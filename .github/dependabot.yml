@@ -57,9 +57,10 @@ updates:
       - dependency-name: 'eslint'
       - dependency-name: '@typescript-eslint/*'
 
-    # Schedule run every Monday, local time
+    # Schedule run every Thursday, local time
     schedule:
       interval: weekly
+      day: 'thursday'
       time: '10:30'
       timezone: 'Europe/London'
 
@@ -73,8 +74,9 @@ updates:
   - package-ecosystem: github-actions
     directory: /
 
-    # Schedule run every Monday, local time
+    # Schedule run every Thursday, local time
     schedule:
       interval: weekly
+      day: 'thursday'
       time: '10:30'
       timezone: 'Europe/London'
