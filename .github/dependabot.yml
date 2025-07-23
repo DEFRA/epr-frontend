@@ -8,54 +8,22 @@ updates:
 
     # Group packages into shared PR
     groups:
-      build:
-        patterns:
-          - '@babel/*'
-          - 'autoprefixer'
-          - 'babel-plugin-module-resolver'
-          - 'babel-loader'
-          - 'babel-plugin-transform-import-meta'
-          - 'tsx'
-          - 'webpack'
-          - 'webpack-*'
-          - 'terser-webpack-plugin'
+      dev:
+        applies-to: 'version-updates'
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
 
-      lint:
-        patterns:
-          - '@typescript-eslint/*'
-          - 'prettier'
-          - 'stylelint'
-          - 'stylelint-*'
-          - 'typescript'
+      prod:
+        applies-to: 'version-updates'
+        dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
 
-      logging:
-        patterns:
-          - '*-pino'
-          - '*-pino-format'
-          - 'pino'
-          - 'pino-*'
-
-      tools:
-        patterns:
-          - 'babel-jest'
-          - 'husky'
-          - 'jest'
-          - 'jest-*'
-          - 'nodemon'
-          - 'npm-run-all'
-          - 'lodash'
-          - 'source-map-loader'
-          - 'sass-*'
-          - 'postcss-*'
-
-      types:
-        patterns:
-          - '@types/*'
-
-    ignore:
-      - dependency-name: 'eslint-*'
-      - dependency-name: 'eslint'
-      - dependency-name: '@typescript-eslint/*'
+      security:
+        applies-to: 'security-updates'
 
     # Schedule run every Thursday, local time
     schedule:
