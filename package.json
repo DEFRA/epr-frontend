@@ -36,6 +36,7 @@
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.888.0",
     "@babel/runtime": "^7.27.6",
     "@defra/hapi-tracing": "^1.26.0",
     "@elastic/ecs-pino-format": "^1.5.0",
@@ -46,6 +47,7 @@
     "@hapi/vision": "^7.0.3",
     "@hapi/yar": "^11.0.3",
     "aws-embedded-metrics": "^4.2.0",
+    "aws-sdk": "^2.1692.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "convict": "^6.2.4",
     "cssnano": "^7.1.0",

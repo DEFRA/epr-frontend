@@ -1,5 +1,17 @@
 version: '3.4'
 services:
+  proxy:
+    image: nginxproxy/nginx-proxy:1.4
+    ports:
+      - '7300:80'
+    environment:
+      - ENABLE_IPV6=true
+      - DEFAULT_ROOT="418"
+      - DEFAULT_HOST=~^uploader\..*\.sslip\.io
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - cdpuploader
 
   localstack:
     image: localstack/localstack:3.0.2
@@ -15,14 +27,14 @@ services:
       LOCALSTACK_HOST: 127.0.0.1
     volumes:
       - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
-      - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
+      - ./compose:/etc/localstack/init/ready.d
     healthcheck:
-      test: ['CMD', 'curl', 'localhost:4566']
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 5s
-      start_period: 5s
-      retries: 3
+      start_period: 10s
+      retries: 20
     networks:
-      - cdp-tenant
+      - cdpuploader
 
   redis:
     image: redis:7.2.3-alpine3.18
@@ -30,12 +42,40 @@ services:
       - '6379:6379'
     restart: always
     networks:
-      - cdp-tenant
+      - cdpuploader
+
+  cdp-uploader:
+    image: defradigital/cdp-uploader:${CDP_UPLOADER_VERSION:-latest}
+    ports:
+      - '7337:7337'
+    links:
+      - 'localstack:localstack'
+      - 'redis:redis'
+    depends_on:
+      localstack:
+        condition: service_healthy
+    env_file:
+      - 'compose/aws.env'
+    environment:
+      VIRTUAL_HOST: ~^uploader\..*\.sslip\.io
+      VIRTUAL_PATH: /
+      VIRTUAL_PORT: 7337
+      PORT: 7337
+      NODE_ENV: development
+      REDIS_HOST: redis
+      USE_SINGLE_INSTANCE_CACHE: true
+      MOCK_VIRUS_SCAN_ENABLED: true
+      MOCK_VIRUS_RESULT_DELAY: 3
+      SQS_ENDPOINT: http://localstack:4566
+      S3_ENDPOINT: http://localstack:4566
+    networks:
+      - cdpuploader
 
   mongodb:
     image: mongo:6.0.13
     networks:
       - cdp-tenant
+      - cdpuploader
     ports:
       - '27017:27017'
     volumes:
@@ -64,8 +104,10 @@ services:
       REDIS_HOST: redis
       LOCALSTACK_ENDPOINT: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
+      AWS_ENDPOINT: http://localstack:4566
     networks:
       - cdp-tenant
+      - cdpuploader 
 
   # your-backend:
   #   image: defradigital/your-backend:${YOUR_BACKEND_VERSION:-latest}
@@ -95,4 +137,6 @@ volumes:
 
 networks:
   cdp-tenant:
+    driver: bridge
+  cdpuploader:
     driver: bridge

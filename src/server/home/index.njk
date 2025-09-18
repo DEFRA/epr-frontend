@@ -52,6 +52,15 @@
           </li>
           <li>and lots more... 😎</li>
         </ul>
+        <form method="POST" action="/upload" enctype="multipart/form-data" id="excel-upload-form" class="govuk-form-group">
+          <label class="govuk-label" for="file">
+            Upload your Excel file
+          </label>
+          <input class="govuk-file-upload" id="file" name="file" type="file" accept=".xlsx,.xls">
+          <span id="file-hint" class="govuk-hint">Max file size: 5MB</span>
+          <button class="govuk-button" type="submit">Upload</button>
+          <div id="upload-status" class="govuk-body"></div>
+        </form>
       </div>
     </div>
   </div>
