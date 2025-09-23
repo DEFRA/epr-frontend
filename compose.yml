@@ -8,6 +8,7 @@ services:
       - ENABLE_IPV6=true
       - DEFAULT_ROOT="418"
       - DEFAULT_HOST=~^uploader\..*\.sslip\.io
+      - DISABLE_SSL=true
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
@@ -16,13 +17,13 @@ services:
   localstack:
     image: localstack/localstack:3.0.2
     ports:
-      - '4566:4566' # LocalStack Gateway
-      - '4510-4559:4510-4559' # external services port range
+      - '4566:4566'
+      - '4510-4559:4510-4559'
     env_file:
       - 'compose/aws.env'
     environment:
       DEBUG: ${DEBUG:-1}
-      LS_LOG: WARN # Localstack DEBUG Level
+      LS_LOG: WARN
       SERVICES: s3,sqs,sns,firehose
       LOCALSTACK_HOST: 127.0.0.1
     volumes:
@@ -48,9 +49,6 @@ services:
     image: defradigital/cdp-uploader:${CDP_UPLOADER_VERSION:-latest}
     ports:
       - '7337:7337'
-    links:
-      - 'localstack:localstack'
-      - 'redis:redis'
     depends_on:
       localstack:
         condition: service_healthy
@@ -68,6 +66,7 @@ services:
       MOCK_VIRUS_RESULT_DELAY: 3
       SQS_ENDPOINT: http://localstack:4566
       S3_ENDPOINT: http://localstack:4566
+      CONSUMER_BUCKETS: re-ex-summary-logs
     networks:
       - cdpuploader
 
@@ -105,6 +104,7 @@ services:
       LOCALSTACK_ENDPOINT: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
       AWS_ENDPOINT: http://localstack:4566
+      CDP_UPLOADER_URL: http://cdp-uploader:7337
     networks:
       - cdp-tenant
       - cdpuploader 

@@ -1,17 +1,43 @@
-/**
- * A GDS styled example home page controller.
- * Provided as an example, remove or modify as required.
- * @satisfies {Partial<ServerRoute>}
- */
+import { config } from '~/src/config/config.js'
+
 export const homeController = {
-  handler(_request, h) {
-    return h.view('home/index', {
-      pageTitle: 'Home',
-      heading: 'Home'
-    })
+  handler: async (request, h) => {
+    try {
+      request.yar.clear('basic-upload')
+
+      const endpointUrl = config.get('cdpUploader.baseUrl') + '/initiate'
+      const response = await fetch(endpointUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          redirect: '/upload/complete',
+          s3Bucket: config.get('bucket')
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to initiate upload: ${response.statusText}`)
+      }
+
+      const upload = await response.json()
+
+      request.yar.set('basic-upload', {
+        statusUrl: upload.statusUrl,
+        uploadId: upload.uploadId
+      })
+
+      return h.view('home/index', {
+        pageTitle: 'Home',
+        heading: 'Home',
+        action: upload.uploadUrl
+      })
+    } catch (err) {
+      request.server.log(['error', 'upload'], err)
+      return h.view('home/index', {
+        pageTitle: 'Home',
+        heading: 'Home',
+        error: `Failed to initialize upload: ${err.message}`
+      })
+    }
   }
 }
-
-/**
- * @import { ServerRoute } from '@hapi/hapi'
- */

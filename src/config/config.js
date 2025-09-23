@@ -216,44 +216,24 @@ export const config = convict({
       env: 'TRACING_HEADER'
     }
   },
-  s3: {
-    region: {
-      doc: 'AWS region for S3 operations',
+  cdpUploader: {
+    baseUrl: {
+      doc: 'Base URL for the CDP uploader service',
       format: String,
-      default: 'eu-west-2',
-      env: 'AWS_REGION'
-    },
-    endpoint: {
-      doc: 'AWS endpoint (use localstack in dev)',
-      format: String,
-      default: process.env.DOCKER_ENV
-        ? 'http://localstack:4566'
-        : 'http://localhost:4566',
-      env: 'AWS_ENDPOINT'
-    },
-    accessKeyId: {
-      doc: 'AWS access key (non-secret for localstack)',
-      format: String,
-      default: 'test',
-      env: 'AWS_ACCESS_KEY_ID'
-    },
-    secretAccessKey: {
-      doc: 'AWS secret key (non-secret for localstack)',
-      format: String,
-      default: 'test',
-      env: 'AWS_SECRET_ACCESS_KEY'
-    },
-    bucket: {
-      doc: 'S3 bucket for uploads',
-      format: String,
-      default: 're-ex-summary-logs',
-      env: 'UPLOAD_BUCKET'
-    },
-    forcePathStyle: {
-      doc: 'Force path-style URLs (required for localstack)',
-      format: Boolean,
-      default: true
+      default: process.env.CDP_UPLOADER_URL ?? 'http://cdp-uploader:7337',
+      env: 'CDP_UPLOADER_URL'
     }
+  },
+  bucket: {
+    doc: 'Bucket name',
+    format: String,
+    default: 're-ex-summary-logs',
+    env: 'BUCKET'
+  },
+  localstackEndpoint: {
+    doc: 'Localstack endpoint',
+    format: String,
+    default: 'http://localhost:4566'
   }
 })
 
