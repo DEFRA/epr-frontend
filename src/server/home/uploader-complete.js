@@ -4,12 +4,7 @@ export const uploadCompleteController = {
   options: {},
   handler: async (request, h) => {
     try {
-      const uploadId = request.query.uploadId
-      if (!uploadId) {
-        request.server.log(['error', 'upload'], 'No upload ID provided')
-        return h.redirect('/')
-      }
-
+      const { uploadId } = request.yar.get('basic-upload')
       const baseUrl = config.get('cdpUploader.baseUrl')
       const statusUrl = `${baseUrl}/status/${uploadId}`
 
@@ -18,7 +13,13 @@ export const uploadCompleteController = {
         `Checking status URL: ${statusUrl}`
       )
 
-      const response = await fetch(statusUrl)
+      const response = await fetch(statusUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      request.server.log(['info', 'statusUrl'], response)
+
       if (!response.ok) {
         throw new Error(`Status check failed: ${response.statusText}`)
       }

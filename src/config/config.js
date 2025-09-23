@@ -220,7 +220,7 @@ export const config = convict({
     baseUrl: {
       doc: 'Base URL for the CDP uploader service',
       format: String,
-      default: process.env.CDP_UPLOADER_URL ?? 'http://cdp-uploader:7337',
+      default: 'http://localhost:7337',
       env: 'CDP_UPLOADER_URL'
     }
   },
