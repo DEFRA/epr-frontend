@@ -6,8 +6,14 @@ export const homeController = {
   handler: async (request, h) => {
     try {
       request.yar.clear('basic-upload')
-
       const endpointUrl = config.get('cdpUploader.baseUrl') + '/initiate'
+      const bucket = config.get('bucket')
+
+      request.server.log(['debug', 'upload'], {
+        endpointUrl,
+        bucket
+      })
+
       const response = await fetch(endpointUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -18,6 +24,11 @@ export const homeController = {
       })
 
       if (!response.ok) {
+        const errorBody = await response.text()
+        request.server.log(
+          ['error', 'upload'],
+          `Uploader error: ${response.status} - ${errorBody}`
+        )
         throw new Error(`Failed to initiate upload: ${response.statusText}`)
       }
 
