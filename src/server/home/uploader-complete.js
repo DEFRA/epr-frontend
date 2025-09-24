@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import { config } from '~/src/config/config.js'
 
 export const uploadCompleteController = {

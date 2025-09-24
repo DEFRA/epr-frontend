@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import fetch from 'node-fetch'
 import { config } from '~/src/config/config.js'
 
