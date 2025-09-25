@@ -1,57 +1,14 @@
 {% extends 'layouts/page.njk' %}
 
 {% block content %}
-  {{ appHeading({
-    text: heading,
-    caption: "Core delivery platform Node.js Frontend Template. EPR"
-  }) }}
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
+        <h1 class="govuk-heading-l">Sites</h1>
+        <h1 class="govuk-heading-m">Test</h1>
         <p>
-          Welcome to the Frontend Template, a starter kit for Core Delivery Platform Node.js Frontends 🚀
+          <a href="/organisations/123/registrations/456" class="govuk-link">Test Registration</a>
         </p>
-        <p>
-          Based on <a href="https://defra.github.io/software-development-standards">DEFRA</a> and <a
-            href="https://design-system.service.gov.uk/">GOV.UK</a> best practices this starter kit provides you with
-          a deployable, production ready template 🙌🏻 to start your new service with.
-        </p>
-        <p>This template comes with:</p>
-        <ul>
-          <li>
-            <a href="https://frontend.design-system.service.gov.uk/">GOV.UK Frontend</a>
-          </li>
-          <li>
-            <a href="https://hapi.dev">Hapi.js</a>
-          </li>
-          <li>
-            <a href="https://mozilla.github.io/nunjucks/">Nunjucks</a>
-          </li>
-          <li>
-            <a href="https://github.com/mozilla/node-convict">Node Convict</a>
-          </li>
-          <li>
-            <a href="https://jestjs.io/">Jest testing</a>
-          </li>
-          <li>GitHub Actions Pull Request and Publish jobs</li>
-          <li>
-            <a href="https://github.com/pinojs/pino">PinoJs logging</a>
-          </li>
-          <li>
-            <a href="https://standardjs.com">Standard JS</a>
-          </li>
-          <li>
-            <a href="https://eslint.org">ESLint</a>
-          </li>
-          <li>
-            <a href="https://stylelint.io">StyleLint</a>
-          </li>
-          <li>
-            <a href="https://prettier.io">Prettier</a>
-          </li>
-          <li>and lots more... 😎</li>
-        </ul>
       </div>
     </div>
   </div>

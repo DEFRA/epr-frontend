@@ -1,5 +1,6 @@
 import {
   createAll,
+  Accordion,
   Button,
   Checkboxes,
   ErrorSummary,
@@ -8,6 +9,7 @@ import {
   SkipLink
 } from 'govuk-frontend'
 
+createAll(Accordion)
 createAll(Button)
 createAll(Checkboxes)
 createAll(ErrorSummary)

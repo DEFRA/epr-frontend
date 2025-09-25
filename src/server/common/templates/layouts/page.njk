@@ -1,7 +1,11 @@
 {% extends "govuk/template.njk" %}
 
 {# Import GOVUK components globally #}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
@@ -17,11 +21,15 @@
     homepageUrl: "https://www.gov.uk/",
     classes: "app-header",
     containerClasses: "govuk-width-container",
-    serviceName: serviceName,
     serviceUrl: serviceUrl,
     useTudorCrown: true
   }) }}
-  {% include "partials/navigation/navigation.njk" %}
+
+  {{ govukServiceNavigation({
+    serviceName: serviceName,
+    serviceUrl: "/",
+    navigation: navigation
+  }) }}
 {% endblock %}
 
 {% block pageTitle %}
@@ -29,6 +37,12 @@
 {% endblock %}
 
 {% block beforeContent %}
+  {{ govukPhaseBanner({
+    tag: {
+      text: "Alpha"
+    },
+    html: 'This is a new service. Help us improve it and <a class="govuk-link" href="#">give your feedback by email</a>.'
+  }) }}
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({
       items: breadcrumbs

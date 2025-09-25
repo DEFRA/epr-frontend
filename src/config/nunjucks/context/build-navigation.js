@@ -4,14 +4,9 @@
 export function buildNavigation(request) {
   return [
     {
-      text: 'Home',
-      url: '/',
-      isActive: request?.path === '/'
-    },
-    {
-      text: 'About',
-      url: '/about',
-      isActive: request?.path === '/about'
+      active: request?.path === '/',
+      href: '/',
+      text: 'Your sites'
     }
   ]
 }
