@@ -1,12 +1,10 @@
 /* istanbul ignore file */
 
 import { config } from '~/src/config/config.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 export const homeController = {
   handler: async (request, h) => {
     try {
-      const logger = createLogger()
       request.yar.clear('basic-upload')
       const endpointUrl = config.get('cdpUploader.baseUrl') + '/initiate'
       const bucket = config.get('bucket')
@@ -23,11 +21,10 @@ export const homeController = {
       }
 
       // delete this log after debugging
-      logger.info(['env temporary'], {
+      request.server.log(['debug', 'upload'], {
         endpointUrl,
         requestOptions: {
           ...requestOptions,
-          // log parsed body instead of raw JSON string
           body: requestPayload
         }
       })
@@ -37,7 +34,13 @@ export const homeController = {
         const errorBody = await response.text()
         request.server.log(
           ['error', 'upload'],
-          `Uploader error: ${response.status} - ${errorBody}`
+          `Uploader error: ${response.status} - ${errorBody}`,
+          {
+            requestOptions: {
+              ...requestOptions,
+              body: requestPayload
+            }
+          }
         )
         throw new Error(`Failed to initiate upload: ${response.statusText}`)
       }
