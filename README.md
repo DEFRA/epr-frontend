@@ -168,6 +168,10 @@ docker run -p 3000:3000 epr-frontend
 
 ### Docker Compose
 
+> [!IMPORTANT]
+>
+> Please ensure you have at least version 2.22.0 of Docker Compose installed.
+
 A local environment with:
 
 - Localstack for AWS services (S3, SQS)
@@ -177,7 +181,7 @@ A local environment with:
 - A commented out backend example.
 
 ```bash
-docker compose up --build -d
+docker compose up --build -d --watch
 ```
 
 ### Dependabot
