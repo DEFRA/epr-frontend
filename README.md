@@ -181,7 +181,7 @@ A local environment with:
 - A commented out backend example.
 
 ```bash
-docker compose up --build -d --watch
+docker compose up --build --watch
 ```
 
 ### Dependabot
