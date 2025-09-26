@@ -1,10 +1,21 @@
 {% extends 'layouts/page.njk' %}
 
+{% block head %}
+  {{ super() }}
+  <meta http-equiv="refresh" content="3">
+{% endblock %}
+
 {%  block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     <div class="govuk-body" data-testid="app-page-body">
-      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <h1 class="govuk-heading-xl">
+        {% if summaryLogStatus === 'validating' %}
+          {{ heading.validating }}
+        {% else %}
+          {{ heading.uploading }}
+        {% endif %}
+      </h1>
       <p>Your summary log is being uploaded and automatically validated. This may take a few minutes.</p>
       <p>Keep this page open and do not refresh it.</p>
     </div>
