@@ -1,0 +1,23 @@
+ARG PARENT_VERSION=2.5.2-node22.13.1
+ARG PORT=3000
+ARG PORT_DEBUG=9229
+
+FROM defradigital/node-development:${PARENT_VERSION}
+
+WORKDIR /app
+
+ENV TZ="Europe/London"
+
+ARG PARENT_VERSION
+LABEL uk.gov.defra.ffc.parent-image=defradigital/node-development:${PARENT_VERSION}
+
+ARG PORT
+ARG PORT_DEBUG
+ENV PORT=${PORT}
+EXPOSE ${PORT} ${PORT_DEBUG}
+
+COPY --chown=node:node --chmod=755 package*.json nodemon.json tsconfig.json babel.config.cjs webpack.config.js .browserslistrc ./
+COPY --chown=node:node --chmod=755 src/ ./src/
+RUN npm install --ignore-scripts
+
+CMD [ "npm", "run", "dev" ]
