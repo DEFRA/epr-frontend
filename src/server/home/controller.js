@@ -7,40 +7,21 @@ export const homeController = {
     try {
       request.yar.clear('basic-upload')
       const endpointUrl = config.get('cdpUploader.baseUrl') + '/initiate'
-      const bucket = config.get('bucket')
 
-      const requestPayload = {
-        redirect: '/upload/complete',
-        s3Bucket: bucket
-      }
-
-      const requestOptions = {
+      const response = await fetch(endpointUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestPayload)
-      }
-
-      // delete this log after debugging
-      request.server.log(['debug', 'upload'], {
-        endpointUrl,
-        requestOptions: {
-          ...requestOptions,
-          body: requestPayload
-        }
+        body: JSON.stringify({
+          redirect: '/upload/complete',
+          s3Bucket: config.get('bucket')
+        })
       })
 
-      const response = await fetch(endpointUrl, requestOptions)
       if (!response.ok) {
         const errorBody = await response.text()
         request.server.log(
           ['error', 'upload'],
-          `Uploader error: ${response.status} - ${errorBody}`,
-          {
-            requestOptions: {
-              ...requestOptions,
-              body: requestPayload
-            }
-          }
+          `Uploader error: ${response.status} - ${errorBody}`
         )
         throw new Error(`Failed to initiate upload: ${response.statusText}`)
       }
