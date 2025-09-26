@@ -73,8 +73,9 @@
 
       <form
         class="form"
-        action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-log/{{ uploadId }}/progress"
+        action="{{ uploadUrl }}"
         method="post"
+        enctype="multipart/form-data"
       >
         {{ govukFileUpload({
           id: "summary-log-upload",

@@ -10,13 +10,7 @@ export const summaryLogUploadProgress = {
       server.route([
         {
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-log/{uploadId}/progress',
-          ...summaryLogUploadProgressController
-        },
-        // @todo: remove this route once CDP Uploader is integrated
-        {
-          method: 'POST',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-log/{uploadId}/progress',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}/progress',
           ...summaryLogUploadProgressController
         }
       ])

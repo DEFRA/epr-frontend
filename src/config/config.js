@@ -215,6 +215,22 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  cdpUploader: {
+    s3buckets: {
+      summaryLogs: {
+        doc: 'CDP Uploader S3 bucket',
+        format: String,
+        default: 're-ex-summary-logs',
+        env: 'CDP_UPLOADER_S3_BUCKET_SUMMARY_LOGS'
+      }
+    },
+    url: {
+      doc: 'CDP Uploader root url',
+      format: String,
+      default: 'http://localhost:7337',
+      env: 'CDP_UPLOADER_URL'
+    }
   }
 })
 
