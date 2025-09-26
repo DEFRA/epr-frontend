@@ -1,0 +1,23 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+
+      {% if status %}
+        {% if status.uploadStatus === 'ready' %}
+          <p class="govuk-body">Your file has been successfully uploaded and processed.</p>
+        {% else %}
+          <p class="govuk-body">Your file is being processed. This page will refresh automatically.</p>
+          <p class="govuk-body">Current status: {{ status }}</p>
+          <meta http-equiv="refresh" content="2">
+        {% endif %}
+      {% endif %}
+
+      <p class="govuk-body">
+        <a href="/" class="govuk-link">Return to homepage</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

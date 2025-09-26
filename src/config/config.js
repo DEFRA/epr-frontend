@@ -215,6 +215,25 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  cdpUploader: {
+    baseUrl: {
+      doc: 'Base URL for the CDP uploader service',
+      format: String,
+      default: 'http://localhost:7337',
+      env: 'CDP_UPLOADER_URL'
+    }
+  },
+  bucket: {
+    doc: 'Bucket name',
+    format: String,
+    default: 're-ex-summary-logs',
+    env: 'BUCKET'
+  },
+  localstackEndpoint: {
+    doc: 'Localstack endpoint',
+    format: String,
+    default: 'http://localhost:4566'
   }
 })
 

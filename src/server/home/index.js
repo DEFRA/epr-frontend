@@ -1,13 +1,6 @@
 import { homeController } from '~/src/server/home/controller.js'
+import { uploadCompleteController } from './uploader-complete.js'
 
-/**
- * Sets up the routes used in the home page.
- * These routes are registered in src/server/router.js.
- */
-
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const home = {
   plugin: {
     name: 'home',
@@ -16,13 +9,14 @@ export const home = {
         {
           method: 'GET',
           path: '/',
-          ...homeController
+          handler: homeController.handler
+        },
+        {
+          method: 'GET',
+          path: '/upload/complete',
+          handler: uploadCompleteController.handler
         }
       ])
     }
   }
 }
-
-/**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- */
