@@ -9,6 +9,8 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 
+const serviceName = 'Manage your packaging waste responsibilities'
+
 describe('#context', () => {
   const mockRequest = { path: '/' }
   let contextResult
@@ -37,17 +39,12 @@ describe('#context', () => {
         getAssetPath: expect.any(Function),
         navigation: [
           {
-            isActive: true,
-            text: 'Home',
-            url: '/'
-          },
-          {
-            isActive: false,
-            text: 'About',
-            url: '/about'
+            active: true,
+            href: '/',
+            text: 'Your sites'
           }
         ],
-        serviceName: 'epr-frontend',
+        serviceName,
         serviceUrl: '/'
       })
     })
@@ -126,17 +123,12 @@ describe('#context cache', () => {
         getAssetPath: expect.any(Function),
         navigation: [
           {
-            isActive: true,
-            text: 'Home',
-            url: '/'
-          },
-          {
-            isActive: false,
-            text: 'About',
-            url: '/about'
+            active: true,
+            href: '/',
+            text: 'Your sites'
           }
         ],
-        serviceName: 'epr-frontend',
+        serviceName,
         serviceUrl: '/'
       })
     })

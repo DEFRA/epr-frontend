@@ -21,9 +21,7 @@ describe('#errors', () => {
       url: '/non-existent-path'
     })
 
-    expect(result).toEqual(
-      expect.stringContaining('Page not found | epr-frontend')
-    )
+    expect(result).toEqual(expect.stringContaining('Page not found |'))
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })

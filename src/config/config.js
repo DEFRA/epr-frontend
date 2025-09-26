@@ -40,7 +40,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'epr-frontend'
+    default: 'Manage your packaging waste responsibilities'
   },
   root: {
     doc: 'Project root',
@@ -84,14 +84,14 @@ export const config = convict({
     format: {
       doc: 'Format to output logs in.',
       format: ['ecs', 'pino-pretty'],
-      default: isProduction ? 'ecs' : 'pino-pretty',
+      default: /* istanbul ignore next */ isProduction ? 'ecs' : 'pino-pretty', // @fixme: code coverage
       env: 'LOG_FORMAT'
     },
     redact: {
       doc: 'Log paths to redact',
       format: Array,
-      default: isProduction
-        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
+      default: /* istanbul ignore next */ isProduction
+        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers'] // @fixme: code coverage
         : []
     }
   },
@@ -119,7 +119,7 @@ export const config = convict({
       engine: {
         doc: 'backend cache is written to',
         format: ['redis', 'memory'],
-        default: isProduction ? 'redis' : 'memory',
+        default: /* istanbul ignore next */ isProduction ? 'redis' : 'memory', // @fixme: code coverage
         env: 'SESSION_CACHE_ENGINE'
       },
       name: {

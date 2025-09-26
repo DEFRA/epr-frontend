@@ -1,0 +1,13 @@
+{% extends 'layouts/page.njk' %}
+
+{%  block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-body" data-testid="app-page-body">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <p>Your summary log is being uploaded and automatically validated. This may take a few minutes.</p>
+      <p>Keep this page open and do not refresh it.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

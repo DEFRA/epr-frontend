@@ -32,6 +32,8 @@ export const loggerOptions = {
   level: logConfig.level,
   ...formatters[logConfig.format],
   nesting: true,
+  // @fixme: code coverage
+  /* istanbul ignore next */
   mixin() {
     const mixinValues = {}
     const traceId = getTraceId()

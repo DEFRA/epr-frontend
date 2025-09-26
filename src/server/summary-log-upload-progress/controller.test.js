@@ -1,7 +1,10 @@
 import { createServer } from '~/src/server/index.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
-describe('#aboutController', () => {
+describe('#summaryLogUploadProgressController', () => {
+  const organisationId = '123'
+  const registrationId = '456'
+  const uploadId = '789'
   /** @type {Server} */
   let server
 
@@ -17,10 +20,12 @@ describe('#aboutController', () => {
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/about'
+      url: `/organisations/${organisationId}/registrations/${registrationId}/summary-log/${uploadId}/progress`
     })
 
-    expect(result).toEqual(expect.stringContaining('About |'))
+    expect(result).toEqual(
+      expect.stringContaining('Summary log: upload progress |')
+    )
     expect(statusCode).toBe(statusCodes.ok)
   })
 })

@@ -13,14 +13,9 @@ describe('#buildNavigation', () => {
       buildNavigation(mockRequest({ path: '/non-existent-path' }))
     ).toEqual([
       {
-        isActive: false,
-        text: 'Home',
-        url: '/'
-      },
-      {
-        isActive: false,
-        text: 'About',
-        url: '/about'
+        active: false,
+        href: '/',
+        text: 'Your sites'
       }
     ])
   })
@@ -28,14 +23,9 @@ describe('#buildNavigation', () => {
   test('Should provide expected highlighted navigation details', () => {
     expect(buildNavigation(mockRequest({ path: '/' }))).toEqual([
       {
-        isActive: true,
-        text: 'Home',
-        url: '/'
-      },
-      {
-        isActive: false,
-        text: 'About',
-        url: '/about'
+        active: true,
+        href: '/',
+        text: 'Your sites'
       }
     ])
   })
