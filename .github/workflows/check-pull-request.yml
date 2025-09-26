@@ -83,3 +83,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  test-journey:
+    name: Run Journey Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t defradigital/epr-frontend:${{github.sha}} .
+      - uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@main
+        with:
+          epr-frontend: ${{github.sha}}
+          branch: main
