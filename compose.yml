@@ -1,4 +1,16 @@
 services:
+  proxy:
+    image: nginxproxy/nginx-proxy:1.4
+    ports:
+      - '7300:80'
+    environment:
+      - ENABLE_IPV6=true
+      - DEFAULT_ROOT="418"
+      - DEFAULT_HOST=~^uploader\..*\.sslip\.io
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - cdp-tenant
 
   localstack:
     image: localstack/localstack:3.0.2
@@ -14,12 +26,12 @@ services:
       LOCALSTACK_HOST: 127.0.0.1
     volumes:
       - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
-      - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
+      - './compose:/etc/localstack/init/ready.d'
     healthcheck:
-      test: ['CMD', 'curl', 'localhost:4566']
-      interval: 5s
+      test: ["CMD", "stat", "/tmp/READY"]
+      interval: 3s
       start_period: 5s
-      retries: 3
+      retries: 20
     networks:
       - cdp-tenant
 
@@ -28,6 +40,34 @@ services:
     ports:
       - '6379:6379'
     restart: always
+    networks:
+      - cdp-tenant
+
+  cdp-uploader:
+    image: defradigital/cdp-uploader:${CDP_UPLOADER_VERSION:-latest}
+    ports:
+      - '7337:7337'
+    links:
+      - 'localstack:localstack'
+      - 'redis:redis'
+    depends_on:
+      localstack:
+        condition: service_healthy
+    env_file:
+      - 'compose/aws.env'
+    environment:
+      VIRTUAL_HOST: ~^uploader\..*\.sslip\.io
+      VIRTUAL_PATH: /
+      VIRTUAL_PORT: 7337
+      PORT: 7337
+      NODE_ENV: development
+      REDIS_HOST: redis
+      USE_SINGLE_INSTANCE_CACHE: true
+      MOCK_VIRUS_SCAN_ENABLED: true
+      MOCK_VIRUS_RESULT_DELAY: 3
+      SQS_ENDPOINT: http://localstack:4566
+      S3_ENDPOINT: http://localstack:4566
+      CONSUMER_BUCKETS: re-ex-summary-logs
     networks:
       - cdp-tenant
 
@@ -74,29 +114,10 @@ services:
       REDIS_HOST: redis
       LOCALSTACK_ENDPOINT: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
+      CDP_UPLOADER_URL: http://cdp-uploader:7337
+      EPR_BACKEND_URL: http://localhost:3001
     networks:
       - cdp-tenant
-
-  # your-backend:
-  #   image: defradigital/your-backend:${YOUR_BACKEND_VERSION:-latest}
-  #   ports:
-  #     - '3555:3555'
-  #   links:
-  #     - 'localstack:localstack'
-  #     - 'mongodb:mongodb'
-  #   depends_on:
-  #     localstack:
-  #       condition: service_healthy
-  #     mongodb:
-  #       condition: service_started
-  #   env_file:
-  #     - 'compose/aws.env'
-  #   environment:
-  #     PORT: 3555
-  #     NODE_ENV: development
-  #     LOCALSTACK_ENDPOINT: http://localstack:4566
-  #   networks:
-  #     - cdp-tenant
 
 ################################################################################
 
