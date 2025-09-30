@@ -19,7 +19,8 @@ export default {
     '<rootDir>/src/server/common/test-helpers',
     '<rootDir>/src/client/javascripts/application.js',
     '<rootDir>/src/index.js',
-    'index.js'
+    'index.js',
+    '\\.vitest\\.js$'
   ],
   coverageDirectory: '<rootDir>/coverage',
   transform: {
