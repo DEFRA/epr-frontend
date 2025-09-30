@@ -17,7 +17,8 @@ export default defineConfig({
         'src/server/common/test-helpers',
         'src/client/javascripts/application.js',
         'src/index.js',
-        '**/index.js'
+        '**/index.js',
+        '**/*.test.js'
       ]
     }
   },
