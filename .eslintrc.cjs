@@ -142,11 +142,6 @@ module.exports = {
             allowArguments: true
           }
         ]
-      },
-      settings: {
-        vitest: {
-          typecheck: false
-        }
       }
     }
   ],
