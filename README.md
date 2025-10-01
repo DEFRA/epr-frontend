@@ -31,8 +31,10 @@ Core delivery platform Node.js Frontend Template.
 
 ### Node.js
 
-Please install [Node.js](http://nodejs.org/) `>= v18` and [npm](https://nodejs.org/) `>= v9`. You will find it
-easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
+This project is written in [Node.js](http://nodejs.org/) and uses [npm](https://npmjs.org/) to manage dependencies.
+
+It uses [nvm](https://github.com/nvm-sh/nvm) to install and manage Node via a [.npmrc](https://github.com/nvm-sh/nvm#nvmrc)
+file which is set to reference the latest [Active LTS](https://nodejs.org/en/about/previous-releases) version.
 
 To use the correct version of Node.js for this application, via nvm:
 
