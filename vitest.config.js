@@ -1,17 +1,15 @@
-import { defineConfig } from 'vitest/config'
 import { fileURLToPath } from 'node:url'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
     globals: true,
     clearMocks: true,
-    include: ['**/src/**/*.test.js'],
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'lcov'],
       include: ['src/**/*.js'],
       exclude: [
-        'node_modules/',
+        ...configDefaults.exclude,
         '.server',
         '.public',
         'src/server/common/test-helpers',
