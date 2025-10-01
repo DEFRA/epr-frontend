@@ -1,9 +1,7 @@
-import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { initUpload } from '~/src/server/common/helpers/upload/init-upload.js'
 import { createServer } from '~/src/server/index.js'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-
-const uploadId = 'abc123'
 
 vi.mock('~/src/server/common/helpers/upload/init-upload.js', () => ({
   initUpload: vi.fn().mockResolvedValue({
@@ -61,7 +59,7 @@ describe('#summaryLogUploadController', () => {
 
     expect(yar.set).toHaveBeenCalledWith(
       'summaryLogs',
-      expect.objectContaining({ uploadId })
+      expect.objectContaining({ uploadId: 'abc123' })
     )
   })
 
