@@ -1,14 +1,14 @@
-import { initUpload } from './init-upload.js'
 import fetch from 'node-fetch'
+import { describe, expect, test, vi } from 'vitest'
+import { initUpload } from './init-upload.js'
 
-jest.mock('node-fetch', () => ({
-  __esModule: true,
-  default: jest.fn().mockResolvedValue({
-    json: jest.fn()
+vi.mock('node-fetch', () => ({
+  default: vi.fn().mockResolvedValue({
+    json: vi.fn()
   })
 }))
 
-describe('initUpload', () => {
+describe(initUpload, () => {
   test('should call fetch', async () => {
     await initUpload()
 

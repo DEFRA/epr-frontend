@@ -33,7 +33,7 @@ export const loggerOptions = {
   ...formatters[logConfig.format],
   nesting: true,
   // @fixme: code coverage
-  /* istanbul ignore next */
+  /* v8 ignore next 8 */
   mixin() {
     const mixinValues = {}
     const traceId = getTraceId()

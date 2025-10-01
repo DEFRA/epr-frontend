@@ -1,5 +1,6 @@
-import { createServer } from '~/src/server/index.js'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { createServer } from '~/src/server/index.js'
 
 describe('#homeController', () => {
   /** @type {Server} */
@@ -14,13 +15,13 @@ describe('#homeController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should provide expected response', async () => {
+  test('should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/'
     })
 
-    expect(result).toEqual(expect.stringContaining('Home |'))
+    expect(result).toStrictEqual(expect.stringContaining('Home |'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 })
