@@ -5,5 +5,6 @@ export const summaryLogStatuses = {
   validating: 'validating',
   validationFailed: 'validationFailed',
   validationSucceeded: 'validationSucceeded',
-  submitted: 'submitted'
+  submitted: 'submitted',
+  rejected: 'rejected'
 }

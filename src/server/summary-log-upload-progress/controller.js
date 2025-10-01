@@ -18,7 +18,7 @@ export const summaryLogUploadProgressController = {
         const { uploadStatus, form, files = [] } = data
         const file = files[0]
         const errorMessage =
-          file?.fileStatus === 'rejected'
+          file?.fileStatus === summaryLogStatuses.rejected
             ? file.errorMessage ||
               'Something went wrong with your file upload. Please try again.'
             : form?.summaryLogUpload?.errorMessage
