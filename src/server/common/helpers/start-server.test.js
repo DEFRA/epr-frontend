@@ -72,7 +72,7 @@ describe('#startServer', () => {
         2,
         'Server started successfully'
       )
-      // eslint-disable-next-line @vitest/max-expects
+      // eslint-disable-next-line vitest/max-expects
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
         3,
         'Access your frontend on http://localhost:3097'
