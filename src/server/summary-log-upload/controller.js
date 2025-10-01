@@ -38,6 +38,13 @@ export const summaryLogUploadController = {
         uploadUrl
       })
 
+      const session = request.yar.get(sessionNames.summaryLogs) || {}
+      const formErrors = session.lastError || null
+      if (formErrors) {
+        delete session.lastError
+        request.yar.set(sessionNames.summaryLogs, session)
+      }
+
       return h.view('summary-log-upload/index', {
         pageTitle: 'Summary log: upload', // @todo use activity/site/material info
         heading: 'Upload your summary log',
@@ -47,7 +54,7 @@ export const summaryLogUploadController = {
         summaryLogId,
         uploadId,
         uploadUrl,
-        formErrors: request.yar.get(sessionNames.summaryLogs)?.lastError || null
+        formErrors
       })
     } catch (err) {
       // @todo: use structured logging
