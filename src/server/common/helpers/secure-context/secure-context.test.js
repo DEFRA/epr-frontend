@@ -1,17 +1,20 @@
+import hapi from '@hapi/hapi'
 import {
-  describe,
-  test,
-  expect,
-  beforeEach,
+  afterAll,
   afterEach,
   beforeAll,
-  afterAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
   vi
 } from 'vitest'
-import hapi from '@hapi/hapi'
+import { config } from '~/src/config/config.js'
+import { requestLogger } from '../logging/request-logger.js'
+import { secureContext } from './secure-context.js'
 
 const mockAddCACert = vi.fn()
-const mockTlsCreateSecureContext = vi
+const mockCreateSecureContext = vi
   .fn()
   .mockReturnValue({ context: { addCACert: mockAddCACert } })
 
@@ -26,23 +29,19 @@ vi.mock('hapi-pino', () => ({
     name: 'mock-hapi-pino'
   }
 }))
-vi.mock('node:tls', async (importOriginal) => {
-  const actual = await importOriginal()
+
+vi.mock('node:tls', async () => {
+  const nodeTls = await import('node:tls')
+
   return {
-    ...actual,
-    createSecureContext: (...args) => mockTlsCreateSecureContext(...args)
+    default: {
+      ...nodeTls,
+      createSecureContext: (...args) => mockCreateSecureContext(...args)
+    }
   }
 })
 
-const { secureContext } = await import(
-  '~/src/server/common/helpers/secure-context/secure-context.js'
-)
-const { requestLogger } = await import(
-  '~/src/server/common/helpers/logging/request-logger.js'
-)
-const { config } = await import('~/src/config/config.js')
-
-describe('#secureContext', () => {
+describe('secureContext', () => {
   let server
 
   describe('When secure context is disabled', () => {
@@ -77,8 +76,6 @@ describe('#secureContext', () => {
     })
 
     beforeEach(async () => {
-      mockTlsCreateSecureContext.mockClear()
-      mockAddCACert.mockClear()
       config.set('isSecureContextEnabled', true)
       server = hapi.server()
       await server.register([requestLogger, secureContext])
@@ -94,18 +91,17 @@ describe('#secureContext', () => {
     })
 
     test('Original tls.createSecureContext should have been called', () => {
-      expect(server.secureContext).toBeDefined()
-      expect(server.secureContext.context).toBeDefined()
+      expect(mockCreateSecureContext).toHaveBeenCalledWith({})
     })
 
     test('addCACert should have been called', () => {
-      expect(server.secureContext.context.addCACert).toBeTypeOf('function')
+      expect(mockAddCACert).toHaveBeenCalled()
     })
 
     test('secureContext decorator should be available', () => {
-      expect(server.secureContext).toBeDefined()
-      expect(server.secureContext.context).toHaveProperty('addCACert')
-      expect(server.secureContext.context.addCACert).toBeTypeOf('function')
+      expect(server.secureContext).toEqual({
+        context: { addCACert: expect.any(Function) }
+      })
     })
   })
 
