@@ -1,6 +1,6 @@
-import { describe, beforeAll, afterAll, test, expect } from 'vitest'
-import { createServer } from '~/src/server/index.js'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { createServer } from '~/src/server/index.js'
 
 describe('#registrationController', () => {
   const organisationId = '123'

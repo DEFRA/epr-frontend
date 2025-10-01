@@ -1,4 +1,4 @@
-import { describe, beforeEach, afterEach, test, expect } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { startServer } from '~/src/server/common/helpers/start-server.js'
 

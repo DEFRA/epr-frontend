@@ -1,4 +1,4 @@
-import { describe, beforeEach, test, expect } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 import { renderComponent } from '~/src/server/common/test-helpers/component-helpers.js'
 
 describe('heading Component', () => {
