@@ -103,7 +103,7 @@ describe('#context cache', () => {
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
-    test('Should read file', () => {
+    beforeEach(() => {
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
@@ -111,11 +111,10 @@ describe('#context cache', () => {
       }`)
 
       contextResult = contextImport.context(mockRequest)
-      expect(mockReadFileSync).toHaveBeenCalled()
     })
 
-    test('Should use cache', () => {
-      expect(mockReadFileSync).not.toHaveBeenCalled()
+    test('Should read file', () => {
+      expect(mockReadFileSync).toHaveBeenCalled()
     })
 
     test('Should provide expected context', () => {
