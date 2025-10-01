@@ -38,6 +38,7 @@ describe('#context', () => {
     })
 
     beforeEach(() => {
+      // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
@@ -120,6 +121,7 @@ describe('#context cache', () => {
   describe('Webpack manifest file cache', () => {
     test('Should read file', () => {
       mockReadFileSync.mockClear()
+      // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
