@@ -1,12 +1,4 @@
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi
-} from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
@@ -24,11 +16,6 @@ const serviceName = 'Manage your packaging waste responsibilities'
 describe('#context', () => {
   const mockRequest = { path: '/' }
   let contextResult
-
-  afterEach(() => {
-    mockReadFileSync.mockClear()
-    mockLoggerError.mockClear()
-  })
 
   describe('When webpack manifest file read succeeds', () => {
     let contextImport
@@ -86,8 +73,6 @@ describe('#context', () => {
 
     beforeAll(async () => {
       vi.resetModules()
-      mockReadFileSync.mockClear()
-      mockLoggerError.mockClear()
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
@@ -110,17 +95,15 @@ describe('#context', () => {
 describe('#context cache', () => {
   const mockRequest = { path: '/' }
   let contextResult
-  let contextImport
-
-  beforeAll(async () => {
-    vi.resetModules()
-    mockReadFileSync.mockClear()
-    contextImport = await import('~/src/config/nunjucks/context/context.js')
-  })
 
   describe('Webpack manifest file cache', () => {
+    let contextImport
+
+    beforeAll(async () => {
+      contextImport = await import('~/src/config/nunjucks/context/context.js')
+    })
+
     test('Should read file', () => {
-      mockReadFileSync.mockClear()
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
@@ -132,13 +115,6 @@ describe('#context cache', () => {
     })
 
     test('Should use cache', () => {
-      mockReadFileSync.mockClear()
-      mockReadFileSync.mockReturnValue(`{
-        "application.js": "javascripts/application.js",
-        "stylesheets/application.scss": "stylesheets/application.css"
-      }`)
-
-      contextResult = contextImport.context(mockRequest)
       expect(mockReadFileSync).not.toHaveBeenCalled()
     })
 
