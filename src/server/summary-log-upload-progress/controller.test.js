@@ -24,8 +24,9 @@ describe('#summaryLogUploadProgressController', () => {
   const organisationId = '123'
   const registrationId = '456'
   const summaryLogId = '789'
-  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-  const url = `${baseUrl}/progress`
+  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
+  const summaryLogBaseUrl = `${baseUrl}/${summaryLogId}`
+  const url = `${summaryLogBaseUrl}/progress`
   /** @type {Server} */
   let server
 
@@ -123,7 +124,7 @@ describe('#summaryLogUploadProgressController', () => {
     const { statusCode, headers } = await server.inject({ method: 'GET', url })
 
     expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`${baseUrl}/review`)
+    expect(headers.location).toBe(`${summaryLogBaseUrl}/review`)
   })
 
   test('should redirect to error', async () => {
@@ -138,6 +139,70 @@ describe('#summaryLogUploadProgressController', () => {
     const { result } = await server.inject({ method: 'GET', url })
 
     expect(result).toEqual(expect.stringContaining('Summary log upload error'))
+  })
+
+  test('status: initiated - rejected file should redirect to upload and set validationFailed', async () => {
+    const uploadId = '123'
+    yar.get.mockImplementationOnce(() => ({
+      uploadId,
+      summaryLogStatus: 'initiated'
+    }))
+
+    fetchStatus.mockResolvedValueOnce({
+      files: [{ fileStatus: 'rejected', errorMessage: 'Bad file' }]
+    })
+
+    overrideRequest(server, yar)
+
+    const { statusCode, headers } = await server.inject({ method: 'GET', url })
+
+    expect(yar.set).toHaveBeenCalledWith(
+      'summaryLogs',
+      expect.objectContaining({
+        summaryLogStatus: 'validationFailed',
+        lastError: 'Bad file'
+      })
+    )
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`${baseUrl}/upload`)
+  })
+
+  test('status: initiated - form error should redirect to upload and set validationFailed', async () => {
+    yar.get.mockImplementationOnce(() => ({
+      uploadId: '123',
+      summaryLogStatus: 'initiated'
+    }))
+
+    fetchStatus.mockResolvedValueOnce({
+      form: { summaryLogUpload: { errorMessage: 'Form failed' } }
+    })
+
+    overrideRequest(server, yar)
+
+    const { statusCode, headers } = await server.inject({ method: 'GET', url })
+
+    expect(yar.set).toHaveBeenCalledWith(
+      'summaryLogs',
+      expect.objectContaining({
+        summaryLogStatus: 'validationFailed',
+        lastError: 'Form failed'
+      })
+    )
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`${baseUrl}/upload`)
+  })
+
+  test('status: validationFailed - should redirect to review', async () => {
+    yar.get.mockImplementationOnce(() => ({
+      summaryLogStatus: 'validationFailed'
+    }))
+
+    overrideRequest(server, yar)
+
+    const { statusCode, headers } = await server.inject({ method: 'GET', url })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`${summaryLogBaseUrl}/review`)
   })
 })
 
