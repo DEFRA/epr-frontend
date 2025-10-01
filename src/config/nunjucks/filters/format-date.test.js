@@ -1,4 +1,3 @@
-import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
 import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
 
 describe('#formatDate', () => {

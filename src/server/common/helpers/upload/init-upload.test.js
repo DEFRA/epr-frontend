@@ -1,5 +1,4 @@
 import fetch from 'node-fetch'
-import { describe, expect, test, vi } from 'vitest'
 import { initUpload } from './init-upload.js'
 
 vi.mock('node-fetch', () => ({

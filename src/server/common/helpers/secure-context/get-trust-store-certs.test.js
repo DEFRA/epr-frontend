@@ -1,4 +1,3 @@
-import { describe, test, expect } from 'vitest'
 import { getTrustStoreCerts } from '~/src/server/common/helpers/secure-context/get-trust-store-certs.js'
 
 describe('#getTrustStoreCerts', () => {

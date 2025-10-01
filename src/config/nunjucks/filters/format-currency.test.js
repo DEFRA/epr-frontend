@@ -1,4 +1,3 @@
-import { describe, test, expect } from 'vitest'
 import { formatCurrency } from '~/src/config/nunjucks/filters/format-currency.js'
 
 describe('#formatCurrency', () => {
