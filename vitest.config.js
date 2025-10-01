@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     clearMocks: true,
-    include: ['**/src/**/*.vitest.js'],
+    include: ['**/src/**/*.test.js'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -17,8 +17,7 @@ export default defineConfig({
         'src/server/common/test-helpers',
         'src/client/javascripts/application.js',
         'src/index.js',
-        '**/index.js',
-        '**/*.test.js'
+        '**/index.js'
       ]
     }
   },

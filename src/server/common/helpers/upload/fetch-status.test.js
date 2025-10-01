@@ -1,10 +1,10 @@
+import { describe, test, expect, vi } from 'vitest'
 import { fetchStatus } from './fetch-status.js'
 import fetch from 'node-fetch'
 
-jest.mock('node-fetch', () => ({
-  __esModule: true,
-  default: jest.fn().mockResolvedValue({
-    json: jest.fn()
+vi.mock('node-fetch', () => ({
+  default: vi.fn().mockResolvedValue({
+    json: vi.fn()
   })
 }))
 

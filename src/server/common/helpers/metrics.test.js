@@ -1,20 +1,20 @@
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
-
 import { config } from '~/src/config/config.js'
 import { metricsCounter } from '~/src/server/common/helpers/metrics.js'
 
-const mockPutMetric = jest.fn()
-const mockFlush = jest.fn()
-const mockLoggerError = jest.fn()
+const mockPutMetric = vi.fn()
+const mockFlush = vi.fn()
+const mockLoggerError = vi.fn()
 
-jest.mock('aws-embedded-metrics', () => ({
-  ...jest.requireActual('aws-embedded-metrics'),
+vi.mock('aws-embedded-metrics', async () => ({
+  ...(await vi.importActual('aws-embedded-metrics')),
   createMetricsLogger: () => ({
     putMetric: mockPutMetric,
     flush: mockFlush
   })
 }))
-jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
+vi.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 

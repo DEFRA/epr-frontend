@@ -1,11 +1,21 @@
-const mockReadFileSync = jest.fn()
-const mockLoggerError = jest.fn()
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 
-jest.mock('node:fs', () => ({
-  ...jest.requireActual('node:fs'),
+const mockReadFileSync = vi.fn()
+const mockLoggerError = vi.fn()
+
+vi.mock('node:fs', async () => ({
+  ...(await vi.importActual('node:fs')),
   readFileSync: () => mockReadFileSync()
 }))
-jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
+vi.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 
@@ -15,6 +25,11 @@ describe('#context', () => {
   const mockRequest = { path: '/' }
   let contextResult
 
+  afterEach(() => {
+    mockReadFileSync.mockClear()
+    mockLoggerError.mockClear()
+  })
+
   describe('When webpack manifest file read succeeds', () => {
     let contextImport
 
@@ -23,7 +38,6 @@ describe('#context', () => {
     })
 
     beforeEach(() => {
-      // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
@@ -70,11 +84,16 @@ describe('#context', () => {
     let contextImport
 
     beforeAll(async () => {
+      vi.resetModules()
+      mockReadFileSync.mockClear()
+      mockLoggerError.mockClear()
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
     beforeEach(() => {
-      mockReadFileSync.mockReturnValue(new Error('File not found'))
+      mockReadFileSync.mockImplementation(() => {
+        throw new Error('File not found')
+      })
 
       contextResult = contextImport.context(mockRequest)
     })
@@ -90,29 +109,34 @@ describe('#context', () => {
 describe('#context cache', () => {
   const mockRequest = { path: '/' }
   let contextResult
+  let contextImport
+
+  beforeAll(async () => {
+    vi.resetModules()
+    mockReadFileSync.mockClear()
+    contextImport = await import('~/src/config/nunjucks/context/context.js')
+  })
 
   describe('Webpack manifest file cache', () => {
-    let contextImport
-
-    beforeAll(async () => {
-      contextImport = await import('~/src/config/nunjucks/context/context.js')
-    })
-
-    beforeEach(() => {
-      // Return JSON string
+    test('Should read file', () => {
+      mockReadFileSync.mockClear()
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
       contextResult = contextImport.context(mockRequest)
-    })
-
-    test('Should read file', () => {
       expect(mockReadFileSync).toHaveBeenCalled()
     })
 
     test('Should use cache', () => {
+      mockReadFileSync.mockClear()
+      mockReadFileSync.mockReturnValue(`{
+        "application.js": "javascripts/application.js",
+        "stylesheets/application.scss": "stylesheets/application.css"
+      }`)
+
+      contextResult = contextImport.context(mockRequest)
       expect(mockReadFileSync).not.toHaveBeenCalled()
     })
 

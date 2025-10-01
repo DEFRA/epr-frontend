@@ -1,3 +1,4 @@
+import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
 import { createServer } from '~/src/server/index.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { catchAll } from '~/src/server/common/helpers/errors.js'
@@ -27,7 +28,7 @@ describe('#errors', () => {
 })
 
 describe('#catchAll', () => {
-  const mockErrorLogger = jest.fn()
+  const mockErrorLogger = vi.fn()
   const mockStack = 'Mock error stack'
   const errorPage = 'error/index'
   const mockRequest = (/** @type {number} */ statusCode) => ({
@@ -40,8 +41,8 @@ describe('#catchAll', () => {
     },
     logger: { error: mockErrorLogger }
   })
-  const mockToolkitView = jest.fn()
-  const mockToolkitCode = jest.fn()
+  const mockToolkitView = vi.fn()
+  const mockToolkitCode = vi.fn()
   const mockToolkit = {
     view: mockToolkitView.mockReturnThis(),
     code: mockToolkitCode.mockReturnThis()

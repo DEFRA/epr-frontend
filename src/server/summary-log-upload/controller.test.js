@@ -1,12 +1,13 @@
+import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
 import { initUpload } from '~/src/server/common/helpers/upload/init-upload.js'
 import { createServer } from '~/src/server/index.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
 const uploadId = 'abc123'
 
-jest.mock('~/src/server/common/helpers/upload/init-upload.js', () => ({
-  initUpload: jest.fn().mockResolvedValue({
-    uploadId
+vi.mock('~/src/server/common/helpers/upload/init-upload.js', () => ({
+  initUpload: vi.fn().mockResolvedValue({
+    uploadId: 'abc123'
   })
 }))
 
@@ -23,8 +24,8 @@ function overrideRequest(server, yar) {
 }
 
 const yar = {
-  get: jest.fn(),
-  set: jest.fn()
+  get: vi.fn(),
+  set: vi.fn()
 }
 
 describe('#summaryLogUploadController', () => {

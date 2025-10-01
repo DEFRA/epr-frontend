@@ -1,9 +1,10 @@
+import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
 import { createServer } from '~/src/server/index.js'
 import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
-jest.mock('~/src/server/common/helpers/upload/fetch-status.js', () => ({
-  fetchStatus: jest.fn().mockResolvedValue({
+vi.mock('~/src/server/common/helpers/upload/fetch-status.js', () => ({
+  fetchStatus: vi.fn().mockResolvedValue({
     uploadStatus: 'pending'
   })
 }))
@@ -39,8 +40,8 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   const yar = {
-    get: jest.fn(),
-    set: jest.fn()
+    get: vi.fn(),
+    set: vi.fn()
   }
 
   test('Should provide expected response', async () => {

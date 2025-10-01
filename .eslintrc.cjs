@@ -122,29 +122,7 @@ module.exports = {
       files: ['src/client/**/*.js']
     },
     {
-      env: {
-        'jest/globals': true
-      },
-      extends: [
-        'plugin:jest-formatting/recommended',
-        'plugin:jest/recommended',
-        'plugin:jest/style'
-      ],
-      files: ['**/*.test.{cjs,js}', '**/__mocks__/**'],
-      plugins: ['jest'],
-      rules: {
-        '@typescript-eslint/unbound-method': 'off',
-        'jest/unbound-method': 'error',
-        'n/no-unpublished-import': [
-          'error',
-          {
-            allowModules: []
-          }
-        ]
-      }
-    },
-    {
-      files: ['**/*.vitest.{cjs,js}'],
+      files: ['**/*.test.{cjs,js}'],
       rules: {
         'n/no-unpublished-import': [
           'error',
