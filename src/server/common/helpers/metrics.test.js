@@ -1,5 +1,5 @@
-import { describe, beforeEach, test, expect } from 'vitest'
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '~/src/config/config.js'
 import { metricsCounter } from '~/src/server/common/helpers/metrics.js'
 

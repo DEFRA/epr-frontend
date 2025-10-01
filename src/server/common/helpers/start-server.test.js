@@ -1,5 +1,5 @@
-import { describe, beforeAll, afterAll, test, expect } from 'vitest'
 import hapi from '@hapi/hapi'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()
@@ -72,6 +72,7 @@ describe('#startServer', () => {
         2,
         'Server started successfully'
       )
+      // eslint-disable-next-line @vitest/max-expects
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
         3,
         'Access your frontend on http://localhost:3097'

@@ -1,5 +1,5 @@
-import { describe, beforeEach, test, expect } from 'vitest'
 import { Cluster, Redis } from 'ioredis'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '~/src/config/config.js'
 import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
 

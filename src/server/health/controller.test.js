@@ -21,7 +21,7 @@ describe('#healthController', () => {
       url: '/health'
     })
 
-    expect(result).toEqual({ message: 'success' })
+    expect(result).toStrictEqual({ message: 'success' })
     expect(statusCode).toBe(statusCodes.ok)
   })
 })

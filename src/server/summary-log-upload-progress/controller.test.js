@@ -1,7 +1,7 @@
-import { describe, beforeAll, afterAll, test, expect } from 'vitest'
-import { createServer } from '~/src/server/index.js'
-import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
+import { createServer } from '~/src/server/index.js'
 
 vi.mock('~/src/server/common/helpers/upload/fetch-status.js', () => ({
   fetchStatus: vi.fn().mockResolvedValue({
@@ -50,7 +50,7 @@ describe('#summaryLogUploadProgressController', () => {
     const { result, statusCode } = await server.inject({ method: 'GET', url })
 
     expect(yar.get).toHaveBeenCalledWith('summaryLogs')
-    expect(result).toEqual(
+    expect(result).toStrictEqual(
       expect.stringContaining('Summary log: upload progress |')
     )
     expect(statusCode).toBe(statusCodes.ok)
@@ -69,7 +69,7 @@ describe('#summaryLogUploadProgressController', () => {
     const { result, statusCode } = await server.inject({ method: 'GET', url })
 
     expect(fetchStatus).toHaveBeenCalledWith(uploadId)
-    expect(result).toEqual(
+    expect(result).toStrictEqual(
       expect.stringContaining('Your file is being uploaded')
     )
     expect(statusCode).toBe(statusCodes.ok)
@@ -108,7 +108,7 @@ describe('#summaryLogUploadProgressController', () => {
       'summaryLogs',
       expect.objectContaining({ summaryLogStatus: 'validating' })
     )
-    expect(result).toEqual(
+    expect(result).toStrictEqual(
       expect.stringContaining('Your file is being validated')
     )
     expect(statusCode).toBe(statusCodes.ok)
@@ -138,7 +138,9 @@ describe('#summaryLogUploadProgressController', () => {
 
     const { result } = await server.inject({ method: 'GET', url })
 
-    expect(result).toEqual(expect.stringContaining('Summary log upload error'))
+    expect(result).toStrictEqual(
+      expect.stringContaining('Summary log upload error')
+    )
   })
 })
 

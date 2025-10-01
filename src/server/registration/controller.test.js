@@ -23,7 +23,7 @@ describe('#registrationController', () => {
       url: `/organisations/${organisationId}/registrations/${registrationId}`
     })
 
-    expect(result).toEqual(expect.stringContaining('Registration |'))
+    expect(result).toStrictEqual(expect.stringContaining('Registration |'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 })

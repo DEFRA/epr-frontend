@@ -99,7 +99,7 @@ describe(secureContext, () => {
     })
 
     test('secureContext decorator should be available', () => {
-      expect(server.secureContext).toEqual({
+      expect(server.secureContext).toStrictEqual({
         context: { addCACert: expect.any(Function) }
       })
     })

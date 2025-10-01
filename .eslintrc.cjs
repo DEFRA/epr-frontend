@@ -125,9 +125,6 @@ module.exports = {
       files: ['**/*.test.{cjs,js}'],
       plugins: ['vitest'],
       extends: ['plugin:@vitest/legacy-all'],
-      env: {
-        'vitest/env': true
-      },
       rules: {
         'n/no-unpublished-import': [
           'error',
@@ -138,7 +135,13 @@ module.exports = {
         '@vitest/consistent-test-it': 'off',
         '@vitest/no-hooks': 'off',
         '@vitest/prefer-expect-assertions': 'off',
-        '@vitest/require-mock-type-parameters': 'off'
+        '@vitest/require-mock-type-parameters': 'off',
+        '@vitest/valid-title': [
+          'warn',
+          {
+            allowArguments: true
+          }
+        ]
       },
       settings: {
         vitest: {

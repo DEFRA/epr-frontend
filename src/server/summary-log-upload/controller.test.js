@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { initUpload } from '~/src/server/common/helpers/upload/init-upload.js'
 import { createServer } from '~/src/server/index.js'
@@ -48,7 +48,9 @@ describe('#summaryLogUploadController', () => {
       url
     })
 
-    expect(result).toEqual(expect.stringContaining('Summary log: upload |'))
+    expect(result).toStrictEqual(
+      expect.stringContaining('Summary log: upload |')
+    )
     expect(statusCode).toBe(statusCodes.ok)
   })
 
@@ -68,7 +70,9 @@ describe('#summaryLogUploadController', () => {
 
     const { result } = await server.inject({ method: 'GET', url })
 
-    expect(result).toEqual(expect.stringContaining('Summary log upload error'))
+    expect(result).toStrictEqual(
+      expect.stringContaining('Summary log upload error')
+    )
   })
 })
 

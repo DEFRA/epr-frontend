@@ -1,7 +1,7 @@
-import { describe, beforeAll, afterAll, test, expect } from 'vitest'
-import { createServer } from '~/src/server/index.js'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { catchAll } from '~/src/server/common/helpers/errors.js'
+import { createServer } from '~/src/server/index.js'
 
 describe('#errors', () => {
   /** @type {Server} */
@@ -22,7 +22,7 @@ describe('#errors', () => {
       url: '/non-existent-path'
     })
 
-    expect(result).toEqual(expect.stringContaining('Page not found |'))
+    expect(result).toStrictEqual(expect.stringContaining('Page not found |'))
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })

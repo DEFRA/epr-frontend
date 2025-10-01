@@ -9,12 +9,12 @@ describe('#getTrustStoreCerts', () => {
   }
 
   test('should provide expected result with "certs"', () => {
-    expect(getTrustStoreCerts(mockProcessEnvWithCerts)).toEqual([
+    expect(getTrustStoreCerts(mockProcessEnvWithCerts)).toStrictEqual([
       '-----BEGIN CERTIFICATE-----\nmock-cert-doris\n-----END CERTIFICATE-----'
     ])
   })
 
   test('should provide expected empty array', () => {
-    expect(getTrustStoreCerts({})).toEqual([])
+    expect(getTrustStoreCerts({})).toStrictEqual([])
   })
 })

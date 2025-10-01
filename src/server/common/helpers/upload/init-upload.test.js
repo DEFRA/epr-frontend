@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi } from 'vitest'
 import fetch from 'node-fetch'
 import { initUpload } from './init-upload.js'
 

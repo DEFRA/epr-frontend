@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi } from 'vitest'
 import { fetchStatus } from './fetch-status.js'
 import fetch from 'node-fetch'
 

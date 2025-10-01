@@ -1,4 +1,5 @@
-import { describe, beforeAll, beforeEach, test, expect } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
 
