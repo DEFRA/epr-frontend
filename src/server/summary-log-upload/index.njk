@@ -10,16 +10,16 @@
   }) }}
 {% endblock %}
 
-{%  block content %}
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
-    <div class="govuk-body" data-testid="app-page-body">
-      <span class="govuk-caption-xl">{{ siteName }}</span>
-      <h1 class="govuk-heading-xl">{{ heading }}</h1>
-      <p>Check you’ve completed the following steps before uploading your summary log.</p>
-      <p>This will ensure that your waste balance is correct and you’re meeting regulatory requirements.</p>
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <span class="govuk-caption-xl">{{ siteName }}</span>
+        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+        <p>Check you’ve completed the following steps before uploading your summary log.</p>
+        <p>This will ensure that your waste balance is correct and you’re meeting regulatory requirements.</p>
 
-      {{ govukAccordion({
+        {{ govukAccordion({
         id: "summary-log-upload-guidance",
         showSectionText: 'Why this is needed',
         classes: ['text-wrap-pretty'],
@@ -67,30 +67,38 @@
         ]
       }) }}
 
-      {{ govukInsetText({
+        {{ govukInsetText({
         text: "You can submit an updated summary log whenever you need to add or adjust your waste records."
       }) }}
 
-      <form
+        <form
         class="form"
         action="{{ uploadUrl }}"
         method="post"
         enctype="multipart/form-data"
       >
-        {{ govukFileUpload({
-          id: "summary-log-upload",
-          name: "summaryLogUpload",
-          label: {
-            text: "Upload XLSX file"
-          },
-          javascript: true
-        }) }}
+          {% set summaryLogUploadError = null %}
+          {% if formErrors %}
+            {% set summaryLogUploadError = {
+              text: formErrors
+            } %}
+          {% endif %}
+          {{ govukFileUpload({
+            id: "summary-log-upload",
+            name: "summaryLogUpload",
+            label: { text: "Upload XLSX file" },
+            javascript: true,
+            attributes: {
+              accept: ".xlsx"
+            },
+            errorMessage: summaryLogUploadError
+          }) }}
 
-        {{ govukButton({
+          {{ govukButton({
           text: 'Continue'
         }) }}
-      </form>
+        </form>
+      </div>
     </div>
   </div>
-</div>
 {% endblock %}

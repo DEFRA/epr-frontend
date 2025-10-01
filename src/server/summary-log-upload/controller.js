@@ -27,7 +27,10 @@ export const summaryLogUploadController = {
         }
       })
 
+      const existingSession = request.yar.get(sessionNames.summaryLogs) || {}
+
       request.yar.set(sessionNames.summaryLogs, {
+        ...existingSession,
         summaryLogId,
         summaryLogStatus: summaryLogStatuses.initiated,
         statusUrl,
@@ -43,7 +46,8 @@ export const summaryLogUploadController = {
         registrationId,
         summaryLogId,
         uploadId,
-        uploadUrl
+        uploadUrl,
+        formErrors: request.yar.get(sessionNames.summaryLogs)?.lastError || null
       })
     } catch (err) {
       // @todo: use structured logging
