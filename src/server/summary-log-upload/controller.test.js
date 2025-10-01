@@ -105,10 +105,11 @@ describe('#summaryLogUploadController', () => {
     overrideRequest(server, yar)
 
     await server.inject({ method: 'GET', url })
-    const callArgs = yar.set.mock.calls.find(
-      ([key]) => key === 'summaryLogs'
-    )[1]
-    expect(callArgs.lastError).toBeUndefined()
+
+    expect(yar.set).toHaveBeenCalledWith(
+      'summaryLogs',
+      expect.not.objectContaining({ lastError: expect.anything() })
+    )
   })
 })
 
