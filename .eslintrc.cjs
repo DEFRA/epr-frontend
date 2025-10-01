@@ -122,26 +122,24 @@ module.exports = {
       files: ['src/client/**/*.js']
     },
     {
-      env: {
-        'jest/globals': true
-      },
-      extends: [
-        'plugin:jest-formatting/recommended',
-        'plugin:jest/recommended',
-        'plugin:jest/style'
-      ],
-      files: ['**/*.test.{cjs,js}', '**/__mocks__/**'],
-      plugins: ['jest'],
+      files: ['**/*.test.{cjs,js}'],
+      plugins: ['vitest'],
+      extends: ['plugin:@vitest/legacy-all'],
       rules: {
-        // Allow Jest to assert on mocked unbound methods
-        '@typescript-eslint/unbound-method': 'off',
-        'jest/unbound-method': 'error',
-
-        // Allow import devDependencies
         'n/no-unpublished-import': [
           'error',
           {
-            allowModules: []
+            allowModules: ['vitest']
+          }
+        ],
+        '@vitest/consistent-test-it': 'off',
+        '@vitest/no-hooks': 'off',
+        '@vitest/prefer-expect-assertions': 'off',
+        '@vitest/require-mock-type-parameters': 'off',
+        '@vitest/valid-title': [
+          'warn',
+          {
+            allowArguments: true
           }
         ]
       }

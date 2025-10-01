@@ -1,12 +1,11 @@
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { initUpload } from '~/src/server/common/helpers/upload/init-upload.js'
 import { createServer } from '~/src/server/index.js'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
-const uploadId = 'abc123'
-
-jest.mock('~/src/server/common/helpers/upload/init-upload.js', () => ({
-  initUpload: jest.fn().mockResolvedValue({
-    uploadId
+vi.mock('~/src/server/common/helpers/upload/init-upload.js', () => ({
+  initUpload: vi.fn().mockResolvedValue({
+    uploadId: 'abc123'
   })
 }))
 
@@ -23,8 +22,8 @@ function overrideRequest(server, yar) {
 }
 
 const yar = {
-  get: jest.fn(),
-  set: jest.fn()
+  get: vi.fn(),
+  set: vi.fn()
 }
 
 describe('#summaryLogUploadController', () => {
@@ -43,13 +42,15 @@ describe('#summaryLogUploadController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should provide expected response', async () => {
+  test('should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url
     })
 
-    expect(result).toEqual(expect.stringContaining('Summary log: upload |'))
+    expect(result).toStrictEqual(
+      expect.stringContaining('Summary log: upload |')
+    )
     expect(statusCode).toBe(statusCodes.ok)
   })
 
@@ -60,7 +61,7 @@ describe('#summaryLogUploadController', () => {
 
     expect(yar.set).toHaveBeenCalledWith(
       'summaryLogs',
-      expect.objectContaining({ uploadId })
+      expect.objectContaining({ uploadId: 'abc123' })
     )
   })
 
@@ -69,7 +70,9 @@ describe('#summaryLogUploadController', () => {
 
     const { result } = await server.inject({ method: 'GET', url })
 
-    expect(result).toEqual(expect.stringContaining('Summary log upload error'))
+    expect(result).toStrictEqual(
+      expect.stringContaining('Summary log upload error')
+    )
   })
 })
 

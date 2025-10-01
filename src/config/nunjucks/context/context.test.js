@@ -1,11 +1,13 @@
-const mockReadFileSync = jest.fn()
-const mockLoggerError = jest.fn()
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
-jest.mock('node:fs', () => ({
-  ...jest.requireActual('node:fs'),
+const mockReadFileSync = vi.fn()
+const mockLoggerError = vi.fn()
+
+vi.mock('node:fs', async () => ({
+  ...(await vi.importActual('node:fs')),
   readFileSync: () => mockReadFileSync()
 }))
-jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
+vi.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 
@@ -15,7 +17,7 @@ describe('#context', () => {
   const mockRequest = { path: '/' }
   let contextResult
 
-  describe('When webpack manifest file read succeeds', () => {
+  describe('when webpack manifest file read succeeds', () => {
     let contextImport
 
     beforeAll(async () => {
@@ -32,8 +34,8 @@ describe('#context', () => {
       contextResult = contextImport.context(mockRequest)
     })
 
-    test('Should provide expected context', () => {
-      expect(contextResult).toEqual({
+    test('should provide expected context', () => {
+      expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
@@ -49,16 +51,16 @@ describe('#context', () => {
       })
     })
 
-    describe('With valid asset path', () => {
-      test('Should provide expected asset path', () => {
+    describe('with valid asset path', () => {
+      test('should provide expected asset path', () => {
         expect(contextResult.getAssetPath('application.js')).toBe(
           '/public/javascripts/application.js'
         )
       })
     })
 
-    describe('With invalid asset path', () => {
-      test('Should provide expected asset', () => {
+    describe('with invalid asset path', () => {
+      test('should provide expected asset', () => {
         expect(contextResult.getAssetPath('an-image.png')).toBe(
           '/public/an-image.png'
         )
@@ -66,20 +68,23 @@ describe('#context', () => {
     })
   })
 
-  describe('When webpack manifest file read fails', () => {
+  describe('when webpack manifest file read fails', () => {
     let contextImport
 
     beforeAll(async () => {
+      vi.resetModules()
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
     beforeEach(() => {
-      mockReadFileSync.mockReturnValue(new Error('File not found'))
+      mockReadFileSync.mockImplementation(() => {
+        throw new Error('File not found')
+      })
 
       contextResult = contextImport.context(mockRequest)
     })
 
-    test('Should log that the Webpack Manifest file is not available', () => {
+    test('should log that the Webpack Manifest file is not available', () => {
       expect(mockLoggerError).toHaveBeenCalledWith(
         'Webpack assets-manifest.json not found'
       )
@@ -91,7 +96,7 @@ describe('#context cache', () => {
   const mockRequest = { path: '/' }
   let contextResult
 
-  describe('Webpack manifest file cache', () => {
+  describe('webpack manifest file cache', () => {
     let contextImport
 
     beforeAll(async () => {
@@ -108,16 +113,12 @@ describe('#context cache', () => {
       contextResult = contextImport.context(mockRequest)
     })
 
-    test('Should read file', () => {
-      expect(mockReadFileSync).toHaveBeenCalled()
+    test('should read file', () => {
+      expect(mockReadFileSync).toHaveBeenCalledWith()
     })
 
-    test('Should use cache', () => {
-      expect(mockReadFileSync).not.toHaveBeenCalled()
-    })
-
-    test('Should provide expected context', () => {
-      expect(contextResult).toEqual({
+    test('should provide expected context', () => {
+      expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),

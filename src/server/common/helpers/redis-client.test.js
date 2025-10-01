@@ -1,21 +1,21 @@
 import { Cluster, Redis } from 'ioredis'
-
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '~/src/config/config.js'
 import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
 
-jest.mock('ioredis', () => ({
-  ...jest.requireActual('ioredis'),
-  Cluster: jest.fn().mockReturnValue({ on: () => ({}) }),
-  Redis: jest.fn().mockReturnValue({ on: () => ({}) })
+vi.mock('ioredis', async () => ({
+  ...(await vi.importActual('ioredis')),
+  Cluster: vi.fn().mockReturnValue({ on: () => ({}) }),
+  Redis: vi.fn().mockReturnValue({ on: () => ({}) })
 }))
 
 describe('#buildRedisClient', () => {
-  describe('When Redis Single InstanceCache is requested', () => {
+  describe('when Redis Single InstanceCache is requested', () => {
     beforeEach(() => {
       buildRedisClient(config.get('redis'))
     })
 
-    test('Should instantiate a single Redis client', () => {
+    test('should instantiate a single Redis client', () => {
       expect(Redis).toHaveBeenCalledWith({
         db: 0,
         host: '127.0.0.1',
@@ -25,7 +25,7 @@ describe('#buildRedisClient', () => {
     })
   })
 
-  describe('When a Redis Cluster is requested', () => {
+  describe('when a Redis Cluster is requested', () => {
     beforeEach(() => {
       buildRedisClient({
         ...config.get('redis'),
@@ -36,7 +36,7 @@ describe('#buildRedisClient', () => {
       })
     })
 
-    test('Should instantiate a Redis Cluster client', () => {
+    test('should instantiate a Redis Cluster client', () => {
       expect(Cluster).toHaveBeenCalledWith(
         [{ host: '127.0.0.1', port: 6379 }],
         {
