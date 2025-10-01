@@ -7,12 +7,14 @@ import importPlugin from 'eslint-plugin-import'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
 import nPlugin from 'eslint-plugin-n'
 import prettierPlugin from 'eslint-plugin-prettier'
+import promisePlugin from 'eslint-plugin-promise'
 import globals from 'globals'
 
 export default [
   // ESLint recommended rules
   js.configs.recommended,
   importPlugin.flatConfigs.recommended,
+  promisePlugin.configs['flat/recommended'],
 
   // Global ignores
   {
