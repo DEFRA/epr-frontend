@@ -15,8 +15,25 @@ export const summaryLogUploadProgressController = {
 
       if (summaryLogStatus === summaryLogStatuses.initiated) {
         const data = await fetchStatus(uploadId)
-        const { uploadStatus } = data
+        const { uploadStatus, form, files = [] } = data
+        const file = files[0]
+        const errorMessage =
+          file?.fileStatus === summaryLogStatuses.rejected
+            ? file.errorMessage ||
+              'Something went wrong with your file upload. Please try again.'
+            : form?.summaryLogUpload?.errorMessage
 
+        if (errorMessage) {
+          request.yar.set(sessionNames.summaryLogs, {
+            ...summaryLogsSession,
+            summaryLogStatus: summaryLogStatuses.validationFailed,
+            lastError: errorMessage
+          })
+
+          return h.redirect(
+            `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+          )
+        }
         if (uploadStatus === 'ready') {
           nextSummaryLogStatus = summaryLogStatuses.uploaded
           request.yar.set(sessionNames.summaryLogs, {
