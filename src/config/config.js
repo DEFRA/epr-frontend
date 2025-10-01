@@ -84,13 +84,13 @@ export const config = convict({
     format: {
       doc: 'Format to output logs in.',
       format: ['ecs', 'pino-pretty'],
-      default: /* istanbul ignore next */ isProduction ? 'ecs' : 'pino-pretty', // @fixme: code coverage
+      default: /* v8 ignore next */ isProduction ? 'ecs' : 'pino-pretty', // @fixme: code coverage
       env: 'LOG_FORMAT'
     },
     redact: {
       doc: 'Log paths to redact',
       format: Array,
-      default: /* istanbul ignore next */ isProduction
+      default: /* v8 ignore next */ isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers'] // @fixme: code coverage
         : []
     }
@@ -119,7 +119,7 @@ export const config = convict({
       engine: {
         doc: 'backend cache is written to',
         format: ['redis', 'memory'],
-        default: /* istanbul ignore next */ isProduction ? 'redis' : 'memory', // @fixme: code coverage
+        default: /* v8 ignore next */ isProduction ? 'redis' : 'memory', // @fixme: code coverage
         env: 'SESSION_CACHE_ENGINE'
       },
       name: {
