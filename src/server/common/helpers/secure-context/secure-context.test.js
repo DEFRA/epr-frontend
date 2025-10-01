@@ -41,10 +41,10 @@ vi.mock('node:tls', async () => {
   }
 })
 
-describe('secureContext', () => {
+describe(secureContext, () => {
   let server
 
-  describe('When secure context is disabled', () => {
+  describe('when secure context is disabled', () => {
     beforeEach(async () => {
       config.set('isSecureContextEnabled', false)
       server = hapi.server()
@@ -62,12 +62,12 @@ describe('secureContext', () => {
       )
     })
 
-    test('Logger should give us disabled message', () => {
+    test('logger should give us disabled message', () => {
       expect(server.secureContext).toBeUndefined()
     })
   })
 
-  describe('When secure context is enabled', () => {
+  describe('when secure context is enabled', () => {
     const PROCESS_ENV = process.env
 
     beforeAll(() => {
@@ -90,12 +90,12 @@ describe('secureContext', () => {
       process.env = PROCESS_ENV
     })
 
-    test('Original tls.createSecureContext should have been called', () => {
+    test('original tls.createSecureContext should have been called', () => {
       expect(mockCreateSecureContext).toHaveBeenCalledWith({})
     })
 
     test('addCACert should have been called', () => {
-      expect(mockAddCACert).toHaveBeenCalled()
+      expect(mockAddCACert).toHaveBeenCalledWith(expect.any(String))
     })
 
     test('secureContext decorator should be available', () => {
@@ -105,7 +105,7 @@ describe('secureContext', () => {
     })
   })
 
-  describe('When secure context is enabled without TRUSTSTORE_ certs', () => {
+  describe('when secure context is enabled without TRUSTSTORE_ certs', () => {
     beforeEach(async () => {
       config.set('isSecureContextEnabled', true)
       server = hapi.server()
@@ -117,7 +117,7 @@ describe('secureContext', () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('Should log about not finding any TRUSTSTORE_ certs', () => {
+    test('should log about not finding any TRUSTSTORE_ certs', () => {
       expect(server.logger.info).toHaveBeenCalledWith(
         'Could not find any TRUSTSTORE_ certificates'
       )

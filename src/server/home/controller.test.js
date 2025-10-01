@@ -1,3 +1,4 @@
+import { describe, beforeAll, afterAll, test, expect } from 'vitest'
 import { createServer } from '~/src/server/index.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
@@ -14,7 +15,7 @@ describe('#homeController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should provide expected response', async () => {
+  test('should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/'

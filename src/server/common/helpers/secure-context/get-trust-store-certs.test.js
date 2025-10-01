@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest'
 import { getTrustStoreCerts } from '~/src/server/common/helpers/secure-context/get-trust-store-certs.js'
 
 describe('#getTrustStoreCerts', () => {
@@ -7,13 +8,13 @@ describe('#getTrustStoreCerts', () => {
     UNRELATED_ENV: 'not-a-cert'
   }
 
-  test('Should provide expected result with "certs"', () => {
+  test('should provide expected result with "certs"', () => {
     expect(getTrustStoreCerts(mockProcessEnvWithCerts)).toEqual([
       '-----BEGIN CERTIFICATE-----\nmock-cert-doris\n-----END CERTIFICATE-----'
     ])
   })
 
-  test('Should provide expected empty array', () => {
+  test('should provide expected empty array', () => {
     expect(getTrustStoreCerts({})).toEqual([])
   })
 })

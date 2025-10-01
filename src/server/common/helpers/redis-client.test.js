@@ -1,3 +1,4 @@
+import { describe, beforeEach, test, expect } from 'vitest'
 import { Cluster, Redis } from 'ioredis'
 import { config } from '~/src/config/config.js'
 import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
@@ -9,12 +10,12 @@ vi.mock('ioredis', async () => ({
 }))
 
 describe('#buildRedisClient', () => {
-  describe('When Redis Single InstanceCache is requested', () => {
+  describe('when Redis Single InstanceCache is requested', () => {
     beforeEach(() => {
       buildRedisClient(config.get('redis'))
     })
 
-    test('Should instantiate a single Redis client', () => {
+    test('should instantiate a single Redis client', () => {
       expect(Redis).toHaveBeenCalledWith({
         db: 0,
         host: '127.0.0.1',
@@ -24,7 +25,7 @@ describe('#buildRedisClient', () => {
     })
   })
 
-  describe('When a Redis Cluster is requested', () => {
+  describe('when a Redis Cluster is requested', () => {
     beforeEach(() => {
       buildRedisClient({
         ...config.get('redis'),
@@ -35,7 +36,7 @@ describe('#buildRedisClient', () => {
       })
     })
 
-    test('Should instantiate a Redis Cluster client', () => {
+    test('should instantiate a Redis Cluster client', () => {
       expect(Cluster).toHaveBeenCalledWith(
         [{ host: '127.0.0.1', port: 6379 }],
         {

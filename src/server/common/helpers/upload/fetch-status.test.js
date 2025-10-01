@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest'
 import { fetchStatus } from './fetch-status.js'
 import fetch from 'node-fetch'
 
@@ -7,7 +8,7 @@ vi.mock('node-fetch', () => ({
   })
 }))
 
-describe('fetchStatus', () => {
+describe(fetchStatus, () => {
   test('should call fetch', async () => {
     const id = 'abc123'
     await fetchStatus(id)

@@ -1,3 +1,4 @@
+import { describe, beforeAll, afterAll, test, expect } from 'vitest'
 import hapi from '@hapi/hapi'
 
 const mockLoggerInfo = vi.fn()
@@ -48,18 +49,18 @@ describe('#startServer', () => {
     process.env = PROCESS_ENV
   })
 
-  describe('When server starts', () => {
+  describe('when server starts', () => {
     let server
 
     afterAll(async () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('Should start up server as expected', async () => {
+    test('should start up server as expected', async () => {
       server = await startServerImport.startServer()
 
-      expect(createServerSpy).toHaveBeenCalled()
-      expect(hapiServerSpy).toHaveBeenCalled()
+      expect(createServerSpy).toHaveBeenCalledWith()
+      expect(hapiServerSpy).toHaveBeenCalledWith(expect.any(Object))
       expect(mockLoggerInfo).toHaveBeenCalledWith(
         'Using Catbox Memory session cache'
       )
@@ -78,12 +79,12 @@ describe('#startServer', () => {
     })
   })
 
-  describe('When server start fails', () => {
+  describe('when server start fails', () => {
     beforeAll(() => {
       createServerSpy.mockRejectedValue(new Error('Server failed to start'))
     })
 
-    test('Should log failed startup message', async () => {
+    test('should log failed startup message', async () => {
       await startServerImport.startServer()
 
       expect(mockLoggerInfo).toHaveBeenCalledWith('Server failed to start :(')

@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest'
 import fetch from 'node-fetch'
 import { initUpload } from './init-upload.js'
 
@@ -7,7 +8,7 @@ vi.mock('node-fetch', () => ({
   })
 }))
 
-describe('initUpload', () => {
+describe(initUpload, () => {
   test('should call fetch', async () => {
     await initUpload()
 

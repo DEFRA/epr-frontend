@@ -1,3 +1,4 @@
+import { describe, beforeAll, afterAll, test, expect } from 'vitest'
 import { createServer } from '~/src/server/index.js'
 import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
@@ -43,7 +44,7 @@ describe('#summaryLogUploadProgressController', () => {
     set: vi.fn()
   }
 
-  test('Should provide expected response', async () => {
+  test('should provide expected response', async () => {
     overrideRequest(server, yar)
 
     const { result, statusCode } = await server.inject({ method: 'GET', url })

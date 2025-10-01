@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { initUpload } from '~/src/server/common/helpers/upload/init-upload.js'
 import { createServer } from '~/src/server/index.js'
@@ -41,7 +42,7 @@ describe('#summaryLogUploadController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should provide expected response', async () => {
+  test('should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url
