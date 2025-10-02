@@ -1,6 +1,10 @@
 import { sessionNames } from '~/src/server/common/constants/session-names.js'
 import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
-import { summaryLogStatuses } from '~/src/server/common/constants/statuses.js'
+import {
+  summaryLogStatuses,
+  cdpUploaderStatuses,
+  cdpUploaderFileStatuses
+} from '~/src/server/common/constants/statuses.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -18,7 +22,7 @@ export const summaryLogUploadProgressController = {
         const { uploadStatus, form, files = [] } = data
         const file = files[0]
         const errorMessage =
-          file?.fileStatus === summaryLogStatuses.rejected
+          file?.fileStatus === cdpUploaderFileStatuses.rejected
             ? file.errorMessage ||
               'Something went wrong with your file upload. Please try again.'
             : form?.summaryLogUpload?.errorMessage
@@ -34,7 +38,7 @@ export const summaryLogUploadProgressController = {
             `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
           )
         }
-        if (uploadStatus === 'ready') {
+        if (uploadStatus === cdpUploaderStatuses.ready) {
           nextSummaryLogStatus = summaryLogStatuses.uploaded
           request.yar.set(sessionNames.summaryLogs, {
             ...summaryLogsSession,

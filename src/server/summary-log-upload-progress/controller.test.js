@@ -2,6 +2,10 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
 import { createServer } from '~/src/server/index.js'
+import {
+  cdpUploaderFileStatuses,
+  cdpUploaderStatuses
+} from '../common/constants/statuses.js'
 
 vi.mock('~/src/server/common/helpers/upload/fetch-status.js', () => ({
   fetchStatus: vi.fn().mockResolvedValue({
@@ -84,7 +88,9 @@ describe('#summaryLogUploadProgressController', () => {
       summaryLogStatus: 'initiated'
     }))
 
-    fetchStatus.mockResolvedValueOnce({ uploadStatus: 'ready' })
+    fetchStatus.mockResolvedValueOnce({
+      uploadStatus: cdpUploaderStatuses.ready
+    })
 
     overrideRequest(server, yar)
 
@@ -152,7 +158,12 @@ describe('#summaryLogUploadProgressController', () => {
     }))
 
     fetchStatus.mockResolvedValueOnce({
-      files: [{ fileStatus: 'rejected', errorMessage: 'Bad file' }]
+      files: [
+        {
+          fileStatus: cdpUploaderFileStatuses.rejected,
+          errorMessage: 'Bad file'
+        }
+      ]
     })
 
     overrideRequest(server, yar)

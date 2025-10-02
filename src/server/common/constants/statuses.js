@@ -5,6 +5,16 @@ export const summaryLogStatuses = {
   validating: 'validating',
   validationFailed: 'validationFailed',
   validationSucceeded: 'validationSucceeded',
-  submitted: 'submitted',
+  submitted: 'submitted'
+}
+export const cdpUploaderStatuses = {
+  initiated: 'initiated',
+  pending: 'pending',
+  ready: 'ready'
+}
+
+export const cdpUploaderFileStatuses = {
+  pending: 'pending',
+  complete: 'complete',
   rejected: 'rejected'
 }
