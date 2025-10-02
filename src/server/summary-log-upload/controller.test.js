@@ -82,7 +82,7 @@ describe('#summaryLogUploadController', () => {
 
     const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-    expect(result).toEqual(expect.stringContaining(errorMessage))
+    expect(result).toStrictEqual(expect.stringContaining(errorMessage))
     expect(statusCode).toBe(statusCodes.ok)
   })
 
