@@ -54,7 +54,7 @@
     "date-fns": "4.1.0",
     "global-agent": "3.0.0",
     "govuk-frontend": "5.12.0",
-    "hapi-pino": "12.1.0",
+    "hapi-pino": "13.0.0",
     "hapi-pulse": "3.0.1",
     "ioredis": "5.8.0",
     "lodash": "4.17.21",
