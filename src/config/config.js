@@ -231,6 +231,40 @@ export const config = convict({
       default: 'http://localhost:7337',
       env: 'CDP_UPLOADER_URL'
     }
+  },
+  appBaseUrl: {
+    doc: 'Application base URL for authentication callbacks',
+    format: String,
+    default: 'http://localhost:3000',
+    env: 'APP_BASE_URL'
+  },
+  defraId: {
+    oidcConfigurationUrl: {
+      doc: 'DEFRA ID OIDC Configuration URL',
+      format: String,
+      env: 'DEFRA_ID_OIDC_CONFIGURATION_URL',
+      default:
+        'http://localhost:3939/cdp-defra-id-stub/.well-known/openid-configuration'
+    },
+    serviceId: {
+      doc: 'DEFRA ID Service ID',
+      format: String,
+      env: 'DEFRA_ID_SERVICE_ID',
+      default: 'd7d72b79-9c62-ee11-8df0-000d3adf7047'
+    },
+    clientId: {
+      doc: 'DEFRA ID Client ID',
+      format: String,
+      env: 'DEFRA_ID_CLIENT_ID',
+      default: '2fb0d715-affa-4bf1-836e-44a464e3fbea'
+    },
+    clientSecret: {
+      doc: 'DEFRA ID Client Secret',
+      format: String,
+      sensitive: true,
+      env: 'DEFRA_ID_CLIENT_SECRET',
+      default: ''
+    }
   }
 })
 

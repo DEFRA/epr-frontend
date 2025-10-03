@@ -5,36 +5,41 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 ## Current State
 
 **epr-frontend** already has:
+
 - Redis configuration and cache engine (`src/config/config.js:160-198`)
 - Session cache infrastructure (`src/server/common/helpers/session-cache/`)
 - Hapi server with similar structure to the demo app
 
 **cdp-defra-id-stub** provides:
+
 - OIDC endpoints (/.well-known/openid-configuration, /authorize, /token, /logout)
 - JWT token generation with user claims
 - Registration flow for test users
 
 **cdp-defra-id-demo** implements:
+
 - OIDC setup using @hapi/bell (`src/server/common/helpers/auth/defra-id.js`)
 - Session cookie validation with automatic token refresh (`src/server/common/helpers/auth/session-cookie.js`)
 - Login/logout flow
 
 ## Incremental Implementation Plan
 
-### **Phase 1: Foundation - Configuration & Dependencies**
-- [ ] 1. Add OIDC configuration to `src/config/config.js`
-  - [ ] defraIdOidcConfigurationUrl
-  - [ ] defraIdServiceId
-  - [ ] defraIdClientId
-  - [ ] defraIdClientSecret
-  - [ ] appBaseUrl
+### **Phase 1: Foundation - Configuration & Dependencies** ✅
 
-- [ ] 2. Install required dependencies
-  - [ ] `@hapi/bell` (OAuth2/OIDC client)
-  - [ ] `@hapi/cookie` (session cookie auth)
-  - [ ] `@hapi/jwt` (JWT decoding)
+- [x] 1. Add OIDC configuration to `src/config/config.js`
+  - [x] defraIdOidcConfigurationUrl
+  - [x] defraIdServiceId
+  - [x] defraIdClientId
+  - [x] defraIdClientSecret
+  - [x] appBaseUrl
+
+- [x] 2. Install required dependencies
+  - [x] `@hapi/bell` (OAuth2/OIDC client)
+  - [x] `@hapi/cookie` (session cookie auth)
+  - [x] `@hapi/jwt` (JWT decoding)
 
 ### **Phase 2: Authentication Infrastructure**
+
 - [ ] 3. Create user session helper utilities
   - [ ] `src/server/common/helpers/auth/get-user-session.js`
   - [ ] `src/server/common/helpers/auth/drop-user-session.js`
@@ -45,6 +50,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [ ] Update `src/server/index.js` to register decorators
 
 ### **Phase 3: OIDC Strategy Setup**
+
 - [ ] 5. Create Defra ID authentication plugin
   - [ ] `src/server/common/helpers/auth/defra-id.js`
   - [ ] Fetch OIDC configuration from stub
@@ -57,12 +63,14 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [ ] Set as default auth strategy
 
 ### **Phase 4: Token Refresh**
+
 - [ ] 7. Implement automatic token refresh
   - [ ] `src/server/common/helpers/auth/refresh-token.js`
   - [ ] Called automatically when token expires (< 1 min remaining)
   - [ ] Updates session with new tokens
 
 ### **Phase 5: Routes & Controllers**
+
 - [ ] 8. Create login route
   - [ ] `src/server/login/` module
   - [ ] Simple controller with `auth: 'defra-id'`
@@ -80,6 +88,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [ ] Redirects to stub logout endpoint
 
 ### **Phase 6: Integration & Testing**
+
 - [ ] 11. Update router to register new routes
   - [ ] Add login, logout, auth to `src/server/router.js`
 
@@ -92,6 +101,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [ ] Add environment variables to `.env` or compose
 
 ### **Phase 7: Optional Enhancements**
+
 - [ ] 14. Add protected routes example
   - [ ] Demonstrate `auth: { mode: 'required' }`
 
@@ -117,6 +127,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 ## Reference Implementations
 
 **Demo App**: `../cdp-defra-id-demo`
+
 - Main config: `src/config/index.js:127-152`
 - Auth setup: `src/server/common/helpers/auth/defra-id.js`
 - Session validation: `src/server/common/helpers/auth/session-cookie.js`
@@ -125,6 +136,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 - Logout: `src/server/logout/controller.js`
 
 **Stub App**: `../cdp-defra-id-stub`
+
 - OIDC endpoints: `src/server/oidc/`
 
 ## Flow Diagram

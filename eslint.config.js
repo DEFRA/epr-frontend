@@ -15,6 +15,7 @@ export default [
   js.configs.recommended,
   importPlugin.flatConfigs.recommended,
   promisePlugin.configs['flat/recommended'],
+  jsdocPlugin.configs['flat/recommended'],
 
   // Global ignores
   {
