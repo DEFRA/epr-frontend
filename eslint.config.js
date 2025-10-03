@@ -1,6 +1,5 @@
 import js from '@eslint/js'
-import tseslint from '@typescript-eslint/eslint-plugin'
-import tsparser from '@typescript-eslint/parser'
+import tseslint from 'typescript-eslint'
 import vitest from '@vitest/eslint-plugin'
 import prettierConfig from 'eslint-config-prettier'
 import importPlugin from 'eslint-plugin-import'
@@ -13,6 +12,7 @@ import globals from 'globals'
 export default [
   // ESLint recommended rules
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   importPlugin.flatConfigs.recommended,
   promisePlugin.configs['flat/recommended'],
   jsdoc.configs['flat/recommended'],
@@ -28,7 +28,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2025,
       sourceType: 'module',
-      parser: tsparser,
+      parser: tseslint.parser,
       parserOptions: {
         project: ['./tsconfig.json']
       },
@@ -37,7 +37,6 @@ export default [
       }
     },
     plugins: {
-      '@typescript-eslint': tseslint,
       n: nPlugin,
       prettier: prettierPlugin
     },
@@ -87,7 +86,7 @@ export default [
     },
     settings: {
       'import/parsers': {
-        '@typescript-eslint/parser': ['.cjs', '.js']
+        'typescript-eslint': ['.cjs', '.js']
       },
       'import/resolver': {
         typescript: {
