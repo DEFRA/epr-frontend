@@ -7,14 +7,14 @@ const mockPutMetric = vi.fn()
 const mockFlush = vi.fn()
 const mockLoggerError = vi.fn()
 
-vi.mock('aws-embedded-metrics', async () => ({
+vi.mock(import('aws-embedded-metrics'), async () => ({
   ...(await vi.importActual('aws-embedded-metrics')),
   createMetricsLogger: () => ({
     putMetric: mockPutMetric,
     flush: mockFlush
   })
 }))
-vi.mock('~/src/server/common/helpers/logging/logger.js', () => ({
+vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 
@@ -46,7 +46,7 @@ describe('#metrics', () => {
     test('should send metric with default value', async () => {
       await metricsCounter(mockMetricsName)
 
-      expect(mockPutMetric).toHaveBeenCalledWith(
+      expect(mockPutMetric).toHaveBeenCalledExactlyOnceWith(
         mockMetricsName,
         defaultMetricsValue,
         Unit.Count,
@@ -57,7 +57,7 @@ describe('#metrics', () => {
     test('should send metric', async () => {
       await metricsCounter(mockMetricsName, mockValue)
 
-      expect(mockPutMetric).toHaveBeenCalledWith(
+      expect(mockPutMetric).toHaveBeenCalledExactlyOnceWith(
         mockMetricsName,
         mockValue,
         Unit.Count,
@@ -68,7 +68,7 @@ describe('#metrics', () => {
     test('should not call flush', async () => {
       await metricsCounter(mockMetricsName, mockValue)
 
-      expect(mockFlush).toHaveBeenCalledWith()
+      expect(mockFlush).toHaveBeenCalledExactlyOnceWith()
     })
   })
 
@@ -83,7 +83,10 @@ describe('#metrics', () => {
     })
 
     test('should log expected error', () => {
-      expect(mockLoggerError).toHaveBeenCalledWith(Error(mockError), mockError)
+      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith(
+        Error(mockError),
+        mockError
+      )
     })
   })
 })

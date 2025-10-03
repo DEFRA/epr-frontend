@@ -3,7 +3,7 @@ import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { initUpload } from '~/src/server/common/helpers/upload/init-upload.js'
 import { createServer } from '~/src/server/index.js'
 
-vi.mock('~/src/server/common/helpers/upload/init-upload.js', () => ({
+vi.mock(import('~/src/server/common/helpers/upload/init-upload.js'), () => ({
   initUpload: vi.fn().mockResolvedValue({
     uploadId: 'abc123'
   })
@@ -59,7 +59,7 @@ describe('#summaryLogUploadController', () => {
 
     await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledWith(
+    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
       'summaryLogs',
       expect.objectContaining({ uploadId: 'abc123' })
     )
@@ -94,7 +94,7 @@ describe('#summaryLogUploadController', () => {
 
     await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledWith(
+    expect(yar.set).toHaveBeenLastCalledWith(
       'summaryLogs',
       expect.not.objectContaining({ lastError: errorMessage })
     )
@@ -106,7 +106,7 @@ describe('#summaryLogUploadController', () => {
 
     await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledWith(
+    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
       'summaryLogs',
       expect.not.objectContaining({ lastError: expect.anything() })
     )
