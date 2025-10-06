@@ -62,12 +62,12 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] Implement token expiry validation
   - [x] Set as default auth strategy
 
-### **Phase 4: Token Refresh**
+### **Phase 4: Token Refresh** ✅
 
-- [ ] 7. Implement automatic token refresh
-  - [ ] `src/server/common/helpers/auth/refresh-token.js`
-  - [ ] Called automatically when token expires (< 1 min remaining)
-  - [ ] Updates session with new tokens
+- [x] 7. Implement automatic token refresh
+  - [x] `src/server/common/helpers/auth/refresh-token.js`
+  - [x] Called automatically when token expires (< 1 min remaining)
+  - [x] Updates session with new tokens
 
 ### **Phase 5: Routes & Controllers**
 
@@ -169,5 +169,9 @@ See `../cdp-defra-id-demo/DEFRA-ID-FLOW.md` for complete sequence diagram of the
 
 - `src/server/common/helpers/auth/defra-id.js` - Defra ID OIDC authentication plugin
 - `src/server/common/helpers/auth/session-cookie.js` - Session cookie strategy with token validation
+
+### Phase 4 - Token Refresh ✅
+
+- `src/server/common/helpers/auth/refresh-token.js` - Automatic token refresh when expiring
 
 **Note**: These files are based on the reference implementation in `cdp-defra-id-demo`, which also does not include tests for these helpers.
