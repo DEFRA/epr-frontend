@@ -7,7 +7,7 @@ const mockLoggerError = vi.fn()
 const mockHapiLoggerInfo = vi.fn()
 const mockHapiLoggerError = vi.fn()
 
-vi.mock('hapi-pino', () => ({
+vi.mock(import('hapi-pino'), () => ({
   default: {
     register: (server) => {
       server.decorate('server', 'logger', {
@@ -18,7 +18,7 @@ vi.mock('hapi-pino', () => ({
     name: 'mock-hapi-pino'
   }
 }))
-vi.mock('~/src/server/common/helpers/logging/logger.js', () => ({
+vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({
     info: (...args) => mockLoggerInfo(...args),
     error: (...args) => mockLoggerError(...args)
@@ -59,9 +59,9 @@ describe('#startServer', () => {
     test('should start up server as expected', async () => {
       server = await startServerImport.startServer()
 
-      expect(createServerSpy).toHaveBeenCalledWith()
-      expect(hapiServerSpy).toHaveBeenCalledWith(expect.any(Object))
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
+      expect(createServerSpy).toHaveBeenCalledExactlyOnceWith()
+      expect(hapiServerSpy).toHaveBeenCalledExactlyOnceWith(expect.any(Object))
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
         'Using Catbox Memory session cache'
       )
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
@@ -88,8 +88,10 @@ describe('#startServer', () => {
     test('should log failed startup message', async () => {
       await startServerImport.startServer()
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Server failed to start :(')
-      expect(mockLoggerError).toHaveBeenCalledWith(
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
+        'Server failed to start :('
+      )
+      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith(
         Error('Server failed to start')
       )
     })
