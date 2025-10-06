@@ -71,10 +71,10 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 
 ### **Phase 5: Routes & Controllers**
 
-- [ ] 8. Create login route
-  - [ ] `src/server/login/` module
-  - [ ] Simple controller with `auth: 'defra-id'`
-  - [ ] Redirects to home after auth
+- [x] 8. Create login route
+  - [x] `src/server/login/` module
+  - [x] Simple controller with `auth: 'defra-id'`
+  - [x] Redirects to home after auth
 
 - [ ] 9. Create auth callback route
   - [ ] `src/server/auth/` module
