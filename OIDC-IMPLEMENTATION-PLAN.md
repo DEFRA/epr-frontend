@@ -100,12 +100,26 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [ ] Point to local cdp-defra-id-stub instance
   - [ ] Add environment variables to `.env` or compose
 
-### **Phase 7: Optional Enhancements**
+### **Phase 7: Testing**
 
-- [ ] 14. Add protected routes example
+- [ ] 16. Add unit tests for authentication helpers
+  - [ ] `src/server/common/helpers/auth/get-user-session.test.js`
+  - [ ] `src/server/common/helpers/auth/drop-user-session.test.js`
+  - [ ] `src/server/common/helpers/auth/user-session.test.js`
+  - [ ] `src/server/common/helpers/auth/refresh-token.test.js`
+
+- [ ] 17. Add integration tests for auth flow
+  - [ ] Login flow test
+  - [ ] Callback handling test
+  - [ ] Token refresh test
+  - [ ] Logout flow test
+
+### **Phase 8: Optional Enhancements**
+
+- [ ] 18. Add protected routes example
   - [ ] Demonstrate `auth: { mode: 'required' }`
 
-- [ ] 15. Add session management utilities
+- [ ] 19. Add session management utilities
   - [ ] View session data
   - [ ] Session timeout handling
 
@@ -142,3 +156,13 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 ## Flow Diagram
 
 See `../cdp-defra-id-demo/DEFRA-ID-FLOW.md` for complete sequence diagram of the OIDC flow.
+
+## Files Implemented (Need Tests)
+
+### Phase 2 - Authentication Infrastructure ✅
+
+- `src/server/common/helpers/auth/get-user-session.js` - Retrieves user session from cache
+- `src/server/common/helpers/auth/drop-user-session.js` - Drops user session from cache
+- `src/server/common/helpers/auth/user-session.js` - Update/remove session functions
+
+**Note**: These files are based on the reference implementation in `cdp-defra-id-demo`, which also does not include tests for these helpers.
