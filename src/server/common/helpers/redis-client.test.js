@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '~/src/config/config.js'
 import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
 
-vi.mock('ioredis', async () => ({
+vi.mock(import('ioredis'), async () => ({
   ...(await vi.importActual('ioredis')),
   Cluster: vi.fn().mockReturnValue({ on: () => ({}) }),
   Redis: vi.fn().mockReturnValue({ on: () => ({}) })
@@ -16,7 +16,7 @@ describe('#buildRedisClient', () => {
     })
 
     test('should instantiate a single Redis client', () => {
-      expect(Redis).toHaveBeenCalledWith({
+      expect(Redis).toHaveBeenCalledExactlyOnceWith({
         db: 0,
         host: '127.0.0.1',
         keyPrefix: 'epr-frontend:',
@@ -37,7 +37,7 @@ describe('#buildRedisClient', () => {
     })
 
     test('should instantiate a Redis Cluster client', () => {
-      expect(Cluster).toHaveBeenCalledWith(
+      expect(Cluster).toHaveBeenCalledExactlyOnceWith(
         [{ host: '127.0.0.1', port: 6379 }],
         {
           dnsLookup: expect.any(Function),

@@ -1,19 +1,20 @@
 import js from '@eslint/js'
-import tseslint from '@typescript-eslint/eslint-plugin'
-import tsparser from '@typescript-eslint/parser'
 import vitest from '@vitest/eslint-plugin'
-import prettierConfig from 'eslint-config-prettier'
 import importPlugin from 'eslint-plugin-import'
-import jsdocPlugin from 'eslint-plugin-jsdoc'
+import jsdoc from 'eslint-plugin-jsdoc'
 import nPlugin from 'eslint-plugin-n'
-import prettierPlugin from 'eslint-plugin-prettier'
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import promisePlugin from 'eslint-plugin-promise'
 import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
 export default [
   // ESLint recommended rules
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   importPlugin.flatConfigs.recommended,
+  jsdoc.configs['flat/recommended'],
+  nPlugin.configs['flat/recommended-script'],
   promisePlugin.configs['flat/recommended'],
 
   // Global ignores
@@ -27,7 +28,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2025,
       sourceType: 'module',
-      parser: tsparser,
+      parser: tseslint.parser,
       parserOptions: {
         project: ['./tsconfig.json']
       },
@@ -35,19 +36,7 @@ export default [
         ...globals.node
       }
     },
-    plugins: {
-      '@typescript-eslint': tseslint,
-      jsdoc: jsdocPlugin,
-      n: nPlugin,
-      prettier: prettierPlugin
-    },
     rules: {
-      'prettier/prettier': [
-        'error',
-        {
-          endOfLine: 'auto'
-        }
-      ],
       'no-console': 'error',
 
       // Turn off strict type checking rules
@@ -87,7 +76,7 @@ export default [
     },
     settings: {
       'import/parsers': {
-        '@typescript-eslint/parser': ['.cjs', '.js']
+        'typescript-eslint': ['.cjs', '.js']
       },
       'import/resolver': {
         typescript: {
@@ -160,5 +149,5 @@ export default [
   },
 
   // Apply prettier config last to override conflicting rules
-  prettierConfig
+  eslintPluginPrettierRecommended
 ]
