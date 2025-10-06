@@ -49,7 +49,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] Decorate request with `getUserSession()` and `dropUserSession()`
   - [x] Update `src/server/index.js` to register decorators
 
-### **Phase 3: OIDC Strategy Setup**
+### **Phase 3: OIDC Strategy Setup** ✅
 
 - [x] 5. Create Defra ID authentication plugin
   - [x] `src/server/common/helpers/auth/defra-id.js`
@@ -57,10 +57,10 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] Configure @hapi/bell with authorization & token endpoints
   - [x] Extract JWT claims into user profile
 
-- [ ] 6. Create session cookie strategy
-  - [ ] `src/server/common/helpers/auth/session-cookie.js`
-  - [ ] Implement token expiry validation
-  - [ ] Set as default auth strategy
+- [x] 6. Create session cookie strategy
+  - [x] `src/server/common/helpers/auth/session-cookie.js`
+  - [x] Implement token expiry validation
+  - [x] Set as default auth strategy
 
 ### **Phase 4: Token Refresh**
 
@@ -164,5 +164,10 @@ See `../cdp-defra-id-demo/DEFRA-ID-FLOW.md` for complete sequence diagram of the
 - `src/server/common/helpers/auth/get-user-session.js` - Retrieves user session from cache
 - `src/server/common/helpers/auth/drop-user-session.js` - Drops user session from cache
 - `src/server/common/helpers/auth/user-session.js` - Update/remove session functions
+
+### Phase 3 - OIDC Strategy Setup ✅
+
+- `src/server/common/helpers/auth/defra-id.js` - Defra ID OIDC authentication plugin
+- `src/server/common/helpers/auth/session-cookie.js` - Session cookie strategy with token validation
 
 **Note**: These files are based on the reference implementation in `cdp-defra-id-demo`, which also does not include tests for these helpers.
