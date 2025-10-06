@@ -76,11 +76,11 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] Simple controller with `auth: 'defra-id'`
   - [x] Redirects to home after auth
 
-- [ ] 9. Create auth callback route
-  - [ ] `src/server/auth/` module
-  - [ ] Handles OIDC callback
-  - [ ] Stores user session in Redis
-  - [ ] Sets session cookie
+- [x] 9. Create auth callback route
+  - [x] `src/server/auth/` module
+  - [x] Handles OIDC callback
+  - [x] Stores user session in Redis
+  - [x] Sets session cookie
 
 - [ ] 10. Create logout route
   - [ ] `src/server/logout/` module
