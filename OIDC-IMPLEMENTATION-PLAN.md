@@ -69,7 +69,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] Called automatically when token expires (< 1 min remaining)
   - [x] Updates session with new tokens
 
-### **Phase 5: Routes & Controllers**
+### **Phase 5: Routes & Controllers** ✅
 
 - [x] 8. Create login route
   - [x] `src/server/login/` module
@@ -82,10 +82,10 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] Stores user session in Redis
   - [x] Sets session cookie
 
-- [ ] 10. Create logout route
-  - [ ] `src/server/logout/` module
-  - [ ] Clears local session
-  - [ ] Redirects to stub logout endpoint
+- [x] 10. Create logout route
+  - [x] `src/server/logout/` module
+  - [x] Clears local session
+  - [x] Redirects to stub logout endpoint
 
 ### **Phase 6: Integration & Testing**
 
@@ -173,5 +173,11 @@ See `../cdp-defra-id-demo/DEFRA-ID-FLOW.md` for complete sequence diagram of the
 ### Phase 4 - Token Refresh ✅
 
 - `src/server/common/helpers/auth/refresh-token.js` - Automatic token refresh when expiring
+
+### Phase 5 - Routes & Controllers ✅
+
+- `src/server/login/` - Login route that triggers OIDC flow
+- `src/server/auth/` - OAuth callback handler that creates session
+- `src/server/logout/` - Logout route that clears session and redirects to provider
 
 **Note**: These files are based on the reference implementation in `cdp-defra-id-demo`, which also does not include tests for these helpers.
