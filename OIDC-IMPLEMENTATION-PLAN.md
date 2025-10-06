@@ -51,11 +51,11 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 
 ### **Phase 3: OIDC Strategy Setup**
 
-- [ ] 5. Create Defra ID authentication plugin
-  - [ ] `src/server/common/helpers/auth/defra-id.js`
-  - [ ] Fetch OIDC configuration from stub
-  - [ ] Configure @hapi/bell with authorization & token endpoints
-  - [ ] Extract JWT claims into user profile
+- [x] 5. Create Defra ID authentication plugin
+  - [x] `src/server/common/helpers/auth/defra-id.js`
+  - [x] Fetch OIDC configuration from stub
+  - [x] Configure @hapi/bell with authorization & token endpoints
+  - [x] Extract JWT claims into user profile
 
 - [ ] 6. Create session cookie strategy
   - [ ] `src/server/common/helpers/auth/session-cookie.js`
