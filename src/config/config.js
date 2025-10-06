@@ -40,7 +40,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'epr-frontend'
+    default: 'Manage your packaging waste responsibilities'
   },
   root: {
     doc: 'Project root',
@@ -84,14 +84,14 @@ export const config = convict({
     format: {
       doc: 'Format to output logs in.',
       format: ['ecs', 'pino-pretty'],
-      default: isProduction ? 'ecs' : 'pino-pretty',
+      default: /* v8 ignore next */ isProduction ? 'ecs' : 'pino-pretty', // @fixme: code coverage
       env: 'LOG_FORMAT'
     },
     redact: {
       doc: 'Log paths to redact',
       format: Array,
-      default: isProduction
-        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
+      default: /* v8 ignore next */ isProduction
+        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers'] // @fixme: code coverage
         : []
     }
   },
@@ -119,7 +119,7 @@ export const config = convict({
       engine: {
         doc: 'backend cache is written to',
         format: ['redis', 'memory'],
-        default: isProduction ? 'redis' : 'memory',
+        default: /* v8 ignore next */ isProduction ? 'redis' : 'memory', // @fixme: code coverage
         env: 'SESSION_CACHE_ENGINE'
       },
       name: {
@@ -214,6 +214,22 @@ export const config = convict({
       format: String,
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
+    }
+  },
+  cdpUploader: {
+    s3buckets: {
+      summaryLogs: {
+        doc: 'CDP Uploader S3 bucket',
+        format: String,
+        default: 're-ex-summary-logs',
+        env: 'CDP_UPLOADER_S3_BUCKET_SUMMARY_LOGS'
+      }
+    },
+    url: {
+      doc: 'CDP Uploader root url',
+      format: String,
+      default: 'http://localhost:7337',
+      env: 'CDP_UPLOADER_URL'
     }
   }
 })

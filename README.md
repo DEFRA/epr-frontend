@@ -31,8 +31,10 @@ Core delivery platform Node.js Frontend Template.
 
 ### Node.js
 
-Please install [Node.js](http://nodejs.org/) `>= v18` and [npm](https://nodejs.org/) `>= v9`. You will find it
-easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
+This project is written in [Node.js](http://nodejs.org/) and uses [npm](https://npmjs.org/) to manage dependencies.
+
+It uses [nvm](https://github.com/nvm-sh/nvm) to install and manage Node via a [.nvmrc](https://github.com/nvm-sh/nvm#nvmrc)
+file which is set to reference the latest [Active LTS](https://nodejs.org/en/about/previous-releases) version.
 
 To use the correct version of Node.js for this application, via nvm:
 
@@ -168,6 +170,10 @@ docker run -p 3000:3000 epr-frontend
 
 ### Docker Compose
 
+> [!IMPORTANT]
+>
+> Please ensure you have at least version 2.22.0 of Docker Compose installed.
+
 A local environment with:
 
 - Localstack for AWS services (S3, SQS)
@@ -177,7 +183,7 @@ A local environment with:
 - A commented out backend example.
 
 ```bash
-docker compose up --build -d
+docker compose up --build --watch
 ```
 
 ### Dependabot

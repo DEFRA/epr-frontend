@@ -1,20 +1,20 @@
-import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import { Engine as CatboxMemory } from '@hapi/catbox-memory'
-
-import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
+import { Engine as CatboxRedis } from '@hapi/catbox-redis'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '~/src/config/config.js'
+import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 
-const mockLoggerInfo = jest.fn()
-const mockLoggerError = jest.fn()
+const mockLoggerInfo = vi.fn()
+const mockLoggerError = vi.fn()
 
-jest.mock('ioredis', () => ({
-  ...jest.requireActual('ioredis'),
-  Cluster: jest.fn().mockReturnValue({ on: () => ({}) }),
-  Redis: jest.fn().mockReturnValue({ on: () => ({}) })
+vi.mock(import('ioredis'), async () => ({
+  ...(await vi.importActual('ioredis')),
+  Cluster: vi.fn().mockReturnValue({ on: () => ({}) }),
+  Redis: vi.fn().mockReturnValue({ on: () => ({}) })
 }))
-jest.mock('@hapi/catbox-redis')
-jest.mock('@hapi/catbox-memory')
-jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
+vi.mock(import('@hapi/catbox-redis'))
+vi.mock(import('@hapi/catbox-memory'))
+vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({
     info: (...args) => mockLoggerInfo(...args),
     error: (...args) => mockLoggerError(...args)
@@ -22,54 +22,56 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
 }))
 
 describe('#getCacheEngine', () => {
-  describe('When Redis cache engine has been requested', () => {
+  describe('when Redis cache engine has been requested', () => {
     beforeEach(() => {
       getCacheEngine('redis')
     })
 
-    test('Should setup Redis cache', () => {
-      expect(CatboxRedis).toHaveBeenCalledWith(expect.any(Object))
+    test('should setup Redis cache', () => {
+      expect(CatboxRedis).toHaveBeenCalledExactlyOnceWith(expect.any(Object))
     })
 
-    test('Should log expected Redis message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Using Redis session cache')
+    test('should log expected Redis message', () => {
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
+        'Using Redis session cache'
+      )
     })
   })
 
-  describe('When In memory cache engine has been requested', () => {
+  describe('when In memory cache engine has been requested', () => {
     beforeEach(() => {
       getCacheEngine()
     })
 
-    test('Should setup In memory cache', () => {
+    test('should setup In memory cache', () => {
       expect(CatboxMemory).toHaveBeenCalledTimes(1)
     })
 
-    test('Should log expected CatBox memory message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
+    test('should log expected CatBox memory message', () => {
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
         'Using Catbox Memory session cache'
       )
     })
   })
 
-  describe('When In memory cache engine has been requested in Production', () => {
+  describe('when In memory cache engine has been requested in Production', () => {
     beforeEach(() => {
       config.set('isProduction', true)
       getCacheEngine()
     })
 
-    test('Should log Production warning message', () => {
-      expect(mockLoggerError).toHaveBeenCalledWith(
+    test('should log Production warning message', () => {
+      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith(
         'Catbox Memory is for local development only, it should not be used in production!'
       )
     })
 
-    test('Should setup In memory cache', () => {
+    test('should setup In memory cache', () => {
       expect(CatboxMemory).toHaveBeenCalledTimes(1)
     })
 
-    test('Should log expected message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledWith(
+    test('should log expected message', () => {
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
         'Using Catbox Memory session cache'
       )
     })

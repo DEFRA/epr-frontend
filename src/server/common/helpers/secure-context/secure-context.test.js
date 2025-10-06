@@ -1,32 +1,50 @@
 import hapi from '@hapi/hapi'
-
-import { secureContext } from '~/src/server/common/helpers/secure-context/secure-context.js'
-import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 import { config } from '~/src/config/config.js'
+import { requestLogger } from '../logging/request-logger.js'
+import { secureContext } from './secure-context.js'
 
-const mockAddCACert = jest.fn()
-const mockTlsCreateSecureContext = jest
+const mockAddCACert = vi.fn()
+const mockCreateSecureContext = vi
   .fn()
   .mockReturnValue({ context: { addCACert: mockAddCACert } })
 
-jest.mock('hapi-pino', () => ({
-  register: (server) => {
-    server.decorate('server', 'logger', {
-      info: jest.fn(),
-      error: jest.fn()
-    })
-  },
-  name: 'mock-hapi-pino'
-}))
-jest.mock('node:tls', () => ({
-  ...jest.requireActual('node:tls'),
-  createSecureContext: (...args) => mockTlsCreateSecureContext(...args)
+vi.mock(import('hapi-pino'), () => ({
+  default: {
+    register: (server) => {
+      server.decorate('server', 'logger', {
+        info: vi.fn(),
+        error: vi.fn()
+      })
+    },
+    name: 'mock-hapi-pino'
+  }
 }))
 
-describe('#secureContext', () => {
+vi.mock(import('node:tls'), async () => {
+  const nodeTls = await import('node:tls')
+
+  return {
+    default: {
+      ...nodeTls,
+      createSecureContext: (...args) => mockCreateSecureContext(...args)
+    }
+  }
+})
+
+describe(secureContext, () => {
   let server
 
-  describe('When secure context is disabled', () => {
+  describe('when secure context is disabled', () => {
     beforeEach(async () => {
       config.set('isSecureContextEnabled', false)
       server = hapi.server()
@@ -39,22 +57,23 @@ describe('#secureContext', () => {
     })
 
     test('secureContext decorator should not be available', () => {
-      expect(server.logger.info).toHaveBeenCalledWith(
+      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith(
         'Custom secure context is disabled'
       )
     })
 
-    test('Logger should give us disabled message', () => {
+    test('logger should give us disabled message', () => {
       expect(server.secureContext).toBeUndefined()
     })
   })
 
-  describe('When secure context is enabled', () => {
+  describe('when secure context is enabled', () => {
     const PROCESS_ENV = process.env
+    const mockCert = 'mock-trust-store-cert-one'
 
     beforeAll(() => {
       process.env = { ...PROCESS_ENV }
-      process.env.TRUSTSTORE_ONE = 'mock-trust-store-cert-one'
+      process.env.TRUSTSTORE_ONE = mockCert
     })
 
     beforeEach(async () => {
@@ -72,22 +91,25 @@ describe('#secureContext', () => {
       process.env = PROCESS_ENV
     })
 
-    test('Original tls.createSecureContext should have been called', () => {
-      expect(mockTlsCreateSecureContext).toHaveBeenCalledWith({})
+    test('original tls.createSecureContext should have been called', () => {
+      expect(mockCreateSecureContext).toHaveBeenCalledExactlyOnceWith({})
     })
 
     test('addCACert should have been called', () => {
-      expect(mockAddCACert).toHaveBeenCalled()
+      // eslint-disable-next-line vitest/prefer-called-exactly-once-with
+      expect(mockAddCACert).toHaveBeenCalledWith(
+        Buffer.from(mockCert, 'base64').toString()
+      )
     })
 
     test('secureContext decorator should be available', () => {
-      expect(server.secureContext).toEqual({
+      expect(server.secureContext).toStrictEqual({
         context: { addCACert: expect.any(Function) }
       })
     })
   })
 
-  describe('When secure context is enabled without TRUSTSTORE_ certs', () => {
+  describe('when secure context is enabled without TRUSTSTORE_ certs', () => {
     beforeEach(async () => {
       config.set('isSecureContextEnabled', true)
       server = hapi.server()
@@ -99,8 +121,8 @@ describe('#secureContext', () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('Should log about not finding any TRUSTSTORE_ certs', () => {
-      expect(server.logger.info).toHaveBeenCalledWith(
+    test('should log about not finding any TRUSTSTORE_ certs', () => {
+      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith(
         'Could not find any TRUSTSTORE_ certificates'
       )
     })

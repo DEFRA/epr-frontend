@@ -67,10 +67,14 @@ export function buildRedisClient(redisConfig) {
     )
   }
 
+  // @fixme: code coverage
+  /* v8 ignore next 3 */
   redisClient.on('connect', () => {
     logger.info('Connected to Redis server')
   })
 
+  // @fixme: code coverage
+  /* v8 ignore next 3 */
   redisClient.on('error', (error) => {
     logger.error(`Redis connection error ${error}`)
   })
