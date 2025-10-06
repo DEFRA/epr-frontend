@@ -38,16 +38,16 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] `@hapi/cookie` (session cookie auth)
   - [x] `@hapi/jwt` (JWT decoding)
 
-### **Phase 2: Authentication Infrastructure**
+### **Phase 2: Authentication Infrastructure** ✅
 
-- [ ] 3. Create user session helper utilities
-  - [ ] `src/server/common/helpers/auth/get-user-session.js`
-  - [ ] `src/server/common/helpers/auth/drop-user-session.js`
-  - [ ] `src/server/common/helpers/auth/user-session.js` (update/remove functions)
+- [x] 3. Create user session helper utilities
+  - [x] `src/server/common/helpers/auth/get-user-session.js`
+  - [x] `src/server/common/helpers/auth/drop-user-session.js`
+  - [x] `src/server/common/helpers/auth/user-session.js` (update/remove functions)
 
-- [ ] 4. Add request decorators for session management
-  - [ ] Decorate request with `getUserSession()` and `dropUserSession()`
-  - [ ] Update `src/server/index.js` to register decorators
+- [x] 4. Add request decorators for session management
+  - [x] Decorate request with `getUserSession()` and `dropUserSession()`
+  - [x] Update `src/server/index.js` to register decorators
 
 ### **Phase 3: OIDC Strategy Setup**
 

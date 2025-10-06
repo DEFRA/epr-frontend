@@ -1,17 +1,19 @@
-import path from 'path'
 import hapi from '@hapi/hapi'
+import path from 'path'
 
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
-import { router } from './router.js'
-import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
+import { dropUserSession } from '~/src/server/common/helpers/auth/drop-user-session.js'
+import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
 import { catchAll } from '~/src/server/common/helpers/errors.js'
-import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
-import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
-import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
+import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
+import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
-import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
+import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
+import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
+import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
+import { router } from './router.js'
 
 export async function createServer() {
   setupProxy()
@@ -52,6 +54,16 @@ export async function createServer() {
       strictHeader: false
     }
   })
+
+  server.app.cache = server.cache({
+    cache: config.get('session.cache.name'),
+    expiresIn: config.get('session.cache.ttl'),
+    segment: 'session'
+  })
+
+  server.decorate('request', 'getUserSession', getUserSession)
+  server.decorate('request', 'dropUserSession', dropUserSession)
+
   await server.register([
     requestLogger,
     requestTracing,

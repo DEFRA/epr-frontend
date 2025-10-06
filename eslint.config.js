@@ -16,7 +16,6 @@ export default [
   jsdoc.configs['flat/recommended'],
   nPlugin.configs['flat/recommended-script'],
   promisePlugin.configs['flat/recommended'],
-  jsdocPlugin.configs['flat/recommended'],
 
   // Global ignores
   {
