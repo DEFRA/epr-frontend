@@ -1,6 +1,6 @@
 /**
  * Get base64 certs from all environment variables starting with TRUSTSTORE_
- * @param {NodeJS.ProcessEnv} envs
+ * @param {import('node:process').ProcessEnv} envs
  * @returns {string[]}
  */
 export function getTrustStoreCerts(envs) {
