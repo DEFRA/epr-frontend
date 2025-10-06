@@ -1,13 +1,12 @@
 import js from '@eslint/js'
-import tseslint from 'typescript-eslint'
 import vitest from '@vitest/eslint-plugin'
-import prettierConfig from 'eslint-config-prettier'
 import importPlugin from 'eslint-plugin-import'
 import jsdoc from 'eslint-plugin-jsdoc'
 import nPlugin from 'eslint-plugin-n'
-import prettierPlugin from 'eslint-plugin-prettier'
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import promisePlugin from 'eslint-plugin-promise'
 import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
 export default [
   // ESLint recommended rules
@@ -37,16 +36,9 @@ export default [
       }
     },
     plugins: {
-      n: nPlugin,
-      prettier: prettierPlugin
+      n: nPlugin
     },
     rules: {
-      'prettier/prettier': [
-        'error',
-        {
-          endOfLine: 'auto'
-        }
-      ],
       'no-console': 'error',
 
       // Turn off strict type checking rules
@@ -159,5 +151,5 @@ export default [
   },
 
   // Apply prettier config last to override conflicting rules
-  prettierConfig
+  eslintPluginPrettierRecommended
 ]
