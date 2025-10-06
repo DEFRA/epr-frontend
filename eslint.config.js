@@ -13,8 +13,9 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   importPlugin.flatConfigs.recommended,
-  promisePlugin.configs['flat/recommended'],
   jsdoc.configs['flat/recommended'],
+  nPlugin.configs['flat/recommended-script'],
+  promisePlugin.configs['flat/recommended'],
 
   // Global ignores
   {
@@ -34,9 +35,6 @@ export default [
       globals: {
         ...globals.node
       }
-    },
-    plugins: {
-      n: nPlugin
     },
     rules: {
       'no-console': 'error',
