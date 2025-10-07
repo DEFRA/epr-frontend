@@ -1,7 +1,5 @@
-const { NODE_ENV } = process.env
-
 /**
- * @type {TransformOptions}
+ * @type {import('@babel/core').TransformOptions}
  */
 module.exports = {
   browserslistEnv: 'node',
@@ -9,7 +7,7 @@ module.exports = {
     [
       '@babel/preset-env',
       {
-        modules: NODE_ENV === 'test' ? 'auto' : false
+        modules: false
       }
     ]
   ],
@@ -23,14 +21,5 @@ module.exports = {
         }
       }
     ]
-  ],
-  env: {
-    test: {
-      plugins: ['babel-plugin-transform-import-meta']
-    }
-  }
+  ]
 }
-
-/**
- * @import { TransformOptions } from '@babel/core'
- */

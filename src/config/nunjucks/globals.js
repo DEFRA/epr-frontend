@@ -1,3 +1,3 @@
-export { default as assign } from 'lodash/assign.js'
+export { assign } from 'lodash-es'
 
 export const govukRebrand = true
