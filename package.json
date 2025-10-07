@@ -79,7 +79,6 @@
     "@vitest/ui": "3.2.4",
     "autoprefixer": "10.4.21",
     "babel-loader": "9.2.1",
-    "babel-plugin-transform-import-meta": "2.3.3",
     "cheerio": "1.1.2",
     "clean-webpack-plugin": "4.0.0",
     "copy-webpack-plugin": "13.0.1",
