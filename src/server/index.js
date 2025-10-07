@@ -12,6 +12,7 @@ import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
+import { i18nPlugin } from '~/src/server/common/helpers/i18n/index.js'
 
 export async function createServer() {
   setupProxy()
@@ -59,6 +60,7 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
+    i18nPlugin,
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 

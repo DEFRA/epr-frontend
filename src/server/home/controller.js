@@ -4,21 +4,14 @@
  * @satisfies {Partial<ServerRoute>}
  */
 
-import { languageSelector } from '../common/helpers/i18n.js'
-
 export const homeController = {
   handler(request, h) {
-    const { lang = 'en' } = request.params
-
     return h.view('home/index', {
-      pageTitle: languageSelector(lang, 'home.pageTitle'),
-      heading: languageSelector(lang, 'home.heading'),
-      languageNotice: languageSelector(lang, 'home.languageNotice'),
-      lang
+      pageTitleKey: 'home.pageTitle',
+      headingKey: 'home.heading'
     })
   }
 }
-
 
 /**
  * @import { ServerRoute } from '@hapi/hapi'
