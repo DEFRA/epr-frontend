@@ -89,8 +89,12 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 
 ### **Phase 6: Integration & Testing**
 
-- [ ] 11. Update router to register new routes
-  - [ ] Add login, logout, auth to `src/server/router.js`
+- [x] 11. Update router to register new routes ✅
+  - [x] Add login, logout, auth to `src/server/router.js`
+  - [x] Conditionally register auth routes only when not in test mode
+  - [x] Update `src/server/index.js` to register auth plugins conditionally
+  - [x] Set `auth: { mode: 'try' }` at server level (only when not in test)
+  - [x] All tests passing, lint clean
 
 - [ ] 12. Update home page to show authentication status
   - [ ] Display user info when authenticated
@@ -180,4 +184,23 @@ See `../cdp-defra-id-demo/DEFRA-ID-FLOW.md` for complete sequence diagram of the
 - `src/server/auth/` - OAuth callback handler that creates session
 - `src/server/logout/` - Logout route that clears session and redirects to provider
 
+### Phase 6 - Integration ✅ (Step 11 complete)
+
+- `src/server/router.js` - Updated to register auth routes conditionally
+- `src/server/index.js` - Updated to:
+  - Register `defraId` and `sessionCookie` plugins (only when not in test mode)
+  - Set `auth: { mode: 'try' }` at server level (only when not in test mode)
+  - This allows routes to work without authentication by default, but authentication can be explicitly required per route
+
+## Test Strategy
+
 **Note**: These files are based on the reference implementation in `cdp-defra-id-demo`, which also does not include tests for these helpers.
+
+The authentication system is tested through:
+
+- **Unit tests**: Test controllers and helpers in isolation without authentication
+- **Integration tests**: Would test full auth flow with the stub running (Phase 7)
+- **Test environment behavior**:
+  - Auth strategies and routes are NOT registered in test mode (`NODE_ENV=test`)
+  - Routes work without authentication in test mode
+  - This matches the pattern from `cdp-defra-id-demo`

@@ -3,8 +3,10 @@ import path from 'path'
 
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
+import { defraId } from '~/src/server/common/helpers/auth/defra-id.js'
 import { dropUserSession } from '~/src/server/common/helpers/auth/drop-user-session.js'
 import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
+import { sessionCookie } from '~/src/server/common/helpers/auth/session-cookie.js'
 import { catchAll } from '~/src/server/common/helpers/errors.js'
 import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
 import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
@@ -17,28 +19,36 @@ import { router } from './router.js'
 
 export async function createServer() {
   setupProxy()
-  const server = hapi.server({
-    port: config.get('port'),
-    routes: {
-      validate: {
-        options: {
-          abortEarly: false
-        }
-      },
-      files: {
-        relativeTo: path.resolve(config.get('root'), '.public')
-      },
-      security: {
-        hsts: {
-          maxAge: 31536000,
-          includeSubDomains: true,
-          preload: false
-        },
-        xss: 'enabled',
-        noSniff: true,
-        xframe: true
+
+  const routesConfig = {
+    validate: {
+      options: {
+        abortEarly: false
       }
     },
+    files: {
+      relativeTo: path.resolve(config.get('root'), '.public')
+    },
+    security: {
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: false
+      },
+      xss: 'enabled',
+      noSniff: true,
+      xframe: true
+    }
+  }
+
+  // Only set auth mode when not in test environment
+  if (!config.get('isTest')) {
+    routesConfig.auth = { mode: 'try' }
+  }
+
+  const server = hapi.server({
+    port: config.get('port'),
+    routes: routesConfig,
     router: {
       stripTrailingSlash: true
     },
@@ -64,15 +74,22 @@ export async function createServer() {
   server.decorate('request', 'getUserSession', getUserSession)
   server.decorate('request', 'dropUserSession', dropUserSession)
 
-  await server.register([
+  const plugins = [
     requestLogger,
     requestTracing,
     secureContext,
     pulse,
-    sessionCache,
-    nunjucksConfig,
-    router // Register all the controllers/routes defined in src/server/router.js
-  ])
+    sessionCache
+  ]
+
+  // Only register authentication strategies when not in test mode
+  if (!config.get('isTest')) {
+    plugins.push(defraId, sessionCookie)
+  }
+
+  plugins.push(nunjucksConfig, router)
+
+  await server.register(plugins)
 
   server.ext('onPreResponse', catchAll)
 

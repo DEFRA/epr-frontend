@@ -1,11 +1,15 @@
 import inert from '@hapi/inert'
 
+import { auth } from '~/src/server/auth/index.js'
+import { serveStaticFiles } from '~/src/server/common/helpers/serve-static-files.js'
+import { config } from '~/src/config/config.js'
 import { health } from '~/src/server/health/index.js'
 import { home } from '~/src/server/home/index.js'
+import { login } from '~/src/server/login/index.js'
+import { logout } from '~/src/server/logout/index.js'
 import { registration } from '~/src/server/registration/index.js'
-import { summaryLogUpload } from '~/src/server/summary-log-upload/index.js'
 import { summaryLogUploadProgress } from '~/src/server/summary-log-upload-progress/index.js'
-import { serveStaticFiles } from '~/src/server/common/helpers/serve-static-files.js'
+import { summaryLogUpload } from '~/src/server/summary-log-upload/index.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -18,6 +22,11 @@ export const router = {
 
       // Health-check route. Used by platform to check if service is running, do not remove!
       await server.register([health])
+
+      // Authentication routes (only register when not in test mode)
+      if (!config.get('isTest')) {
+        await server.register([login, auth, logout])
+      }
 
       // Application specific routes, add your own routes here
       await server.register([
