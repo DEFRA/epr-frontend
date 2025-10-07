@@ -96,13 +96,17 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
   - [x] Set `auth: { mode: 'try' }` at server level (only when not in test)
   - [x] All tests passing, lint clean
 
-- [ ] 12. Update home page to show authentication status
-  - [ ] Display user info when authenticated
-  - [ ] Show login/logout links
+- [x] 12. Update home page to show authentication status ✅
+  - [x] Updated Nunjucks context to be async and include `authedUser`
+  - [x] Updated home page template to show user info when authenticated
+  - [x] Added login/logout links based on authentication state
+  - [x] Updated context tests to handle async function
+  - [x] All tests passing, lint clean
 
-- [ ] 13. Configure stub connection
-  - [ ] Point to local cdp-defra-id-stub instance
-  - [ ] Add environment variables to `.env` or compose
+- [x] 13. Configure stub connection ✅
+  - [x] Config already points to local cdp-defra-id-stub
+  - [x] Fixed port from 3939 to 3200 (stub's default port)
+  - [x] Ready to run with stub
 
 ### **Phase 7: Testing**
 

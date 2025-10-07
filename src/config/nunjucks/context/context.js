@@ -18,7 +18,7 @@ let webpackManifest
 /**
  * @param {Request | null} request
  */
-export function context(request) {
+export async function context(request) {
   if (!webpackManifest) {
     try {
       webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
@@ -27,7 +27,10 @@ export function context(request) {
     }
   }
 
+  const authedUser = request ? await request.getUserSession() : null
+
   return {
+    authedUser,
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',

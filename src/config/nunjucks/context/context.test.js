@@ -14,7 +14,10 @@ vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
 const serviceName = 'Manage your packaging waste responsibilities'
 
 describe('#context', () => {
-  const mockRequest = { path: '/' }
+  const mockRequest = {
+    path: '/',
+    getUserSession: vi.fn().mockResolvedValue(null)
+  }
   let contextResult
 
   describe('when webpack manifest file read succeeds', () => {
@@ -24,18 +27,19 @@ describe('#context', () => {
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
-    beforeEach(() => {
+    beforeEach(async () => {
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-      contextResult = contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest)
     })
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
+        authedUser: null,
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
@@ -76,12 +80,12 @@ describe('#context', () => {
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
-    beforeEach(() => {
+    beforeEach(async () => {
       mockReadFileSync.mockImplementation(() => {
         throw new Error('File not found')
       })
 
-      contextResult = contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest)
     })
 
     test('should log that the Webpack Manifest file is not available', () => {
@@ -93,7 +97,10 @@ describe('#context', () => {
 })
 
 describe('#context cache', () => {
-  const mockRequest = { path: '/' }
+  const mockRequest = {
+    path: '/',
+    getUserSession: vi.fn().mockResolvedValue(null)
+  }
   let contextResult
 
   describe('webpack manifest file cache', () => {
@@ -103,14 +110,14 @@ describe('#context cache', () => {
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
-    beforeEach(() => {
+    beforeEach(async () => {
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-      contextResult = contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest)
     })
 
     test('should read file', () => {
@@ -119,6 +126,7 @@ describe('#context cache', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
+        authedUser: null,
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
