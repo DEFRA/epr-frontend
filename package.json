@@ -57,7 +57,7 @@
     "hapi-pino": "13.0.0",
     "hapi-pulse": "3.0.1",
     "ioredis": "5.8.1",
-    "lodash": "4.17.21",
+    "lodash-es": "4.17.21",
     "node-fetch": "3.3.2",
     "nunjucks": "3.2.4",
     "pino": "10.0.0",
