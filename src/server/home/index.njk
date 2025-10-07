@@ -1,10 +1,20 @@
 {% extends 'layouts/page.njk' %}
 
 {% block content %}
+  {% if lang == 'cy' %}
+    <div role="note" aria-label="Information" class="application-notice info-notice">
+      <p>Mae’r gwasanaeth hwn hefyd ar gael <a href="/en">yn Saesneg (English)</a>.</p>
+    </div>
+  {% else %}
+    <div role="note" aria-label="Information" class="application-notice info-notice">
+      <p>This service is also available <a href="/cy">in Welsh (Cymraeg)</a>.</p>
+    </div>
+  {% endif %}
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <h1 class="govuk-heading-l">Sites</h1>
+        <h1 class="govuk-heading-l">{{ heading }}</h1>
         <h1 class="govuk-heading-m">Test</h1>
         <p>
           <a href="/organisations/123/registrations/456" class="govuk-link">Test Registration</a>
@@ -12,5 +22,4 @@
       </div>
     </div>
   </div>
-
 {% endblock %}
