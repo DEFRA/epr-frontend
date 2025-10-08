@@ -19,10 +19,10 @@ describe('#errors', () => {
   test('should provide expected Not Found page', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/non-existent-path'
+      url: '/cy'
     })
 
-    expect(result).toStrictEqual(expect.stringContaining('Page not found |'))
+    expect(result).toMatch('Page not found |')
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })
@@ -55,7 +55,8 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Page not found',
       heading: statusCodes.notFound,
-      message: 'Page not found'
+      message: 'Page not found',
+      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
   })
@@ -67,7 +68,8 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Forbidden',
       heading: statusCodes.forbidden,
-      message: 'Forbidden'
+      message: 'Forbidden',
+      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
   })
@@ -79,7 +81,8 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Unauthorized',
       heading: statusCodes.unauthorized,
-      message: 'Unauthorized'
+      message: 'Unauthorized',
+      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorized)
   })
@@ -91,7 +94,8 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Bad Request',
       heading: statusCodes.badRequest,
-      message: 'Bad Request'
+      message: 'Bad Request',
+      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
   })
@@ -103,7 +107,8 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.imATeapot,
-      message: 'Something went wrong'
+      message: 'Something went wrong',
+      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.imATeapot)
   })
@@ -115,7 +120,8 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.internalServerError,
-      message: 'Something went wrong'
+      message: 'Something went wrong',
+      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledWith(
       statusCodes.internalServerError

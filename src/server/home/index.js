@@ -19,9 +19,9 @@ export const home = {
           path: '/{lang?}',
           options: {
             validate: {
-              params: {
-                lang: Joi.string().valid('en', 'cy').optional()
-              }
+              params: Joi.object({
+                lang: Joi.string().valid('en', 'cy')
+              })
             }
           },
           ...homeController
