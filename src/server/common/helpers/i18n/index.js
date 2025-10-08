@@ -1,9 +1,12 @@
 /*
-* Hapi plugin for i18n: loads locale files and injects `t()` + `lang` into view context.
-* Reloads locales on each request in development mode.
-*/
+ * Hapi plugin for i18n: loads locale files and injects `t()` + `lang` into view context.
+ * Reloads locales on each request in development mode.
+ */
 
-import { loadLocales, languageSelector } from '~/src/server/common/helpers/i18n.js'
+import {
+  loadLocales,
+  languageSelector
+} from '~/src/server/common/helpers/i18n.js'
 
 export const i18nPlugin = {
   name: 'i18n',
@@ -11,11 +14,15 @@ export const i18nPlugin = {
     loadLocales()
     server.ext('onPreResponse', (request, h) => {
       const { lang = 'en' } = request.params || {}
-      const context = request.response?.source?.context
+      const response = request.response
 
-      if (context) {
-        context.t = (key, vars) => languageSelector(lang, key, vars)
-        context.lang = lang
+      // Hapi views live in response.source.context, but some errors set it differently
+      if (response.variety === 'view' && response.source) {
+        response.source.context = {
+          ...(response.source.context || {}),
+          t: (key, vars) => languageSelector(lang, key, vars),
+          lang
+        }
       }
 
       return h.continue

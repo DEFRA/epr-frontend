@@ -13,6 +13,7 @@ import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
 import { i18nPlugin } from '~/src/server/common/helpers/i18n/index.js'
+import Joi from 'joi'
 
 export async function createServer() {
   setupProxy()
@@ -53,6 +54,9 @@ export async function createServer() {
       strictHeader: false
     }
   })
+  
+  server.validator(Joi)
+
   await server.register([
     requestLogger,
     requestTracing,

@@ -1,4 +1,5 @@
 import { homeController } from '~/src/server/home/controller.js'
+import Joi from 'joi'
 
 /**
  * Sets up the routes used in the home page.
@@ -16,6 +17,13 @@ export const home = {
         {
           method: 'GET',
           path: '/{lang?}',
+          options: {
+            validate: {
+              params: {
+                lang: Joi.string().valid('en', 'cy').optional()
+              }
+            }
+          },
           ...homeController
         }
       ])

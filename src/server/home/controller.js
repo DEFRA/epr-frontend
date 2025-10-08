@@ -7,8 +7,9 @@
 export const homeController = {
   handler(request, h) {
     return h.view('home/index', {
-      pageTitleKey: 'home.pageTitle',
-      headingKey: 'home.heading'
+      pageTitle: 'home.pageTitle',
+      serviceName: 'global.serviceName',
+      heading: 'home.heading'
     })
   }
 }
