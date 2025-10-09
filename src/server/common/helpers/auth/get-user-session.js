@@ -1,10 +1,15 @@
 /**
+ * @import { Request } from '@hapi/hapi'
+ */
+
+/**
  * Get user session from cache
+ * @param {Request} request - Hapi request object
  * @returns {Promise<object>}
  */
-async function getUserSession() {
-  return this.state?.userSession?.sessionId
-    ? await this.server.app.cache.get(this.state.userSession.sessionId)
+async function getUserSession(request) {
+  return request.state?.userSession?.sessionId
+    ? await request.server.app.cache.get(request.state.userSession.sessionId)
     : {}
 }
 

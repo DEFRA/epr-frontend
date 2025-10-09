@@ -256,14 +256,14 @@ export const config = convict({
       doc: 'DEFRA ID Client ID',
       format: String,
       env: 'DEFRA_ID_CLIENT_ID',
-      default: '2fb0d715-affa-4bf1-836e-44a464e3fbea'
+      default: '63983fc2-cfff-45bb-8ec2-959e21062b9a'
     },
     clientSecret: {
       doc: 'DEFRA ID Client Secret',
       format: String,
       sensitive: true,
       env: 'DEFRA_ID_CLIENT_SECRET',
-      default: ''
+      default: 'test_value'
     }
   }
 })

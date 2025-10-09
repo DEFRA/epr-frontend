@@ -1,6 +1,7 @@
 import fetch from 'node-fetch'
 
 import { config } from '~/src/config/config.js'
+import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
 
 /**
  * Refresh access token using refresh token
@@ -8,7 +9,7 @@ import { config } from '~/src/config/config.js'
  * @returns {Promise<Response>} Fetch response
  */
 async function refreshAccessToken(request) {
-  const authedUser = await request.getUserSession()
+  const authedUser = await getUserSession(request)
   const refreshToken = authedUser?.refreshToken ?? null
   const clientId = config.get('defraId.clientId')
   const clientSecret = config.get('defraId.clientSecret')

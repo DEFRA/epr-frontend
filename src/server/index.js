@@ -4,8 +4,6 @@ import path from 'path'
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { defraId } from '~/src/server/common/helpers/auth/defra-id.js'
-import { dropUserSession } from '~/src/server/common/helpers/auth/drop-user-session.js'
-import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
 import { sessionCookie } from '~/src/server/common/helpers/auth/session-cookie.js'
 import { catchAll } from '~/src/server/common/helpers/errors.js'
 import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
@@ -70,9 +68,6 @@ export async function createServer() {
     expiresIn: config.get('session.cache.ttl'),
     segment: 'session'
   })
-
-  server.decorate('request', 'getUserSession', getUserSession)
-  server.decorate('request', 'dropUserSession', dropUserSession)
 
   const plugins = [
     requestLogger,

@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import { config } from '~/src/config/config.js'
 import { buildNavigation } from '~/src/config/nunjucks/context/build-navigation.js'
+import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
@@ -27,7 +28,7 @@ export async function context(request) {
     }
   }
 
-  const authedUser = request ? await request.getUserSession() : null
+  const authedUser = request ? await getUserSession(request) : null
 
   return {
     authedUser,

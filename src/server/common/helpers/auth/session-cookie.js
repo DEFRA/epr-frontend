@@ -2,6 +2,7 @@ import authCookie from '@hapi/cookie'
 import { isPast, parseISO, subMinutes } from 'date-fns'
 
 import { config } from '~/src/config/config.js'
+import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
 import { refreshAccessToken } from '~/src/server/common/helpers/auth/refresh-token.js'
 import {
   removeUserSession,
@@ -28,7 +29,7 @@ const sessionCookie = {
         },
         keepAlive: true,
         validate: async (request, session) => {
-          const authedUser = await request.getUserSession()
+          const authedUser = await getUserSession(request)
 
           // Check if token will expire in less than 1 minute
           const tokenHasExpired = isPast(

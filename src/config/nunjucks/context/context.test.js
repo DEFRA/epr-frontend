@@ -39,7 +39,7 @@ describe('#context', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
-        authedUser: null,
+        authedUser: {},
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
@@ -126,7 +126,7 @@ describe('#context cache', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
-        authedUser: null,
+        authedUser: {},
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
