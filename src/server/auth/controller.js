@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid'
 import { addSeconds } from 'date-fns'
+import { randomUUID } from 'node:crypto'
 
 /**
  * Auth callback controller
@@ -18,7 +18,7 @@ const authCallbackController = {
       const expiresInMilliSeconds = expiresInSeconds * 1000
       const expiresAt = addSeconds(new Date(), expiresInSeconds)
 
-      const sessionId = uuidv4()
+      const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, {
         ...profile,
         isAuthenticated: request.auth.isAuthenticated,
