@@ -18,7 +18,9 @@ import { router } from './router.js'
 export async function createServer() {
   setupProxy()
 
-  const routesConfig = {
+  const isDefraIdEnabled = config.get('featureFlags.defraId')
+
+  const routes = {
     validate: {
       options: {
         abortEarly: false
@@ -36,17 +38,13 @@ export async function createServer() {
       xss: 'enabled',
       noSniff: true,
       xframe: true
-    }
-  }
-
-  // Only set auth mode when feature flag is enabled
-  if (config.get('featureFlags.defraId')) {
-    routesConfig.auth = { mode: 'try' }
+    },
+    auth: isDefraIdEnabled ? { mode: 'try' } : false
   }
 
   const server = hapi.server({
     port: config.get('port'),
-    routes: routesConfig,
+    routes: routes,
     router: {
       stripTrailingSlash: true
     },
@@ -54,7 +52,7 @@ export async function createServer() {
       {
         name: config.get('session.cache.name'),
         engine: getCacheEngine(
-          /** @type {Engine} */ (config.get('session.cache.engine'))
+          /** @type {Engine} */ config.get('session.cache.engine')
         )
       }
     ],
@@ -78,7 +76,7 @@ export async function createServer() {
   ]
 
   // Only register authentication strategies when feature flag is enabled
-  if (config.get('featureFlags.defraId')) {
+  if (isDefraIdEnabled) {
     plugins.push(defraId, sessionCookie)
   }
 
