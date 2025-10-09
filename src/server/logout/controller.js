@@ -5,6 +5,7 @@ import { provideAuthedUser } from '~/src/server/logout/prerequisites/provide-aut
 /**
  * Logout controller
  * Clears local session and redirects to Defra ID logout endpoint
+ * @satisfies {Partial<ServerRoute>}
  */
 const logoutController = {
   options: {
@@ -33,3 +34,7 @@ const logoutController = {
 }
 
 export { logoutController }
+
+/**
+ * @import { ServerRoute } from '@hapi/hapi'
+ */

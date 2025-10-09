@@ -12,6 +12,7 @@ import {
 /**
  * Session cookie authentication plugin
  * Handles session validation and automatic token refresh
+ * @satisfies {ServerRegisterPluginObject<void>}
  */
 const sessionCookie = {
   plugin: {
@@ -76,3 +77,7 @@ const sessionCookie = {
 }
 
 export { sessionCookie }
+
+/**
+ * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ */

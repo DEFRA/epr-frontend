@@ -7,6 +7,7 @@ import { config } from '~/src/config/config.js'
 /**
  * Defra ID OIDC authentication plugin
  * Configures `@hapi/bell` for OAuth2/OIDC flow with Defra ID
+ * @satisfies {ServerRegisterPluginObject<void>}
  */
 const defraId = {
   plugin: {
@@ -87,3 +88,7 @@ const defraId = {
 }
 
 export { defraId }
+
+/**
+ * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ */
