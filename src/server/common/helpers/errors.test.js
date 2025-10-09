@@ -52,78 +52,88 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.notFound), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
+    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Page not found',
       heading: statusCodes.notFound,
       message: 'Page not found',
       t: expect.any(Function)
     })
-    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
+    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
+      statusCodes.notFound
+    )
   })
 
   test('should provide expected "Forbidden" page', () => {
     catchAll(mockRequest(statusCodes.forbidden), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
+    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Forbidden',
       heading: statusCodes.forbidden,
       message: 'Forbidden',
       t: expect.any(Function)
     })
-    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
+    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
+      statusCodes.forbidden
+    )
   })
 
   test('should provide expected "Unauthorized" page', () => {
     catchAll(mockRequest(statusCodes.unauthorized), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
+    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Unauthorized',
       heading: statusCodes.unauthorized,
       message: 'Unauthorized',
       t: expect.any(Function)
     })
-    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorized)
+    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
+      statusCodes.unauthorized
+    )
   })
 
   test('should provide expected "Bad Request" page', () => {
     catchAll(mockRequest(statusCodes.badRequest), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
+    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Bad Request',
       heading: statusCodes.badRequest,
       message: 'Bad Request',
       t: expect.any(Function)
     })
-    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
+    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
+      statusCodes.badRequest
+    )
   })
 
   test('should provide expected default page', () => {
     catchAll(mockRequest(statusCodes.imATeapot), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
+    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.imATeapot,
       message: 'Something went wrong',
       t: expect.any(Function)
     })
-    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.imATeapot)
+    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
+      statusCodes.imATeapot
+    )
   })
 
   test('should provide expected "Something went wrong" page and log error for internalServerError', () => {
     catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
 
-    expect(mockErrorLogger).toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
+    expect(mockErrorLogger).toHaveBeenCalledExactlyOnceWith(mockStack)
+    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.internalServerError,
       message: 'Something went wrong',
       t: expect.any(Function)
     })
-    expect(mockToolkitCode).toHaveBeenCalledWith(
+    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.internalServerError
     )
   })

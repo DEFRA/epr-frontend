@@ -18,7 +18,7 @@ const mockCreateSecureContext = vi
   .fn()
   .mockReturnValue({ context: { addCACert: mockAddCACert } })
 
-vi.mock('hapi-pino', () => ({
+vi.mock(import('hapi-pino'), () => ({
   default: {
     register: (server) => {
       server.decorate('server', 'logger', {
@@ -30,7 +30,7 @@ vi.mock('hapi-pino', () => ({
   }
 }))
 
-vi.mock('node:tls', async () => {
+vi.mock(import('node:tls'), async () => {
   const nodeTls = await import('node:tls')
 
   return {
@@ -57,7 +57,7 @@ describe(secureContext, () => {
     })
 
     test('secureContext decorator should not be available', () => {
-      expect(server.logger.info).toHaveBeenCalledWith(
+      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith(
         'Custom secure context is disabled'
       )
     })
@@ -69,10 +69,11 @@ describe(secureContext, () => {
 
   describe('when secure context is enabled', () => {
     const PROCESS_ENV = process.env
+    const mockCert = 'mock-trust-store-cert-one'
 
     beforeAll(() => {
       process.env = { ...PROCESS_ENV }
-      process.env.TRUSTSTORE_ONE = 'mock-trust-store-cert-one'
+      process.env.TRUSTSTORE_ONE = mockCert
     })
 
     beforeEach(async () => {
@@ -91,11 +92,14 @@ describe(secureContext, () => {
     })
 
     test('original tls.createSecureContext should have been called', () => {
-      expect(mockCreateSecureContext).toHaveBeenCalledWith({})
+      expect(mockCreateSecureContext).toHaveBeenCalledExactlyOnceWith({})
     })
 
     test('addCACert should have been called', () => {
-      expect(mockAddCACert).toHaveBeenCalledWith(expect.any(String))
+      // eslint-disable-next-line vitest/prefer-called-exactly-once-with
+      expect(mockAddCACert).toHaveBeenCalledWith(
+        Buffer.from(mockCert, 'base64').toString()
+      )
     })
 
     test('secureContext decorator should be available', () => {
@@ -118,7 +122,7 @@ describe(secureContext, () => {
     })
 
     test('should log about not finding any TRUSTSTORE_ certs', () => {
-      expect(server.logger.info).toHaveBeenCalledWith(
+      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith(
         'Could not find any TRUSTSTORE_ certificates'
       )
     })

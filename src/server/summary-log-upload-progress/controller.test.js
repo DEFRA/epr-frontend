@@ -7,7 +7,7 @@ import {
   cdpUploaderStatuses
 } from '../common/constants/statuses.js'
 
-vi.mock('~/src/server/common/helpers/upload/fetch-status.js', () => ({
+vi.mock(import('~/src/server/common/helpers/upload/fetch-status.js'), () => ({
   fetchStatus: vi.fn().mockResolvedValue({
     uploadStatus: 'pending'
   })
@@ -54,7 +54,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-    expect(yar.get).toHaveBeenCalledWith('summaryLogs')
+    expect(yar.get).toHaveBeenCalledExactlyOnceWith('summaryLogs')
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log: upload progress |')
     )
@@ -73,7 +73,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-    expect(fetchStatus).toHaveBeenCalledWith(uploadId)
+    expect(fetchStatus).toHaveBeenCalledExactlyOnceWith(uploadId)
     expect(result).toStrictEqual(
       expect.stringContaining('Your file is being uploaded')
     )
@@ -96,7 +96,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledWith(
+    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
       'summaryLogs',
       expect.objectContaining({ summaryLogStatus: 'uploaded' })
     )
@@ -111,7 +111,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledWith(
+    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
       'summaryLogs',
       expect.objectContaining({ summaryLogStatus: 'validating' })
     )
@@ -170,7 +170,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     const { statusCode, headers } = await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledWith(
+    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
       'summaryLogs',
       expect.objectContaining({
         summaryLogStatus: 'validationFailed',
@@ -195,7 +195,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     const { statusCode, headers } = await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledWith(
+    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
       'summaryLogs',
       expect.objectContaining({
         summaryLogStatus: 'validationFailed',

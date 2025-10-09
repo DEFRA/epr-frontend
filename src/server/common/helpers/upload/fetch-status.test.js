@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 import { describe, expect, test, vi } from 'vitest'
 import { fetchStatus } from './fetch-status.js'
 
-vi.mock('node-fetch', () => ({
+vi.mock(import('node-fetch'), () => ({
   default: vi.fn().mockResolvedValue({
     json: vi.fn()
   })
