@@ -265,6 +265,14 @@ export const config = convict({
       env: 'DEFRA_ID_CLIENT_SECRET',
       default: 'test_value'
     }
+  },
+  featureFlags: {
+    defraId: {
+      doc: 'Feature Flag: Defra ID',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_DEFRA_ID'
+    }
   }
 })
 

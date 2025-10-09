@@ -23,8 +23,8 @@ export const router = {
       // Health-check route. Used by platform to check if service is running, do not remove!
       await server.register([health])
 
-      // Authentication routes (only register when not in test mode)
-      if (!config.get('isTest')) {
+      // Authentication routes
+      if (config.get('featureFlags.defraId')) {
         await server.register([login, auth, logout])
       }
 

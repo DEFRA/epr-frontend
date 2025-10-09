@@ -39,8 +39,8 @@ export async function createServer() {
     }
   }
 
-  // Only set auth mode when not in test environment
-  if (!config.get('isTest')) {
+  // Only set auth mode when feature flag is enabled
+  if (config.get('featureFlags.defraId')) {
     routesConfig.auth = { mode: 'try' }
   }
 
@@ -77,8 +77,8 @@ export async function createServer() {
     sessionCache
   ]
 
-  // Only register authentication strategies when not in test mode
-  if (!config.get('isTest')) {
+  // Only register authentication strategies when feature flag is enabled
+  if (config.get('featureFlags.defraId')) {
     plugins.push(defraId, sessionCookie)
   }
 
