@@ -68,6 +68,9 @@
     "undici": "7.16.0",
     "uuid": "13.0.0"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*"
+  },
   "devDependencies": {
     "@babel/cli": "7.28.3",
     "@babel/core": "7.28.4",
