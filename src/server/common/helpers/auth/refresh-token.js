@@ -5,8 +5,8 @@ import { getUserSession } from '~/src/server/common/helpers/auth/get-user-sessio
 
 /**
  * Refresh access token using refresh token
- * @param {object} request - Hapi request object
- * @returns {Promise<Response>} Fetch response
+ * @param {Request} request - Hapi request object
+ * @returns {Promise<Response>}
  */
 async function refreshAccessToken(request) {
   const authedUser = await getUserSession(request)
@@ -35,3 +35,8 @@ async function refreshAccessToken(request) {
 }
 
 export { refreshAccessToken }
+
+/**
+ * @import { Request } from '@hapi/hapi'
+ * @import { Response } from 'node-fetch'
+ */

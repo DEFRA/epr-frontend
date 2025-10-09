@@ -6,7 +6,8 @@ import { getUserSession } from '~/src/server/common/helpers/auth/get-user-sessio
 
 /**
  * Remove user session from cache and clear cookie
- * @param {object} request - Hapi request object
+ * @param {Request} request - Hapi request object
+ * @returns {void}
  */
 function removeUserSession(request) {
   dropUserSession(request)
@@ -15,9 +16,9 @@ function removeUserSession(request) {
 
 /**
  * Update user session with refreshed tokens
- * @param {object} request - Hapi request object
- * @param {object} refreshedSession - Refreshed session data
- * @returns {Promise<object>}
+ * @param {Request} request - Hapi request object
+ * @param {RefreshedTokens} refreshedSession - Refreshed session data
+ * @returns {Promise<UserSession>}
  */
 async function updateUserSession(request, refreshedSession) {
   const payload = jwt.token.decode(refreshedSession.access_token).decoded
@@ -63,3 +64,16 @@ async function updateUserSession(request, refreshedSession) {
 }
 
 export { removeUserSession, updateUserSession }
+
+/**
+ * @import { Request } from '@hapi/hapi'
+ * @import { UserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
+ */
+
+/**
+ * @typedef {object} RefreshedTokens
+ * @property {string} access_token
+ * @property {string} refresh_token
+ * @property {string} id_token
+ * @property {number} expires_in
+ */
