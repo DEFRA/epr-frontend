@@ -110,7 +110,7 @@ Implementation plan for adding Defra ID OIDC authentication to epr-frontend, bas
 
 ### **Phase 7: Testing**
 
-- [ ] 16. Add unit tests for authentication helpers
+- [x] 16. Add unit tests for authentication helpers
   - [x] `src/server/common/helpers/auth/get-user-session.test.js`
   - [x] `src/server/common/helpers/auth/drop-user-session.test.js`
   - [x] `src/server/common/helpers/auth/user-session.test.js`
