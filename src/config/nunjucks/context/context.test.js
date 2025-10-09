@@ -40,6 +40,7 @@ describe('#context', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         authedUser: {},
+        isDefraIdEnabled: false,
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
@@ -127,6 +128,7 @@ describe('#context cache', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         authedUser: {},
+        isDefraIdEnabled: false,
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),

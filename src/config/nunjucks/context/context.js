@@ -32,6 +32,7 @@ export async function context(request) {
 
   return {
     authedUser,
+    isDefraIdEnabled: config.get('featureFlags.defraId'),
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
