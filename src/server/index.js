@@ -44,7 +44,7 @@ export async function createServer() {
 
   const server = hapi.server({
     port: config.get('port'),
-    routes: routes,
+    routes,
     router: {
       stripTrailingSlash: true
     },

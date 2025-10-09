@@ -38,6 +38,7 @@ export default [
     },
     rules: {
       'no-console': 'error',
+      'object-shorthand': ['error', 'properties'],
 
       // Turn off strict type checking rules
       '@typescript-eslint/no-unsafe-argument': 'off',
