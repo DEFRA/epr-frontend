@@ -68,6 +68,7 @@
     "undici": "7.16.0"
   },
   "optionalDependencies": {
+    "@esbuild/linux-x64": "*",
     "@rollup/rollup-linux-x64-gnu": "*"
   },
   "devDependencies": {
