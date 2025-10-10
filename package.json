@@ -69,7 +69,8 @@
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "*",
-    "@rollup/rollup-linux-x64-gnu": "*"
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "sass-embedded-linux-x64": "*"
   },
   "devDependencies": {
     "@babel/cli": "7.28.3",
