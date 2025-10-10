@@ -2,13 +2,13 @@
 
 {% block content %}
   <div role="note" aria-label="Information" class="application-notice info-notice">
-    <p>{{ t('home.languageNotice') | safe }}</p>
+    <p>{{ localize('home.languageNotice') | safe }}</p>
   </div>
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <h1 class="govuk-heading-l">{{ t('home.heading') }}</h1>
+        <h1 class="govuk-heading-l">{{ localize('home.heading') }}</h1>
         <p>
           <a href="/organisations/123/registrations/456" class="govuk-link">
             Test Registration

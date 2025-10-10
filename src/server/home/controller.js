@@ -7,9 +7,9 @@
 export const homeController = {
   handler(request, h) {
     return h.view('home/index', {
-      pageTitle: 'home.pageTitle',
-      serviceName: 'global.serviceName',
-      heading: 'home.heading'
+      pageTitle: request.localize('home.pageTitle'),
+      serviceName: request.localize('global.serviceName'),
+      heading: request.localize('home.heading')
     })
   }
 }

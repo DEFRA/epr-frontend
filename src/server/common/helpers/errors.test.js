@@ -19,7 +19,7 @@ describe('#errors', () => {
   test('should provide expected Not Found page', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy'
+      url: '/some/non-existent-page'
     })
 
     expect(result).toMatch('Page not found |')
@@ -56,7 +56,6 @@ describe('#catchAll', () => {
       pageTitle: 'Page not found',
       heading: statusCodes.notFound,
       message: 'Page not found',
-      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.notFound
@@ -71,7 +70,6 @@ describe('#catchAll', () => {
       pageTitle: 'Forbidden',
       heading: statusCodes.forbidden,
       message: 'Forbidden',
-      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.forbidden
@@ -86,7 +84,6 @@ describe('#catchAll', () => {
       pageTitle: 'Unauthorized',
       heading: statusCodes.unauthorized,
       message: 'Unauthorized',
-      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.unauthorized
@@ -101,7 +98,6 @@ describe('#catchAll', () => {
       pageTitle: 'Bad Request',
       heading: statusCodes.badRequest,
       message: 'Bad Request',
-      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.badRequest
@@ -116,7 +112,6 @@ describe('#catchAll', () => {
       pageTitle: 'Something went wrong',
       heading: statusCodes.imATeapot,
       message: 'Something went wrong',
-      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.imATeapot
@@ -131,7 +126,6 @@ describe('#catchAll', () => {
       pageTitle: 'Something went wrong',
       heading: statusCodes.internalServerError,
       message: 'Something went wrong',
-      t: expect.any(Function)
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.internalServerError

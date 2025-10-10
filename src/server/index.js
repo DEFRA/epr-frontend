@@ -12,8 +12,8 @@ import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
-import { i18nPlugin } from '~/src/server/common/helpers/i18n/index.js'
 import Joi from 'joi'
+import HapiI18n from 'hapi-i18n'
 
 export async function createServer() {
   setupProxy()
@@ -54,7 +54,7 @@ export async function createServer() {
       strictHeader: false
     }
   })
-  
+
   server.validator(Joi)
 
   await server.register([
@@ -64,10 +64,62 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
-    i18nPlugin,
+    {
+      plugin: HapiI18n,
+      options: {
+        locales: ['en', 'cy'],
+        directory: path.resolve('src/locales'),
+        defaultLocale: 'en',
+        queryParameter: 'lang',
+        cookieName: 'lang',
+        updateFiles: false,
+        objectNotation: true
+      }
+    },
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 
+  server.ext('onPreAuth', (request, h) => {
+    const { languageCode } = request.params
+
+    if (languageCode && ['en', 'cy'].includes(languageCode)) {
+      request.i18n.setLocale(languageCode)
+      request.localize = request.i18n.__.bind(request.i18n)
+    }
+
+    return h.continue
+  })
+
+  server.ext('onPreHandler', (request, h) => {
+    if (request.i18n) {
+      request.localize = request.i18n.__.bind(request.i18n)
+    }
+    return h.continue
+  })
+
+  server.ext('onRequest', (request, h) => {
+    const pathLocale = request.path.split('/')[1]
+    const supported = ['en', 'cy']
+
+    if (supported.includes(pathLocale)) {
+      request.i18n?.setLocale(pathLocale)
+      request.localize = request.i18n.__.bind(request.i18n)
+    }
+
+    return h.continue
+  })
+
+  server.ext('onPreResponse', (request, h) => {
+    const response = request.response
+    if (response.variety === 'view') {
+      response.source.context = {
+        ...(response.source.context || {}),
+        i18n: request.i18n,
+        localize: (...args) => request.i18n.__.apply(request.i18n, args)
+      }
+    }
+    return h.continue
+  })
   server.ext('onPreResponse', catchAll)
 
   return server

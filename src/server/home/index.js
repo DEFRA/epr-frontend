@@ -16,14 +16,7 @@ export const home = {
       server.route([
         {
           method: 'GET',
-          path: '/{lang?}',
-          options: {
-            validate: {
-              params: Joi.object({
-                lang: Joi.string().valid('en', 'cy')
-              })
-            }
-          },
+          path: '/{languageCode?}',
           ...homeController
         }
       ])

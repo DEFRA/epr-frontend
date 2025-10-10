@@ -19,6 +19,8 @@ let webpackManifest
  * @param {Request | null} request
  */
 export function context(request) {
+  console.log('🧠 context() called — i18n:', !!request.i18n)
+  console.log('🧠 request.i18n.__ type:', typeof request?.i18n?.__)
   if (!webpackManifest) {
     try {
       webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
@@ -32,6 +34,7 @@ export function context(request) {
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     breadcrumbs: [],
+    i18n: request.i18n,
     navigation: buildNavigation(request),
 
     /**

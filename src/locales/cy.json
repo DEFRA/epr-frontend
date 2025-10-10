@@ -12,7 +12,10 @@
     "languageNotice": "Mae’r gwasanaeth hwn hefyd ar gael <a href='/en'>yn Saesneg (English)</a>."
   },
   "errors": {
-    "generic": "Aeth rhywbeth o’i le. Ceisiwch eto.",
-    "notFound": "Tudalen heb ei chanfod"
+    "generic": "Aeth rhywbeth o'i le. Rhowch gynnig arall arni.",
+    "notFound": "Tudalen heb ei chanfod",
+    "forbidden": "Gwaharddedig",
+    "unauthorized": "Heb awdurdod",
+    "badRequest": "Cais annilys"
   }
 }
