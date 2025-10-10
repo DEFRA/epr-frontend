@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import { config } from '~/src/config/config.js'
 import { buildNavigation } from '~/src/config/nunjucks/context/build-navigation.js'
+import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
@@ -18,7 +19,7 @@ let webpackManifest
 /**
  * @param {Request | null} request
  */
-export function context(request) {
+export async function context(request) {
   if (!webpackManifest) {
     try {
       webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
@@ -27,7 +28,11 @@ export function context(request) {
     }
   }
 
+  const authedUser = request ? await getUserSession(request) : null
+
   return {
+    authedUser,
+    isDefraIdEnabled: config.get('featureFlags.defraId'),
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',

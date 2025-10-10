@@ -1,0 +1,22 @@
+import { loginController } from '~/src/server/login/controller.js'
+
+/**
+ * Login plugin
+ * Registers the /login route that triggers OIDC authentication
+ */
+const login = {
+  plugin: {
+    name: 'login',
+    register: (server) => {
+      server.route([
+        {
+          method: 'GET',
+          path: '/login',
+          ...loginController
+        }
+      ])
+    }
+  }
+}
+
+export { login }

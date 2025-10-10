@@ -1,42 +1,50 @@
-import path from 'path'
 import hapi from '@hapi/hapi'
+import path from 'path'
 
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
-import { router } from './router.js'
-import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
+import { defraId } from '~/src/server/common/helpers/auth/defra-id.js'
+import { sessionCookie } from '~/src/server/common/helpers/auth/session-cookie.js'
 import { catchAll } from '~/src/server/common/helpers/errors.js'
-import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
-import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
-import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
+import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
+import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
-import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
+import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
+import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
+import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
+import { router } from './router.js'
 
 export async function createServer() {
   setupProxy()
-  const server = hapi.server({
-    port: config.get('port'),
-    routes: {
-      validate: {
-        options: {
-          abortEarly: false
-        }
-      },
-      files: {
-        relativeTo: path.resolve(config.get('root'), '.public')
-      },
-      security: {
-        hsts: {
-          maxAge: 31536000,
-          includeSubDomains: true,
-          preload: false
-        },
-        xss: 'enabled',
-        noSniff: true,
-        xframe: true
+
+  const isDefraIdEnabled = config.get('featureFlags.defraId')
+
+  const routes = {
+    validate: {
+      options: {
+        abortEarly: false
       }
     },
+    files: {
+      relativeTo: path.resolve(config.get('root'), '.public')
+    },
+    security: {
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: false
+      },
+      xss: 'enabled',
+      noSniff: true,
+      xframe: true
+    },
+    auth: isDefraIdEnabled ? { mode: 'try' } : false
+  }
+
+  const server = hapi.server({
+    port: config.get('port'),
+    routes,
     router: {
       stripTrailingSlash: true
     },
@@ -44,7 +52,7 @@ export async function createServer() {
       {
         name: config.get('session.cache.name'),
         engine: getCacheEngine(
-          /** @type {Engine} */ (config.get('session.cache.engine'))
+          /** @type {Engine} */ config.get('session.cache.engine')
         )
       }
     ],
@@ -52,15 +60,29 @@ export async function createServer() {
       strictHeader: false
     }
   })
-  await server.register([
+
+  server.app.cache = server.cache({
+    cache: config.get('session.cache.name'),
+    expiresIn: config.get('session.cache.ttl'),
+    segment: 'session'
+  })
+
+  const plugins = [
     requestLogger,
     requestTracing,
     secureContext,
     pulse,
-    sessionCache,
-    nunjucksConfig,
-    router // Register all the controllers/routes defined in src/server/router.js
-  ])
+    sessionCache
+  ]
+
+  // Only register authentication strategies when feature flag is enabled
+  if (isDefraIdEnabled) {
+    plugins.push(defraId, sessionCookie)
+  }
+
+  plugins.push(nunjucksConfig, router)
+
+  await server.register(plugins)
 
   server.ext('onPreResponse', catchAll)
 
