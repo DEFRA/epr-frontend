@@ -4,6 +4,7 @@ import { config } from '~/src/config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import * as getUserSessionModule from '~/src/server/common/helpers/auth/get-user-session.js'
 import { createServer } from '~/src/server/index.js'
+import { createMockOidcServer } from '~/src/server/common/test-helpers/mock-oidc.js'
 
 vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'))
 
@@ -48,8 +49,10 @@ describe('#homeController', () => {
   describe('when auth is enabled', () => {
     /** @type {Server} */
     let server
+    const mockOidcServer = createMockOidcServer()
 
     beforeAll(async () => {
+      mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
       config.set('featureFlags.defraId', true)
 
       server = await createServer()
@@ -57,6 +60,7 @@ describe('#homeController', () => {
     })
 
     afterAll(async () => {
+      mockOidcServer.close()
       await server.stop({ timeout: 0 })
     })
 

@@ -1,19 +1,26 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { config } from '~/src/config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { createMockOidcServer } from '~/src/server/common/test-helpers/mock-oidc.js'
 import { createServer } from '~/src/server/index.js'
 
 describe('#loginController - integration', () => {
   /** @type {Server} */
   let server
+  const mockOidcServer = createMockOidcServer()
 
   beforeEach(async () => {
     server = null
+    mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
   })
 
   afterEach(async () => {
     config.reset('featureFlags.defraId')
-    await server.stop({ timeout: 0 })
+    mockOidcServer.resetHandlers()
+    mockOidcServer.close()
+    if (server) {
+      await server.stop({ timeout: 0 })
+    }
   })
 
   describe('login flow', () => {
