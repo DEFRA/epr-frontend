@@ -55,7 +55,7 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Page not found',
       heading: statusCodes.notFound,
-      message: 'Page not found',
+      message: 'Page not found'
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.notFound
@@ -69,7 +69,7 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Forbidden',
       heading: statusCodes.forbidden,
-      message: 'Forbidden',
+      message: 'Forbidden'
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.forbidden
@@ -83,7 +83,7 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Unauthorized',
       heading: statusCodes.unauthorized,
-      message: 'Unauthorized',
+      message: 'Unauthorized'
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.unauthorized
@@ -97,7 +97,7 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Bad Request',
       heading: statusCodes.badRequest,
-      message: 'Bad Request',
+      message: 'Bad Request'
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.badRequest
@@ -111,7 +111,7 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.imATeapot,
-      message: 'Something went wrong',
+      message: 'Something went wrong'
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.imATeapot
@@ -125,7 +125,7 @@ describe('#catchAll', () => {
     expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.internalServerError,
-      message: 'Something went wrong',
+      message: 'Something went wrong'
     })
     expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
       statusCodes.internalServerError

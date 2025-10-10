@@ -35,9 +35,6 @@ export function catchAll(request, h) {
     request.localize || request?.i18n?.__.bind(request.i18n) || ((key) => key)
 
   const errorMessage = statusCodeMessage(statusCode, localize)
-  console.log('statusCode: ', statusCode);
-  console.log('errorMessage: ', errorMessage);
-console.log('localize(errors).badRequest: ', localize('errors').badRequest);
   if (statusCode >= statusCodes.internalServerError) {
     request.logger.error(response?.stack)
   }
