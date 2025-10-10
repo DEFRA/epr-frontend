@@ -19,10 +19,10 @@ describe('#errors', () => {
   test('should provide expected Not Found page', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/non-existent-path'
+      url: '/some/non-existent-page'
     })
 
-    expect(result).toStrictEqual(expect.stringContaining('Page not found |'))
+    expect(result).toMatch('Page not found |')
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })

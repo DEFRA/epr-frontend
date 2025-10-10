@@ -1,0 +1,21 @@
+{
+  "global": {
+    "serviceName": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
+    "submit": "Cyflwyno",
+    "cancel": "Canslo",
+    "back": "Yn ôl",
+    "continue": "Parhau"
+  },
+  "home": {
+    "pageTitle": "Hafan",
+    "heading": "Hafan",
+    "languageNotice": "Mae’r gwasanaeth hwn hefyd ar gael <a href='/en'>yn Saesneg (English)</a>."
+  },
+  "errors": {
+    "generic": "Aeth rhywbeth o'i le. Rhowch gynnig arall arni.",
+    "notFound": "Tudalen heb ei chanfod",
+    "forbidden": "Gwaharddedig",
+    "unauthorized": "Heb awdurdod",
+    "badRequest": "Cais annilys"
+  }
+}

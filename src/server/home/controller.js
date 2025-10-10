@@ -3,11 +3,13 @@
  * Provided as an example, remove or modify as required.
  * @satisfies {Partial<ServerRoute>}
  */
+
 export const homeController = {
-  handler(_request, h) {
+  handler(request, h) {
     return h.view('home/index', {
-      pageTitle: 'Home',
-      heading: 'Home'
+      pageTitle: request.localize('home.pageTitle'),
+      serviceName: request.localize('global.serviceName'),
+      heading: request.localize('home.heading')
     })
   }
 }

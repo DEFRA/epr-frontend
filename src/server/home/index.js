@@ -1,4 +1,5 @@
 import { homeController } from '~/src/server/home/controller.js'
+import Joi from 'joi'
 
 /**
  * Sets up the routes used in the home page.
@@ -15,7 +16,7 @@ export const home = {
       server.route([
         {
           method: 'GET',
-          path: '/',
+          path: '/{languageCode?}',
           ...homeController
         }
       ])
