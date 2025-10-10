@@ -1,0 +1,19 @@
+{
+  "serviceName": "Manage your packaging waste responsibilities",
+  "global": {
+    "serviceName": "Manage your packaging waste responsibilities",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "back": "Back",
+    "continue": "Continue"
+  },
+  "home": {
+    "pageTitle": "Home",
+    "heading": "Home",
+    "languageNotice": "This service is also available <a href='/cy'>in Welsh (Cymraeg)</a>."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "notFound": "Page not found"
+  }
+}
