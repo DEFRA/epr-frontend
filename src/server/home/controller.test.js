@@ -3,16 +3,12 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { config } from '~/src/config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import * as getUserSessionModule from '~/src/server/common/helpers/auth/get-user-session.js'
-import { createServer } from '~/src/server/index.js'
 import { createMockOidcServer } from '~/src/server/common/test-helpers/mock-oidc.js'
+import { createServer } from '~/src/server/index.js'
 
 vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'))
 
 describe('#homeController', () => {
-  afterAll(async () => {
-    config.reset('featureFlags.defraId')
-  })
-
   describe('when auth is disabled', () => {
     /** @type {Server} */
     let server
@@ -49,17 +45,23 @@ describe('#homeController', () => {
   describe('when auth is enabled', () => {
     /** @type {Server} */
     let server
-    const mockOidcServer = createMockOidcServer()
+    const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
     beforeAll(async () => {
       mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
       config.set('featureFlags.defraId', true)
+      config.set(
+        'defraId.oidcConfigurationUrl',
+        'http://defra-id.auth/.well-known/openid-configuration'
+      )
 
       server = await createServer()
       await server.initialize()
     })
 
     afterAll(async () => {
+      config.reset('featureFlags.defraId')
+      config.reset('defraId.oidcConfigurationUrl')
       mockOidcServer.close()
       await server.stop({ timeout: 0 })
     })

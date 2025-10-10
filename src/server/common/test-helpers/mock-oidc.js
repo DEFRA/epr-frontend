@@ -2,16 +2,18 @@ import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 
 /**
- * Mock OIDC configuration response
+ * Generate mock OIDC configuration response
  * Matches the structure returned by cdp-defra-id-stub
+ * @param {string} baseUrl - Base URL for the OIDC provider (e.g., 'http://localhost:3200/cdp-defra-id-stub')
+ * @returns {object} OIDC configuration object
  */
-const mockOidcConfiguration = {
-  issuer: 'http://localhost:3200/cdp-defra-id-stub',
-  authorization_endpoint: 'http://localhost:3200/cdp-defra-id-stub/authorize',
-  token_endpoint: 'http://localhost:3200/cdp-defra-id-stub/token',
-  userinfo_endpoint: 'http://localhost:3200/cdp-defra-id-stub/userinfo',
-  end_session_endpoint: 'http://localhost:3200/cdp-defra-id-stub/logout',
-  jwks_uri: 'http://localhost:3200/.well-known/jwks.json',
+const createMockOidcConfiguration = (baseUrl) => ({
+  issuer: baseUrl,
+  authorization_endpoint: `${baseUrl}/authorize`,
+  token_endpoint: `${baseUrl}/token`,
+  userinfo_endpoint: `${baseUrl}/userinfo`,
+  end_session_endpoint: `${baseUrl}/logout`,
+  jwks_uri: `${new URL(baseUrl).origin}/.well-known/jwks.json`,
   response_types_supported: ['code'],
   subject_types_supported: ['public'],
   id_token_signing_alg_values_supported: ['RS256'],
@@ -36,27 +38,34 @@ const mockOidcConfiguration = {
     'roles'
   ],
   code_challenge_methods_supported: ['plain', 'S256']
-}
+})
 
 /**
- * MSW request handlers for OIDC endpoints
+ * Create MSW request handlers for OIDC endpoints
+ * @param {string} baseUrl - Base URL for the OIDC provider
+ * @returns {Array} MSW request handlers
  */
-const oidcHandlers = [
-  // OIDC discovery endpoint
-  http.get(
-    'http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration',
-    () => {
-      return HttpResponse.json(mockOidcConfiguration)
-    }
-  )
-]
+const createOidcHandlers = (baseUrl) => {
+  const config = createMockOidcConfiguration(baseUrl)
+
+  return [
+    // OIDC discovery endpoint
+    http.get(`${baseUrl}/.well-known/openid-configuration`, () => {
+      return HttpResponse.json(config)
+    })
+  ]
+}
 
 /**
  * Create and configure MSW server for OIDC tests
+ * @param {string} [baseUrl] - Base URL for the OIDC provider (defaults to 'http://localhost:3200/cdp-defra-id-stub')
  * @returns {import('msw/node').SetupServer}
  */
-const createMockOidcServer = () => {
-  return setupServer(...oidcHandlers)
+const createMockOidcServer = (
+  baseUrl = 'http://localhost:3200/cdp-defra-id-stub'
+) => {
+  const handlers = createOidcHandlers(baseUrl)
+  return setupServer(...handlers)
 }
 
-export { createMockOidcServer, mockOidcConfiguration, oidcHandlers }
+export { createMockOidcServer, createMockOidcConfiguration, createOidcHandlers }
