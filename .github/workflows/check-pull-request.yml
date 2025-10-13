@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Check branch name
         uses: actions/github-script@v8
-        if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.head_ref, 'snyk-upgrade-') }}
+        if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.head_ref, 'dependabot/') && !startsWith(github.head_ref, 'snyk-upgrade-') }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
@@ -29,9 +29,10 @@ jobs:
             } else {
               core.exportVariable('ticketKey', ticketKey.toUpperCase());
             }
+
       - name: Add ticket link to PR description
         uses: actions/github-script@v8
-        if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.head_ref, 'snyk-upgrade-') }}
+        if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.head_ref, 'dependabot/') && !startsWith(github.head_ref, 'snyk-upgrade-') }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
