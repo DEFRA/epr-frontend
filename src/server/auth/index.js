@@ -9,7 +9,7 @@ const auth = {
     name: 'auth',
     register: (server) => {
       server.route({
-        method: ['GET', 'POST'],
+        method: ['GET'],
         path: '/auth/callback',
         ...authCallbackController
       })
