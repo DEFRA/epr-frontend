@@ -4,8 +4,10 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <h1 class="govuk-heading-l">Sites</h1>
-        <h1 class="govuk-heading-m">Test</h1>
+        <p>{{ localise("home:languageNotice") | safe }}</p>
+        <p>{{ greeting }}</p>
+        <h1 class="govuk-heading-l">{{ localise("home:heading") | safe }}</h1>
+        <h1 class="govuk-heading-m">{{ localise("common:serviceName") | safe }}</h1>
         <p>
           <a href="/organisations/123/registrations/456" class="govuk-link">Test Registration</a>
         </p>
