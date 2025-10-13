@@ -66,6 +66,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: |
+          # FIXME remove hardcoded npm version (see: https://stackoverflow.com/a/79048990))
+          npm i -g npm@11.4.2
           npm ci --ignore-scripts
           npm run build
           npm run format:check
