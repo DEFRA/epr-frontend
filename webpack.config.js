@@ -1,10 +1,10 @@
+import { CleanWebpackPlugin } from 'clean-webpack-plugin'
+import CopyPlugin from 'copy-webpack-plugin'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
-import CopyPlugin from 'copy-webpack-plugin'
-import { CleanWebpackPlugin } from 'clean-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
-import WebpackAssetsManifest from 'webpack-assets-manifest'
+import { WebpackAssetsManifest } from 'webpack-assets-manifest'
 
 const { NODE_ENV = 'development' } = process.env
 
