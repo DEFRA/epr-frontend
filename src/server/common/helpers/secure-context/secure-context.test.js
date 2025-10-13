@@ -96,7 +96,6 @@ describe(secureContext, () => {
     })
 
     test('addCACert should have been called', () => {
-      // eslint-disable-next-line vitest/prefer-called-exactly-once-with
       expect(mockAddCACert).toHaveBeenCalledWith(
         Buffer.from(mockCert, 'base64').toString()
       )
