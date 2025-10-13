@@ -5,7 +5,7 @@ import { getUserSession } from '~/src/server/common/helpers/auth/get-user-sessio
  * @type {import('@hapi/hapi').RouteOptionsPreObject}
  */
 const provideAuthedUser = {
-  method: async (request) => await getUserSession(request),
+  method: async (request) => getUserSession(request),
   assign: 'authedUser'
 }
 

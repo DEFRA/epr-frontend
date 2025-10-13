@@ -60,7 +60,7 @@ async function updateUserSession(request, refreshedSession) {
     expiresAt
   })
 
-  return await getUserSession(request)
+  return getUserSession(request)
 }
 
 export { removeUserSession, updateUserSession }

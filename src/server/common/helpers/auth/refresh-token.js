@@ -24,7 +24,7 @@ async function refreshAccessToken(request) {
 
   request.logger.info('Access token expired, refreshing...')
 
-  return await fetch(authedUser.tokenUrl, {
+  return fetch(authedUser.tokenUrl, {
     method: 'post',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',

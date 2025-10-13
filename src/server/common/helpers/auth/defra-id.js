@@ -1,8 +1,16 @@
-import fetch from 'node-fetch'
-import jwt from '@hapi/jwt'
 import bell from '@hapi/bell'
+import jwt from '@hapi/jwt'
+import fetch from 'node-fetch'
 
 import { config } from '~/src/config/config.js'
+
+const getOidcConfiguration = async (oidcConfigurationUrl) => {
+  const res = await fetch(oidcConfigurationUrl)
+  if (!res.ok) {
+    throw new Error(`OIDC config fetch failed: ${res.status} ${res.statusText}`)
+  }
+  return res.json()
+}
 
 /**
  * Defra ID OIDC authentication plugin
@@ -22,9 +30,7 @@ const defraId = {
       await server.register(bell)
 
       // Fetch OIDC configuration from discovery endpoint
-      const oidcConf = await fetch(oidcConfigurationUrl).then((res) =>
-        res.json()
-      )
+      const oidcConf = await getOidcConfiguration(oidcConfigurationUrl)
 
       // Configure bell authentication strategy
       server.auth.strategy('defra-id', 'bell', {
