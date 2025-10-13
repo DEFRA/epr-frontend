@@ -4,7 +4,7 @@ This document describes the OpenID Connect (OIDC) authentication flow between th
 
 ## Overview
 
-The authentication system uses the standard OAuth 2.0 Authorization Code flow with PKCE (Proof Key for Code Exchange) support. The `epr-frontend` acts as the OIDC client (Relying Party), while `cdp-defra-id-stub` acts as the OIDC Provider (Identity Provider).
+The authentication system uses the standard OAuth 2.0 Authorisation Code flow with PKCE (Proof Key for Code Exchange) support. The `epr-frontend` acts as the OIDC client (Relying Party), while `cdp-defra-id-stub` acts as the OIDC Provider (Identity Provider).
 
 ## System Components
 
@@ -26,7 +26,7 @@ The authentication system uses the standard OAuth 2.0 Authorization Code flow wi
 - **Purpose**: Mock Defra ID identity provider for local development
 - **Key Routes**:
   - `/.well-known/openid-configuration` - OIDC discovery endpoint
-  - `/cdp-defra-id-stub/authorize` - Authorization endpoint
+  - `/cdp-defra-id-stub/authorize` - Authorisation endpoint
   - `/cdp-defra-id-stub/token` - Token exchange endpoint
   - `/cdp-defra-id-stub/login` - User selection page
   - `/cdp-defra-id-stub/logout` - Logout endpoint
@@ -52,13 +52,13 @@ When the defra-id plugin initializes, it fetches the OIDC configuration from the
 GET http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration
 ```
 
-This returns the authorization and token endpoints that will be used in the flow.
+This returns the authorisation and token endpoints that will be used in the flow.
 
 **Code Reference**: `src/server/common/helpers/auth/defra-id.js:24-27`
 
-### 3. Redirect to Authorization Endpoint
+### 3. Redirect to Authorisation Endpoint
 
-The `@hapi/bell` plugin automatically redirects the user's browser to the stub's authorization endpoint with the following parameters:
+The `@hapi/bell` plugin automatically redirects the user's browser to the stub's authorisation endpoint with the following parameters:
 
 ```
 GET http://localhost:3200/cdp-defra-id-stub/authorize
@@ -83,14 +83,14 @@ The stub application:
 
 **Code Reference**: `cdp-defra-id-stub/src/server/oidc/controllers/authorize-controller.js:18-29`
 
-### 5. Authorization Code Generation
+### 5. Authorisation Code Generation
 
 Once a user is selected, the stub:
 
 - Validates the client_id, response_type, scope, and other parameters
-- Creates a session with user information and the authorization code
+- Creates a session with user information and the authorisation code
 - Redirects back to the frontend's callback URL with:
-  - `code` - Authorization code
+  - `code` - Authorisation code
   - `state` - State parameter for CSRF protection
 
 ```
@@ -101,14 +101,14 @@ Redirect to: http://localhost:3000/auth/callback?code=<session_id>&state=<state>
 
 ### 6. Token Exchange
 
-The frontend's callback handler (managed by `@hapi/bell`) automatically exchanges the authorization code for tokens by making a POST request to the token endpoint:
+The frontend's callback handler (managed by `@hapi/bell`) automatically exchanges the authorisation code for tokens by making a POST request to the token endpoint:
 
 ```
 POST http://localhost:3200/cdp-defra-id-stub/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=authorization_code
-&code=<authorization_code>
+&code=<authorisation_code>
 &client_id=63983fc2-cfff-45bb-8ec2-959e21062b9a
 &client_secret=test_value
 &redirect_uri=http://localhost:3000/auth/callback
@@ -259,7 +259,7 @@ sequenceDiagram
     Frontend->>Stub: GET /.well-known/openid-configuration
     Stub-->>Frontend: Return OIDC endpoints configuration
 
-    Note over User,Stub: 2. Authorization Request
+    Note over User,Stub: 2. Authorisation Request
     Frontend-->>Browser: 302 Redirect to authorize endpoint
     Note over Browser: Redirect with client_id, scope,<br/>redirect_uri, state
     Browser->>Stub: GET /cdp-defra-id-stub/authorize<br/>?client_id=...&response_type=code<br/>&redirect_uri=.../auth/callback<br/>&scope=openid+offline_access<br/>&state=...&serviceId=...
@@ -272,16 +272,16 @@ sequenceDiagram
         Browser->>Stub: Submit user selection
     end
 
-    Note over Stub: Validate client_id, scope, response_type<br/>Create session with authorization code
+    Note over Stub: Validate client_id, scope, response_type<br/>Create session with authorisation code
 
-    Note over User,Stub: 4. Authorization Response
+    Note over User,Stub: 4. Authorisation Response
     Stub-->>Browser: 302 Redirect to callback<br/>with code & state
     Browser->>Frontend: GET /auth/callback<br/>?code=<session_id>&state=<state>
 
     Note over User,Stub: 5. Token Exchange
     Note over Frontend: @hapi/bell validates state<br/>and exchanges code for tokens
     Frontend->>Stub: POST /cdp-defra-id-stub/token<br/>grant_type=authorization_code<br/>code=...&client_id=...&client_secret=...
-    Note over Stub: Validate authorization code<br/>and client credentials
+    Note over Stub: Validate authorisation code<br/>and client credentials
     Stub-->>Frontend: Return tokens<br/>{access_token, id_token,<br/>refresh_token, expires_in}
 
     Note over User,Stub: 6. Profile Extraction & Session Creation
@@ -330,13 +330,13 @@ Both applications use Pino for logging. Key events logged during the flow:
 **Frontend**:
 
 - OIDC configuration fetch
-- Authorization redirect
+- Authorisation redirect
 - Token exchange
 - Session creation: "User has been successfully authenticated"
 
 **Stub**:
 
-- Authorization requests with client details
+- Authorisation requests with client details
 - User selection/validation
 - Token generation
 - Session lookups
@@ -369,7 +369,7 @@ The stub maintains an in-memory list of test users. You can register new users v
 
 - `src/server/oidc/index.js` - OIDC plugin and route registration
 - `src/server/oidc/controllers/well-known-openid-configuration.js` - Discovery endpoint
-- `src/server/oidc/controllers/authorize-controller.js` - Authorization endpoint
+- `src/server/oidc/controllers/authorize-controller.js` - Authorisation endpoint
 - `src/server/oidc/controllers/token-controller.js` - Token endpoint
 - `src/server/oidc/oidc-config.js` - OIDC configuration
 - `src/config/index.js:200-238` - OIDC stub configuration
@@ -379,6 +379,6 @@ The stub maintains an in-memory list of test users. You can register new users v
 This implementation follows:
 
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
-- [OAuth 2.0 Authorization Code Flow](https://tools.ietf.org/html/rfc6749#section-4.1)
+- [OAuth 2.0 Authorisation Code Flow](https://tools.ietf.org/html/rfc6749#section-4.1)
 - [PKCE (RFC 7636)](https://tools.ietf.org/html/rfc7636)
 - [JWT (RFC 7519)](https://tools.ietf.org/html/rfc7519)
