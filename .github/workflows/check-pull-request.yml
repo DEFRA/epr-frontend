@@ -3,7 +3,7 @@ name: Check Pull Request
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
     types:
       - opened
       - reopened
@@ -67,7 +67,10 @@ jobs:
           cache: npm
       - run: |
           # FIXME remove hardcoded npm version (see: https://stackoverflow.com/a/79048990))
-          npm i -g npm@11.4.2
+          npm i -g npm@11.6.2
+          npm i --ignore-scripts
+          echo "npm version: $(npm -v)"
+
           npm ci --ignore-scripts
           npm run build
           npm run format:check
