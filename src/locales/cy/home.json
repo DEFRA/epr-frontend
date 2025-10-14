@@ -2,5 +2,8 @@
   "pageTitle": "Hafan",
   "heading": "Hafan",
   "languageNotice": "Mae’r gwasanaeth hwn hefyd ar gael <a href='/en'>yn Saesneg (English)</a>.",
-  "greeting": "Hi there(inWelsh), {{name}}!"
+  "greeting": "Hi there(inWelsh), {{name}}!",
+  "item": "{{count}} eitemau",
+  "item_one": "{{count}} eitem",
+  "item_other": "{{count}} eitemau"
 }
