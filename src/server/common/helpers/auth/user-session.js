@@ -9,8 +9,8 @@ import { getUserSession } from '~/src/server/common/helpers/auth/get-user-sessio
  * @param {Request} request - Hapi request object
  * @returns {void}
  */
-function removeUserSession(request) {
-  dropUserSession(request)
+async function removeUserSession(request) {
+  await dropUserSession(request)
   request.cookieAuth.clear()
 }
 

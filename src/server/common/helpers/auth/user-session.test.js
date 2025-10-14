@@ -13,7 +13,7 @@ vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'))
 vi.mock(import('@hapi/jwt'))
 
 describe('#removeUserSession', () => {
-  test('should drop session and clear cookie', () => {
+  test('should drop session and clear cookie', async () => {
     const mockRequest = {
       state: {
         userSession: {
@@ -32,7 +32,7 @@ describe('#removeUserSession', () => {
       }
     }
 
-    removeUserSession(mockRequest)
+    await removeUserSession(mockRequest)
 
     expect(dropUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
     expect(mockRequest.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()

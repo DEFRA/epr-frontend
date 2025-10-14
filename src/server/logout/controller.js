@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash-es'
-import { dropUserSession } from '~/src/server/common/helpers/auth/drop-user-session.js'
 import { provideAuthedUser } from '~/src/server/logout/prerequisites/provide-authed-user.js'
+import { removeUserSession } from '../common/helpers/auth/user-session.js'
 
 /**
  * Logout controller
@@ -25,9 +25,7 @@ const logoutController = {
       `${authedUser.logoutUrl}?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${referrer}`
     )
 
-    // FIXME should this be awaited?
-    dropUserSession(request)
-    request.cookieAuth.clear()
+    await removeUserSession(request)
 
     return h.redirect(logoutUrl)
   }
