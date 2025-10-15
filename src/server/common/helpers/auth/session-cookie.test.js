@@ -51,7 +51,6 @@ describe('#sessionCookie', () => {
   let mockSubMinutes
 
   beforeEach(async () => {
-    // Reset all mocks
     vi.clearAllMocks()
 
     // Import mocked modules

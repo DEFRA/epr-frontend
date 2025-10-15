@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defraId } from '~/src/server/common/helpers/auth/defra-id.js'
 
-// Mock dependencies
 vi.mock(import('@hapi/bell'), () => ({
   default: {
     name: 'bell',
@@ -35,7 +34,6 @@ describe('#defraId', () => {
   let mockBell
 
   beforeEach(async () => {
-    // Reset all mocks
     vi.clearAllMocks()
 
     // Import mocked modules

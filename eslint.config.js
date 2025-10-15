@@ -39,7 +39,6 @@ export default [
     rules: {
       'no-console': 'error',
       'object-shorthand': ['error', 'properties'],
-      // 'promise/prefer-await-to-then': 'error',
       'promise/prefer-await-to-then': ['error', { strict: true }],
 
       // Turn off strict type checking rules
