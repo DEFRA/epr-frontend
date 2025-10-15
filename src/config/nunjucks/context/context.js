@@ -31,13 +31,13 @@ export async function context(request) {
   const authedUser = request ? await getUserSession(request) : null
 
   return {
-    authedUser,
-    isDefraIdEnabled: config.get('featureFlags.defraId'),
     assetPath: `${assetPath}/assets`,
+    authedUser,
+    breadcrumbs: [],
+    isDefraIdEnabled: config.get('featureFlags.defraId'),
+    navigation: buildNavigation(request),
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
-    breadcrumbs: [],
-    navigation: buildNavigation(request),
 
     /**
      * @param {string} asset

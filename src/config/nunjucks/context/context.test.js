@@ -1,7 +1,18 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  test,
+  vi
+} from 'vitest'
+import { config } from '~/src/config/config.js'
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
+const mockGetUserSession = vi.fn()
 
 vi.mock(import('node:fs'), async () => ({
   ...(await vi.importActual('node:fs')),
@@ -10,15 +21,53 @@ vi.mock(import('node:fs'), async () => ({
 vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
+vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'), () => ({
+  getUserSession: (...args) => mockGetUserSession(...args)
+}))
 
 const serviceName = 'Manage your packaging waste responsibilities'
 
 describe('#context', () => {
   const mockRequest = {
-    path: '/',
-    getUserSession: vi.fn().mockResolvedValue(null)
+    path: '/'
   }
   let contextResult
+
+  beforeEach(() => {
+    mockGetUserSession.mockResolvedValue({})
+  })
+
+  describe('defra id', () => {
+    let contextImport
+
+    beforeAll(async () => {
+      contextImport = await import('~/src/config/nunjucks/context/context.js')
+    })
+
+    afterEach(() => {
+      config.reset('featureFlags.defraId')
+    })
+
+    it('should provide the feature flag when enabled', async () => {
+      config.set('featureFlags.defraId', true)
+
+      contextResult = await contextImport.context(mockRequest)
+
+      expect(contextResult).toStrictEqual(
+        expect.objectContaining({ isDefraIdEnabled: true })
+      )
+    })
+
+    it('should add the authed user to the context', async () => {
+      mockGetUserSession.mockResolvedValue({ token: 'token-val' })
+
+      contextResult = await contextImport.context(mockRequest)
+
+      expect(contextResult).toStrictEqual(
+        expect.objectContaining({ authedUser: { token: 'token-val' } })
+      )
+    })
+  })
 
   describe('when webpack manifest file read succeeds', () => {
     let contextImport
@@ -39,11 +88,11 @@ describe('#context', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
-        authedUser: {},
-        isDefraIdEnabled: false,
         assetPath: '/public/assets',
+        authedUser: {},
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        isDefraIdEnabled: false,
         navigation: [
           {
             active: true,
@@ -99,8 +148,7 @@ describe('#context', () => {
 
 describe('#context cache', () => {
   const mockRequest = {
-    path: '/',
-    getUserSession: vi.fn().mockResolvedValue(null)
+    path: '/'
   }
   let contextResult
 
@@ -127,11 +175,11 @@ describe('#context cache', () => {
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
-        authedUser: {},
-        isDefraIdEnabled: false,
         assetPath: '/public/assets',
+        authedUser: {},
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        isDefraIdEnabled: false,
         navigation: [
           {
             active: true,
