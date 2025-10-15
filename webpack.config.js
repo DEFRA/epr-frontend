@@ -3,7 +3,9 @@ import CopyPlugin from 'copy-webpack-plugin'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
+import * as sass from 'sass'
 import TerserPlugin from 'terser-webpack-plugin'
+
 import { WebpackAssetsManifest } from 'webpack-assets-manifest'
 
 const { NODE_ENV = 'development' } = process.env
@@ -107,6 +109,7 @@ export default {
           {
             loader: 'sass-loader',
             options: {
+              implementation: sass,
               sassOptions: {
                 loadPaths: [
                   path.join(dirname, 'src/client/stylesheets'),

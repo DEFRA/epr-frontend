@@ -1,7 +1,18 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  test,
+  vi
+} from 'vitest'
+import { config } from '~/src/config/config.js'
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
+const mockGetUserSession = vi.fn()
 
 vi.mock(import('node:fs'), async () => ({
   ...(await vi.importActual('node:fs')),
@@ -10,12 +21,53 @@ vi.mock(import('node:fs'), async () => ({
 vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
+vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'), () => ({
+  getUserSession: (...args) => mockGetUserSession(...args)
+}))
 
 const serviceName = 'Manage your packaging waste responsibilities'
 
 describe('#context', () => {
-  const mockRequest = { path: '/' }
+  const mockRequest = {
+    path: '/'
+  }
   let contextResult
+
+  beforeEach(() => {
+    mockGetUserSession.mockResolvedValue({})
+  })
+
+  describe('defra id', () => {
+    let contextImport
+
+    beforeAll(async () => {
+      contextImport = await import('~/src/config/nunjucks/context/context.js')
+    })
+
+    afterEach(() => {
+      config.reset('featureFlags.defraId')
+    })
+
+    it('should provide the feature flag when enabled', async () => {
+      config.set('featureFlags.defraId', true)
+
+      contextResult = await contextImport.context(mockRequest)
+
+      expect(contextResult).toStrictEqual(
+        expect.objectContaining({ isDefraIdEnabled: true })
+      )
+    })
+
+    it('should add the authed user to the context', async () => {
+      mockGetUserSession.mockResolvedValue({ token: 'token-val' })
+
+      contextResult = await contextImport.context(mockRequest)
+
+      expect(contextResult).toStrictEqual(
+        expect.objectContaining({ authedUser: { token: 'token-val' } })
+      )
+    })
+  })
 
   describe('when webpack manifest file read succeeds', () => {
     let contextImport
@@ -24,21 +76,23 @@ describe('#context', () => {
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
-    beforeEach(() => {
+    beforeEach(async () => {
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-      contextResult = contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest)
     })
 
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
+        authedUser: {},
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        isDefraIdEnabled: false,
         navigation: [
           {
             active: true,
@@ -76,12 +130,12 @@ describe('#context', () => {
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
-    beforeEach(() => {
+    beforeEach(async () => {
       mockReadFileSync.mockImplementation(() => {
         throw new Error('File not found')
       })
 
-      contextResult = contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest)
     })
 
     test('should log that the Webpack Manifest file is not available', () => {
@@ -93,7 +147,9 @@ describe('#context', () => {
 })
 
 describe('#context cache', () => {
-  const mockRequest = { path: '/' }
+  const mockRequest = {
+    path: '/'
+  }
   let contextResult
 
   describe('webpack manifest file cache', () => {
@@ -103,14 +159,14 @@ describe('#context cache', () => {
       contextImport = await import('~/src/config/nunjucks/context/context.js')
     })
 
-    beforeEach(() => {
+    beforeEach(async () => {
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-      contextResult = contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest)
     })
 
     test('should read file', () => {
@@ -120,8 +176,10 @@ describe('#context cache', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
+        authedUser: {},
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        isDefraIdEnabled: false,
         navigation: [
           {
             active: true,
