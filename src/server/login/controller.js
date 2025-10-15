@@ -8,7 +8,7 @@ const loginController = {
   options: {
     auth: 'defra-id'
   },
-  handler: async (request, h) => h.redirect('/')
+  handler: async (_request, h) => h.redirect('/')
 }
 
 export { loginController }
