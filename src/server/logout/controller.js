@@ -25,7 +25,7 @@ const logoutController = {
       `${authedUser.logoutUrl}?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${referrer}`
     )
 
-    await removeUserSession(request)
+    removeUserSession(request)
 
     return h.redirect(logoutUrl)
   }
