@@ -12,6 +12,8 @@ import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
+import { initI18n } from './common/helpers/i18n/i18n.js'
+import { i18nPlugin } from './common/helpers/i18next.js'
 
 export async function createServer() {
   setupProxy()
@@ -52,6 +54,8 @@ export async function createServer() {
       strictHeader: false
     }
   })
+  const i18next = await initI18n()
+
   await server.register([
     requestLogger,
     requestTracing,
@@ -59,8 +63,32 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
+    { plugin: i18nPlugin, options: { i18next } },
     router // Register all the controllers/routes defined in src/server/router.js
   ])
+
+  server.ext('onRequest', (request, h) => {
+    const { path } = request
+
+    if (path.startsWith('/cy')) {
+      request.i18n.changeLanguage('cy')
+      request.setUrl(path.replace(/^\/cy/, '') || '/')
+    } else {
+      request.i18n.changeLanguage('en')
+    }
+    return h.continue
+  })
+
+  server.ext('onPreResponse', (request, h) => {
+    console.log('serverRequest##################: ', request?.t);
+  if (request.response.variety === 'view') {
+    request.response.source.context = {
+      ...(request.response.source.context || {}),
+      localise: request.t
+    }
+  }
+  return h.continue
+})
 
   server.ext('onPreResponse', catchAll)
 
