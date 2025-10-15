@@ -1,8 +1,8 @@
 import jwt from '@hapi/jwt'
 import { addSeconds } from 'date-fns'
-
-import { dropUserSession } from '~/src/server/common/helpers/auth/drop-user-session.js'
-import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
+import { getDisplayName } from './display.js'
+import { dropUserSession } from './drop-user-session.js'
+import { getUserSession } from './get-user-session.js'
 
 /**
  * Remove user session from cache and clear cookie
@@ -29,9 +29,7 @@ async function updateUserSession(request, refreshedSession) {
   const expiresInMilliSeconds = expiresInSeconds * 1000
   const expiresAt = addSeconds(new Date(), expiresInSeconds)
   const authedUser = await getUserSession(request)
-  const displayName = [payload.firstName, payload.lastName]
-    .filter((part) => part)
-    .join(' ')
+  const displayName = getDisplayName(payload)
 
   await request.server.app.cache.set(request.state.userSession.sessionId, {
     ...authedUser,

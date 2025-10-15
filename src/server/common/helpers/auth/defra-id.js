@@ -3,6 +3,7 @@ import jwt from '@hapi/jwt'
 import fetch from 'node-fetch'
 
 import { config } from '~/src/config/config.js'
+import { getDisplayName } from './display.js'
 
 const getOidcConfiguration = async (oidcConfigurationUrl) => {
   const res = await fetch(oidcConfigurationUrl)
@@ -52,9 +53,7 @@ const defraId = {
           profile: async function (credentials, params) {
             // Decode JWT and extract user profile
             const payload = jwt.token.decode(credentials.token).decoded.payload
-            const displayName = [payload.firstName, payload.lastName]
-              .filter((part) => part)
-              .join(' ')
+            const displayName = getDisplayName(payload)
 
             credentials.profile = {
               id: payload.sub,

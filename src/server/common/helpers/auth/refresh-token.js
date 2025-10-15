@@ -1,7 +1,6 @@
 import fetch from 'node-fetch'
-
 import { config } from '~/src/config/config.js'
-import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
+import { getUserSession } from './get-user-session.js'
 
 /**
  * Refresh access token using refresh token

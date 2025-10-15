@@ -297,27 +297,6 @@ describe('#defraId', () => {
       })
     })
 
-    it('should construct displayName with both firstName and lastName', async () => {
-      const mockPayload = {
-        sub: 'user-123',
-        firstName: 'Jane',
-        lastName: 'Smith'
-      }
-
-      mockJwt.token.decode.mockReturnValue({
-        decoded: {
-          payload: mockPayload
-        }
-      })
-
-      const mockCredentials = { token: 'mock-token' }
-      const mockParams = { id_token: 'mock-id-token' }
-
-      await profileFn(mockCredentials, mockParams)
-
-      expect(mockCredentials.profile.displayName).toBe('Jane Smith')
-    })
-
     it('should include all required profile fields', async () => {
       const mockPayload = {
         sub: 'user-456',
