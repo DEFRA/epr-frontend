@@ -14,6 +14,8 @@ import { secureContext } from '~/src/server/common/helpers/secure-context/index.
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
 import { router } from './router.js'
+import { initI18n } from './common/helpers/i18n/i18n.js'
+import { i18nPlugin } from './common/helpers/i18next.js'
 
 export async function createServer() {
   setupProxy()
@@ -67,12 +69,15 @@ export async function createServer() {
     segment: 'session'
   })
 
+  const i18next = await initI18n()
+
   const plugins = [
     requestLogger,
     requestTracing,
     secureContext,
     pulse,
-    sessionCache
+    sessionCache,
+    { plugin: i18nPlugin, options: { i18next } }
   ]
 
   // Only register authentication strategies when feature flag is enabled
