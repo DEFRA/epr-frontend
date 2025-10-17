@@ -47,12 +47,11 @@ services:
     image: defradigital/cdp-uploader:${CDP_UPLOADER_VERSION:-latest}
     ports:
       - '7337:7337'
-    links:
-      - 'localstack:localstack'
-      - 'redis:redis'
     depends_on:
       localstack:
         condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - 'compose/aws.env'
     environment:
@@ -94,9 +93,6 @@ services:
       dockerfile: Dockerfile.local
     ports:
       - '3000:3000'
-    links:
-      - 'localstack:localstack'
-      - 'redis:redis'
     extra_hosts:
       - 'localhost:host-gateway'
     develop:
@@ -119,11 +115,11 @@ services:
         - path: webpack.config.js
           action: rebuild
     depends_on:
+      defra-id-stub:
+        condition: service_started
       localstack:
         condition: service_healthy
       redis:
-        condition: service_started
-      defra-id-stub:
         condition: service_started
     env_file:
       - 'compose/aws.env'
