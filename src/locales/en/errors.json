@@ -1,0 +1,7 @@
+{
+  "generic": "Something went wrong. Please try again.",
+  "notFound": "Page not found",
+  "forbidden": "Forbidden",
+  "unauthorized": "Unauthorized",
+  "badRequest": "Bad request"
+}
