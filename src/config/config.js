@@ -238,6 +238,12 @@ export const config = convict({
     default: 'http://localhost:3000',
     env: 'APP_BASE_URL'
   },
+  eprBackendUrl: {
+    doc: 'EPR Backend API base URL',
+    format: String,
+    default: 'http://localhost:3001',
+    env: 'EPR_BACKEND_URL'
+  },
   defraId: {
     oidcConfigurationUrl: {
       doc: 'DEFRA ID OIDC Configuration URL',
