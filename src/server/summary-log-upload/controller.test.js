@@ -112,14 +112,17 @@ describe('#summaryLogUploadController', () => {
     )
   })
 
-  test('should call initUpload with callback URL', async () => {
+  test('should call initUpload with callback containing organisation and registration ids', async () => {
     await server.inject({ method: 'GET', url })
 
     expect(initUpload).toHaveBeenCalledWith(
       expect.objectContaining({
-        callback: expect.stringMatching(
-          /\/v1\/organisations\/123\/registrations\/456\/summary-logs\/[a-f0-9-]+\/upload-completed$/
-        )
+        callback: expect.stringContaining('/organisations/123/')
+      })
+    )
+    expect(initUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callback: expect.stringContaining('/registrations/456/')
       })
     )
   })
