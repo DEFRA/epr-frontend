@@ -71,6 +71,21 @@ services:
     networks:
       - cdp-tenant
 
+  defra-id-stub:
+    image: defradigital/cdp-defra-id-stub:${DEFRA_ID_STUB_VERSION:-latest}
+    ports:
+      - '3200:3200'
+    environment:
+      PORT: 3200
+      APP_BASE_URL: http://localhost:3200
+      OIDC_BASE_PATH: /cdp-defra-id-stub
+      OIDC_CLIENT_ID: 63983fc2-cfff-45bb-8ec2-959e21062b9a
+      OIDC_CLIENT_SECRET: test_value
+      OIDC_SHOW_LOGIN: true
+      NODE_ENV: development
+    networks:
+      - cdp-tenant
+
 ################################################################################
 
   ui:
@@ -82,6 +97,8 @@ services:
     links:
       - 'localstack:localstack'
       - 'redis:redis'
+    extra_hosts:
+      - 'localhost:host-gateway'
     develop:
       watch:
         - path: src/
@@ -106,6 +123,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      defra-id-stub:
+        condition: service_started
     env_file:
       - 'compose/aws.env'
     environment:
@@ -116,6 +135,8 @@ services:
       USE_SINGLE_INSTANCE_CACHE: true
       CDP_UPLOADER_URL: http://cdp-uploader:7337
       EPR_BACKEND_URL: http://localhost:3001
+      DEFRA_ID_OIDC_CONFIGURATION_URL: http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration
+      FEATURE_FLAG_DEFRA_ID: true
     networks:
       - cdp-tenant
 
