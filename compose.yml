@@ -21,9 +21,9 @@ services:
       - 'compose/aws.env'
     environment:
       DEBUG: ${DEBUG:-1}
+      LOCALSTACK_HOST: 127.0.0.1
       LS_LOG: WARN # Localstack DEBUG Level
       SERVICES: s3,sqs,sns,firehose
-      LOCALSTACK_HOST: 127.0.0.1
     volumes:
       - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
       - './compose:/etc/localstack/init/ready.d'
@@ -57,18 +57,18 @@ services:
     env_file:
       - 'compose/aws.env'
     environment:
+      CONSUMER_BUCKETS: re-ex-summary-logs
+      MOCK_VIRUS_RESULT_DELAY: 3
+      MOCK_VIRUS_SCAN_ENABLED: true
+      NODE_ENV: development
+      PORT: 7337
+      REDIS_HOST: redis
+      S3_ENDPOINT: http://localstack:4566
+      SQS_ENDPOINT: http://localstack:4566
+      USE_SINGLE_INSTANCE_CACHE: true
       VIRTUAL_HOST: ~^uploader\..*\.sslip\.io
       VIRTUAL_PATH: /
       VIRTUAL_PORT: 7337
-      PORT: 7337
-      NODE_ENV: development
-      REDIS_HOST: redis
-      USE_SINGLE_INSTANCE_CACHE: true
-      MOCK_VIRUS_SCAN_ENABLED: true
-      MOCK_VIRUS_RESULT_DELAY: 3
-      SQS_ENDPOINT: http://localstack:4566
-      S3_ENDPOINT: http://localstack:4566
-      CONSUMER_BUCKETS: re-ex-summary-logs
     networks:
       - cdp-tenant
 
@@ -80,15 +80,15 @@ services:
       redis:
         condition: service_started
     environment:
-      PORT: 3200
       APP_BASE_URL: http://localhost:3200
+      NODE_ENV: development
       OIDC_BASE_PATH: /cdp-defra-id-stub
       OIDC_CLIENT_ID: 63983fc2-cfff-45bb-8ec2-959e21062b9a
       OIDC_CLIENT_SECRET: test_value
       OIDC_SHOW_LOGIN: true
-      NODE_ENV: development
-      SESSION_CACHE_ENGINE: redis
+      PORT: 3200
       REDIS_HOST: redis
+      SESSION_CACHE_ENGINE: redis
       USE_SINGLE_INSTANCE_CACHE: true
     networks:
       - cdp-tenant
@@ -96,6 +96,7 @@ services:
 ################################################################################
 
   ui:
+    profiles: ['all']
     build:
       context: .
       dockerfile: Dockerfile.local
@@ -132,15 +133,15 @@ services:
     env_file:
       - 'compose/aws.env'
     environment:
-      PORT: 3000
-      NODE_ENV: development
-      REDIS_HOST: redis
-      LOCALSTACK_ENDPOINT: http://localstack:4566
-      USE_SINGLE_INSTANCE_CACHE: true
       CDP_UPLOADER_URL: http://cdp-uploader:7337
-      EPR_BACKEND_URL: http://localhost:3001
       DEFRA_ID_OIDC_CONFIGURATION_URL: http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration
+      EPR_BACKEND_URL: http://localhost:3001
       FEATURE_FLAG_DEFRA_ID: true
+      LOCALSTACK_ENDPOINT: http://localstack:4566
+      NODE_ENV: development
+      PORT: 3000
+      REDIS_HOST: redis
+      USE_SINGLE_INSTANCE_CACHE: true
     networks:
       - cdp-tenant
 
