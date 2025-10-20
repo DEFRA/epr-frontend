@@ -4,14 +4,14 @@ import middleware from 'i18next-http-middleware'
 import { initI18n } from './i18n.js'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('i18next')
-vi.mock('i18next-fs-backend')
-vi.mock('i18next-http-middleware')
+vi.mock(import('i18next'))
+vi.mock(import('i18next-fs-backend'))
+vi.mock(import('i18next-http-middleware'))
 
-describe('initI18n', () => {
+describe(initI18n, function () {
   beforeEach(() => {
-    i18next.use = vi.fn().mockReturnThis()
-    i18next.init = vi.fn().mockResolvedValue()
+    vi.spyOn(i18next, 'use').mockReturnThis()
+    vi.spyOn(i18next, 'init').mockResolvedValue()
   })
 
   test('initialises i18next with expected configuration', async () => {
@@ -34,11 +34,13 @@ describe('initI18n', () => {
     await initI18n()
 
     const config = i18next.init.mock.calls[0][0]
+
     expect(config.backend.loadPath).toContain('src/locales/{{lng}}/{{ns}}.json')
   })
 
   test('throws if init rejects', async () => {
     i18next.init.mockRejectedValueOnce(new Error('init failed'))
+
     await expect(initI18n()).rejects.toThrow('init failed')
   })
 })
