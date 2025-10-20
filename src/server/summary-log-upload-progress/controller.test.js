@@ -131,41 +131,33 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: rejected with failureReason - should show error message and stop polling', async () => {
+    test('status: rejected with failureReason - should redirect to upload page with error in session', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.rejected,
         failureReason: 'File rejected by virus scanner'
       })
 
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
+      const { headers, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
 
-      expect(result).toStrictEqual(expect.stringContaining('Upload failed'))
-      expect(result).toStrictEqual(
-        expect.stringContaining('File rejected by virus scanner')
-      )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${baseUrl}/upload`)
     })
 
-    test('status: rejected without failureReason - should show default error message', async () => {
+    test('status: rejected without failureReason - should redirect to upload page with default error in session', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.rejected
       })
 
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
+      const { headers, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
 
-      expect(result).toStrictEqual(expect.stringContaining('Upload failed'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          'Something went wrong with your file upload. Please try again.'
-        )
-      )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${baseUrl}/upload`)
     })
 
     test('status: invalid - should show validation error and stop polling', async () => {

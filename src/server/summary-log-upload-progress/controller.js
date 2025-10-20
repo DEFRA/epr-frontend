@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
 import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-summary-log-status.js'
 import { backendSummaryLogStatuses } from '~/src/server/common/constants/statuses.js'
+import { sessionNames } from '~/src/server/common/constants/session-names.js'
 
 const PROCESSING_STATES = [
   backendSummaryLogStatuses.preprocessing,
@@ -69,6 +70,23 @@ export const summaryLogUploadProgressController = {
         registrationId,
         summaryLogId
       )
+
+      // If upload rejected, redirect to upload page with error
+      if (status === backendSummaryLogStatuses.rejected) {
+        const summaryLogsSession =
+          request.yar.get(sessionNames.summaryLogs) || {}
+
+        request.yar.set(sessionNames.summaryLogs, {
+          ...summaryLogsSession,
+          lastError:
+            failureReason ||
+            'Something went wrong with your file upload. Please try again.'
+        })
+
+        return h.redirect(
+          `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+        )
+      }
 
       const viewData = getViewData(status, failureReason)
 
