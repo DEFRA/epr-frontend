@@ -87,13 +87,13 @@ export const config = convict({
     format: {
       doc: 'Format to output logs in.',
       format: ['ecs', 'pino-pretty'],
-      default: getLogFormatType(isProduction),
+      default: getLogFormatType({ isProduction }),
       env: 'LOG_FORMAT'
     },
     redact: {
       doc: 'Log paths to redact',
       format: Array,
-      default: getLogRedactType(isProduction)
+      default: getLogRedactType({ isProduction })
     }
   },
   httpProxy: /** @type {SchemaObj<string | null>} */ ({
@@ -120,7 +120,7 @@ export const config = convict({
       engine: {
         doc: 'backend cache is written to',
         format: ['redis', 'memory'],
-        default: getSessionCacheEngineType(isProduction),
+        default: getSessionCacheEngineType({ isProduction }),
         env: 'SESSION_CACHE_ENGINE'
       },
       name: {

@@ -1,3 +1,3 @@
-export function getSessionCacheEngineType(isProduction = false) {
+export function getSessionCacheEngineType({ isProduction }) {
   return isProduction ? 'redis' : 'memory'
 }
