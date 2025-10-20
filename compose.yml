@@ -74,6 +74,9 @@ services:
     image: defradigital/cdp-defra-id-stub:${DEFRA_ID_STUB_VERSION:-latest}
     ports:
       - '3200:3200'
+    depends_on:
+      redis:
+        condition: service_started
     environment:
       PORT: 3200
       APP_BASE_URL: http://localhost:3200
@@ -82,6 +85,9 @@ services:
       OIDC_CLIENT_SECRET: test_value
       OIDC_SHOW_LOGIN: true
       NODE_ENV: development
+      SESSION_CACHE_ENGINE: redis
+      REDIS_HOST: redis
+      USE_SINGLE_INSTANCE_CACHE: true
     networks:
       - cdp-tenant
 
