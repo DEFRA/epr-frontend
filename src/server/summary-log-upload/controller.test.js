@@ -111,6 +111,21 @@ describe('#summaryLogUploadController', () => {
       expect.not.objectContaining({ lastError: expect.anything() })
     )
   })
+
+  test('should call initUpload with callback containing organisation and registration ids', async () => {
+    await server.inject({ method: 'GET', url })
+
+    expect(initUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callback: expect.stringContaining('/organisations/123/')
+      })
+    )
+    expect(initUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callback: expect.stringContaining('/registrations/456/')
+      })
+    )
+  })
 })
 
 /**

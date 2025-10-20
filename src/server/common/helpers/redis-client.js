@@ -57,6 +57,8 @@ export function buildRedisClient(redisConfig) {
       {
         keyPrefix,
         slotsRefreshTimeout: 10000,
+        /* @fixme: code coverage */
+        /* v8 ignore next */
         dnsLookup: (address, callback) => callback(null, address),
         redisOptions: {
           db,

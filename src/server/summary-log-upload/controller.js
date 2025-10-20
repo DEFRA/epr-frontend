@@ -15,10 +15,12 @@ export const summaryLogUploadController = {
 
     const summaryLogId = crypto.randomUUID()
     const s3Bucket = config.get('cdpUploader.s3buckets.summaryLogs')
+    const eprBackendUrl = config.get('eprBackendUrl')
 
     try {
       const { uploadId, uploadUrl, statusUrl } = await initUpload({
         redirect: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`,
+        callback: `${eprBackendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/upload-completed`,
         s3Bucket,
         s3path: `/organisations/${organisationId}/registrations/${registrationId}`,
         mimeTypes: [mimeTypes.xlsx],
