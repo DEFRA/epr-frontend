@@ -1,10 +1,55 @@
-import { sessionNames } from '~/src/server/common/constants/session-names.js'
-import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
-import {
-  summaryLogStatuses,
-  cdpUploaderStatuses,
-  cdpUploaderFileStatuses
-} from '~/src/server/common/constants/statuses.js'
+import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-summary-log-status.js'
+import { backendSummaryLogStatuses } from '~/src/server/common/constants/statuses.js'
+
+const PROCESSING_STATES = [
+  backendSummaryLogStatuses.preprocessing,
+  backendSummaryLogStatuses.validating
+]
+
+/**
+ * Determines view data based on backend status
+ * @param {string} status - Backend status
+ * @param {string} [failureReason] - Error message from backend
+ * @returns {{heading: string, message: string, isProcessing: boolean}}
+ */
+const getViewData = (status, failureReason) => {
+  // Processing states - show designed message
+  if (PROCESSING_STATES.includes(status)) {
+    return {
+      heading: 'Your file is being uploaded',
+      message:
+        'Your summary log is being uploaded and automatically validated. This may take a few minutes.',
+      isProcessing: true
+    }
+  }
+
+  // Terminal states - use placeholders until designs finalized
+  const placeholders = {
+    [backendSummaryLogStatuses.validated]: {
+      heading: 'Validation complete',
+      message: 'Your file is ready to submit'
+    },
+    [backendSummaryLogStatuses.submitted]: {
+      heading: 'Submission complete',
+      message: 'Your waste records have been updated'
+    },
+    [backendSummaryLogStatuses.rejected]: {
+      heading: 'Upload failed',
+      message:
+        failureReason ||
+        'Something went wrong with your file upload. Please try again.'
+    },
+    [backendSummaryLogStatuses.invalid]: {
+      heading: 'Validation failed',
+      message: 'Please check your file and try again'
+    }
+  }
+
+  return {
+    ...placeholders[status],
+    isProcessing: false
+  }
+}
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -13,73 +58,31 @@ export const summaryLogUploadProgressController = {
   handler: async (request, h) => {
     try {
       const { organisationId, registrationId, summaryLogId } = request.params
-      const summaryLogsSession = request.yar.get(sessionNames.summaryLogs)
-      const { uploadId, summaryLogStatus } = summaryLogsSession ?? {}
-      let nextSummaryLogStatus = summaryLogStatus
 
-      if (summaryLogStatus === summaryLogStatuses.initiated) {
-        const data = await fetchStatus(uploadId)
-        const { uploadStatus, form, files = [] } = data
-        const file = files[0]
-        const errorMessage =
-          file?.fileStatus === cdpUploaderFileStatuses.rejected
-            ? file.errorMessage ||
-              'Something went wrong with your file upload. Please try again.'
-            : form?.summaryLogUpload?.errorMessage
+      // Poll backend for status
+      const { status, failureReason } = await fetchSummaryLogStatus(
+        organisationId,
+        registrationId,
+        summaryLogId
+      )
 
-        if (errorMessage) {
-          request.yar.set(sessionNames.summaryLogs, {
-            ...summaryLogsSession,
-            summaryLogStatus: summaryLogStatuses.validationFailed,
-            lastError: errorMessage
-          })
-
-          return h.redirect(
-            `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-          )
-        }
-        if (uploadStatus === cdpUploaderStatuses.ready) {
-          nextSummaryLogStatus = summaryLogStatuses.uploaded
-          request.yar.set(sessionNames.summaryLogs, {
-            ...summaryLogsSession,
-            summaryLogStatus: nextSummaryLogStatus
-          })
-        }
-      } else if (summaryLogStatus === summaryLogStatuses.uploaded) {
-        nextSummaryLogStatus = summaryLogStatuses.validating
-        request.yar.set(sessionNames.summaryLogs, {
-          ...summaryLogsSession,
-          summaryLogStatus: nextSummaryLogStatus
-        })
-
-        // @todo: call epr-backend to initiate validation
-      } else if (
-        [
-          summaryLogStatuses.validationFailed,
-          summaryLogStatuses.validationSucceeded
-        ].includes(summaryLogStatus)
-      ) {
-        return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/review`
-        )
-      }
+      const viewData = getViewData(status, failureReason)
 
       return h.view('summary-log-upload-progress/index', {
-        pageTitle: 'Summary log: upload progress', // @todo use activity/site/material info
-        heading: {
-          uploading: 'Your file is being uploaded',
-          validating: 'Your file is being validated'
-        },
-        summaryLogStatus: nextSummaryLogStatus
+        pageTitle: 'Summary log: upload progress',
+        ...viewData,
+        shouldPoll: PROCESSING_STATES.includes(status),
+        pollUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
       })
     } catch (err) {
-      // @todo: use structured logging
       request.server.log(['error', 'upload-progress'], err)
 
-      return h.view('error/index', {
-        pageTitle: 'Summary log: upload error',
-        heading: 'Summary log upload error',
-        error: `Failed to upload: ${err.message}`
+      return h.view('summary-log-upload-progress/index', {
+        pageTitle: 'Summary log: upload progress',
+        heading: 'Error checking status',
+        message: 'Unable to check upload status - please try again later',
+        isProcessing: false,
+        shouldPoll: false
       })
     }
   }
