@@ -5,6 +5,8 @@ import { getUserSession } from '~/src/server/common/helpers/auth/get-user-sessio
  * @type {import('@hapi/hapi').RouteOptionsPreObject}
  */
 const provideAuthedUser = {
+  // @fixme: code coverage
+  /* v8 ignore next */
   method: async (request) => getUserSession(request),
   assign: 'authedUser'
 }

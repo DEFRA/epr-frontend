@@ -84,15 +84,21 @@ export const config = convict({
     format: {
       doc: 'Format to output logs in.',
       format: ['ecs', 'pino-pretty'],
-      default: /* v8 ignore next */ isProduction ? 'ecs' : 'pino-pretty', // @fixme: code coverage
+      // This can't be tested without changing the config to accept Dependency Injection from the tests
+      /* c8 ignore start */
+      default: isProduction ? 'ecs' : 'pino-pretty',
+      /* c8 ignore stop */
       env: 'LOG_FORMAT'
     },
     redact: {
       doc: 'Log paths to redact',
       format: Array,
-      default: /* v8 ignore next */ isProduction
-        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers'] // @fixme: code coverage
+      // This can't be tested without changing the config to accept Dependency Injection from the tests
+      /* c8 ignore start */
+      default: isProduction
+        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
         : []
+      /* c8 ignore stop */
     }
   },
   httpProxy: /** @type {SchemaObj<string | null>} */ ({
