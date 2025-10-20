@@ -2,6 +2,9 @@ import convict from 'convict'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { getLogFormatType, getLogRedactType } from './utils/log.js'
+import { getSessionCacheEngineType } from './utils/session.js'
+
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
@@ -84,21 +87,13 @@ export const config = convict({
     format: {
       doc: 'Format to output logs in.',
       format: ['ecs', 'pino-pretty'],
-      // This can't be tested without changing the config to accept Dependency Injection from the tests
-      /* c8 ignore start */
-      default: isProduction ? 'ecs' : 'pino-pretty',
-      /* c8 ignore stop */
+      default: getLogFormatType(isProduction),
       env: 'LOG_FORMAT'
     },
     redact: {
       doc: 'Log paths to redact',
       format: Array,
-      // This can't be tested without changing the config to accept Dependency Injection from the tests
-      /* c8 ignore start */
-      default: isProduction
-        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : []
-      /* c8 ignore stop */
+      default: getLogRedactType(isProduction)
     }
   },
   httpProxy: /** @type {SchemaObj<string | null>} */ ({
@@ -125,7 +120,7 @@ export const config = convict({
       engine: {
         doc: 'backend cache is written to',
         format: ['redis', 'memory'],
-        default: /* v8 ignore next */ isProduction ? 'redis' : 'memory', // @fixme: code coverage
+        default: getSessionCacheEngineType(isProduction),
         env: 'SESSION_CACHE_ENGINE'
       },
       name: {

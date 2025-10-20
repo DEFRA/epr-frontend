@@ -24,8 +24,9 @@ export const summaryLogUploadProgressController = {
         const errorMessage =
           file?.fileStatus === cdpUploaderFileStatuses.rejected
             ? // @fixme: code coverage
-              file.errorMessage /* c8 ignore next */ ||
-              /* c8 ignore next */ 'Something went wrong with your file upload. Please try again.'
+              /* v8 ignore next 2 */
+              file.errorMessage ||
+              'Something went wrong with your file upload. Please try again.'
             : form?.summaryLogUpload?.errorMessage
 
         if (errorMessage) {
