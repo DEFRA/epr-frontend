@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-summary-log-status.js'
@@ -188,7 +189,7 @@ describe('#summaryLogUploadProgressController', () => {
   describe('error handling', () => {
     test('should treat 404 as preprocessing and continue polling', async () => {
       const error = new Error('Backend returned 404: Not Found')
-      error.status = 404
+      error.status = StatusCodes.NOT_FOUND
       fetchSummaryLogStatus.mockRejectedValueOnce(error)
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })

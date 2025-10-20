@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes'
 import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-summary-log-status.js'
 import { backendSummaryLogStatuses } from '~/src/server/common/constants/statuses.js'
 
@@ -5,6 +6,8 @@ const PROCESSING_STATES = [
   backendSummaryLogStatuses.preprocessing,
   backendSummaryLogStatuses.validating
 ]
+
+const PAGE_TITLE = 'Summary log: upload progress'
 
 /**
  * Determines view data based on backend status
@@ -57,6 +60,7 @@ const getViewData = (status, failureReason) => {
 export const summaryLogUploadProgressController = {
   handler: async (request, h) => {
     const { organisationId, registrationId, summaryLogId } = request.params
+    const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
 
     try {
       // Poll backend for status
@@ -69,21 +73,21 @@ export const summaryLogUploadProgressController = {
       const viewData = getViewData(status, failureReason)
 
       return h.view('summary-log-upload-progress/index', {
-        pageTitle: 'Summary log: upload progress',
+        pageTitle: PAGE_TITLE,
         ...viewData,
         shouldPoll: PROCESSING_STATES.includes(status),
-        pollUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
+        pollUrl
       })
     } catch (err) {
       // 404 means summary log not created yet - treat as preprocessing
-      if (err.status === 404) {
+      if (err.status === StatusCodes.NOT_FOUND) {
         const viewData = getViewData(backendSummaryLogStatuses.preprocessing)
 
         return h.view('summary-log-upload-progress/index', {
-          pageTitle: 'Summary log: upload progress',
+          pageTitle: PAGE_TITLE,
           ...viewData,
           shouldPoll: true,
-          pollUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
+          pollUrl
         })
       }
 
@@ -91,7 +95,7 @@ export const summaryLogUploadProgressController = {
       request.server.log(['error', 'upload-progress'], err)
 
       return h.view('summary-log-upload-progress/index', {
-        pageTitle: 'Summary log: upload progress',
+        pageTitle: PAGE_TITLE,
         heading: 'Error checking status',
         message: 'Unable to check upload status - please try again later',
         isProcessing: false,
