@@ -40,6 +40,9 @@ describe('#loginController - integration', () => {
 
       afterEach(async () => {
         config.reset('defraId.oidcConfigurationUrl')
+        config.reset('defraId.clientId')
+        config.reset('defraId.clientSecret')
+        config.reset('defraId.serviceId')
         mockOidcServer.resetHandlers()
       })
 
@@ -48,10 +51,15 @@ describe('#loginController - integration', () => {
       })
 
       test('should redirect to oidc provider when oidc configuration url is set', async () => {
-        config.set(
-          'defraId.oidcConfigurationUrl',
-          'http://defra-id.auth/.well-known/openid-configuration'
-        )
+        config.load({
+          defraId: {
+            oidcConfigurationUrl:
+              'http://defra-id.auth/.well-known/openid-configuration',
+            clientId: 'test-client-id',
+            clientSecret: 'test-secret',
+            serviceId: 'test-service-id'
+          }
+        })
 
         server = await createServer()
         await server.initialize()

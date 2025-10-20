@@ -249,20 +249,20 @@ export const config = convict({
       doc: 'DEFRA ID Service ID',
       format: String,
       env: 'DEFRA_ID_SERVICE_ID',
-      default: 'd7d72b79-9c62-ee11-8df0-000d3adf7047'
+      default: ''
     },
     clientId: {
       doc: 'DEFRA ID Client ID',
       format: String,
       env: 'DEFRA_ID_CLIENT_ID',
-      default: '63983fc2-cfff-45bb-8ec2-959e21062b9a'
+      default: ''
     },
     clientSecret: {
       doc: 'DEFRA ID Client Secret',
       format: String,
       sensitive: true,
       env: 'DEFRA_ID_CLIENT_SECRET',
-      default: 'test_value'
+      default: ''
     }
   }
 })

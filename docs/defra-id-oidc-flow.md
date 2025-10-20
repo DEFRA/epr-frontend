@@ -15,10 +15,9 @@ The authentication system uses the standard OAuth 2.0 Authorisation Code flow wi
 - **Key Routes**:
   - `/login` - Initiates the OIDC flow
   - `/auth/callback` - Handles the callback from the identity provider
-- **Key Configuration**:
-  - Client ID: `63983fc2-cfff-45bb-8ec2-959e21062b9a`
-  - Client Secret: `test_value`
-  - Discovery URL: `http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration`
+- **Key Configuration** (configured via environment variables in `compose.yml`):
+  - Client ID / Secret: Identifies our app with the stub
+  - Discovery URL: Required to enable Defra ID - points to the stub
 
 ### cdp-defra-id-stub (Port 3200)
 
@@ -226,10 +225,12 @@ The application uses the `isDefraIdEnabled()` helper function to check if the OI
 
 - `APP_BASE_URL` - base URL for callbacks (default: `http://localhost:3000`)
 - `DEFRA_ID_OIDC_CONFIGURATION_URL` - OIDC discovery endpoint (required to enable authentication; when not set or empty, authentication is disabled)
-- `DEFRA_ID_SERVICE_ID` - service identifier (default: `d7d72b79-9c62-ee11-8df0-000d3adf7047`)
-- `DEFRA_ID_CLIENT_ID` - OAuth client ID (default: `63983fc2-cfff-45bb-8ec2-959e21062b9a`)
-- `DEFRA_ID_CLIENT_SECRET` - OAuth client secret (default: `test_value`)
+- `DEFRA_ID_SERVICE_ID` - service identifier (required when authentication is enabled)
+- `DEFRA_ID_CLIENT_ID` - OAuth client ID (required when authentication is enabled)
+- `DEFRA_ID_CLIENT_SECRET` - OAuth client secret (required when authentication is enabled)
 - `SESSION_COOKIE_PASSWORD` - cookie encryption key (min 32 chars)
+
+For local development, these values are configured in `compose.yml` for the `ui` service.
 
 #### cdp-defra-id-stub
 

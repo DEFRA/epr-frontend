@@ -49,10 +49,15 @@ describe('#homeController', () => {
 
     beforeAll(async () => {
       mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
-      config.set(
-        'defraId.oidcConfigurationUrl',
-        'http://defra-id.auth/.well-known/openid-configuration'
-      )
+      config.load({
+        defraId: {
+          oidcConfigurationUrl:
+            'http://defra-id.auth/.well-known/openid-configuration',
+          clientId: 'test-client-id',
+          clientSecret: 'test-secret',
+          serviceId: 'test-service-id'
+        }
+      })
 
       server = await createServer()
       await server.initialize()
@@ -60,6 +65,9 @@ describe('#homeController', () => {
 
     afterAll(async () => {
       config.reset('defraId.oidcConfigurationUrl')
+      config.reset('defraId.clientId')
+      config.reset('defraId.clientSecret')
+      config.reset('defraId.serviceId')
       mockOidcServer.close()
       await server.stop({ timeout: 0 })
     })
