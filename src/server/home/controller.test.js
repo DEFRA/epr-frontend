@@ -49,7 +49,6 @@ describe('#homeController', () => {
 
     beforeAll(async () => {
       mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
-      config.set('featureFlags.defraId', true)
       config.set(
         'defraId.oidcConfigurationUrl',
         'http://defra-id.auth/.well-known/openid-configuration'
@@ -60,7 +59,6 @@ describe('#homeController', () => {
     })
 
     afterAll(async () => {
-      config.reset('featureFlags.defraId')
       config.reset('defraId.oidcConfigurationUrl')
       mockOidcServer.close()
       await server.stop({ timeout: 0 })

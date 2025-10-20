@@ -212,28 +212,24 @@ grant_type=refresh_token
 
 ## Configuration
 
-### Feature Flag
+### Enabling Authentication
 
-Authentication is controlled by a feature flag:
+Authentication is enabled when the `DEFRA_ID_OIDC_CONFIGURATION_URL` environment variable is configured with a valid OIDC discovery endpoint URL. When this variable is not set or empty, authentication routes and strategies are not registered.
 
-```javascript
-FEATURE_FLAG_DEFRA_ID = true
-```
+The application uses the `isDefraIdEnabled()` helper function to check if the OIDC configuration URL is present and non-empty.
 
-When disabled, authentication routes and strategies are not registered.
-
-**Code Reference**: `src/server/index.js:21,42,79-81`
+**Code Reference**: `src/config/config.js:277-280`, `src/server/index.js:21,42,79`, `src/server/router.js:27`
 
 ### Environment Variables
 
 #### epr-frontend
 
-- `APP_BASE_URL` - Base URL for callbacks (default: `http://localhost:3000`)
-- `DEFRA_ID_OIDC_CONFIGURATION_URL` - OIDC discovery endpoint
-- `DEFRA_ID_SERVICE_ID` - Service identifier
-- `DEFRA_ID_CLIENT_ID` - OAuth client ID
-- `DEFRA_ID_CLIENT_SECRET` - OAuth client secret
-- `SESSION_COOKIE_PASSWORD` - Cookie encryption key (min 32 chars)
+- `APP_BASE_URL` - base URL for callbacks (default: `http://localhost:3000`)
+- `DEFRA_ID_OIDC_CONFIGURATION_URL` - OIDC discovery endpoint (required to enable authentication; when not set or empty, authentication is disabled)
+- `DEFRA_ID_SERVICE_ID` - service identifier (default: `d7d72b79-9c62-ee11-8df0-000d3adf7047`)
+- `DEFRA_ID_CLIENT_ID` - OAuth client ID (default: `63983fc2-cfff-45bb-8ec2-959e21062b9a`)
+- `DEFRA_ID_CLIENT_SECRET` - OAuth client secret (default: `test_value`)
+- `SESSION_COOKIE_PASSWORD` - cookie encryption key (min 32 chars)
 
 #### cdp-defra-id-stub
 
@@ -349,7 +345,7 @@ Set `LOG_LEVEL=debug` for more detailed logging.
 
 1. Start cdp-defra-id-stub: `npm run dev` (Port 3200)
 2. Start epr-frontend: `npm run dev` (Port 3000)
-3. Set `FEATURE_FLAG_DEFRA_ID=true` in epr-frontend
+3. Ensure `DEFRA_ID_OIDC_CONFIGURATION_URL` is set (e.g., `http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration`)
 4. Navigate to `http://localhost:3000/login`
 
 ### Test Users
@@ -363,7 +359,8 @@ The stub maintains an in-memory list of test users. You can register new users v
 - `src/server/common/helpers/auth/defra-id.js` - Defra ID OIDC plugin configuration
 - `src/server/auth/controller.js` - OAuth callback handler
 - `src/server/login/controller.js` - Login route handler
-- `src/config/config.js:241-268` - Defra ID configuration
+- `src/config/config.js:241-267` - Defra ID configuration
+- `src/config/config.js:277-280` - isDefraIdEnabled() helper function
 
 ### cdp-defra-id-stub
 

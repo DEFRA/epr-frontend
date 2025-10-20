@@ -243,8 +243,7 @@ export const config = convict({
       doc: 'DEFRA ID OIDC Configuration URL',
       format: String,
       env: 'DEFRA_ID_OIDC_CONFIGURATION_URL',
-      default:
-        'http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration'
+      default: ''
     },
     serviceId: {
       doc: 'DEFRA ID Service ID',
@@ -265,18 +264,19 @@ export const config = convict({
       env: 'DEFRA_ID_CLIENT_SECRET',
       default: 'test_value'
     }
-  },
-  featureFlags: {
-    defraId: {
-      doc: 'Feature Flag: Defra ID',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_DEFRA_ID'
-    }
   }
 })
 
 config.validate({ allowed: 'strict' })
+
+/**
+ * Check if Defra ID authentication is enabled
+ * @returns {boolean} True if DEFRA_ID_OIDC_CONFIGURATION_URL is configured
+ */
+export const isDefraIdEnabled = () => {
+  const oidcUrl = config.get('defraId.oidcConfigurationUrl')
+  return Boolean(oidcUrl && oidcUrl.trim() !== '')
+}
 
 /**
  * @import { Schema, SchemaObj } from 'convict'

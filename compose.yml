@@ -136,7 +136,6 @@ services:
       CDP_UPLOADER_URL: http://cdp-uploader:7337
       DEFRA_ID_OIDC_CONFIGURATION_URL: http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration
       EPR_BACKEND_URL: http://localhost:3001
-      FEATURE_FLAG_DEFRA_ID: true
       LOCALSTACK_ENDPOINT: http://localstack:4566
       NODE_ENV: development
       PORT: 3000

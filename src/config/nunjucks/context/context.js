@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { config } from '~/src/config/config.js'
+import { config, isDefraIdEnabled } from '~/src/config/config.js'
 import { buildNavigation } from '~/src/config/nunjucks/context/build-navigation.js'
 import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
@@ -34,7 +34,7 @@ export async function context(request) {
     assetPath: `${assetPath}/assets`,
     authedUser,
     breadcrumbs: [],
-    isDefraIdEnabled: config.get('featureFlags.defraId'),
+    isDefraIdEnabled: isDefraIdEnabled(),
     navigation: buildNavigation(request),
     serviceName: config.get('serviceName'),
     serviceUrl: '/',

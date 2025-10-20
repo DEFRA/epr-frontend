@@ -1,7 +1,7 @@
 import hapi from '@hapi/hapi'
 import path from 'path'
 
-import { config } from '~/src/config/config.js'
+import { config, isDefraIdEnabled } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { defraId } from '~/src/server/common/helpers/auth/defra-id.js'
 import { sessionCookie } from '~/src/server/common/helpers/auth/session-cookie.js'
@@ -18,7 +18,7 @@ import { router } from './router.js'
 export async function createServer() {
   setupProxy()
 
-  const isDefraIdEnabled = config.get('featureFlags.defraId')
+  const defraIdEnabled = isDefraIdEnabled()
 
   const routes = {
     validate: {
@@ -39,7 +39,7 @@ export async function createServer() {
       noSniff: true,
       xframe: true
     },
-    auth: isDefraIdEnabled ? { mode: 'try' } : false
+    auth: defraIdEnabled ? { mode: 'try' } : false
   }
 
   const server = hapi.server({
@@ -75,8 +75,8 @@ export async function createServer() {
     sessionCache
   ]
 
-  // Only register authentication strategies when feature flag is enabled
-  if (isDefraIdEnabled) {
+  // Only register authentication strategies when Defra ID is enabled
+  if (defraIdEnabled) {
     plugins.push(defraId, sessionCookie)
   }
 
