@@ -186,6 +186,25 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('error handling', () => {
+    test('should treat 404 as preprocessing and continue polling', async () => {
+      const error = new Error('Backend returned 404: Not Found')
+      error.status = 404
+      fetchSummaryLogStatus.mockRejectedValueOnce(error)
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your file is being uploaded')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('meta http-equiv="refresh"')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Keep this page open')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('should show error page and stop polling when backend fetch fails', async () => {
       fetchSummaryLogStatus.mockRejectedValueOnce(new Error('Network error'))
 

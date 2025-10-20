@@ -56,9 +56,9 @@ const getViewData = (status, failureReason) => {
  */
 export const summaryLogUploadProgressController = {
   handler: async (request, h) => {
-    try {
-      const { organisationId, registrationId, summaryLogId } = request.params
+    const { organisationId, registrationId, summaryLogId } = request.params
 
+    try {
       // Poll backend for status
       const { status, failureReason } = await fetchSummaryLogStatus(
         organisationId,
@@ -75,6 +75,19 @@ export const summaryLogUploadProgressController = {
         pollUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
       })
     } catch (err) {
+      // 404 means summary log not created yet - treat as preprocessing
+      if (err.status === 404) {
+        const viewData = getViewData(backendSummaryLogStatuses.preprocessing)
+
+        return h.view('summary-log-upload-progress/index', {
+          pageTitle: 'Summary log: upload progress',
+          ...viewData,
+          shouldPoll: true,
+          pollUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
+        })
+      }
+
+      // Other errors - show error page
       request.server.log(['error', 'upload-progress'], err)
 
       return h.view('summary-log-upload-progress/index', {

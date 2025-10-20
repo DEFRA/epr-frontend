@@ -23,9 +23,11 @@ async function fetchSummaryLogStatus(
   })
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       `Backend returned ${response.status}: ${response.statusText}`
     )
+    error.status = response.status
+    throw error
   }
 
   return response.json()
