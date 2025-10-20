@@ -10,6 +10,15 @@ export const i18nPlugin = {
       middleware.handle(i18next)(request.raw.req, request.raw.res, () => {})
       request.i18n = request.raw.req.i18n
       request.t = request.i18n.t.bind(request.i18n)
+
+      const { path } = request
+      if (path.startsWith('/cy')) {
+        request.i18n.changeLanguage('cy')
+        request.setUrl(path.replace(/^\/cy/, '') || '/')
+      } else {
+        request.i18n.changeLanguage('en')
+      }
+
       return h.continue
     })
 
