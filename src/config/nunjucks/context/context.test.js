@@ -26,6 +26,13 @@ vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'), () => ({
 }))
 
 const serviceName = 'Manage your packaging waste responsibilities'
+const navigation = [
+  {
+    active: true,
+    href: '/',
+    text: 'Your sites'
+  }
+]
 
 describe('#context', () => {
   const mockRequest = {
@@ -54,7 +61,28 @@ describe('#context', () => {
       contextResult = await contextImport.context(mockRequest)
 
       expect(contextResult).toStrictEqual(
-        expect.objectContaining({ isDefraIdEnabled: true })
+        expect.objectContaining({
+          isDefraIdEnabled: true,
+          navigation
+        })
+      )
+    })
+
+    it.each([
+      ['undefined', undefined],
+      ['null', null],
+      ['0', 0],
+      ['false', false],
+      ['empty string', ''],
+      ['NaN', NaN]
+    ])('should handle a request value of %s', async (_, request) => {
+      contextResult = await contextImport.context(request)
+
+      expect(contextResult).toStrictEqual(
+        expect.objectContaining({
+          authedUser: null,
+          navigation: [{ ...navigation[0], active: false }]
+        })
       )
     })
 
@@ -93,13 +121,7 @@ describe('#context', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation: [
-          {
-            active: true,
-            href: '/',
-            text: 'Your sites'
-          }
-        ],
+        navigation,
         serviceName,
         serviceUrl: '/'
       })
@@ -180,13 +202,7 @@ describe('#context cache', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation: [
-          {
-            active: true,
-            href: '/',
-            text: 'Your sites'
-          }
-        ],
+        navigation,
         serviceName,
         serviceUrl: '/'
       })

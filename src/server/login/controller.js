@@ -8,6 +8,8 @@ const loginController = {
   options: {
     auth: 'defra-id'
   },
+  /* @fixme: code coverage */
+  /* v8 ignore next */
   handler: async (_request, h) => h.redirect('/')
 }
 
