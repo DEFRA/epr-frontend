@@ -1,0 +1,44 @@
+import i18next from 'i18next'
+import Backend from 'i18next-fs-backend'
+import middleware from 'i18next-http-middleware'
+import { initI18n } from './i18n.js'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+vi.mock('i18next')
+vi.mock('i18next-fs-backend')
+vi.mock('i18next-http-middleware')
+
+describe('initI18n', () => {
+  beforeEach(() => {
+    i18next.use = vi.fn().mockReturnThis()
+    i18next.init = vi.fn().mockResolvedValue()
+  })
+
+  test('initialises i18next with expected configuration', async () => {
+    await initI18n()
+
+    expect(i18next.use).toHaveBeenCalledWith(Backend)
+    expect(i18next.use).toHaveBeenCalledWith(middleware.LanguageDetector)
+    expect(i18next.init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fallbackLng: 'en',
+        preload: ['en', 'cy'],
+        ns: ['common', 'home', 'errors'],
+        defaultNS: 'common',
+        debug: false
+      })
+    )
+  })
+
+  test('sets correct loadPath for backend', async () => {
+    await initI18n()
+
+    const config = i18next.init.mock.calls[0][0]
+    expect(config.backend.loadPath).toContain('src/locales/{{lng}}/{{ns}}.json')
+  })
+
+  test('throws if init rejects', async () => {
+    i18next.init.mockRejectedValueOnce(new Error('init failed'))
+    await expect(initI18n()).rejects.toThrow('init failed')
+  })
+})
