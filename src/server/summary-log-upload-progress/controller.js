@@ -10,6 +10,8 @@ const PROCESSING_STATES = new Set([
 
 const PAGE_TITLE = 'Summary log: upload progress'
 const VIEW_NAME = 'summary-log-upload-progress/index'
+const DEFAULT_ERROR_MESSAGE =
+  'Something went wrong with your file upload. Please try again.'
 
 /**
  * Determines view data based on backend status
@@ -40,9 +42,7 @@ const getViewData = (status, failureReason) => {
     },
     [backendSummaryLogStatuses.rejected]: {
       heading: 'Upload failed',
-      message:
-        failureReason ||
-        'Something went wrong with your file upload. Please try again.'
+      message: failureReason || DEFAULT_ERROR_MESSAGE
     },
     [backendSummaryLogStatuses.invalid]: {
       heading: 'Validation failed',
@@ -79,9 +79,7 @@ export const summaryLogUploadProgressController = {
 
         request.yar.set(sessionNames.summaryLogs, {
           ...summaryLogsSession,
-          lastError:
-            failureReason ||
-            'Something went wrong with your file upload. Please try again.'
+          lastError: failureReason || DEFAULT_ERROR_MESSAGE
         })
 
         return h.redirect(
@@ -92,8 +90,8 @@ export const summaryLogUploadProgressController = {
       const viewData = getViewData(status, failureReason)
 
       return h.view(VIEW_NAME, {
-        pageTitle: PAGE_TITLE,
         ...viewData,
+        pageTitle: PAGE_TITLE,
         shouldPoll: PROCESSING_STATES.has(status),
         pollUrl
       })
@@ -103,8 +101,8 @@ export const summaryLogUploadProgressController = {
         const viewData = getViewData(backendSummaryLogStatuses.preprocessing)
 
         return h.view(VIEW_NAME, {
-          pageTitle: PAGE_TITLE,
           ...viewData,
+          pageTitle: PAGE_TITLE,
           shouldPoll: true,
           pollUrl
         })
