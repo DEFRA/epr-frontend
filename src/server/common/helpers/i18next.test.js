@@ -40,33 +40,6 @@ describe('#i18nPlugin - integration', () => {
   })
 
   describe('url rewriting', () => {
-    it('should strip /cy prefix and route correctly', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/cy/health'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.request.path).toBe('/health')
-      expect(response.result).toStrictEqual({ message: 'success' })
-    })
-
-    it('should handle /cy root by routing to /', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/cy'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.request.path).toBe('/')
-
-      const $ = load(response.result)
-      const heading = $('h1').first().text()
-
-      expect(heading).toBe('Sites')
-
-      expect($('html')).toHaveLength(1)
-    })
 
     it.each([
       { originalUrl: '/cy', expectedPath: '/' },
