@@ -62,6 +62,7 @@ describe('#i18nPlugin - integration', () => {
         const $ = load(response.result)
 
         expect($('html').attr('lang')).toBe(expectedLang)
+        expect($('h1').first().text()).toBe('Sites')
       }
     )
   })
