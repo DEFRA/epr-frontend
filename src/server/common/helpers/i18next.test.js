@@ -17,34 +17,6 @@ describe('#i18nPlugin - integration', () => {
   })
 
   describe('language detection and html lang attribute', () => {
-    it('should default to english for root path', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-
-      expect(response.headers['content-type']).toContain('text/html')
-
-      const $ = load(response.result)
-
-      expect($('html').attr('lang')).toBe('en')
-    })
-
-    it('should set welsh language for /cy path', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/cy'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-
-      const $ = load(response.result)
-
-      expect($('h1').first().text()).toBe('Sites')
-      expect($('html').attr('lang')).toBe('cy')
-    })
 
     it.each([
       { url: '/', expectedLang: 'en', description: 'english' },
