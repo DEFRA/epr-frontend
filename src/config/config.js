@@ -276,10 +276,6 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
-/**
- * Check if Defra ID authentication is enabled
- * @returns {boolean} True if DEFRA_ID_OIDC_CONFIGURATION_URL is configured
- */
 export const isDefraIdEnabled = () => {
   const oidcUrl = config.get('defraId.oidcConfigurationUrl')
   return Boolean(oidcUrl && oidcUrl.trim() !== '')
