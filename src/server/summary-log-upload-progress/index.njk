@@ -2,22 +2,22 @@
 
 {% block head %}
   {{ super() }}
-  <meta http-equiv="refresh" content="3">
+  {% if shouldPoll %}
+    <meta http-equiv="refresh" content="3; url={{ pollUrl }}">
+  {% endif %}
 {% endblock %}
 
 {%  block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     <div class="govuk-body" data-testid="app-page-body">
-      <h1 class="govuk-heading-xl">
-        {% if summaryLogStatus === 'validating' %}
-          {{ heading.validating }}
-        {% else %}
-          {{ heading.uploading }}
-        {% endif %}
-      </h1>
-      <p>Your summary log is being uploaded and automatically validated. This may take a few minutes.</p>
-      <p>Keep this page open and do not refresh it.</p>
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      {% if isProcessing %}
+        <p>{{ message }}</p>
+        <p>Keep this page open and do not refresh it.</p>
+      {% else %}
+        <p>{{ message }}</p>
+      {% endif %}
     </div>
   </div>
 </div>

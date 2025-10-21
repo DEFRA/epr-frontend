@@ -1,29 +1,21 @@
+import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-import { fetchStatus } from '~/src/server/common/helpers/upload/fetch-status.js'
+import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-summary-log-status.js'
 import { createServer } from '~/src/server/index.js'
-import {
-  cdpUploaderFileStatuses,
-  cdpUploaderStatuses
-} from '../common/constants/statuses.js'
+import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
 
-vi.mock(import('~/src/server/common/helpers/upload/fetch-status.js'), () => ({
-  fetchStatus: vi.fn().mockResolvedValue({
-    uploadStatus: 'pending'
+vi.mock(
+  import('~/src/server/common/helpers/upload/fetch-summary-log-status.js'),
+  () => ({
+    fetchSummaryLogStatus: vi.fn().mockResolvedValue({
+      status: 'preprocessing'
+    })
   })
-}))
+)
 
-function overrideRequest(server, yar) {
-  server.ext({
-    type: 'onRequest',
-    method: (request, h) => {
-      request.yar.get = yar.get
-      request.yar.set = yar.set
-
-      return h.continue
-    }
-  })
-}
+const enablesClientSidePolling = () =>
+  expect.stringContaining('meta http-equiv="refresh"')
 
 describe('#summaryLogUploadProgressController', () => {
   const organisationId = '123'
@@ -44,179 +36,173 @@ describe('#summaryLogUploadProgressController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  const yar = {
-    get: vi.fn(),
-    set: vi.fn()
-  }
-
   test('should provide expected response', async () => {
-    overrideRequest(server, yar)
-
     const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-    expect(yar.get).toHaveBeenCalledExactlyOnceWith('summaryLogs')
+    expect(fetchSummaryLogStatus).toHaveBeenCalledWith(
+      organisationId,
+      registrationId,
+      summaryLogId
+    )
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log: upload progress |')
     )
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('status: initiated - should call fetchStatus', async () => {
-    const uploadId = '123'
-
-    yar.get.mockImplementationOnce(() => ({
-      uploadId,
-      summaryLogStatus: 'initiated'
-    }))
-
-    overrideRequest(server, yar)
-
-    const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-    expect(fetchStatus).toHaveBeenCalledExactlyOnceWith(uploadId)
-    expect(result).toStrictEqual(
-      expect.stringContaining('Your file is being uploaded')
-    )
-    expect(statusCode).toBe(statusCodes.ok)
-  })
-
-  test('status: initiated - should set summaryLogStatus to uploaded', async () => {
-    const uploadId = '123'
-
-    yar.get.mockImplementationOnce(() => ({
-      uploadId,
-      summaryLogStatus: 'initiated'
-    }))
-
-    fetchStatus.mockResolvedValueOnce({
-      uploadStatus: cdpUploaderStatuses.ready
-    })
-
-    overrideRequest(server, yar)
-
-    await server.inject({ method: 'GET', url })
-
-    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
-      'summaryLogs',
-      expect.objectContaining({ summaryLogStatus: 'uploaded' })
-    )
-  })
-
-  test('status: uploaded - should set summaryLogStatus to validating', async () => {
-    yar.get.mockImplementationOnce(() => ({
-      summaryLogStatus: 'uploaded'
-    }))
-
-    overrideRequest(server, yar)
-
-    const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
-      'summaryLogs',
-      expect.objectContaining({ summaryLogStatus: 'validating' })
-    )
-    expect(result).toStrictEqual(
-      expect.stringContaining('Your file is being validated')
-    )
-    expect(statusCode).toBe(statusCodes.ok)
-  })
-
-  test('status: validationSucceeded - should redirect to review', async () => {
-    yar.get.mockImplementationOnce(() => ({
-      summaryLogStatus: 'validationSucceeded'
-    }))
-
-    overrideRequest(server, yar)
-
-    const { statusCode, headers } = await server.inject({ method: 'GET', url })
-
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`${summaryLogBaseUrl}/review`)
-  })
-
-  test('should redirect to error', async () => {
-    yar.get.mockImplementationOnce(() => ({
-      summaryLogStatus: 'initiated'
-    }))
-
-    fetchStatus.mockRejectedValueOnce(new Error('Mock error'))
-
-    overrideRequest(server, yar)
-
-    const { result } = await server.inject({ method: 'GET', url })
-
-    expect(result).toStrictEqual(
-      expect.stringContaining('Summary log upload error')
-    )
-  })
-
-  test('status: initiated - rejected file should redirect to upload and set validationFailed', async () => {
-    const uploadId = '123'
-    yar.get.mockImplementationOnce(() => ({
-      uploadId,
-      summaryLogStatus: 'initiated'
-    }))
-
-    fetchStatus.mockResolvedValueOnce({
-      files: [
-        {
-          fileStatus: cdpUploaderFileStatuses.rejected,
-          errorMessage: 'Bad file'
-        }
-      ]
-    })
-
-    overrideRequest(server, yar)
-
-    const { statusCode, headers } = await server.inject({ method: 'GET', url })
-
-    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
-      'summaryLogs',
-      expect.objectContaining({
-        summaryLogStatus: 'validationFailed',
-        lastError: 'Bad file'
+  describe('processing states', () => {
+    test('status: preprocessing - should show processing message and poll', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.preprocessing
       })
-    )
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`${baseUrl}/upload`)
-  })
 
-  test('status: initiated - form error should redirect to upload and set validationFailed', async () => {
-    yar.get.mockImplementationOnce(() => ({
-      uploadId: '123',
-      summaryLogStatus: 'initiated'
-    }))
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-    fetchStatus.mockResolvedValueOnce({
-      form: { summaryLogUpload: { errorMessage: 'Form failed' } }
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your file is being uploaded')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'Your summary log is being uploaded and automatically validated'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Keep this page open and do not refresh it')
+      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
     })
 
-    overrideRequest(server, yar)
-
-    const { statusCode, headers } = await server.inject({ method: 'GET', url })
-
-    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
-      'summaryLogs',
-      expect.objectContaining({
-        summaryLogStatus: 'validationFailed',
-        lastError: 'Form failed'
+    test('status: validating - should show processing message and poll', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validating
       })
-    )
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`${baseUrl}/upload`)
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your file is being uploaded')
+      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 
-  test('status: validationFailed - should redirect to review', async () => {
-    yar.get.mockImplementationOnce(() => ({
-      summaryLogStatus: 'validationFailed'
-    }))
+  describe('terminal states', () => {
+    test('status: validated - should show success message and stop polling', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated
+      })
 
-    overrideRequest(server, yar)
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-    const { statusCode, headers } = await server.inject({ method: 'GET', url })
+      expect(result).toStrictEqual(
+        expect.stringContaining('Validation complete')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your file is ready to submit')
+      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('Keep this page open')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
 
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`${summaryLogBaseUrl}/review`)
+    test('status: submitted - should show success message and stop polling', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.submitted
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('Submission complete')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your waste records have been updated')
+      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: rejected with failureReason - should redirect to upload page with error in session', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.rejected,
+        failureReason: 'File rejected by virus scanner'
+      })
+
+      const { headers, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${baseUrl}/upload`)
+    })
+
+    test('status: rejected without failureReason - should redirect to upload page with default error in session', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.rejected
+      })
+
+      const { headers, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${baseUrl}/upload`)
+    })
+
+    test('status: invalid - should show validation error and stop polling', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(expect.stringContaining('Validation failed'))
+      expect(result).toStrictEqual(
+        expect.stringContaining('Please check your file and try again')
+      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
+
+  describe('error handling', () => {
+    test('should treat 404 as preprocessing and continue polling', async () => {
+      const error = new Error('Backend returned 404: Not Found')
+      error.status = StatusCodes.NOT_FOUND
+      fetchSummaryLogStatus.mockRejectedValueOnce(error)
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your file is being uploaded')
+      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
+      expect(result).toStrictEqual(
+        expect.stringContaining('Keep this page open')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('should show error page and stop polling when backend fetch fails', async () => {
+      fetchSummaryLogStatus.mockRejectedValueOnce(new Error('Network error'))
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('Error checking status')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Unable to check upload status')
+      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 })
 
