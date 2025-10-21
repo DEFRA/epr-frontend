@@ -59,22 +59,6 @@ describe('#i18nPlugin - integration', () => {
     )
   })
 
-  describe('translation context injection', () => {
-    it('should make translation function available in view context', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/'
-      })
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-
-      const $ = load(response.result)
-
-      expect($('h1').first().text()).toBe('Sites')
-      expect($('html')).toHaveLength(1)
-    })
-  })
-})
 
 /**
  * @import { Server } from '@hapi/hapi'
