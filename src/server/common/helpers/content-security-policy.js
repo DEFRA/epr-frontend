@@ -1,9 +1,8 @@
 import Blankie from 'blankie'
+import { config } from '~/src/config/config.js'
 
-const isDevelopment = process.env.NODE_ENV === 'development'
-
-export function cspFormAction({ isDevelopment }) {
-  return isDevelopment ? ['self', 'localhost:*'] : ['self']
+export function cspFormAction({ isProduction }) {
+  return isProduction ? ['self'] : ['self', 'localhost:*']
 }
 
 /**
@@ -28,7 +27,7 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    formAction: cspFormAction({ isDevelopment }),
+    formAction: cspFormAction({ isProduction: config.get('isProduction') }),
     manifestSrc: ['self'],
     generateNonces: false
   }

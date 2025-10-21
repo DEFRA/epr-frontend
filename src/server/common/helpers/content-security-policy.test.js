@@ -4,10 +4,10 @@ import { cspFormAction } from '~/src/server/common/helpers/content-security-poli
 
 describe(cspFormAction, () => {
   it.each([
-    ['development', { isDevelopment: true }, ['self', 'localhost:*']],
-    ['production', { isDevelopment: false }, ['self']]
-  ])('should use %s values', (_, config, value) => {
-    expect(cspFormAction(config)).toStrictEqual(value)
+    ['non-production', { isProduction: false }, ['self', 'localhost:*']],
+    ['production', { isProduction: true }, ['self']]
+  ])('should use %s values', (_, config, values) => {
+    expect(cspFormAction(config)).toStrictEqual(values)
   })
 })
 
@@ -29,6 +29,23 @@ describe('#contentSecurityPolicy', () => {
       url: '/'
     })
 
-    expect(resp.headers['content-security-policy']).toBeDefined()
+    expect(resp.headers['content-security-policy']).toBe(
+      [
+        "base-uri 'self'",
+        "connect-src 'self' wss data:",
+        "default-src 'self'",
+        "font-src 'self' data:",
+        "form-action 'self' localhost:*",
+        "frame-ancestors 'none'",
+        "frame-src 'self' data:",
+        "img-src 'self' data:",
+        "manifest-src 'self'",
+        "media-src 'self'",
+        "object-src 'none'",
+        "script-src 'self' 'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
+        "style-src 'self'",
+        "worker-src 'self'"
+      ].join(';')
+    )
   })
 })
