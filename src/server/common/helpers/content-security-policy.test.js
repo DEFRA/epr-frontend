@@ -1,5 +1,15 @@
-import { describe, beforeAll, afterAll, test, expect } from 'vitest'
+import { describe, beforeAll, afterAll, it, expect } from 'vitest'
 import { createServer } from '~/src/server/index.js'
+import { cspFormAction } from '~/src/server/common/helpers/content-security-policy.js'
+
+describe(cspFormAction, () => {
+  it.each([
+    ['development', { isDevelopment: true }, ['self', 'localhost:*']],
+    ['production', { isDevelopment: false }, ['self']]
+  ])('should use %s values', (_, config, value) => {
+    expect(cspFormAction(config)).toStrictEqual(value)
+  })
+})
 
 describe('#contentSecurityPolicy', () => {
   let server
@@ -13,7 +23,7 @@ describe('#contentSecurityPolicy', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('should set the CSP policy header', async () => {
+  it('should set the CSP policy header', async () => {
     const resp = await server.inject({
       method: 'GET',
       url: '/'

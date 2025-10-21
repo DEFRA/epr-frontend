@@ -1,5 +1,11 @@
 import Blankie from 'blankie'
 
+const isDevelopment = process.env.NODE_ENV === 'development'
+
+export function cspFormAction({ isDevelopment }) {
+  return isDevelopment ? ['self', 'localhost:*'] : ['self']
+}
+
 /**
  * Manage content security policies.
  * @satisfies {import('@hapi/hapi').Plugin}
@@ -22,7 +28,7 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    formAction: ['self'],
+    formAction: cspFormAction({ isDevelopment }),
     manifestSrc: ['self'],
     generateNonces: false
   }
