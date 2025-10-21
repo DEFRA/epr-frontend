@@ -17,7 +17,6 @@ describe('#i18nPlugin - integration', () => {
   })
 
   describe('language detection and html lang attribute', () => {
-
     it.each([
       { url: '/', expectedLang: 'en', description: 'english' },
       { url: '/cy', expectedLang: 'cy', description: 'welsh' }
@@ -40,7 +39,6 @@ describe('#i18nPlugin - integration', () => {
   })
 
   describe('url rewriting', () => {
-
     it.each([
       { originalUrl: '/cy', expectedPath: '/' },
       { originalUrl: '/cy/', expectedPath: '/' },
@@ -58,7 +56,7 @@ describe('#i18nPlugin - integration', () => {
       }
     )
   })
-
+})
 
 /**
  * @import { Server } from '@hapi/hapi'
