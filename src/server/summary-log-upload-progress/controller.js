@@ -3,12 +3,13 @@ import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-
 import { backendSummaryLogStatuses } from '~/src/server/common/constants/statuses.js'
 import { sessionNames } from '~/src/server/common/constants/session-names.js'
 
-const PROCESSING_STATES = [
+const PROCESSING_STATES = new Set([
   backendSummaryLogStatuses.preprocessing,
   backendSummaryLogStatuses.validating
-]
+])
 
 const PAGE_TITLE = 'Summary log: upload progress'
+const VIEW_NAME = 'summary-log-upload-progress/index'
 
 /**
  * Determines view data based on backend status
@@ -18,7 +19,7 @@ const PAGE_TITLE = 'Summary log: upload progress'
  */
 const getViewData = (status, failureReason) => {
   // Processing states - show designed message
-  if (PROCESSING_STATES.includes(status)) {
+  if (PROCESSING_STATES.has(status)) {
     return {
       heading: 'Your file is being uploaded',
       message:
@@ -90,10 +91,10 @@ export const summaryLogUploadProgressController = {
 
       const viewData = getViewData(status, failureReason)
 
-      return h.view('summary-log-upload-progress/index', {
+      return h.view(VIEW_NAME, {
         pageTitle: PAGE_TITLE,
         ...viewData,
-        shouldPoll: PROCESSING_STATES.includes(status),
+        shouldPoll: PROCESSING_STATES.has(status),
         pollUrl
       })
     } catch (err) {
@@ -101,7 +102,7 @@ export const summaryLogUploadProgressController = {
       if (err.status === StatusCodes.NOT_FOUND) {
         const viewData = getViewData(backendSummaryLogStatuses.preprocessing)
 
-        return h.view('summary-log-upload-progress/index', {
+        return h.view(VIEW_NAME, {
           pageTitle: PAGE_TITLE,
           ...viewData,
           shouldPoll: true,
@@ -112,7 +113,7 @@ export const summaryLogUploadProgressController = {
       // Other errors - show error page
       request.server.log(['error', 'upload-progress'], err)
 
-      return h.view('summary-log-upload-progress/index', {
+      return h.view(VIEW_NAME, {
         pageTitle: PAGE_TITLE,
         heading: 'Error checking status',
         message: 'Unable to check upload status - please try again later',
