@@ -14,6 +14,9 @@ vi.mock(
   })
 )
 
+const enablesClientSidePolling = () =>
+  expect.stringContaining('meta http-equiv="refresh"')
+
 describe('#summaryLogUploadProgressController', () => {
   const organisationId = '123'
   const registrationId = '456'
@@ -66,9 +69,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Keep this page open and do not refresh it')
       )
-      expect(result).toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -82,9 +83,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Your file is being uploaded')
       )
-      expect(result).toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
   })
@@ -103,9 +102,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Your file is ready to submit')
       )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
       expect(result).not.toStrictEqual(
         expect.stringContaining('Keep this page open')
       )
@@ -125,9 +122,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Your waste records have been updated')
       )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -171,9 +166,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Please check your file and try again')
       )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
   })
@@ -189,9 +182,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Your file is being uploaded')
       )
-      expect(result).toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
       expect(result).toStrictEqual(
         expect.stringContaining('Keep this page open')
       )
@@ -209,9 +200,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Unable to check upload status')
       )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('meta http-equiv="refresh"')
-      )
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
   })
