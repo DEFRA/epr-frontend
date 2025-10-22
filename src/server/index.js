@@ -14,7 +14,8 @@ import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
-import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
+import { contentSecurityPolicy } from '~/src/server/common/helpers/content-security-policy.js'
+import { userAgentProtection } from '~/src/server/common/helpers/useragent-protection.js'
 import { router } from './router.js'
 import { initI18n } from './common/helpers/i18n/i18n.js'
 import { i18nPlugin } from './common/helpers/i18next.js'
@@ -79,6 +80,7 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    userAgentProtection, // Must be registered before Scooter to intercept malicious User-Agents
     Scooter,
     contentSecurityPolicy,
     { plugin: i18nPlugin, options: { i18next } }
