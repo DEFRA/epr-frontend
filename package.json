@@ -47,10 +47,12 @@
     "@hapi/hapi": "21.4.3",
     "@hapi/inert": "7.1.0",
     "@hapi/jwt": "3.2.1",
+    "@hapi/scooter": "7.0.0",
     "@hapi/vision": "7.0.3",
     "@hapi/yar": "11.0.3",
     "aws-embedded-metrics": "4.2.0",
     "babel-plugin-module-resolver": "5.0.2",
+    "blankie": "5.0.0",
     "convict": "6.2.4",
     "cssnano": "7.1.1",
     "cssnano-preset-default": "7.0.9",
@@ -69,6 +71,7 @@
     "nunjucks": "3.2.4",
     "pino": "10.1.0",
     "pino-pretty": "13.1.2",
+    "semver": "7.7.3",
     "undici": "7.16.0"
   },
   "devDependencies": {

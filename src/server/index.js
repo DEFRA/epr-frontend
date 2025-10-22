@@ -1,5 +1,6 @@
-import hapi from '@hapi/hapi'
 import path from 'path'
+import hapi from '@hapi/hapi'
+import Scooter from '@hapi/scooter'
 
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
@@ -13,6 +14,7 @@ import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
+import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { router } from './router.js'
 import { initI18n } from './common/helpers/i18n/i18n.js'
 import { i18nPlugin } from './common/helpers/i18next.js'
@@ -77,6 +79,8 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    Scooter,
+    contentSecurityPolicy,
     { plugin: i18nPlugin, options: { i18next } }
   ]
 
