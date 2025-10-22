@@ -8,6 +8,7 @@
       "~/*": ["./*"],
       "#client/*": ["./src/client/*"],
       "#config/*": ["./src/config/*"],
+      "#locales/*": ["./src/locales/*"],
       "#server/*": ["./src/server/*"]
     },
     "resolveJsonModule": true,
