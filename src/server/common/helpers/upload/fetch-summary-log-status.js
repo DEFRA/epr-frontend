@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 
 /**
  * Fetches summary log status from EPR Backend

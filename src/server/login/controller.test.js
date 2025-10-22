@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import { createMockOidcServer } from '~/src/server/common/test-helpers/mock-oidc.js'
 import { createServer } from '~/src/server/index.js'

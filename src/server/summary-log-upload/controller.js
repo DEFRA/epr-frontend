@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { mimeTypes } from '~/src/server/common/constants/mime-types.js'
 import { initUpload } from '~/src/server/common/helpers/upload/init-upload.js'
 import { sessionNames } from '~/src/server/common/constants/session-names.js'

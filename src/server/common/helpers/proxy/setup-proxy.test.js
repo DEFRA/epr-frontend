@@ -1,6 +1,6 @@
 import { getGlobalDispatcher, ProxyAgent } from 'undici'
 import { afterEach, describe, expect, test } from 'vitest'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
 
 describe(setupProxy, () => {

@@ -1,6 +1,6 @@
 import { load } from 'cheerio'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import * as getUserSessionModule from '~/src/server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '~/src/server/common/test-helpers/mock-oidc.js'

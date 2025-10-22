@@ -1,6 +1,6 @@
 import authCookie from '@hapi/cookie'
 import { isPast, parseISO, subMinutes } from 'date-fns'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import {
   removeUserSession,
   updateUserSession

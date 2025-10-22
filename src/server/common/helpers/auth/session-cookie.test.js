@@ -19,7 +19,7 @@ vi.mock(import('date-fns'), async (importOriginal) => {
   }
 })
 
-vi.mock(import('~/src/config/config.js'), () => ({
+vi.mock(import('#config/config.js'), () => ({
   config: {
     get: vi.fn()
   }
@@ -57,7 +57,7 @@ describe('#sessionCookie', () => {
     const authCookie = await import('@hapi/cookie')
     mockAuthCookie = authCookie.default
 
-    const { config } = await import('~/src/config/config.js')
+    const { config } = await import('#config/config.js')
     mockConfig = config
 
     const { getUserSession } = await import(

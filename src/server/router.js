@@ -2,7 +2,7 @@ import inert from '@hapi/inert'
 
 import { auth } from '~/src/server/auth/index.js'
 import { serveStaticFiles } from '~/src/server/common/helpers/serve-static-files.js'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { health } from '~/src/server/health/index.js'
 import { home } from '~/src/server/home/index.js'
 import { login } from '~/src/server/login/index.js'

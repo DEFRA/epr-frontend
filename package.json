@@ -5,6 +5,9 @@
   "sideEffects": false,
   "main": ".server/index.js",
   "type": "module",
+  "imports": {
+    "#config/*": "./src/config/*"
+  },
   "engines": {
     "node": "24.10.0"
   },

@@ -20,7 +20,7 @@ vi.mock(import('node-fetch'), () => ({
   default: vi.fn()
 }))
 
-vi.mock(import('~/src/config/config.js'), () => ({
+vi.mock(import('#config/config.js'), () => ({
   config: {
     get: vi.fn()
   }
@@ -46,7 +46,7 @@ describe('#defraId', () => {
     const bell = await import('@hapi/bell')
     mockBell = bell.default
 
-    const { config } = await import('~/src/config/config.js')
+    const { config } = await import('#config/config.js')
     mockConfig = config
 
     // Setup default mock implementations
