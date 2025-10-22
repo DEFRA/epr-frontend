@@ -4,12 +4,6 @@
     "checkJs": false,
     "module": "NodeNext",
     "noEmit": true,
-    "paths": {
-      "#client/*": ["./src/client/*"],
-      "#config/*": ["./src/config/*"],
-      "#locales/*": ["./src/locales/*"],
-      "#server/*": ["./src/server/*"]
-    },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strictFunctionTypes": true,
