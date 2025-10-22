@@ -57,7 +57,6 @@
     "@hapi/vision": "7.0.3",
     "@hapi/yar": "11.0.3",
     "aws-embedded-metrics": "4.2.0",
-    "babel-plugin-module-resolver": "5.0.2",
     "blankie": "5.0.0",
     "convict": "6.2.4",
     "cssnano": "7.1.1",

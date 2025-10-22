@@ -10,16 +10,5 @@ module.exports = {
         modules: false
       }
     ]
-  ],
-  plugins: [
-    [
-      'module-resolver',
-      {
-        root: ['./'],
-        alias: {
-          '~': '.'
-        }
-      }
-    ]
   ]
 }
