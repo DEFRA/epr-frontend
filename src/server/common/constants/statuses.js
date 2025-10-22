@@ -18,3 +18,12 @@ export const cdpUploaderFileStatuses = {
   complete: 'complete',
   rejected: 'rejected'
 }
+
+export const backendSummaryLogStatuses = {
+  preprocessing: 'preprocessing',
+  rejected: 'rejected',
+  validating: 'validating',
+  invalid: 'invalid',
+  validated: 'validated',
+  submitted: 'submitted'
+}

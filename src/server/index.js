@@ -1,10 +1,12 @@
 import hapi from '@hapi/hapi'
+import Scooter from '@hapi/scooter'
 import path from 'path'
 
 import { config, isDefraIdEnabled } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { defraId } from '~/src/server/common/helpers/auth/defra-id.js'
 import { sessionCookie } from '~/src/server/common/helpers/auth/session-cookie.js'
+import { contentSecurityPolicy } from '~/src/server/common/helpers/content-security-policy.js'
 import { catchAll } from '~/src/server/common/helpers/errors.js'
 import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
 import { setupProxy } from '~/src/server/common/helpers/proxy/setup-proxy.js'
@@ -13,6 +15,7 @@ import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
+import { userAgentProtection } from '~/src/server/common/helpers/useragent-protection.js'
 import { initI18n } from './common/helpers/i18n/i18n.js'
 import { i18nPlugin } from './common/helpers/i18next.js'
 import { router } from './router.js'
@@ -77,6 +80,9 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    userAgentProtection, // Must be registered before Scooter to intercept malicious User-Agents
+    Scooter,
+    contentSecurityPolicy,
     { plugin: i18nPlugin, options: { i18next } }
   ]
 

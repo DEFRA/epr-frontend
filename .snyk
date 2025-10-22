@@ -1,0 +1,15 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  SNYK-JS-USERAGENT-8309369:
+    - '*':
+        reason: No fix available, however we have implemented User-Agent truncation to mitigate ReDoS attacks
+        expires: 2026-10-24T17:59:39.786Z
+        created: 2025-08-25T17:59:39.792Z
+  SNYK-JS-USERAGENT-174737:
+    - '*':
+        reason: No fix available, however we have implemented User-Agent truncation to mitigate ReDoS attacks
+        expires: 2026-10-24T18:00:04.997Z
+        created: 2025-08-25T18:00:05.003Z
+patch: {}
