@@ -1,9 +1,9 @@
-import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
+import { buildRedisClient } from '#server/common/helpers/redis-client.js'
 import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import { Engine as CatboxMemory } from '@hapi/catbox-memory'
 
 import { config } from '#config/config.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
  * @typedef {'redis' | 'memory'} Engine

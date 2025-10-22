@@ -1,4 +1,4 @@
-import { homeController } from '~/src/server/home/controller.js'
+import { homeController } from '#server/home/controller.js'
 
 /**
  * Sets up the routes used in the home page.

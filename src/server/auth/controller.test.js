@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
-import { authCallbackController } from '~/src/server/auth/controller.js'
+import { authCallbackController } from '#server/auth/controller.js'
 
 vi.mock(import('node:crypto'), () => ({
   randomUUID: vi.fn(() => 'mock-uuid-1234')

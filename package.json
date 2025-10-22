@@ -6,7 +6,8 @@
   "main": ".server/index.js",
   "type": "module",
   "imports": {
-    "#config/*": "./src/config/*"
+    "#config/*": "./src/config/*",
+    "#server/*": "./src/server/*"
   },
   "engines": {
     "node": "24.10.0"

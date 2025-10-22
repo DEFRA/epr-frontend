@@ -18,10 +18,10 @@ vi.mock(import('node:fs'), async () => ({
   ...(await vi.importActual('node:fs')),
   readFileSync: () => mockReadFileSync()
 }))
-vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
+vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
-vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'), () => ({
+vi.mock(import('#server/common/helpers/auth/get-user-session.js'), () => ({
   getUserSession: (...args) => mockGetUserSession(...args)
 }))
 

@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { config } from '#config/config.js'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-import { createMockOidcServer } from '~/src/server/common/test-helpers/mock-oidc.js'
-import { createServer } from '~/src/server/index.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/index.js'
 
 describe('#loginController - integration', () => {
   /** @type {Server} */

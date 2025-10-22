@@ -6,7 +6,8 @@
     "noEmit": true,
     "paths": {
       "~/*": ["./*"],
-      "#config/*": ["./src/config/*"]
+      "#config/*": ["./src/config/*"],
+      "#server/*": ["./src/server/*"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,

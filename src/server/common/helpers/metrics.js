@@ -5,7 +5,7 @@ import {
 } from 'aws-embedded-metrics'
 
 import { config } from '#config/config.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
  * Aws embedded metrics wrapper

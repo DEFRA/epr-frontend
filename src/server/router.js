@@ -1,15 +1,15 @@
 import inert from '@hapi/inert'
 
-import { auth } from '~/src/server/auth/index.js'
-import { serveStaticFiles } from '~/src/server/common/helpers/serve-static-files.js'
+import { auth } from '#server/auth/index.js'
+import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
 import { config } from '#config/config.js'
-import { health } from '~/src/server/health/index.js'
-import { home } from '~/src/server/home/index.js'
-import { login } from '~/src/server/login/index.js'
-import { logout } from '~/src/server/logout/index.js'
-import { registration } from '~/src/server/registration/index.js'
-import { summaryLogUploadProgress } from '~/src/server/summary-log-upload-progress/index.js'
-import { summaryLogUpload } from '~/src/server/summary-log-upload/index.js'
+import { health } from '#server/health/index.js'
+import { home } from '#server/home/index.js'
+import { login } from '#server/login/index.js'
+import { logout } from '#server/logout/index.js'
+import { registration } from '#server/registration/index.js'
+import { summaryLogUploadProgress } from '#server/summary-log-upload-progress/index.js'
+import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
