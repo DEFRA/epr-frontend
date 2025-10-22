@@ -5,7 +5,6 @@
     "module": "NodeNext",
     "noEmit": true,
     "paths": {
-      "~/*": ["./*"],
       "#client/*": ["./src/client/*"],
       "#config/*": ["./src/config/*"],
       "#locales/*": ["./src/locales/*"],
