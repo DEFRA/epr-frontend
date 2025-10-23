@@ -8,6 +8,7 @@ export async function initI18n() {
     .use(Backend)
     .use(middleware.LanguageDetector)
     .init({
+      lng: process.env.DEFAULT_LANGUAGE || 'en',
       fallbackLng: 'en',
       preload: ['en', 'cy'],
       ns: ['common', 'home', 'errors'],
