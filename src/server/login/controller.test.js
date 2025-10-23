@@ -18,7 +18,7 @@ describe('#loginController - integration', () => {
 
   describe('login flow', () => {
     describe('when auth is disabled', () => {
-      test('should not be accessible when feature flag is disabled', async () => {
+      test('should not be accessible when oidc configuration url is not set', async () => {
         server = await createServer()
         await server.initialize()
 
@@ -39,8 +39,10 @@ describe('#loginController - integration', () => {
       })
 
       afterEach(async () => {
-        config.reset('featureFlags.defraId')
+        config.reset('defraId.clientId')
+        config.reset('defraId.clientSecret')
         config.reset('defraId.oidcConfigurationUrl')
+        config.reset('defraId.serviceId')
         mockOidcServer.resetHandlers()
       })
 
@@ -48,12 +50,16 @@ describe('#loginController - integration', () => {
         mockOidcServer.close()
       })
 
-      test('should redirect to OIDC provider when feature flag is enabled', async () => {
-        config.set('featureFlags.defraId', true)
-        config.set(
-          'defraId.oidcConfigurationUrl',
-          'http://defra-id.auth/.well-known/openid-configuration'
-        )
+      test('should redirect to oidc provider when oidc configuration url is set', async () => {
+        config.load({
+          defraId: {
+            clientId: 'test-client-id',
+            clientSecret: 'test-secret',
+            oidcConfigurationUrl:
+              'http://defra-id.auth/.well-known/openid-configuration',
+            serviceId: 'test-service-id'
+          }
+        })
 
         server = await createServer()
         await server.initialize()

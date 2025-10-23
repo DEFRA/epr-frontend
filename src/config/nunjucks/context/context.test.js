@@ -52,11 +52,14 @@ describe('#context', () => {
     })
 
     afterEach(() => {
-      config.reset('featureFlags.defraId')
+      config.reset('defraId.oidcConfigurationUrl')
     })
 
-    it('should provide the feature flag when enabled', async () => {
-      config.set('featureFlags.defraId', true)
+    it('should indicate defra id is enabled when oidc configuration url is set', async () => {
+      config.set(
+        'defraId.oidcConfigurationUrl',
+        'http://defra-id.auth/.well-known/openid-configuration'
+      )
 
       contextResult = await contextImport.context(mockRequest)
 

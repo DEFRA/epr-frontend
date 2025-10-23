@@ -1,11 +1,8 @@
-import path from 'path'
-import hapi from '@hapi/hapi'
-import Scooter from '@hapi/scooter'
-
-import { config } from '#config/config.js'
+import { config, isDefraIdEnabled } from '#config/config.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { defraId } from '#server/common/helpers/auth/defra-id.js'
 import { sessionCookie } from '#server/common/helpers/auth/session-cookie.js'
+import { contentSecurityPolicy } from '#server/common/helpers/content-security-policy.js'
 import { catchAll } from '#server/common/helpers/errors.js'
 import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
 import { setupProxy } from '#server/common/helpers/proxy/setup-proxy.js'
@@ -14,16 +11,18 @@ import { requestTracing } from '#server/common/helpers/request-tracing.js'
 import { secureContext } from '#server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '#server/common/helpers/session-cache/session-cache.js'
-import { contentSecurityPolicy } from '#server/common/helpers/content-security-policy.js'
 import { userAgentProtection } from '#server/common/helpers/useragent-protection.js'
-import { router } from './router.js'
+import hapi from '@hapi/hapi'
+import Scooter from '@hapi/scooter'
+import path from 'path'
 import { initI18n } from './common/helpers/i18n/i18n.js'
 import { i18nPlugin } from './common/helpers/i18next.js'
+import { router } from './router.js'
 
 export async function createServer() {
   setupProxy()
 
-  const isDefraIdEnabled = config.get('featureFlags.defraId')
+  const defraIdEnabled = isDefraIdEnabled()
 
   const routes = {
     validate: {
@@ -44,7 +43,7 @@ export async function createServer() {
       noSniff: true,
       xframe: true
     },
-    auth: isDefraIdEnabled ? { mode: 'try' } : false
+    auth: defraIdEnabled ? { mode: 'try' } : false
   }
 
   const server = hapi.server({
@@ -86,8 +85,7 @@ export async function createServer() {
     { plugin: i18nPlugin, options: { i18next } }
   ]
 
-  // Only register authentication strategies when feature flag is enabled
-  if (isDefraIdEnabled) {
+  if (defraIdEnabled) {
     plugins.push(defraId, sessionCookie)
   }
 

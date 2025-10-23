@@ -1,8 +1,6 @@
-import inert from '@hapi/inert'
-
+import { isDefraIdEnabled } from '#config/config.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
-import { config } from '#config/config.js'
 import { health } from '#server/health/index.js'
 import { home } from '#server/home/index.js'
 import { login } from '#server/login/index.js'
@@ -10,6 +8,7 @@ import { logout } from '#server/logout/index.js'
 import { registration } from '#server/registration/index.js'
 import { summaryLogUploadProgress } from '#server/summary-log-upload-progress/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
+import inert from '@hapi/inert'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -24,7 +23,7 @@ export const router = {
       await server.register([health])
 
       // Authentication routes
-      if (config.get('featureFlags.defraId')) {
+      if (isDefraIdEnabled()) {
         await server.register([login, auth, logout])
       }
 

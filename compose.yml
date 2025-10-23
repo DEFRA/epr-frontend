@@ -21,9 +21,9 @@ services:
       - 'compose/aws.env'
     environment:
       DEBUG: ${DEBUG:-1}
+      LOCALSTACK_HOST: 127.0.0.1
       LS_LOG: WARN # Localstack DEBUG Level
       SERVICES: s3,sqs,sns,firehose
-      LOCALSTACK_HOST: 127.0.0.1
     volumes:
       - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
       - './compose:/etc/localstack/init/ready.d'
@@ -40,6 +40,8 @@ services:
     ports:
       - '6379:6379'
     restart: always
+    volumes:
+      - redis-data:/data
     networks:
       - cdp-tenant
 
@@ -47,41 +49,61 @@ services:
     image: defradigital/cdp-uploader:${CDP_UPLOADER_VERSION:-latest}
     ports:
       - '7337:7337'
-    links:
-      - 'localstack:localstack'
-      - 'redis:redis'
     depends_on:
       localstack:
         condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - 'compose/aws.env'
     environment:
+      CONSUMER_BUCKETS: re-ex-summary-logs
+      MOCK_VIRUS_RESULT_DELAY: 3
+      MOCK_VIRUS_SCAN_ENABLED: true
+      NODE_ENV: development
+      PORT: 7337
+      REDIS_HOST: redis
+      S3_ENDPOINT: http://localstack:4566
+      SQS_ENDPOINT: http://localstack:4566
+      USE_SINGLE_INSTANCE_CACHE: true
       VIRTUAL_HOST: ~^uploader\..*\.sslip\.io
       VIRTUAL_PATH: /
       VIRTUAL_PORT: 7337
-      PORT: 7337
+    networks:
+      - cdp-tenant
+
+  defra-id-stub:
+    image: defradigital/cdp-defra-id-stub:${DEFRA_ID_STUB_VERSION:-latest}
+    ports:
+      - '3200:3200'
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      APP_BASE_URL: http://localhost:3200
       NODE_ENV: development
+      OIDC_BASE_PATH: /cdp-defra-id-stub
+      OIDC_CLIENT_ID: 63983fc2-cfff-45bb-8ec2-959e21062b9a
+      OIDC_CLIENT_SECRET: test_value
+      OIDC_SHOW_LOGIN: true
+      PORT: 3200
       REDIS_HOST: redis
+      SESSION_CACHE_ENGINE: redis
       USE_SINGLE_INSTANCE_CACHE: true
-      MOCK_VIRUS_SCAN_ENABLED: true
-      MOCK_VIRUS_RESULT_DELAY: 3
-      SQS_ENDPOINT: http://localstack:4566
-      S3_ENDPOINT: http://localstack:4566
-      CONSUMER_BUCKETS: re-ex-summary-logs
     networks:
       - cdp-tenant
 
 ################################################################################
 
   ui:
+    profiles: ['all']
     build:
       context: .
       dockerfile: Dockerfile.local
     ports:
       - '3000:3000'
-    links:
-      - 'localstack:localstack'
-      - 'redis:redis'
+    extra_hosts:
+      - 'localhost:host-gateway'
     develop:
       watch:
         - path: src/
@@ -102,6 +124,8 @@ services:
         - path: webpack.config.js
           action: rebuild
     depends_on:
+      defra-id-stub:
+        condition: service_started
       localstack:
         condition: service_healthy
       redis:
@@ -109,13 +133,17 @@ services:
     env_file:
       - 'compose/aws.env'
     environment:
-      PORT: 3000
-      NODE_ENV: development
-      REDIS_HOST: redis
-      LOCALSTACK_ENDPOINT: http://localstack:4566
-      USE_SINGLE_INSTANCE_CACHE: true
       CDP_UPLOADER_URL: http://cdp-uploader:7337
+      DEFRA_ID_CLIENT_ID: 63983fc2-cfff-45bb-8ec2-959e21062b9a
+      DEFRA_ID_CLIENT_SECRET: test_value
+      DEFRA_ID_OIDC_CONFIGURATION_URL: http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration
+      DEFRA_ID_SERVICE_ID: d7d72b79-9c62-ee11-8df0-000d3adf7047
       EPR_BACKEND_URL: http://localhost:3001
+      LOCALSTACK_ENDPOINT: http://localstack:4566
+      NODE_ENV: development
+      PORT: 3000
+      REDIS_HOST: redis
+      USE_SINGLE_INSTANCE_CACHE: true
     networks:
       - cdp-tenant
 
@@ -124,3 +152,6 @@ services:
 networks:
   cdp-tenant:
     driver: bridge
+
+volumes:
+  redis-data:
