@@ -5,10 +5,10 @@
  */
 export const homeController = {
   handler(request, h) {
-    const localize = request.t
+    const localise = request.t
     return h.view('home/index', {
-      pageTitle: localize('home:pageTitle'),
-      heading: localize('home:pageTitle')
+      pageTitle: localise('home:pageTitle'),
+      heading: localise('home:pageTitle')
     })
   }
 }
