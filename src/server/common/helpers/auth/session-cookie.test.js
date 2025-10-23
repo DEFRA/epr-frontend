@@ -1,6 +1,6 @@
 import { addMinutes } from 'date-fns'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { sessionCookie } from '~/src/server/common/helpers/auth/session-cookie.js'
+import { sessionCookie } from '#server/common/helpers/auth/session-cookie.js'
 
 vi.mock(import('@hapi/cookie'), () => ({
   default: {
@@ -19,21 +19,21 @@ vi.mock(import('date-fns'), async (importOriginal) => {
   }
 })
 
-vi.mock(import('~/src/config/config.js'), () => ({
+vi.mock(import('#config/config.js'), () => ({
   config: {
     get: vi.fn()
   }
 }))
 
-vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'), () => ({
+vi.mock(import('#server/common/helpers/auth/get-user-session.js'), () => ({
   getUserSession: vi.fn()
 }))
 
-vi.mock(import('~/src/server/common/helpers/auth/refresh-token.js'), () => ({
+vi.mock(import('#server/common/helpers/auth/refresh-token.js'), () => ({
   refreshAccessToken: vi.fn()
 }))
 
-vi.mock(import('~/src/server/common/helpers/auth/user-session.js'), () => ({
+vi.mock(import('#server/common/helpers/auth/user-session.js'), () => ({
   removeUserSession: vi.fn(),
   updateUserSession: vi.fn()
 }))
@@ -57,21 +57,21 @@ describe('#sessionCookie', () => {
     const authCookie = await import('@hapi/cookie')
     mockAuthCookie = authCookie.default
 
-    const { config } = await import('~/src/config/config.js')
+    const { config } = await import('#config/config.js')
     mockConfig = config
 
     const { getUserSession } = await import(
-      '~/src/server/common/helpers/auth/get-user-session.js'
+      '#server/common/helpers/auth/get-user-session.js'
     )
     mockGetUserSession = getUserSession
 
     const { refreshAccessToken } = await import(
-      '~/src/server/common/helpers/auth/refresh-token.js'
+      '#server/common/helpers/auth/refresh-token.js'
     )
     mockRefreshAccessToken = refreshAccessToken
 
     const { removeUserSession, updateUserSession } = await import(
-      '~/src/server/common/helpers/auth/user-session.js'
+      '#server/common/helpers/auth/user-session.js'
     )
     mockRemoveUserSession = removeUserSession
     mockUpdateUserSession = updateUserSession

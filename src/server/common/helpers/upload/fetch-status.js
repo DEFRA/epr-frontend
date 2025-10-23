@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 
 async function fetchStatus(id) {
   const endpointUrl = config.get('cdpUploader.url') + `/status/${id}`

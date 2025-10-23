@@ -1,12 +1,12 @@
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-summary-log-status.js'
-import { createServer } from '~/src/server/index.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { createServer } from '#server/index.js'
 import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
 
 vi.mock(
-  import('~/src/server/common/helpers/upload/fetch-summary-log-status.js'),
+  import('#server/common/helpers/upload/fetch-summary-log-status.js'),
   () => ({
     fetchSummaryLogStatus: vi.fn().mockResolvedValue({
       status: 'preprocessing'

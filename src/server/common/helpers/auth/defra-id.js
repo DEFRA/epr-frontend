@@ -2,7 +2,7 @@ import bell from '@hapi/bell'
 import jwt from '@hapi/jwt'
 import fetch from 'node-fetch'
 
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { getDisplayName } from './display.js'
 
 const getOidcConfiguration = async (oidcConfigurationUrl) => {

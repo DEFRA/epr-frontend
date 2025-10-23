@@ -3,7 +3,7 @@ import path from 'path'
 import nunjucks from 'nunjucks'
 import hapiVision from '@hapi/vision'
 
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { context } from './context/context.js'
 import * as filters from './filters/index.js'
 import * as globals from './globals.js'
