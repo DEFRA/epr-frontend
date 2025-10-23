@@ -2,9 +2,9 @@
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-full">
+    <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <a href="{{ langPrefix }}/#" class="govuk-back-link">{{localise("common:back")}}</a>
+        <h1 class="govuk-heading-l">Sites</h1>
 
         {% if isDefraIdEnabled %}
           {% if authedUser and authedUser.displayName %}
@@ -14,7 +14,7 @@
               </div>
             </div>
             <p class="govuk-body">
-              <a href="/logout" class="govuk-link">Sign out</a>
+              <a href="/logout" class="govuk-link"> {{localise("common:signOut")}}</a>
             </p>
             <details class="govuk-details">
               <summary class="govuk-details__summary">
@@ -35,7 +35,7 @@
             </details>
           {% else %}
             <p class="govuk-body">
-              Welcome, guest!
+              {{localise("home:greeting")}}, guest!
             </p>
             <p class="govuk-body">
               You can <a id="login-link" href="/login" class="govuk-link">sign in</a> to access your account.
@@ -43,88 +43,12 @@
           {% endif %}
         {% endif %}
 
-        <nav class="govuk-breadcrumbs govuk-!-margin-top-3">
-          <ol class="govuk-breadcrumbs__list">
-            <li class="govuk-breadcrumbs__list-item">
-              <a href="{{ langPrefix }}/" class="govuk-breadcrumbs__link">{{ pageTitle }}</a>
-            </li>
-          </ol>
-        </nav>
-        <h1 class="govuk-heading-l govuk-!-margin-top-4">Sites</h1>
-        <h2 class="govuk-heading-m">Select site and material</h2>
-
-        <h3 class="govuk-heading-s govuk-!-margin-top-6">South Road</h3>
-
-        <table class="govuk-table">
-          <caption class="govuk-visually-hidden">Available waste balance for South Road</caption>
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Material</th>
-              <th scope="col" class="govuk-table__header">Status</th>
-              <th scope="col" class="govuk-table__header">Available waste balance</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Paper and board</a>
-              </td>
-              <td class="govuk-table__cell">Accredited</td>
-              <td class="govuk-table__cell">23,495 tonnes</td>
-            </tr>
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Plastic</a>
-              </td>
-              <td class="govuk-table__cell">Accredited</td>
-              <td class="govuk-table__cell">18,019 tonnes</td>
-            </tr>
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Steel</a>
-              </td>
-              <td class="govuk-table__cell">Not accredited</td>
-              <td class="govuk-table__cell"></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3 class="govuk-heading-s govuk-!-margin-top-6">South Road</h3>
-
-        <table class="govuk-table">
-          <caption class="govuk-visually-hidden">Available waste balance for South Road</caption>
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Material</th>
-              <th scope="col" class="govuk-table__header">Status</th>
-              <th scope="col" class="govuk-table__header">Available waste balance</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Paper and board</a>
-              </td>
-              <td class="govuk-table__cell">Accredited</td>
-              <td class="govuk-table__cell">23,495 tonnes</td>
-            </tr>
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Plastic</a>
-              </td>
-              <td class="govuk-table__cell">Accredited</td>
-              <td class="govuk-table__cell">18,019 tonnes</td>
-            </tr>
-            <tr class="govuk-table__row">
-              <td class="govuk-table__cell">
-                <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Steel</a>
-              </td>
-              <td class="govuk-table__cell">Not accredited</td>
-              <td class="govuk-table__cell"></td>
-            </tr>
-          </tbody>
-        </table>
+        <h2 class="govuk-heading-m">Test</h2>
+        <p>
+          <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Test Registration</a>
+        </p>
       </div>
     </div>
   </div>
+
 {% endblock %}

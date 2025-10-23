@@ -28,14 +28,17 @@ export const i18nPlugin = {
         request.response.source.context.t = request.t
         request.response.source.context.language = language
         request.response.source.context.htmlLang = language
-      }
 
-      if (request.response.variety === 'view') {
-        request.response.source.context = {
-          ...request.response.source.context,
-          localise: request.t,
-          language,
-          langPrefix: language === 'cy' ? '/cy' : ''
+        if (request.response.variety === 'view') {
+          const existingContext = request.response.source.context
+          request.response.source.context = {
+            ...existingContext,
+            t: existingContext.t,
+            language: existingContext.language,
+            htmlLang: existingContext.htmlLang,
+            localise: request.t,
+            langPrefix: language === 'cy' ? '/cy' : ''
+          }
         }
       }
       return h.continue
