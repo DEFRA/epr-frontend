@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-import { createServer } from '~/src/server/index.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createServer } from '#server/index.js'
 
 describe('#healthController', () => {
   /** @type {Server} */

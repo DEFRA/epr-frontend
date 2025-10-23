@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash-es'
-import { provideAuthedUser } from '~/src/server/logout/prerequisites/provide-authed-user.js'
+import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
 import { removeUserSession } from '../common/helpers/auth/user-session.js'
 
 /**

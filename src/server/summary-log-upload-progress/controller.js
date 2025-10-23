@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
-import { fetchSummaryLogStatus } from '~/src/server/common/helpers/upload/fetch-summary-log-status.js'
-import { backendSummaryLogStatuses } from '~/src/server/common/constants/statuses.js'
-import { sessionNames } from '~/src/server/common/constants/session-names.js'
+import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { backendSummaryLogStatuses } from '#server/common/constants/statuses.js'
+import { sessionNames } from '#server/common/constants/session-names.js'
 
 const PROCESSING_STATES = new Set([
   backendSummaryLogStatuses.preprocessing,

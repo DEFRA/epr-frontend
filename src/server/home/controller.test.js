@@ -1,12 +1,12 @@
 import { load } from 'cheerio'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { config } from '~/src/config/config.js'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-import * as getUserSessionModule from '~/src/server/common/helpers/auth/get-user-session.js'
-import { createMockOidcServer } from '~/src/server/common/test-helpers/mock-oidc.js'
-import { createServer } from '~/src/server/index.js'
+import { config } from '#config/config.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import * as getUserSessionModule from '#server/common/helpers/auth/get-user-session.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/index.js'
 
-vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'))
+vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
 
 describe('#homeController', () => {
   describe('when auth is disabled', () => {

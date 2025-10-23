@@ -1,13 +1,13 @@
 import fetch from 'node-fetch'
 import { describe, expect, test, vi } from 'vitest'
 
-import { config } from '~/src/config/config.js'
-import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
-import { refreshAccessToken } from '~/src/server/common/helpers/auth/refresh-token.js'
+import { config } from '#config/config.js'
+import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { refreshAccessToken } from '#server/common/helpers/auth/refresh-token.js'
 
 vi.mock(import('node-fetch'))
-vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'))
-vi.mock(import('~/src/config/config.js'))
+vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
+vi.mock(import('#config/config.js'))
 
 describe('#refreshAccessToken', () => {
   test('should refresh access token with correct parameters', async () => {

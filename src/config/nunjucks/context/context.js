@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
-import { config } from '~/src/config/config.js'
-import { buildNavigation } from '~/src/config/nunjucks/context/build-navigation.js'
-import { getUserSession } from '~/src/server/common/helpers/auth/get-user-session.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { config } from '#config/config.js'
+import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
+import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')

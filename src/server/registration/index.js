@@ -1,4 +1,4 @@
-import { registrationController } from '~/src/server/registration/controller.js'
+import { registrationController } from '#server/registration/controller.js'
 
 /**
  * Sets up the routes used in the registration page.

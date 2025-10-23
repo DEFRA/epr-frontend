@@ -1,6 +1,6 @@
 import { describe, beforeEach, afterEach, test, expect } from 'vitest'
 import http2 from 'node:http2'
-import { createServer } from '~/src/server/index.js'
+import { createServer } from '#server/index.js'
 
 const { constants: httpConstants } = http2
 const MAX_USER_AGENT_LENGTH = 150

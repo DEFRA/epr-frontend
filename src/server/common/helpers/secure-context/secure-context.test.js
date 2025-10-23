@@ -9,7 +9,7 @@ import {
   test,
   vi
 } from 'vitest'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { requestLogger } from '../logging/request-logger.js'
 import { secureContext } from './secure-context.js'
 

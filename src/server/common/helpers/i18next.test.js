@@ -1,7 +1,7 @@
 import { load } from 'cheerio'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-import { createServer } from '~/src/server/index.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createServer } from '#server/index.js'
 
 describe('#i18nPlugin - integration', () => {
   /** @type {Server} */
