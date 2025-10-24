@@ -1,4 +1,4 @@
-import { logoutController } from '~/src/server/logout/controller.js'
+import { logoutController } from '#server/logout/controller.js'
 
 /**
  * Logout plugin

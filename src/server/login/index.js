@@ -1,4 +1,4 @@
-import { loginController } from '~/src/server/login/controller.js'
+import { loginController } from '#server/login/controller.js'
 
 /**
  * Login plugin

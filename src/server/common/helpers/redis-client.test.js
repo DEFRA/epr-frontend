@@ -1,12 +1,16 @@
 import { Cluster, Redis } from 'ioredis'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { config } from '~/src/config/config.js'
-import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
+import { config } from '#config/config.js'
+import { buildRedisClient } from '#server/common/helpers/redis-client.js'
 
 vi.mock(import('ioredis'), async () => ({
   ...(await vi.importActual('ioredis')),
-  Cluster: vi.fn().mockReturnValue({ on: () => ({}) }),
-  Redis: vi.fn().mockReturnValue({ on: () => ({}) })
+  Cluster: vi.fn(function () {
+    return { on: () => ({}) }
+  }),
+  Redis: vi.fn(function () {
+    return { on: () => ({}) }
+  })
 }))
 
 describe('#buildRedisClient', () => {

@@ -1,4 +1,4 @@
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 /**
  * @param {number} statusCode

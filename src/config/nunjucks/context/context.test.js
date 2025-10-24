@@ -8,7 +8,7 @@ import {
   test,
   vi
 } from 'vitest'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
@@ -18,10 +18,10 @@ vi.mock(import('node:fs'), async () => ({
   ...(await vi.importActual('node:fs')),
   readFileSync: () => mockReadFileSync()
 }))
-vi.mock(import('~/src/server/common/helpers/logging/logger.js'), () => ({
+vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
-vi.mock(import('~/src/server/common/helpers/auth/get-user-session.js'), () => ({
+vi.mock(import('#server/common/helpers/auth/get-user-session.js'), () => ({
   getUserSession: (...args) => mockGetUserSession(...args)
 }))
 
@@ -48,15 +48,18 @@ describe('#context', () => {
     let contextImport
 
     beforeAll(async () => {
-      contextImport = await import('~/src/config/nunjucks/context/context.js')
+      contextImport = await import('#config/nunjucks/context/context.js')
     })
 
     afterEach(() => {
-      config.reset('featureFlags.defraId')
+      config.reset('defraId.oidcConfigurationUrl')
     })
 
-    it('should provide the feature flag when enabled', async () => {
-      config.set('featureFlags.defraId', true)
+    it('should indicate defra id is enabled when oidc configuration url is set', async () => {
+      config.set(
+        'defraId.oidcConfigurationUrl',
+        'http://defra-id.auth/.well-known/openid-configuration'
+      )
 
       contextResult = await contextImport.context(mockRequest)
 
@@ -101,7 +104,7 @@ describe('#context', () => {
     let contextImport
 
     beforeAll(async () => {
-      contextImport = await import('~/src/config/nunjucks/context/context.js')
+      contextImport = await import('#config/nunjucks/context/context.js')
     })
 
     beforeEach(async () => {
@@ -149,7 +152,7 @@ describe('#context', () => {
 
     beforeAll(async () => {
       vi.resetModules()
-      contextImport = await import('~/src/config/nunjucks/context/context.js')
+      contextImport = await import('#config/nunjucks/context/context.js')
     })
 
     beforeEach(async () => {
@@ -178,7 +181,7 @@ describe('#context cache', () => {
     let contextImport
 
     beforeAll(async () => {
-      contextImport = await import('~/src/config/nunjucks/context/context.js')
+      contextImport = await import('#config/nunjucks/context/context.js')
     })
 
     beforeEach(async () => {

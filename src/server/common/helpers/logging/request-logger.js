@@ -1,6 +1,6 @@
 import hapiPino from 'hapi-pino'
 
-import { loggerOptions } from '~/src/server/common/helpers/logging/logger-options.js'
+import { loggerOptions } from '#server/common/helpers/logging/logger-options.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<Options>}

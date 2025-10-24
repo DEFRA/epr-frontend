@@ -250,42 +250,38 @@ export const config = convict({
       doc: 'DEFRA ID OIDC Configuration URL',
       format: String,
       env: 'DEFRA_ID_OIDC_CONFIGURATION_URL',
-      default:
-        'http://localhost:3200/cdp-defra-id-stub/.well-known/openid-configuration'
+      default: ''
     },
     serviceId: {
       doc: 'DEFRA ID Service ID',
       format: String,
       env: 'DEFRA_ID_SERVICE_ID',
-      default: 'd7d72b79-9c62-ee11-8df0-000d3adf7047'
+      default: ''
     },
     clientId: {
       doc: 'DEFRA ID Client ID',
       format: String,
       env: 'DEFRA_ID_CLIENT_ID',
-      default: '63983fc2-cfff-45bb-8ec2-959e21062b9a'
+      default: ''
     },
     clientSecret: {
       doc: 'DEFRA ID Client Secret',
       format: String,
       sensitive: true,
       env: 'DEFRA_ID_CLIENT_SECRET',
-      default: 'test_value'
-    }
-  },
-  featureFlags: {
-    defraId: {
-      doc: 'Feature Flag: Defra ID',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_DEFRA_ID'
+      default: ''
     }
   }
 })
 
 config.validate({ allowed: 'strict' })
 
+export const isDefraIdEnabled = () => {
+  const oidcUrl = config.get('defraId.oidcConfigurationUrl')
+  return Boolean(oidcUrl && oidcUrl.trim() !== '')
+}
+
 /**
  * @import { Schema, SchemaObj } from 'convict'
- * @import { RedisConfig } from '~/src/server/common/helpers/redis-client.js'
+ * @import { RedisConfig } from '#server/common/helpers/redis-client.js'
  */

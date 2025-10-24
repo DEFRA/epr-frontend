@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 import { getUserSession } from './get-user-session.js'
 
 /**

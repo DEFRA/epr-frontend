@@ -179,11 +179,27 @@ A local environment with:
 - Localstack for AWS services (S3, SQS)
 - Redis
 - MongoDB
-- This service.
-- A commented out backend example.
+- [Defra ID stub](https://github.com/DEFRA/cdp-defra-id-stub)
+
+Start services in Docker
 
 ```bash
-docker compose up --build --watch
+docker compose up
+
+# run frontend in the terminal
+npm run dev
+```
+
+Run with frontend
+
+```sh
+docker compose --profile all up --build --watch
+```
+
+Delete Redis storage
+
+```sh
+docker compose down -v
 ```
 
 ### Dependabot

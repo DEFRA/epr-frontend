@@ -1,4 +1,4 @@
-import { summaryLogUploadProgressController } from '~/src/server/summary-log-upload-progress/controller.js'
+import { summaryLogUploadProgressController } from '#server/summary-log-upload-progress/controller.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}

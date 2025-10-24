@@ -1,5 +1,5 @@
-import { config } from '~/src/config/config.js'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { config } from '#config/config.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}

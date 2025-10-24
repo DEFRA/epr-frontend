@@ -1,5 +1,5 @@
 import Blankie from 'blankie'
-import { config } from '~/src/config/config.js'
+import { config } from '#config/config.js'
 
 export function cspFormAction({ isProduction }) {
   return isProduction ? ['self'] : ['self', 'localhost:*']
