@@ -33,9 +33,6 @@ export const i18nPlugin = {
           const existingContext = request.response.source.context
           request.response.source.context = {
             ...existingContext,
-            t: existingContext.t,
-            language: existingContext.language,
-            htmlLang: existingContext.htmlLang,
             localise: request.t,
             langPrefix: language === 'cy' ? '/cy' : ''
           }
