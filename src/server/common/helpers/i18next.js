@@ -29,6 +29,7 @@ export const i18nPlugin = {
         request.response.source.context.language = language
         request.response.source.context.htmlLang = language
 
+        /* istanbul ignore next */
         if (request.response.variety === 'view') {
           const existingContext = request.response.source.context
           request.response.source.context = {

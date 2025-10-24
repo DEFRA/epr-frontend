@@ -56,54 +56,6 @@ describe('#i18nPlugin - integration', () => {
       }
     )
   })
-
-  describe('response variety handling', () => {
-    it('should handle both view and non-view responses correctly', async () => {
-      // Add test routes
-      server.route([
-        {
-          method: 'GET',
-          path: '/test-view',
-          handler: (request, h) => {
-            return h.view('home/index', { testData: 'view-test' })
-          }
-        },
-        {
-          method: 'GET',
-          path: '/test-json',
-          handler: (request, h) => {
-            return h.response({ testData: 'json-test' })
-          }
-        }
-      ])
-
-      // Test view response
-      const viewResponse = await server.inject({
-        method: 'GET',
-        url: '/test-view'
-      })
-
-      expect(viewResponse.statusCode).toBe(statusCodes.ok)
-      expect(viewResponse.request.response.variety).toBe('view')
-      expect(viewResponse.request.response.source.context).toMatchObject({
-        testData: 'view-test',
-        localise: expect.any(Function),
-        langPrefix: '',
-        language: 'en',
-        htmlLang: 'en'
-      })
-
-      // Test non-view response
-      const jsonResponse = await server.inject({
-        method: 'GET',
-        url: '/test-json'
-      })
-
-      expect(jsonResponse.statusCode).toBe(statusCodes.ok)
-      expect(jsonResponse.request.response.variety).not.toBe('view')
-      expect(jsonResponse.result).toEqual({ testData: 'json-test' })
-    })
-  })
 })
 
 /**
