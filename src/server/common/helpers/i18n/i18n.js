@@ -8,12 +8,13 @@ export async function initI18n() {
     .use(Backend)
     .use(middleware.LanguageDetector)
     .init({
+      lng: 'en',
       fallbackLng: 'en',
       preload: ['en', 'cy'],
       ns: ['common', 'home', 'errors'],
       defaultNS: 'common',
       backend: {
-        loadPath: path.resolve('src/locales/{{lng}}/{{ns}}.json')
+        loadPath: path.resolve('src/server/{{ns}}/{{lng}}.json')
       },
       detection: {
         order: ['path', 'querystring', 'cookie', 'header'],

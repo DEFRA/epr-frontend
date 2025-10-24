@@ -3,5 +3,6 @@
   "submit": "Submit",
   "cancel": "Cancel",
   "back": "Back",
-  "continue": "Continue"
+  "continue": "Continue",
+  "signOut": "Sign out"
 }

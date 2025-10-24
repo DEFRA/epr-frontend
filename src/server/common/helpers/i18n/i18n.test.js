@@ -35,7 +35,7 @@ describe(initI18n, function () {
 
     const config = i18next.init.mock.calls[0][0]
 
-    expect(config.backend.loadPath).toContain('src/locales/{{lng}}/{{ns}}.json')
+    expect(config.backend.loadPath).toContain('src/server/{{ns}}/{{lng}}.json')
   })
 
   test('throws if init rejects', async () => {

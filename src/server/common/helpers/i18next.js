@@ -23,10 +23,21 @@ export const i18nPlugin = {
     })
 
     server.ext('onPreResponse', (request, h) => {
+      const language = request.i18n.language
       if (request.response?.source?.context) {
         request.response.source.context.t = request.t
-        request.response.source.context.language = request.i18n.language
-        request.response.source.context.htmlLang = request.i18n.language
+        request.response.source.context.language = language
+        request.response.source.context.htmlLang = language
+
+        /* istanbul ignore next */
+        if (request.response.variety === 'view') {
+          const existingContext = request.response.source.context
+          request.response.source.context = {
+            ...existingContext,
+            localise: request.t,
+            langPrefix: language === 'cy' ? '/cy' : ''
+          }
+        }
       }
       return h.continue
     })
