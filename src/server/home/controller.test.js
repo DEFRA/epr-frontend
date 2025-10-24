@@ -1,10 +1,10 @@
-import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as getUserSessionModule from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
+import { load } from 'cheerio'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
 
@@ -23,8 +23,6 @@ describe('#homeController', () => {
     })
 
     test('should provide expected response with correct status', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
-
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: '/'

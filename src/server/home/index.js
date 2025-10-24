@@ -1,4 +1,4 @@
-import { homeController } from '#server/home/controller.js'
+import { controller } from './controller.js'
 
 /**
  * Sets up the routes used in the home page.
@@ -14,9 +14,9 @@ export const home = {
     register(server) {
       server.route([
         {
+          ...controller,
           method: 'GET',
-          path: '/',
-          ...homeController
+          path: '/'
         }
       ])
     }
