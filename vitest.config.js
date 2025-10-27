@@ -16,6 +16,7 @@ export default defineConfig({
         ...configDefaults.exclude,
         '.public',
         '.server',
+        '**/*.md',
         '**/index.js',
         'coverage',
         'src/**/*.njk',
