@@ -56,6 +56,70 @@ describe('#i18nPlugin - integration', () => {
       }
     )
   })
+
+  describe('response variety handling', () => {
+    it.each([
+      {
+        type: 'view',
+        variety: 'view',
+        path: '/test-view',
+        content: '<html><body>Test View</body></html>',
+        contentType: 'text/html',
+        expectedContext: {
+          pageTitle: 'Test Page',
+          localise: expect.any(Function),
+          langPrefix: ''
+        }
+      },
+      {
+        type: 'api',
+        variety: 'api',
+        path: '/test-not-view',
+        content: JSON.stringify({ message: 'Not a view response' }),
+        contentType: 'application/json',
+        expectedContext: {
+          pageTitle: 'Test Page'
+        }
+      }
+    ])(
+      'should handle $type responses correctly',
+      async ({ variety, path, content, contentType, expectedContext }) => {
+        server.route({
+          method: 'GET',
+          path,
+          handler: async (request, h) => {
+            request.i18n = { language: 'en' }
+            request.t = () => 'translated'
+
+            const bufferContent = Buffer.from(content)
+            const response = h
+              .response(bufferContent)
+              .type(contentType)
+              .header('content-type', `${contentType}; charset=utf-8`)
+
+            response.variety = variety
+            response.source = bufferContent
+            response.source.context = {
+              pageTitle: 'Test Page'
+            }
+
+            return response
+          }
+        })
+
+        const response = await server.inject({
+          method: 'GET',
+          url: path
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.request.response.variety).toBe(variety)
+        expect(response.request.response.source.context).toMatchObject(
+          expectedContext
+        )
+      }
+    )
+  })
 })
 
 /**
