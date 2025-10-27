@@ -10,8 +10,9 @@ const PROCESSING_STATES = new Set([
 
 const PAGE_TITLE = 'Summary log: upload progress'
 const VIEW_NAME = 'summary-log-upload-progress/index'
-const DEFAULT_ERROR_MESSAGE =
+const DEFAULT_REJECTED_ERROR_MESSAGE =
   'Something went wrong with your file upload. Please try again.'
+const DEFAULT_INVALID_ERROR_MESSAGE = 'Please check your file and try again'
 
 /**
  * Determines view data based on backend status
@@ -42,11 +43,11 @@ const getViewData = (status, failureReason) => {
     },
     [backendSummaryLogStatuses.rejected]: {
       heading: 'Upload failed',
-      message: failureReason || DEFAULT_ERROR_MESSAGE
+      message: failureReason || DEFAULT_REJECTED_ERROR_MESSAGE
     },
     [backendSummaryLogStatuses.invalid]: {
       heading: 'Validation failed',
-      message: 'Please check your file and try again'
+      message: failureReason || DEFAULT_INVALID_ERROR_MESSAGE
     }
   }
 
@@ -79,7 +80,7 @@ export const summaryLogUploadProgressController = {
 
         request.yar.set(sessionNames.summaryLogs, {
           ...summaryLogsSession,
-          lastError: failureReason || DEFAULT_ERROR_MESSAGE
+          lastError: failureReason || DEFAULT_REJECTED_ERROR_MESSAGE
         })
 
         return h.redirect(
