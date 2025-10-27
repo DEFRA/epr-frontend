@@ -14,13 +14,14 @@ export default defineConfig({
       include: ['src/**'],
       exclude: [
         ...configDefaults.exclude,
-        '.server',
         '.public',
+        '.server',
+        '**/index.js',
         'coverage',
-        'src/server/common/test-helpers',
+        'src/**/*.njk',
         'src/client/javascripts/application.js',
         'src/index.js',
-        '**/index.js'
+        'src/server/common/test-helpers'
       ],
       thresholds: {
         lines: 100,
