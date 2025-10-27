@@ -6,11 +6,20 @@
  */
 const loginController = {
   options: {
-    auth: 'defra-id'
+    auth: 'defra-id',
+    ext: {
+      onPreAuth: {
+        method: (request, h) => {
+          request.yar.flash('referrer', '/account')
+
+          return h.continue
+        }
+      }
+    }
   },
   /* @fixme: code coverage */
   /* v8 ignore next */
-  handler: async (_request, h) => h.redirect('/')
+  handler: async (_request, h) => h.redirect('/account')
 }
 
 export { loginController }

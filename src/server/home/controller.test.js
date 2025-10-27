@@ -96,67 +96,11 @@ describe('#homeController', () => {
         // Page structure
         expect($('[data-testid="app-page-body"]')).toHaveLength(1)
 
-        // Guest welcome message
-        expect($('.govuk-body').text()).toContain('Welcome, guest!')
-
-        // Login link should exist
-        const loginLink = $('#login-link')
-
-        expect(loginLink).toHaveLength(1)
-        expect(loginLink.attr('href')).toBe('/login')
-        expect(loginLink.text()).toContain('sign in')
-
-        // No logout link
-        // eslint-disable-next-line vitest/max-expects
-        expect($('a[href="/logout"]')).toHaveLength(0)
-
-        // No authenticated welcome panel
-        // eslint-disable-next-line vitest/max-expects
-        expect($('.govuk-panel--confirmation').text()).not.toContain('Welcome,')
-      })
-    })
-
-    describe('when user is authenticated', () => {
-      test('should render page with logout link and user welcome', async () => {
-        // Mock getUserSession to return authenticated user
-        const mockUserSession = {
-          displayName: 'John Doe',
-          email: 'john.doe@example.com',
-          userId: 'user-123'
-        }
-
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue(
-          mockUserSession
+        expect($('h1').text()).toBe(
+          'Manage your packaging waste responsibilites'
         )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/'
-        })
-
-        const $ = load(result)
-
-        // Authenticated welcome panel should exist
-        const welcomePanel = $('.govuk-panel--confirmation')
-
-        expect(welcomePanel).toHaveLength(1)
-        expect(welcomePanel.text()).toContain('Welcome, John Doe')
-
-        // Logout link should exist
-        const logoutLink = $('a[href="/logout"]')
-
-        expect(logoutLink).toHaveLength(1)
-        expect(logoutLink.text()).toContain('Sign out')
-
-        // No login link
-        expect($('#login-link')).toHaveLength(0)
-
-        // eslint-disable-next-line vitest/max-expects
-        expect($('.govuk-details__summary-text').text()).toContain(
-          'View your account details'
-        )
-        // eslint-disable-next-line vitest/max-expects
-        expect($('.govuk-summary-list')).toHaveLength(1)
+        expect($('button').text().trim()).toBe('Start now')
+        expect($('form').attr('action')).toBe('/login')
       })
     })
   })
