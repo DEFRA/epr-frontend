@@ -5,3 +5,26 @@
 .app-header {
   border-bottom-color: $app-light-grey;
 }
+
+.app-width-container--wide {
+  background-color: #f3f2f1;
+}
+
+.manage-account-links {
+  display: block;
+  float: right;
+  list-style-type: none;
+  margin: 18px 0;
+
+  > li {
+    display: inline;
+    margin-bottom: 0;
+    padding: 0 5px;
+    text-align: right;
+    border-right: 1px solid #000;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+}

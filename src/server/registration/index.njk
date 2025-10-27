@@ -2,9 +2,39 @@
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <div class="govuk-body" data-testid="app-page-body">
-        <h2 class="govuk-heading-l">{{ localise('registration:packagingHeading') }}</h2>
+    <div class="govuk-body" data-testid="app-page-body">
+      <div class="govuk-grid-column-two-thirds">
+        <span class="govuk-caption-xl">{{ registration.noticeAddress.line1 }}, {{ registration.noticeAddress.town }}</span>
+        <h1 class="govuk-heading-xl">{{ registration.material | capitalize }}</h1>
+      </div>
+      <div class="govuk-grid-column-one-third">
+        <ul class="govuk-list">
+          <li>
+            <h3 class="govuk-heading-s">
+              Registration
+              {{govukTag({
+                text: registration.status | capitalize,
+                classes: "govuk-tag--yellow"
+              })}}
+            </h3>
+          </li>
+          <li>
+            <h3 class="govuk-heading-s">
+              Accreditation
+              {{govukTag({
+                text: accreditation.status | capitalize,
+                classes: "govuk-tag--yellow"
+              })}}
+            </h3>
+          </li>
+          <li>
+            <h3 class="govuk-heading-s">
+              Accreditation no. {{ accreditation.accreditationNumber }}
+            </h3>
+          </li>
+        </ul>
+      </div>
+      <div class="govuk-grid-column-two-thirds">
         <p>
           <a
             href="{{ localiseUrl('/organisations/' + organisationId + '/registrations/' + registrationId + '/summary-logs/upload') }}"

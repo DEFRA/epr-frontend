@@ -16,6 +16,7 @@ echo "[INIT SCRIPT] Creating queues" >&2
 
 # queues
 aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name cdp-clamav-results
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name cdp-uploader-download-requests
 aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name cdp-uploader-scan-results-callback.fifo --attributes "{\"FifoQueue\":\"true\",\"ContentBasedDeduplication\": \"true\"}"
 
 # test harness

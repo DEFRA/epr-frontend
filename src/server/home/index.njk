@@ -4,20 +4,52 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <h1 class="govuk-heading-l">{{ localise('home:heading') }}</h1>
-        <p class="govuk-body">{{ localise('home:subheading') }}</p>
-        <p class="govuk-body">{{ localise('home:services:description') }}</p>
-        <ul class="govuk-list govuk-list--bullet">
-          <li>{{ localise('home:services:registrations') }}</li>
-          <li>{{ localise('home:services:accreditations') }}</li>
-          <li>{{ localise('home:services:summaryLog') }}</li>
-          <li>{{ localise('home:services:regulatorReports') }}</li>
-          <li>{{ localise('home:services:prns') }}</li>
-        </ul>
-        {{ govukButton({
-          href: localiseUrl('/login'),
-          text: localise('home:startNow')
-        }) }}
+        <h1 class="govuk-heading-l">Sites</h1>
+
+        {% if isDefraIdEnabled and authedUser and authedUser.displayName %}
+          <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
+            <div class="govuk-panel__body" style="color: #0b0c0c;">
+              Welcome, <strong>{{ authedUser.displayName }}</strong>
+            </div>
+          </div>
+          <details class="govuk-details">
+            <summary class="govuk-details__summary">
+              <span class="govuk-details__summary-text">
+                View your account details
+              </span>
+            </summary>
+            <div class="govuk-details__text">
+              <dl class="govuk-summary-list">
+                {% for key, value in authedUser %}
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">{{ key }}</dt>
+                    <dd class="govuk-summary-list__value"><code>{{ value }}</code></dd>
+                  </div>
+                {% endfor %}
+              </dl>
+            </div>
+          </details>
+        {% endif %}
+
+        <h2 class="govuk-heading-m">Test</h2>
+        <p>
+          <a href="/organisations/6507f1f77bcf86cd79943901" class="govuk-link">ACME ltd</a>
+        </p>
+        <p>
+          <a href="/organisations/6507f1f77bcf86cd79943921" class="govuk-link">Plastic Exporters</a>
+        </p>
+        <p>
+          <a href="/organisations/6507f1f77bcf86cd79943931" class="govuk-link">Future Green Trust</a>
+        </p>
+        <p>
+          <a href="/organisations/6507f1f77bcf86cd79943901/registrations/6507f1f77bcf86cd79943902" class="govuk-link">ACME ltd: Glass</a>
+        </p>
+        <p>
+          <a href="/organisations/6507f1f77bcf86cd79943921/registrations/6507f1f77bcf86cd79943922" class="govuk-link">Plastic Exporters: Plastic</a>
+        </p>
+        <p>
+          <a href="/organisations/6507f1f77bcf86cd79943931/registrations/6507f1f77bcf86cd79943932" class="govuk-link">Future Green Trust: Steel</a>
+        </p>
       </div>
     </div>
   </div>

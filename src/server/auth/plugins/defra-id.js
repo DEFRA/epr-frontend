@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import bell from '@hapi/bell'
 import { buildUserProfile } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
+import { getDisplayName } from '../helpers/display.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
@@ -79,6 +80,33 @@ const createDefraId = (verifyToken) => ({
               payload,
               tokenUrl: oidcConf.token_endpoint
             })
+
+            const { displayName, id: userId } = credentials.profile
+            const logoutUrl = oidcConf.end_session_endpoint
+            const relationships =
+              payload.relationships?.map((relationship) => {
+                const [relationshipId, organisationId, organisationName] =
+                  relationship.split(':')
+
+                return {
+                  id: relationshipId,
+                  orgId: organisationId,
+                  orgName: organisationName?.trim(),
+                  isCurrent: payload.currentRelationshipId === relationshipId
+                }
+              }) ?? []
+            const currentRelationship =
+              relationships?.find(({ isCurrent }) => isCurrent) ?? null
+
+            server.app.defraId = {
+              currentRelationship,
+              logoutUrl,
+              relationships,
+              user: {
+                id: userId,
+                name: displayName
+              }
+            }
           }
         },
         providerParams: function (request) {
