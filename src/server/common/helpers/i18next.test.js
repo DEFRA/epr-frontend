@@ -1,7 +1,7 @@
-import { load } from 'cheerio'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createServer } from '#server/index.js'
+import { load } from 'cheerio'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('#i18nPlugin - integration', () => {
   /** @type {Server} */
@@ -33,7 +33,9 @@ describe('#i18nPlugin - integration', () => {
         const $ = load(response.result)
 
         expect($('html').attr('lang')).toBe(expectedLang)
-        expect($('h1').first().text()).toBe('Sites')
+        expect($('h1').first().text()).toBe(
+          'Manage your packaging waste responsibilites'
+        )
       }
     )
   })

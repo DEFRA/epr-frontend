@@ -4,8 +4,6 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <h1 class="govuk-heading-l">Sites</h1>
-
         {% if isDefraIdEnabled %}
           {% if authedUser and authedUser.displayName %}
             <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
@@ -43,10 +41,19 @@
           {% endif %}
         {% endif %}
 
-        <h2 class="govuk-heading-m">Test</h2>
-        <p>
-          <a href="/organisations/123/registrations/456" class="govuk-link">Test Registration</a>
-        </p>
+        <form action="/login">
+          <h1 class="govuk-heading-l">Manage your packaging waste responsibilites</h1>
+          <p class="govuk-body">This service helps UK-based reprocessors and exporters meet packaging waste regulations.</p>
+          <p class="govuk-body">Use the service to manage your:</p>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>registrations</li>
+            <li>accreditations</li>
+            <li>summary log</li>
+            <li>regulator reports</li>
+            <li>PRNs or PERNs</li>
+          </ul>
+          {{ govukButton({ text: "Start now" }) }}
+        </form>
       </div>
     </div>
   </div>
