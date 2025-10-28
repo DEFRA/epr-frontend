@@ -3,6 +3,7 @@ import Backend from 'i18next-fs-backend'
 import middleware from 'i18next-http-middleware'
 import { initI18n } from './i18n.js'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { languages } from '#server/common/constants/language-codes.js'
 
 vi.mock(import('i18next'))
 vi.mock(import('i18next-fs-backend'))
@@ -21,8 +22,8 @@ describe(initI18n, function () {
     expect(i18next.use).toHaveBeenCalledWith(middleware.LanguageDetector)
     expect(i18next.init).toHaveBeenCalledWith(
       expect.objectContaining({
-        fallbackLng: 'en',
-        preload: ['en', 'cy'],
+        fallbackLng: languages.ENGLISH,
+        preload: [languages.ENGLISH, languages.WELSH],
         ns: ['common', 'home', 'errors'],
         defaultNS: 'common',
         debug: false
@@ -35,7 +36,7 @@ describe(initI18n, function () {
 
     const config = i18next.init.mock.calls[0][0]
 
-    expect(config.backend.loadPath).toContain('src/locales/{{lng}}/{{ns}}.json')
+    expect(config.backend.loadPath).toContain('src/server/{{ns}}/{{lng}}.json')
   })
 
   test('throws if init rejects', async () => {
