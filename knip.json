@@ -14,7 +14,8 @@
     "pino-pretty",
     "cssnano",
     "cssnano-preset-default",
-    "autoprefixer"
+    "autoprefixer",
+    "postcss-load-config"
   ],
   "ignoreExportsUsedInFile": true
 }
