@@ -1,0 +1,20 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/client/javascripts/application.js!", "src/**/*.test.js"],
+  "project": ["src/**/*.js!"],
+  "ignore": [
+    "coverage/**",
+    ".server/**",
+    ".cache/**",
+    ".husky/**",
+    "node_modules/**"
+  ],
+  "ignoreDependencies": [
+    "husky",
+    "pino-pretty",
+    "cssnano",
+    "cssnano-preset-default",
+    "autoprefixer"
+  ],
+  "ignoreExportsUsedInFile": true
+}
