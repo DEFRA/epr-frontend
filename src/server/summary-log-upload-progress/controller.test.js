@@ -169,6 +169,22 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
+
+    test('status: invalid with failureReason - should show specific error message and stop polling', async () => {
+      const failureReason =
+        'The waste registration number in your summary log does not match your registration'
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        failureReason
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(expect.stringContaining('Validation failed'))
+      expect(result).toStrictEqual(expect.stringContaining(failureReason))
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 
   describe('error handling', () => {
