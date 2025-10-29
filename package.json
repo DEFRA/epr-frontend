@@ -17,6 +17,8 @@
     "build": "run-s build:frontend build:server",
     "build:frontend": "NODE_ENV=production webpack",
     "build:server": "NODE_ENV=production babel --delete-dir-on-start --ignore \"**/*.test.js\" --ignore \"**/test-helpers\" --copy-files --no-copy-ignored --out-dir ./.server ./src",
+    "dc:all:up": "docker compose --profile all up --build --watch",
+    "dc:all:down": "docker compose --profile all down",
     "dev": "run-p frontend:watch server:watch",
     "dev:debug": "run-p frontend:watch server:debug",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",

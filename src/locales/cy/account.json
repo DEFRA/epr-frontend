@@ -1,0 +1,8 @@
+{
+  "welcome": "Croeso, <strong>{{displayName}}</strong>",
+  "signOut": "Allgofnodi",
+  "viewAccountDetails": "Gweld manylion eich cyfrif",
+  "sitesHeading": "Safleoedd",
+  "testHeading": "Prawf",
+  "testRegistrationLink": "Cofrestriad Prawf"
+}
