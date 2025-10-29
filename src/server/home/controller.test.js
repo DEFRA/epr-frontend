@@ -75,17 +75,17 @@ describe('#homeController', () => {
         heading: 'Rheoli eich cyfrifoldebau gwastraff pecynnu',
         lang: 'cy',
         loginUrl: '/cy/login',
+        startNow: 'Dechreuwch nawr',
         title: 'Hafan',
-        url: '/cy',
-        startNow: 'Dechreuwch nawr'
+        url: '/cy'
       },
       {
         heading: 'Manage your packaging waste responsibilities',
         lang: 'en',
         loginUrl: '/login',
+        startNow: 'Start now',
         title: 'Home',
-        url: '/',
-        startNow: 'Start now'
+        url: '/'
       }
     ])(
       'when user is not authenticated (lang: $lang)',
