@@ -76,7 +76,7 @@ describe('#accountController', () => {
 
         expect($('h1').text()).toBe('Sites')
         expect($('title').text().trim()).toStrictEqual(
-          expect.stringMatching(/^Account |/)
+          expect.stringMatching(/^Account \|/)
         )
         expect(statusCode).toBe(statusCodes.ok)
       })

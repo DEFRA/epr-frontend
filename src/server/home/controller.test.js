@@ -4,7 +4,7 @@ import * as getUserSessionModule from '#server/common/helpers/auth/get-user-sess
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
 
@@ -22,7 +22,7 @@ describe('#homeController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('should provide expected response with correct status', async () => {
+    it('should provide expected response with correct status', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: '/'
@@ -70,39 +70,61 @@ describe('#homeController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    describe('when user is not authenticated', () => {
-      test('should provide expected response with correct status', async () => {
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
+    describe.each([
+      {
+        heading: 'Rheoli eich cyfrifoldebau gwastraff pecynnu',
+        lang: 'cy',
+        loginUrl: '/cy/login',
+        title: 'Hafan',
+        url: '/cy',
+        startNow: 'Dechreuwch nawr'
+      },
+      {
+        heading: 'Manage your packaging waste responsibilities',
+        lang: 'en',
+        loginUrl: '/login',
+        title: 'Home',
+        url: '/',
+        startNow: 'Start now'
+      }
+    ])(
+      'when user is not authenticated (lang: $lang)',
+      ({ heading, loginUrl, startNow, title, url }) => {
+        it('should provide expected response with correct status', async () => {
+          vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
 
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/'
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url
+          })
+
+          const $ = load(result)
+
+          expect($('title').text().trim()).toStrictEqual(
+            expect.stringMatching(new RegExp(`^${title} \\|`))
+          )
+          expect(statusCode).toBe(statusCodes.ok)
         })
 
-        expect(result).toStrictEqual(expect.stringContaining('Home |'))
-        expect(statusCode).toBe(statusCodes.ok)
-      })
+        it('should render page with login link and guest welcome', async () => {
+          vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
 
-      test('should render page with login link and guest welcome', async () => {
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
+          const { result } = await server.inject({
+            method: 'GET',
+            url
+          })
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/'
+          const $ = load(result)
+
+          // Page structure
+          expect($('[data-testid="app-page-body"]')).toHaveLength(1)
+
+          expect($('h1').text()).toBe(heading)
+          expect($('button').text().trim()).toBe(startNow)
+          expect($('form').attr('action')).toBe(loginUrl)
         })
-
-        const $ = load(result)
-
-        // Page structure
-        expect($('[data-testid="app-page-body"]')).toHaveLength(1)
-
-        expect($('h1').text()).toBe(
-          'Manage your packaging waste responsibilities'
-        )
-        expect($('button').text().trim()).toBe('Start now')
-        expect($('form').attr('action')).toBe('/login')
-      })
-    })
+      }
+    )
   })
 })
 

@@ -4,7 +4,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <form action="/login">
+        <form action="{{ langPrefix }}/login">
           <h1 class="govuk-heading-l">{{ localise('home:heading') }}</h1>
           <p class="govuk-body">{{ localise('home:subheading') }}</p>
           <p class="govuk-body">{{ localise('home:services:description') }}</p>
@@ -15,7 +15,7 @@
             <li>{{ localise('home:services:regulatorReports') }}</li>
             <li>{{ localise('home:services:prns') }}</li>
           </ul>
-          {{ govukButton({ text: "Start now" }) }}
+          {{ govukButton({ text: localise('home:startNow') }) }}
         </form>
       </div>
     </div>

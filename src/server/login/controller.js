@@ -1,3 +1,10 @@
+import { languages } from '../common/constants/language-codes.js'
+
+const getPath = (request) => {
+  const lang = request.i18n?.language
+  return lang === languages.WELSH ? '/cy/account' : '/account'
+}
+
 /**
  * Login controller
  * Triggers OIDC authentication flow by using 'defra-id' auth strategy
@@ -10,8 +17,7 @@ const loginController = {
     ext: {
       onPreAuth: {
         method: (request, h) => {
-          // FIXME prefix with /cy for welsh language
-          request.yar.flash('referrer', '/account')
+          request.yar.flash('referrer', getPath(request))
 
           return h.continue
         }
@@ -20,7 +26,7 @@ const loginController = {
   },
   /* @fixme: code coverage */
   /* v8 ignore next */
-  handler: async (_request, h) => h.redirect('/account')
+  handler: async (request, h) => h.redirect(getPath(request))
 }
 
 export { loginController }
