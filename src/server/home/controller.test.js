@@ -97,7 +97,7 @@ describe('#homeController', () => {
         expect($('[data-testid="app-page-body"]')).toHaveLength(1)
 
         expect($('h1').text()).toBe(
-          'Manage your packaging waste responsibilites'
+          'Manage your packaging waste responsibilities'
         )
         expect($('button').text().trim()).toBe('Start now')
         expect($('form').attr('action')).toBe('/login')

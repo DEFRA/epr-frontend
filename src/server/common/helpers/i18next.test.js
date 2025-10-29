@@ -18,11 +18,22 @@ describe('#i18nPlugin - integration', () => {
 
   describe('language detection and html lang attribute', () => {
     it.each([
-      { url: '/', expectedLang: 'en', description: 'english' },
-      { url: '/cy', expectedLang: 'cy', description: 'welsh' }
+      {
+        url: '/',
+        expectedLang: 'en',
+        description: 'english',
+        heading: 'Manage your packaging waste responsibilities'
+      },
+      {
+        url: '/cy',
+        expectedLang: 'cy',
+        description: 'welsh',
+        // TODO placeholder welsh translation
+        heading: 'Rheoli eich cyfrifoldebau gwastraff pecynnu'
+      }
     ])(
       'should set lang="$expectedLang" for $description pages ($url)',
-      async ({ url, expectedLang }) => {
+      async ({ url, expectedLang, heading }) => {
         const response = await server.inject({
           method: 'GET',
           url
@@ -33,9 +44,7 @@ describe('#i18nPlugin - integration', () => {
         const $ = load(response.result)
 
         expect($('html').attr('lang')).toBe(expectedLang)
-        expect($('h1').first().text()).toBe(
-          'Manage your packaging waste responsibilites'
-        )
+        expect($('h1').first().text()).toBe(heading)
       }
     )
   })
