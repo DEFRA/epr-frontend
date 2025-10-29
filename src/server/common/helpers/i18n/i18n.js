@@ -12,7 +12,7 @@ export async function initI18n() {
       lng: languages.ENGLISH,
       fallbackLng: languages.ENGLISH,
       preload: [languages.ENGLISH, languages.WELSH],
-      ns: ['common', 'home', 'errors'],
+      ns: ['common', 'home', 'error'],
       defaultNS: 'common',
       backend: {
         loadPath: path.resolve('src/server/{{ns}}/{{lng}}.json')
