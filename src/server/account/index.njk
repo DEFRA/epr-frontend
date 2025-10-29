@@ -8,11 +8,11 @@
           {% if authedUser and authedUser.displayName %}
             <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
               <div class="govuk-panel__body" style="color: #0b0c0c;">
-                Welcome, <strong>{{ authedUser.displayName }}</strong>
+                {{ t("account:greeting") }}, <strong>{{ authedUser.displayName }}</strong>
               </div>
             </div>
             <p class="govuk-body">
-              <a href="/logout" class="govuk-link">Sign out</a>
+              <a href="/logout" class="govuk-link"> {{ t("common:signOut") }}</a>
             </p>
             <details class="govuk-details">
               <summary class="govuk-details__summary">
@@ -35,10 +35,9 @@
         {% endif %}
 
         <h1 class="govuk-heading-l">Sites</h1>
-
         <h2 class="govuk-heading-m">Test</h2>
         <p>
-          <a href="/organisations/123/registrations/456" class="govuk-link">Test Registration</a>
+          <a href="{{ langPrefix }}/organisations/123/registrations/456" class="govuk-link">Test Registration</a>
         </p>
       </div>
     </div>

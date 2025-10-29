@@ -2,10 +2,10 @@
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
-  handler(_request, h) {
+  handler({ t }, h) {
     return h.view('account/index', {
-      pageTitle: 'Account',
-      heading: 'Account'
+      pageTitle: t('account:pageTitle'),
+      heading: t('account:pageTitle')
     })
   }
 }

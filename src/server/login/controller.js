@@ -10,6 +10,7 @@ const loginController = {
     ext: {
       onPreAuth: {
         method: (request, h) => {
+          // FIXME prefix with /cy for welsh language
           request.yar.flash('referrer', '/account')
 
           return h.continue
