@@ -1,5 +1,6 @@
 import middleware from 'i18next-http-middleware'
 import { languages } from '../constants/language-codes.js'
+import { localiseUrl } from './i18n/localiseUrl.js'
 
 export const i18nPlugin = {
   name: 'app-i18n',
@@ -33,10 +34,12 @@ export const i18nPlugin = {
         context.htmlLang = language
 
         if (request.response.variety === 'view') {
+          const langPrefix = language === languages.WELSH ? '/cy' : ''
           request.response.source.context = {
             ...context,
             localise: request.t,
-            langPrefix: language === languages.WELSH ? '/cy' : ''
+            langPrefix,
+            localiseUrl: (path) => localiseUrl(path, langPrefix)
           }
         }
       }
