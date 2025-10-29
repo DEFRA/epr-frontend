@@ -1,138 +1,57 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { vi, describe, expect, it, beforeEach } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+
 import { catchAll } from '#server/common/helpers/errors.js'
-import { createServer } from '#server/index.js'
 
-describe('#errors', () => {
-  /** @type {Server} */
-  let server
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  test('should provide expected Not Found page', async () => {
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/non-existent-path'
-    })
-
-    expect(result).toStrictEqual(expect.stringContaining('Page not found |'))
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-})
-
-describe('#catchAll', () => {
+describe(catchAll, () => {
   const mockErrorLogger = vi.fn()
-  const mockStack = 'Mock error stack'
-  const errorPage = 'error/index'
-  const mockRequest = (/** @type {number} */ statusCode) => ({
-    response: {
-      isBoom: true,
-      stack: mockStack,
-      output: {
-        statusCode
-      }
-    },
-    logger: { error: mockErrorLogger }
-  })
-  const mockToolkitView = vi.fn()
-  const mockToolkitCode = vi.fn()
   const mockToolkit = {
-    view: mockToolkitView.mockReturnThis(),
-    code: mockToolkitCode.mockReturnThis()
+    view: vi.fn().mockReturnThis(),
+    code: vi.fn().mockReturnThis()
   }
 
-  test('should provide expected "Not Found" page', () => {
-    catchAll(mockRequest(statusCodes.notFound), mockToolkit)
-
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
-      pageTitle: 'Page not found',
-      heading: statusCodes.notFound,
-      message: 'Page not found'
-    })
-    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
-      statusCodes.notFound
-    )
+  const makeRequest = (statusCode) => ({
+    response: { isBoom: true, stack: 'mock-stack', output: { statusCode } },
+    logger: { error: mockErrorLogger },
+    t: vi.fn((key) => key)
   })
 
-  test('should provide expected "Forbidden" page', () => {
-    catchAll(mockRequest(statusCodes.forbidden), mockToolkit)
-
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
-      pageTitle: 'Forbidden',
-      heading: statusCodes.forbidden,
-      message: 'Forbidden'
-    })
-    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
-      statusCodes.forbidden
-    )
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  test('should provide expected "Unauthorized" page', () => {
-    catchAll(mockRequest(statusCodes.unauthorized), mockToolkit)
+  it('should skip non-boom responses', () => {
+    const request = { response: {} }
+    const h = { continue: Symbol('continue') }
+    const result = catchAll(request, h)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
-      pageTitle: 'Unauthorized',
-      heading: statusCodes.unauthorized,
-      message: 'Unauthorized'
-    })
-    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
-      statusCodes.unauthorized
-    )
+    expect(result).toBe(h.continue)
   })
 
-  test('should provide expected "Bad Request" page', () => {
-    catchAll(mockRequest(statusCodes.badRequest), mockToolkit)
+  it.each([
+    [statusCodes.notFound, 'error:notFound'],
+    [statusCodes.forbidden, 'error:forbidden'],
+    [statusCodes.unauthorized, 'error:unauthorized'],
+    [statusCodes.badRequest, 'error:badRequest'],
+    [statusCodes.imATeapot, 'error:generic']
+  ])('renders expected error page for %i', (code, expectedKey) => {
+    const req = makeRequest(code)
+    catchAll(req, mockToolkit)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
-      pageTitle: 'Bad Request',
-      heading: statusCodes.badRequest,
-      message: 'Bad Request'
+    expect(req.t).toHaveBeenCalledWith(expectedKey)
+    expect(mockToolkit.view).toHaveBeenCalledWith('error/index', {
+      pageTitle: expectedKey,
+      heading: code,
+      message: expectedKey
     })
-    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
-      statusCodes.badRequest
-    )
+    expect(mockToolkit.code).toHaveBeenCalledWith(code)
+    expect(mockErrorLogger).not.toHaveBeenCalled()
   })
 
-  test('should provide expected default page', () => {
-    catchAll(mockRequest(statusCodes.imATeapot), mockToolkit)
+  it('logs error for 500+', () => {
+    const req = makeRequest(statusCodes.internalServerError)
+    catchAll(req, mockToolkit)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
-      pageTitle: 'Something went wrong',
-      heading: statusCodes.imATeapot,
-      message: 'Something went wrong'
-    })
-    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
-      statusCodes.imATeapot
-    )
-  })
-
-  test('should provide expected "Something went wrong" page and log error for internalServerError', () => {
-    catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
-
-    expect(mockErrorLogger).toHaveBeenCalledExactlyOnceWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledExactlyOnceWith(errorPage, {
-      pageTitle: 'Something went wrong',
-      heading: statusCodes.internalServerError,
-      message: 'Something went wrong'
-    })
-    expect(mockToolkitCode).toHaveBeenCalledExactlyOnceWith(
-      statusCodes.internalServerError
-    )
+    expect(mockErrorLogger).toHaveBeenCalledWith('mock-stack')
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

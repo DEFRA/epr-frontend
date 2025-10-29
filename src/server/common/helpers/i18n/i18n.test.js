@@ -24,7 +24,7 @@ describe(initI18n, function () {
       expect.objectContaining({
         fallbackLng: languages.ENGLISH,
         preload: [languages.ENGLISH, languages.WELSH],
-        ns: ['common', 'home', 'errors'],
+        ns: ['common', 'home', 'error'],
         defaultNS: 'common',
         debug: false
       })
