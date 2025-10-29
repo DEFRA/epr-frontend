@@ -10,7 +10,7 @@ export AWS_SECRET_ACCESS_KEY=test
 echo "[INIT SCRIPT] Creating buckets" >&2
 
 aws --endpoint-url=http://localhost:4566 s3 mb s3://cdp-uploader-quarantine
-aws --endpoint-url=http://localhost:4566 s3 mb s3://my-bucket
+aws --endpoint-url=http://localhost:4566 s3 mb s3://re-ex-summary-logs
 
 echo "[INIT SCRIPT] Creating queues" >&2
 
