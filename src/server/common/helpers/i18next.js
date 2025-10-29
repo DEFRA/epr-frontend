@@ -1,4 +1,5 @@
 import middleware from 'i18next-http-middleware'
+import { languages } from '../constants/language-codes.js'
 
 export const i18nPlugin = {
   name: 'app-i18n',
@@ -13,21 +14,33 @@ export const i18nPlugin = {
 
       const { path } = request
       if (path.startsWith('/cy')) {
-        await request.i18n.changeLanguage('cy')
+        await request.i18n.changeLanguage(languages.WELSH)
         request.setUrl(path.replace(/^\/cy/, '') || '/')
       } else {
-        await request.i18n.changeLanguage('en')
+        await request.i18n.changeLanguage(languages.ENGLISH)
       }
 
       return h.continue
     })
 
     server.ext('onPreResponse', (request, h) => {
+      const language = request.i18n?.language
+
       if (request.response?.source?.context) {
-        request.response.source.context.t = request.t
-        request.response.source.context.language = request.i18n.language
-        request.response.source.context.htmlLang = request.i18n.language
+        const context = request.response.source.context
+        context.t = request.t
+        context.language = language
+        context.htmlLang = language
+
+        if (request.response.variety === 'view') {
+          request.response.source.context = {
+            ...context,
+            localise: request.t,
+            langPrefix: language === languages.WELSH ? '/cy' : ''
+          }
+        }
       }
+
       return h.continue
     })
   }
