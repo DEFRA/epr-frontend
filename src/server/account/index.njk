@@ -8,11 +8,11 @@
           {% if authedUser and authedUser.displayName %}
             <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
               <div class="govuk-panel__body" style="color: #0b0c0c;">
-                {{ t("account:greeting") }}, <strong>{{ authedUser.displayName }}</strong>
+                {{ localise('account:greeting') }}, <strong>{{ authedUser.displayName }}</strong>
               </div>
             </div>
             <p class="govuk-body">
-              <a href="/logout" class="govuk-link"> {{ t("common:signOut") }}</a>
+              <a href="/logout" class="govuk-link"> {{ localise('common:signOut') }}</a>
             </p>
             <details class="govuk-details">
               <summary class="govuk-details__summary">

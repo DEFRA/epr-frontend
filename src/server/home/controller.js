@@ -2,11 +2,9 @@
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
-  handler(request, h) {
-    const localise = request.t
+  handler({ t: localise }, h) {
     return h.view('home/index', {
-      pageTitle: localise('home:pageTitle'),
-      heading: localise('home:pageTitle')
+      pageTitle: localise('home:pageTitle')
     })
   }
 }
