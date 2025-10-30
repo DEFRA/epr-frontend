@@ -1,23 +1,13 @@
 /**
- * Prefixes a path with the correct language code.
- * @param {string} path - The path to localise (e.g. "/organisations/123")
- * @param {string} langPrefix - Usually "" or "/cy"
- * @returns {string}
+ * Creates a URL localization function with a specific language prefix.
+ * @param {string} prefix - The language prefix to prepend (e.g., "" for English, "/cy" for Welsh)
+ * @returns {function(string): string} A function that takes a path and returns the localized URL
  */
 
-import { config } from '#config/config.js'
-
-export function localiseUrl(path, langPrefix = '') {
-  const baseUrl = config.get('appBaseUrl')
-  const cleanedPath = path.startsWith('/') ? path : `/${path}`
-
-  const url = new URL(cleanedPath, baseUrl)
-
-  let newPath = `${langPrefix}${url.pathname}`
-
-  while (newPath.endsWith('/') && newPath.length > 1) {
-    newPath = newPath.slice(0, -1)
+export const localiseUrl = (prefix) => (path) => {
+  if (path) {
+    const url = new URL(path, 'http://example')
+    return `${prefix}${url.pathname}${url.search}${url.hash}`
   }
-
-  return `${newPath}${url.search}${url.hash}`
+  return prefix || '/'
 }

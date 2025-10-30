@@ -3,11 +3,7 @@ import { langPrefix } from '../constants/lang-prefix.js'
 import { languages } from '../constants/language-codes.js'
 import { localiseUrl } from './i18n/localiseUrl.js'
 
-const getLocaliseUrl = (request) => {
-  const language = request.i18n.language
-  const pathPrefix = langPrefix[language]
-  return (path) => localiseUrl(path, pathPrefix)
-}
+const getLocaliseUrl = (language) => localiseUrl(langPrefix[language])
 
 export const i18nPlugin = {
   name: 'app-i18n',
@@ -19,7 +15,7 @@ export const i18nPlugin = {
       middleware.handle(i18next)(request.raw.req, request.raw.res, () => {})
       request.i18n = request.raw.req.i18n
       request.t = request.i18n.t.bind(request.i18n)
-      request.localiseUrl = getLocaliseUrl(request)
+      request.localiseUrl = getLocaliseUrl(request.i18n.language)
 
       const { path } = request
       if (path.startsWith(langPrefix.cy)) {
@@ -45,7 +41,7 @@ export const i18nPlugin = {
           request.response.source.context = {
             ...context,
             localise: request.t,
-            localiseUrl: getLocaliseUrl(request)
+            localiseUrl: getLocaliseUrl(request.i18n.language)
           }
         }
       }
