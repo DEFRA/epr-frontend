@@ -5,10 +5,19 @@
  * @returns {string}
  */
 
+import { config } from '#config/config.js'
+
 export function localiseUrl(path, langPrefix = '') {
-  if (!path) {
-    return langPrefix || ''
+  const baseUrl = config.get('appBaseUrl')
+  const cleanedPath = path.startsWith('/') ? path : `/${path}`
+
+  const url = new URL(cleanedPath, baseUrl)
+
+  let newPath = `${langPrefix}${url.pathname}`
+
+  while (newPath.endsWith('/') && newPath.length > 1) {
+    newPath = newPath.slice(0, -1)
   }
-  const cleaned = path.startsWith('/') ? path : `/${path}`
-  return `${langPrefix}${cleaned}`.replace(/\/+$/, '')
+
+  return `${newPath}${url.search}${url.hash}`
 }

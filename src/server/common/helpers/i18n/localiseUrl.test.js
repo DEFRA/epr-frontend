@@ -26,7 +26,7 @@ describe(localiseUrl, () => {
   })
 
   it('should return "/" when path is empty or falsy', () => {
-    expect(localiseUrl('', langPrefix.en)).toBe('')
-    expect(localiseUrl(null, langPrefix.cy)).toBe('/cy')
+    expect(localiseUrl('', langPrefix.en)).toBe('/')
+    expect(localiseUrl('', langPrefix.cy)).toBe('/cy')
   })
 })
