@@ -4,18 +4,18 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <form action="/login">
-          <h1 class="govuk-heading-l">Manage your packaging waste responsibilites</h1>
-          <p class="govuk-body">This service helps UK-based reprocessors and exporters meet packaging waste regulations.</p>
-          <p class="govuk-body">Use the service to manage your:</p>
+        <form action="{{ localiseUrl('/login') }}">
+          <h1 class="govuk-heading-l">{{ localise('home:heading') }}</h1>
+          <p class="govuk-body">{{ localise('home:subheading') }}</p>
+          <p class="govuk-body">{{ localise('home:services:description') }}</p>
           <ul class="govuk-list govuk-list--bullet">
-            <li>registrations</li>
-            <li>accreditations</li>
-            <li>summary log</li>
-            <li>regulator reports</li>
-            <li>PRNs or PERNs</li>
+            <li>{{ localise('home:services:registrations') }}</li>
+            <li>{{ localise('home:services:accreditations') }}</li>
+            <li>{{ localise('home:services:summaryLog') }}</li>
+            <li>{{ localise('home:services:regulatorReports') }}</li>
+            <li>{{ localise('home:services:prns') }}</li>
           </ul>
-          {{ govukButton({ text: "Start now" }) }}
+          {{ govukButton({ text: localise('home:startNow') }) }}
         </form>
       </div>
     </div>

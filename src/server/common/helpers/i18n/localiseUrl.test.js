@@ -1,32 +1,31 @@
-import { localiseUrl } from './localiseUrl.js'
-import { describe, expect, it } from 'vitest'
 import { langPrefix } from '#server/common/constants/lang-prefix.js'
-
-const registrationPath = '/organisations'
-const englishRegistrationPath = `${registrationPath}`
-const welshRegistrationPath = `/cy${registrationPath}`
+import { describe, expect, it } from 'vitest'
+import { localiseUrl } from './localiseUrl.js'
 
 describe(localiseUrl, () => {
-  it('should prefix Welsh URLs with /cy', () => {
-    expect(localiseUrl(registrationPath, langPrefix.cy)).toBe(
-      welshRegistrationPath
-    )
+  describe('english localisation', () => {
+    it.each([
+      { path: '', expected: '/' },
+      { path: 'organisations/123', expected: '/organisations/123' },
+      {
+        path: '/organisations/123?tab=details#contact',
+        expected: '/organisations/123?tab=details#contact'
+      }
+    ])('should return $expected when path is $path', ({ path, expected }) => {
+      expect(localiseUrl(langPrefix.en)(path)).toBe(expected)
+    })
   })
 
-  it('should not prefix English URLs', () => {
-    expect(localiseUrl(registrationPath, langPrefix.en)).toBe(
-      englishRegistrationPath
-    )
-  })
-
-  it('should handle paths without leading slash', () => {
-    expect(localiseUrl('organisations', langPrefix.cy)).toBe(
-      welshRegistrationPath
-    )
-  })
-
-  it('should return "/" when path is empty or falsy', () => {
-    expect(localiseUrl('', langPrefix.en)).toBe('/')
-    expect(localiseUrl('', langPrefix.cy)).toBe('/cy')
+  describe('welsh localisation', () => {
+    it.each([
+      { path: '', expected: '/cy' },
+      { path: 'organisations/123', expected: '/cy/organisations/123' },
+      {
+        path: '/organisations/123?tab=details#contact',
+        expected: '/cy/organisations/123?tab=details#contact'
+      }
+    ])('should return $expected when path is $path', ({ path, expected }) => {
+      expect(localiseUrl(langPrefix.cy)(path)).toBe(expected)
+    })
   })
 })

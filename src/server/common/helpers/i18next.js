@@ -1,7 +1,9 @@
 import middleware from 'i18next-http-middleware'
+import { langPrefix } from '../constants/lang-prefix.js'
 import { languages } from '../constants/language-codes.js'
 import { localiseUrl } from './i18n/localiseUrl.js'
-import { langPrefix } from '../constants/lang-prefix.js'
+
+const getLocaliseUrl = (language) => localiseUrl(langPrefix[language])
 
 export const i18nPlugin = {
   name: 'app-i18n',
@@ -13,6 +15,7 @@ export const i18nPlugin = {
       middleware.handle(i18next)(request.raw.req, request.raw.res, () => {})
       request.i18n = request.raw.req.i18n
       request.t = request.i18n.t.bind(request.i18n)
+      request.localiseUrl = getLocaliseUrl(request.i18n.language)
 
       const { path } = request
       if (path.startsWith(langPrefix.cy)) {
@@ -26,8 +29,7 @@ export const i18nPlugin = {
     })
 
     server.ext('onPreResponse', (request, h) => {
-      const language = request.i18n?.language
-      const pathPrefix = langPrefix[language]
+      const language = request.i18n.language
 
       if (request.response?.source?.context) {
         const context = request.response.source.context
@@ -39,7 +41,7 @@ export const i18nPlugin = {
           request.response.source.context = {
             ...context,
             localise: request.t,
-            localiseUrl: (path) => localiseUrl(path, pathPrefix)
+            localiseUrl: getLocaliseUrl(request.i18n.language)
           }
         }
       }

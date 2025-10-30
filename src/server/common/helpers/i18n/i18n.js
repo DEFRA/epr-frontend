@@ -1,8 +1,8 @@
-import path from 'path'
+import { languages } from '#server/common/constants/language-codes.js'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import middleware from 'i18next-http-middleware'
-import { languages } from '#server/common/constants/language-codes.js'
+import path from 'path'
 
 export async function initI18n() {
   await i18next
@@ -12,7 +12,8 @@ export async function initI18n() {
       lng: languages.ENGLISH,
       fallbackLng: languages.ENGLISH,
       preload: [languages.ENGLISH, languages.WELSH],
-      ns: ['common', 'home', 'error'],
+      // FIXME can we do something simpler than having to hardcode these?
+      ns: ['account', 'common', 'error', 'home'],
       defaultNS: 'common',
       backend: {
         loadPath: path.resolve('src/server/{{ns}}/{{lng}}.json')

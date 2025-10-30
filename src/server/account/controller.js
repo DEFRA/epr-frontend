@@ -2,10 +2,9 @@
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
-  handler(_request, h) {
+  handler({ t: localise }, h) {
     return h.view('account/index', {
-      pageTitle: 'Account',
-      heading: 'Account'
+      pageTitle: localise('account:pageTitle')
     })
   }
 }
