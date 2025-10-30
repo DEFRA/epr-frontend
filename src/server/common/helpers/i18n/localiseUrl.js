@@ -6,7 +6,7 @@
 
 export const localiseUrl = (prefix) => (path) => {
   if (path) {
-    const url = new URL(path, 'http://example')
+    const url = new URL(path, 'https://example')
     return `${prefix}${url.pathname}${url.search}${url.hash}`
   }
   return prefix || '/'
