@@ -1,9 +1,4 @@
-import { languages } from '../common/constants/language-codes.js'
-
-const getPath = (request) => {
-  const lang = request.i18n?.language
-  return lang === languages.WELSH ? '/cy/account' : '/account'
-}
+const getPath = ({ localiseUrl }) => localiseUrl('/account')
 
 /**
  * Login controller
