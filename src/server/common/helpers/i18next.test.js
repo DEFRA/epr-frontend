@@ -69,8 +69,7 @@ describe('#i18nPlugin - integration', () => {
         contentType: 'text/html',
         expectedContext: {
           pageTitle: 'Test Page',
-          localise: expect.any(Function),
-          langPrefix: ''
+          localise: expect.any(Function)
         }
       },
       {
