@@ -30,6 +30,12 @@ export function catchAll(request, h) {
   }
 
   const statusCode = response.output.statusCode
+
+  // If i18n is not available (e.g., for static assets), return the boom response
+  if (!request.t) {
+    return h.continue
+  }
+
   const errorMessage = statusCodeMessage(statusCode, request.t)
 
   if (statusCode >= statusCodes.internalServerError) {
