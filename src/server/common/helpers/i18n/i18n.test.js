@@ -24,7 +24,14 @@ describe(initI18n, function () {
       expect.objectContaining({
         fallbackLng: languages.ENGLISH,
         preload: [languages.ENGLISH, languages.WELSH],
-        ns: ['account', 'common', 'error', 'home'],
+        ns: expect.arrayContaining([
+          'account',
+          'common',
+          'error',
+          'home',
+          'summary-log-upload',
+          'summary-log-upload-progress'
+        ]),
         defaultNS: 'common',
         debug: false
       })

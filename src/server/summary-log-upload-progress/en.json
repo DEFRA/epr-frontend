@@ -1,0 +1,24 @@
+{
+  "pageTitle": "Summary log: upload progress",
+
+  "processingHeading": "Your file is being uploaded",
+  "processingMessage": "Your summary log is being uploaded and automatically validated",
+  "processingKeepOpen": "Keep this page open and do not refresh it",
+
+  "validatedHeading": "Validation complete",
+  "validatedMessage": "Your file is ready to submit",
+
+  "submittedHeading": "Submission complete",
+  "submittedMessage": "Your waste records have been updated",
+
+  "invalidHeading": "Validation failed",
+  "invalidMessage": "Please check your file and try again",
+  "invalidFailureReasonExample": "The waste registration number in your summary log does not match your registration",
+
+  "rejectedDefaultReason": "File rejected by virus scanner",
+
+  "errorHeading": "Error checking status",
+  "errorMessage": "Unable to check upload status",
+
+  "loadingKeepOpen": "Keep this page open"
+}
