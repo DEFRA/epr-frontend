@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import {
   afterEach,
   beforeAll,
@@ -8,7 +9,6 @@ import {
   test,
   vi
 } from 'vitest'
-import { config } from '#config/config.js'
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
@@ -37,7 +37,8 @@ const navigation = [
 describe('#context', () => {
   const mockRequest = {
     path: '/',
-    localiseUrl: vi.fn((path) => path)
+    localiseUrl: vi.fn((path) => path),
+    t: vi.fn((key) => key)
   }
   let contextResult
 
