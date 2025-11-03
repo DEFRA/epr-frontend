@@ -1,5 +1,6 @@
-import { isEmpty } from 'lodash-es'
+import { config } from '#config/config.js'
 import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
+import { isEmpty } from 'lodash-es'
 import { removeUserSession } from '../common/helpers/auth/user-session.js'
 
 /**
@@ -18,11 +19,15 @@ const logoutController = {
       return h.redirect('/')
     }
 
-    const referrer = request.info.referrer
+    const { href: postLogoutRedirectUrl } = new URL(
+      request.localiseUrl('/'),
+      config.get('appBaseUrl')
+    )
+
     const idTokenHint = authedUser.idToken
 
     const logoutUrl = encodeURI(
-      `${authedUser.logoutUrl}?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${referrer}`
+      `${authedUser.logoutUrl}?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${postLogoutRedirectUrl}`
     )
 
     removeUserSession(request)

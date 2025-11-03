@@ -52,7 +52,7 @@ export async function context(request) {
     authedUser,
     breadcrumbs: [],
     isDefraIdEnabled: isDefraIdEnabled(),
-    navigation: buildNavigation(request),
+    navigation: buildNavigation(request, authedUser),
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     ...getI18nContext(request),

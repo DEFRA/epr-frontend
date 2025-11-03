@@ -36,7 +36,8 @@ const navigation = [
 
 describe('#context', () => {
   const mockRequest = {
-    path: '/'
+    path: '/',
+    localiseUrl: vi.fn((path) => path)
   }
   let contextResult
 
