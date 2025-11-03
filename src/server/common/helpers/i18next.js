@@ -3,7 +3,12 @@ import { langPrefix } from '../constants/lang-prefix.js'
 import { languages } from '../constants/language-codes.js'
 import { localiseUrl } from './i18n/localiseUrl.js'
 
-const getLocaliseUrl = (language) => {
+/**
+ * Creates a URL localizer function for the given language
+ * @param {string | undefined} language - The language code (e.g., 'en', 'cy', 'en-GB')
+ * @returns {(path: string) => string} A function to localize URLs
+ */
+export const getLocaliseUrl = (language) => {
   // FIXME can we remove default?
   const normalisedLang = language?.split('-')[0] || 'en'
   return localiseUrl(langPrefix[normalisedLang] ?? '')
