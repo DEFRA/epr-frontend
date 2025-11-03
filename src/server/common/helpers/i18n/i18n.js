@@ -12,6 +12,7 @@ export async function initI18n() {
       lng: languages.ENGLISH,
       fallbackLng: languages.ENGLISH,
       preload: [languages.ENGLISH, languages.WELSH],
+      supportedLngs: [languages.ENGLISH, languages.WELSH],
       // FIXME can we do something simpler than having to hardcode these?
       ns: ['account', 'common', 'error', 'home'],
       defaultNS: 'common',

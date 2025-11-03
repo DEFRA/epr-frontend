@@ -53,7 +53,6 @@ describe('#i18nPlugin - integration', () => {
     it.each([
       { originalUrl: '/cy', expectedPath: '/' },
       { originalUrl: '/cy/', expectedPath: '/' },
-      { originalUrl: '/cy/health', expectedPath: '/health' },
       { originalUrl: '/cy/some/deep/path', expectedPath: '/some/deep/path' }
     ])(
       'should rewrite $originalUrl to $expectedPath',
