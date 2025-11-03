@@ -11,6 +11,7 @@ import { summaryLogStatuses } from '#server/common/constants/statuses.js'
  */
 export const summaryLogUploadController = {
   handler: async (request, h) => {
+    const localise = request.t
     const { organisationId, registrationId } = request.params
 
     const summaryLogId = crypto.randomUUID()
@@ -48,9 +49,9 @@ export const summaryLogUploadController = {
       }
 
       return h.view('summary-log-upload/index', {
-        pageTitle: 'Summary log: upload', // @todo use activity/site/material info
-        heading: 'Upload your summary log',
-        siteName: 'Test site', // @fixme
+        pageTitle: localise('summary-log-upload:pageTitle'),
+        heading: localise('summary-log-upload:heading'),
+        siteName: localise('summary-log-upload:siteName'),
         organisationId,
         registrationId,
         summaryLogId,
@@ -63,9 +64,9 @@ export const summaryLogUploadController = {
       request.server.log(['error', 'upload'], err)
 
       return h.view('error/index', {
-        pageTitle: 'Summary log: upload error',
-        heading: 'Summary log upload error',
-        error: `Failed to initialize upload: ${err.message}`
+        pageTitle: localise('summary-log-upload:errorPageTitle'),
+        heading: localise('summary-log-upload:errorHeading'),
+        error: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`
       })
     }
   }
