@@ -1,19 +1,16 @@
+import { langPrefix } from '#server/common/constants/lang-prefix.js'
+import { languages } from '#server/common/constants/language-codes.js'
 import assert from 'node:assert'
-import { langPrefix } from '../../constants/lang-prefix.js'
-
-const VALID_PREFIXES = Object.values(langPrefix)
 
 /**
- * Creates a URL localization function with a specific language prefix.
- * @param {string} prefix - The language prefix to prepend (e.g., "" for English, "/cy" for Welsh)
+ * Creates a URL localization function for a specific language.
+ * @param {string} language - The language code (e.g., 'en' for English, 'cy' for Welsh)
  * @returns {function(string): string} A function that takes a path and returns the localized URL
  */
-export const localiseUrl = (prefix) => {
-  // FIXME should we assert or pass the language here instead?
-  assert(
-    VALID_PREFIXES.includes(prefix),
-    `Invalid language prefix: "${prefix}". Must be one of: ${VALID_PREFIXES.map((p) => `"${p}"`).join(', ')}`
-  )
+export const localiseUrl = (language) => {
+  assert(language, 'language is undefined')
+
+  const prefix = langPrefix[language] || langPrefix[languages.ENGLISH]
 
   return (path) => {
     if (path) {

@@ -164,12 +164,6 @@ describe('#i18nPlugin - integration', () => {
 })
 
 describe('#getLocaliseUrl', () => {
-  it('should handle undefined language and default to en', () => {
-    const localiseUrl = getLocaliseUrl(undefined)
-
-    expect(localiseUrl('/test')).toBe('/test')
-  })
-
   it('should handle language with region code (en-GB)', () => {
     const localiseUrl = getLocaliseUrl('en-GB')
 

@@ -5,13 +5,12 @@ import { localiseUrl } from './i18n/localiseUrl.js'
 
 /**
  * Creates a URL localizer function for the given language
- * @param {string | undefined} language - The language code (e.g., 'en', 'cy', 'en-GB')
+ * @param {string | undefined} locale - The (language code or) locale (e.g., 'en', 'cy', 'en-GB')
  * @returns {(path: string) => string} A function to localize URLs
  */
-export const getLocaliseUrl = (language) => {
-  // FIXME can we remove default?
-  const normalisedLang = language?.split('-')[0] || 'en'
-  return localiseUrl(langPrefix[normalisedLang] ?? '')
+export const getLocaliseUrl = (locale) => {
+  const [lang] = locale.split('-')
+  return localiseUrl(lang)
 }
 
 export const i18nPlugin = {

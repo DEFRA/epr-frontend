@@ -1,4 +1,6 @@
+import { languages } from './language-codes.js'
+
 export const langPrefix = {
-  en: '',
-  cy: '/cy'
+  [languages.ENGLISH]: '',
+  [languages.WELSH]: '/cy'
 }
