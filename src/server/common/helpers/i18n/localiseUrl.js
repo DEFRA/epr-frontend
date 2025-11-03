@@ -1,5 +1,4 @@
-import { langPrefix } from '#server/common/constants/lang-prefix.js'
-import { languages } from '#server/common/constants/language-codes.js'
+import { languages, pathPrefix } from '#server/common/constants/languages.js'
 import assert from 'node:assert'
 
 /**
@@ -10,7 +9,7 @@ import assert from 'node:assert'
 export const localiseUrl = (language) => {
   assert(language, 'language is undefined')
 
-  const prefix = langPrefix[language] || langPrefix[languages.ENGLISH]
+  const prefix = pathPrefix[language] || pathPrefix[languages.ENGLISH]
 
   return (path) => {
     if (path) {

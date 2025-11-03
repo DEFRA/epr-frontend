@@ -1,6 +1,5 @@
 import middleware from 'i18next-http-middleware'
-import { langPrefix } from '../constants/lang-prefix.js'
-import { languages } from '../constants/language-codes.js'
+import { languages, pathPrefix } from '../constants/languages.js'
 import { localiseUrl } from './i18n/localiseUrl.js'
 
 /**
@@ -29,7 +28,7 @@ export const i18nPlugin = {
       if (request.i18n) {
         const { path } = request
 
-        if (path.startsWith(langPrefix.cy)) {
+        if (path.startsWith(pathPrefix.cy)) {
           await request.i18n.changeLanguage(languages.WELSH)
           request.setUrl(path.replace(/^\/cy/, '') || '/')
         } else {
