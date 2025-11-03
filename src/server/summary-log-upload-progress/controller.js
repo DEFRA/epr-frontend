@@ -8,46 +8,45 @@ const PROCESSING_STATES = new Set([
   backendSummaryLogStatuses.validating
 ])
 
-const PAGE_TITLE = 'Summary log: upload progress'
 const VIEW_NAME = 'summary-log-upload-progress/index'
-const DEFAULT_REJECTED_ERROR_MESSAGE =
-  'Something went wrong with your file upload. Please try again.'
-const DEFAULT_INVALID_ERROR_MESSAGE = 'Please check your file and try again'
 
 /**
  * Determines view data based on backend status
+ * @param {Function} localise - The i18n translation function
  * @param {string} status - Backend status
  * @param {string} [failureReason] - Error message from backend
  * @returns {{heading: string, message: string, isProcessing: boolean}}
  */
-const getViewData = (status, failureReason) => {
+const getViewData = (localise, status, failureReason) => {
   // Processing states - show designed message
   if (PROCESSING_STATES.has(status)) {
     return {
-      heading: 'Your file is being uploaded',
-      message:
-        'Your summary log is being uploaded and automatically validated. This may take a few minutes.',
+      heading: localise('summary-log-upload-progress:processingHeading'),
+      message: localise('summary-log-upload-progress:processingMessage'),
       isProcessing: true
     }
   }
 
-  // Terminal states - use placeholders until designs finalized
+  // Terminal states
   const placeholders = {
     [backendSummaryLogStatuses.validated]: {
-      heading: 'Validation complete',
-      message: 'Your file is ready to submit'
+      heading: localise('summary-log-upload-progress:validatedHeading'),
+      message: localise('summary-log-upload-progress:validatedMessage')
     },
     [backendSummaryLogStatuses.submitted]: {
-      heading: 'Submission complete',
-      message: 'Your waste records have been updated'
+      heading: localise('summary-log-upload-progress:submittedHeading'),
+      message: localise('summary-log-upload-progress:submittedMessage')
     },
     [backendSummaryLogStatuses.rejected]: {
-      heading: 'Upload failed',
-      message: failureReason || DEFAULT_REJECTED_ERROR_MESSAGE
+      heading: localise('summary-log-upload-progress:invalidHeading'),
+      message:
+        failureReason ||
+        localise('summary-log-upload-progress:rejectedDefaultReason')
     },
     [backendSummaryLogStatuses.invalid]: {
-      heading: 'Validation failed',
-      message: failureReason || DEFAULT_INVALID_ERROR_MESSAGE
+      heading: localise('summary-log-upload-progress:invalidHeading'),
+      message:
+        failureReason || localise('summary-log-upload-progress:invalidMessage')
     }
   }
 
@@ -62,6 +61,7 @@ const getViewData = (status, failureReason) => {
  */
 export const summaryLogUploadProgressController = {
   handler: async (request, h) => {
+    const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
     const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
 
@@ -73,14 +73,16 @@ export const summaryLogUploadProgressController = {
         summaryLogId
       )
 
-      // If upload rejected, redirect to upload page with error
+      // If upload rejected, redirect back to upload page with error
       if (status === backendSummaryLogStatuses.rejected) {
         const summaryLogsSession =
           request.yar.get(sessionNames.summaryLogs) || {}
 
         request.yar.set(sessionNames.summaryLogs, {
           ...summaryLogsSession,
-          lastError: failureReason || DEFAULT_REJECTED_ERROR_MESSAGE
+          lastError:
+            failureReason ||
+            localise('summary-log-upload-progress:rejectedDefaultReason')
         })
 
         return h.redirect(
@@ -88,22 +90,25 @@ export const summaryLogUploadProgressController = {
         )
       }
 
-      const viewData = getViewData(status, failureReason)
+      const viewData = getViewData(localise, status, failureReason)
 
       return h.view(VIEW_NAME, {
         ...viewData,
-        pageTitle: PAGE_TITLE,
+        pageTitle: localise('summary-log-upload-progress:pageTitle'),
         shouldPoll: PROCESSING_STATES.has(status),
         pollUrl
       })
     } catch (err) {
       // 404 means summary log not created yet - treat as preprocessing
       if (err.status === StatusCodes.NOT_FOUND) {
-        const viewData = getViewData(backendSummaryLogStatuses.preprocessing)
+        const viewData = getViewData(
+          localise,
+          backendSummaryLogStatuses.preprocessing
+        )
 
         return h.view(VIEW_NAME, {
           ...viewData,
-          pageTitle: PAGE_TITLE,
+          pageTitle: localise('summary-log-upload-progress:pageTitle'),
           shouldPoll: true,
           pollUrl
         })
@@ -113,9 +118,9 @@ export const summaryLogUploadProgressController = {
       request.server.log(['error', 'upload-progress'], err)
 
       return h.view(VIEW_NAME, {
-        pageTitle: PAGE_TITLE,
-        heading: 'Error checking status',
-        message: 'Unable to check upload status - please try again later',
+        pageTitle: localise('summary-log-upload-progress:pageTitle'),
+        heading: localise('summary-log-upload-progress:errorHeading'),
+        message: localise('summary-log-upload-progress:errorMessage'),
         isProcessing: false,
         shouldPoll: false
       })
