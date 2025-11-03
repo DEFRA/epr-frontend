@@ -64,6 +64,7 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
     const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
+    const PAGE_TITLE = localise('summary-log-upload-progress:pageTitle')
 
     try {
       // Poll backend for status
@@ -94,7 +95,7 @@ export const summaryLogUploadProgressController = {
 
       return h.view(VIEW_NAME, {
         ...viewData,
-        pageTitle: localise('summary-log-upload-progress:pageTitle'),
+        pageTitle: PAGE_TITLE,
         shouldPoll: PROCESSING_STATES.has(status),
         pollUrl
       })
@@ -108,7 +109,7 @@ export const summaryLogUploadProgressController = {
 
         return h.view(VIEW_NAME, {
           ...viewData,
-          pageTitle: localise('summary-log-upload-progress:pageTitle'),
+          pageTitle: PAGE_TITLE,
           shouldPoll: true,
           pollUrl
         })
@@ -118,7 +119,7 @@ export const summaryLogUploadProgressController = {
       request.server.log(['error', 'upload-progress'], err)
 
       return h.view(VIEW_NAME, {
-        pageTitle: localise('summary-log-upload-progress:pageTitle'),
+        pageTitle: PAGE_TITLE,
         heading: localise('summary-log-upload-progress:errorHeading'),
         message: localise('summary-log-upload-progress:errorMessage'),
         isProcessing: false,
