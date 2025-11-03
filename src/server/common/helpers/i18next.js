@@ -38,25 +38,5 @@ export const i18nPlugin = {
 
       return h.continue
     })
-
-    server.ext('onPreResponse', (request, h) => {
-      if (request.response?.source?.context && request.i18n) {
-        // FIXME do we need all of this as we're modding the request / context?
-        const context = request.response.source.context
-        context.t = request.t
-        context.language = request.i18n.language
-        context.htmlLang = request.i18n.language
-
-        if (request.response.variety === 'view') {
-          request.response.source.context = {
-            ...context,
-            localise: request.t,
-            localiseUrl: getLocaliseUrl(request.i18n.language)
-          }
-        }
-      }
-
-      return h.continue
-    })
   }
 }

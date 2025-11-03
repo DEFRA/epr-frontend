@@ -76,8 +76,7 @@ describe('#i18nPlugin - integration', () => {
         content: '<html><body>Test View</body></html>',
         contentType: 'text/html',
         expectedContext: {
-          pageTitle: 'Test Page',
-          localise: expect.any(Function)
+          pageTitle: 'Test Page'
         }
       },
       {
