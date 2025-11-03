@@ -1,21 +1,37 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 
+const statusCodeErrors = {
+  [statusCodes.notFound]: {
+    code: 'error:notFound',
+    fallback: 'Page not found'
+  },
+  [statusCodes.forbidden]: {
+    code: 'error:forbidden',
+    fallback: 'Forbidden'
+  },
+  [statusCodes.unauthorized]: {
+    code: 'error:unauthorized',
+    fallback: 'Unauthorised'
+  },
+  [statusCodes.badRequest]: {
+    code: 'error:badRequest',
+    fallback: 'Bad request'
+  }
+}
+
+const defaultError = {
+  code: 'error:generic',
+  fallback: 'Something went wrong'
+}
+
 /**
  * @param {number} statusCode
+ * @param {(key: string) => string} [localise]
  */
 function statusCodeMessage(statusCode, localise) {
-  switch (statusCode) {
-    case statusCodes.notFound:
-      return localise('error:notFound')
-    case statusCodes.forbidden:
-      return localise('error:forbidden')
-    case statusCodes.unauthorized:
-      return localise('error:unauthorized')
-    case statusCodes.badRequest:
-      return localise('error:badRequest')
-    default:
-      return localise('error:generic')
-  }
+  const error = statusCodeErrors[statusCode] || defaultError
+
+  return localise ? localise(error.code) : error.fallback
 }
 
 /**
@@ -30,11 +46,6 @@ export function catchAll(request, h) {
   }
 
   const statusCode = response.output.statusCode
-
-  // If i18n is not available (e.g., for static assets), return the boom response
-  if (!request.t) {
-    return h.continue
-  }
 
   const errorMessage = statusCodeMessage(statusCode, request.t)
 
