@@ -54,4 +54,24 @@ describe(catchAll, () => {
 
     expect(mockErrorLogger).toHaveBeenCalledWith('mock-stack')
   })
+
+  it('should use fallback message when localise function not available', () => {
+    const request = {
+      response: {
+        isBoom: true,
+        stack: 'mock-stack',
+        output: { statusCode: statusCodes.notFound }
+      },
+      logger: { error: mockErrorLogger }
+      // Note: no `t` function provided (as would happen on ignored routes)
+    }
+
+    catchAll(request, mockToolkit)
+
+    expect(mockToolkit.view).toHaveBeenCalledWith('error/index', {
+      pageTitle: 'Page not found',
+      heading: statusCodes.notFound,
+      message: 'Page not found'
+    })
+  })
 })

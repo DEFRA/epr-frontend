@@ -82,7 +82,13 @@ export async function createServer() {
     userAgentProtection, // Must be registered before Scooter to intercept malicious User-Agents
     Scooter,
     contentSecurityPolicy,
-    { plugin: i18nPlugin, options: { i18next } }
+    {
+      plugin: i18nPlugin,
+      options: {
+        i18next,
+        ignoreRoutes: ['/.well-known', '/favicon.ico', '/health', '/public']
+      }
+    }
   ]
 
   if (defraIdEnabled) {

@@ -1,49 +1,42 @@
 import middleware from 'i18next-http-middleware'
-import { langPrefix } from '../constants/lang-prefix.js'
-import { languages } from '../constants/language-codes.js'
+import { languages, pathPrefix } from '../constants/languages.js'
 import { localiseUrl } from './i18n/localiseUrl.js'
 
-const getLocaliseUrl = (language) => localiseUrl(langPrefix[language])
+/**
+ * Creates a URL localizer function for the given language
+ * @param {string | undefined} locale - The (language code or) locale (e.g., 'en', 'cy', 'en-GB')
+ * @returns {(path: string) => string} A function to localize URLs
+ */
+export const getLocaliseUrl = (locale) => {
+  const [lang] = locale.split('-')
+  return localiseUrl(lang)
+}
 
 export const i18nPlugin = {
   name: 'app-i18n',
   version: '1.0.0',
-  register: async function (server, options) {
-    const { i18next } = options
+  register: async function (server, opt) {
+    const { i18next, ...options } = opt
 
-    server.ext('onRequest', async (request, h) => {
-      middleware.handle(i18next)(request.raw.req, request.raw.res, () => {})
-      request.i18n = request.raw.req.i18n
-      request.t = request.i18n.t.bind(request.i18n)
-      request.localiseUrl = getLocaliseUrl(request.i18n.language)
-
-      const { path } = request
-      if (path.startsWith(langPrefix.cy)) {
-        await request.i18n.changeLanguage(languages.WELSH)
-        request.setUrl(path.replace(/^\/cy/, '') || '/')
-      } else {
-        await request.i18n.changeLanguage(languages.ENGLISH)
-      }
-
-      return h.continue
+    const i18nMiddleware = middleware.handle(i18next, {
+      ...options
     })
 
-    server.ext('onPreResponse', (request, h) => {
-      const language = request.i18n.language
+    server.ext('onRequest', async (request, h) => {
+      i18nMiddleware(request, request.raw.res, () => {})
 
-      if (request.response?.source?.context) {
-        const context = request.response.source.context
-        context.t = request.t
-        context.language = language
-        context.htmlLang = language
+      if (request.i18n) {
+        const { path } = request
 
-        if (request.response.variety === 'view') {
-          request.response.source.context = {
-            ...context,
-            localise: request.t,
-            localiseUrl: getLocaliseUrl(request.i18n.language)
-          }
+        if (path.startsWith(pathPrefix.cy)) {
+          await request.i18n.changeLanguage(languages.WELSH)
+          request.setUrl(path.replace(/^\/cy/, '') || '/')
+        } else {
+          await request.i18n.changeLanguage(languages.ENGLISH)
         }
+
+        // Add localiseUrl helper
+        request.localiseUrl = getLocaliseUrl(request.i18n.language)
       }
 
       return h.continue

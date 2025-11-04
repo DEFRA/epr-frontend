@@ -16,6 +16,24 @@ const manifestPath = path.join(
 let webpackManifest
 
 /**
+ * Extract i18n properties from request for template context
+ * Only includes properties if i18n is available on the request
+ * @param {Request | null} request
+ */
+const getI18nContext = (request) => {
+  if (!request?.i18n) {
+    return {}
+  }
+
+  return {
+    htmlLang: request.i18n.language,
+    language: request.i18n.language,
+    localise: request.t,
+    localiseUrl: request.localiseUrl
+  }
+}
+
+/**
  * @param {Request | null} request
  */
 export async function context(request) {
@@ -34,9 +52,10 @@ export async function context(request) {
     authedUser,
     breadcrumbs: [],
     isDefraIdEnabled: isDefraIdEnabled(),
-    navigation: buildNavigation(request),
+    navigation: buildNavigation(request, authedUser),
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
+    ...getI18nContext(request),
 
     /**
      * @param {string} asset
