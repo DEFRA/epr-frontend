@@ -49,6 +49,18 @@ describe('#buildNavigation', () => {
         }
       ])
     })
+
+    it('should localise url correctly', () => {
+      const request = mockRequest({
+        path: '/cy',
+        localiseUrl: localiseUrl(languages.WELSH)
+      })
+      const authedUser = { displayName: 'Test User' }
+
+      const [yourSites] = buildNavigation(request, authedUser)
+
+      expect(yourSites.href).toBe('/cy/')
+    })
   })
 
   describe('sign out', () => {

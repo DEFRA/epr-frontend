@@ -1,11 +1,11 @@
 import { isEmpty } from 'lodash-es'
 
-const yourSites = (request) => {
+const yourSites = ({ localiseUrl, path, t: localise }) => {
   return [
     {
-      active: request.path === '/',
-      href: '/',
-      text: request.t('common:navigation:yourSites')
+      active: path === '/',
+      href: localiseUrl('/'),
+      text: localise('common:navigation:yourSites')
     }
   ]
 }
