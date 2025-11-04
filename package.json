@@ -39,7 +39,10 @@
     "server:debug": "nodemon --exec tsx --enable-source-maps --inspect ./src",
     "prestart": "npm run build",
     "start": "NODE_ENV=production node --use-strict .",
-    "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module"
+    "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
+    "check:locales": "node scripts/check-locales.js",
+    "check:translations": "i18n-check --locales 'src/server/**' -s en",
+    "check:i18n": "npm run check:locales && npm run check:translations"
   },
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
@@ -84,6 +87,7 @@
     "@babel/cli": "7.28.3",
     "@babel/core": "7.28.5",
     "@babel/preset-env": "7.28.5",
+    "@lingual/i18n-check": "0.8.12",
     "@types/convict": "6.1.6",
     "@types/lodash": "4.17.20",
     "@types/node": "24.9.2",
