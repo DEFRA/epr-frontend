@@ -1,3 +1,4 @@
+import { languages } from '#server/common/constants/languages.js'
 import { dropUserSession } from '#server/common/helpers/auth/drop-user-session.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { logoutController } from '#server/logout/controller.js'
@@ -55,7 +56,7 @@ describe('#logoutController', () => {
         cookieAuth: {
           clear: vi.fn()
         },
-        localiseUrl: localiseUrl('en'),
+        localiseUrl: localiseUrl(languages.ENGLISH),
         pre: {
           authedUser: mockAuthedUser
         }
