@@ -12,7 +12,7 @@ const VIEW_NAME = 'summary-log-upload-progress/index'
 
 /**
  * Determines view data based on backend status
- * @param {Function} localise - The i18n translation function
+ * @param {(key: string) => string} localise - The i18n translation function
  * @param {string} status - Backend status
  * @param {string} [failureReason] - Error message from backend
  * @returns {{heading: string, message: string, isProcessing: boolean}}
