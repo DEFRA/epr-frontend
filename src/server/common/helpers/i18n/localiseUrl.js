@@ -1,5 +1,5 @@
+import { config } from '#config/config.js'
 import { languages, pathPrefix } from '#server/common/constants/languages.js'
-import assert from 'node:assert'
 
 /**
  * Creates a URL localization function for a specific language.
@@ -7,13 +7,12 @@ import assert from 'node:assert'
  * @returns {function(string): string} A function that takes a path and returns the localized URL
  */
 export const localiseUrl = (language) => {
-  assert(language, 'language is undefined')
-
+  const base = config.get('appBaseUrl')
   const prefix = pathPrefix[language] || pathPrefix[languages.ENGLISH]
 
   return (path) => {
     if (path) {
-      const url = new URL(path, 'https://example')
+      const url = new URL(path, base)
       return `${prefix}${url.pathname}${url.search}${url.hash}`
     }
     return prefix || '/'
