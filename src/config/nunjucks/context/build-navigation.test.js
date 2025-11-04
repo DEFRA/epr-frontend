@@ -1,4 +1,6 @@
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
+import { languages } from '#server/common/constants/languages.js'
+import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
@@ -45,6 +47,48 @@ describe('#buildNavigation', () => {
         text: 'Your sites'
       }
     ])
+  })
+
+  it('should include sign out link when user is authenticated', () => {
+    const request = mockRequest({ path: '/' })
+    const authedUser = { displayName: 'Test User' }
+
+    expect(buildNavigation(request, authedUser)).toStrictEqual([
+      {
+        active: true,
+        href: '/',
+        text: 'Your sites'
+      },
+      {
+        href: '/logout',
+        text: 'Sign out'
+      }
+    ])
+  })
+
+  it('should not include sign out link when user is not authenticated', () => {
+    const request = mockRequest({ path: '/' })
+    const authedUser = {}
+
+    expect(buildNavigation(request, authedUser)).toStrictEqual([
+      {
+        active: true,
+        href: '/',
+        text: 'Your sites'
+      }
+    ])
+  })
+
+  it('should localise logout url correctly', () => {
+    const request = mockRequest({
+      path: '/cy',
+      localiseUrl: localiseUrl(languages.WELSH)
+    })
+    const authedUser = { displayName: 'Test User' }
+
+    const nav = buildNavigation(request, authedUser)
+
+    expect(nav[1].href).toBe('/cy/logout')
   })
 })
 

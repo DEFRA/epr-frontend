@@ -1,5 +1,17 @@
 import { isEmpty } from 'lodash-es'
 
+const logout = ({ localiseUrl, t: localise }, authedUser) => {
+  if (!isEmpty(authedUser)) {
+    return [
+      {
+        href: localiseUrl('/logout'),
+        text: localise('common:navigation:signOut')
+      }
+    ]
+  }
+  return []
+}
+
 /**
  * @param {Partial<Request> | null} request
  */
@@ -14,14 +26,7 @@ export function buildNavigation(request, authedUser) {
       href: '/',
       text: request?.t('common:navigation:yourSites')
     },
-    ...(!isEmpty(authedUser)
-      ? [
-          {
-            href: request.localiseUrl('/logout'),
-            text: request.t('common:navigation:signOut')
-          }
-        ]
-      : [])
+    ...logout(request, authedUser)
   ]
 }
 
