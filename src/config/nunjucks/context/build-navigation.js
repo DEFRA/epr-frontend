@@ -3,8 +3,8 @@ import { isEmpty } from 'lodash-es'
 const yourSites = ({ localiseUrl, path, t: localise }) => {
   return [
     {
-      active: path === '/',
-      href: localiseUrl('/'),
+      active: path === '/account',
+      href: localiseUrl('/account'),
       text: localise('common:navigation:yourSites')
     }
   ]

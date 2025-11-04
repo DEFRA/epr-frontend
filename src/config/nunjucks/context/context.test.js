@@ -28,8 +28,8 @@ vi.mock(import('#server/common/helpers/auth/get-user-session.js'), () => ({
 const serviceName = 'Manage your packaging waste responsibilities'
 const navigation = [
   {
-    active: true,
-    href: '/',
+    active: false,
+    href: '/account',
     text: 'Your sites'
   }
 ]

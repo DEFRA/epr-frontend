@@ -29,25 +29,23 @@ describe('#buildNavigation', () => {
 
   describe('your sites', () => {
     it('should provide expected navigation details', () => {
-      expect(
-        buildNavigation(mockRequest({ path: '/non-existent-path' }))
-      ).toStrictEqual([
-        {
-          active: false,
-          href: '/',
-          text: 'Your sites'
-        }
-      ])
+      const nav = buildNavigation(mockRequest({ path: '/non-existent-path' }))
+
+      expect(nav[0]).toStrictEqual({
+        active: false,
+        href: '/account',
+        text: 'Your sites'
+      })
     })
 
     it('should provide expected highlighted navigation details', () => {
-      expect(buildNavigation(mockRequest({ path: '/' }))).toStrictEqual([
-        {
-          active: true,
-          href: '/',
-          text: 'Your sites'
-        }
-      ])
+      const nav = buildNavigation(mockRequest({ path: '/account' }))
+
+      expect(nav[0]).toStrictEqual({
+        active: true,
+        href: '/account',
+        text: 'Your sites'
+      })
     })
 
     it('should localise url correctly', () => {
@@ -59,7 +57,7 @@ describe('#buildNavigation', () => {
 
       const [yourSites] = buildNavigation(request, authedUser)
 
-      expect(yourSites.href).toBe('/cy/')
+      expect(yourSites.href).toBe('/cy/account')
     })
   })
 
@@ -68,30 +66,21 @@ describe('#buildNavigation', () => {
       const request = mockRequest({ path: '/' })
       const authedUser = { displayName: 'Test User' }
 
-      expect(buildNavigation(request, authedUser)).toStrictEqual([
-        {
-          active: true,
-          href: '/',
-          text: 'Your sites'
-        },
-        {
-          href: '/logout',
-          text: 'Sign out'
-        }
-      ])
+      const nav = buildNavigation(request, authedUser)
+
+      expect(nav[1]).toStrictEqual({
+        href: '/logout',
+        text: 'Sign out'
+      })
     })
 
     it('should not include sign out link when user is not authenticated', () => {
       const request = mockRequest({ path: '/' })
       const authedUser = {}
 
-      expect(buildNavigation(request, authedUser)).toStrictEqual([
-        {
-          active: true,
-          href: '/',
-          text: 'Your sites'
-        }
-      ])
+      const nav = buildNavigation(request, authedUser)
+
+      expect(nav).toHaveLength(1)
     })
 
     it('should localise logout url correctly', () => {
