@@ -98,6 +98,38 @@ describe('#context', () => {
         expect.objectContaining({ authedUser: { token: 'token-val' } })
       )
     })
+
+    it('should include i18n properties when i18n is available on request', async () => {
+      const mockI18nRequest = {
+        i18n: {
+          language: 'cy'
+        },
+        t: vi.fn(),
+        localiseUrl: vi.fn()
+      }
+
+      contextResult = await contextImport.context(mockI18nRequest)
+
+      expect(contextResult).toStrictEqual(
+        expect.objectContaining({
+          htmlLang: 'cy',
+          language: 'cy',
+          localise: expect.any(Function),
+          localiseUrl: expect.any(Function)
+        })
+      )
+    })
+
+    it('should not include i18n properties when i18n is not available on request', async () => {
+      const mockNoI18nRequest = {}
+
+      contextResult = await contextImport.context(mockNoI18nRequest)
+
+      expect(contextResult).not.toHaveProperty('htmlLang')
+      expect(contextResult).not.toHaveProperty('language')
+      expect(contextResult).not.toHaveProperty('localise')
+      expect(contextResult).not.toHaveProperty('localiseUrl')
+    })
   })
 
   describe('when webpack manifest file read succeeds', () => {

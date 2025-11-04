@@ -1,9 +1,9 @@
-import path from 'path'
+import { languages } from '#server/common/constants/languages.js'
 import fs from 'fs'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import middleware from 'i18next-http-middleware'
-import { languages } from '#server/common/constants/language-codes.js'
+import path from 'path'
 
 /**
  * Recursively find namespaces by looking for en.json or cy.json files
@@ -38,6 +38,7 @@ export async function initI18n() {
       lng: languages.ENGLISH,
       fallbackLng: languages.ENGLISH,
       preload: [languages.ENGLISH, languages.WELSH],
+      supportedLngs: [languages.ENGLISH, languages.WELSH],
       ns,
       defaultNS: 'common',
       backend: {
