@@ -1,7 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import { config } from '#config/config.js'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { localiseUrl } from './localiseUrl.js'
 
 describe(localiseUrl, () => {
+  beforeAll(() => {
+    config.set('appBaseUrl', 'https://required-for-url.ctor')
+  })
+
+  afterAll(() => {
+    config.reset('appBaseUrl')
+  })
+
   describe('english localisation', () => {
     it.each([
       { path: '', expected: '/' },
