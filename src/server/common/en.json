@@ -3,7 +3,8 @@
   "cancel": "Cancel",
   "continue": "Continue",
   "navigation": {
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "yourSites": "Your sites"
   },
   "serviceName": "Manage your packaging waste responsibilities",
   "submit": "Submit"

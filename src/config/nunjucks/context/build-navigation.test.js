@@ -1,15 +1,31 @@
-import { describe, expect, test } from 'vitest'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
 
 /**
  * @param {Partial<Request>} [options]
  */
 function mockRequest(options) {
-  return { ...options }
+  return {
+    t: vi.fn((key) => {
+      const translations = {
+        'common:navigation:yourSites': 'Your sites',
+        'common:navigation:signOut': 'Sign out'
+      }
+      return translations[key] || key
+    }),
+    localiseUrl: vi.fn((path) => path),
+    ...options
+  }
 }
 
 describe('#buildNavigation', () => {
-  test('should provide expected navigation details', () => {
+  it('should show that navigation is now dependant on the request', () => {
+    expect(buildNavigation(null)).toStrictEqual([])
+  })
+
+  it('should provide expected navigation details', () => {
     expect(
       buildNavigation(mockRequest({ path: '/non-existent-path' }))
     ).toStrictEqual([
@@ -21,7 +37,7 @@ describe('#buildNavigation', () => {
     ])
   })
 
-  test('should provide expected highlighted navigation details', () => {
+  it('should provide expected highlighted navigation details', () => {
     expect(buildNavigation(mockRequest({ path: '/' }))).toStrictEqual([
       {
         active: true,
@@ -34,4 +50,5 @@ describe('#buildNavigation', () => {
 
 /**
  * @import { Request } from '@hapi/hapi'
+ * @import { Server } from '@hapi/hapi'
  */

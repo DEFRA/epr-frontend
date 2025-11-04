@@ -3,7 +3,8 @@
   "cancel": "Canslo",
   "continue": "Parhau",
   "navigation": {
-    "signOut": "Allgofnodi"
+    "signOut": "Allgofnodi",
+    "yourSites": "Eich gwefannau"
   },
   "serviceName": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
   "submit": "Cyflwyno"
