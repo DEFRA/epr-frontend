@@ -1,5 +1,15 @@
 import { isEmpty } from 'lodash-es'
 
+const yourSites = (request) => {
+  return [
+    {
+      active: request.path === '/',
+      href: '/',
+      text: request.t('common:navigation:yourSites')
+    }
+  ]
+}
+
 const logout = ({ localiseUrl, t: localise }, authedUser) => {
   if (!isEmpty(authedUser)) {
     return [
@@ -20,14 +30,7 @@ export function buildNavigation(request, authedUser) {
     return []
   }
 
-  return [
-    {
-      active: request?.path === '/',
-      href: '/',
-      text: request?.t('common:navigation:yourSites')
-    },
-    ...logout(request, authedUser)
-  ]
+  return [...yourSites(request), ...logout(request, authedUser)]
 }
 
 /**
