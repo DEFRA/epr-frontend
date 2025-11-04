@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import {
   afterEach,
   beforeAll,
@@ -8,7 +9,6 @@ import {
   test,
   vi
 } from 'vitest'
-import { config } from '#config/config.js'
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
@@ -26,18 +26,26 @@ vi.mock(import('#server/common/helpers/auth/get-user-session.js'), () => ({
 }))
 
 const serviceName = 'Manage your packaging waste responsibilities'
-const navigation = [
-  {
-    active: true,
-    href: '/',
-    text: 'Your sites'
+
+/**
+ * @param {Partial<Request>} [options]
+ */
+function mockRequest(options) {
+  return {
+    localiseUrl: vi.fn((path) => path),
+    path: '/',
+    t: vi.fn((key) => {
+      const translations = {
+        'common:navigation:yourSites': 'Your sites',
+        'common:navigation:signOut': 'Sign out'
+      }
+      return translations[key] || key
+    }),
+    ...options
   }
-]
+}
 
 describe('#context', () => {
-  const mockRequest = {
-    path: '/'
-  }
   let contextResult
 
   beforeEach(() => {
@@ -61,12 +69,11 @@ describe('#context', () => {
         'http://defra-id.auth/.well-known/openid-configuration'
       )
 
-      contextResult = await contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest())
 
       expect(contextResult).toStrictEqual(
         expect.objectContaining({
-          isDefraIdEnabled: true,
-          navigation
+          isDefraIdEnabled: true
         })
       )
     })
@@ -84,7 +91,7 @@ describe('#context', () => {
       expect(contextResult).toStrictEqual(
         expect.objectContaining({
           authedUser: null,
-          navigation: [{ ...navigation[0], active: false }]
+          navigation: []
         })
       )
     })
@@ -92,7 +99,7 @@ describe('#context', () => {
     it('should add the authed user to the context', async () => {
       mockGetUserSession.mockResolvedValue({ token: 'token-val' })
 
-      contextResult = await contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest())
 
       expect(contextResult).toStrictEqual(
         expect.objectContaining({ authedUser: { token: 'token-val' } })
@@ -100,13 +107,11 @@ describe('#context', () => {
     })
 
     it('should include i18n properties when i18n is available on request', async () => {
-      const mockI18nRequest = {
+      const mockI18nRequest = mockRequest({
         i18n: {
           language: 'cy'
-        },
-        t: vi.fn(),
-        localiseUrl: vi.fn()
-      }
+        }
+      })
 
       contextResult = await contextImport.context(mockI18nRequest)
 
@@ -121,7 +126,7 @@ describe('#context', () => {
     })
 
     it('should not include i18n properties when i18n is not available on request', async () => {
-      const mockNoI18nRequest = {}
+      const mockNoI18nRequest = mockRequest()
 
       contextResult = await contextImport.context(mockNoI18nRequest)
 
@@ -146,7 +151,7 @@ describe('#context', () => {
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-      contextResult = await contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest())
     })
 
     test('should provide expected context', () => {
@@ -156,7 +161,7 @@ describe('#context', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation,
+        navigation: [],
         serviceName,
         serviceUrl: '/'
       })
@@ -192,7 +197,7 @@ describe('#context', () => {
         throw new Error('File not found')
       })
 
-      contextResult = await contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest())
     })
 
     test('should log that the Webpack Manifest file is not available', () => {
@@ -204,9 +209,6 @@ describe('#context', () => {
 })
 
 describe('#context cache', () => {
-  const mockRequest = {
-    path: '/'
-  }
   let contextResult
 
   describe('webpack manifest file cache', () => {
@@ -223,7 +225,7 @@ describe('#context cache', () => {
         "stylesheets/application.scss": "stylesheets/application.css"
       }`)
 
-      contextResult = await contextImport.context(mockRequest)
+      contextResult = await contextImport.context(mockRequest())
     })
 
     test('should read file', () => {
@@ -237,7 +239,7 @@ describe('#context cache', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation,
+        navigation: [],
         serviceName,
         serviceUrl: '/'
       })

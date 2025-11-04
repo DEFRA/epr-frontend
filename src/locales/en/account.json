@@ -1,8 +1,0 @@
-{
-  "welcome": "Welcome, <strong>{{displayName}}</strong>",
-  "signOut": "Sign out",
-  "viewAccountDetails": "View your account details",
-  "sitesHeading": "Sites",
-  "testHeading": "Test",
-  "testRegistrationLink": "Test Registration"
-}
