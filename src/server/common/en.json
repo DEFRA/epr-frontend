@@ -1,8 +1,10 @@
 {
-  "serviceName": "Manage your packaging waste responsibilities",
-  "submit": "Submit",
-  "cancel": "Cancel",
   "back": "Back",
+  "cancel": "Cancel",
   "continue": "Continue",
-  "signOut": "Sign out"
+  "navigation": {
+    "signOut": "Sign out"
+  },
+  "serviceName": "Manage your packaging waste responsibilities",
+  "submit": "Submit"
 }

@@ -14,7 +14,7 @@ export function buildNavigation(request, authedUser) {
       ? [
           {
             href: request.localiseUrl('/logout'),
-            text: request.t('common:signOut')
+            text: request.t('common:navigation:signOut')
           }
         ]
       : [])

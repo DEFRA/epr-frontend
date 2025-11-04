@@ -1,8 +1,10 @@
 {
-  "serviceName": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
-  "submit": "Cyflwyno",
-  "cancel": "Canslo",
   "back": "Yn ôl",
+  "cancel": "Canslo",
   "continue": "Parhau",
-  "signOut": "Allgofnodi"
+  "navigation": {
+    "signOut": "Allgofnodi"
+  },
+  "serviceName": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
+  "submit": "Cyflwyno"
 }
