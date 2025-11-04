@@ -23,25 +23,44 @@ function mockRequest(options) {
 }
 
 describe('#buildNavigation', () => {
+  const users = {
+    authed: { displayName: 'Test User' },
+    unauthed: {}
+  }
+
   it('should show that navigation is now dependant on the request', () => {
     expect(buildNavigation(null)).toStrictEqual([])
   })
 
   describe('your sites', () => {
     it('should provide expected navigation details', () => {
-      const nav = buildNavigation(mockRequest({ path: '/non-existent-path' }))
+      const [yourSites] = buildNavigation(
+        mockRequest({ path: '/non-existent-path' }),
+        users.authed
+      )
 
-      expect(nav[0]).toStrictEqual({
+      expect(yourSites).toStrictEqual({
         active: false,
         href: '/account',
         text: 'Your sites'
       })
     })
 
-    it('should provide expected highlighted navigation details', () => {
-      const nav = buildNavigation(mockRequest({ path: '/account' }))
+    it('should not include link when user is not authenticated', () => {
+      const request = mockRequest({ path: '/' })
 
-      expect(nav[0]).toStrictEqual({
+      const [yourSites] = buildNavigation(request, users.unauthed)
+
+      expect(yourSites).toBeUndefined()
+    })
+
+    it('should provide expected highlighted navigation details', () => {
+      const [yourSites] = buildNavigation(
+        mockRequest({ path: '/account' }),
+        users.authed
+      )
+
+      expect(yourSites).toStrictEqual({
         active: true,
         href: '/account',
         text: 'Your sites'
@@ -53,9 +72,8 @@ describe('#buildNavigation', () => {
         path: '/cy',
         localiseUrl: localiseUrl(languages.WELSH)
       })
-      const authedUser = { displayName: 'Test User' }
 
-      const [yourSites] = buildNavigation(request, authedUser)
+      const [yourSites] = buildNavigation(request, users.authed)
 
       expect(yourSites.href).toBe('/cy/account')
     })
@@ -64,11 +82,10 @@ describe('#buildNavigation', () => {
   describe('sign out', () => {
     it('should include sign out link when user is authenticated', () => {
       const request = mockRequest({ path: '/' })
-      const authedUser = { displayName: 'Test User' }
 
-      const nav = buildNavigation(request, authedUser)
+      const [, signout] = buildNavigation(request, users.authed)
 
-      expect(nav[1]).toStrictEqual({
+      expect(signout).toStrictEqual({
         href: '/logout',
         text: 'Sign out'
       })
@@ -76,23 +93,21 @@ describe('#buildNavigation', () => {
 
     it('should not include sign out link when user is not authenticated', () => {
       const request = mockRequest({ path: '/' })
-      const authedUser = {}
 
-      const nav = buildNavigation(request, authedUser)
+      const [, signout] = buildNavigation(request, users.unauthed)
 
-      expect(nav).toHaveLength(1)
+      expect(signout).toBeUndefined()
     })
 
-    it('should localise logout url correctly', () => {
+    it('should localise url correctly', () => {
       const request = mockRequest({
         path: '/cy',
         localiseUrl: localiseUrl(languages.WELSH)
       })
-      const authedUser = { displayName: 'Test User' }
 
-      const nav = buildNavigation(request, authedUser)
+      const [, signout] = buildNavigation(request, users.authed)
 
-      expect(nav[1].href).toBe('/cy/logout')
+      expect(signout.href).toBe('/cy/logout')
     })
   })
 })

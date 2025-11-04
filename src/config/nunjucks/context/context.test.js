@@ -26,13 +26,6 @@ vi.mock(import('#server/common/helpers/auth/get-user-session.js'), () => ({
 }))
 
 const serviceName = 'Manage your packaging waste responsibilities'
-const navigation = [
-  {
-    active: false,
-    href: '/account',
-    text: 'Your sites'
-  }
-]
 
 /**
  * @param {Partial<Request>} [options]
@@ -80,8 +73,7 @@ describe('#context', () => {
 
       expect(contextResult).toStrictEqual(
         expect.objectContaining({
-          isDefraIdEnabled: true,
-          navigation
+          isDefraIdEnabled: true
         })
       )
     })
@@ -169,7 +161,7 @@ describe('#context', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation,
+        navigation: [],
         serviceName,
         serviceUrl: '/'
       })
@@ -247,7 +239,7 @@ describe('#context cache', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation,
+        navigation: [],
         serviceName,
         serviceUrl: '/'
       })

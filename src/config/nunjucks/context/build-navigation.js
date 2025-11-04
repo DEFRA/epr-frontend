@@ -1,13 +1,16 @@
 import { isEmpty } from 'lodash-es'
 
-const yourSites = ({ localiseUrl, path, t: localise }) => {
-  return [
-    {
-      active: path === '/account',
-      href: localiseUrl('/account'),
-      text: localise('common:navigation:yourSites')
-    }
-  ]
+const yourSites = ({ localiseUrl, path, t: localise }, authedUser) => {
+  if (!isEmpty(authedUser)) {
+    return [
+      {
+        active: path === '/account',
+        href: localiseUrl('/account'),
+        text: localise('common:navigation:yourSites')
+      }
+    ]
+  }
+  return []
 }
 
 const logout = ({ localiseUrl, t: localise }, authedUser) => {
@@ -30,7 +33,7 @@ export function buildNavigation(request, authedUser) {
     return []
   }
 
-  return [...yourSites(request), ...logout(request, authedUser)]
+  return [...yourSites(request, authedUser), ...logout(request, authedUser)]
 }
 
 /**
