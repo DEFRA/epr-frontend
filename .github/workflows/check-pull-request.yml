@@ -60,6 +60,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Run translations check (non-blocking for now)
+        run: npm run check:i18n
+        continue-on-error: true
+
       - name: Test code and Create Test Coverage Reports
         uses: actions/setup-node@v6
         with:
