@@ -33,6 +33,12 @@ const defraId = {
       // Fetch OIDC configuration from discovery endpoint
       const oidcConf = await getOidcConfiguration(oidcConfigurationUrl)
 
+      // Parse authorization endpoint to extract any existing query parameters
+      // Azure AD B2C may include policy parameters like ?p=policy_name
+      const authUrl = new URL(oidcConf.authorization_endpoint)
+      const authBaseUrl = authUrl.origin + authUrl.pathname
+      const authParams = Object.fromEntries(authUrl.searchParams)
+
       // Configure bell authentication strategy
       server.auth.strategy('defra-id', 'bell', {
         location: (request) => {
@@ -47,7 +53,7 @@ const defraId = {
           name: 'defra-id',
           protocol: 'oauth2',
           useParamsAuth: true,
-          auth: oidcConf.authorization_endpoint,
+          auth: authBaseUrl,
           token: oidcConf.token_endpoint,
           scope: ['openid', 'offline_access'],
           profile: async function (credentials, params) {
@@ -85,6 +91,7 @@ const defraId = {
         cookie: 'bell-defra-id',
         isSecure: config.get('session.cookie.secure'),
         providerParams: {
+          ...authParams,
           serviceId
         }
       })
