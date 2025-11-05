@@ -1,8 +1,17 @@
-import Blankie from 'blankie'
 import { config } from '#config/config.js'
+import Blankie from 'blankie'
 
-export function cspFormAction({ isProduction }) {
-  return isProduction ? ['self'] : ['self', 'localhost:*']
+const oidcHost = (oidcConfigurationUrl) => {
+  if (oidcConfigurationUrl) {
+    const { host } = new URL(oidcConfigurationUrl)
+    return [host]
+  }
+  return []
+}
+
+export function cspFormAction({ isProduction, oidcConfigurationUrl }) {
+  const oidc = oidcHost(oidcConfigurationUrl)
+  return isProduction ? ['self', ...oidc] : ['self', ...oidc, 'localhost:*']
 }
 
 /**
@@ -12,24 +21,27 @@ export function cspFormAction({ isProduction }) {
 const contentSecurityPolicy = {
   plugin: Blankie,
   options: {
-    // Hash 'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=' is to support a GOV.UK frontend script bundled within Nunjucks macros
-    // https://frontend.design-system.service.gov.uk/import-javascript/#if-our-inline-javascript-snippet-is-blocked-by-a-content-security-policy
+    connectSrc: ['self', 'wss', 'data:'],
     defaultSrc: ['self'],
     fontSrc: ['self', 'data:'],
-    connectSrc: ['self', 'wss', 'data:'],
+    formAction: cspFormAction({
+      isProduction: config.get('isProduction'),
+      oidcConfigurationUrl: config.get('defraId.oidcConfigurationUrl')
+    }),
+    frameAncestors: ['none'],
+    frameSrc: ['self', 'data:'],
+    generateNonces: false,
+    imgSrc: ['self', 'data:'],
+    manifestSrc: ['self'],
     mediaSrc: ['self'],
-    styleSrc: ['self'],
+    objectSrc: ['none'],
+    // Hash 'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=' is to support a GOV.UK frontend script bundled within Nunjucks macros
+    // https://frontend.design-system.service.gov.uk/import-javascript/#if-our-inline-javascript-snippet-is-blocked-by-a-content-security-policy
     scriptSrc: [
       'self',
       "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='"
     ],
-    imgSrc: ['self', 'data:'],
-    frameSrc: ['self', 'data:'],
-    objectSrc: ['none'],
-    frameAncestors: ['none'],
-    formAction: cspFormAction({ isProduction: config.get('isProduction') }),
-    manifestSrc: ['self'],
-    generateNonces: false
+    styleSrc: ['self']
   }
 }
 
