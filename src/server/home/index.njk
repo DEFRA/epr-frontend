@@ -4,19 +4,20 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <form action="{{ localiseUrl('/login') }}">
-          <h1 class="govuk-heading-l">{{ localise('home:heading') }}</h1>
-          <p class="govuk-body">{{ localise('home:subheading') }}</p>
-          <p class="govuk-body">{{ localise('home:services:description') }}</p>
-          <ul class="govuk-list govuk-list--bullet">
-            <li>{{ localise('home:services:registrations') }}</li>
-            <li>{{ localise('home:services:accreditations') }}</li>
-            <li>{{ localise('home:services:summaryLog') }}</li>
-            <li>{{ localise('home:services:regulatorReports') }}</li>
-            <li>{{ localise('home:services:prns') }}</li>
-          </ul>
-          {{ govukButton({ text: localise('home:startNow') }) }}
-        </form>
+        <h1 class="govuk-heading-l">{{ localise('home:heading') }}</h1>
+        <p class="govuk-body">{{ localise('home:subheading') }}</p>
+        <p class="govuk-body">{{ localise('home:services:description') }}</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>{{ localise('home:services:registrations') }}</li>
+          <li>{{ localise('home:services:accreditations') }}</li>
+          <li>{{ localise('home:services:summaryLog') }}</li>
+          <li>{{ localise('home:services:regulatorReports') }}</li>
+          <li>{{ localise('home:services:prns') }}</li>
+        </ul>
+        {{ govukButton({
+          href: localiseUrl('/login'),
+          text: localise('home:startNow')
+        }) }}
       </div>
     </div>
   </div>
