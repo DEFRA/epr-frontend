@@ -328,7 +328,7 @@ describe('#defraId', () => {
 
       await profileFn(mockCredentials, mockParams)
 
-      expect(mockJwt.token.decode).toHaveBeenCalledWith('mock-access-token')
+      expect(mockJwt.token.decode).toHaveBeenCalledWith('mock-id-token')
       expect(mockCredentials.profile).toStrictEqual({
         id: 'user-123',
         correlationId: 'corr-123',
