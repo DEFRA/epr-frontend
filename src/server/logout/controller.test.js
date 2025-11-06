@@ -49,7 +49,7 @@ describe('#logoutController', () => {
     test('should drop session, clear cookie and redirect to logout URL', async () => {
       const mockAuthedUser = {
         idToken: 'id-token-123',
-        logoutUrl: 'http://localhost:3200/logout'
+        logoutUrl: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
       }
 
       const mockRequest = {
@@ -72,7 +72,9 @@ describe('#logoutController', () => {
       expect(mockRequest.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        'http://localhost:3200/logout?id_token_hint=id-token-123&post_logout_redirect_uri=http://localhost:3000/'
+        new URL(
+          'http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2F'
+        )
       )
       expect(result).toBe('redirect-response')
     })
