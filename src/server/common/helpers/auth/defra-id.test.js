@@ -181,6 +181,62 @@ describe('#defraId', () => {
 
       expect(config.providerParams.serviceId).toBe('test-service-id')
     })
+
+    it('should extract query parameters from authorization endpoint and add to providerParams', async () => {
+      // Mock OIDC config with Azure AD B2C style query parameters
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          issuer: 'http://test.auth',
+          authorization_endpoint:
+            'http://test.auth/authorize?p=b2c_1a_signupsignin',
+          token_endpoint: 'http://test.auth/token',
+          userinfo_endpoint: 'http://test.auth/userinfo',
+          end_session_endpoint: 'http://test.auth/logout',
+          jwks_uri: 'http://test.auth/.well-known/jwks.json'
+        })
+      })
+
+      await defraId.plugin.register(mockServer)
+
+      const strategyCall = mockServer.auth.strategy.mock.calls[0]
+      const config = strategyCall[2]
+
+      // Base URL should not have query parameters
+      expect(config.provider.auth).toBe('http://test.auth/authorize')
+      // Query parameters should be in providerParams
+      expect(config.providerParams).toStrictEqual({
+        serviceId: 'test-service-id',
+        p: 'b2c_1a_signupsignin'
+      })
+    })
+
+    it('should handle multiple query parameters in authorization endpoint', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          issuer: 'http://test.auth',
+          authorization_endpoint:
+            'http://test.auth/authorize?p=b2c_1a_signupsignin&custom=value',
+          token_endpoint: 'http://test.auth/token',
+          userinfo_endpoint: 'http://test.auth/userinfo',
+          end_session_endpoint: 'http://test.auth/logout',
+          jwks_uri: 'http://test.auth/.well-known/jwks.json'
+        })
+      })
+
+      await defraId.plugin.register(mockServer)
+
+      const strategyCall = mockServer.auth.strategy.mock.calls[0]
+      const config = strategyCall[2]
+
+      expect(config.provider.auth).toBe('http://test.auth/authorize')
+      expect(config.providerParams).toStrictEqual({
+        serviceId: 'test-service-id',
+        p: 'b2c_1a_signupsignin',
+        custom: 'value'
+      })
+    })
   })
 
   describe('location function', () => {
@@ -272,7 +328,7 @@ describe('#defraId', () => {
 
       await profileFn(mockCredentials, mockParams)
 
-      expect(mockJwt.token.decode).toHaveBeenCalledWith('mock-access-token')
+      expect(mockJwt.token.decode).toHaveBeenCalledWith('mock-id-token')
       expect(mockCredentials.profile).toStrictEqual({
         id: 'user-123',
         correlationId: 'corr-123',

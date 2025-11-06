@@ -1,31 +1,11 @@
-import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
+import { describe, beforeAll, afterAll, it, expect } from 'vitest'
 import { createServer } from '#server/index.js'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
 
 describe(cspFormAction, () => {
   it.each([
-    [
-      'non-production',
-      { isProduction: false, oidcConfigurationUrl: '' },
-      ['self', 'localhost:*']
-    ],
-    [
-      'non-production (defra-id)',
-      {
-        isProduction: false,
-        oidcConfigurationUrl: 'https://dcimtest.b2clogin.com'
-      },
-      ['self', 'dcimtest.b2clogin.com', 'localhost:*']
-    ],
-    ['production', { isProduction: true, oidcConfigurationUrl: '' }, ['self']],
-    [
-      'production (defra-id)',
-      {
-        isProduction: true,
-        oidcConfigurationUrl: 'https://dcimtest.b2clogin.com'
-      },
-      ['self', 'dcimtest.b2clogin.com']
-    ]
+    ['non-production', { isProduction: false }, ['self', 'localhost:*']],
+    ['production', { isProduction: true }, ['self']]
   ])('should use %s values', (_, config, values) => {
     expect(cspFormAction(config)).toStrictEqual(values)
   })

@@ -118,10 +118,12 @@ describe('#homeController', () => {
 
           // Page structure
           expect($('[data-testid="app-page-body"]')).toHaveLength(1)
-
           expect($('h1').text()).toBe(heading)
-          expect($('button').text().trim()).toBe(startNow)
-          expect($('form').attr('action')).toBe(loginUrl)
+
+          const loginLink = $('[data-testid="app-page-body"] a')
+
+          expect(loginLink.text().trim()).toBe(startNow)
+          expect(loginLink.attr('href')).toBe(loginUrl)
         })
       }
     )

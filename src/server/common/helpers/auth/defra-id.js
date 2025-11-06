@@ -5,6 +5,37 @@ import fetch from 'node-fetch'
 import { config } from '#config/config.js'
 import { getDisplayName } from './display.js'
 
+/**
+ * @typedef {object} BellCredentials
+ * @property {number} expiresIn - Token expiration time in seconds
+ * @property {string} provider - OAuth provider name (e.g., "defra-id")
+ * @property {object} query - Query parameters from the OAuth callback
+ * @property {string} refreshToken - JWT refresh token
+ * @property {string} token - JWT access token
+ * @property {object} [profile] - User profile object (set by the profile function)
+ */
+
+/**
+ * @typedef {object} OAuthTokenParams
+ * @property {string} access_token - JWT access token
+ * @property {number} expires_in - Token expiration time in seconds
+ * @property {string} id_token - JWT ID token containing user claims
+ * @property {string} refresh_token - JWT refresh token for obtaining new access tokens
+ * @property {string} token_type - Token type (typically "bearer")
+ */
+
+/**
+ * @typedef {object} AzureB2CTokenParams
+ * @property {string} id_token - JWT ID token containing user claims
+ * @property {number} id_token_expires_in - ID token expiration time in seconds
+ * @property {number} not_before - Timestamp before which the token is not valid
+ * @property {string} profile_info - Base64 encoded profile information
+ * @property {string} refresh_token - JWT refresh token for obtaining new access tokens
+ * @property {number} refresh_token_expires_in - Refresh token expiration time in seconds
+ * @property {string} scope - Space-separated list of granted scopes
+ * @property {string} token_type - Token type (typically "Bearer")
+ */
+
 const getOidcConfiguration = async (oidcConfigurationUrl) => {
   const res = await fetch(oidcConfigurationUrl)
   if (!res.ok) {
@@ -33,6 +64,12 @@ const defraId = {
       // Fetch OIDC configuration from discovery endpoint
       const oidcConf = await getOidcConfiguration(oidcConfigurationUrl)
 
+      // Parse authorization endpoint to extract any existing query parameters
+      // Azure AD B2C may include policy parameters like ?p=policy_name
+      const authUrl = new URL(oidcConf.authorization_endpoint)
+      const authBaseUrl = authUrl.origin + authUrl.pathname
+      const authParams = Object.fromEntries(authUrl.searchParams)
+
       // Configure bell authentication strategy
       server.auth.strategy('defra-id', 'bell', {
         location: (request) => {
@@ -47,12 +84,18 @@ const defraId = {
           name: 'defra-id',
           protocol: 'oauth2',
           useParamsAuth: true,
-          auth: oidcConf.authorization_endpoint,
+          auth: authBaseUrl,
           token: oidcConf.token_endpoint,
           scope: ['openid', 'offline_access'],
+          /**
+           * Extract user profile from OIDC ID token and populate credentials
+           * @param {BellCredentials} credentials - Bell credentials object (mutated to add profile)
+           * @param {OAuthTokenParams | AzureB2CTokenParams} params - OAuth token response parameters (supports both standard OAuth and Azure B2C formats)
+           * @returns {Promise<void>}
+           */
           profile: async function (credentials, params) {
             // Decode JWT and extract user profile
-            const payload = jwt.token.decode(credentials.token).decoded.payload
+            const payload = jwt.token.decode(params.id_token).decoded.payload
             const displayName = getDisplayName(payload)
 
             credentials.profile = {
@@ -85,6 +128,7 @@ const defraId = {
         cookie: 'bell-defra-id',
         isSecure: config.get('session.cookie.secure'),
         providerParams: {
+          ...authParams,
           serviceId
         }
       })
