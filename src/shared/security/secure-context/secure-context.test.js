@@ -10,7 +10,7 @@ import {
   vi
 } from 'vitest'
 import { config } from '#config/config.js'
-import { requestLogger } from '../logging/request-logger.js'
+import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
 import { secureContext } from './secure-context.js'
 
 const mockAddCACert = vi.fn()
