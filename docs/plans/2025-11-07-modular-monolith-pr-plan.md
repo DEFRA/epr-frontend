@@ -27,11 +27,10 @@ Already complete - commit `3b7b49b`
 **Files:**
 
 - Modify: `package.json`
-- Modify: `tsconfig.json`
 
 **Implementation:**
 
-Update package.json imports section:
+Update package.json imports section to add the new paths:
 
 ```json
 {
@@ -45,37 +44,24 @@ Update package.json imports section:
 }
 ```
 
-Update tsconfig.json paths:
-
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "#client/*": ["src/client/*"],
-      "#config/*": ["src/config/*"],
-      "#server/*": ["src/server/*"],
-      "#modules/*": ["src/modules/*"],
-      "#shared/infrastructure/*": ["src/shared/infrastructure/*"]
-    }
-  }
-}
-```
+Note: tsconfig.json with `"module": "NodeNext"` already understands Node.js subpath imports natively, so no changes needed there.
 
 **Verification:**
 
 ```bash
 npm test  # All 195 tests pass
+npm run lint  # Linting passes
 npm run build  # Build succeeds
 ```
 
 **Commit:**
 
 ```bash
-git add package.json tsconfig.json
+git add package.json
 git commit -m "feat: configure import paths for modules and infrastructure
 
 Add #modules/* and #shared/infrastructure/* to Node.js subpath imports.
-Update tsconfig paths for IDE autocomplete support."
+TypeScript with module: NodeNext understands these natively."
 ```
 
 ### Task 3: Install ESLint Boundary Plugin
