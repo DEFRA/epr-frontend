@@ -8,6 +8,7 @@
   "imports": {
     "#client/*": "./src/client/*",
     "#config/*": "./src/config/*",
+    "#routes/*": "./src/routes/*",
     "#server/*": "./src/server/*"
   },
   "engines": {

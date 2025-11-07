@@ -1,35 +1,47 @@
 import { languages } from '#server/common/constants/languages.js'
-import fs from 'fs'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import middleware from 'i18next-http-middleware'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 
 /**
- * Recursively find namespaces by looking for en.json or cy.json files
+ * Find namespaces and build a map of namespace → directory path
+ * @param {string[]} translationDirs - Base directories to scan
+ * @returns {{ namespaces: string[], pathMap: Map<string, string> }}
  */
-function findNamespaces(baseDir) {
-  const namespaces = new Set()
+function findNamespacesWithPaths(translationDirs) {
+  const pathMap = new Map()
 
-  const entries = fs.readdirSync(baseDir, { withFileTypes: true })
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const dirPath = path.join(baseDir, entry.name)
-      const files = fs.readdirSync(dirPath)
+  for (const baseDir of translationDirs) {
+    const resolvedBaseDir = path.resolve(baseDir)
+    const entries = fs.readdirSync(resolvedBaseDir, { withFileTypes: true })
 
-      if (files.some((file) => /(en|cy)\.json$/.test(file))) {
-        const ns = entry.name
-        namespaces.add(ns)
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const dirPath = path.join(resolvedBaseDir, entry.name)
+        const files = fs.readdirSync(dirPath)
+
+        if (files.some((file) => /(en|cy)\.json$/.test(file))) {
+          const ns = entry.name
+          // Store first occurrence (routes takes precedence over server)
+          if (!pathMap.has(ns)) {
+            pathMap.set(ns, baseDir)
+          }
+        }
       }
     }
   }
 
-  return Array.from(namespaces)
+  return {
+    namespaces: Array.from(pathMap.keys()),
+    pathMap
+  }
 }
 
 export async function initI18n() {
-  const serverDir = path.resolve('src/server')
-  const ns = findNamespaces(serverDir)
+  const translationDirs = ['src/routes', 'src/server']
+  const { namespaces: ns, pathMap } = findNamespacesWithPaths(translationDirs)
 
   await i18next
     .use(Backend)
@@ -42,7 +54,15 @@ export async function initI18n() {
       ns,
       defaultNS: 'common',
       backend: {
-        loadPath: path.resolve('src/server/{{ns}}/{{lng}}.json')
+        loadPath: (lng, ns) => {
+          const dir = pathMap.get(ns)
+          if (!dir) {
+            throw new Error(
+              `Translation namespace "${ns}" not found. Available namespaces: ${Array.from(pathMap.keys()).join(', ')}`
+            )
+          }
+          return path.resolve(`${dir}/${ns}/${lng}.json`)
+        }
       },
       detection: {
         order: ['path', 'querystring', 'cookie', 'header'],
