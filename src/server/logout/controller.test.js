@@ -1,4 +1,4 @@
-import { languages } from '#server/common/constants/languages.js'
+import { languages } from '#modules/platform/constants/languages.js'
 import { dropUserSession } from '#server/common/helpers/auth/drop-user-session.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { logoutController } from '#server/logout/controller.js'

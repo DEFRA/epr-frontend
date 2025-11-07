@@ -1,5 +1,5 @@
 import middleware from 'i18next-http-middleware'
-import { languages, pathPrefix } from '../constants/languages.js'
+import { languages, pathPrefix } from '#modules/platform/constants/languages.js'
 import { localiseUrl } from './i18n/localiseUrl.js'
 
 /**

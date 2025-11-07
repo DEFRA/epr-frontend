@@ -10,7 +10,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const nunjucksTestEnv = nunjucks.configure(
   [
     '~/node_modules/govuk-frontend/dist/',
-    path.normalize(path.resolve(dirname, '../templates')),
+    path.normalize(path.resolve(dirname, '../../../server/common/templates')),
     path.normalize(path.resolve(dirname, '../components'))
   ],
   {

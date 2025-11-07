@@ -1,4 +1,4 @@
-import { buildRedisClient } from '#server/common/helpers/redis-client.js'
+import { buildRedisClient } from '#modules/platform/session/redis-client.js'
 import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import { Engine as CatboxMemory } from '@hapi/catbox-memory'
 

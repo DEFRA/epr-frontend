@@ -1,4 +1,4 @@
-import { statusCodes } from '#server/common/constants/status-codes.js'
+import { statusCodes } from '#modules/platform/constants/status-codes.js'
 import { getLocaliseUrl } from '#server/common/helpers/i18next.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'

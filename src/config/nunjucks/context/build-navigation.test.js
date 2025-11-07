@@ -1,5 +1,5 @@
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
-import { languages } from '#server/common/constants/languages.js'
+import { languages } from '#modules/platform/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { describe, expect, it, vi } from 'vitest'
 

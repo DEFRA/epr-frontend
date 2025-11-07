@@ -1,10 +1,10 @@
 import crypto from 'node:crypto'
 
 import { config } from '#config/config.js'
-import { mimeTypes } from '#server/common/constants/mime-types.js'
+import { mimeTypes } from '#modules/platform/constants/mime-types.js'
 import { initUpload } from '#server/common/helpers/upload/init-upload.js'
-import { sessionNames } from '#server/common/constants/session-names.js'
-import { summaryLogStatuses } from '#server/common/constants/statuses.js'
+import { sessionNames } from '#modules/platform/constants/session-names.js'
+import { summaryLogStatuses } from '#modules/platform/constants/statuses.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}

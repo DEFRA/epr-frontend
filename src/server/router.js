@@ -1,7 +1,7 @@
 import { isDefraIdEnabled } from '#config/config.js'
 import { account } from '#server/account/index.js'
 import { auth } from '#server/auth/index.js'
-import { health } from '#server/health/index.js'
+import { health } from '#modules/platform/health/index.js'
 import { home } from '#server/home/index.js'
 import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'

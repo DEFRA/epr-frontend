@@ -4,8 +4,8 @@ import { defraId } from '#server/common/helpers/auth/defra-id.js'
 import { sessionCookie } from '#server/common/helpers/auth/session-cookie.js'
 import { catchAll } from '#shared/errors/errors.js'
 import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
-import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
-import { sessionCache } from '#server/common/helpers/session-cache/session-cache.js'
+import { getCacheEngine } from '#modules/platform/session/cache-engine.js'
+import { sessionCache } from '#modules/platform/session/session-cache.js'
 import { contentSecurityPolicy } from '#shared/middleware/content-security-policy.js'
 import { requestTracing } from '#shared/middleware/request-tracing.js'
 import { userAgentProtection } from '#shared/middleware/useragent-protection.js'
@@ -105,5 +105,5 @@ export async function createServer() {
 }
 
 /**
- * @import {Engine} from '#server/common/helpers/session-cache/cache-engine.js'
+ * @import {Engine} from '#modules/platform/session/cache-engine.js'
  */

@@ -1,4 +1,4 @@
-import { statusCodes } from '#server/common/constants/status-codes.js'
+import { statusCodes } from '#modules/platform/constants/status-codes.js'
 
 const statusCodeErrors = {
   [statusCodes.notFound]: {

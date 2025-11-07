@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { statusCodes } from '#modules/platform/constants/status-codes.js'
+import { createMockOidcServer } from '#modules/platform/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
 

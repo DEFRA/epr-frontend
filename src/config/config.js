@@ -283,5 +283,5 @@ export const isDefraIdEnabled = () => {
 
 /**
  * @import { Schema, SchemaObj } from 'convict'
- * @import { RedisConfig } from '#server/common/helpers/redis-client.js'
+ * @import { RedisConfig } from '#modules/platform/session/redis-client.js'
  */

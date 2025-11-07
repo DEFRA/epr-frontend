@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { statusCodes } from '#server/common/constants/status-codes.js'
+import { statusCodes } from '#modules/platform/constants/status-codes.js'
 import { createServer } from '#server/index.js'
 
 describe('#healthController', () => {

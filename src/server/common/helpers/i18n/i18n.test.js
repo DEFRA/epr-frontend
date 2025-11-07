@@ -1,4 +1,4 @@
-import { languages } from '#server/common/constants/languages.js'
+import { languages } from '#modules/platform/constants/languages.js'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import middleware from 'i18next-http-middleware'

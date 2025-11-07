@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { statusCodes } from '#server/common/constants/status-codes.js'
+import { statusCodes } from '#modules/platform/constants/status-codes.js'
 import { initUpload } from '#server/common/helpers/upload/init-upload.js'
 import { createServer } from '#server/index.js'
 

@@ -2,7 +2,7 @@ import { Engine as CatboxMemory } from '@hapi/catbox-memory'
 import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '#config/config.js'
-import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
+import { getCacheEngine } from '#modules/platform/session/cache-engine.js'
 
 const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()

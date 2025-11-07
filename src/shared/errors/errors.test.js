@@ -1,5 +1,5 @@
 import { vi, describe, expect, it, beforeEach } from 'vitest'
-import { statusCodes } from '#server/common/constants/status-codes.js'
+import { statusCodes } from '#modules/platform/constants/status-codes.js'
 
 import { catchAll } from '#shared/errors/errors.js'
 
