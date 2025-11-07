@@ -18,7 +18,8 @@ const logoutController = {
       return h.redirect('/')
     }
 
-    const referrer = request.info.referrer
+    // @fixme: retrieve protocol, hostname, port from config so that it works for all environments
+    const referrer = 'http://localhost:3000/'
     const idTokenHint = authedUser.idToken
 
     const logoutUrl = encodeURI(

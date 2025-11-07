@@ -35,7 +35,8 @@ export const registrationController = {
         organisationId,
         registrationId,
         registration,
-        accreditation
+        accreditation,
+        defraId: request.server.app.defraId
       })
     } catch (error) {
       request.logger.info('Failed to fetch registration', error)

@@ -32,6 +32,40 @@
     serviceUrl: "/",
     navigation: navigation
   }) }}
+  {% if isDefraIdEnabled %}
+    <div class="menu">
+      <div class="govuk-grid-row govuk-width-container app-width-container--wide">
+        <div class="govuk-grid-column-full">
+          <ul class="manage-account-links govuk-!-padding-0">
+            {% if defraId.currentRelationship %}
+              <li class="govuk-body-s">
+                <a href="http://localhost:3200/cdp-defra-id-stub/register/{{ defraId.user.id }}" class="govuk-link">{{ defraId.user.name }}</a>
+              </li>
+              <li class="govuk-body-s">
+                {% if defraId.relationships.length > 1 %}
+                  <a
+                    class="govuk-link"
+                    href="http://localhost:3200/cdp-defra-id-stub/register/{{ defraId.user.id }}/relationship/{{ defraId.currentRelationship.id }}/current"
+                  >
+                    {{ defraId.currentRelationship.orgName }}
+                  </a>
+                {% else %}
+                  {{ defraId.currentRelationship.orgName }}
+                {% endif %}
+              </li>
+              <li class="govuk-body-s">
+                <a href="/logout" class="govuk-link">Sign out</a>
+              </li>
+            {% else %}
+              <li class="govuk-body-s">
+                <a href="/login" class="govuk-link">Sign in</a>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block pageTitle %}

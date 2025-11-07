@@ -20,69 +20,81 @@ function getOrganisationLinkHref(id, redirectUrl) {
 }
 
 export async function fetchWithAuthInterception(url, request, h) {
-  const { data, response } = await fetchWithAuthHeader(url, request)
+  request.logger.info({ url }, 'auth: fetchWithAuthInterception')
 
-  if (!response.ok) {
-    throw Boom.unauthorized()
-  }
+  try {
+    const { data, response } = await fetchWithAuthHeader(url, request)
 
-  if (data.action === 'link-organisations') {
-    const { path: redirectUrl } = request
-    const { defraId, isCurrentOrganisationLinked, organisations } = data
-    const hasManyOrganisations = organisations.length > 1
-    const entityName = hasManyOrganisations ? 'organisations' : 'organisation'
-    const shouldShowTableOfUnlinkedOrganisations =
-      hasManyOrganisations && !isCurrentOrganisationLinked
-    const otherRelationships = defraId.otherRelationships.map(
-      ({ defraIdOrgName, defraIdRelationshipId }) => [
-        { text: defraIdOrgName },
-        {
-          html: `<a href="http://localhost:3200/cdp-defra-id-stub/register/${defraId.userId}/relationship/${defraIdRelationshipId}/current">Switch</a>`
-        }
-      ]
-    )
-
-    const commonTemplateData = {
-      defraIdOrgName: defraId.orgName,
-      entityName,
-      isCurrentOrganisationLinked,
-      otherRelationships,
-      shouldShowTableOfUnlinkedOrganisations
+    if (!response.ok) {
+      throw Boom.unauthorized()
     }
 
-    const templateData = shouldShowTableOfUnlinkedOrganisations
-      ? {
-          ...commonTemplateData,
-          organisations: organisations.map(({ name, orgId, id }) => [
-            { text: name ?? 'data missing' },
-            { text: orgId ?? 'data missing' },
-            { text: id ?? 'data missing' },
-            {
-              html: `<a href="${getOrganisationLinkHref(id, redirectUrl)}">Link</a>`
-            }
-          ])
-        }
-      : {
-          ...commonTemplateData,
-          organisation: {
-            name: organisations[0].name,
-            orgId: organisations[0].orgId,
-            id: organisations[0].id,
-            linkHref: getOrganisationLinkHref(organisations[0].id, redirectUrl),
-            addHref: `http://localhost:3200/cdp-defra-id-stub/register/${defraId.userId}/relationship`
+    if (data.action === 'link-organisations') {
+      const { path: redirectUrl } = request
+      const { defraId, isCurrentOrganisationLinked, organisations } = data
+      const hasManyOrganisations = organisations.length > 1
+      const entityName = hasManyOrganisations ? 'organisations' : 'organisation'
+      const shouldShowTableOfUnlinkedOrganisations =
+        hasManyOrganisations && !isCurrentOrganisationLinked
+      const otherRelationships = defraId.otherRelationships.map(
+        ({ defraIdOrgName, defraIdRelationshipId }) => [
+          { text: defraIdOrgName },
+          {
+            html: `<a href="http://localhost:3200/cdp-defra-id-stub/register/${defraId.userId}/relationship/${defraIdRelationshipId}/current">Switch</a>`
           }
-        }
+        ]
+      )
 
-    return {
-      data,
-      response,
-      view: h.view('organisation/link-options', {
-        pageTitle: 'Link Organisation',
-        heading: 'Link Organisation',
-        ...templateData
-      })
+      const commonTemplateData = {
+        defraIdOrgName: defraId.orgName,
+        entityName,
+        isCurrentOrganisationLinked,
+        otherRelationships,
+        shouldShowTableOfUnlinkedOrganisations
+      }
+
+      const templateData = shouldShowTableOfUnlinkedOrganisations
+        ? {
+            ...commonTemplateData,
+            organisations: organisations.map(({ name, orgId, id }) => [
+              { text: name ?? 'data missing' },
+              { text: orgId ?? 'data missing' },
+              { text: id ?? 'data missing' },
+              {
+                html: `<a href="${getOrganisationLinkHref(id, redirectUrl)}">Link</a>`
+              }
+            ])
+          }
+        : {
+            ...commonTemplateData,
+            organisation: {
+              name: organisations[0].name,
+              orgId: organisations[0].orgId,
+              id: organisations[0].id,
+              linkHref: getOrganisationLinkHref(
+                organisations[0].id,
+                redirectUrl
+              ),
+              addHref: `http://localhost:3200/cdp-defra-id-stub/register/${defraId.userId}/relationship`
+            }
+          }
+
+      return {
+        data,
+        response,
+        view: h.view('organisation/link', {
+          pageTitle: 'Link Organisation',
+          heading: 'Link Organisation',
+          defraId: request.server.app.defraId,
+          ...templateData
+        })
+      }
     }
-  }
 
-  return { data, response }
+    return { data, response }
+  } catch (error) {
+    request.logger.error(error, 'auth: fetchWithAuthInterception')
+
+    throw error
+  }
 }

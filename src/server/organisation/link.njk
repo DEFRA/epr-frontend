@@ -5,23 +5,9 @@
     <div class="govuk-body" data-testid="app-page-body">
       <div class="govuk-grid-column-two-thirds">
         <h1 class="govuk-heading-xl">{{ heading }}</h1>
-
         <p>We've found a potential match for your {{ entityName }}</p>
         <h2 class="govuk-heading-l">You currently represent</h2>
         <p>Name: {{ defraIdOrgName }} ({% if isCurrentOrganisationLinked %}linked{% else %}unlinked{% endif %})</p>
-        {{ govukTable({
-          firstCellIsHeader: true,
-          head: [
-            {
-              text: "Name"
-            },
-            {
-              text: "Action"
-            }
-          ],
-          rows: otherRelationships
-        }) }}
-
         {% if shouldShowTableOfUnlinkedOrganisations %}
           <h2 class="govuk-heading-l">{{ entityName | capitalize }} data not linked</h2>
           {{ govukTable({
@@ -55,6 +41,17 @@
             }) }}
             <a href="{{ organisation.addHref }}" class="govuk-link">Add a new organisation</a>
           </div>
+        {% else %}
+          <h2 class="govuk-heading-l">You are logged in to the wrong organisation</h2>
+          <p><strong>{{ organisation.name }}</strong> does not match <strong>{{ defraId.currentRelationship.orgName }}</strong></p>
+          <p>Please
+            <a
+              class="govuk-link"
+              href="http://localhost:3200/cdp-defra-id-stub/register/{{ defraId.user.id }}/relationship/{{ defraId.currentRelationship.id }}/current"
+            >
+              switch organisation
+            </a>
+          </p>
         {% endif %}
       </div>
     </div>

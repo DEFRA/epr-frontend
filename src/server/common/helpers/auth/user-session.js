@@ -12,6 +12,7 @@ import { getUserSession } from './get-user-session.js'
 async function removeUserSession(request) {
   await dropUserSession(request)
   request.cookieAuth.clear()
+  request.server.app.defraId = null
 }
 
 /**

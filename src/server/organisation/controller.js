@@ -38,6 +38,8 @@ export const organisationLinkController = {
  */
 export const organisationController = {
   async handler(request, h) {
+    request.logger.info('organisationController')
+
     const { organisationId } = request.params
     const baseUrl = config.get('eprBackendUrl')
     const url = `${baseUrl}/v1/organisations/${organisationId}`
@@ -67,10 +69,11 @@ export const organisationController = {
       return h.view('organisation/index', {
         pageTitle: name,
         heading: name,
+        defraId: request.server.app.defraId,
         ...templateData
       })
     } catch (error) {
-      request.logger.info('Failed to fetch organisation', error)
+      request.logger.error(error, 'Failed to fetch organisation')
 
       throw Boom.unauthorized()
     }

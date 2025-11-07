@@ -51,12 +51,40 @@ const defraId = {
           token: oidcConf.token_endpoint,
           scope: ['openid', 'offline_access'],
           profile: async function (credentials, params) {
+            server.logger.info('auth: Defra ID profile received')
+
             // Decode JWT and extract user profile
             const payload = jwt.token.decode(credentials.token).decoded.payload
+            const userId = payload.sub
             const displayName = getDisplayName(payload)
+            const logoutUrl = oidcConf.end_session_endpoint
+            const relationships =
+              payload.relationships?.map((relationship) => {
+                const [relationshipId, organisationId, organisationName] =
+                  relationship.split(':')
+
+                return {
+                  id: relationshipId,
+                  orgId: organisationId,
+                  orgName: organisationName?.trim(),
+                  isCurrent: payload.currentRelationshipId === relationshipId
+                }
+              }) ?? []
+            const currentRelationship =
+              relationships?.find(({ isCurrent }) => isCurrent) ?? null
+
+            server.app.defraId = {
+              currentRelationship,
+              logoutUrl,
+              relationships,
+              user: {
+                id: userId,
+                name: displayName
+              }
+            }
 
             credentials.profile = {
-              id: payload.sub,
+              id: userId,
               correlationId: payload.correlationId,
               sessionId: payload.sessionId,
               contactId: payload.contactId,
@@ -75,7 +103,7 @@ const defraId = {
               roles: payload.roles,
               idToken: params.id_token,
               tokenUrl: oidcConf.token_endpoint,
-              logoutUrl: oidcConf.end_session_endpoint
+              logoutUrl
             }
           }
         },

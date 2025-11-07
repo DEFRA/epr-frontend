@@ -6,41 +6,29 @@
       <div class="govuk-body" data-testid="app-page-body">
         <h1 class="govuk-heading-l">Sites</h1>
 
-        {% if isDefraIdEnabled %}
-          {% if authedUser and authedUser.displayName %}
-            <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
-              <div class="govuk-panel__body" style="color: #0b0c0c;">
-                Welcome, <strong>{{ authedUser.displayName }}</strong>
-              </div>
+        {% if isDefraIdEnabled and authedUser and authedUser.displayName %}
+          <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
+            <div class="govuk-panel__body" style="color: #0b0c0c;">
+              Welcome, <strong>{{ authedUser.displayName }}</strong>
             </div>
-            <p class="govuk-body">
-              <a href="/logout" class="govuk-link">Sign out</a>
-            </p>
-            <details class="govuk-details">
-              <summary class="govuk-details__summary">
-                <span class="govuk-details__summary-text">
-                  View your account details
-                </span>
-              </summary>
-              <div class="govuk-details__text">
-                <dl class="govuk-summary-list">
-                  {% for key, value in authedUser %}
-                    <div class="govuk-summary-list__row">
-                      <dt class="govuk-summary-list__key">{{ key }}</dt>
-                      <dd class="govuk-summary-list__value"><code>{{ value }}</code></dd>
-                    </div>
-                  {% endfor %}
-                </dl>
-              </div>
-            </details>
-          {% else %}
-            <p class="govuk-body">
-              Welcome, guest!
-            </p>
-            <p class="govuk-body">
-              You can <a id="login-link" href="/login" class="govuk-link">sign in</a> to access your account.
-            </p>
-          {% endif %}
+          </div>
+          <details class="govuk-details">
+            <summary class="govuk-details__summary">
+              <span class="govuk-details__summary-text">
+                View your account details
+              </span>
+            </summary>
+            <div class="govuk-details__text">
+              <dl class="govuk-summary-list">
+                {% for key, value in authedUser %}
+                  <div class="govuk-summary-list__row">
+                    <dt class="govuk-summary-list__key">{{ key }}</dt>
+                    <dd class="govuk-summary-list__value"><code>{{ value }}</code></dd>
+                  </div>
+                {% endfor %}
+              </dl>
+            </div>
+          </details>
         {% endif %}
 
         <h2 class="govuk-heading-m">Test</h2>
@@ -51,10 +39,16 @@
           <a href="/organisations/6507f1f77bcf86cd79943921" class="govuk-link">Plastic Exporters</a>
         </p>
         <p>
+          <a href="/organisations/6507f1f77bcf86cd79943931" class="govuk-link">Future Green Trust</a>
+        </p>
+        <p>
           <a href="/organisations/6507f1f77bcf86cd79943901/registrations/6507f1f77bcf86cd79943902" class="govuk-link">ACME ltd: Glass</a>
         </p>
         <p>
           <a href="/organisations/6507f1f77bcf86cd79943921/registrations/6507f1f77bcf86cd79943922" class="govuk-link">Plastic Exporters: Plastic</a>
+        </p>
+        <p>
+          <a href="/organisations/6507f1f77bcf86cd79943931/registrations/6507f1f77bcf86cd79943932" class="govuk-link">Future Green Trust: Steel</a>
         </p>
       </div>
     </div>
