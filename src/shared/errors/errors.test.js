@@ -1,7 +1,7 @@
 import { vi, describe, expect, it, beforeEach } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 
-import { catchAll } from '#server/common/helpers/errors.js'
+import { catchAll } from '#shared/errors/errors.js'
 
 describe(catchAll, () => {
   const mockErrorLogger = vi.fn()
