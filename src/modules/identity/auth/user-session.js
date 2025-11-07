@@ -65,7 +65,7 @@ export { removeUserSession, updateUserSession }
 
 /**
  * @import { Request } from '@hapi/hapi'
- * @import { UserSession } from '#server/common/helpers/auth/get-user-session.js'
+ * @import { UserSession } from '#modules/identity/auth/get-user-session.js'
  */
 
 /**

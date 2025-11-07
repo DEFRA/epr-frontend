@@ -4,7 +4,7 @@ import { config } from '#config/config.js'
 import {
   removeUserSession,
   updateUserSession
-} from '#server/common/helpers/auth/user-session.js'
+} from '#modules/identity/auth/user-session.js'
 import { getUserSession } from './get-user-session.js'
 import { refreshAccessToken } from './refresh-token.js'
 

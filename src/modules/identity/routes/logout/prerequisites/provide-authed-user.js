@@ -1,4 +1,4 @@
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { getUserSession } from '#modules/identity/auth/get-user-session.js'
 
 /**
  * Prerequisite to provide authenticated user to request.pre

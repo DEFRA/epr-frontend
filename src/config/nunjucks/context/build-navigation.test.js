@@ -3,7 +3,7 @@ import { languages } from '#modules/platform/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
+vi.mock(import('#modules/identity/auth/get-user-session.js'))
 
 /**
  * @param {Partial<Request>} [options]

@@ -1,4 +1,4 @@
-import { logoutController } from '#server/logout/controller.js'
+import { logoutController } from '#modules/identity/routes/logout/controller.js'
 
 /**
  * Logout plugin

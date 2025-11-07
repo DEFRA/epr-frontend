@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defraId } from '#server/common/helpers/auth/defra-id.js'
+import { defraId } from '#modules/identity/auth/defra-id.js'
 
 vi.mock(import('@hapi/bell'), () => ({
   default: {

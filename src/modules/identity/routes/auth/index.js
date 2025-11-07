@@ -1,4 +1,4 @@
-import { authCallbackController } from '#server/auth/controller.js'
+import { authCallbackController } from '#modules/identity/routes/auth/controller.js'
 
 /**
  * Auth plugin
