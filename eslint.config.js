@@ -151,6 +151,25 @@ export default [
     }
   },
 
+  // Module boundary enforcement
+  {
+    files: ['src/**/*.js'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/modules/*/!(index).js', '**/modules/*/**/*.js'],
+              message:
+                'import from module public API (#modules/{name}) instead of internal paths'
+            }
+          ]
+        }
+      ]
+    }
+  },
+
   // Apply prettier config last to override conflicting rules
   eslintPluginPrettierRecommended
 ]

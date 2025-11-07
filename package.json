@@ -8,8 +8,8 @@
   "imports": {
     "#client/*": "./src/client/*",
     "#config/*": "./src/config/*",
-    "#server/*": "./src/server/*",
     "#modules/*": "./src/modules/*",
+    "#server/*": "./src/server/*",
     "#shared/*": "./src/shared/*"
   },
   "engines": {
