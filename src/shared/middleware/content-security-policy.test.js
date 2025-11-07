@@ -1,6 +1,6 @@
 import { describe, beforeAll, afterAll, it, expect } from 'vitest'
 import { createServer } from '#server/index.js'
-import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
+import { cspFormAction } from '#shared/middleware/content-security-policy.js'
 
 describe(cspFormAction, () => {
   it.each([
