@@ -15,19 +15,19 @@ function findNamespacesWithPaths(translationDirs) {
 
   for (const baseDir of translationDirs) {
     const resolvedBaseDir = path.resolve(baseDir)
-    const entries = fs.readdirSync(resolvedBaseDir, { withFileTypes: true })
+    const entries = fs
+      .readdirSync(resolvedBaseDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
 
     for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const dirPath = path.join(resolvedBaseDir, entry.name)
-        const files = fs.readdirSync(dirPath)
+      const dirPath = path.join(resolvedBaseDir, entry.name)
+      const files = fs.readdirSync(dirPath)
 
-        if (files.some((file) => /(en|cy)\.json$/.test(file))) {
-          const ns = entry.name
-          // Store first occurrence (routes takes precedence over server)
-          if (!pathMap.has(ns)) {
-            pathMap.set(ns, baseDir)
-          }
+      if (files.some((file) => /(en|cy)\.json$/.test(file))) {
+        const ns = entry.name
+        // Store first occurrence (routes takes precedence over server)
+        if (!pathMap.has(ns)) {
+          pathMap.set(ns, baseDir)
         }
       }
     }
