@@ -8,7 +8,9 @@
   "imports": {
     "#client/*": "./src/client/*",
     "#config/*": "./src/config/*",
-    "#server/*": "./src/server/*"
+    "#server/*": "./src/server/*",
+    "#modules/*": "./src/modules/*",
+    "#shared/infrastructure/*": "./src/shared/infrastructure/*"
   },
   "engines": {
     "node": "24.10.0"
