@@ -12,11 +12,11 @@ import { userAgentProtection } from '#shared/middleware/useragent-protection.js'
 import { setupProxy } from '#shared/security/proxy/setup-proxy.js'
 import { secureContext } from '#shared/security/secure-context/index.js'
 import { pulse } from '#shared/server/pulse.js'
+import { initI18n } from '#modules/localisation/i18n.js'
+import { i18nPlugin } from '#modules/localisation/plugins/i18next.js'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import path from 'path'
-import { initI18n } from './common/helpers/i18n/i18n.js'
-import { i18nPlugin } from './common/helpers/i18next.js'
 import { router } from './router.js'
 
 export async function createServer() {

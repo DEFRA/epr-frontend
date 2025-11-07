@@ -1,5 +1,5 @@
 import { statusCodes } from '#modules/platform/constants/status-codes.js'
-import { getLocaliseUrl } from '#server/common/helpers/i18next.js'
+import { getLocaliseUrl } from '#modules/localisation/plugins/i18next.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'

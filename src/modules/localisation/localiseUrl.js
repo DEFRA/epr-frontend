@@ -1,5 +1,8 @@
 import { config } from '#config/config.js'
-import { languages, pathPrefix } from '#modules/platform/constants/languages.js'
+import {
+  languages,
+  pathPrefix
+} from '#modules/localisation/constants/languages.js'
 
 /**
  * Creates a URL localization function for a specific language.

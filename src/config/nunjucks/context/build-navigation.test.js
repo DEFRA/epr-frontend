@@ -1,6 +1,6 @@
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
-import { languages } from '#modules/platform/constants/languages.js'
-import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
+import { languages } from '#modules/localisation/constants/languages.js'
+import { localiseUrl } from '#modules/localisation/localiseUrl.js'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#modules/identity/auth/get-user-session.js'))
