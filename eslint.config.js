@@ -38,6 +38,7 @@ export default [
     },
     rules: {
       'no-console': 'error',
+      'no-shadow': 'error',
       'object-shorthand': ['error', 'properties'],
       'promise/prefer-await-to-then': ['error', { strict: true }],
 

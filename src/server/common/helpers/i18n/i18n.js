@@ -54,14 +54,14 @@ export async function initI18n() {
       ns,
       defaultNS: 'common',
       backend: {
-        loadPath: (lng, ns) => {
-          const dir = pathMap.get(ns)
+        loadPath: (lng, namespace) => {
+          const dir = pathMap.get(namespace)
           if (!dir) {
             throw new Error(
-              `Translation namespace "${ns}" not found. Available namespaces: ${Array.from(pathMap.keys()).join(', ')}`
+              `Translation namespace "${namespace}" not found. Available namespaces: ${Array.from(pathMap.keys()).join(', ')}`
             )
           }
-          return path.resolve(`${dir}/${ns}/${lng}.json`)
+          return path.resolve(`${dir}/${namespace}/${lng}.json`)
         }
       },
       detection: {
