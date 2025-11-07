@@ -1,7 +1,7 @@
 import process from 'node:process'
 
 import { createLogger } from '#server/common/helpers/logging/logger.js'
-import { startServer } from '#server/common/helpers/start-server.js'
+import { startServer } from '#shared/server/start-server.js'
 
 await startServer()
 

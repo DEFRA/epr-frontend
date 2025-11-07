@@ -1,7 +1,7 @@
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '#config/config.js'
-import { metricsCounter } from '#server/common/helpers/metrics.js'
+import { metricsCounter } from '#shared/server/metrics.js'
 
 const mockPutMetric = vi.fn()
 const mockFlush = vi.fn()
