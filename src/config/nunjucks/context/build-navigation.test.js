@@ -13,6 +13,7 @@ function mockRequest(options) {
     t: vi.fn((key) => {
       const translations = {
         'common:navigation:yourSites': 'Your sites',
+        'common:navigation:switchOrganisation': 'Switch organisation',
         'common:navigation:signOut': 'Sign out'
       }
       return translations[key] || key
@@ -79,11 +80,43 @@ describe('#buildNavigation', () => {
     })
   })
 
+  describe('switch organisation', () => {
+    it('should include switch organisation link when user is authenticated', () => {
+      const request = mockRequest({ path: '/' })
+
+      const [, switchOrg] = buildNavigation(request, users.authed)
+
+      expect(switchOrg).toStrictEqual({
+        href: '/auth/organisation',
+        text: 'Switch organisation'
+      })
+    })
+
+    it('should not include switch organisation link when user is not authenticated', () => {
+      const request = mockRequest({ path: '/' })
+
+      const [, switchOrg] = buildNavigation(request, users.unauthed)
+
+      expect(switchOrg).toBeUndefined()
+    })
+
+    it('should localise url correctly', () => {
+      const request = mockRequest({
+        path: '/cy',
+        localiseUrl: localiseUrl(languages.WELSH)
+      })
+
+      const [, switchOrg] = buildNavigation(request, users.authed)
+
+      expect(switchOrg.href).toBe('/cy/auth/organisation')
+    })
+  })
+
   describe('sign out', () => {
     it('should include sign out link when user is authenticated', () => {
       const request = mockRequest({ path: '/' })
 
-      const [, signout] = buildNavigation(request, users.authed)
+      const [, , signout] = buildNavigation(request, users.authed)
 
       expect(signout).toStrictEqual({
         href: '/logout',
@@ -94,7 +127,7 @@ describe('#buildNavigation', () => {
     it('should not include sign out link when user is not authenticated', () => {
       const request = mockRequest({ path: '/' })
 
-      const [, signout] = buildNavigation(request, users.unauthed)
+      const [, , signout] = buildNavigation(request, users.unauthed)
 
       expect(signout).toBeUndefined()
     })
@@ -105,7 +138,7 @@ describe('#buildNavigation', () => {
         localiseUrl: localiseUrl(languages.WELSH)
       })
 
-      const [, signout] = buildNavigation(request, users.authed)
+      const [, , signout] = buildNavigation(request, users.authed)
 
       expect(signout.href).toBe('/cy/logout')
     })

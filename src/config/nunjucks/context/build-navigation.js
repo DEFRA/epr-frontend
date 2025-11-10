@@ -13,6 +13,18 @@ const yourSites = ({ localiseUrl, path, t: localise }, authedUser) => {
   return []
 }
 
+const switchOrganisation = ({ localiseUrl, t: localise }, authedUser) => {
+  if (!isEmpty(authedUser)) {
+    return [
+      {
+        href: localiseUrl('/auth/organisation'),
+        text: localise('common:navigation:switchOrganisation')
+      }
+    ]
+  }
+  return []
+}
+
 const logout = ({ localiseUrl, t: localise }, authedUser) => {
   if (!isEmpty(authedUser)) {
     return [
@@ -33,7 +45,11 @@ export function buildNavigation(request, authedUser) {
     return []
   }
 
-  return [...yourSites(request, authedUser), ...logout(request, authedUser)]
+  return [
+    ...yourSites(request, authedUser),
+    ...switchOrganisation(request, authedUser),
+    ...logout(request, authedUser)
+  ]
 }
 
 /**
