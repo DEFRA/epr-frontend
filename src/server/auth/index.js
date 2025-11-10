@@ -1,4 +1,4 @@
-import { authCallbackController } from '#server/auth/controller.js'
+import { authCallbackController } from '#server/auth/callback/controller.js'
 
 /**
  * Auth plugin
@@ -9,9 +9,9 @@ const auth = {
     name: 'auth',
     register: (server) => {
       server.route({
-        method: ['GET'],
-        path: '/auth/callback',
-        ...authCallbackController
+        ...authCallbackController,
+        method: 'GET',
+        path: '/auth/callback'
       })
     }
   }
