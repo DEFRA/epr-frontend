@@ -1,6 +1,5 @@
+import { controller } from '#server/auth/callback/controller.js'
 import { describe, expect, test, vi } from 'vitest'
-
-import { authCallbackController } from '#server/auth/callback/controller.js'
 
 vi.mock(import('node:crypto'), () => ({
   randomUUID: vi.fn(() => 'mock-uuid-1234')
@@ -51,7 +50,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await authCallbackController.handler(mockRequest, mockH)
+      const result = await controller.handler(mockRequest, mockH)
 
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledExactlyOnceWith(
         'mock-uuid-1234',
@@ -113,7 +112,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await authCallbackController.handler(mockRequest, mockH)
+      const result = await controller.handler(mockRequest, mockH)
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
       expect(result).toBe('redirect-response')
@@ -148,7 +147,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await authCallbackController.handler(mockRequest, mockH)
+      const result = await controller.handler(mockRequest, mockH)
 
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()

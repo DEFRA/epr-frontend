@@ -72,6 +72,10 @@ const defraId = {
 
       // Configure bell authentication strategy
       server.auth.strategy('defra-id', 'bell', {
+        clientId,
+        clientSecret,
+        cookie: 'bell-defra-id',
+        isSecure: config.get('session.cookie.secure'),
         location: (request) => {
           // Store referrer for redirect after login
           if (request.info.referrer) {
@@ -80,6 +84,7 @@ const defraId = {
 
           return authCallbackUrl
         },
+        password: config.get('session.cookie.password'),
         provider: {
           name: 'defra-id',
           protocol: 'oauth2',
@@ -122,14 +127,13 @@ const defraId = {
             }
           }
         },
-        password: config.get('session.cookie.password'),
-        clientId,
-        clientSecret,
-        cookie: 'bell-defra-id',
-        isSecure: config.get('session.cookie.secure'),
-        providerParams: {
-          ...authParams,
-          serviceId
+        providerParams: function (request) {
+          return {
+            ...authParams,
+            // TODO store paths/routes as constants
+            forceReselection: request.path === '/auth/organisation',
+            serviceId
+          }
         }
       })
     }
