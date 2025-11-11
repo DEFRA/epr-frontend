@@ -1,9 +1,8 @@
+import { config } from '#config/config.js'
 import bell from '@hapi/bell'
 import jwt from '@hapi/jwt'
 import fetch from 'node-fetch'
-
-import { config } from '#config/config.js'
-import { getDisplayName } from './display.js'
+import { getDisplayName } from '../helpers/display.js'
 
 /**
  * @typedef {object} BellCredentials

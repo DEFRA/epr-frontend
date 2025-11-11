@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { getUserSession } from './get-user-session.js'
 
 describe('#getUserSession', () => {
   describe('when session exists', () => {

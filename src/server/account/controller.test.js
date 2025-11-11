@@ -1,12 +1,12 @@
 import { config } from '#config/config.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import * as getUserSessionModule from '#server/common/helpers/auth/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
-vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
+vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 describe('#accountController', () => {
   describe('auth disabled', () => {

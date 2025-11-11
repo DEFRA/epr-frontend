@@ -1,6 +1,6 @@
 import { addMinutes } from 'date-fns'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { sessionCookie } from '#server/common/helpers/auth/session-cookie.js'
+import { sessionCookie } from './session-cookie.js'
 
 vi.mock(import('@hapi/cookie'), () => ({
   default: {
@@ -25,15 +25,15 @@ vi.mock(import('#config/config.js'), () => ({
   }
 }))
 
-vi.mock(import('#server/common/helpers/auth/get-user-session.js'), () => ({
+vi.mock(import('#server/auth/helpers/get-user-session.js'), () => ({
   getUserSession: vi.fn()
 }))
 
-vi.mock(import('#server/common/helpers/auth/refresh-token.js'), () => ({
+vi.mock(import('#server/auth/helpers/refresh-token.js'), () => ({
   refreshAccessToken: vi.fn()
 }))
 
-vi.mock(import('#server/common/helpers/auth/user-session.js'), () => ({
+vi.mock(import('#server/auth/helpers/user-session.js'), () => ({
   removeUserSession: vi.fn(),
   updateUserSession: vi.fn()
 }))
@@ -61,17 +61,17 @@ describe('#sessionCookie', () => {
     mockConfig = config
 
     const { getUserSession } = await import(
-      '#server/common/helpers/auth/get-user-session.js'
+      '#server/auth/helpers/get-user-session.js'
     )
     mockGetUserSession = getUserSession
 
     const { refreshAccessToken } = await import(
-      '#server/common/helpers/auth/refresh-token.js'
+      '#server/auth/helpers/refresh-token.js'
     )
     mockRefreshAccessToken = refreshAccessToken
 
     const { removeUserSession, updateUserSession } = await import(
-      '#server/common/helpers/auth/user-session.js'
+      '#server/auth/helpers/user-session.js'
     )
     mockRemoveUserSession = removeUserSession
     mockUpdateUserSession = updateUserSession

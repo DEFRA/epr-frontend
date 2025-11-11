@@ -1,10 +1,10 @@
+import { dropUserSession } from '#server/auth/helpers/drop-user-session.js'
 import { languages } from '#server/common/constants/languages.js'
-import { dropUserSession } from '#server/common/helpers/auth/drop-user-session.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { logoutController } from '#server/logout/controller.js'
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock(import('#server/common/helpers/auth/drop-user-session.js'))
+vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
 describe('#logoutController', () => {
   describe('when user is not authenticated', () => {

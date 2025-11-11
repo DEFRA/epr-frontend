@@ -1,6 +1,6 @@
 import { config, isDefraIdEnabled } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'

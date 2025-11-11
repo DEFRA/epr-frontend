@@ -1,7 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-
-import { dropUserSession } from '#server/common/helpers/auth/drop-user-session.js'
 import { createServer } from '#server/index.js'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { dropUserSession } from './drop-user-session.js'
 
 describe('#dropUserSession', () => {
   /** @type {Server} */
