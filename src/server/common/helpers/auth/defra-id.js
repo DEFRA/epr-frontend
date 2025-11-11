@@ -77,9 +77,14 @@ const defraId = {
         cookie: 'bell-defra-id',
         isSecure: config.get('session.cookie.secure'),
         location: (request) => {
-          // Store referrer for redirect after login
           if (request.info.referrer) {
-            request.yar.flash('referrer', request.info.referrer)
+            const { hash, pathname, search } = new URL(request.info.referrer)
+
+            // TODO store paths/routes as constants
+            if (!pathname.startsWith('/auth/callback')) {
+              const referrer = `${pathname}${search}${hash}`
+              request.yar.flash('referrer', referrer)
+            }
           }
 
           return authCallbackUrl
