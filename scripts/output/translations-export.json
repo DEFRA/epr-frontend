@@ -1,0 +1,330 @@
+[
+  {
+    "namespace": "registration",
+    "key": "packagingHeading",
+    "en": "Packaging waste records",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "registration",
+    "key": "submitSummaryLog",
+    "en": "Submit summary log",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "pageTitle",
+    "en": "Summary log: upload",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "heading",
+    "en": "Upload your summary log",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "siteName",
+    "en": "Test site",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "checkStepsIntro1",
+    "en": "Check you’ve completed the following steps before uploading your summary log.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "checkStepsIntro2",
+    "en": "This will ensure that your waste balance is correct and you’re meeting regulatory requirements.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionWhyNeeded",
+    "en": "Why this is needed",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection1Heading",
+    "en": "You’ve completed section 1 for each load",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection1Text",
+    "en": "A load will only be added to your waste balance when you’ve provided all the information in this section.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection2Heading",
+    "en": "You’ve included all known information in sections 2, 3 and 4",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection2Intro",
+    "en": "By completing these sections you’re ensuring that:",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection2Bullet1",
+    "en": "you’re meeting your regulatory requirements",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection2Bullet2",
+    "en": "reports you submit to your regulator will be accurate",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection3Heading",
+    "en": "You’ve adjusted any out-of-date information",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection3Paragraph1",
+    "en": "You should always submit the most up-to-date information you have, to ensure that your waste balance is accurate.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection3Paragraph2",
+    "en": "Any adjustments for this reporting period will be reflected straight away in your waste balance.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection3Paragraph3",
+    "en": "Any adjustments made to loads from previous reporting periods will need to be confirmed by an approved person at your company.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection4Heading",
+    "en": "You’ve included any waste sent on in section 5, if applicable",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "accordionSection4Text",
+    "en": "You only need to complete this section if packaging waste has been sent on. These loads will be removed from your waste balance when all the information is provided.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "insetText",
+    "en": "You can submit an updated summary log whenever you need to add or adjust your waste records.",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "fileUploadLabel",
+    "en": "Upload XLSX file",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "continueButton",
+    "en": "Continue",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "errorPageTitle",
+    "en": "Summary log: upload error",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "errorHeading",
+    "en": "Summary log upload error",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload",
+    "key": "errorGeneric",
+    "en": "Failed to initialize upload",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "pageTitle",
+    "en": "Summary log: upload progress",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "processingHeading",
+    "en": "Your file is being uploaded",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "processingMessage",
+    "en": "Your summary log is being uploaded and automatically validated",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "processingKeepOpen",
+    "en": "Keep this page open and do not refresh it",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "validatedHeading",
+    "en": "Validation complete",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "validatedMessage",
+    "en": "Your file is ready to submit",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "submittedHeading",
+    "en": "Submission complete",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "submittedMessage",
+    "en": "Your waste records have been updated",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "invalidHeading",
+    "en": "Validation failed",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "invalidMessage",
+    "en": "Please check your file and try again",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "invalidFailureReasonExample",
+    "en": "The waste registration number in your summary log does not match your registration",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "rejectedDefaultReason",
+    "en": "File rejected by virus scanner",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "errorHeading",
+    "en": "Error checking status",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "errorMessage",
+    "en": "Unable to check upload status",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  },
+  {
+    "namespace": "summary-log-upload-progress",
+    "key": "loadingKeepOpen",
+    "en": "Keep this page open",
+    "cy": "",
+    "missingInCy": true,
+    "missingInEn": false
+  }
+]

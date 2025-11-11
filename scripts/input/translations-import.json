@@ -1,0 +1,8 @@
+[
+  {
+    "namespace": "summary-log-upload",
+    "key": "pageTitle",
+    "cy": "Crynodeb cofnod: uwchlwytho"
+  },
+  { "namespace": "summary-log-upload", "key": "continueButton", "cy": "Parhau" }
+]

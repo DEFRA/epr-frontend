@@ -42,7 +42,9 @@
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
     "check:locales": "node scripts/check-locales.js",
     "check:translations": "i18n-check --locales 'src/server/**' -s en && i18n-check --locales 'src/server/**' -s cy",
-    "check:i18n": "npm run check:locales && npm run check:translations"
+    "check:i18n": "npm run check:locales && npm run check:translations",
+    "export:translations": "node scripts/export-translations.js",
+    "import:translations": "node scripts/import-translations.js"
   },
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
