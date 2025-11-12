@@ -25,7 +25,10 @@ function mockRequest(options) {
 
 describe('#buildNavigation', () => {
   const users = {
-    authed: { displayName: 'Test User' },
+    authed: {
+      displayName: 'Test User',
+      relationships: ['0:123:ABCs:0:Employee:0', '1:456:DEFs:0:Employee:0']
+    },
     unauthed: {}
   }
 
@@ -81,7 +84,7 @@ describe('#buildNavigation', () => {
   })
 
   describe('switch organisation', () => {
-    it('should include switch organisation link when user is authenticated', () => {
+    it('should include switch organisation link when user is authenticated and has > 1 relationship', () => {
       const request = mockRequest({ path: '/' })
 
       const [, switchOrg] = buildNavigation(request, users.authed)
@@ -95,9 +98,30 @@ describe('#buildNavigation', () => {
     it('should not include switch organisation link when user is not authenticated', () => {
       const request = mockRequest({ path: '/' })
 
-      const [, switchOrg] = buildNavigation(request, users.unauthed)
+      const navigation = buildNavigation(request, users.unauthed)
 
-      expect(switchOrg).toBeUndefined()
+      expect(navigation).not.toStrictEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: '/auth/organisation' })
+        ])
+      )
+    })
+
+    it('should not include switch organisation link when user has <= 1 relationships', () => {
+      const request = mockRequest({ path: '/' })
+
+      const soleTrader = {
+        displayName: 'Sole Trader',
+        relationships: ['0:123:ABCs:0:Employee:0']
+      }
+
+      const navigation = buildNavigation(request, soleTrader)
+
+      expect(navigation).not.toStrictEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: '/auth/organisation' })
+        ])
+      )
     })
 
     it('should localise url correctly', () => {

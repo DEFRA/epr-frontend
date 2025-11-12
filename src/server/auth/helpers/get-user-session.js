@@ -17,11 +17,12 @@ export { getUserSession }
 
 /**
  * @typedef {object} UserSession
- * @property {string} [displayName]
- * @property {string} [email]
- * @property {string} [userId]
- * @property {boolean} [isAuthenticated]
- * @property {string} [token]
- * @property {string} [refreshToken]
- * @property {string} [expiresAt]
+ * @property {boolean} isAuthenticated
+ * @property {string} displayName
+ * @property {string} email
+ * @property {string} expiresAt
+ * @property {string} refreshToken
+ * @property {string[]} relationships
+ * @property {string} token
+ * @property {string} userId
  */

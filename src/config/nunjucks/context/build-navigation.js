@@ -1,5 +1,24 @@
 import { isEmpty } from 'lodash-es'
 
+/**
+ * @import {UserSession} from "#server/auth/helpers/get-user-session.js"
+ */
+
+/**
+ * I18nRequest
+ * @typedef {{ localiseUrl: (url: string) => string; t: (key: string) => string; }} I18nRequest
+ */
+
+/**
+ * Navigation item
+ * @typedef {{active?: boolean, href: string, text: string}} NavigationItem
+ */
+
+/**
+ * @param {I18nRequest | null} request
+ * @param {UserSession | null} authedUser
+ * @returns {NavigationItem[]}
+ */
 const yourSites = ({ localiseUrl, path, t: localise }, authedUser) => {
   if (!isEmpty(authedUser)) {
     return [
@@ -13,8 +32,13 @@ const yourSites = ({ localiseUrl, path, t: localise }, authedUser) => {
   return []
 }
 
-const switchOrganisation = ({ localiseUrl, t: localise }, authedUser) => {
-  if (!isEmpty(authedUser)) {
+/**
+ * @param {I18nRequest | null} request
+ * @param {UserSession | null} userSession
+ * @returns {NavigationItem[]}
+ */
+const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
+  if (userSession?.relationships?.length > 1) {
     return [
       {
         href: localiseUrl('/auth/organisation'),
@@ -25,6 +49,11 @@ const switchOrganisation = ({ localiseUrl, t: localise }, authedUser) => {
   return []
 }
 
+/**
+ * @param {I18nRequest | null} request
+ * @param {UserSession | null} authedUser
+ * @returns {NavigationItem[]}
+ */
 const logout = ({ localiseUrl, t: localise }, authedUser) => {
   if (!isEmpty(authedUser)) {
     return [
