@@ -3,8 +3,11 @@
  */
 
 /**
- * I18nRequest
- * @typedef {{ localiseUrl: (url: string) => string; t: (key: string) => string; }} I18nRequest
+ * I18nRequest - Request object with i18n helpers
+ * @typedef {Partial<Request> & {
+ *  localiseUrl: (url: string) => string;
+ *  t: (key: string) => string
+ * }} I18nRequest
  */
 
 /**
@@ -13,30 +16,26 @@
  */
 
 /**
- * @param {I18nRequest | null} request
- * @param {UserSession | null} userSession
+ * @param {I18nRequest} request
  * @returns {NavigationItem[]}
  */
-const yourSites = ({ localiseUrl, path, t: localise }, userSession) => {
-  if (userSession) {
-    return [
-      {
-        active: path === '/account',
-        href: localiseUrl('/account'),
-        text: localise('common:navigation:yourSites')
-      }
-    ]
-  }
-  return []
+const yourSites = ({ localiseUrl, path, t: localise }) => {
+  return [
+    {
+      active: path === '/account',
+      href: localiseUrl('/account'),
+      text: localise('common:navigation:yourSites')
+    }
+  ]
 }
 
 /**
- * @param {I18nRequest | null} request
- * @param {UserSession | null} userSession
+ * @param {I18nRequest} request
+ * @param {UserSession} userSession
  * @returns {NavigationItem[]}
  */
 const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
-  if (userSession?.relationships?.length > 1) {
+  if (userSession.relationships?.length > 1) {
     return [
       {
         href: localiseUrl('/auth/organisation'),
@@ -48,34 +47,31 @@ const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
 }
 
 /**
- * @param {I18nRequest | null} request
- * @param {UserSession | null} userSession
+ * @param {I18nRequest} request
  * @returns {NavigationItem[]}
  */
-const logout = ({ localiseUrl, t: localise }, userSession) => {
-  if (userSession) {
-    return [
-      {
-        href: localiseUrl('/logout'),
-        text: localise('common:navigation:signOut')
-      }
-    ]
-  }
-  return []
+const logout = ({ localiseUrl, t: localise }) => {
+  return [
+    {
+      href: localiseUrl('/logout'),
+      text: localise('common:navigation:signOut')
+    }
+  ]
 }
 
 /**
- * @param {Partial<Request> | null} request
+ * @param {I18nRequest | null} request
+ * @param {UserSession | null} userSession
  */
-export function buildNavigation(request, authedUser) {
-  if (!request) {
+export function buildNavigation(request, userSession) {
+  if (!request || !userSession) {
     return []
   }
 
   return [
-    ...yourSites(request, authedUser),
-    ...switchOrganisation(request, authedUser),
-    ...logout(request, authedUser)
+    ...yourSites(request),
+    ...switchOrganisation(request, userSession),
+    ...logout(request)
   ]
 }
 
