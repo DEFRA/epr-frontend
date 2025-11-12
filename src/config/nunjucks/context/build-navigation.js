@@ -1,5 +1,3 @@
-import { isEmpty } from 'lodash-es'
-
 /**
  * @import {UserSession} from "#server/auth/helpers/get-user-session.js"
  */
@@ -16,11 +14,11 @@ import { isEmpty } from 'lodash-es'
 
 /**
  * @param {I18nRequest | null} request
- * @param {UserSession | null} authedUser
+ * @param {UserSession | null} userSession
  * @returns {NavigationItem[]}
  */
-const yourSites = ({ localiseUrl, path, t: localise }, authedUser) => {
-  if (!isEmpty(authedUser)) {
+const yourSites = ({ localiseUrl, path, t: localise }, userSession) => {
+  if (userSession) {
     return [
       {
         active: path === '/account',
@@ -51,11 +49,11 @@ const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
 
 /**
  * @param {I18nRequest | null} request
- * @param {UserSession | null} authedUser
+ * @param {UserSession | null} userSession
  * @returns {NavigationItem[]}
  */
-const logout = ({ localiseUrl, t: localise }, authedUser) => {
-  if (!isEmpty(authedUser)) {
+const logout = ({ localiseUrl, t: localise }, userSession) => {
+  if (userSession) {
     return [
       {
         href: localiseUrl('/logout'),

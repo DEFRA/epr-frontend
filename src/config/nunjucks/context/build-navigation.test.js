@@ -29,7 +29,7 @@ describe('#buildNavigation', () => {
       displayName: 'Test User',
       relationships: ['0:123:ABCs:0:Employee:0', '1:456:DEFs:0:Employee:0']
     },
-    unauthed: {}
+    unauthed: null
   }
 
   it('should show that navigation is now dependant on the request', () => {

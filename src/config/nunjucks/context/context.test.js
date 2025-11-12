@@ -161,7 +161,17 @@ describe('#context', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation: [],
+        navigation: [
+          {
+            active: false,
+            href: '/account',
+            text: 'Your sites'
+          },
+          {
+            href: '/logout',
+            text: 'Sign out'
+          }
+        ],
         serviceName,
         serviceUrl: '/'
       })
@@ -239,7 +249,17 @@ describe('#context cache', () => {
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
-        navigation: [],
+        navigation: [
+          {
+            active: false,
+            href: '/account',
+            text: 'Your sites'
+          },
+          {
+            href: '/logout',
+            text: 'Sign out'
+          }
+        ],
         serviceName,
         serviceUrl: '/'
       })
