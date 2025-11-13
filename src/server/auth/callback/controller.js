@@ -1,3 +1,4 @@
+import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { addSeconds } from 'date-fns'
 import { randomUUID } from 'node:crypto'
 
@@ -7,7 +8,7 @@ import { randomUUID } from 'node:crypto'
  * Creates user session and sets session cookie
  * @satisfies {Partial<ServerRoute>}
  */
-const authCallbackController = {
+const controller = {
   options: {
     auth: 'defra-id'
   },
@@ -35,11 +36,12 @@ const authCallbackController = {
 
     const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
 
-    return h.redirect(redirect)
+    const safeRedirect = getSafeRedirect(redirect)
+    return h.redirect(safeRedirect)
   }
 }
 
-export { authCallbackController }
+export { controller }
 
 /**
  * @import { ServerRoute } from '@hapi/hapi'

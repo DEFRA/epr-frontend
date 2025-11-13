@@ -3,7 +3,7 @@ import { languages } from '#server/common/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
+vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 /**
  * @param {Partial<Request>} [options]
@@ -13,6 +13,7 @@ function mockRequest(options) {
     t: vi.fn((key) => {
       const translations = {
         'common:navigation:yourSites': 'Your sites',
+        'common:navigation:switchOrganisation': 'Switch organisation',
         'common:navigation:signOut': 'Sign out'
       }
       return translations[key] || key
@@ -24,8 +25,11 @@ function mockRequest(options) {
 
 describe('#buildNavigation', () => {
   const users = {
-    authed: { displayName: 'Test User' },
-    unauthed: {}
+    authed: {
+      displayName: 'Test User',
+      relationships: ['0:123:ABCs:0:Employee:0', '1:456:DEFs:0:Employee:0']
+    },
+    unauthed: null
   }
 
   it('should show that navigation is now dependant on the request', () => {
@@ -79,11 +83,64 @@ describe('#buildNavigation', () => {
     })
   })
 
+  describe('switch organisation', () => {
+    it('should include switch organisation link when user is authenticated and has > 1 relationship', () => {
+      const request = mockRequest({ path: '/' })
+
+      const [, switchOrg] = buildNavigation(request, users.authed)
+
+      expect(switchOrg).toStrictEqual({
+        href: '/auth/organisation',
+        text: 'Switch organisation'
+      })
+    })
+
+    it('should not include switch organisation link when user is not authenticated', () => {
+      const request = mockRequest({ path: '/' })
+
+      const navigation = buildNavigation(request, users.unauthed)
+
+      expect(navigation).not.toStrictEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: '/auth/organisation' })
+        ])
+      )
+    })
+
+    it('should not include switch organisation link when user has <= 1 relationships', () => {
+      const request = mockRequest({ path: '/' })
+
+      const soleTrader = {
+        displayName: 'Sole Trader',
+        relationships: ['0:123:ABCs:0:Employee:0']
+      }
+
+      const navigation = buildNavigation(request, soleTrader)
+
+      expect(navigation).not.toStrictEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ href: '/auth/organisation' })
+        ])
+      )
+    })
+
+    it('should localise url correctly', () => {
+      const request = mockRequest({
+        path: '/cy',
+        localiseUrl: localiseUrl(languages.WELSH)
+      })
+
+      const [, switchOrg] = buildNavigation(request, users.authed)
+
+      expect(switchOrg.href).toBe('/cy/auth/organisation')
+    })
+  })
+
   describe('sign out', () => {
     it('should include sign out link when user is authenticated', () => {
       const request = mockRequest({ path: '/' })
 
-      const [, signout] = buildNavigation(request, users.authed)
+      const [, , signout] = buildNavigation(request, users.authed)
 
       expect(signout).toStrictEqual({
         href: '/logout',
@@ -94,7 +151,7 @@ describe('#buildNavigation', () => {
     it('should not include sign out link when user is not authenticated', () => {
       const request = mockRequest({ path: '/' })
 
-      const [, signout] = buildNavigation(request, users.unauthed)
+      const [, , signout] = buildNavigation(request, users.unauthed)
 
       expect(signout).toBeUndefined()
     })
@@ -105,7 +162,7 @@ describe('#buildNavigation', () => {
         localiseUrl: localiseUrl(languages.WELSH)
       })
 
-      const [, signout] = buildNavigation(request, users.authed)
+      const [, , signout] = buildNavigation(request, users.authed)
 
       expect(signout.href).toBe('/cy/logout')
     })

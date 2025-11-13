@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
 import { isEmpty } from 'lodash-es'
-import { removeUserSession } from '../common/helpers/auth/user-session.js'
+import { removeUserSession } from '#server/auth/helpers/user-session.js'
 
 /**
  * Logout controller

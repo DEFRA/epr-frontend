@@ -1,24 +1,47 @@
 import { isEmpty } from 'lodash-es'
 
-const yourSites = ({ localiseUrl, path, t: localise }, authedUser) => {
-  if (!isEmpty(authedUser)) {
-    return [
-      {
-        active: path === '/account',
-        href: localiseUrl('/account'),
-        text: localise('common:navigation:yourSites')
-      }
-    ]
-  }
-  return []
+/**
+ * @import {UserSession} from "#server/auth/helpers/get-user-session.js"
+ */
+
+/**
+ * I18nRequest - Request object with i18n helpers
+ * @typedef {Partial<Request> & {
+ *  localiseUrl: (url: string) => string;
+ *  t: (key: string) => string
+ * }} I18nRequest
+ */
+
+/**
+ * Navigation item
+ * @typedef {{active?: boolean, href: string, text: string}} NavigationItem
+ */
+
+/**
+ * @param {I18nRequest} request
+ * @returns {NavigationItem[]}
+ */
+const yourSites = ({ localiseUrl, path, t: localise }) => {
+  return [
+    {
+      active: path === '/account',
+      href: localiseUrl('/account'),
+      text: localise('common:navigation:yourSites')
+    }
+  ]
 }
 
-const logout = ({ localiseUrl, t: localise }, authedUser) => {
-  if (!isEmpty(authedUser)) {
+/**
+ * @param {I18nRequest} request
+ * @param {UserSession} userSession
+ * @returns {NavigationItem[]}
+ */
+const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
+  if (userSession.relationships?.length > 1) {
     return [
       {
-        href: localiseUrl('/logout'),
-        text: localise('common:navigation:signOut')
+        href: localiseUrl('/auth/organisation'),
+        text: localise('common:navigation:switchOrganisation')
       }
     ]
   }
@@ -26,14 +49,32 @@ const logout = ({ localiseUrl, t: localise }, authedUser) => {
 }
 
 /**
- * @param {Partial<Request> | null} request
+ * @param {I18nRequest} request
+ * @returns {NavigationItem[]}
  */
-export function buildNavigation(request, authedUser) {
-  if (!request) {
+const logout = ({ localiseUrl, t: localise }) => {
+  return [
+    {
+      href: localiseUrl('/logout'),
+      text: localise('common:navigation:signOut')
+    }
+  ]
+}
+
+/**
+ * @param {I18nRequest | null} request
+ * @param {Partial<UserSession>} userSession
+ */
+export function buildNavigation(request, userSession) {
+  if (!request || isEmpty(userSession)) {
     return []
   }
 
-  return [...yourSites(request, authedUser), ...logout(request, authedUser)]
+  return [
+    ...yourSites(request),
+    ...switchOrganisation(request, userSession),
+    ...logout(request)
+  ]
 }
 
 /**

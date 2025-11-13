@@ -1,15 +1,14 @@
-import jwt from '@hapi/jwt'
-import { describe, expect, test, vi } from 'vitest'
-
-import { dropUserSession } from '#server/common/helpers/auth/drop-user-session.js'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 import {
   removeUserSession,
   updateUserSession
-} from '#server/common/helpers/auth/user-session.js'
+} from '#server/auth/helpers/user-session.js'
+import jwt from '@hapi/jwt'
+import { describe, expect, test, vi } from 'vitest'
+import { dropUserSession } from './drop-user-session.js'
+import { getUserSession } from './get-user-session.js'
 
-vi.mock(import('#server/common/helpers/auth/drop-user-session.js'))
-vi.mock(import('#server/common/helpers/auth/get-user-session.js'))
+vi.mock(import('#server/auth/helpers/drop-user-session.js'))
+vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('@hapi/jwt'))
 
 describe('#removeUserSession', () => {

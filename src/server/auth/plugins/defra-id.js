@@ -1,9 +1,8 @@
+import { config } from '#config/config.js'
 import bell from '@hapi/bell'
 import jwt from '@hapi/jwt'
 import fetch from 'node-fetch'
-
-import { config } from '#config/config.js'
-import { getDisplayName } from './display.js'
+import { getDisplayName } from '../helpers/display.js'
 
 /**
  * @typedef {object} BellCredentials
@@ -72,14 +71,24 @@ const defraId = {
 
       // Configure bell authentication strategy
       server.auth.strategy('defra-id', 'bell', {
+        clientId,
+        clientSecret,
+        cookie: 'bell-defra-id',
+        isSecure: config.get('session.cookie.secure'),
         location: (request) => {
-          // Store referrer for redirect after login
           if (request.info.referrer) {
-            request.yar.flash('referrer', request.info.referrer)
+            const { hash, pathname, search } = new URL(request.info.referrer)
+
+            // TODO store paths/routes as constants
+            if (!pathname.startsWith('/auth/callback')) {
+              const referrer = `${pathname}${search}${hash}`
+              request.yar.flash('referrer', referrer)
+            }
           }
 
           return authCallbackUrl
         },
+        password: config.get('session.cookie.password'),
         provider: {
           name: 'defra-id',
           protocol: 'oauth2',
@@ -122,14 +131,13 @@ const defraId = {
             }
           }
         },
-        password: config.get('session.cookie.password'),
-        clientId,
-        clientSecret,
-        cookie: 'bell-defra-id',
-        isSecure: config.get('session.cookie.secure'),
-        providerParams: {
-          ...authParams,
-          serviceId
+        providerParams: function (request) {
+          return {
+            ...authParams,
+            // TODO store paths/routes as constants
+            forceReselection: request.path === '/auth/organisation',
+            serviceId
+          }
         }
       })
     }

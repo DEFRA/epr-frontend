@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defraId } from '#server/common/helpers/auth/defra-id.js'
+import { defraId } from './defra-id.js'
 
 vi.mock(import('@hapi/bell'), () => ({
   default: {
@@ -179,7 +179,10 @@ describe('#defraId', () => {
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
       const config = strategyCall[2]
 
-      expect(config.providerParams.serviceId).toBe('test-service-id')
+      // providerParams is a function, call it with a mock request
+      const params = config.providerParams({ path: '/auth/login' })
+
+      expect(params.serviceId).toBe('test-service-id')
     })
 
     it('should extract query parameters from authorization endpoint and add to providerParams', async () => {
@@ -204,10 +207,14 @@ describe('#defraId', () => {
 
       // Base URL should not have query parameters
       expect(config.provider.auth).toBe('http://test.auth/authorize')
+
       // Query parameters should be in providerParams
-      expect(config.providerParams).toStrictEqual({
+      const params = config.providerParams({ path: '/auth/login' })
+
+      expect(params).toStrictEqual({
         serviceId: 'test-service-id',
-        p: 'b2c_1a_signupsignin'
+        p: 'b2c_1a_signupsignin',
+        forceReselection: false
       })
     })
 
@@ -231,10 +238,14 @@ describe('#defraId', () => {
       const config = strategyCall[2]
 
       expect(config.provider.auth).toBe('http://test.auth/authorize')
-      expect(config.providerParams).toStrictEqual({
+
+      const params = config.providerParams({ path: '/auth/login' })
+
+      expect(params).toStrictEqual({
         serviceId: 'test-service-id',
         p: 'b2c_1a_signupsignin',
-        custom: 'value'
+        custom: 'value',
+        forceReselection: false
       })
     })
   })
@@ -276,8 +287,29 @@ describe('#defraId', () => {
 
       expect(mockRequest.yar.flash).toHaveBeenCalledWith(
         'referrer',
-        'http://localhost:3000/dashboard'
+        '/dashboard'
       )
+    })
+
+    it('should not store referrer in flash when referrer is callback URL', async () => {
+      await defraId.plugin.register(mockServer)
+
+      const strategyCall = mockServer.auth.strategy.mock.calls[0]
+      const config = strategyCall[2]
+      const locationFn = config.location
+
+      const mockRequest = {
+        info: {
+          referrer: 'http://localhost:3000/auth/callback'
+        },
+        yar: {
+          flash: vi.fn()
+        }
+      }
+
+      locationFn(mockRequest)
+
+      expect(mockRequest.yar.flash).not.toHaveBeenCalled()
     })
   })
 
