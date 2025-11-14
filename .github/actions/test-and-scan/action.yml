@@ -30,13 +30,13 @@ runs:
       shell: bash
       run: npm run lint
 
-    - name: Run tests
-      shell: bash
-      run: npm test
-
     - name: Build
       shell: bash
       run: npm run build
+
+    - name: Run tests
+      shell: bash
+      run: npm test
 
     - name: SonarCloud Scan
       uses: SonarSource/sonarqube-scan-action@v6
