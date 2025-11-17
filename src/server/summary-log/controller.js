@@ -95,7 +95,9 @@ export const summaryLogUploadProgressController = {
       ) {
         return h.view(CHECK_VIEW_NAME, {
           pageTitle: localise('summary-log:checkPageTitle'),
-          heading: localise('summary-log:checkHeading')
+          heading: localise('summary-log:checkHeading'),
+          organisationId,
+          registrationId
         })
       }
 
