@@ -129,17 +129,18 @@ const handleRejectedStatus = (
 
 /**
  * Renders appropriate view based on status
- * @param {object} h - Hapi response toolkit
- * @param {Function} localise - i18n localisation function
- * @param {string} status - Backend status
- * @param {string} [failureReason] - Failure reason from backend
- * @param {string} [accreditationNumber] - Accreditation number for submitted logs
- * @param {string} organisationId - Organisation ID
- * @param {string} registrationId - Registration ID
- * @param {string} pollUrl - URL for polling status
+ * @param {object} options - Rendering options
+ * @param {object} options.h - Hapi response toolkit
+ * @param {object} options.localise - i18n localisation function
+ * @param {string} options.status - Backend status
+ * @param {string} [options.failureReason] - Failure reason from backend
+ * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
+ * @param {string} options.organisationId - Organisation ID
+ * @param {string} options.registrationId - Registration ID
+ * @param {string} options.pollUrl - URL for polling status
  * @returns {object} Hapi view response
  */
-const renderViewForStatus = (
+const renderViewForStatus = ({
   h,
   localise,
   status,
@@ -148,7 +149,7 @@ const renderViewForStatus = (
   organisationId,
   registrationId,
   pollUrl
-) => {
+}) => {
   const PAGE_TITLE = localise('summary-log:pageTitle')
 
   // If validated, show check page
@@ -213,7 +214,7 @@ export const summaryLogUploadProgressController = {
       }
 
       // Render appropriate view based on status
-      return renderViewForStatus(
+      return renderViewForStatus({
         h,
         localise,
         status,
@@ -222,7 +223,7 @@ export const summaryLogUploadProgressController = {
         organisationId,
         registrationId,
         pollUrl
-      )
+      })
     } catch (err) {
       // 404 means summary log not created yet - treat as preprocessing
       if (err.status === StatusCodes.NOT_FOUND) {
