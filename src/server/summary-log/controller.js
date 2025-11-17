@@ -101,7 +101,7 @@ const getStatusData = async (
  * Handles rejected status by storing error in session and redirecting
  * @param {object} request - Hapi request object
  * @param {object} h - Hapi response toolkit
- * @param {Function} localise - i18n localisation function
+ * @param {(key: string) => string} localise - i18n localisation function
  * @param {string} failureReason - Failure reason from backend
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
@@ -131,7 +131,7 @@ const handleRejectedStatus = (
  * Renders appropriate view based on status
  * @param {object} options - Rendering options
  * @param {object} options.h - Hapi response toolkit
- * @param {object} options.localise - i18n localisation function
+ * @param {(key: string) => string} options.localise - i18n localisation function
  * @param {string} options.status - Backend status
  * @param {string} [options.failureReason] - Failure reason from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
