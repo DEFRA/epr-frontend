@@ -30,7 +30,7 @@ describe(initI18n, function () {
           'error',
           'home',
           'summary-log-upload',
-          'summary-log-upload-progress'
+          'summary-log'
         ]),
         defaultNS: 'common',
         debug: false
