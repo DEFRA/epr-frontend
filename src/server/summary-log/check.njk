@@ -18,9 +18,11 @@
       <li>{{ localise('summary-log:declarationBullet2') }}</li>
     </ul>
 
-    <button type="button" class="govuk-button" data-module="govuk-button">
-      {{ localise('summary-log:confirmButton') }}
-    </button>
+    <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+      <button type="submit" class="govuk-button" data-module="govuk-button">
+        {{ localise('summary-log:confirmButton') }}
+      </button>
+    </form>
 
     <p class="govuk-body">
       <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:reuploadButton') }}</a>

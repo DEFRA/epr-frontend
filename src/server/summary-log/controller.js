@@ -137,6 +137,7 @@ const handleRejectedStatus = (
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
  * @param {string} options.organisationId - Organisation ID
  * @param {string} options.registrationId - Registration ID
+ * @param {string} options.summaryLogId - Summary log ID
  * @param {string} options.pollUrl - URL for polling status
  * @returns {object} Hapi view response
  */
@@ -148,6 +149,7 @@ const renderViewForStatus = ({
   accreditationNumber,
   organisationId,
   registrationId,
+  summaryLogId,
   pollUrl
 }) => {
   const PAGE_TITLE = localise('summary-log:pageTitle')
@@ -157,7 +159,8 @@ const renderViewForStatus = ({
     return h.view(CHECK_VIEW_NAME, {
       pageTitle: localise('summary-log:checkPageTitle'),
       organisationId,
-      registrationId
+      registrationId,
+      summaryLogId
     })
   }
 
@@ -222,6 +225,7 @@ export const summaryLogUploadProgressController = {
         accreditationNumber,
         organisationId,
         registrationId,
+        summaryLogId,
         pollUrl
       })
     } catch (err) {

@@ -118,6 +118,13 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'action="/organisations/123/registrations/456/summary-logs/789/submit"'
+        )
+      )
+      expect(result).toStrictEqual(expect.stringContaining('method="POST"'))
+
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
