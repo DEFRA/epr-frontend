@@ -11,7 +11,8 @@ vi.mock(import('@hapi/bell'), () => ({
 vi.mock(import('@hapi/jwt'), () => ({
   default: {
     token: {
-      decode: vi.fn()
+      decode: vi.fn(),
+      verify: vi.fn()
     }
   }
 }))
@@ -24,6 +25,18 @@ vi.mock(import('#config/config.js'), () => ({
   config: {
     get: vi.fn()
   }
+}))
+
+vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
+  createLogger: () => ({
+    error: vi.fn()
+  })
+}))
+
+vi.mock(import('jwk-to-pem'), () => ({
+  default: vi.fn(
+    () => '-----BEGIN PUBLIC KEY-----\ntest-pem\n-----END PUBLIC KEY-----'
+  )
 }))
 
 describe('#defraId', () => {
@@ -64,16 +77,39 @@ describe('#defraId', () => {
       return configMap[key]
     })
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        issuer: 'http://test.auth',
-        authorization_endpoint: 'http://test.auth/authorize',
-        token_endpoint: 'http://test.auth/token',
-        userinfo_endpoint: 'http://test.auth/userinfo',
-        end_session_endpoint: 'http://test.auth/logout',
-        jwks_uri: 'http://test.auth/.well-known/jwks.json'
-      })
+    mockFetch.mockImplementation((url) => {
+      // Mock OIDC discovery endpoint
+      if (url.includes('openid-configuration')) {
+        return Promise.resolve({
+          ok: true,
+          json: vi.fn().mockResolvedValue({
+            issuer: 'http://test.auth',
+            authorization_endpoint: 'http://test.auth/authorize',
+            token_endpoint: 'http://test.auth/token',
+            userinfo_endpoint: 'http://test.auth/userinfo',
+            end_session_endpoint: 'http://test.auth/logout',
+            jwks_uri: 'http://test.auth/.well-known/jwks.json'
+          })
+        })
+      }
+      // Mock JWKS endpoint
+      if (url.includes('jwks.json')) {
+        return Promise.resolve({
+          ok: true,
+          json: vi.fn().mockResolvedValue({
+            keys: [
+              {
+                kty: 'RSA',
+                use: 'sig',
+                kid: 'test-key-id',
+                n: 'test-modulus',
+                e: 'AQAB'
+              }
+            ]
+          })
+        })
+      }
+      return Promise.reject(new Error('Unmocked URL: ' + url))
     })
 
     mockServer = {
@@ -104,10 +140,15 @@ describe('#defraId', () => {
     })
 
     it('should throw error when OIDC configuration fetch fails', async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found'
+      mockFetch.mockImplementation((url) => {
+        if (url.includes('openid-configuration')) {
+          return Promise.resolve({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found'
+          })
+        }
+        return Promise.reject(new Error('Unmocked URL: ' + url))
       })
 
       await expect(defraId.plugin.register(mockServer)).rejects.toThrow(
@@ -116,10 +157,15 @@ describe('#defraId', () => {
     })
 
     it('should throw error when OIDC configuration fetch returns 500', async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error'
+      mockFetch.mockImplementation((url) => {
+        if (url.includes('openid-configuration')) {
+          return Promise.resolve({
+            ok: false,
+            status: 500,
+            statusText: 'Internal Server Error'
+          })
+        }
+        return Promise.reject(new Error('Unmocked URL: ' + url))
       })
 
       await expect(defraId.plugin.register(mockServer)).rejects.toThrow(
@@ -187,17 +233,38 @@ describe('#defraId', () => {
 
     it('should extract query parameters from authorization endpoint and add to providerParams', async () => {
       // Mock OIDC config with Azure AD B2C style query parameters
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({
-          issuer: 'http://test.auth',
-          authorization_endpoint:
-            'http://test.auth/authorize?p=b2c_1a_signupsignin',
-          token_endpoint: 'http://test.auth/token',
-          userinfo_endpoint: 'http://test.auth/userinfo',
-          end_session_endpoint: 'http://test.auth/logout',
-          jwks_uri: 'http://test.auth/.well-known/jwks.json'
-        })
+      mockFetch.mockImplementation((url) => {
+        if (url.includes('openid-configuration')) {
+          return Promise.resolve({
+            ok: true,
+            json: vi.fn().mockResolvedValue({
+              issuer: 'http://test.auth',
+              authorization_endpoint:
+                'http://test.auth/authorize?p=b2c_1a_signupsignin',
+              token_endpoint: 'http://test.auth/token',
+              userinfo_endpoint: 'http://test.auth/userinfo',
+              end_session_endpoint: 'http://test.auth/logout',
+              jwks_uri: 'http://test.auth/.well-known/jwks.json'
+            })
+          })
+        }
+        if (url.includes('jwks.json')) {
+          return Promise.resolve({
+            ok: true,
+            json: vi.fn().mockResolvedValue({
+              keys: [
+                {
+                  kty: 'RSA',
+                  use: 'sig',
+                  kid: 'test-key-id',
+                  n: 'test-modulus',
+                  e: 'AQAB'
+                }
+              ]
+            })
+          })
+        }
+        return Promise.reject(new Error('Unmocked URL: ' + url))
       })
 
       await defraId.plugin.register(mockServer)
@@ -219,17 +286,38 @@ describe('#defraId', () => {
     })
 
     it('should handle multiple query parameters in authorization endpoint', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({
-          issuer: 'http://test.auth',
-          authorization_endpoint:
-            'http://test.auth/authorize?p=b2c_1a_signupsignin&custom=value',
-          token_endpoint: 'http://test.auth/token',
-          userinfo_endpoint: 'http://test.auth/userinfo',
-          end_session_endpoint: 'http://test.auth/logout',
-          jwks_uri: 'http://test.auth/.well-known/jwks.json'
-        })
+      mockFetch.mockImplementation((url) => {
+        if (url.includes('openid-configuration')) {
+          return Promise.resolve({
+            ok: true,
+            json: vi.fn().mockResolvedValue({
+              issuer: 'http://test.auth',
+              authorization_endpoint:
+                'http://test.auth/authorize?p=b2c_1a_signupsignin&custom=value',
+              token_endpoint: 'http://test.auth/token',
+              userinfo_endpoint: 'http://test.auth/userinfo',
+              end_session_endpoint: 'http://test.auth/logout',
+              jwks_uri: 'http://test.auth/.well-known/jwks.json'
+            })
+          })
+        }
+        if (url.includes('jwks.json')) {
+          return Promise.resolve({
+            ok: true,
+            json: vi.fn().mockResolvedValue({
+              keys: [
+                {
+                  kty: 'RSA',
+                  use: 'sig',
+                  kid: 'test-key-id',
+                  n: 'test-modulus',
+                  e: 'AQAB'
+                }
+              ]
+            })
+          })
+        }
+        return Promise.reject(new Error('Unmocked URL: ' + url))
       })
 
       await defraId.plugin.register(mockServer)

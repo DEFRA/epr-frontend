@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash-es'
 
 /**
- * @import {UserSession} from "#server/auth/helpers/get-user-session.js"
+ * @import { UserSession } from '#server/auth/types/session.js'
  */
 
 /**

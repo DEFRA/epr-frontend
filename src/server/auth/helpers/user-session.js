@@ -65,13 +65,6 @@ export { removeUserSession, updateUserSession }
 
 /**
  * @import { Request } from '@hapi/hapi'
- * @import { UserSession } from '#server/auth/helpers/get-user-session.js'
- */
-
-/**
- * @typedef {object} RefreshedTokens
- * @property {string} access_token
- * @property {string} refresh_token
- * @property {string} id_token
- * @property {number} expires_in
+ * @import { RefreshedTokens } from '../types/tokens.js'
+ * @import { UserSession } from '../types/session.js'
  */
