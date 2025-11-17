@@ -8,7 +8,8 @@ const PROCESSING_STATES = new Set([
   backendSummaryLogStatuses.validating
 ])
 
-const VIEW_NAME = 'summary-log-upload-progress/index'
+const VIEW_NAME = 'summary-log/progress'
+const CHECK_VIEW_NAME = 'summary-log/check'
 
 /**
  * Determines view data based on backend status
@@ -21,8 +22,8 @@ const getViewData = (localise, status, failureReason) => {
   // Processing states - show designed message
   if (PROCESSING_STATES.has(status)) {
     return {
-      heading: localise('summary-log-upload-progress:processingHeading'),
-      message: localise('summary-log-upload-progress:processingMessage'),
+      heading: localise('summary-log:processingHeading'),
+      message: localise('summary-log:processingMessage'),
       isProcessing: true
     }
   }
@@ -30,23 +31,20 @@ const getViewData = (localise, status, failureReason) => {
   // Terminal states
   const placeholders = {
     [backendSummaryLogStatuses.validated]: {
-      heading: localise('summary-log-upload-progress:validatedHeading'),
-      message: localise('summary-log-upload-progress:validatedMessage')
+      heading: localise('summary-log:validatedHeading'),
+      message: localise('summary-log:validatedMessage')
     },
     [backendSummaryLogStatuses.submitted]: {
-      heading: localise('summary-log-upload-progress:submittedHeading'),
-      message: localise('summary-log-upload-progress:submittedMessage')
+      heading: localise('summary-log:submittedHeading'),
+      message: localise('summary-log:submittedMessage')
     },
     [backendSummaryLogStatuses.rejected]: {
-      heading: localise('summary-log-upload-progress:invalidHeading'),
-      message:
-        failureReason ||
-        localise('summary-log-upload-progress:rejectedDefaultReason')
+      heading: localise('summary-log:invalidHeading'),
+      message: failureReason || localise('summary-log:rejectedDefaultReason')
     },
     [backendSummaryLogStatuses.invalid]: {
-      heading: localise('summary-log-upload-progress:invalidHeading'),
-      message:
-        failureReason || localise('summary-log-upload-progress:invalidMessage')
+      heading: localise('summary-log:invalidHeading'),
+      message: failureReason || localise('summary-log:invalidMessage')
     }
   }
 
@@ -63,8 +61,8 @@ export const summaryLogUploadProgressController = {
   handler: async (request, h) => {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
-    const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`
-    const PAGE_TITLE = localise('summary-log-upload-progress:pageTitle')
+    const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const PAGE_TITLE = localise('summary-log:pageTitle')
 
     try {
       // Poll backend for status
@@ -82,13 +80,23 @@ export const summaryLogUploadProgressController = {
         request.yar.set(sessionNames.summaryLogs, {
           ...summaryLogsSession,
           lastError:
-            failureReason ||
-            localise('summary-log-upload-progress:rejectedDefaultReason')
+            failureReason || localise('summary-log:rejectedDefaultReason')
         })
 
         return h.redirect(
           `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
         )
+      }
+
+      // If validated or submitted, show check page
+      if (
+        status === backendSummaryLogStatuses.validated ||
+        status === backendSummaryLogStatuses.submitted
+      ) {
+        return h.view(CHECK_VIEW_NAME, {
+          pageTitle: localise('summary-log:checkPageTitle'),
+          heading: localise('summary-log:checkHeading')
+        })
       }
 
       const viewData = getViewData(localise, status, failureReason)
@@ -120,8 +128,8 @@ export const summaryLogUploadProgressController = {
 
       return h.view(VIEW_NAME, {
         pageTitle: PAGE_TITLE,
-        heading: localise('summary-log-upload-progress:errorHeading'),
-        message: localise('summary-log-upload-progress:errorMessage'),
+        heading: localise('summary-log:errorHeading'),
+        message: localise('summary-log:errorMessage'),
         isProcessing: false,
         shouldPoll: false
       })
