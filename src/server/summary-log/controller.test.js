@@ -23,7 +23,7 @@ describe('#summaryLogUploadProgressController', () => {
   const summaryLogId = '789'
   const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
   const summaryLogBaseUrl = `${baseUrl}/${summaryLogId}`
-  const url = `${summaryLogBaseUrl}/progress`
+  const url = summaryLogBaseUrl
   /** @type {Server} */
   let server
 
@@ -44,9 +44,7 @@ describe('#summaryLogUploadProgressController', () => {
       registrationId,
       summaryLogId
     )
-    expect(result).toStrictEqual(
-      expect.stringContaining('Summary log: upload progress |')
-    )
+    expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 
@@ -89,7 +87,7 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('terminal states', () => {
-    test('status: validated - should show success message and stop polling', async () => {
+    test('status: validated - should show check page and stop polling', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated
       })
@@ -97,19 +95,21 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Validation complete')
+        expect.stringContaining('Check before you submit')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('Compliance'))
+      expect(result).toStrictEqual(expect.stringContaining('Declaration'))
+      expect(result).toStrictEqual(
+        expect.stringContaining('Confirm and submit')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is ready to submit')
+        expect.stringContaining('Re-upload summary log')
       )
       expect(result).not.toStrictEqual(enablesClientSidePolling())
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('Keep this page open')
-      )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: submitted - should show success message and stop polling', async () => {
+    test('status: submitted - should show check page and stop polling', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.submitted
       })
@@ -117,10 +117,15 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Submission complete')
+        expect.stringContaining('Check before you submit')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('Compliance'))
+      expect(result).toStrictEqual(expect.stringContaining('Declaration'))
+      expect(result).toStrictEqual(
+        expect.stringContaining('Confirm and submit')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Your waste records have been updated')
+        expect.stringContaining('Re-upload summary log')
       )
       expect(result).not.toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)

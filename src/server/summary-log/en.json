@@ -1,0 +1,37 @@
+{
+  "pageTitle": "Summary log",
+
+  "processingHeading": "Your file is being uploaded",
+  "processingMessage": "Your summary log is being uploaded and automatically validated",
+  "processingKeepOpen": "Keep this page open and do not refresh it",
+
+  "validatedHeading": "Validation complete",
+  "validatedMessage": "Your file is ready to submit",
+
+  "submittedHeading": "Submission complete",
+  "submittedMessage": "Your waste records have been updated",
+
+  "invalidHeading": "Validation failed",
+  "invalidMessage": "Please check your file and try again",
+  "invalidFailureReasonExample": "The waste registration number in your summary log does not match your registration",
+
+  "rejectedDefaultReason": "File rejected by virus scanner",
+
+  "errorHeading": "Error checking status",
+  "errorMessage": "Unable to check upload status",
+
+  "loadingKeepOpen": "Keep this page open",
+
+  "checkPageTitle": "Summary log",
+  "checkHeading": "Check before you submit",
+  "checkIntro": "Your summary log has been validated and is ready to submit.",
+  "complianceHeading": "Compliance",
+  "complianceSubheading": "You must comply with your waste permit",
+  "complianceBody": "By submitting this summary log, you are declaring that you have complied with the requirements of your environmental permit during the reporting period.",
+  "declarationHeading": "Declaration",
+  "declarationIntro": "By submitting this summary log, you confirm that:",
+  "declarationBullet1": "the information provided is complete and accurate",
+  "declarationBullet2": "you have the authority to submit this information on behalf of your organisation",
+  "confirmButton": "Confirm and submit",
+  "reuploadButton": "Re-upload summary log"
+}
