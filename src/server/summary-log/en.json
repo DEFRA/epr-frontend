@@ -33,5 +33,10 @@
   "declarationBullet1": "the information provided is complete and accurate",
   "declarationBullet2": "you have the authority to submit this information on behalf of your organisation",
   "confirmButton": "Confirm and submit",
-  "reuploadButton": "Re-upload summary log"
+  "reuploadButton": "Re-upload summary log",
+
+  "successPageTitle": "Summary log submitted",
+  "successPanelTitle": "Summary log for accreditation number {{accreditationNumber}} submitted",
+  "successInsetText": "To change or add to the information you've provided, submit an updated summary log",
+  "returnToHome": "Return to home"
 }

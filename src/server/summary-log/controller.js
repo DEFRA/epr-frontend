@@ -10,6 +10,7 @@ const PROCESSING_STATES = new Set([
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
+const SUCCESS_VIEW_NAME = 'summary-log/success'
 
 /**
  * Determines view data based on backend status
@@ -65,12 +66,32 @@ export const summaryLogUploadProgressController = {
     const PAGE_TITLE = localise('summary-log:pageTitle')
 
     try {
-      // Poll backend for status
-      const { status, failureReason } = await fetchSummaryLogStatus(
-        organisationId,
-        registrationId,
-        summaryLogId
-      )
+      // Check session for fresh data first (prevents race condition after POST submit)
+      const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
+      const freshData = summaryLogsSession.freshData
+
+      let status, failureReason, accreditationNumber
+
+      if (freshData) {
+        // Use fresh data from session and clear it
+        status = freshData.status
+        accreditationNumber = freshData.accreditationNumber
+        failureReason = freshData.failureReason
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { freshData: _, ...remainingSession } = summaryLogsSession
+        request.yar.set(sessionNames.summaryLogs, remainingSession)
+      } else {
+        // Poll backend for status
+        const response = await fetchSummaryLogStatus(
+          organisationId,
+          registrationId,
+          summaryLogId
+        )
+        status = response.status
+        failureReason = response.failureReason
+        accreditationNumber = response.accreditationNumber
+      }
 
       // If upload rejected, redirect back to upload page with error
       if (status === backendSummaryLogStatuses.rejected) {
@@ -88,15 +109,22 @@ export const summaryLogUploadProgressController = {
         )
       }
 
-      // If validated or submitted, show check page
-      if (
-        status === backendSummaryLogStatuses.validated ||
-        status === backendSummaryLogStatuses.submitted
-      ) {
+      // If validated, show check page
+      if (status === backendSummaryLogStatuses.validated) {
         return h.view(CHECK_VIEW_NAME, {
           pageTitle: localise('summary-log:checkPageTitle'),
           organisationId,
           registrationId
+        })
+      }
+
+      // If submitted, show success page
+      if (status === backendSummaryLogStatuses.submitted) {
+        return h.view(SUCCESS_VIEW_NAME, {
+          pageTitle: localise('summary-log:successPageTitle'),
+          organisationId,
+          registrationId,
+          accreditationNumber
         })
       }
 

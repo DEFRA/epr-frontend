@@ -1,0 +1,24 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-panel govuk-panel--confirmation">
+      <h1 class="govuk-panel__title">
+        {{ localise('summary-log:successPageTitle') }}
+      </h1>
+      <div class="govuk-panel__body">
+        {{ localise('summary-log:successPanelTitle', { accreditationNumber: accreditationNumber }) }}
+      </div>
+    </div>
+
+    <div class="govuk-inset-text">
+      {{ localise('summary-log:successInsetText') }}
+    </div>
+
+    <p class="govuk-body">
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
