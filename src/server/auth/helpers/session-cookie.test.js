@@ -1,412 +1,467 @@
-import { addMinutes } from 'date-fns'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { sessionCookie } from './session-cookie.js'
+import { config } from '#config/config.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/index.js'
+import Iron from '@hapi/iron'
+import jwt from '@hapi/jwt'
+import { subMinutes } from 'date-fns'
+import { http, HttpResponse } from 'msw'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-vi.mock(import('@hapi/cookie'), () => ({
-  default: {
-    name: 'cookie',
-    register: vi.fn()
-  }
-}))
+describe('#sessionCookie - integration', () => {
+  /** @type {import('@hapi/hapi').Server} */
+  let server
+  let mockOidcServer
 
-vi.mock(import('date-fns'), async (importOriginal) => {
-  const actual = await importOriginal()
-  return {
-    ...actual,
-    isPast: vi.fn(),
-    parseISO: vi.fn(),
-    subMinutes: vi.fn()
-  }
-})
+  beforeAll(async () => {
+    // Setup OIDC mock server
+    mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
-vi.mock(import('#config/config.js'), () => ({
-  config: {
-    get: vi.fn()
-  }
-}))
+    // Add token refresh endpoint
+    mockOidcServer.use(
+      http.post('http://defra-id.auth/token', async ({ request }) => {
+        const body = await request.text()
+        const params = new URLSearchParams(body)
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'), () => ({
-  getUserSession: vi.fn()
-}))
+        if (params.get('grant_type') === 'refresh_token') {
+          // Create a valid JWT structure (header.payload.signature)
+          // We're using a fake but properly formatted JWT
+          const mockJwtPayload = {
+            sub: 'user-123',
+            email: 'test@example.com',
+            correlationId: 'corr-123',
+            sessionId: 'sess-123',
+            contactId: 'contact-123',
+            serviceId: 'test-service-id',
+            firstName: 'Test',
+            lastName: 'User',
+            uniqueReference: 'ref-123',
+            loa: '2',
+            aal: '1',
+            enrolmentCount: 1,
+            enrolmentRequestCount: 0,
+            currentRelationshipId: 'rel-123',
+            relationships: ['rel-123'],
+            roles: ['role1']
+          }
 
-vi.mock(import('#server/auth/helpers/refresh-token.js'), () => ({
-  refreshAccessToken: vi.fn()
-}))
+          // Create a fake JWT (base64 encoded header.payload.signature)
+          const header = Buffer.from(
+            JSON.stringify({ alg: 'RS256', typ: 'JWT' })
+          ).toString('base64url')
+          const payload = Buffer.from(JSON.stringify(mockJwtPayload)).toString(
+            'base64url'
+          )
+          const signature = 'fake-signature'
+          const mockAccessToken = `${header}.${payload}.${signature}`
 
-vi.mock(import('#server/auth/helpers/user-session.js'), () => ({
-  removeUserSession: vi.fn(),
-  updateUserSession: vi.fn()
-}))
-
-describe('#sessionCookie', () => {
-  let mockServer
-  let mockAuthCookie
-  let mockConfig
-  let mockGetUserSession
-  let mockRefreshAccessToken
-  let mockRemoveUserSession
-  let mockUpdateUserSession
-  let mockIsPast
-  let mockParseISO
-  let mockSubMinutes
-
-  beforeEach(async () => {
-    vi.clearAllMocks()
-
-    // Import mocked modules
-    const authCookie = await import('@hapi/cookie')
-    mockAuthCookie = authCookie.default
-
-    const { config } = await import('#config/config.js')
-    mockConfig = config
-
-    const { getUserSession } = await import(
-      '#server/auth/helpers/get-user-session.js'
-    )
-    mockGetUserSession = getUserSession
-
-    const { refreshAccessToken } = await import(
-      '#server/auth/helpers/refresh-token.js'
-    )
-    mockRefreshAccessToken = refreshAccessToken
-
-    const { removeUserSession, updateUserSession } = await import(
-      '#server/auth/helpers/user-session.js'
-    )
-    mockRemoveUserSession = removeUserSession
-    mockUpdateUserSession = updateUserSession
-
-    const dateFns = await import('date-fns')
-    mockIsPast = dateFns.isPast
-    mockParseISO = dateFns.parseISO
-    mockSubMinutes = dateFns.subMinutes
-
-    // Setup default mock implementations
-    mockConfig.get.mockImplementation((key) => {
-      const configMap = {
-        'session.cookie.password': 'test-password-at-least-32-characters-long',
-        'session.cookie.secure': true,
-        'session.cookie.ttl': 3600000 // 1 hour
-      }
-      return configMap[key]
-    })
-
-    mockServer = {
-      register: vi.fn().mockResolvedValue(undefined),
-      auth: {
-        strategy: vi.fn(),
-        default: vi.fn()
-      },
-      app: {
-        cache: {
-          get: vi.fn()
+          return HttpResponse.json({
+            access_token: mockAccessToken,
+            refresh_token: 'new-refresh-token',
+            id_token: 'new-id-token',
+            expires_in: 3600,
+            token_type: 'Bearer'
+          })
         }
+
+        return HttpResponse.json({ error: 'invalid_grant' }, { status: 400 })
+      })
+    )
+
+    mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
+
+    // Configure auth
+    config.load({
+      defraId: {
+        clientId: 'test-client-id',
+        clientSecret: 'test-secret',
+        oidcConfigurationUrl:
+          'http://defra-id.auth/.well-known/openid-configuration',
+        serviceId: 'test-service-id'
       }
-    }
-  })
-
-  afterEach(() => {
-    vi.resetAllMocks()
-  })
-
-  describe('plugin metadata', () => {
-    it('should have correct plugin name', () => {
-      expect(sessionCookie.plugin.name).toBe('user-session')
-    })
-  })
-
-  describe('plugin registration', () => {
-    it('should register cookie auth plugin', async () => {
-      await sessionCookie.plugin.register(mockServer)
-
-      expect(mockServer.register).toHaveBeenCalledWith(mockAuthCookie)
     })
 
-    it('should configure session strategy with correct cookie settings', async () => {
-      await sessionCookie.plugin.register(mockServer)
+    // Create and initialize server
+    server = await createServer()
+    await server.initialize()
+  })
 
-      expect(mockServer.auth.strategy).toHaveBeenCalledWith(
-        'session',
-        'cookie',
+  afterAll(async () => {
+    config.reset('defraId.clientId')
+    config.reset('defraId.clientSecret')
+    config.reset('defraId.oidcConfigurationUrl')
+    config.reset('defraId.serviceId')
+    mockOidcServer.close()
+    await server.stop({ timeout: 0 })
+  })
+
+  describe('token refresh on expired session', () => {
+    beforeAll(() => {
+      // Add a test route that requires authentication
+      server.route({
+        method: 'GET',
+        path: '/test-auth',
+        options: {
+          auth: 'session'
+        },
+        handler: (request) => {
+          return {
+            userId: request.auth.credentials.id,
+            email: request.auth.credentials.email,
+            token: request.auth.credentials.token
+          }
+        }
+      })
+    })
+
+    it('should refresh token and continue when token is expired', async () => {
+      // Create a session with an expired token
+      const sessionId = 'test-session-123'
+      const expiredAt = subMinutes(new Date(), 30).toISOString() // 30 mins ago, definitely expired
+
+      const sessionData = {
+        id: 'user-123',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        token: 'old-access-token',
+        refreshToken: 'old-refresh-token',
+        idToken: 'old-id-token',
+        expiresAt: expiredAt,
+        expiresIn: 3600000,
+        isAuthenticated: true,
+        correlationId: 'corr-123',
+        sessionId: 'sess-123',
+        contactId: 'contact-123',
+        serviceId: 'test-service-id',
+        firstName: 'Test',
+        lastName: 'User',
+        uniqueReference: 'ref-123',
+        loa: '2',
+        aal: '1',
+        enrolmentCount: 1,
+        enrolmentRequestCount: 0,
+        currentRelationshipId: 'rel-123',
+        relationships: ['rel-123'],
+        roles: ['role1'],
+        tokenUrl: 'http://defra-id.auth/token',
+        logoutUrl: 'http://defra-id.auth/logout'
+      }
+
+      // Set session in cache
+      await server.app.cache.set(sessionId, sessionData)
+
+      // Create a properly sealed cookie using Iron
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      // Make an authenticated request with the cookie - this will trigger the validate function
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(200)
+
+      const payload = JSON.parse(response.payload)
+
+      expect(payload.userId).toBe('user-123')
+
+      // Decode the new token and verify its contents
+      const token = jwt.token.decode(payload.token).decoded.payload
+
+      expect(token).toStrictEqual(
         expect.objectContaining({
-          cookie: {
-            name: 'userSession',
-            path: '/',
-            password: 'test-password-at-least-32-characters-long',
-            isSecure: true,
-            ttl: 3600000
-          },
-          keepAlive: true
+          sub: 'user-123',
+          email: 'test@example.com',
+          serviceId: 'test-service-id'
         })
       )
+
+      // Verify session was updated in cache
+      const updatedSession = await server.app.cache.get(sessionId)
+
+      expect(updatedSession.refreshToken).toBe('new-refresh-token')
+
+      // expiresAt should be updated to a future time
+      const newExpiresAt = new Date(updatedSession.expiresAt)
+
+      expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
     })
 
-    it('should set session as default auth strategy', async () => {
-      await sessionCookie.plugin.register(mockServer)
+    it('should remove session when refresh fails', async () => {
+      // Setup a mock that returns an error for token refresh
+      mockOidcServer.use(
+        http.post('http://defra-id.auth/token', () => {
+          return HttpResponse.json(
+            {
+              error: 'invalid_grant',
+              error_description: 'Refresh token expired'
+            },
+            { status: 400 }
+          )
+        })
+      )
 
-      expect(mockServer.auth.default).toHaveBeenCalledWith('session')
+      const sessionId = 'test-session-456'
+      const expiredAt = subMinutes(new Date(), 2).toISOString()
+
+      const sessionData = {
+        id: 'user-456',
+        email: 'test2@example.com',
+        displayName: 'Test User 2',
+        token: 'old-access-token-2',
+        refreshToken: 'invalid-refresh-token',
+        idToken: 'old-id-token-2',
+        expiresAt: expiredAt,
+        expiresIn: 3600000,
+        isAuthenticated: true,
+        correlationId: 'corr-456',
+        sessionId: 'sess-456',
+        contactId: 'contact-456',
+        serviceId: 'test-service-id',
+        firstName: 'Test',
+        lastName: 'User',
+        uniqueReference: 'ref-456',
+        loa: '2',
+        aal: '1',
+        enrolmentCount: 0,
+        enrolmentRequestCount: 0,
+        currentRelationshipId: 'rel-456',
+        relationships: [],
+        roles: [],
+        tokenUrl: 'http://defra-id.auth/token',
+        logoutUrl: 'http://defra-id.auth/logout'
+      }
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      // Create a properly sealed cookie using Iron
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      // Make an authenticated request with the cookie
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      // Should return 401 when refresh fails
+      expect(response.statusCode).toBe(401)
+
+      // Session should be removed from cache
+      const removedSession = await server.app.cache.get(sessionId)
+
+      expect(removedSession).toBeNull()
+
+      // Reset mock for other tests
+      mockOidcServer.resetHandlers()
     })
-  })
 
-  describe('validate function', () => {
-    let validateFn
+    it('should not refresh when token is still valid', async () => {
+      const sessionId = 'test-session-789'
+      const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes in future
 
-    beforeEach(async () => {
-      await sessionCookie.plugin.register(mockServer)
+      const sessionData = {
+        id: 'user-789',
+        email: 'test3@example.com',
+        displayName: 'Test User 3',
+        token: 'valid-access-token',
+        refreshToken: 'valid-refresh-token',
+        idToken: 'valid-id-token',
+        expiresAt: futureExpiry,
+        expiresIn: 3600000,
+        isAuthenticated: true,
+        correlationId: 'corr-789',
+        sessionId: 'sess-789',
+        contactId: 'contact-789',
+        serviceId: 'test-service-id',
+        firstName: 'Test',
+        lastName: 'User',
+        uniqueReference: 'ref-789',
+        loa: '2',
+        aal: '1',
+        enrolmentCount: 1,
+        enrolmentRequestCount: 0,
+        currentRelationshipId: 'rel-789',
+        relationships: ['rel-789'],
+        roles: ['role1'],
+        tokenUrl: 'http://defra-id.auth/token',
+        logoutUrl: 'http://defra-id.auth/logout'
+      }
 
-      const strategyCall = mockServer.auth.strategy.mock.calls[0]
-      const config = strategyCall[2]
-      validateFn = config.validate
+      await server.app.cache.set(sessionId, sessionData)
+
+      // Create a properly sealed cookie using Iron
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      // Make an authenticated request with the cookie
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(200)
+
+      const payload = JSON.parse(response.payload)
+
+      // Should still have the original valid token
+      expect(payload.token).toBe('valid-access-token')
+
+      // Session should remain unchanged
+      const unchangedSession = await server.app.cache.get(sessionId)
+
+      expect(unchangedSession.token).toBe('valid-access-token')
+      expect(unchangedSession.refreshToken).toBe('valid-refresh-token')
     })
 
-    describe('when token is not expired', () => {
-      it('should return valid session from cache', async () => {
-        const futureDate = addMinutes(new Date(), 10).toISOString()
-        const mockUserSession = {
-          id: 'user-123',
+    it.each([
+      {
+        testCase: 'only first name',
+        firstName: 'Jane',
+        lastName: null,
+        expectedDisplayName: 'Jane'
+      },
+      {
+        testCase: 'only last name',
+        firstName: null,
+        lastName: 'Smith',
+        expectedDisplayName: 'Smith'
+      }
+    ])(
+      'should handle token refresh with user having $testCase',
+      async ({ firstName, lastName, expectedDisplayName }) => {
+        const sessionId = `test-session-${expectedDisplayName.toLowerCase()}`
+        const expiredAt = subMinutes(new Date(), 30).toISOString()
+
+        const sessionData = {
+          id: 'user-name-test',
           email: 'test@example.com',
-          expiresAt: futureDate
+          displayName: expectedDisplayName,
+          token: 'old-token',
+          refreshToken: 'old-refresh',
+          idToken: 'old-id',
+          expiresAt: expiredAt,
+          expiresIn: 3600000,
+          isAuthenticated: true,
+          correlationId: 'corr-test',
+          sessionId: 'sess-test',
+          contactId: 'contact-test',
+          serviceId: 'test-service-id',
+          firstName,
+          lastName,
+          uniqueReference: 'ref-test',
+          loa: '1',
+          aal: '1',
+          enrolmentCount: 0,
+          enrolmentRequestCount: 0,
+          currentRelationshipId: 'rel-test',
+          relationships: [],
+          roles: [],
+          tokenUrl: 'http://defra-id.auth/token',
+          logoutUrl: 'http://defra-id.auth/logout'
         }
 
-        mockGetUserSession.mockResolvedValue({
-          expiresAt: futureDate
-        })
+        await server.app.cache.set(sessionId, sessionData)
 
-        const parsedDate = new Date(futureDate)
-        mockParseISO.mockReturnValue(parsedDate)
+        // Override the mock to return JWT with the specified name fields
+        mockOidcServer.use(
+          http.post('http://defra-id.auth/token', async ({ request }) => {
+            const body = await request.text()
+            const params = new URLSearchParams(body)
 
-        const oneMinuteBefore = addMinutes(parsedDate, -1)
-        mockSubMinutes.mockReturnValue(oneMinuteBefore)
+            if (params.get('grant_type') === 'refresh_token') {
+              const mockJwtPayload = {
+                sub: 'user-name-test',
+                email: 'test@example.com',
+                correlationId: 'corr-test',
+                sessionId: 'sess-test',
+                contactId: 'contact-test',
+                serviceId: 'test-service-id',
+                firstName,
+                lastName,
+                uniqueReference: 'ref-test',
+                loa: '1',
+                aal: '1',
+                enrolmentCount: 0,
+                enrolmentRequestCount: 0,
+                currentRelationshipId: 'rel-test',
+                relationships: [],
+                roles: []
+              }
 
-        // Token is NOT expired
-        mockIsPast.mockReturnValue(false)
+              const header = Buffer.from(
+                JSON.stringify({ alg: 'RS256', typ: 'JWT' })
+              ).toString('base64url')
+              const payload = Buffer.from(
+                JSON.stringify(mockJwtPayload)
+              ).toString('base64url')
+              const signature = 'fake-signature'
+              const mockAccessToken = `${header}.${payload}.${signature}`
 
-        mockServer.app.cache.get.mockResolvedValue(mockUserSession)
+              return HttpResponse.json({
+                access_token: mockAccessToken,
+                refresh_token: 'new-refresh-token',
+                id_token: 'new-id-token',
+                expires_in: 3600,
+                token_type: 'Bearer'
+              })
+            }
 
-        const mockRequest = {}
-        const mockSession = { sessionId: 'session-123' }
-
-        const result = await validateFn(mockRequest, mockSession)
-
-        expect(mockGetUserSession).toHaveBeenCalledWith(mockRequest)
-        expect(mockIsPast).toHaveBeenCalledWith(oneMinuteBefore)
-        expect(mockServer.app.cache.get).toHaveBeenCalledWith('session-123')
-        expect(result).toStrictEqual({
-          isValid: true,
-          credentials: mockUserSession
-        })
-      })
-
-      it('should return invalid when session not found in cache', async () => {
-        const futureDate = addMinutes(new Date(), 10).toISOString()
-
-        mockGetUserSession.mockResolvedValue({
-          expiresAt: futureDate
-        })
-
-        const parsedDate = new Date(futureDate)
-        mockParseISO.mockReturnValue(parsedDate)
-        mockSubMinutes.mockReturnValue(addMinutes(parsedDate, -1))
-        mockIsPast.mockReturnValue(false)
-
-        // Session not in cache
-        mockServer.app.cache.get.mockResolvedValue(null)
-
-        const mockRequest = {}
-        const mockSession = { sessionId: 'session-123' }
-
-        const result = await validateFn(mockRequest, mockSession)
-
-        expect(mockServer.app.cache.get).toHaveBeenCalledWith('session-123')
-        expect(result).toStrictEqual({
-          isValid: false
-        })
-      })
-    })
-
-    describe('when token is expired', () => {
-      it('should refresh token and return updated session when refresh succeeds', async () => {
-        const expiredDate = addMinutes(new Date(), -5).toISOString()
-
-        mockGetUserSession.mockResolvedValue({
-          expiresAt: expiredDate
-        })
-
-        const parsedDate = new Date(expiredDate)
-        mockParseISO.mockReturnValue(parsedDate)
-        mockSubMinutes.mockReturnValue(addMinutes(parsedDate, -1))
-
-        // Token IS expired
-        mockIsPast.mockReturnValue(true)
-
-        const mockRefreshResponse = {
-          ok: true,
-          json: vi.fn().mockResolvedValue({
-            access_token: 'new-access-token',
-            refresh_token: 'new-refresh-token',
-            expires_in: 3600
+            return HttpResponse.json(
+              { error: 'invalid_grant' },
+              { status: 400 }
+            )
           })
-        }
+        )
 
-        mockRefreshAccessToken.mockResolvedValue(mockRefreshResponse)
+        const cookiePassword = config.get('session.cookie.password')
+        const sealedCookie = await Iron.seal(
+          { sessionId },
+          cookiePassword,
+          Iron.defaults
+        )
 
-        const oneMinuteBefore = addMinutes(parsedDate, -1)
-        mockSubMinutes.mockReturnValue(oneMinuteBefore)
-
-        const mockUpdatedSession = {
-          id: 'user-123',
-          email: 'test@example.com',
-          token: 'new-access-token',
-          refreshToken: 'new-refresh-token',
-          expiresAt: addMinutes(new Date(), 60).toISOString()
-        }
-
-        mockUpdateUserSession.mockResolvedValue(mockUpdatedSession)
-
-        const mockRequest = {}
-        const mockSession = { sessionId: 'session-123' }
-
-        const result = await validateFn(mockRequest, mockSession)
-
-        expect(mockGetUserSession).toHaveBeenCalledWith(mockRequest)
-        expect(mockIsPast).toHaveBeenCalledWith(oneMinuteBefore)
-        expect(mockRefreshAccessToken).toHaveBeenCalledWith(mockRequest)
-        expect(mockUpdateUserSession).toHaveBeenCalledWith(mockRequest, {
-          access_token: 'new-access-token',
-          refresh_token: 'new-refresh-token',
-          expires_in: 3600
-        })
-        expect(result).toStrictEqual({
-          isValid: true,
-          credentials: mockUpdatedSession
-        })
-      })
-
-      it('should remove session and return invalid when refresh fails', async () => {
-        const expiredDate = addMinutes(new Date(), -5).toISOString()
-
-        mockGetUserSession.mockResolvedValue({
-          expiresAt: expiredDate
+        const response = await server.inject({
+          method: 'GET',
+          url: '/test-auth',
+          headers: {
+            cookie: `userSession=${sealedCookie}`
+          }
         })
 
-        const parsedDate = new Date(expiredDate)
-        mockParseISO.mockReturnValue(parsedDate)
+        expect(response.statusCode).toBe(200)
 
-        const oneMinuteBefore = addMinutes(parsedDate, -1)
-        mockSubMinutes.mockReturnValue(oneMinuteBefore)
+        // Check that displayName is correct based on available name fields
+        const updatedSession = await server.app.cache.get(sessionId)
 
-        // Token IS expired
-        mockIsPast.mockReturnValue(true)
+        expect(updatedSession.displayName).toBe(expectedDisplayName)
+        expect(updatedSession.firstName).toBe(firstName)
+        expect(updatedSession.lastName).toBe(lastName)
 
-        const mockRefreshResponse = {
-          ok: false,
-          json: vi.fn().mockResolvedValue({
-            error: 'invalid_grant'
-          })
-        }
-
-        mockRefreshAccessToken.mockResolvedValue(mockRefreshResponse)
-        mockRemoveUserSession.mockResolvedValue(undefined)
-
-        const mockRequest = {}
-        const mockSession = { sessionId: 'session-123' }
-
-        const result = await validateFn(mockRequest, mockSession)
-
-        expect(mockGetUserSession).toHaveBeenCalledWith(mockRequest)
-        expect(mockRefreshAccessToken).toHaveBeenCalledWith(mockRequest)
-        expect(mockRemoveUserSession).toHaveBeenCalledWith(mockRequest)
-        expect(mockUpdateUserSession).not.toHaveBeenCalled()
-        expect(result).toStrictEqual({
-          isValid: false
-        })
-      })
-
-      it('should handle token expiring in less than 1 minute', async () => {
-        // Token expires in 30 seconds
-        const soonToExpireDate = addMinutes(new Date(), 0.5).toISOString()
-
-        mockGetUserSession.mockResolvedValue({
-          expiresAt: soonToExpireDate
-        })
-
-        const parsedDate = new Date(soonToExpireDate)
-        mockParseISO.mockReturnValue(parsedDate)
-
-        const oneMinuteBefore = addMinutes(parsedDate, -1)
-        mockSubMinutes.mockReturnValue(oneMinuteBefore)
-
-        // Token is considered expired (less than 1 minute remaining)
-        mockIsPast.mockReturnValue(true)
-
-        const mockRefreshResponse = {
-          ok: true,
-          json: vi.fn().mockResolvedValue({
-            access_token: 'new-token',
-            refresh_token: 'new-refresh',
-            expires_in: 3600
-          })
-        }
-
-        mockRefreshAccessToken.mockResolvedValue(mockRefreshResponse)
-        mockUpdateUserSession.mockResolvedValue({
-          id: 'user-123',
-          token: 'new-token'
-        })
-
-        const mockRequest = {}
-        const mockSession = { sessionId: 'session-123' }
-
-        const result = await validateFn(mockRequest, mockSession)
-
-        expect(mockIsPast).toHaveBeenCalledWith(oneMinuteBefore)
-        expect(mockRefreshAccessToken).toHaveBeenCalledWith(mockRequest)
-        expect(result.isValid).toBe(true)
-      })
-    })
-
-    describe('date handling', () => {
-      it('should correctly parse ISO date string', async () => {
-        const futureDate = '2025-12-31T23:59:59.000Z'
-
-        mockGetUserSession.mockResolvedValue({
-          expiresAt: futureDate
-        })
-
-        const parsedDate = new Date(futureDate)
-        mockParseISO.mockReturnValue(parsedDate)
-        mockSubMinutes.mockReturnValue(addMinutes(parsedDate, -1))
-        mockIsPast.mockReturnValue(false)
-        mockServer.app.cache.get.mockResolvedValue({ id: 'user-123' })
-
-        const mockRequest = {}
-        const mockSession = { sessionId: 'session-123' }
-
-        await validateFn(mockRequest, mockSession)
-
-        expect(mockParseISO).toHaveBeenCalledWith(futureDate)
-      })
-
-      it('should subtract 1 minute from expiry time for comparison', async () => {
-        const futureDate = '2025-12-31T23:59:59.000Z'
-
-        mockGetUserSession.mockResolvedValue({
-          expiresAt: futureDate
-        })
-
-        const parsedDate = new Date(futureDate)
-        mockParseISO.mockReturnValue(parsedDate)
-        mockSubMinutes.mockReturnValue(addMinutes(parsedDate, -1))
-        mockIsPast.mockReturnValue(false)
-        mockServer.app.cache.get.mockResolvedValue({ id: 'user-123' })
-
-        const mockRequest = {}
-        const mockSession = { sessionId: 'session-123' }
-
-        await validateFn(mockRequest, mockSession)
-
-        expect(mockSubMinutes).toHaveBeenCalledWith(parsedDate, 1)
-      })
-    })
+        // Reset mock for other tests
+        mockOidcServer.resetHandlers()
+      }
+    )
   })
 })
