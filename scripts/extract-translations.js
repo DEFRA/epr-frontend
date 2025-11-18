@@ -9,8 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 /**
  * Parse command line arguments to extract the output path
  */
-function parseArgs() {
-  const args = process.argv.slice(2)
+export function parseArgs(args = process.argv.slice(2)) {
   const outIndex = args.indexOf('--out')
 
   if (outIndex === -1 || !args[outIndex + 1]) {
@@ -29,7 +28,7 @@ function parseArgs() {
 /**
  * Find all namespace directories in src/server that contain translation files
  */
-function findNamespaces(baseDir) {
+export function findNamespaces(baseDir) {
   return fs
     .readdirSync(baseDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -43,7 +42,7 @@ function findNamespaces(baseDir) {
  * Flatten nested JSON objects into dot-notation keys
  * Example: { a: { b: 'value' } } becomes { 'a.b': 'value' }
  */
-function flattenKeys(obj, prefix = '') {
+export function flattenKeys(obj, prefix = '') {
   let result = {}
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = prefix ? `${prefix}.${key}` : key
@@ -60,7 +59,7 @@ function flattenKeys(obj, prefix = '') {
  * Extract translations that are missing or out of sync between en.json and cy.json
  * Returns array of objects with field, en, and cy values
  */
-function extractMissingTranslations(baseDir) {
+export function extractMissingTranslations(baseDir) {
   const namespaces = findNamespaces(baseDir)
   const missingTranslations = []
 
@@ -104,7 +103,7 @@ function extractMissingTranslations(baseDir) {
 /**
  * Write translation data to Excel file with columns: field | en | cy
  */
-async function writeToExcel(data, outputPath) {
+export async function writeToExcel(data, outputPath) {
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('Translations')
 
@@ -131,7 +130,7 @@ async function writeToExcel(data, outputPath) {
 /**
  * Main execution: parse args, extract missing translations, and export to Excel
  */
-async function main() {
+export async function main() {
   const { outputPath } = parseArgs()
   const baseDir = path.resolve(__dirname, '../src/server')
 
@@ -149,10 +148,20 @@ async function main() {
   )
 }
 
-try {
-  await main()
-} catch (error) {
-  // eslint-disable-next-line no-console
-  console.error(`❌ ${error.message}`)
-  process.exitCode = 1
+/**
+ * Run the script and handle errors
+ */
+export async function run() {
+  try {
+    await main()
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(`❌ ${error.message}`)
+    process.exitCode = 1
+  }
+}
+
+/* c8 ignore next 3 */
+if (import.meta.url === `file://${process.argv[1]}`) {
+  await run()
 }

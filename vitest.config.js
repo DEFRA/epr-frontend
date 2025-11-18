@@ -11,7 +11,7 @@ export default defineConfig({
       provider: 'v8',
       reportsDirectory: './coverage',
       reporter: ['text', 'lcov'],
-      include: ['src/**'],
+      include: ['src/**', 'scripts/**/*.js'],
       exclude: [
         ...configDefaults.exclude,
         '.public',
@@ -22,7 +22,9 @@ export default defineConfig({
         'src/**/*.njk',
         'src/client/javascripts/application.js',
         'src/index.js',
-        'src/server/common/test-helpers'
+        'src/server/common/test-helpers',
+        'scripts/**/*.test.js',
+        'scripts/check-locales.js'
       ],
       thresholds: {
         lines: 100,
