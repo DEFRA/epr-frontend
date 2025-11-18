@@ -116,7 +116,8 @@ describe('#defraId', () => {
       register: vi.fn().mockResolvedValue(undefined),
       auth: {
         strategy: vi.fn()
-      }
+      },
+      app: {}
     }
   })
 

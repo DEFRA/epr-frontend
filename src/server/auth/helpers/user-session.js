@@ -7,9 +7,9 @@ import { getUserSession } from './get-user-session.js'
 /**
  * Build a user session object from JWT payload and tokens
  * @param {object} options - Session building options
- * @param {object} options.payload - JWT token payload
+ * @param {object} options.payload - JWT token payload (from verified id_token)
  * @param {{ id_token: string, access_token: string, refresh_token: string, expires_in: number }} options.tokens - Token data with id_token, access_token, refresh_token, and expires_in
- * @returns {UserSession} User session object
+ * @returns {Partial<UserSession>} Partial user session object (missing tokenUrl and logoutUrl which are preserved from existing session)
  */
 function buildSessionFromPayload({ payload, tokens }) {
   const expiresInSeconds = tokens.expires_in
@@ -61,8 +61,9 @@ async function removeUserSession(request) {
  * @returns {Promise<UserSession>}
  */
 async function updateUserSession(request, refreshedSession) {
-  const payload = jwt.token.decode(refreshedSession.access_token).decoded
-    .payload
+  // Verify id_token signature (OIDC standard for user identity)
+  const payload = request.server.app.verifyToken(refreshedSession.id_token)
+    .decoded.payload
 
   const { value: authedUser } = await getUserSession(request)
 

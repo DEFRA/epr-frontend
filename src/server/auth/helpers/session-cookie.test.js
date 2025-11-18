@@ -53,11 +53,12 @@ describe('#sessionCookie - integration', () => {
           )
           const signature = 'fake-signature'
           const mockAccessToken = `${header}.${payload}.${signature}`
+          const mockIdToken = `${header}.${payload}.${signature}` // Same structure as access token
 
           return HttpResponse.json({
             access_token: mockAccessToken,
             refresh_token: 'new-refresh-token',
-            id_token: 'new-id-token',
+            id_token: mockIdToken,
             expires_in: 3600,
             token_type: 'Bearer'
           })
@@ -83,6 +84,12 @@ describe('#sessionCookie - integration', () => {
     // Create and initialize server
     server = await createServer()
     await server.initialize()
+
+    // Mock verifyToken to simply decode without verifying signature
+    // This allows tests to use fake JWTs without needing valid signatures
+    server.app.verifyToken = (token) => {
+      return jwt.token.decode(token)
+    }
   })
 
   afterAll(async () => {
@@ -409,11 +416,12 @@ describe('#sessionCookie - integration', () => {
               ).toString('base64url')
               const signature = 'fake-signature'
               const mockAccessToken = `${header}.${payload}.${signature}`
+              const mockIdToken = `${header}.${payload}.${signature}` // Same structure as access token
 
               return HttpResponse.json({
                 access_token: mockAccessToken,
                 refresh_token: 'new-refresh-token',
-                id_token: 'new-id-token',
+                id_token: mockIdToken,
                 expires_in: 3600,
                 token_type: 'Bearer'
               })

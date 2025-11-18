@@ -26,6 +26,9 @@ const defraId = {
       )
       const verifyToken = await getVerifyToken(oidcConf)
 
+      // Store verifyToken on server.app for use in token refresh flow
+      server.app.verifyToken = verifyToken
+
       // Parse authorization endpoint to extract any existing query parameters
       // Azure AD B2C may include policy parameters like ?p=policy_name
       const authUrl = new URL(oidcConf.authorization_endpoint)
