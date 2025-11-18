@@ -20,7 +20,7 @@ export const summaryLogUploadController = {
 
     try {
       const { uploadId, uploadUrl, statusUrl } = await initUpload({
-        redirect: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/progress`,
+        redirect: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
         callback: `${eprBackendUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/upload-completed`,
         s3Bucket,
         s3path: `/organisations/${organisationId}/registrations/${registrationId}`,
