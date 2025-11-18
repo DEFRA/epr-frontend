@@ -33,12 +33,6 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   })
 }))
 
-vi.mock(import('jwk-to-pem'), () => ({
-  default: vi.fn(
-    () => '-----BEGIN PUBLIC KEY-----\ntest-pem\n-----END PUBLIC KEY-----'
-  )
-}))
-
 describe('#defraId', () => {
   let mockServer
   let mockFetch

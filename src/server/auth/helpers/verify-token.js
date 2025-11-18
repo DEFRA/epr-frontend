@@ -1,7 +1,7 @@
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import Jwt from '@hapi/jwt'
-import jwkToPem from 'jwk-to-pem'
 import fetch from 'node-fetch'
+import { createPublicKey } from 'node:crypto'
 
 /**
  * @import { VerifyToken } from '../types/verify-token.js'
@@ -18,7 +18,10 @@ export const getVerifyToken = async ({ jwks_uri: url }) => {
     const res = await fetch(url)
     const { keys } = await res.json()
 
-    const pem = jwkToPem(keys[0])
+    const pem = createPublicKey({ key: keys[0], format: 'jwk' }).export({
+      type: 'spki',
+      format: 'pem'
+    })
 
     /**
      * @type {VerifyToken}

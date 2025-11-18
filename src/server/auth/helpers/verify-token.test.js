@@ -14,8 +14,8 @@ vi.mock(import('@hapi/jwt'), () => ({
   }
 }))
 
-vi.mock(import('jwk-to-pem'), () => ({
-  default: vi.fn()
+vi.mock(import('node:crypto'), () => ({
+  createPublicKey: vi.fn()
 }))
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
@@ -27,7 +27,7 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
 describe(getVerifyToken, () => {
   let mockFetch
   let mockJwt
-  let mockJwkToPem
+  let mockCreatePublicKey
   let mockCreateLogger
 
   beforeEach(async () => {
@@ -39,8 +39,8 @@ describe(getVerifyToken, () => {
     const jwt = await import('@hapi/jwt')
     mockJwt = jwt.default
 
-    const jwkToPem = await import('jwk-to-pem')
-    mockJwkToPem = jwkToPem.default
+    const crypto = await import('node:crypto')
+    mockCreatePublicKey = crypto.createPublicKey
 
     const { createLogger } = await import(
       '#server/common/helpers/logging/logger.js'
@@ -63,13 +63,16 @@ describe(getVerifyToken, () => {
       }
     ]
 
+    const mockPem =
+      '-----BEGIN PUBLIC KEY-----\ntest-pem\n-----END PUBLIC KEY-----'
+
     mockFetch.mockResolvedValue({
       json: vi.fn().mockResolvedValue({ keys: mockKeys })
     })
 
-    mockJwkToPem.mockReturnValue(
-      '-----BEGIN PUBLIC KEY-----\ntest-pem\n-----END PUBLIC KEY-----'
-    )
+    mockCreatePublicKey.mockReturnValue({
+      export: vi.fn().mockReturnValue(mockPem)
+    })
 
     const verifyToken = await getVerifyToken({
       jwks_uri: 'http://test.auth/.well-known/jwks.json'
@@ -78,7 +81,10 @@ describe(getVerifyToken, () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'http://test.auth/.well-known/jwks.json'
     )
-    expect(mockJwkToPem).toHaveBeenCalledWith(mockKeys[0])
+    expect(mockCreatePublicKey).toHaveBeenCalledWith({
+      key: mockKeys[0],
+      format: 'jwk'
+    })
     expect(verifyToken).toBeInstanceOf(Function)
   })
 
@@ -108,7 +114,9 @@ describe(getVerifyToken, () => {
       json: vi.fn().mockResolvedValue({ keys: mockKeys })
     })
 
-    mockJwkToPem.mockReturnValue(mockPem)
+    mockCreatePublicKey.mockReturnValue({
+      export: vi.fn().mockReturnValue(mockPem)
+    })
     mockJwt.token.decode.mockReturnValue(mockDecoded)
 
     const verifyToken = await getVerifyToken({
@@ -171,7 +179,7 @@ describe(getVerifyToken, () => {
     )
   })
 
-  it('should log error and throw when jwkToPem fails', async () => {
+  it('should log error and throw when createPublicKey fails', async () => {
     const mockError = new Error('Invalid JWK')
     const mockKeys = [
       {
@@ -187,7 +195,7 @@ describe(getVerifyToken, () => {
       json: vi.fn().mockResolvedValue({ keys: mockKeys })
     })
 
-    mockJwkToPem.mockImplementation(() => {
+    mockCreatePublicKey.mockImplementation(() => {
       throw mockError
     })
 
