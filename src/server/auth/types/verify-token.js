@@ -13,4 +13,4 @@
  * @returns {DecodedToken} Decoded and verified token
  */
 
-export {}
+export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import
