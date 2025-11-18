@@ -92,6 +92,26 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
+
+    test('status: submitting - should show submitting message and poll', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.submitting
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your file is being submitted')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your summary log is being submitted')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Keep this page open and do not refresh it')
+      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 
   describe('terminal states', () => {

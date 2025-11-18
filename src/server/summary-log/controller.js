@@ -5,11 +5,13 @@ import { sessionNames } from '#server/common/constants/session-names.js'
 
 const PROCESSING_STATES = new Set([
   backendSummaryLogStatuses.preprocessing,
-  backendSummaryLogStatuses.validating
+  backendSummaryLogStatuses.validating,
+  backendSummaryLogStatuses.submitting
 ])
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
+const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
 const SUCCESS_VIEW_NAME = 'summary-log/success'
 
 /**
@@ -161,6 +163,18 @@ const renderViewForStatus = ({
       organisationId,
       registrationId,
       summaryLogId
+    })
+  }
+
+  // If submitting, show submitting page
+  if (status === backendSummaryLogStatuses.submitting) {
+    return h.view(SUBMITTING_VIEW_NAME, {
+      pageTitle: localise('summary-log:pageTitle'),
+      heading: localise('summary-log:submittingHeading'),
+      message: localise('summary-log:submittingMessage'),
+      isProcessing: true,
+      shouldPoll: true,
+      pollUrl
     })
   }
 

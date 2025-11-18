@@ -1,0 +1,23 @@
+{% extends 'layouts/page.njk' %}
+
+{% block head %}
+  {{ super() }}
+  {% if shouldPoll %}
+    <meta http-equiv="refresh" content="3; url={{ pollUrl }}">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-body" data-testid="app-page-body">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <p>{{ message }}</p>
+
+      {% if isProcessing %}
+        <p>{{ localise('summary-log:processingKeepOpen') }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

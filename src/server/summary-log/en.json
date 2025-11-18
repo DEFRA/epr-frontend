@@ -8,6 +8,9 @@
   "validatedHeading": "Validation complete",
   "validatedMessage": "Your file is ready to submit",
 
+  "submittingHeading": "Your file is being submitted",
+  "submittingMessage": "Your summary log is being submitted",
+
   "submittedHeading": "Submission complete",
   "submittedMessage": "Your waste records have been updated",
 
