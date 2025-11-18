@@ -61,7 +61,7 @@ const sessionCookie = {
 
           const userSession = await server.app.cache.get(session.sessionId)
 
-          /* c8 ignore else - Extreme edge case: session deleted between first lookup and this second lookup (race condition) */
+          /* v8 ignore else - Extreme edge case: session deleted between first lookup and this second lookup (race condition) */
           if (userSession) {
             return {
               isValid: true,

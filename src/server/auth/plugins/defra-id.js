@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import bell from '@hapi/bell'
-import { getDisplayName } from '../helpers/display.js'
+import { buildUserProfile } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 import { getVerifyToken } from '../helpers/verify-token.js'
 
@@ -69,30 +69,12 @@ const defraId = {
             // Decode JWT and extract user profile
             const payload = verifyToken(params.id_token).decoded.payload
 
-            const displayName = getDisplayName(payload)
-
-            credentials.profile = {
-              id: payload.sub,
-              correlationId: payload.correlationId,
-              sessionId: payload.sessionId,
-              contactId: payload.contactId,
-              serviceId: payload.serviceId,
-              firstName: payload.firstName,
-              lastName: payload.lastName,
-              displayName,
-              email: payload.email,
-              uniqueReference: payload.uniqueReference,
-              loa: payload.loa,
-              aal: payload.aal,
-              enrolmentCount: payload.enrolmentCount,
-              enrolmentRequestCount: payload.enrolmentRequestCount,
-              currentRelationshipId: payload.currentRelationshipId,
-              relationships: payload.relationships,
-              roles: payload.roles,
+            credentials.profile = buildUserProfile({
               idToken: params.id_token,
-              tokenUrl: oidcConf.token_endpoint,
-              logoutUrl: oidcConf.end_session_endpoint
-            }
+              logoutUrl: oidcConf.end_session_endpoint,
+              payload,
+              tokenUrl: oidcConf.token_endpoint
+            })
           }
         },
         providerParams: function (request) {
