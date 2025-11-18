@@ -3,10 +3,44 @@ import {
   removeUserSession,
   updateUserSession
 } from '#server/auth/helpers/user-session.js'
+import { err, ok } from '#server/common/helpers/result.js'
 import authCookie from '@hapi/cookie'
 import { isPast, parseISO, subMinutes } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
 import { refreshAccessToken } from './refresh-token.js'
+
+/**
+ * Checks if token is expired and refreshes it if needed
+ * @param {Request} request - Hapi request object
+ * @param {UserSession} userSession - Current user session
+ * @returns {Promise<Result<UserSession>>} Result indicating success or failure
+ */
+async function handleExpiredTokenRefresh(request, userSession) {
+  // Check if token will expire in less than 1 minute
+  const tokenHasExpired = isPast(subMinutes(parseISO(userSession.expiresAt), 1))
+
+  if (!tokenHasExpired) {
+    return ok(userSession)
+  }
+
+  try {
+    const response = await refreshAccessToken(request)
+    if (!response.ok) {
+      return err({ message: 'Failed to refresh session', cause: response })
+    }
+
+    const refreshAccessTokenJson = await response.json()
+
+    const refreshedSession = await updateUserSession(
+      request,
+      refreshAccessTokenJson
+    )
+
+    return ok(refreshedSession)
+  } catch (error) {
+    return err({ message: 'Failed to refresh session', cause: error })
+  }
+}
 
 /**
  * Session cookie authentication plugin
@@ -28,44 +62,37 @@ const sessionCookie = {
           ttl: config.get('session.cookie.ttl')
         },
         keepAlive: true,
+        /**
+         * Validates the session cookie on each request
+         * @param {Request} request - Hapi request object
+         * @param {UserSession} session - Session data from cookie
+         * @returns {Promise<{isValid: boolean, credentials?: UserSession}>} Validation result
+         */
         validate: async (request, session) => {
-          const { ok, value: authedUser } = await getUserSession(request)
-
-          if (!ok) {
+          const { ok: hasSession, value: userSession } =
+            await getUserSession(request)
+          if (!hasSession) {
             return { isValid: false }
           }
 
-          // Check if token will expire in less than 1 minute
-          const tokenHasExpired = isPast(
-            subMinutes(parseISO(authedUser.expiresAt), 1)
+          const { ok: refreshOk, error } = await handleExpiredTokenRefresh(
+            request,
+            userSession
           )
+          if (!refreshOk) {
+            request.logger.error(error, error.message)
+            removeUserSession(request)
 
-          // FIXME work to do here wrt refresh and invalidation
-          if (tokenHasExpired) {
-            const response = await refreshAccessToken(request)
-            const refreshAccessTokenJson = await response.json()
-
-            if (!response.ok) {
-              removeUserSession(request)
-
-              return { isValid: false }
-            }
-
-            await updateUserSession(request, refreshAccessTokenJson)
-
-            // return {
-            //   isValid: true,
-            //   credentials: updatedSession
-            // }
+            return { isValid: false }
           }
 
-          const userSession = await server.app.cache.get(session.sessionId)
+          const refreshedSession = await server.app.cache.get(session.sessionId)
 
           /* v8 ignore else - Extreme edge case: session deleted between first lookup and this second lookup (race condition) */
-          if (userSession) {
+          if (refreshedSession) {
             return {
               isValid: true,
-              credentials: userSession
+              credentials: refreshedSession
             }
           } else {
             return { isValid: false }
@@ -81,5 +108,7 @@ const sessionCookie = {
 export { sessionCookie }
 
 /**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { UserSession } from '../types/session.js'
+ * @import { Result } from '#server/common/helpers/result.js'
  */

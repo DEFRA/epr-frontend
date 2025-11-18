@@ -95,6 +95,43 @@ describe('#sessionCookie - integration', () => {
   })
 
   describe('token refresh on expired session', () => {
+    /**
+     * Helper function to create expired session data for refresh tests
+     * @param {string} userId - User identifier
+     * @param {string} expiresAt - ISO date string for token expiry
+     * @returns {{sessionId: string, sessionData: object}} Session ID and data
+     */
+    const createExpiredRefreshSessionData = (userId, expiresAt) => ({
+      sessionId: `test-session-${userId}`,
+      sessionData: {
+        id: userId,
+        email: `${userId}@example.com`,
+        displayName: 'Test User',
+        token: `old-access-token-${userId}`,
+        refreshToken: `old-refresh-token-${userId}`,
+        idToken: `old-id-token-${userId}`,
+        expiresAt,
+        expiresIn: 3600000,
+        isAuthenticated: true,
+        correlationId: `corr-${userId}`,
+        sessionId: `sess-${userId}`,
+        contactId: `contact-${userId}`,
+        serviceId: 'test-service-id',
+        firstName: 'Test',
+        lastName: 'User',
+        uniqueReference: `ref-${userId}`,
+        loa: '2',
+        aal: '1',
+        enrolmentCount: 0,
+        enrolmentRequestCount: 0,
+        currentRelationshipId: `rel-${userId}`,
+        relationships: [],
+        roles: [],
+        tokenUrl: 'http://defra-id.auth/token',
+        logoutUrl: 'http://defra-id.auth/logout'
+      }
+    })
+
     beforeAll(() => {
       // Add a test route that requires authentication
       server.route({
@@ -114,37 +151,16 @@ describe('#sessionCookie - integration', () => {
     })
 
     it('should refresh token and continue when token is expired', async () => {
-      // Create a session with an expired token
-      const sessionId = 'test-session-123'
       const expiredAt = subMinutes(new Date(), 30).toISOString() // 30 mins ago, definitely expired
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-123',
+        expiredAt
+      )
 
-      const sessionData = {
-        id: 'user-123',
-        email: 'test@example.com',
-        displayName: 'Test User',
-        token: 'old-access-token',
-        refreshToken: 'old-refresh-token',
-        idToken: 'old-id-token',
-        expiresAt: expiredAt,
-        expiresIn: 3600000,
-        isAuthenticated: true,
-        correlationId: 'corr-123',
-        sessionId: 'sess-123',
-        contactId: 'contact-123',
-        serviceId: 'test-service-id',
-        firstName: 'Test',
-        lastName: 'User',
-        uniqueReference: 'ref-123',
-        loa: '2',
-        aal: '1',
-        enrolmentCount: 1,
-        enrolmentRequestCount: 0,
-        currentRelationshipId: 'rel-123',
-        relationships: ['rel-123'],
-        roles: ['role1'],
-        tokenUrl: 'http://defra-id.auth/token',
-        logoutUrl: 'http://defra-id.auth/logout'
-      }
+      // Override some fields for this specific test
+      sessionData.enrolmentCount = 1
+      sessionData.relationships = ['rel-123']
+      sessionData.roles = ['role1']
 
       // Set session in cache
       await server.app.cache.set(sessionId, sessionData)
@@ -208,36 +224,11 @@ describe('#sessionCookie - integration', () => {
         })
       )
 
-      const sessionId = 'test-session-456'
       const expiredAt = subMinutes(new Date(), 2).toISOString()
-
-      const sessionData = {
-        id: 'user-456',
-        email: 'test2@example.com',
-        displayName: 'Test User 2',
-        token: 'old-access-token-2',
-        refreshToken: 'invalid-refresh-token',
-        idToken: 'old-id-token-2',
-        expiresAt: expiredAt,
-        expiresIn: 3600000,
-        isAuthenticated: true,
-        correlationId: 'corr-456',
-        sessionId: 'sess-456',
-        contactId: 'contact-456',
-        serviceId: 'test-service-id',
-        firstName: 'Test',
-        lastName: 'User',
-        uniqueReference: 'ref-456',
-        loa: '2',
-        aal: '1',
-        enrolmentCount: 0,
-        enrolmentRequestCount: 0,
-        currentRelationshipId: 'rel-456',
-        relationships: [],
-        roles: [],
-        tokenUrl: 'http://defra-id.auth/token',
-        logoutUrl: 'http://defra-id.auth/logout'
-      }
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-456',
+        expiredAt
+      )
 
       await server.app.cache.set(sessionId, sessionData)
 
@@ -486,6 +477,120 @@ describe('#sessionCookie - integration', () => {
 
       // Should return 401 when session not found
       expect(response.statusCode).toBe(401)
+    })
+
+    it('should return invalid and log error when token refresh throws exception', async () => {
+      // Setup a mock that simulates a network error
+      mockOidcServer.use(
+        http.post('http://defra-id.auth/token', () => {
+          return HttpResponse.error()
+        })
+      )
+
+      const sessionId = 'test-session-exception'
+      const expiredAt = subMinutes(new Date(), 2).toISOString()
+
+      const sessionData = {
+        id: 'user-exception',
+        email: 'exception@example.com',
+        displayName: 'Exception User',
+        token: 'old-access-token',
+        refreshToken: 'old-refresh-token',
+        idToken: 'old-id-token',
+        expiresAt: expiredAt,
+        expiresIn: 3600000,
+        isAuthenticated: true,
+        correlationId: 'corr-exception',
+        sessionId: 'sess-exception',
+        contactId: 'contact-exception',
+        serviceId: 'test-service-id',
+        firstName: 'Exception',
+        lastName: 'User',
+        uniqueReference: 'ref-exception',
+        loa: '2',
+        aal: '1',
+        enrolmentCount: 0,
+        enrolmentRequestCount: 0,
+        currentRelationshipId: 'rel-exception',
+        relationships: [],
+        roles: [],
+        tokenUrl: 'http://defra-id.auth/token',
+        logoutUrl: 'http://defra-id.auth/logout'
+      }
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      // Create a properly sealed cookie using Iron
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      // Make an authenticated request with the cookie
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      // Should return 401 when refresh throws exception
+      expect(response.statusCode).toBe(401)
+
+      // Verify session is cleaned up
+      const cachedSession = await server.app.cache.get(sessionId)
+
+      expect(cachedSession).toBeNull()
+
+      // Reset mock for other tests
+      mockOidcServer.resetHandlers()
+    })
+
+    it('should return invalid when session is deleted during validation (race condition)', async () => {
+      const expiredAt = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes in future
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-race',
+        expiredAt
+      )
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      // Mock cache.get to return null on the second call (simulating race condition)
+      const originalGet = server.app.cache.get
+      let callCount = 0
+      server.app.cache.get = async (key) => {
+        callCount++
+        // First call (in getUserSession) returns the session
+        if (callCount === 1) {
+          return originalGet.call(server.app.cache, key)
+        }
+        // Second call (after refresh check) returns null (simulating deletion)
+        return null
+      }
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      // Should return 401 when session is deleted during validation
+      expect(response.statusCode).toBe(401)
+
+      // Restore original cache.get
+      server.app.cache.get = originalGet
     })
   })
 })

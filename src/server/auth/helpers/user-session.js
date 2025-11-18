@@ -58,7 +58,7 @@ async function removeUserSession(request) {
  * Update user session with refreshed tokens
  * @param {Request} request - Hapi request object
  * @param {RefreshedTokens} refreshedSession - Refreshed session data
- * @returns {Promise<void>}
+ * @returns {Promise<UserSession>}
  */
 async function updateUserSession(request, refreshedSession) {
   const payload = jwt.token.decode(refreshedSession.access_token).decoded
@@ -74,10 +74,17 @@ async function updateUserSession(request, refreshedSession) {
     tokens: refreshedSession
   })
 
-  await request.server.app.cache.set(request.state.userSession.sessionId, {
+  const session = {
     ...existingSession,
     ...updatedSession
-  })
+  }
+
+  await request.server.app.cache.set(
+    request.state.userSession.sessionId,
+    session
+  )
+
+  return session
 }
 
 export { buildSessionFromPayload, removeUserSession, updateUserSession }
