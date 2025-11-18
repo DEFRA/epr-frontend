@@ -5,7 +5,7 @@ import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- * @import { BellCredentials, OAuthTokenParams, AzureB2CTokenParams } from '../types/auth-types.js'
+ * @import { BellCredentials, OAuthTokenParams, AzureB2CTokenParams } from '../types/auth.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
