@@ -1,0 +1,158 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+// eslint-disable-next-line n/no-unpublished-import
+import ExcelJS from 'exceljs'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+/**
+ * Parse command line arguments to extract the output path
+ */
+function parseArgs() {
+  const args = process.argv.slice(2)
+  const outIndex = args.indexOf('--out')
+
+  if (outIndex === -1 || !args[outIndex + 1]) {
+    throw new Error(
+      '--out argument is required\n' +
+        'Usage: npm run export-translations -- --out <output-path>\n' +
+        'Example: npm run export-translations -- --out ./translations-export.xlsx'
+    )
+  }
+
+  return {
+    outputPath: args[outIndex + 1]
+  }
+}
+
+/**
+ * Find all namespace directories in src/server that contain translation files
+ */
+function findNamespaces(baseDir) {
+  return fs
+    .readdirSync(baseDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => ({
+      namespace: entry.name,
+      path: path.join(baseDir, entry.name)
+    }))
+}
+
+/**
+ * Flatten nested JSON objects into dot-notation keys
+ * Example: { a: { b: 'value' } } becomes { 'a.b': 'value' }
+ */
+function flattenKeys(obj, prefix = '') {
+  let result = {}
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result = { ...result, ...flattenKeys(value, fullKey) }
+    } else {
+      result[fullKey] = value
+    }
+  }
+  return result
+}
+
+/**
+ * Extract translations that are missing or out of sync between en.json and cy.json
+ * Returns array of objects with field, en, and cy values
+ */
+function extractMissingTranslations(baseDir) {
+  const namespaces = findNamespaces(baseDir)
+  const missingTranslations = []
+
+  for (const { namespace, path: nsPath } of namespaces) {
+    const enPath = path.join(nsPath, 'en.json')
+    const cyPath = path.join(nsPath, 'cy.json')
+
+    const enExists = fs.existsSync(enPath)
+    const cyExists = fs.existsSync(cyPath)
+
+    if (!enExists && !cyExists) {
+      continue
+    }
+
+    const enData = enExists
+      ? flattenKeys(JSON.parse(fs.readFileSync(enPath, 'utf8')))
+      : {}
+    const cyData = cyExists
+      ? flattenKeys(JSON.parse(fs.readFileSync(cyPath, 'utf8')))
+      : {}
+
+    const allKeys = new Set([...Object.keys(enData), ...Object.keys(cyData)])
+
+    for (const key of allKeys) {
+      const enValue = enData[key] || ''
+      const cyValue = cyData[key] || ''
+
+      if (!enValue || !cyValue) {
+        missingTranslations.push({
+          field: `${namespace}:${key}`,
+          en: enValue,
+          cy: cyValue
+        })
+      }
+    }
+  }
+
+  return missingTranslations
+}
+
+/**
+ * Write translation data to Excel file with columns: field | en | cy
+ */
+async function writeToExcel(data, outputPath) {
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet('Translations')
+
+  worksheet.columns = [
+    { header: 'field', key: 'field', width: 50 },
+    { header: 'en', key: 'en', width: 50 },
+    { header: 'cy', key: 'cy', width: 50 }
+  ]
+
+  worksheet.getRow(1).font = { bold: true }
+
+  data.forEach((row) => {
+    worksheet.addRow(row)
+  })
+
+  const outputDir = path.dirname(outputPath)
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true })
+  }
+
+  await workbook.xlsx.writeFile(outputPath)
+}
+
+/**
+ * Main execution: parse args, extract missing translations, and export to Excel
+ */
+async function main() {
+  const { outputPath } = parseArgs()
+  const baseDir = path.resolve(__dirname, '../src/server')
+
+  if (!fs.existsSync(baseDir)) {
+    throw new Error(`Directory ${baseDir} does not exist`)
+  }
+
+  const missingTranslations = extractMissingTranslations(baseDir)
+
+  await writeToExcel(missingTranslations, outputPath)
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `✅ Exported ${missingTranslations.length} missing translation${missingTranslations.length !== 1 ? 's' : ''} → ${outputPath}`
+  )
+}
+
+try {
+  await main()
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.error(`❌ ${error.message}`)
+  process.exitCode = 1
+}
