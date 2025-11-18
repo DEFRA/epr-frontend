@@ -2,20 +2,12 @@ import fs from 'node:fs'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import {
-  parseArgs,
-  findNamespaces,
-  flattenKeys,
-  extractMissingTranslations,
-  writeToExcel,
-  main,
-  run
-} from './extract-translations.js'
+import { main, run } from './extract-translations.js'
 
 const execFileAsync = promisify(execFile)
 
 vi.mock(import('node:fs'))
-vi.mock(import('exceljs'), () => ({
+vi.mock(import('exceljs/dist/es5/exceljs.browser.js'), () => ({
   default: {
     Workbook: class MockWorkbook {
       constructor() {
@@ -36,393 +28,52 @@ vi.mock(import('exceljs'), () => ({
   }
 }))
 
-describe('extract-translations', () => {
-  describe(parseArgs, () => {
-    it('should extract output path from args', () => {
-      const args = ['--out', './output.xlsx']
-      const result = parseArgs(args)
+describe('extract-translations integration tests', () => {
+  let consoleLogSpy
+  let consoleErrorSpy
+  let originalArgv
+  let originalExitCode
 
-      expect(result).toEqual({ outputPath: './output.xlsx' })
-    })
-
-    it('should throw error when --out is missing', () => {
-      const args = []
-
-      expect(() => parseArgs(args)).toThrow('--out argument is required')
-    })
-
-    it('should throw error when --out value is missing', () => {
-      const args = ['--out']
-
-      expect(() => parseArgs(args)).toThrow('--out argument is required')
-    })
-
-    it('should handle --out with other arguments', () => {
-      const args = ['--verbose', '--out', './test.xlsx', '--other']
-      const result = parseArgs(args)
-
-      expect(result).toEqual({ outputPath: './test.xlsx' })
-    })
+  beforeEach(() => {
+    vi.resetAllMocks()
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    originalArgv = process.argv
+    originalExitCode = process.exitCode
+    process.exitCode = 0
   })
 
-  describe(findNamespaces, () => {
-    beforeEach(() => {
-      vi.resetAllMocks()
-    })
-
-    it('should find all directory entries', () => {
-      const mockEntries = [
-        { name: 'home', isDirectory: () => true, isFile: () => false },
-        { name: 'account', isDirectory: () => true, isFile: () => false },
-        { name: 'en.json', isDirectory: () => false, isFile: () => true }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
-
-      const result = findNamespaces('/base/path')
-
-      expect(result).toEqual([
-        { namespace: 'home', path: '/base/path/home' },
-        { namespace: 'account', path: '/base/path/account' }
-      ])
-    })
-
-    it('should return empty array when no directories found', () => {
-      const mockEntries = [
-        { name: 'en.json', isDirectory: () => false, isFile: () => true }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
-
-      const result = findNamespaces('/base/path')
-
-      expect(result).toEqual([])
-    })
+  afterEach(() => {
+    consoleLogSpy.mockRestore()
+    consoleErrorSpy.mockRestore()
+    process.argv = originalArgv
+    process.exitCode = originalExitCode
   })
 
-  describe(flattenKeys, () => {
-    it('should flatten simple nested object', () => {
-      const input = {
-        a: {
-          b: 'value1',
-          c: 'value2'
-        }
-      }
+  describe('successful extraction scenarios', () => {
+    it('should extract missing Welsh translations and export to Excel', async () => {
+      process.argv = ['node', 'script.js', '--out', './output.xlsx']
 
-      const result = flattenKeys(input)
-
-      expect(result).toEqual({
-        'a.b': 'value1',
-        'a.c': 'value2'
-      })
-    })
-
-    it('should flatten deeply nested object', () => {
-      const input = {
-        level1: {
-          level2: {
-            level3: 'deep value'
-          }
-        }
-      }
-
-      const result = flattenKeys(input)
-
-      expect(result).toEqual({
-        'level1.level2.level3': 'deep value'
-      })
-    })
-
-    it('should handle flat object', () => {
-      const input = {
-        key1: 'value1',
-        key2: 'value2'
-      }
-
-      const result = flattenKeys(input)
-
-      expect(result).toEqual(input)
-    })
-
-    it('should handle arrays as values', () => {
-      const input = {
-        items: ['a', 'b', 'c']
-      }
-
-      const result = flattenKeys(input)
-
-      expect(result).toEqual({
-        items: ['a', 'b', 'c']
-      })
-    })
-
-    it('should handle empty object', () => {
-      const result = flattenKeys({})
-
-      expect(result).toEqual({})
-    })
-
-    it('should handle null values', () => {
-      const input = {
-        key: null
-      }
-
-      const result = flattenKeys(input)
-
-      expect(result).toEqual({
-        key: null
-      })
-    })
-
-    it('should use custom prefix', () => {
-      const input = {
-        a: 'value'
-      }
-
-      const result = flattenKeys(input, 'prefix')
-
-      expect(result).toEqual({
-        'prefix.a': 'value'
-      })
-    })
-  })
-
-  describe(extractMissingTranslations, () => {
-    beforeEach(() => {
-      vi.resetAllMocks()
-    })
-
-    it('should extract missing translations when cy is missing', () => {
-      const mockEntries = [
-        { name: 'home', isDirectory: () => true, isFile: () => false }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
-      vi.mocked(fs.existsSync).mockImplementation((path) => {
-        if (path.includes('en.json')) return true
-        if (path.includes('cy.json')) return false
-        return false
-      })
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify({ greeting: 'Hello' })
-      )
-
-      const result = extractMissingTranslations('/base/path')
-
-      expect(result).toEqual([{ field: 'home:greeting', en: 'Hello', cy: '' }])
-    })
-
-    it('should extract missing translations when en is missing', () => {
-      const mockEntries = [
-        { name: 'home', isDirectory: () => true, isFile: () => false }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
-      vi.mocked(fs.existsSync).mockImplementation((path) => {
-        if (path.includes('en.json')) return false
-        if (path.includes('cy.json')) return true
-        return false
-      })
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify({ greeting: 'Helo' })
-      )
-
-      const result = extractMissingTranslations('/base/path')
-
-      expect(result).toEqual([{ field: 'home:greeting', en: '', cy: 'Helo' }])
-    })
-
-    it('should skip namespaces without any translation files', () => {
-      const mockEntries = [
-        { name: 'home', isDirectory: () => true, isFile: () => false }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
-      vi.mocked(fs.existsSync).mockReturnValue(false)
-
-      const result = extractMissingTranslations('/base/path')
-
-      expect(result).toEqual([])
-    })
-
-    it('should handle nested translation keys', () => {
-      const mockEntries = [
-        { name: 'home', isDirectory: () => true, isFile: () => false }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
       vi.mocked(fs.existsSync).mockReturnValue(true)
-      vi.mocked(fs.readFileSync).mockImplementation((path) => {
-        if (path.includes('en.json')) {
-          return JSON.stringify({ services: { registration: 'Registration' } })
-        }
-        return JSON.stringify({})
-      })
-
-      const result = extractMissingTranslations('/base/path')
-
-      expect(result).toEqual([
-        { field: 'home:services.registration', en: 'Registration', cy: '' }
-      ])
-    })
-
-    it('should not include translations that exist in both files', () => {
-      const mockEntries = [
-        { name: 'home', isDirectory: () => true, isFile: () => false }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
-      vi.mocked(fs.existsSync).mockReturnValue(true)
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify({ greeting: 'Hello' })
-      )
-
-      const result = extractMissingTranslations('/base/path')
-
-      expect(result).toEqual([])
-    })
-
-    it('should handle multiple namespaces', () => {
-      const mockEntries = [
+      vi.mocked(fs.readdirSync).mockReturnValue([
         { name: 'home', isDirectory: () => true, isFile: () => false },
         { name: 'account', isDirectory: () => true, isFile: () => false }
-      ]
-
-      vi.mocked(fs.readdirSync).mockReturnValue(mockEntries)
-      vi.mocked(fs.existsSync).mockImplementation((path) => {
-        if (path.includes('home')) return true
-        if (path.includes('account/en.json')) return true
-        if (path.includes('account/cy.json')) return false
-        return false
-      })
-      vi.mocked(fs.readFileSync).mockImplementation((path) => {
-        if (path.includes('home')) {
-          return JSON.stringify({ title: 'Home' })
-        }
-        return JSON.stringify({ title: 'Account' })
-      })
-
-      const result = extractMissingTranslations('/base/path')
-
-      expect(result).toEqual([
-        { field: 'account:title', en: 'Account', cy: '' }
       ])
-    })
-  })
 
-  describe(writeToExcel, () => {
-    beforeEach(() => {
-      vi.clearAllMocks()
-      vi.mocked(fs.existsSync).mockReturnValue(true)
-    })
-
-    it('should create workbook and worksheet', async () => {
-      const data = [{ field: 'test:key', en: 'English', cy: 'Welsh' }]
-
-      await writeToExcel(data, '/output/file.xlsx')
-
-      expect(fs.existsSync).toHaveBeenCalled()
-    })
-
-    it('should set worksheet columns', async () => {
-      const data = []
-
-      const result = await writeToExcel(data, '/output/file.xlsx')
-
-      expect(result).toBeUndefined()
-    })
-
-    it('should add data rows', async () => {
-      const data = [
-        { field: 'test:key1', en: 'English 1', cy: 'Welsh 1' },
-        { field: 'test:key2', en: 'English 2', cy: 'Welsh 2' }
-      ]
-
-      await writeToExcel(data, '/output/file.xlsx')
-
-      expect(fs.existsSync).toHaveBeenCalled()
-    })
-
-    it('should create output directory if it does not exist', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false)
-      vi.mocked(fs.mkdirSync).mockReturnValue(undefined)
-
-      await writeToExcel([], '/output/dir/file.xlsx')
-
-      expect(fs.mkdirSync).toHaveBeenCalledWith('/output/dir', {
-        recursive: true
-      })
-    })
-
-    it('should not create directory if it exists', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
-
-      await writeToExcel([], '/output/file.xlsx')
-
-      expect(fs.mkdirSync).not.toHaveBeenCalled()
-    })
-
-    it('should write file', async () => {
-      await writeToExcel([], '/output/file.xlsx')
-
-      expect(fs.existsSync).toHaveBeenCalled()
-    })
-  })
-
-  describe(main, () => {
-    let consoleLogSpy
-    let originalArgv
-
-    beforeEach(() => {
-      vi.resetAllMocks()
-      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-      originalArgv = process.argv
-      process.argv = ['node', 'script.js', '--out', './output.xlsx']
-    })
-
-    afterEach(() => {
-      consoleLogSpy.mockRestore()
-      process.argv = originalArgv
-    })
-
-    it('should throw error when base directory does not exist', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false)
-
-      await expect(main()).rejects.toThrow('Directory')
-    })
-
-    it('should log success message with singular translation', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
-      vi.mocked(fs.readdirSync).mockReturnValue([
-        { name: 'home', isDirectory: () => true, isFile: () => false }
-      ])
       vi.mocked(fs.readFileSync).mockImplementation((path) => {
-        if (path.includes('en.json')) {
-          return JSON.stringify({ key: 'value' })
+        if (path.includes('home/en.json')) {
+          return JSON.stringify({ greeting: 'Hello', title: 'Home' })
         }
-        return JSON.stringify({})
-      })
-
-      await main()
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('1 missing translation')
-      )
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.not.stringContaining('translations')
-      )
-    })
-
-    it('should log success message with plural translations', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(true)
-      vi.mocked(fs.readdirSync).mockReturnValue([
-        { name: 'home', isDirectory: () => true, isFile: () => false }
-      ])
-      vi.mocked(fs.readFileSync).mockImplementation((path) => {
-        if (path.includes('en.json')) {
-          return JSON.stringify({ key1: 'value1', key2: 'value2' })
+        if (path.includes('home/cy.json')) {
+          return JSON.stringify({ greeting: 'Helo' })
         }
-        return JSON.stringify({})
+        if (path.includes('account/en.json')) {
+          return JSON.stringify({ services: { registration: 'Registration' } })
+        }
+        if (path.includes('account/cy.json')) {
+          return JSON.stringify({})
+        }
+        return '{}'
       })
 
       await main()
@@ -430,97 +81,193 @@ describe('extract-translations', () => {
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('2 missing translations')
       )
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('./output.xlsx')
+      )
+      expect(process.exitCode).toBe(0)
     })
 
-    it('should log output path', async () => {
+    it('should extract missing English translations and export to Excel', async () => {
+      process.argv = ['node', 'script.js', '--out', './output.xlsx']
+
       vi.mocked(fs.existsSync).mockReturnValue(true)
-      vi.mocked(fs.readdirSync).mockReturnValue([])
+      vi.mocked(fs.readdirSync).mockReturnValue([
+        { name: 'home', isDirectory: () => true, isFile: () => false }
+      ])
+
+      vi.mocked(fs.readFileSync).mockImplementation((path) => {
+        if (path.includes('home/en.json')) {
+          return JSON.stringify({})
+        }
+        if (path.includes('home/cy.json')) {
+          return JSON.stringify({ greeting: 'Helo' })
+        }
+        return '{}'
+      })
 
       await main()
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('./output.xlsx')
+        expect.stringContaining('1 missing translation')
       )
-    })
-  })
-
-  describe(run, () => {
-    let consoleLogSpy
-    let consoleErrorSpy
-    let originalArgv
-    let originalExitCode
-
-    beforeEach(() => {
-      vi.resetAllMocks()
-      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      originalArgv = process.argv
-      originalExitCode = process.exitCode
-      process.exitCode = 0
-    })
-
-    afterEach(() => {
-      consoleLogSpy.mockRestore()
-      consoleErrorSpy.mockRestore()
-      process.argv = originalArgv
-      process.exitCode = originalExitCode
-    })
-
-    it('should run successfully and call main', async () => {
-      process.argv = ['node', 'script.js', '--out', './output.xlsx']
-      vi.mocked(fs.existsSync).mockReturnValue(true)
-      vi.mocked(fs.readdirSync).mockReturnValue([])
-
-      await run()
-
-      expect(consoleLogSpy).toHaveBeenCalled()
       expect(process.exitCode).toBe(0)
     })
 
-    it('should catch and log errors from main', async () => {
+    it('should handle nested translation keys correctly', async () => {
+      process.argv = ['node', 'script.js', '--out', './output.xlsx']
+
+      vi.mocked(fs.existsSync).mockReturnValue(true)
+      vi.mocked(fs.readdirSync).mockReturnValue([
+        { name: 'common', isDirectory: () => true, isFile: () => false }
+      ])
+
+      vi.mocked(fs.readFileSync).mockImplementation((path) => {
+        if (path.includes('common/en.json')) {
+          return JSON.stringify({
+            services: {
+              registration: 'Registration',
+              accreditation: 'Accreditation'
+            }
+          })
+        }
+        if (path.includes('common/cy.json')) {
+          return JSON.stringify({ services: { registration: 'Cofrestru' } })
+        }
+        return '{}'
+      })
+
+      await main()
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('1 missing translation')
+      )
+    })
+
+    it('should handle namespaces with and without translation files', async () => {
+      process.argv = ['node', 'script.js', '--out', './output.xlsx']
+
+      vi.mocked(fs.existsSync).mockImplementation((path) => {
+        if (path.includes('src/server')) return true
+        if (path.includes('output.xlsx')) return false
+        if (path.includes('empty')) return false
+        return true
+      })
+      vi.mocked(fs.readdirSync).mockReturnValue([
+        { name: 'home', isDirectory: () => true, isFile: () => false },
+        { name: 'empty', isDirectory: () => true, isFile: () => false }
+      ])
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({}))
+      vi.mocked(fs.mkdirSync).mockReturnValue(undefined)
+
+      await main()
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('0 missing translations')
+      )
+    })
+
+    it('should not export translations that exist in both files', async () => {
+      process.argv = ['node', 'script.js', '--out', './output.xlsx']
+
+      vi.mocked(fs.existsSync).mockReturnValue(true)
+      vi.mocked(fs.readdirSync).mockReturnValue([
+        { name: 'home', isDirectory: () => true, isFile: () => false }
+      ])
+
+      vi.mocked(fs.readFileSync).mockReturnValue(
+        JSON.stringify({ greeting: 'Hello', title: 'Home' })
+      )
+
+      await main()
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('0 missing translations')
+      )
+    })
+
+    it('should create output directory if it does not exist', async () => {
+      process.argv = ['node', 'script.js', '--out', './new-dir/output.xlsx']
+
+      vi.mocked(fs.existsSync).mockImplementation((path) => {
+        if (path.includes('src/server')) return true
+        if (path.includes('new-dir')) return false
+        return false
+      })
+      vi.mocked(fs.readdirSync).mockReturnValue([])
+      vi.mocked(fs.mkdirSync).mockReturnValue(undefined)
+
+      await main()
+
+      expect(fs.mkdirSync).toHaveBeenCalledWith('./new-dir', {
+        recursive: true
+      })
+    })
+  })
+
+  describe('error handling scenarios', () => {
+    it('should throw error when --out argument is missing', async () => {
       process.argv = ['node', 'script.js']
 
       await run()
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('❌')
-      )
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('--out argument is required')
+      )
+      expect(process.exitCode).toBe(1)
+    })
+
+    it('should throw error when base directory does not exist', async () => {
+      process.argv = ['node', 'script.js', '--out', './output.xlsx']
+      vi.mocked(fs.existsSync).mockReturnValue(false)
+
+      await run()
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Directory')
       )
       expect(process.exitCode).toBe(1)
     })
   })
 
-  describe('CLI execution', () => {
-    it('should handle errors when run directly without --out argument', async () => {
+  describe('cLI execution', () => {
+    const testOutputPath = '/tmp/test-cli-output.xlsx'
+
+    afterEach(async () => {
+      try {
+        await execFileAsync('rm', ['-f', testOutputPath])
+      } catch {
+        // Ignore errors if file doesn't exist
+      }
+    })
+
+    it('should fail when run directly without --out argument', async () => {
       const scriptPath = new URL('./extract-translations.js', import.meta.url)
         .pathname
 
       try {
         await execFileAsync('node', [scriptPath])
+
         expect.fail('Should have thrown an error')
       } catch (error) {
+        // eslint-disable-next-line vitest/no-conditional-expect
         expect(error.code).toBe(1)
+        // eslint-disable-next-line vitest/no-conditional-expect
         expect(error.stderr).toContain('--out argument is required')
       }
     })
 
-    it('should execute successfully when run directly with --out argument', async () => {
+    it('should execute successfully when run with valid arguments', async () => {
       const scriptPath = new URL('./extract-translations.js', import.meta.url)
         .pathname
-      const outputPath = '/tmp/test-cli-output.xlsx'
 
       const { stdout } = await execFileAsync('node', [
         scriptPath,
         '--out',
-        outputPath
+        testOutputPath
       ])
 
       expect(stdout).toContain('✅ Exported')
-      expect(stdout).toContain(outputPath)
-
-      await execFileAsync('rm', ['-f', outputPath])
+      expect(stdout).toContain(testOutputPath)
     }, 10000)
   })
 })

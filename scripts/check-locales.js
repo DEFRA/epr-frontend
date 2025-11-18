@@ -1,27 +1,22 @@
-import fs from 'fs'
-import path from 'path'
+import {
+  findNamespaces,
+  readTranslationFiles
+} from '../src/utils/translation/translation-utils.js'
 
 const baseDir = 'src/server'
 
-const namespaces = fs
-  .readdirSync(baseDir, { withFileTypes: true })
-  .filter((d) => d.isDirectory())
-  .map((d) => path.join(baseDir, d.name))
+const namespaces = findNamespaces(baseDir)
 
 const missing = []
 
-for (const ns of namespaces) {
-  const enPath = path.join(ns, 'en.json')
-  const cyPath = path.join(ns, 'cy.json')
+for (const { namespace, path: nsPath } of namespaces) {
+  const { enExists, cyExists } = readTranslationFiles(nsPath)
 
-  const hasEn = fs.existsSync(enPath)
-  const hasCy = fs.existsSync(cyPath)
-
-  if (!hasEn && !hasCy) {
+  if (!enExists && !cyExists) {
     continue
   }
-  if (!hasEn || !hasCy) {
-    missing.push({ namespace: path.basename(ns), en: hasEn, cy: hasCy })
+  if (!enExists || !cyExists) {
+    missing.push({ namespace, en: enExists, cy: cyExists })
   }
 }
 

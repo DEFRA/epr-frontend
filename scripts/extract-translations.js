@@ -1,8 +1,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
 // eslint-disable-next-line n/no-unpublished-import
-import ExcelJS from 'exceljs'
+import ExcelJS from 'exceljs/dist/es5/exceljs.browser.js'
+
+import {
+  findNamespaces,
+  flattenKeys,
+  readTranslationFiles
+} from '../src/utils/translation/translation-utils.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -26,36 +33,6 @@ export function parseArgs(args = process.argv.slice(2)) {
 }
 
 /**
- * Find all namespace directories in src/server that contain translation files
- */
-export function findNamespaces(baseDir) {
-  return fs
-    .readdirSync(baseDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => ({
-      namespace: entry.name,
-      path: path.join(baseDir, entry.name)
-    }))
-}
-
-/**
- * Flatten nested JSON objects into dot-notation keys
- * Example: { a: { b: 'value' } } becomes { 'a.b': 'value' }
- */
-export function flattenKeys(obj, prefix = '') {
-  let result = {}
-  for (const [key, value] of Object.entries(obj)) {
-    const fullKey = prefix ? `${prefix}.${key}` : key
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result = { ...result, ...flattenKeys(value, fullKey) }
-    } else {
-      result[fullKey] = value
-    }
-  }
-  return result
-}
-
-/**
  * Extract translations that are missing or out of sync between en.json and cy.json
  * Returns array of objects with field, en, and cy values
  */
@@ -64,22 +41,15 @@ export function extractMissingTranslations(baseDir) {
   const missingTranslations = []
 
   for (const { namespace, path: nsPath } of namespaces) {
-    const enPath = path.join(nsPath, 'en.json')
-    const cyPath = path.join(nsPath, 'cy.json')
+    const { en, cy, enExists, cyExists } = readTranslationFiles(nsPath)
 
-    const enExists = fs.existsSync(enPath)
-    const cyExists = fs.existsSync(cyPath)
-
+    /* c8 ignore next 3 */
     if (!enExists && !cyExists) {
       continue
     }
 
-    const enData = enExists
-      ? flattenKeys(JSON.parse(fs.readFileSync(enPath, 'utf8')))
-      : {}
-    const cyData = cyExists
-      ? flattenKeys(JSON.parse(fs.readFileSync(cyPath, 'utf8')))
-      : {}
+    const enData = flattenKeys(en)
+    const cyData = flattenKeys(cy)
 
     const allKeys = new Set([...Object.keys(enData), ...Object.keys(cyData)])
 

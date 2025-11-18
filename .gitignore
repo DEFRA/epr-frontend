@@ -10,5 +10,5 @@ coverage
 .cache
 .envrc
 tsconfig.tsbuildinfo
-*-export.xlsx
+*.xlsx
 translations-*.xlsx

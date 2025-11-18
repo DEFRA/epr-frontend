@@ -1,30 +1,26 @@
 import { languages } from '#server/common/constants/languages.js'
-import fs from 'fs'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import middleware from 'i18next-http-middleware'
 import path from 'path'
 
+import {
+  findNamespaces as findAllNamespaces,
+  readTranslationFiles
+} from '#utils/translation/translation-utils.js'
+
 /**
- * Recursively find namespaces by looking for en.json or cy.json files
+ * Find namespaces that have translation files (en.json or cy.json)
  */
 function findNamespaces(baseDir) {
-  const namespaces = new Set()
+  const allNamespaces = findAllNamespaces(baseDir)
 
-  const entries = fs.readdirSync(baseDir, { withFileTypes: true })
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const dirPath = path.join(baseDir, entry.name)
-      const files = fs.readdirSync(dirPath)
-
-      if (files.some((file) => /(en|cy)\.json$/.test(file))) {
-        const ns = entry.name
-        namespaces.add(ns)
-      }
-    }
-  }
-
-  return Array.from(namespaces)
+  return allNamespaces
+    .filter(({ path: nsPath }) => {
+      const { enExists, cyExists } = readTranslationFiles(nsPath)
+      return enExists || cyExists
+    })
+    .map(({ namespace }) => namespace)
 }
 
 export async function initI18n() {
