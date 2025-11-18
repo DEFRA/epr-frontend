@@ -1,8 +1,8 @@
-import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { createServer } from '#server/index.js'
+import { StatusCodes } from 'http-status-codes'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
 
 vi.mock(
@@ -87,13 +87,7 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('terminal states', () => {
-    test('status: validated - should show check page and stop polling', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
+    const expectCheckPageContent = (result) => {
       expect(result).toStrictEqual(
         expect.stringContaining('Check before you submit')
       )
@@ -105,8 +99,19 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Re-upload summary log')
       )
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
+    }
+
+    test('status: validated - should show check page and stop polling', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
       expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
     test('status: submitted - should show check page and stop polling', async () => {
@@ -116,19 +121,10 @@ describe('#summaryLogUploadProgressController', () => {
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      expect(result).toStrictEqual(
-        expect.stringContaining('Check before you submit')
-      )
-      expect(result).toStrictEqual(expect.stringContaining('Compliance'))
-      expect(result).toStrictEqual(expect.stringContaining('Declaration'))
-      expect(result).toStrictEqual(
-        expect.stringContaining('Confirm and submit')
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining('Re-upload summary log')
-      )
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expectCheckPageContent(result)
+
       expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
     test('status: rejected with failureReason - should redirect to upload page with error in session', async () => {
