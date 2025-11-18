@@ -13,6 +13,7 @@ const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
 const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
 const SUCCESS_VIEW_NAME = 'summary-log/success'
+const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
 /**
  * Determines view data based on backend status
@@ -154,7 +155,7 @@ const renderViewForStatus = ({
   summaryLogId,
   pollUrl
 }) => {
-  const PAGE_TITLE = localise('summary-log:pageTitle')
+  const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
   // If validated, show check page
   if (status === backendSummaryLogStatuses.validated) {
@@ -169,7 +170,7 @@ const renderViewForStatus = ({
   // If submitting, show submitting page
   if (status === backendSummaryLogStatuses.submitting) {
     return h.view(SUBMITTING_VIEW_NAME, {
-      pageTitle: localise('summary-log:pageTitle'),
+      pageTitle: localise(PAGE_TITLE_KEY),
       heading: localise('summary-log:submittingHeading'),
       message: localise('summary-log:submittingMessage'),
       isProcessing: true,
@@ -207,7 +208,7 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
     const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const PAGE_TITLE = localise('summary-log:pageTitle')
+    const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
     try {
       const { status, failureReason, accreditationNumber } =
