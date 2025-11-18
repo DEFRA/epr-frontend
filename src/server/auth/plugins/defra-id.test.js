@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defraId } from './defra-id.js'
+import { createDefraId } from './defra-id.js'
 
 vi.mock(import('@hapi/bell'), () => ({
   default: {
@@ -45,6 +45,8 @@ describe('#defraId', () => {
   let mockJwt
   let mockConfig
   let mockBell
+  let mockVerifyToken
+  let defraId
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -61,6 +63,11 @@ describe('#defraId', () => {
 
     const { config } = await import('#config/config.js')
     mockConfig = config
+
+    // Create mock verifyToken function
+    mockVerifyToken = vi.fn((token) => {
+      return jwt.default.token.decode(token)
+    })
 
     // Setup default mock implementations
     mockConfig.get.mockImplementation((key) => {
@@ -119,6 +126,9 @@ describe('#defraId', () => {
       },
       app: {}
     }
+
+    // Create defraId plugin with mock verifyToken
+    defraId = createDefraId(mockVerifyToken)
   })
 
   afterEach(() => {

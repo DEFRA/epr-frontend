@@ -1,8 +1,14 @@
-import jwt from '@hapi/jwt'
 import { addSeconds } from 'date-fns'
 import { getDisplayName } from './display.js'
 import { dropUserSession } from './drop-user-session.js'
 import { getUserSession } from './get-user-session.js'
+
+/**
+ * @import { Request } from '@hapi/hapi'
+ * @import { RefreshedTokens } from '../types/tokens.js'
+ * @import { UserSession } from '../types/session.js'
+ * @import { VerifyToken } from '../types/verify-token.js'
+ */
 
 /**
  * Build a user session object from JWT payload and tokens
@@ -55,43 +61,41 @@ async function removeUserSession(request) {
 }
 
 /**
- * Update user session with refreshed tokens
- * @param {Request} request - Hapi request object
- * @param {RefreshedTokens} refreshedSession - Refreshed session data
- * @returns {Promise<UserSession>}
+ * Create updateUserSession function with verifyToken closure
+ * @param {VerifyToken} verifyToken - Token verification function
+ * @returns {(request: Request, refreshedSession: RefreshedTokens) => Promise<UserSession>} updateUserSession function
  */
-async function updateUserSession(request, refreshedSession) {
-  // Verify id_token signature (OIDC standard for user identity)
-  const payload = request.server.app.verifyToken(refreshedSession.id_token)
-    .decoded.payload
+const createUpdateUserSession = (verifyToken) =>
+  /**
+   * Update user session with refreshed tokens
+   * @param {Request} request - Hapi request object
+   * @param {RefreshedTokens} refreshedSession - Refreshed session data
+   * @returns {Promise<UserSession>}
+   */
+  async function updateUserSession(request, refreshedSession) {
+    const payload = verifyToken(refreshedSession.id_token).decoded.payload
 
-  const { value: authedUser } = await getUserSession(request)
+    const { value: authedUser } = await getUserSession(request)
 
-  /* v8 ignore next - Extreme edge case: session deleted during token refresh (race condition), fallback to empty object */
-  const existingSession = authedUser || {}
+    /* v8 ignore next - Extreme edge case: session deleted during token refresh (race condition), fallback to empty object */
+    const existingSession = authedUser || {}
 
-  const updatedSession = buildSessionFromPayload({
-    payload,
-    tokens: refreshedSession
-  })
+    const updatedSession = buildSessionFromPayload({
+      payload,
+      tokens: refreshedSession
+    })
 
-  const session = {
-    ...existingSession,
-    ...updatedSession
+    const session = {
+      ...existingSession,
+      ...updatedSession
+    }
+
+    await request.server.app.cache.set(
+      request.state.userSession.sessionId,
+      session
+    )
+
+    return session
   }
 
-  await request.server.app.cache.set(
-    request.state.userSession.sessionId,
-    session
-  )
-
-  return session
-}
-
-export { buildSessionFromPayload, removeUserSession, updateUserSession }
-
-/**
- * @import { Request } from '@hapi/hapi'
- * @import { RefreshedTokens } from '../types/tokens.js'
- * @import { UserSession } from '../types/session.js'
- */
+export { buildSessionFromPayload, createUpdateUserSession, removeUserSession }

@@ -2,14 +2,20 @@ import { config } from '#config/config.js'
 import bell from '@hapi/bell'
 import { buildUserProfile } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
-import { getVerifyToken } from '../helpers/verify-token.js'
 
 /**
- * Defra ID OIDC authentication plugin
- * Configures `@hapi/bell` for OAuth2/OIDC flow with Defra ID
- * @satisfies {ServerRegisterPluginObject<void>}
+ * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { BellCredentials, OAuthTokenParams, AzureB2CTokenParams } from '../types/auth-types.js'
+ * @import { VerifyToken } from '../types/verify-token.js'
  */
-const defraId = {
+
+/**
+ * Create Defra ID OIDC authentication plugin
+ * Factory function that creates a plugin with verifyToken closure
+ * @param {VerifyToken} verifyToken - Token verification function
+ * @returns {ServerRegisterPluginObject<void>}
+ */
+const createDefraId = (verifyToken) => ({
   plugin: {
     name: 'defra-id',
     register: async (server) => {
@@ -24,10 +30,6 @@ const defraId = {
       const oidcConf = await getOidcConfiguration(
         config.get('defraId.oidcConfigurationUrl')
       )
-      const verifyToken = await getVerifyToken(oidcConf)
-
-      // Store verifyToken on server.app for use in token refresh flow
-      server.app.verifyToken = verifyToken
 
       // Parse authorization endpoint to extract any existing query parameters
       // Azure AD B2C may include policy parameters like ?p=policy_name
@@ -69,7 +71,6 @@ const defraId = {
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
-            // Decode JWT and extract user profile
             const payload = verifyToken(params.id_token).decoded.payload
 
             credentials.profile = buildUserProfile({
@@ -91,11 +92,6 @@ const defraId = {
       })
     }
   }
-}
+})
 
-export { defraId }
-
-/**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- * @import { BellCredentials, OAuthTokenParams, AzureB2CTokenParams } from '../types/auth-types.js'
- */
+export { createDefraId }

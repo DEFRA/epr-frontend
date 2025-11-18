@@ -5,7 +5,14 @@ import Iron from '@hapi/iron'
 import jwt from '@hapi/jwt'
 import { subMinutes } from 'date-fns'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+
+// Mock getVerifyToken to return a simple decoder instead of actual verification
+vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
+  getVerifyToken: vi.fn(async () => {
+    return (token) => jwt.token.decode(token)
+  })
+}))
 
 describe('#sessionCookie - integration', () => {
   /** @type {import('@hapi/hapi').Server} */
@@ -84,12 +91,6 @@ describe('#sessionCookie - integration', () => {
     // Create and initialize server
     server = await createServer()
     await server.initialize()
-
-    // Mock verifyToken to simply decode without verifying signature
-    // This allows tests to use fake JWTs without needing valid signatures
-    server.app.verifyToken = (token) => {
-      return jwt.token.decode(token)
-    }
   })
 
   afterAll(async () => {
