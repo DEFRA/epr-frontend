@@ -8,8 +8,13 @@ import { getUserSession } from './get-user-session.js'
  * @returns {Promise<Response>}
  */
 async function refreshAccessToken(request) {
-  const authedUser = await getUserSession(request)
-  const refreshToken = authedUser?.refreshToken ?? null
+  const { ok, value: authedUser } = await getUserSession(request)
+
+  if (!ok) {
+    throw new Error('Cannot refresh token: no user session found')
+  }
+
+  const refreshToken = authedUser.refreshToken ?? null
   const clientId = config.get('defraId.clientId')
   const clientSecret = config.get('defraId.clientSecret')
 

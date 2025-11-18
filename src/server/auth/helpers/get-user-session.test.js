@@ -30,12 +30,15 @@ describe('#getUserSession', () => {
       expect(mockRequest.server.app.cache.get).toHaveBeenCalledExactlyOnceWith(
         'session-123'
       )
-      expect(result).toStrictEqual(mockSession)
+      expect(result).toStrictEqual({
+        ok: true,
+        value: mockSession
+      })
     })
   })
 
   describe('when session does not exist', () => {
-    test('should return empty object when no userSession in state', async () => {
+    test('should return not found when no userSession in state', async () => {
       const mockRequest = {
         state: {},
         server: {
@@ -50,10 +53,10 @@ describe('#getUserSession', () => {
       const result = await getUserSession(mockRequest)
 
       expect(mockRequest.server.app.cache.get).not.toHaveBeenCalled()
-      expect(result).toStrictEqual({})
+      expect(result).toStrictEqual({ ok: false })
     })
 
-    test('should return empty object when no sessionId in userSession', async () => {
+    test('should return not found when no sessionId in userSession', async () => {
       const mockRequest = {
         state: {
           userSession: {}
@@ -70,10 +73,10 @@ describe('#getUserSession', () => {
       const result = await getUserSession(mockRequest)
 
       expect(mockRequest.server.app.cache.get).not.toHaveBeenCalled()
-      expect(result).toStrictEqual({})
+      expect(result).toStrictEqual({ ok: false })
     })
 
-    test('should return empty object when state is undefined', async () => {
+    test('should return not found when state is undefined', async () => {
       const mockRequest = {
         server: {
           app: {
@@ -87,7 +90,7 @@ describe('#getUserSession', () => {
       const result = await getUserSession(mockRequest)
 
       expect(mockRequest.server.app.cache.get).not.toHaveBeenCalled()
-      expect(result).toStrictEqual({})
+      expect(result).toStrictEqual({ ok: false })
     })
   })
 })

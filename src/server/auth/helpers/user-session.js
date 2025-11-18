@@ -28,11 +28,14 @@ async function updateUserSession(request, refreshedSession) {
   const expiresInSeconds = refreshedSession.expires_in
   const expiresInMilliSeconds = expiresInSeconds * 1000
   const expiresAt = addSeconds(new Date(), expiresInSeconds)
-  const authedUser = await getUserSession(request)
+  const { value: authedUser } = await getUserSession(request)
   const displayName = getDisplayName(payload)
 
+  // c8 ignore next - Extreme edge case: session deleted during token refresh (race condition), fallback to empty object
+  const existingSession = authedUser || {}
+
   await request.server.app.cache.set(request.state.userSession.sessionId, {
-    ...authedUser,
+    ...existingSession,
     id: payload.sub,
     correlationId: payload.correlationId,
     sessionId: payload.sessionId,

@@ -23,6 +23,10 @@ describe('#homeController', () => {
     })
 
     it('should provide expected response with correct status', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: false
+      })
+
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: '/'
@@ -91,7 +95,10 @@ describe('#homeController', () => {
       'when user is not authenticated (lang: $lang)',
       ({ heading, loginUrl, startNow, title, url }) => {
         it('should provide expected response with correct status', async () => {
-          vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
+          vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+            found: false,
+            data: null
+          })
 
           const { result, statusCode } = await server.inject({
             method: 'GET',
@@ -107,7 +114,10 @@ describe('#homeController', () => {
         })
 
         it('should render page with login link and guest welcome', async () => {
-          vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
+          vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+            found: false,
+            data: null
+          })
 
           const { result } = await server.inject({
             method: 'GET',

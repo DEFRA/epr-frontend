@@ -15,7 +15,10 @@ describe('#refreshAccessToken', () => {
       tokenUrl: 'http://localhost:3200/token'
     }
 
-    vi.mocked(getUserSession).mockResolvedValue(mockAuthedUser)
+    vi.mocked(getUserSession).mockResolvedValue({
+      ok: true,
+      value: mockAuthedUser
+    })
 
     const mockConfig = {
       get: vi.fn((key) => {
@@ -86,7 +89,10 @@ describe('#refreshAccessToken', () => {
       tokenUrl: 'http://localhost:3200/token'
     }
 
-    vi.mocked(getUserSession).mockResolvedValue(mockAuthedUser)
+    vi.mocked(getUserSession).mockResolvedValue({
+      ok: true,
+      value: mockAuthedUser
+    })
 
     const mockConfig = {
       get: vi.fn((key) => {
@@ -125,7 +131,10 @@ describe('#refreshAccessToken', () => {
       tokenUrl: 'http://localhost:3200/token'
     }
 
-    vi.mocked(getUserSession).mockResolvedValue(mockAuthedUser)
+    vi.mocked(getUserSession).mockResolvedValue({
+      ok: true,
+      value: mockAuthedUser
+    })
 
     const mockConfig = {
       get: vi.fn((key) => {
@@ -157,5 +166,21 @@ describe('#refreshAccessToken', () => {
     const params = fetchCall[1].body
 
     expect(params.get('refresh_token')).toBe('null')
+  })
+
+  test('should throw error when getUserSession returns no session', async () => {
+    vi.mocked(getUserSession).mockResolvedValue({ ok: false })
+
+    const mockRequest = {
+      logger: {
+        info: vi.fn()
+      }
+    }
+
+    await expect(refreshAccessToken(mockRequest)).rejects.toThrow(
+      'Cannot refresh token: no user session found'
+    )
+
+    expect(mockRequest.logger.info).not.toHaveBeenCalled()
   })
 })

@@ -29,7 +29,11 @@ const sessionCookie = {
         },
         keepAlive: true,
         validate: async (request, session) => {
-          const authedUser = await getUserSession(request)
+          const { ok, value: authedUser } = await getUserSession(request)
+
+          if (!ok) {
+            return { isValid: false }
+          }
 
           // Check if token will expire in less than 1 minute
           const tokenHasExpired = isPast(
@@ -57,18 +61,15 @@ const sessionCookie = {
 
           const userSession = await server.app.cache.get(session.sessionId)
 
-          // FIXME remove ignore and fix logic
-          /* c8 ignore next */
+          /* c8 ignore else - Extreme edge case: session deleted between first lookup and this second lookup (race condition) */
           if (userSession) {
             return {
               isValid: true,
               credentials: userSession
             }
+          } else {
+            return { isValid: false }
           }
-
-          // FIXME remove ignore and fix logic
-          /* c8 ignore next */
-          return { isValid: false }
         }
       })
 

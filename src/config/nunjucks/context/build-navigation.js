@@ -1,5 +1,3 @@
-import { isEmpty } from 'lodash-es'
-
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
  */
@@ -63,10 +61,10 @@ const logout = ({ localiseUrl, t: localise }) => {
 
 /**
  * @param {I18nRequest | null} request
- * @param {Partial<UserSession>} userSession
+ * @param {Partial<UserSession | null>} userSession
  */
 export function buildNavigation(request, userSession) {
-  if (!request || isEmpty(userSession)) {
+  if (!request || !userSession) {
     return []
   }
 

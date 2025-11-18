@@ -23,6 +23,10 @@ describe('#accountController', () => {
     })
 
     test('should provide expected response with correct status', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: false
+      })
+
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: '/account'
@@ -65,7 +69,10 @@ describe('#accountController', () => {
 
     describe('when user is not authenticated', () => {
       test('should provide expected response with correct status', async () => {
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          found: false,
+          data: null
+        })
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -82,7 +89,10 @@ describe('#accountController', () => {
       })
 
       test('should render page with login link and guest welcome', async () => {
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({})
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          found: false,
+          data: null
+        })
 
         const { result } = await server.inject({
           method: 'GET',
@@ -108,9 +118,10 @@ describe('#accountController', () => {
           userId: 'user-123'
         }
 
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue(
-          mockUserSession
-        )
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          ok: true,
+          value: mockUserSession
+        })
 
         const { result } = await server.inject({
           method: 'GET',

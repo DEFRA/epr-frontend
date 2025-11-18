@@ -463,5 +463,29 @@ describe('#sessionCookie - integration', () => {
         mockOidcServer.resetHandlers()
       }
     )
+
+    it('should return invalid when session not found in cache', async () => {
+      // Create a cookie with a sessionId that doesn't exist in cache
+      const nonExistentSessionId = 'non-existent-session-id'
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId: nonExistentSessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      // Make an authenticated request with the cookie
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      // Should return 401 when session not found
+      expect(response.statusCode).toBe(401)
+    })
   })
 })

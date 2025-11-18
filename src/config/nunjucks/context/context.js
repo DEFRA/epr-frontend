@@ -45,14 +45,14 @@ export async function context(request) {
     }
   }
 
-  const authedUser = request ? await getUserSession(request) : null
+  const { value: authedUser } = await getUserSession(request)
 
   return {
     assetPath: `${assetPath}/assets`,
-    authedUser,
+    authedUser: authedUser ?? null,
     breadcrumbs: [],
     isDefraIdEnabled: isDefraIdEnabled(),
-    navigation: buildNavigation(request, authedUser),
+    navigation: buildNavigation(request, authedUser ?? null),
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     ...getI18nContext(request),
