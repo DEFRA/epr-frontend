@@ -1,5 +1,5 @@
+import { buildSessionFromProfile } from '#server/auth/helpers/build-session.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
-import { addSeconds } from 'date-fns'
 import { randomUUID } from 'node:crypto'
 
 /**
@@ -15,19 +15,15 @@ const controller = {
   handler: async (request, h) => {
     if (request.auth.isAuthenticated) {
       const { profile } = request.auth.credentials
-      const expiresInSeconds = request.auth.credentials.expiresIn
-      const expiresInMilliSeconds = expiresInSeconds * 1000
-      const expiresAt = addSeconds(new Date(), expiresInSeconds)
+
+      const session = buildSessionFromProfile({
+        credentials: request.auth.credentials,
+        isAuthenticated: request.auth.isAuthenticated,
+        profile
+      })
 
       const sessionId = randomUUID()
-      await request.server.app.cache.set(sessionId, {
-        ...profile,
-        isAuthenticated: request.auth.isAuthenticated,
-        token: request.auth.credentials.token,
-        refreshToken: request.auth.credentials.refreshToken,
-        expiresIn: expiresInMilliSeconds,
-        expiresAt
-      })
+      await request.server.app.cache.set(sessionId, session)
 
       request.cookieAuth.set({ sessionId })
 
@@ -45,4 +41,5 @@ export { controller }
 
 /**
  * @import { ServerRoute } from '@hapi/hapi'
+ * @import { UserProfile, UserSession } from '../types/session.js'
  */

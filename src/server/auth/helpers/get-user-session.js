@@ -1,28 +1,26 @@
-/**
- * @import { Request } from '@hapi/hapi'
- */
+import { err, ok } from '#server/common/helpers/result.js'
 
 /**
- * @typedef {object} UserSession
- * @property {string} displayName
- * @property {string} email
- * @property {string} expiresAt
- * @property {boolean} isAuthenticated
- * @property {string} refreshToken
- * @property {string[]} relationships
- * @property {string} token
- * @property {string} userId
+ * @import { Request } from '@hapi/hapi'
+ * @import { UserSession } from '../types/session.js'
+ * @import { Result } from '#server/common/helpers/result.js'
  */
 
 /**
  * Get user session from cache
  * @param {Request} request - Hapi request object
- * @returns {Promise<Partial<UserSession>>}
+ * @returns {Promise<Result<UserSession>>}
  */
 async function getUserSession(request) {
-  return request.state?.userSession?.sessionId
-    ? await request.server.app.cache.get(request.state.userSession.sessionId)
-    : {}
+  if (!request.state?.userSession?.sessionId) {
+    return err()
+  }
+
+  const session = await request.server.app.cache.get(
+    request.state.userSession.sessionId
+  )
+
+  return session ? ok(session) : err()
 }
 
 export { getUserSession }

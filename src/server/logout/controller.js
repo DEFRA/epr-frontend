@@ -1,7 +1,6 @@
 import { config } from '#config/config.js'
-import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
-import { isEmpty } from 'lodash-es'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
+import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
 
 /**
  * Logout controller
@@ -15,7 +14,7 @@ const logoutController = {
   handler: async (request, h) => {
     const authedUser = request.pre.authedUser
 
-    if (isEmpty(authedUser)) {
+    if (!authedUser) {
       return h.redirect('/')
     }
 

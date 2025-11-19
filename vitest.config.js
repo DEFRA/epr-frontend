@@ -16,12 +16,16 @@ export default defineConfig({
         ...configDefaults.exclude,
         '.public',
         '.server',
+        '**/.gitkeep',
         '**/*.md',
         '**/index.js',
         'coverage',
+        'src/**/*.json',
         'src/**/*.njk',
+        'src/**/*.scss',
         'src/client/javascripts/application.js',
         'src/index.js',
+        'src/server/auth/types',
         'src/server/common/test-helpers'
       ],
       thresholds: {

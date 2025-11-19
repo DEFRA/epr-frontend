@@ -49,7 +49,7 @@ describe('#context', () => {
   let contextResult
 
   beforeEach(() => {
-    mockGetUserSession.mockResolvedValue({})
+    mockGetUserSession.mockResolvedValue({ ok: false })
   })
 
   describe('defra id', () => {
@@ -97,7 +97,10 @@ describe('#context', () => {
     })
 
     it('should add the authed user to the context', async () => {
-      mockGetUserSession.mockResolvedValue({ token: 'token-val' })
+      mockGetUserSession.mockResolvedValue({
+        ok: true,
+        value: { token: 'token-val' }
+      })
 
       contextResult = await contextImport.context(mockRequest())
 
@@ -157,7 +160,7 @@ describe('#context', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
-        authedUser: {},
+        authedUser: null,
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
@@ -235,7 +238,7 @@ describe('#context cache', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
-        authedUser: {},
+        authedUser: null,
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,

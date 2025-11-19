@@ -8,24 +8,6 @@ vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
 describe('#logoutController', () => {
   describe('when user is not authenticated', () => {
-    test('should redirect to home when authedUser is empty', async () => {
-      const mockRequest = {
-        pre: {
-          authedUser: {}
-        }
-      }
-
-      const mockH = {
-        redirect: vi.fn().mockReturnValue('redirect-response')
-      }
-
-      const result = await logoutController.handler(mockRequest, mockH)
-
-      expect(dropUserSession).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
-      expect(result).toBe('redirect-response')
-    })
-
     test('should redirect to home when authedUser is null', async () => {
       const mockRequest = {
         pre: {

@@ -1,38 +1,29 @@
-import jwt from '@hapi/jwt'
 import { addSeconds } from 'date-fns'
 import { getDisplayName } from './display.js'
 import { dropUserSession } from './drop-user-session.js'
 import { getUserSession } from './get-user-session.js'
 
 /**
- * Remove user session from cache and clear cookie
- * @param {Request} request - Hapi request object
- * @returns {void}
+ * @import { Request } from '@hapi/hapi'
+ * @import { RefreshedTokens } from '../types/tokens.js'
+ * @import { UserSession } from '../types/session.js'
+ * @import { VerifyToken } from '../types/verify-token.js'
  */
-async function removeUserSession(request) {
-  await dropUserSession(request)
-  request.cookieAuth.clear()
-}
 
 /**
- * Update user session with refreshed tokens
- * @param {Request} request - Hapi request object
- * @param {RefreshedTokens} refreshedSession - Refreshed session data
- * @returns {Promise<UserSession>}
+ * Build a user session object from JWT payload and tokens
+ * @param {object} options - Session building options
+ * @param {object} options.payload - JWT token payload (from verified id_token)
+ * @param {{ id_token: string, access_token: string, refresh_token: string, expires_in: number }} options.tokens - Token data with id_token, access_token, refresh_token, and expires_in
+ * @returns {Partial<UserSession>} Partial user session object (missing tokenUrl and logoutUrl which are preserved from existing session)
  */
-async function updateUserSession(request, refreshedSession) {
-  const payload = jwt.token.decode(refreshedSession.access_token).decoded
-    .payload
-
-  // Update userSession with new access token and new expiry details
-  const expiresInSeconds = refreshedSession.expires_in
+function buildSessionFromPayload({ payload, tokens }) {
+  const expiresInSeconds = tokens.expires_in
   const expiresInMilliSeconds = expiresInSeconds * 1000
   const expiresAt = addSeconds(new Date(), expiresInSeconds)
-  const authedUser = await getUserSession(request)
   const displayName = getDisplayName(payload)
 
-  await request.server.app.cache.set(request.state.userSession.sessionId, {
-    ...authedUser,
+  return {
     id: payload.sub,
     correlationId: payload.correlationId,
     sessionId: payload.sessionId,
@@ -51,27 +42,60 @@ async function updateUserSession(request, refreshedSession) {
     relationships: payload.relationships,
     roles: payload.roles,
     isAuthenticated: true,
-    idToken: refreshedSession.id_token,
-    token: refreshedSession.access_token,
-    refreshToken: refreshedSession.refresh_token,
+    idToken: tokens.id_token,
+    token: tokens.access_token,
+    refreshToken: tokens.refresh_token,
     expiresIn: expiresInMilliSeconds,
     expiresAt
-  })
-
-  return getUserSession(request)
+  }
 }
 
-export { removeUserSession, updateUserSession }
+/**
+ * Remove user session from cache and clear cookie
+ * @param {Request} request - Hapi request object
+ * @returns {void}
+ */
+async function removeUserSession(request) {
+  await dropUserSession(request)
+  request.cookieAuth.clear()
+}
 
 /**
- * @import { Request } from '@hapi/hapi'
- * @import { UserSession } from '#server/auth/helpers/get-user-session.js'
+ * Create updateUserSession function with verifyToken closure
+ * @param {VerifyToken} verifyToken - Token verification function
+ * @returns {(request: Request, refreshedSession: RefreshedTokens) => Promise<UserSession>} updateUserSession function
  */
+const createUpdateUserSession = (verifyToken) =>
+  /**
+   * Update user session with refreshed tokens
+   * @param {Request} request - Hapi request object
+   * @param {RefreshedTokens} refreshedSession - Refreshed session data
+   * @returns {Promise<UserSession>}
+   */
+  async function updateUserSession(request, refreshedSession) {
+    const payload = verifyToken(refreshedSession.id_token).decoded.payload
 
-/**
- * @typedef {object} RefreshedTokens
- * @property {string} access_token
- * @property {string} refresh_token
- * @property {string} id_token
- * @property {number} expires_in
- */
+    const { value: authedUser } = await getUserSession(request)
+
+    /* v8 ignore next - Extreme edge case: session deleted during token refresh (race condition), fallback to empty object */
+    const existingSession = authedUser || {}
+
+    const updatedSession = buildSessionFromPayload({
+      payload,
+      tokens: refreshedSession
+    })
+
+    const session = {
+      ...existingSession,
+      ...updatedSession
+    }
+
+    await request.server.app.cache.set(
+      request.state.userSession.sessionId,
+      session
+    )
+
+    return session
+  }
+
+export { buildSessionFromPayload, createUpdateUserSession, removeUserSession }

@@ -1,7 +1,9 @@
 import { config, isDefraIdEnabled } from '#config/config.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
-import { sessionCookie } from '#server/auth/helpers/session-cookie.js'
-import { defraId } from '#server/auth/plugins/defra-id.js'
+import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
+import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
+import { getVerifyToken } from '#server/auth/helpers/verify-token.js'
+import { createDefraId } from '#server/auth/plugins/defra-id.js'
 import { contentSecurityPolicy } from '#server/common/helpers/content-security-policy.js'
 import { catchAll } from '#server/common/helpers/errors.js'
 import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
@@ -92,7 +94,13 @@ export async function createServer() {
   ]
 
   if (defraIdEnabled) {
-    plugins.push(defraId, sessionCookie)
+    const oidcConf = await getOidcConfiguration(
+      config.get('defraId.oidcConfigurationUrl')
+    )
+
+    const verifyToken = await getVerifyToken(oidcConf)
+
+    plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
   }
 
   plugins.push(nunjucksConfig, router)

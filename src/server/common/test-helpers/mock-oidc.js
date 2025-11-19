@@ -47,11 +47,26 @@ const createMockOidcConfiguration = (baseUrl) => ({
  */
 const createOidcHandlers = (baseUrl) => {
   const config = createMockOidcConfiguration(baseUrl)
+  const origin = new URL(baseUrl).origin
 
   return [
     // OIDC discovery endpoint
     http.get(`${baseUrl}/.well-known/openid-configuration`, () => {
       return HttpResponse.json(config)
+    }),
+    // JWKS endpoint
+    http.get(`${origin}/.well-known/jwks.json`, () => {
+      return HttpResponse.json({
+        keys: [
+          {
+            kty: 'RSA',
+            use: 'sig',
+            kid: 'test-key-id',
+            n: 'test-modulus-value',
+            e: 'AQAB'
+          }
+        ]
+      })
     })
   ]
 }
