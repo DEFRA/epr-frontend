@@ -78,8 +78,11 @@ const createUpdateUserSession = (verifyToken) =>
 
     const { value: authedUser } = await getUserSession(request)
 
-    /* v8 ignore next - Extreme edge case: session deleted during token refresh (race condition), fallback to empty object */
-    const existingSession = authedUser || {}
+    if (!authedUser) {
+      throw new Error(
+        'Cannot update session: session was deleted during token refresh'
+      )
+    }
 
     const updatedSession = buildSessionFromPayload({
       payload,
@@ -87,7 +90,7 @@ const createUpdateUserSession = (verifyToken) =>
     })
 
     const session = {
-      ...existingSession,
+      ...authedUser,
       ...updatedSession
     }
 
