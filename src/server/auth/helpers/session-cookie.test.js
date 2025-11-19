@@ -7,10 +7,10 @@ import { subMinutes } from 'date-fns'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
-// Mock getVerifyToken to return a simple decoder instead of actual verification
+// Mock getVerifyToken to return a simple decoder that returns just the payload
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
   getVerifyToken: vi.fn(async () => {
-    return (token) => jwt.token.decode(token)
+    return (token) => jwt.token.decode(token).decoded.payload
   })
 }))
 

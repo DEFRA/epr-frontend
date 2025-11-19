@@ -58,9 +58,9 @@ describe('#defraId', () => {
     const { config } = await import('#config/config.js')
     mockConfig = config
 
-    // Create mock verifyToken function
+    // Create mock verifyToken function that returns just the payload
     mockVerifyToken = vi.fn((token) => {
-      return jwt.default.token.decode(token)
+      return jwt.default.token.decode(token).decoded.payload
     })
 
     // Setup default mock implementations
