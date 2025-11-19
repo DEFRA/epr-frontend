@@ -5,12 +5,20 @@ import Iron from '@hapi/iron'
 import jwt from '@hapi/jwt'
 import { subMinutes } from 'date-fns'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest'
 
-// Mock getVerifyToken to return a simple decoder instead of actual verification
+// Mock getVerifyToken to return a simple decoder that returns just the payload
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
   getVerifyToken: vi.fn(async () => {
-    return (token) => jwt.token.decode(token)
+    return (token) => jwt.token.decode(token).decoded.payload
   })
 }))
 
@@ -18,14 +26,16 @@ describe('#sessionCookie - integration', () => {
   /** @type {import('@hapi/hapi').Server} */
   let server
   let mockOidcServer
+  let defaultTokenHandler
 
   beforeAll(async () => {
     // Setup OIDC mock server
     mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
-    // Add token refresh endpoint
-    mockOidcServer.use(
-      http.post('http://defra-id.auth/token', async ({ request }) => {
+    // Create and store the default token refresh handler
+    defaultTokenHandler = http.post(
+      'http://defra-id.auth/token',
+      async ({ request }) => {
         const body = await request.text()
         const params = new URLSearchParams(body)
 
@@ -72,8 +82,11 @@ describe('#sessionCookie - integration', () => {
         }
 
         return HttpResponse.json({ error: 'invalid_grant' }, { status: 400 })
-      })
+      }
     )
+
+    // Add the handler to the server
+    mockOidcServer.use(defaultTokenHandler)
 
     mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
 
@@ -91,6 +104,10 @@ describe('#sessionCookie - integration', () => {
     // Create and initialize server
     server = await createServer()
     await server.initialize()
+  })
+
+  afterEach(() => {
+    mockOidcServer.resetHandlers(defaultTokenHandler)
   })
 
   afterAll(async () => {
@@ -264,9 +281,6 @@ describe('#sessionCookie - integration', () => {
       const removedSession = await server.app.cache.get(sessionId)
 
       expect(removedSession).toBeNull()
-
-      // Reset mock for other tests
-      mockOidcServer.resetHandlers()
     })
 
     it('should not refresh when token is still valid', async () => {
@@ -458,9 +472,6 @@ describe('#sessionCookie - integration', () => {
         expect(updatedSession.displayName).toBe(expectedDisplayName)
         expect(updatedSession.firstName).toBe(firstName)
         expect(updatedSession.lastName).toBe(lastName)
-
-        // Reset mock for other tests
-        mockOidcServer.resetHandlers()
       }
     )
 
@@ -553,9 +564,6 @@ describe('#sessionCookie - integration', () => {
       const cachedSession = await server.app.cache.get(sessionId)
 
       expect(cachedSession).toBeNull()
-
-      // Reset mock for other tests
-      mockOidcServer.resetHandlers()
     })
 
     it('should return invalid when session is deleted during validation (race condition)', async () => {

@@ -4,7 +4,7 @@ import { getDisplayName } from './display.js'
 /**
  * Build user profile from JWT payload
  * @param {object} options - Profile building options
- * @param {object} options.payload - JWT token payload
+ * @param {DefraIdJwtPayload} options.payload - JWT token payload with Defra ID claims
  * @param {string} options.idToken - ID token
  * @param {string} options.tokenUrl - OIDC token endpoint URL
  * @param {string} options.logoutUrl - OIDC logout endpoint URL
@@ -63,5 +63,6 @@ function buildSessionFromProfile({ credentials, isAuthenticated, profile }) {
 export { buildSessionFromProfile, buildUserProfile }
 
 /**
+ * @import { DefraIdJwtPayload } from '../types/auth.js'
  * @import { UserProfile, UserSession } from '../types/session.js'
  */

@@ -1,16 +1,12 @@
 /**
- * @typedef {object} DecodedToken
- * @property {object} decoded - The decoded token
- * @property {object} decoded.header - JWT header
- * @property {object} decoded.payload - JWT payload with user claims
- * @property {string} decoded.signature - JWT signature
+ * @import { DefraIdJwtPayload } from './auth.js'
  */
 
 /**
- * @typedef {function(string): DecodedToken} VerifyToken
- * Function that verifies JWT signature and returns decoded token
+ * @typedef {(token: string) => Promise<DefraIdJwtPayload>} VerifyToken
+ * Function that verifies JWT signature and returns payload
  * @param {string} token - JWT token string to verify
- * @returns {DecodedToken} Decoded and verified token
+ * @returns {Promise<DefraIdJwtPayload>} JWT payload with Defra ID user claims
  */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

@@ -71,7 +71,7 @@ const createDefraId = (verifyToken) => ({
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
-            const payload = verifyToken(params.id_token).decoded.payload
+            const payload = await verifyToken(params.id_token)
 
             credentials.profile = buildUserProfile({
               idToken: params.id_token,
