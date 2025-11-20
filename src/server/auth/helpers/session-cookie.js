@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import {
-  removeUserSession,
-  createUpdateUserSession
+  createUpdateUserSession,
+  removeUserSession
 } from '#server/auth/helpers/user-session.js'
 import { err, ok } from '#server/common/helpers/result.js'
 import authCookie from '@hapi/cookie'
