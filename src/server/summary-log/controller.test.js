@@ -149,7 +149,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: submitted - should show check page and stop polling', async () => {
+    test('status: submitted - should show success page and stop polling', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.submitted,
         accreditationNumber: '493021'
@@ -157,7 +157,11 @@ describe('#summaryLogUploadProgressController', () => {
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      expectCheckPageContent(result)
+      expect(result).toStrictEqual(
+        expect.stringContaining('Summary log submitted')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('493021'))
+      expect(result).toStrictEqual(expect.stringContaining('Return to home'))
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toStrictEqual(enablesClientSidePolling())
