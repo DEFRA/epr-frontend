@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { createServer } from '#server/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
@@ -11,6 +12,13 @@ vi.mock(
     fetchSummaryLogStatus: vi.fn().mockResolvedValue({
       status: 'preprocessing'
     })
+  })
+)
+
+vi.mock(
+  import('#server/common/helpers/summary-log/submit-summary-log.js'),
+  () => ({
+    submitSummaryLog: vi.fn()
   })
 )
 
@@ -84,6 +92,26 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
     })
+
+    test('status: submitting - should show submitting message and poll', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.submitting
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your file is being submitted')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Your summary log is being submitted')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('Keep this page open and do not refresh it')
+      )
+      expect(result).toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 
   describe('terminal states', () => {
@@ -110,21 +138,80 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'action="/organisations/123/registrations/456/summary-logs/789/submit"'
+        )
+      )
+      expect(result).toStrictEqual(expect.stringContaining('method="POST"'))
+
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: submitted - should show check page and stop polling', async () => {
+    test('status: submitted - should show success page and stop polling', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.submitted
+        status: backendSummaryLogStatuses.submitted,
+        accreditationNumber: '493021'
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      expectCheckPageContent(result)
+      expect(result).toStrictEqual(
+        expect.stringContaining('Summary log submitted')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('493021'))
+      expect(result).toStrictEqual(expect.stringContaining('Return to home'))
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toStrictEqual(enablesClientSidePolling())
+    })
+
+    test('status: submitted with freshData from POST - should use freshData and not call backend', async () => {
+      // Integration test: POST submit sets freshData, GET uses it
+      const submitUrl = `${url}/submit`
+
+      // Mock the backend submit call for the POST
+      submitSummaryLog.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.submitted,
+        accreditationNumber: '999888'
+      })
+
+      // Make POST request to set up freshData in session
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: submitUrl
+      })
+
+      // Verify POST redirected
+      expect(postResponse.statusCode).toBe(statusCodes.found)
+
+      // Get session cookie from POST response
+      const sessionCookie = postResponse.headers['set-cookie']
+
+      // Make GET request with the session cookie
+      // The GET handler should use freshData from session (not call fetchSummaryLogStatus)
+      const initialCallCount = fetchSummaryLogStatus.mock.calls.length
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        headers: {
+          cookie: Array.isArray(sessionCookie)
+            ? sessionCookie[0]
+            : sessionCookie
+        }
+      })
+
+      // Verify fetchSummaryLogStatus was NOT called (freshData was used instead)
+      expect(fetchSummaryLogStatus.mock.calls).toHaveLength(initialCallCount)
+
+      // Verify success page with accreditation number from freshData
+      expect(result).toStrictEqual(
+        expect.stringContaining('Summary log submitted')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('999888'))
+      expect(statusCode).toBe(statusCodes.ok)
     })
 
     test('status: rejected with failureReason - should redirect to upload page with error in session', async () => {

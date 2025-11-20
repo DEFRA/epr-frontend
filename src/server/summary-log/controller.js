@@ -5,11 +5,15 @@ import { sessionNames } from '#server/common/constants/session-names.js'
 
 const PROCESSING_STATES = new Set([
   backendSummaryLogStatuses.preprocessing,
-  backendSummaryLogStatuses.validating
+  backendSummaryLogStatuses.validating,
+  backendSummaryLogStatuses.submitting
 ])
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
+const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
+const SUCCESS_VIEW_NAME = 'summary-log/success'
+const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
 /**
  * Determines view data based on backend status
@@ -55,6 +59,148 @@ const getViewData = (localise, status, failureReason) => {
 }
 
 /**
+ * Gets status data from session (if fresh) or backend API
+ * @param {object} request - Hapi request object
+ * @param {string} organisationId - Organisation ID
+ * @param {string} registrationId - Registration ID
+ * @param {string} summaryLogId - Summary log ID
+ * @returns {Promise<{status: string, failureReason?: string, accreditationNumber?: string}>}
+ */
+const getStatusData = async (
+  request,
+  organisationId,
+  registrationId,
+  summaryLogId
+) => {
+  // Check session for fresh data first (prevents race condition after POST submit)
+  const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
+  const freshData = summaryLogsSession.freshData
+
+  if (freshData) {
+    // Use fresh data from session and clear it
+    const { status, accreditationNumber, failureReason } = freshData
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { freshData: _, ...remainingSession } = summaryLogsSession
+    request.yar.set(sessionNames.summaryLogs, remainingSession)
+
+    return { status, accreditationNumber, failureReason }
+  }
+
+  // Poll backend for status
+  const response = await fetchSummaryLogStatus(
+    organisationId,
+    registrationId,
+    summaryLogId
+  )
+  return {
+    status: response.status,
+    failureReason: response.failureReason,
+    accreditationNumber: response.accreditationNumber
+  }
+}
+
+/**
+ * Handles rejected status by storing error in session and redirecting
+ * @param {object} request - Hapi request object
+ * @param {object} h - Hapi response toolkit
+ * @param {(key: string) => string} localise - i18n localisation function
+ * @param {string} failureReason - Failure reason from backend
+ * @param {string} organisationId - Organisation ID
+ * @param {string} registrationId - Registration ID
+ * @returns {object} Hapi redirect response
+ */
+const handleRejectedStatus = (
+  request,
+  h,
+  localise,
+  failureReason,
+  organisationId,
+  registrationId
+) => {
+  const currentSession = request.yar.get(sessionNames.summaryLogs) || {}
+
+  request.yar.set(sessionNames.summaryLogs, {
+    ...currentSession,
+    lastError: failureReason || localise('summary-log:rejectedDefaultReason')
+  })
+
+  return h.redirect(
+    `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+  )
+}
+
+/**
+ * Renders appropriate view based on status
+ * @param {object} options - Rendering options
+ * @param {object} options.h - Hapi response toolkit
+ * @param {(key: string) => string} options.localise - i18n localisation function
+ * @param {string} options.status - Backend status
+ * @param {string} [options.failureReason] - Failure reason from backend
+ * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
+ * @param {string} options.organisationId - Organisation ID
+ * @param {string} options.registrationId - Registration ID
+ * @param {string} options.summaryLogId - Summary log ID
+ * @param {string} options.pollUrl - URL for polling status
+ * @returns {object} Hapi view response
+ */
+const renderViewForStatus = ({
+  h,
+  localise,
+  status,
+  failureReason,
+  accreditationNumber,
+  organisationId,
+  registrationId,
+  summaryLogId,
+  pollUrl
+}) => {
+  const PAGE_TITLE = localise(PAGE_TITLE_KEY)
+
+  // If validated, show check page
+  if (status === backendSummaryLogStatuses.validated) {
+    return h.view(CHECK_VIEW_NAME, {
+      pageTitle: localise('summary-log:checkPageTitle'),
+      organisationId,
+      registrationId,
+      summaryLogId
+    })
+  }
+
+  // If submitting, show submitting page
+  if (status === backendSummaryLogStatuses.submitting) {
+    return h.view(SUBMITTING_VIEW_NAME, {
+      pageTitle: localise(PAGE_TITLE_KEY),
+      heading: localise('summary-log:submittingHeading'),
+      message: localise('summary-log:submittingMessage'),
+      isProcessing: true,
+      shouldPoll: true,
+      pollUrl
+    })
+  }
+
+  // If submitted, show success page
+  if (status === backendSummaryLogStatuses.submitted) {
+    return h.view(SUCCESS_VIEW_NAME, {
+      pageTitle: localise('summary-log:successPageTitle'),
+      organisationId,
+      registrationId,
+      accreditationNumber
+    })
+  }
+
+  // Show progress page for all other statuses
+  const viewData = getViewData(localise, status, failureReason)
+
+  return h.view(VIEW_NAME, {
+    ...viewData,
+    pageTitle: PAGE_TITLE,
+    shouldPoll: PROCESSING_STATES.has(status),
+    pollUrl
+  })
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const summaryLogUploadProgressController = {
@@ -62,50 +208,39 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
     const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const PAGE_TITLE = localise('summary-log:pageTitle')
+    const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
     try {
-      // Poll backend for status
-      const { status, failureReason } = await fetchSummaryLogStatus(
-        organisationId,
-        registrationId,
-        summaryLogId
-      )
+      const { status, failureReason, accreditationNumber } =
+        await getStatusData(
+          request,
+          organisationId,
+          registrationId,
+          summaryLogId
+        )
 
       // If upload rejected, redirect back to upload page with error
       if (status === backendSummaryLogStatuses.rejected) {
-        const summaryLogsSession =
-          request.yar.get(sessionNames.summaryLogs) || {}
-
-        request.yar.set(sessionNames.summaryLogs, {
-          ...summaryLogsSession,
-          lastError:
-            failureReason || localise('summary-log:rejectedDefaultReason')
-        })
-
-        return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+        return handleRejectedStatus(
+          request,
+          h,
+          localise,
+          failureReason,
+          organisationId,
+          registrationId
         )
       }
 
-      // If validated or submitted, show check page
-      if (
-        status === backendSummaryLogStatuses.validated ||
-        status === backendSummaryLogStatuses.submitted
-      ) {
-        return h.view(CHECK_VIEW_NAME, {
-          pageTitle: localise('summary-log:checkPageTitle'),
-          organisationId,
-          registrationId
-        })
-      }
-
-      const viewData = getViewData(localise, status, failureReason)
-
-      return h.view(VIEW_NAME, {
-        ...viewData,
-        pageTitle: PAGE_TITLE,
-        shouldPoll: PROCESSING_STATES.has(status),
+      // Render appropriate view based on status
+      return renderViewForStatus({
+        h,
+        localise,
+        status,
+        failureReason,
+        accreditationNumber,
+        organisationId,
+        registrationId,
+        summaryLogId,
         pollUrl
       })
     } catch (err) {

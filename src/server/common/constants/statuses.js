@@ -14,5 +14,6 @@ export const backendSummaryLogStatuses = {
   validating: 'validating',
   invalid: 'invalid',
   validated: 'validated',
+  submitting: 'submitting',
   submitted: 'submitted'
 }
