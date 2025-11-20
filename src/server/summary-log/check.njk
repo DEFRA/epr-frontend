@@ -1,0 +1,30 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">{{ localise('summary-log:checkHeading') }}</h1>
+
+    <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
+
+    <h2 class="govuk-heading-m">{{ localise('summary-log:complianceHeading') }}</h2>
+    <h3 class="govuk-heading-s">{{ localise('summary-log:complianceSubheading') }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:complianceBody') }}</p>
+
+    <h2 class="govuk-heading-m">{{ localise('summary-log:declarationHeading') }}</h2>
+    <p class="govuk-body">{{ localise('summary-log:declarationIntro') }}</p>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>{{ localise('summary-log:declarationBullet1') }}</li>
+      <li>{{ localise('summary-log:declarationBullet2') }}</li>
+    </ul>
+
+    <button type="button" class="govuk-button" data-module="govuk-button">
+      {{ localise('summary-log:confirmButton') }}
+    </button>
+
+    <p class="govuk-body">
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:reuploadButton') }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

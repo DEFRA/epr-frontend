@@ -1,4 +1,4 @@
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 /**
  * Prerequisite to provide authenticated user to request.pre
@@ -7,7 +7,10 @@ import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
 const provideAuthedUser = {
   // @fixme: code coverage
   /* v8 ignore next */
-  method: async (request) => getUserSession(request),
+  method: async (request) => {
+    const { value } = await getUserSession(request)
+    return value
+  },
   assign: 'authedUser'
 }
 

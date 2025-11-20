@@ -1,7 +1,9 @@
 import { config, isDefraIdEnabled } from '#config/config.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
-import { defraId } from '#server/common/helpers/auth/defra-id.js'
-import { sessionCookie } from '#server/common/helpers/auth/session-cookie.js'
+import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
+import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
+import { getVerifyToken } from '#server/auth/helpers/verify-token.js'
+import { createDefraId } from '#server/auth/plugins/defra-id.js'
 import { contentSecurityPolicy } from '#server/common/helpers/content-security-policy.js'
 import { catchAll } from '#server/common/helpers/errors.js'
 import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
@@ -82,11 +84,23 @@ export async function createServer() {
     userAgentProtection, // Must be registered before Scooter to intercept malicious User-Agents
     Scooter,
     contentSecurityPolicy,
-    { plugin: i18nPlugin, options: { i18next } }
+    {
+      plugin: i18nPlugin,
+      options: {
+        i18next,
+        ignoreRoutes: ['/.well-known', '/favicon.ico', '/health', '/public']
+      }
+    }
   ]
 
   if (defraIdEnabled) {
-    plugins.push(defraId, sessionCookie)
+    const oidcConf = await getOidcConfiguration(
+      config.get('defraId.oidcConfigurationUrl')
+    )
+
+    const verifyToken = await getVerifyToken(oidcConf)
+
+    plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
   }
 
   plugins.push(nunjucksConfig, router)

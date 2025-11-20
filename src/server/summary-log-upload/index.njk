@@ -5,7 +5,7 @@
 
 {% block beforeContent %}
   {{ govukBackLink({
-    text: "Back",
+    text: localise("common:back"),
     href: "javascript:window.history.back()"
   }) }}
 {% endblock %}
@@ -16,77 +16,81 @@
       <div class="govuk-body" data-testid="app-page-body">
         <span class="govuk-caption-xl">{{ siteName }}</span>
         <h1 class="govuk-heading-xl">{{ heading }}</h1>
-        <p>Check you’ve completed the following steps before uploading your summary log.</p>
-        <p>This will ensure that your waste balance is correct and you’re meeting regulatory requirements.</p>
+
+        <p>{{ localise("summary-log-upload:checkStepsIntro1") }}</p>
+        <p>{{ localise("summary-log-upload:checkStepsIntro2") }}</p>
 
         {{ govukAccordion({
-        id: "summary-log-upload-guidance",
-        showSectionText: 'Why this is needed',
-        classes: ['text-wrap-pretty'],
-        items: [
-          {
-            heading: {
-              text: "You’ve completed section 1 for each load"
+          id: "summary-log-upload-guidance",
+          showSectionText: localise("summary-log-upload:accordionWhyNeeded"),
+          classes: ['text-wrap-pretty'],
+          items: [
+            {
+              heading: {
+                text: localise("summary-log-upload:accordionSection1Heading")
+              },
+              content: {
+                text: localise("summary-log-upload:accordionSection1Text")
+              }
             },
-            content: {
-              text: 'A load will only be added to your waste balance when you’ve provided all the information in this section. '
-            }
-          },
-          {
-            heading: {
-              text: "You’ve included all known information in sections 2, 3 and 4"
+            {
+              heading: {
+                text: localise("summary-log-upload:accordionSection2Heading")
+              },
+              content: {
+                html: '
+                  <div>
+                    <p>' ~ localise("summary-log-upload:accordionSection2Intro") ~ '</p>
+                    <ul class="govuk-list govuk-list--bullet">
+                      <li>' ~ localise("summary-log-upload:accordionSection2Bullet1") ~ '</li>
+                      <li>' ~ localise("summary-log-upload:accordionSection2Bullet2") ~ '</li>
+                    </ul>
+                  </div>'
+              }
             },
-            content: {
-              html: '<div>
-                       <p>By completing these sections you’re ensuring that:</p>
-                       <ul class="govuk-list govuk-list--bullet">
-                         <li>you’re meeting your regulatory requirements</li>
-                         <li>reports you submit to your regulator will be accurate</li>
-                       </ul>
-                     </div>'
-            }
-          },
-          {
-            heading: {
-              text: "You’ve adjusted any out-of-date information"
+            {
+              heading: {
+                text: localise("summary-log-upload:accordionSection3Heading")
+              },
+              content: {
+                html: '
+                  <p>' ~ localise("summary-log-upload:accordionSection3Paragraph1") ~ '</p>
+                  <p>' ~ localise("summary-log-upload:accordionSection3Paragraph2") ~ '</p>
+                  <p>' ~ localise("summary-log-upload:accordionSection3Paragraph3") ~ '</p>'
+              }
             },
-            content: {
-              html: '<p>You should always submit the most up-to-date information you have, to ensure that your waste balance is accurate.</p>
-                     <p>Any adjustments for this reporting period will be reflected straight away in your waste balance.</p>
-                     <p>Any adjustments made to loads from previous reporting periods will need to be confirmed by an approved person at your company.</p>'
+            {
+              heading: {
+                text: localise("summary-log-upload:accordionSection4Heading")
+              },
+              content: {
+                text: localise("summary-log-upload:accordionSection4Text")
+              }
             }
-          },
-          {
-            heading: {
-              text: "You’ve included any waste sent on in section 5, if applicable"
-            },
-            content: {
-              text: 'You only need to complete this section if packaging waste has been sent on. These loads will be removed from your waste balance when all the information is provided.'
-            }
-          }
-        ]
-      }) }}
+          ]
+        }) }}
 
         {{ govukInsetText({
-        text: "You can submit an updated summary log whenever you need to add or adjust your waste records."
-      }) }}
+          text: localise("summary-log-upload:insetText")
+        }) }}
 
         <form
-        class="form"
-        action="{{ uploadUrl }}"
-        method="post"
-        enctype="multipart/form-data"
-      >
+          class="form"
+          action="{{ uploadUrl }}"
+          method="post"
+          enctype="multipart/form-data"
+        >
           {% set summaryLogUploadError = null %}
           {% if formErrors %}
             {% set summaryLogUploadError = {
               text: formErrors
             } %}
           {% endif %}
+
           {{ govukFileUpload({
             id: "summary-log-upload",
             name: "summaryLogUpload",
-            label: { text: "Upload XLSX file" },
+            label: { text: localise("summary-log-upload:fileUploadLabel") },
             javascript: true,
             attributes: {
               accept: ".xlsx"
@@ -95,7 +99,7 @@
           }) }}
 
           {{ govukButton({
-            text: 'Continue'
+            text: localise("summary-log-upload:continueButton")
           }) }}
         </form>
       </div>

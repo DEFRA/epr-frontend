@@ -1,9 +1,9 @@
+import { languages } from '#server/common/constants/languages.js'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import middleware from 'i18next-http-middleware'
-import { initI18n } from './i18n.js'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { languages } from '#server/common/constants/language-codes.js'
+import { initI18n } from './i18n.js'
 
 vi.mock(import('i18next'))
 vi.mock(import('i18next-fs-backend'))
@@ -24,7 +24,14 @@ describe(initI18n, function () {
       expect.objectContaining({
         fallbackLng: languages.ENGLISH,
         preload: [languages.ENGLISH, languages.WELSH],
-        ns: ['common', 'home', 'errors'],
+        ns: expect.arrayContaining([
+          'account',
+          'common',
+          'error',
+          'home',
+          'summary-log-upload',
+          'summary-log'
+        ]),
         defaultNS: 'common',
         debug: false
       })

@@ -1,6 +1,14 @@
 {
   "pageTitle": "Hafan",
-  "heading": "Hafan",
-  "languageNotice": "Mae'r gwasanaeth hwn hefyd ar gael <a href='/en'>yn Saesneg (English)</a>.",
-  "greeting": "Croeso"
+  "heading": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
+  "subheading": "Mae'r gwasanaeth hwn yn helpu ailbroseswyr ac allforwyr yn y DU i fodloni rheoliadau gwastraff pecynnu.",
+  "services": {
+    "description": "Defnyddiwch y gwasanaeth i reoli eich:",
+    "registrations": "cofrestriadau",
+    "accreditations": "achrediadau",
+    "summaryLog": "log cryno",
+    "regulatorReports": "adroddiadau rheolydd",
+    "prns": "PRNs neu PERNs"
+  },
+  "startNow": "Dechreuwch nawr"
 }

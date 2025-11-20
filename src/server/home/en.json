@@ -1,6 +1,14 @@
 {
   "pageTitle": "Home",
-  "heading": "Home",
-  "languageNotice": "This service is also available <a href='/cy'>in Welsh (Cymraeg)</a>.",
-  "greeting": "Welcome"
+  "heading": "Manage your packaging waste responsibilities",
+  "subheading": "This service helps UK-based reprocessors and exporters meet packaging waste regulations.",
+  "services": {
+    "description": "Use the service to manage your:",
+    "registrations": "registrations",
+    "accreditations": "accreditations",
+    "summaryLog": "summary log",
+    "regulatorReports": "regulator reports",
+    "prns": "PRNs or PERNs"
+  },
+  "startNow": "Start now"
 }

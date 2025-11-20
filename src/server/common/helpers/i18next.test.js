@@ -1,7 +1,8 @@
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { getLocaliseUrl } from '#server/common/helpers/i18next.js'
+import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createServer } from '#server/index.js'
 
 describe('#i18nPlugin - integration', () => {
   /** @type {Server} */
@@ -18,11 +19,22 @@ describe('#i18nPlugin - integration', () => {
 
   describe('language detection and html lang attribute', () => {
     it.each([
-      { url: '/', expectedLang: 'en', description: 'english' },
-      { url: '/cy', expectedLang: 'cy', description: 'welsh' }
+      {
+        url: '/',
+        expectedLang: 'en',
+        description: 'english',
+        heading: 'Manage your packaging waste responsibilities'
+      },
+      {
+        url: '/cy',
+        expectedLang: 'cy',
+        description: 'welsh',
+        // TODO placeholder welsh translation
+        heading: 'Rheoli eich cyfrifoldebau gwastraff pecynnu'
+      }
     ])(
       'should set lang="$expectedLang" for $description pages ($url)',
-      async ({ url, expectedLang }) => {
+      async ({ url, expectedLang, heading }) => {
         const response = await server.inject({
           method: 'GET',
           url
@@ -33,7 +45,7 @@ describe('#i18nPlugin - integration', () => {
         const $ = load(response.result)
 
         expect($('html').attr('lang')).toBe(expectedLang)
-        expect($('h1').first().text()).toBe('Sites')
+        expect($('h1').first().text()).toBe(heading)
       }
     )
   })
@@ -42,7 +54,6 @@ describe('#i18nPlugin - integration', () => {
     it.each([
       { originalUrl: '/cy', expectedPath: '/' },
       { originalUrl: '/cy/', expectedPath: '/' },
-      { originalUrl: '/cy/health', expectedPath: '/health' },
       { originalUrl: '/cy/some/deep/path', expectedPath: '/some/deep/path' }
     ])(
       'should rewrite $originalUrl to $expectedPath',
@@ -66,9 +77,7 @@ describe('#i18nPlugin - integration', () => {
         content: '<html><body>Test View</body></html>',
         contentType: 'text/html',
         expectedContext: {
-          pageTitle: 'Test Page',
-          localise: expect.any(Function),
-          langPrefix: ''
+          pageTitle: 'Test Page'
         }
       },
       {
@@ -119,6 +128,63 @@ describe('#i18nPlugin - integration', () => {
         )
       }
     )
+  })
+
+  describe('localiseUrl edge cases', () => {
+    it('should handle language with region code via Accept-Language header', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/',
+        headers: {
+          'Accept-Language': 'en-GB,en;q=0.9'
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.request.localiseUrl).toBeDefined()
+      // Should normalize en-GB to en and use English prefix
+      expect(response.request.localiseUrl('/test')).toBe('/test')
+    })
+
+    it('should handle Welsh with region code', async () => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/cy',
+        headers: {
+          'Accept-Language': 'cy-GB,cy;q=0.9'
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.request.localiseUrl).toBeDefined()
+      // Should normalize cy-GB to cy and use Welsh prefix
+      expect(response.request.localiseUrl('/test')).toBe('/cy/test')
+    })
+  })
+})
+
+describe('#getLocaliseUrl', () => {
+  it('should handle language with region code (en-GB)', () => {
+    const localiseUrl = getLocaliseUrl('en-GB')
+
+    expect(localiseUrl('/test')).toBe('/test')
+  })
+
+  it('should handle language with region code (cy-GB)', () => {
+    const localiseUrl = getLocaliseUrl('cy-GB')
+
+    expect(localiseUrl('/test')).toBe('/cy/test')
+  })
+
+  it('should handle unsupported language and default to en', () => {
+    const localiseUrl = getLocaliseUrl('fr')
+
+    expect(localiseUrl('/test')).toBe('/test')
+  })
+
+  it('should handle simple language codes', () => {
+    expect(getLocaliseUrl('en')('/test')).toBe('/test')
+    expect(getLocaliseUrl('cy')('/test')).toBe('/cy/test')
   })
 })
 

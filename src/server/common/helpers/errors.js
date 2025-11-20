@@ -1,21 +1,37 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 
+const statusCodeErrors = {
+  [statusCodes.notFound]: {
+    code: 'error:notFound',
+    fallback: 'Page not found'
+  },
+  [statusCodes.forbidden]: {
+    code: 'error:forbidden',
+    fallback: 'Forbidden'
+  },
+  [statusCodes.unauthorized]: {
+    code: 'error:unauthorized',
+    fallback: 'Unauthorised'
+  },
+  [statusCodes.badRequest]: {
+    code: 'error:badRequest',
+    fallback: 'Bad request'
+  }
+}
+
+const defaultError = {
+  code: 'error:generic',
+  fallback: 'Something went wrong'
+}
+
 /**
  * @param {number} statusCode
+ * @param {(key: string) => string} [localise]
  */
-function statusCodeMessage(statusCode) {
-  switch (statusCode) {
-    case statusCodes.notFound:
-      return 'Page not found'
-    case statusCodes.forbidden:
-      return 'Forbidden'
-    case statusCodes.unauthorized:
-      return 'Unauthorized'
-    case statusCodes.badRequest:
-      return 'Bad Request'
-    default:
-      return 'Something went wrong'
-  }
+function statusCodeMessage(statusCode, localise) {
+  const error = statusCodeErrors[statusCode] || defaultError
+
+  return localise ? localise(error.code) : error.fallback
 }
 
 /**
@@ -30,7 +46,8 @@ export function catchAll(request, h) {
   }
 
   const statusCode = response.output.statusCode
-  const errorMessage = statusCodeMessage(statusCode)
+
+  const errorMessage = statusCodeMessage(statusCode, request.t)
 
   if (statusCode >= statusCodes.internalServerError) {
     request.logger.error(response?.stack)

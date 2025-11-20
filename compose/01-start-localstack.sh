@@ -20,13 +20,5 @@ aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name cdp-uploa
 
 # test harness
 aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name mock-clamav
-aws --endpoint-url=http://localhost:4566 s3api put-bucket-notification-configuration\
-    --bucket cdp-uploader-quarantine \
-    --notification-configuration '{
-                                      "QueueConfigurations": [
-                                         {
-                                           "QueueArn": "arn:aws:sqs:eu-west-2:000000000000:mock-clamav",
-                                           "Events": ["s3:ObjectCreated:*"]
-                                         }
-                                       ]
-	                                }'
+aws --endpoint-url=http://localhost:4566 s3api put-bucket-notification-configuration --bucket cdp-uploader-quarantine --notification-configuration '{"QueueConfigurations": [{"QueueArn": "arn:aws:sqs:eu-west-2:000000000000:mock-clamav","Events": ["s3:ObjectCreated:*"]}]}'
+aws --endpoint-url=http://localhost:4566 sqs create-queue --region $AWS_REGION --queue-name cdp-uploader-download-requests

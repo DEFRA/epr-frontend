@@ -14,13 +14,19 @@ export default defineConfig({
       include: ['src/**'],
       exclude: [
         ...configDefaults.exclude,
-        '.server',
         '.public',
+        '.server',
+        '**/.gitkeep',
+        '**/*.md',
+        '**/index.js',
         'coverage',
-        'src/server/common/test-helpers',
+        'src/**/*.json',
+        'src/**/*.njk',
+        'src/**/*.scss',
         'src/client/javascripts/application.js',
         'src/index.js',
-        '**/index.js'
+        'src/server/auth/types',
+        'src/server/common/test-helpers'
       ],
       thresholds: {
         lines: 100,
