@@ -2,8 +2,8 @@ import { config } from '#config/config.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import Iron from '@hapi/iron'
-import jwt from '@hapi/jwt'
 import { subMinutes } from 'date-fns'
+import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import {
   afterAll,
@@ -17,9 +17,7 @@ import {
 
 // Mock getVerifyToken to return a simple decoder that returns just the payload
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
-  getVerifyToken: vi.fn(async () => {
-    return (token) => jwt.token.decode(token).decoded.payload
-  })
+  getVerifyToken: vi.fn(async () => (token) => jose.decodeJwt(token))
 }))
 
 describe('#sessionCookie - integration', () => {
@@ -214,7 +212,7 @@ describe('#sessionCookie - integration', () => {
       expect(payload.userId).toBe('user-123')
 
       // Decode the new token and verify its contents
-      const token = jwt.token.decode(payload.token).decoded.payload
+      const token = jose.decodeJwt(payload.token)
 
       expect(token).toStrictEqual(
         expect.objectContaining({

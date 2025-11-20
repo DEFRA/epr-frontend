@@ -1,3 +1,4 @@
+import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createDefraId } from './defra-id.js'
 
@@ -5,15 +6,6 @@ vi.mock(import('@hapi/bell'), () => ({
   default: {
     name: 'bell',
     register: vi.fn()
-  }
-}))
-
-vi.mock(import('@hapi/jwt'), () => ({
-  default: {
-    token: {
-      decode: vi.fn(),
-      verify: vi.fn()
-    }
   }
 }))
 
@@ -36,7 +28,6 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
 describe('#defraId', () => {
   let mockServer
   let mockFetch
-  let mockJwt
   let mockConfig
   let mockBell
   let mockVerifyToken
@@ -49,9 +40,6 @@ describe('#defraId', () => {
     const fetch = await import('node-fetch')
     mockFetch = fetch.default
 
-    const jwt = await import('@hapi/jwt')
-    mockJwt = jwt.default
-
     const bell = await import('@hapi/bell')
     mockBell = bell.default
 
@@ -59,9 +47,7 @@ describe('#defraId', () => {
     mockConfig = config
 
     // Create mock verifyToken function that returns just the payload
-    mockVerifyToken = vi.fn((token) => {
-      return jwt.default.token.decode(token).decoded.payload
-    })
+    mockVerifyToken = vi.fn((token) => jose.decodeJwt(token))
 
     // Setup default mock implementations
     mockConfig.get.mockImplementation((key) => {
@@ -437,11 +423,7 @@ describe('#defraId', () => {
         roles: ['admin', 'user']
       }
 
-      mockJwt.token.decode.mockReturnValue({
-        decoded: {
-          payload: mockPayload
-        }
-      })
+      mockVerifyToken.mockResolvedValue(mockPayload)
 
       const mockCredentials = {
         token: 'mock-access-token'
@@ -453,7 +435,7 @@ describe('#defraId', () => {
 
       await profileFn(mockCredentials, mockParams)
 
-      expect(mockJwt.token.decode).toHaveBeenCalledWith('mock-id-token')
+      expect(mockVerifyToken).toHaveBeenCalledWith('mock-id-token')
       expect(mockCredentials.profile).toStrictEqual({
         id: 'user-123',
         correlationId: 'corr-123',
@@ -498,11 +480,7 @@ describe('#defraId', () => {
         roles: ['editor', 'viewer', 'admin']
       }
 
-      mockJwt.token.decode.mockReturnValue({
-        decoded: {
-          payload: mockPayload
-        }
-      })
+      mockVerifyToken.mockReturnValue(mockPayload)
 
       const mockCredentials = { token: 'access-token-456' }
       const mockParams = { id_token: 'id-token-456' }
