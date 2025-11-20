@@ -7,17 +7,6 @@ export const summaryLogStatuses = {
   validationSucceeded: 'validationSucceeded',
   submitted: 'submitted'
 }
-export const cdpUploaderStatuses = {
-  initiated: 'initiated',
-  pending: 'pending',
-  ready: 'ready'
-}
-
-export const cdpUploaderFileStatuses = {
-  pending: 'pending',
-  complete: 'complete',
-  rejected: 'rejected'
-}
 
 export const backendSummaryLogStatuses = {
   preprocessing: 'preprocessing',
