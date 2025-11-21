@@ -58,7 +58,7 @@ jobs:
     needs: pr-prep
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Test and Scan
         uses: ./.github/actions/test-and-scan
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: pr-validator
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: docker build -t defradigital/epr-frontend:${{github.sha}} .
       - uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@main
         with:
