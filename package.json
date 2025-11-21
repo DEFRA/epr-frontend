@@ -44,7 +44,8 @@
     "check:translations": "i18n-check --locales 'src/server/**' -s en && i18n-check --locales 'src/server/**' -s cy",
     "check:i18n": "npm run check:translations",
     "i18n:extract": "npx i18next-parser --config i18next-parser.config.js",
-    "i18n:extract:verbose": "npx i18next-parser --config i18next-parser.config.js --verbose"
+    "i18n:extract:verbose": "npx i18next-parser --config i18next-parser.config.js --verbose",
+    "export:translations": "node scripts/export-translations.js"
   },
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
@@ -111,6 +112,7 @@
     "eslint-plugin-n": "17.23.1",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-promise": "7.2.1",
+    "exceljs": "4.4.0",
     "globals": "16.5.0",
     "husky": "9.1.7",
     "i18next-cli": "1.5.11",
