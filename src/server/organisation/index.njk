@@ -1,0 +1,25 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-body" data-testid="app-page-body">
+      <div class="govuk-grid-column-two-thirds">
+        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+        <h2 class="govuk-heading-l"></h2>
+        {{ govukTable({
+          firstCellIsHeader: true,
+          head: [
+            {
+              text: "Material"
+            },
+            {
+              text: "Status"
+            }
+          ],
+          rows: registrations
+        }) }}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

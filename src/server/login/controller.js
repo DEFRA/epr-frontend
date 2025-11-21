@@ -1,4 +1,4 @@
-const getPath = ({ localiseUrl }) => localiseUrl('/account')
+const getPath = ({ localiseUrl }) => localiseUrl('/')
 
 /**
  * Login controller
