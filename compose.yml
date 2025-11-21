@@ -81,6 +81,8 @@ services:
     image: defradigital/cdp-defra-id-stub:${DEFRA_ID_STUB_VERSION:-latest}
     ports:
       - '3200:3200'
+    extra_hosts:
+      - 'localhost:host-gateway'
     depends_on:
       redis:
         condition: service_started
