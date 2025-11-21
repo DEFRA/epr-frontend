@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchWithAuthInterception } from '#server/common/helpers/auth/fetch.js'
+import { fetchWithAuthInterception } from '#server/auth/helpers/fetch.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}

@@ -5,7 +5,7 @@ import { config } from '#config/config.js'
 import {
   fetchWithAuthHeader,
   fetchWithAuthInterception
-} from '#server/common/helpers/auth/fetch.js'
+} from '#server/auth/helpers/fetch.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}

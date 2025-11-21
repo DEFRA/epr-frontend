@@ -1,12 +1,12 @@
 import Boom from '@hapi/boom'
 import fetch from 'node-fetch'
-import { getUserSession } from '#server/common/helpers/auth/get-user-session.js'
+import { getUserSession } from './get-user-session.js'
 
 export async function fetchWithAuthHeader(url, request) {
-  const accessToken = (await getUserSession(request)).token
+  const { value: session } = await getUserSession(request)
   const response = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bearer ${session.token}`
     }
   })
 
