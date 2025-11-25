@@ -1,14 +1,14 @@
 {
-  "pageTitle": "Home",
   "heading": "Manage your packaging waste responsibilities",
-  "subheading": "This service helps UK-based reprocessors and exporters meet packaging waste regulations.",
+  "pageTitle": "Home",
   "services": {
-    "description": "Use the service to manage your:",
-    "registrations": "registrations",
     "accreditations": "accreditations",
-    "summaryLog": "summary log",
+    "description": "Use the service to manage your:",
+    "prns": "PRNs or PERNs",
+    "registrations": "registrations",
     "regulatorReports": "regulator reports",
-    "prns": "PRNs or PERNs"
+    "summaryLog": "summary log"
   },
-  "startNow": "Start now"
+  "startNow": "Start now",
+  "subheading": "This service helps UK-based reprocessors and exporters meet packaging waste regulations."
 }
