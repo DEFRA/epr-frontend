@@ -46,9 +46,8 @@
     "i18n:extract": "npx i18next-cli extract",
     "i18n:extract:dry": "npx i18next-cli extract --dry-run",
     "i18n:status": "npx i18next-cli status",
-    "export:translations": "node scripts/export-translations.js",
+    "export:translations:excel": "node scripts/export-translations.js",
     "import:translations": "node scripts/import-translations.js",
-    "check:locales": "node scripts/check-locales.js",
     "validate:translations": "node scripts/validate-translations.js"
   },
   "author": "Defra DDTS",

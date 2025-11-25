@@ -1,6 +1,8 @@
 import { defineConfig } from 'i18next-cli'
 // eslint-disable-next-line n/no-missing-import
 import nunjucksPlugin from './scripts/i18next-nunjucks-plugin.mjs'
+// eslint-disable-next-line n/no-missing-import
+import exportPlugin from './scripts/i18next-export-plugin.mjs'
 
 export default defineConfig({
   locales: ['en', 'cy'],
@@ -30,5 +32,8 @@ export default defineConfig({
     input: ['src/server/**/{{language}}.json'],
     output: 'src/types/i18next.d.ts'
   },
-  plugins: [nunjucksPlugin()]
+  plugins: [
+    nunjucksPlugin(),
+    exportPlugin({ output: 'aftersync-results.json' })
+  ]
 })

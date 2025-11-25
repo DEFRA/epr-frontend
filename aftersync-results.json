@@ -1,0 +1,348 @@
+[
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/summary-log/en.json",
+    "updated": true,
+    "newTranslations": {
+      "checkHeading": "Check before you submit",
+      "checkIntro": "Your summary log has been validated and is ready to submit.",
+      "checkPageTitle": "Summary log",
+      "complianceBody": "By submitting this summary log, you are declaring that you have complied with the requirements of your environmental permit during the reporting period.",
+      "complianceHeading": "Compliance",
+      "complianceSubheading": "You must comply with your waste permit",
+      "confirmButton": "Confirm and submit",
+      "declarationBullet1": "the information provided is complete and accurate",
+      "declarationBullet2": "you have the authority to submit this information on behalf of your organisation",
+      "declarationHeading": "Declaration",
+      "declarationIntro": "By submitting this summary log, you confirm that:",
+      "errorHeading": "Error checking status",
+      "errorMessage": "Unable to check upload status",
+      "invalidFailureReasonExample": "The waste registration number in your summary log does not match your registration",
+      "invalidHeading": "Validation failed",
+      "invalidMessage": "Please check your file and try again",
+      "loadingKeepOpen": "Keep this page open",
+      "pageTitle": "Summary log",
+      "processingHeading": "Your file is being uploaded",
+      "processingKeepOpen": "Keep this page open and do not refresh it",
+      "processingMessage": "Your summary log is being uploaded and automatically validated",
+      "rejectedDefaultReason": "File rejected by virus scanner",
+      "reuploadButton": "Re-upload summary log",
+      "submittedHeading": "Submission complete",
+      "submittedMessage": "Your waste records have been updated",
+      "validatedHeading": "Validation complete",
+      "validatedMessage": "Your file is ready to submit"
+    },
+    "existingTranslations": {
+      "pageTitle": "Summary log",
+      "processingHeading": "Your file is being uploaded",
+      "processingMessage": "Your summary log is being uploaded and automatically validated",
+      "processingKeepOpen": "Keep this page open and do not refresh it",
+      "validatedHeading": "Validation complete",
+      "validatedMessage": "Your file is ready to submit",
+      "submittedHeading": "Submission complete",
+      "submittedMessage": "Your waste records have been updated",
+      "invalidHeading": "Validation failed",
+      "invalidMessage": "Please check your file and try again",
+      "invalidFailureReasonExample": "The waste registration number in your summary log does not match your registration",
+      "rejectedDefaultReason": "File rejected by virus scanner",
+      "errorHeading": "Error checking status",
+      "errorMessage": "Unable to check upload status",
+      "loadingKeepOpen": "Keep this page open",
+      "checkPageTitle": "Summary log",
+      "checkHeading": "Check before you submit",
+      "checkIntro": "Your summary log has been validated and is ready to submit.",
+      "complianceHeading": "Compliance",
+      "complianceSubheading": "You must comply with your waste permit",
+      "complianceBody": "By submitting this summary log, you are declaring that you have complied with the requirements of your environmental permit during the reporting period.",
+      "declarationHeading": "Declaration",
+      "declarationIntro": "By submitting this summary log, you confirm that:",
+      "declarationBullet1": "the information provided is complete and accurate",
+      "declarationBullet2": "you have the authority to submit this information on behalf of your organisation",
+      "confirmButton": "Confirm and submit",
+      "reuploadButton": "Re-upload summary log"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/summary-log-upload/en.json",
+    "updated": true,
+    "newTranslations": {
+      "accordionSection1Heading": "You’ve completed section 1 for each load",
+      "accordionSection1Text": "A load will only be added to your waste balance when you’ve provided all the information in this section.",
+      "accordionSection2Bullet1": "you’re meeting your regulatory requirements",
+      "accordionSection2Bullet2": "reports you submit to your regulator will be accurate",
+      "accordionSection2Heading": "You’ve included all known information in sections 2, 3 and 4",
+      "accordionSection2Intro": "By completing these sections you’re ensuring that:",
+      "accordionSection3Heading": "You’ve adjusted any out-of-date information",
+      "accordionSection3Paragraph1": "You should always submit the most up-to-date information you have, to ensure that your waste balance is accurate.",
+      "accordionSection3Paragraph2": "Any adjustments for this reporting period will be reflected straight away in your waste balance.",
+      "accordionSection3Paragraph3": "Any adjustments made to loads from previous reporting periods will need to be confirmed by an approved person at your company.",
+      "accordionSection4Heading": "You’ve included any waste sent on in section 5, if applicable",
+      "accordionSection4Text": "You only need to complete this section if packaging waste has been sent on. These loads will be removed from your waste balance when all the information is provided.",
+      "accordionWhyNeeded": "Why this is needed",
+      "checkStepsIntro1": "Check you’ve completed the following steps before uploading your summary log.",
+      "checkStepsIntro2": "This will ensure that your waste balance is correct and you’re meeting regulatory requirements.",
+      "continueButton": "Continue",
+      "errorGeneric": "Failed to initialize upload",
+      "errorHeading": "Summary log upload error",
+      "errorPageTitle": "Summary log: upload error",
+      "fileUploadLabel": "Upload XLSX file",
+      "heading": "Upload your summary log",
+      "insetText": "You can submit an updated summary log whenever you need to add or adjust your waste records.",
+      "pageTitle": "Summary log: upload",
+      "siteName": "Test site"
+    },
+    "existingTranslations": {
+      "pageTitle": "Summary log: upload",
+      "heading": "Upload your summary log",
+      "siteName": "Test site",
+      "checkStepsIntro1": "Check you’ve completed the following steps before uploading your summary log.",
+      "checkStepsIntro2": "This will ensure that your waste balance is correct and you’re meeting regulatory requirements.",
+      "accordionWhyNeeded": "Why this is needed",
+      "accordionSection1Heading": "You’ve completed section 1 for each load",
+      "accordionSection1Text": "A load will only be added to your waste balance when you’ve provided all the information in this section.",
+      "accordionSection2Heading": "You’ve included all known information in sections 2, 3 and 4",
+      "accordionSection2Intro": "By completing these sections you’re ensuring that:",
+      "accordionSection2Bullet1": "you’re meeting your regulatory requirements",
+      "accordionSection2Bullet2": "reports you submit to your regulator will be accurate",
+      "accordionSection3Heading": "You’ve adjusted any out-of-date information",
+      "accordionSection3Paragraph1": "You should always submit the most up-to-date information you have, to ensure that your waste balance is accurate.",
+      "accordionSection3Paragraph2": "Any adjustments for this reporting period will be reflected straight away in your waste balance.",
+      "accordionSection3Paragraph3": "Any adjustments made to loads from previous reporting periods will need to be confirmed by an approved person at your company.",
+      "accordionSection4Heading": "You’ve included any waste sent on in section 5, if applicable",
+      "accordionSection4Text": "You only need to complete this section if packaging waste has been sent on. These loads will be removed from your waste balance when all the information is provided.",
+      "insetText": "You can submit an updated summary log whenever you need to add or adjust your waste records.",
+      "fileUploadLabel": "Upload XLSX file",
+      "continueButton": "Continue",
+      "errorPageTitle": "Summary log: upload error",
+      "errorHeading": "Summary log upload error",
+      "errorGeneric": "Failed to initialize upload"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/home/en.json",
+    "updated": true,
+    "newTranslations": {
+      "heading": "Manage your packaging waste responsibilities",
+      "pageTitle": "Home",
+      "services": {
+        "accreditations": "accreditations",
+        "description": "Use the service to manage your:",
+        "prns": "PRNs or PERNs",
+        "registrations": "registrations",
+        "regulatorReports": "regulator reports",
+        "summaryLog": "summary log"
+      },
+      "startNow": "Start now",
+      "subheading": "This service helps UK-based reprocessors and exporters meet packaging waste regulations."
+    },
+    "existingTranslations": {
+      "pageTitle": "Home",
+      "heading": "Manage your packaging waste responsibilities",
+      "subheading": "This service helps UK-based reprocessors and exporters meet packaging waste regulations.",
+      "services": {
+        "description": "Use the service to manage your:",
+        "registrations": "registrations",
+        "accreditations": "accreditations",
+        "summaryLog": "summary log",
+        "regulatorReports": "regulator reports",
+        "prns": "PRNs or PERNs"
+      },
+      "startNow": "Start now"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/account/en.json",
+    "updated": true,
+    "newTranslations": {
+      "greeting": "Welcome",
+      "pageTitle": "Account"
+    },
+    "existingTranslations": {
+      "pageTitle": "Account",
+      "greeting": "Welcome"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/common/en.json",
+    "updated": false,
+    "newTranslations": {
+      "back": "Back",
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "navigation": {
+        "signOut": "Sign out",
+        "switchOrganisation": "Switch organisation",
+        "yourSites": "Your sites"
+      },
+      "serviceName": "Manage your packaging waste responsibilities",
+      "submit": "Submit"
+    },
+    "existingTranslations": {
+      "back": "Back",
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "navigation": {
+        "signOut": "Sign out",
+        "switchOrganisation": "Switch organisation",
+        "yourSites": "Your sites"
+      },
+      "serviceName": "Manage your packaging waste responsibilities",
+      "submit": "Submit"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/registration/en.json",
+    "updated": false,
+    "newTranslations": {
+      "packagingHeading": "Packaging waste records",
+      "submitSummaryLog": "Submit summary log"
+    },
+    "existingTranslations": {
+      "packagingHeading": "Packaging waste records",
+      "submitSummaryLog": "Submit summary log"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/summary-log/cy.json",
+    "updated": true,
+    "newTranslations": {
+      "checkHeading": "",
+      "checkIntro": "",
+      "checkPageTitle": "",
+      "complianceBody": "",
+      "complianceHeading": "",
+      "complianceSubheading": "",
+      "confirmButton": "",
+      "declarationBullet1": "",
+      "declarationBullet2": "",
+      "declarationHeading": "",
+      "declarationIntro": "",
+      "errorHeading": "",
+      "errorMessage": "",
+      "invalidHeading": "",
+      "invalidMessage": "",
+      "pageTitle": "",
+      "processingHeading": "",
+      "processingKeepOpen": "",
+      "processingMessage": "",
+      "rejectedDefaultReason": "",
+      "reuploadButton": "",
+      "submittedHeading": "",
+      "submittedMessage": "",
+      "validatedHeading": "",
+      "validatedMessage": ""
+    },
+    "existingTranslations": {}
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/summary-log-upload/cy.json",
+    "updated": true,
+    "newTranslations": {
+      "accordionSection1Heading": "",
+      "accordionSection1Text": "",
+      "accordionSection2Bullet1": "",
+      "accordionSection2Bullet2": "",
+      "accordionSection2Heading": "",
+      "accordionSection2Intro": "",
+      "accordionSection3Heading": "",
+      "accordionSection3Paragraph1": "",
+      "accordionSection3Paragraph2": "",
+      "accordionSection3Paragraph3": "",
+      "accordionSection4Heading": "",
+      "accordionSection4Text": "",
+      "accordionWhyNeeded": "",
+      "checkStepsIntro1": "",
+      "checkStepsIntro2": "",
+      "continueButton": "",
+      "errorGeneric": "",
+      "errorHeading": "",
+      "errorPageTitle": "",
+      "fileUploadLabel": "",
+      "heading": "",
+      "insetText": "",
+      "pageTitle": "",
+      "siteName": ""
+    },
+    "existingTranslations": {}
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/home/cy.json",
+    "updated": true,
+    "newTranslations": {
+      "heading": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
+      "pageTitle": "Hafan",
+      "services": {
+        "accreditations": "achrediadau",
+        "description": "Defnyddiwch y gwasanaeth i reoli eich:",
+        "prns": "PRNs neu PERNs",
+        "registrations": "cofrestriadau",
+        "regulatorReports": "adroddiadau rheolydd",
+        "summaryLog": "log cryno"
+      },
+      "startNow": "Dechreuwch nawr",
+      "subheading": "Mae'r gwasanaeth hwn yn helpu ailbroseswyr ac allforwyr yn y DU i fodloni rheoliadau gwastraff pecynnu."
+    },
+    "existingTranslations": {
+      "pageTitle": "Hafan",
+      "heading": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
+      "subheading": "Mae'r gwasanaeth hwn yn helpu ailbroseswyr ac allforwyr yn y DU i fodloni rheoliadau gwastraff pecynnu.",
+      "services": {
+        "description": "Defnyddiwch y gwasanaeth i reoli eich:",
+        "registrations": "cofrestriadau",
+        "accreditations": "achrediadau",
+        "summaryLog": "log cryno",
+        "regulatorReports": "adroddiadau rheolydd",
+        "prns": "PRNs neu PERNs"
+      },
+      "startNow": "Dechreuwch nawr"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/account/cy.json",
+    "updated": true,
+    "newTranslations": {
+      "greeting": "Croeso",
+      "pageTitle": "Cyfrif"
+    },
+    "existingTranslations": {
+      "pageTitle": "Cyfrif",
+      "greeting": "Croeso"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/common/cy.json",
+    "updated": false,
+    "newTranslations": {
+      "back": "Yn ôl",
+      "cancel": "Canslo",
+      "continue": "Parhau",
+      "navigation": {
+        "signOut": "Allgofnodi",
+        "switchOrganisation": "Sefydliad switsh",
+        "yourSites": "Eich gwefannau"
+      },
+      "serviceName": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
+      "submit": "Cyflwyno"
+    },
+    "existingTranslations": {
+      "back": "Yn ôl",
+      "cancel": "Canslo",
+      "continue": "Parhau",
+      "navigation": {
+        "signOut": "Allgofnodi",
+        "switchOrganisation": "Sefydliad switsh",
+        "yourSites": "Eich gwefannau"
+      },
+      "serviceName": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
+      "submit": "Cyflwyno"
+    }
+  },
+  {
+    "path": "/Users/mohammeddebashi/workspace/defra/epr-frontend/src/server/registration/cy.json",
+    "updated": true,
+    "newTranslations": {
+      "packagingHeading": "",
+      "submitSummaryLog": ""
+    },
+    "existingTranslations": {}
+  }
+]
