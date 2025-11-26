@@ -64,7 +64,7 @@ const getViewData = (localise, status, failureReason) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} summaryLogId - Summary log ID
- * @returns {Promise<{status: string, failureReason?: string, accreditationNumber?: string}>}
+ * @returns {Promise<{status: string, failureReason?: string, accreditationNumber?: string, loadCounts?: object}>}
  */
 const getStatusData = async (
   request,
@@ -78,13 +78,13 @@ const getStatusData = async (
 
   if (freshData) {
     // Use fresh data from session and clear it
-    const { status, accreditationNumber, failureReason } = freshData
+    const { status, accreditationNumber, failureReason, loadCounts } = freshData
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { freshData: _, ...remainingSession } = summaryLogsSession
     request.yar.set(sessionNames.summaryLogs, remainingSession)
 
-    return { status, accreditationNumber, failureReason }
+    return { status, accreditationNumber, failureReason, loadCounts }
   }
 
   // Poll backend for status
@@ -96,7 +96,8 @@ const getStatusData = async (
   return {
     status: response.status,
     failureReason: response.failureReason,
-    accreditationNumber: response.accreditationNumber
+    accreditationNumber: response.accreditationNumber,
+    loadCounts: response.loadCounts
   }
 }
 
@@ -138,6 +139,7 @@ const handleRejectedStatus = (
  * @param {string} options.status - Backend status
  * @param {string} [options.failureReason] - Failure reason from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
+ * @param {object} [options.loadCounts] - Load counts for validated summary logs
  * @param {string} options.organisationId - Organisation ID
  * @param {string} options.registrationId - Registration ID
  * @param {string} options.summaryLogId - Summary log ID
@@ -150,6 +152,7 @@ const renderViewForStatus = ({
   status,
   failureReason,
   accreditationNumber,
+  loadCounts,
   organisationId,
   registrationId,
   summaryLogId,
@@ -163,7 +166,8 @@ const renderViewForStatus = ({
       pageTitle: localise('summary-log:checkPageTitle'),
       organisationId,
       registrationId,
-      summaryLogId
+      summaryLogId,
+      loadCounts
     })
   }
 
@@ -211,7 +215,7 @@ export const summaryLogUploadProgressController = {
     const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
     try {
-      const { status, failureReason, accreditationNumber } =
+      const { status, failureReason, accreditationNumber, loadCounts } =
         await getStatusData(
           request,
           organisationId,
@@ -238,6 +242,7 @@ export const summaryLogUploadProgressController = {
         status,
         failureReason,
         accreditationNumber,
+        loadCounts,
         organisationId,
         registrationId,
         summaryLogId,

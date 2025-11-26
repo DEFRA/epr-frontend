@@ -149,6 +149,216 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
+    test('status: validated with loadCounts - should show waste balance section with new loads', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loadCounts: {
+          new: { valid: 29, invalid: 0 },
+          unchanged: { valid: 10, invalid: 0 },
+          adjusted: { valid: 0, invalid: 0 }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '29 new loads will be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'These are loads that have been added since your summary log was last submitted'
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with loadCounts - should show invalid loads section', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loadCounts: {
+          new: { valid: 0, invalid: 9 },
+          unchanged: { valid: 10, invalid: 0 },
+          adjusted: { valid: 0, invalid: 0 }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '9 loads will not be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'These loads are missing information from section 1'
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with loadCounts - should show adjusted loads section', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loadCounts: {
+          new: { valid: 0, invalid: 0 },
+          unchanged: { valid: 10, invalid: 0 },
+          adjusted: { valid: 14, invalid: 0 }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '14 loads in your current reporting period have been adjusted'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'Your waste balance will be updated to reflect these adjustments'
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with loadCounts - should show all sections when all counts present', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loadCounts: {
+          new: { valid: 29, invalid: 9 },
+          unchanged: { valid: 10, invalid: 0 },
+          adjusted: { valid: 14, invalid: 0 }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '29 new loads will be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '9 loads will not be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '14 loads in your current reporting period have been adjusted'
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with loadCounts - should use singular form for single load', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loadCounts: {
+          new: { valid: 1, invalid: 1 },
+          unchanged: { valid: 10, invalid: 0 },
+          adjusted: { valid: 1, invalid: 0 }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '1 new load will be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '1 load will not be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '1 load in your current reporting period has been adjusted'
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with loadCounts - should show all sections even when counts are zero', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loadCounts: {
+          new: { valid: 0, invalid: 0 },
+          unchanged: { valid: 10, invalid: 0 },
+          adjusted: { valid: 0, invalid: 0 }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '0 new loads will be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '0 loads will not be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '0 loads in your current reporting period have been adjusted'
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated without loadCounts - should default to zero counts', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '0 new loads will be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '0 loads will not be added to your waste balance'
+        )
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          '0 loads in your current reporting period have been adjusted'
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: submitted - should show success page and stop polling', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.submitted,
