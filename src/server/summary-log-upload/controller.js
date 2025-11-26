@@ -57,7 +57,8 @@ export const summaryLogUploadController = {
         summaryLogId,
         uploadId,
         uploadUrl,
-        formErrors
+        formErrors,
+        defraId: request.server.app.defraId
       })
     } catch (err) {
       // @todo: use structured logging
@@ -66,7 +67,8 @@ export const summaryLogUploadController = {
       return h.view('error/index', {
         pageTitle: localise('summary-log-upload:errorPageTitle'),
         heading: localise('summary-log-upload:errorHeading'),
-        error: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`
+        error: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`,
+        defraId: request.server.app.defraId
       })
     }
   }
