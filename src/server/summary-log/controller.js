@@ -153,7 +153,8 @@ const renderViewForStatus = ({
   organisationId,
   registrationId,
   summaryLogId,
-  pollUrl
+  pollUrl,
+  defraId
 }) => {
   const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
@@ -163,7 +164,8 @@ const renderViewForStatus = ({
       pageTitle: localise('summary-log:checkPageTitle'),
       organisationId,
       registrationId,
-      summaryLogId
+      summaryLogId,
+      defraId
     })
   }
 
@@ -175,7 +177,8 @@ const renderViewForStatus = ({
       message: localise('summary-log:submittingMessage'),
       isProcessing: true,
       shouldPoll: true,
-      pollUrl
+      pollUrl,
+      defraId
     })
   }
 
@@ -185,7 +188,8 @@ const renderViewForStatus = ({
       pageTitle: localise('summary-log:successPageTitle'),
       organisationId,
       registrationId,
-      accreditationNumber
+      accreditationNumber,
+      defraId
     })
   }
 
@@ -196,7 +200,8 @@ const renderViewForStatus = ({
     ...viewData,
     pageTitle: PAGE_TITLE,
     shouldPoll: PROCESSING_STATES.has(status),
-    pollUrl
+    pollUrl,
+    defraId
   })
 }
 
@@ -241,7 +246,8 @@ export const summaryLogUploadProgressController = {
         organisationId,
         registrationId,
         summaryLogId,
-        pollUrl
+        pollUrl,
+        defraId: request.server.app.defraId
       })
     } catch (err) {
       // 404 means summary log not created yet - treat as preprocessing
@@ -255,7 +261,8 @@ export const summaryLogUploadProgressController = {
           ...viewData,
           pageTitle: PAGE_TITLE,
           shouldPoll: true,
-          pollUrl
+          pollUrl,
+          defraId: request.server.app.defraId
         })
       }
 
@@ -267,7 +274,8 @@ export const summaryLogUploadProgressController = {
         heading: localise('summary-log:errorHeading'),
         message: localise('summary-log:errorMessage'),
         isProcessing: false,
-        shouldPoll: false
+        shouldPoll: false,
+        defraId: request.server.app.defraId
       })
     }
   }
