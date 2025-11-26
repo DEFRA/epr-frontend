@@ -174,29 +174,53 @@ docker run -p 3000:3000 epr-frontend
 >
 > Please ensure you have at least version 2.22.0 of Docker Compose installed.
 
-A local environment with:
+The project uses a shared compose file (`compose.shared.yml`) for all supporting services.
 
-- Localstack for AWS services (S3, SQS)
-- Redis
-- MongoDB
-- [Defra ID stub](https://github.com/DEFRA/cdp-defra-id-stub)
-
-Start services in Docker
+**Run supporting services only:**
 
 ```bash
-docker compose up
-
-# run frontend in the terminal
-npm run dev
+docker compose -f compose.shared.yml up
 ```
 
-Run with frontend
+Then run the frontend locally with `npm run dev` in a separate terminal.
+
+**Run frontend in Docker + supporting services (backend on host):**
+
+```bash
+EPR_BACKEND_URL=http://localhost:3001 docker compose --profile all up --build --watch
+```
+
+Then run the backend locally with `npm run dev` in a separate terminal in the backend repo.
+
+**Run frontend + backend + supporting services:**
 
 ```sh
 docker compose --profile all up --build --watch
 ```
 
-Delete Redis storage
+**Run with specific backend version:**
+
+```sh
+BACKEND_VERSION=1.2.3 docker compose --profile all up --build --watch
+```
+
+**Include Defra ID stub (for authentication):**
+
+```sh
+docker compose --profile all --profile stub up --build --watch
+```
+
+**Supporting services included:**
+
+- LocalStack (AWS services: S3, SQS, SNS, Firehose)
+- MongoDB (for backend)
+- nginx-proxy (reverse proxy)
+- Redis (session cache)
+- cdp-defra-id-stub ([Defra ID stub](https://github.com/DEFRA/cdp-defra-id-stub), `--profile stub`)
+- cdp-uploader (file upload service)
+- epr-backend (`--profile all`, requires `GOVUK_NOTIFY_API_KEY` environment variable)
+
+**Delete volumes:**
 
 ```sh
 docker compose down -v
