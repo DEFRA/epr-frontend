@@ -159,7 +159,12 @@ describe('#summaryLogUploadProgressController', () => {
             invalid: [1099, 1100]
           },
           unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [], invalid: [] }
+          adjusted: { valid: [], invalid: [] },
+          totals: {
+            added: { valid: 7, invalid: 2 },
+            unchanged: { valid: 0, invalid: 0 },
+            adjusted: { valid: 0, invalid: 0 }
+          }
         }
       })
 
@@ -190,7 +195,12 @@ describe('#summaryLogUploadProgressController', () => {
         loads: {
           added: { valid: [], invalid: [] },
           unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [1096, 1099, 1100], invalid: [] }
+          adjusted: { valid: [1096, 1099, 1100], invalid: [] },
+          totals: {
+            added: { valid: 0, invalid: 0 },
+            unchanged: { valid: 0, invalid: 0 },
+            adjusted: { valid: 3, invalid: 0 }
+          }
         }
       })
 
@@ -210,7 +220,12 @@ describe('#summaryLogUploadProgressController', () => {
         loads: {
           added: { valid: [], invalid: [] },
           unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [1096, 1099, 1100], invalid: [] }
+          adjusted: { valid: [1096, 1099, 1100], invalid: [] },
+          totals: {
+            added: { valid: 0, invalid: 0 },
+            unchanged: { valid: 0, invalid: 0 },
+            adjusted: { valid: 3, invalid: 0 }
+          }
         }
       })
 
@@ -235,7 +250,12 @@ describe('#summaryLogUploadProgressController', () => {
         loads: {
           added: { valid: [1092, 1093, 1094], invalid: [] },
           unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [], invalid: [] }
+          adjusted: { valid: [], invalid: [] },
+          totals: {
+            added: { valid: 3, invalid: 0 },
+            unchanged: { valid: 0, invalid: 0 },
+            adjusted: { valid: 0, invalid: 0 }
+          }
         }
       })
 
@@ -259,7 +279,12 @@ describe('#summaryLogUploadProgressController', () => {
         loads: {
           added: { valid: [1092], invalid: [] },
           unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [1093], invalid: [] }
+          adjusted: { valid: [1093], invalid: [] },
+          totals: {
+            added: { valid: 1, invalid: 0 },
+            unchanged: { valid: 0, invalid: 0 },
+            adjusted: { valid: 1, invalid: 0 }
+          }
         }
       })
 
@@ -282,7 +307,12 @@ describe('#summaryLogUploadProgressController', () => {
         loads: {
           added: { valid: [1092, 1093, 1094, 1095, 1096], invalid: [] },
           unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [], invalid: [] }
+          adjusted: { valid: [], invalid: [] },
+          totals: {
+            added: { valid: 5, invalid: 0 },
+            unchanged: { valid: 0, invalid: 0 },
+            adjusted: { valid: 0, invalid: 0 }
+          }
         }
       })
 
@@ -459,25 +489,49 @@ describe('#summaryLogUploadProgressController', () => {
 })
 
 describe('#buildLoadsViewModel', () => {
-  test('returns empty arrays and zero totals when loads is undefined', () => {
+  test('returns empty arrays and zero counts when loads is undefined', () => {
     const result = buildLoadsViewModel(undefined)
 
     expect(result).toStrictEqual({
-      added: { valid: [], invalid: [], total: 0 },
-      adjusted: { valid: [], invalid: [], total: 0 }
+      added: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
     })
   })
 
-  test('returns empty arrays and zero totals when loads is null', () => {
+  test('returns empty arrays and zero counts when loads is null', () => {
     const result = buildLoadsViewModel(null)
 
     expect(result).toStrictEqual({
-      added: { valid: [], invalid: [], total: 0 },
-      adjusted: { valid: [], invalid: [], total: 0 }
+      added: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
     })
   })
 
-  test('returns empty arrays and zero totals when loads has empty arrays', () => {
+  test('returns empty arrays and zero counts when loads has empty arrays and no totals', () => {
     const result = buildLoadsViewModel({
       added: { valid: [], invalid: [] },
       unchanged: { valid: [], invalid: [] },
@@ -485,48 +539,87 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result).toStrictEqual({
-      added: { valid: [], invalid: [], total: 0 },
-      adjusted: { valid: [], invalid: [], total: 0 }
+      added: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
     })
   })
 
-  test('calculates totals correctly for added loads', () => {
+  test('uses totals from backend for counts (arrays may be truncated)', () => {
     const result = buildLoadsViewModel({
       added: { valid: [1001, 1002, 1003], invalid: [1004, 1005] },
       unchanged: { valid: [], invalid: [] },
-      adjusted: { valid: [], invalid: [] }
+      adjusted: { valid: [], invalid: [] },
+      totals: {
+        added: { valid: 150, invalid: 50 },
+        unchanged: { valid: 0, invalid: 0 },
+        adjusted: { valid: 0, invalid: 0 }
+      }
     })
 
+    // Arrays contain truncated data, but counts come from totals
     expect(result.added).toStrictEqual({
       valid: [1001, 1002, 1003],
       invalid: [1004, 1005],
-      total: 5
+      validCount: 150,
+      invalidCount: 50,
+      total: 200
     })
   })
 
-  test('calculates totals correctly for adjusted loads', () => {
+  test('uses totals for adjusted loads counts', () => {
     const result = buildLoadsViewModel({
       added: { valid: [], invalid: [] },
       unchanged: { valid: [], invalid: [] },
-      adjusted: { valid: [2001, 2002], invalid: [2003] }
+      adjusted: { valid: [2001, 2002], invalid: [2003] },
+      totals: {
+        added: { valid: 0, invalid: 0 },
+        unchanged: { valid: 0, invalid: 0 },
+        adjusted: { valid: 120, invalid: 30 }
+      }
     })
 
     expect(result.adjusted).toStrictEqual({
       valid: [2001, 2002],
       invalid: [2003],
-      total: 3
+      validCount: 120,
+      invalidCount: 30,
+      total: 150
     })
   })
 
   test('handles partial loads data gracefully', () => {
     const result = buildLoadsViewModel({
       added: { valid: [1001] }
-      // missing invalid, unchanged, adjusted
+      // missing invalid, unchanged, adjusted, totals
     })
 
     expect(result).toStrictEqual({
-      added: { valid: [1001], invalid: [], total: 1 },
-      adjusted: { valid: [], invalid: [], total: 0 }
+      added: {
+        valid: [1001],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
     })
   })
 })

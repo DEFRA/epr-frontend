@@ -16,12 +16,12 @@
 
     {% if loads.added.total > 0 %}
     <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-added-loads">
-      {% if loads.added.valid | length > 0 %}
+      {% if loads.added.validCount > 0 %}
       <div class="govuk-accordion__section">
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
             <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-valid">
-              {{ localise('summary-log:loadsAdded', { count: loads.added.valid | length }) }}
+              {{ localise('summary-log:loadsAdded', { count: loads.added.validCount }) }}
             </span>
           </h3>
           <div class="govuk-accordion__section-summary govuk-body">
@@ -39,12 +39,12 @@
       </div>
       {% endif %}
 
-      {% if loads.added.invalid | length > 0 %}
+      {% if loads.added.invalidCount > 0 %}
       <div class="govuk-accordion__section">
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
             <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-invalid">
-              {{ localise('summary-log:loadsNotAdded', { count: loads.added.invalid | length }) }}
+              {{ localise('summary-log:loadsNotAdded', { count: loads.added.invalidCount }) }}
             </span>
           </h3>
           <div class="govuk-accordion__section-summary govuk-body">

@@ -16,25 +16,31 @@ const SUCCESS_VIEW_NAME = 'summary-log/success'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
 /**
- * Transforms raw loads data from backend into a view model with computed totals
+ * Transforms raw loads data from backend into a view model
+ * Uses totals from backend (not array lengths) because arrays are truncated at 100 items
  * @param {object} [loads] - Raw loads data from backend API
- * @returns {object} View model with row IDs and computed totals
+ * @returns {object} View model with row IDs and counts from totals
  */
-export const buildLoadsViewModel = (loads) => ({
-  added: {
-    valid: loads?.added?.valid ?? [],
-    invalid: loads?.added?.invalid ?? [],
-    total:
-      (loads?.added?.valid?.length ?? 0) + (loads?.added?.invalid?.length ?? 0)
-  },
-  adjusted: {
-    valid: loads?.adjusted?.valid ?? [],
-    invalid: loads?.adjusted?.invalid ?? [],
-    total:
-      (loads?.adjusted?.valid?.length ?? 0) +
-      (loads?.adjusted?.invalid?.length ?? 0)
+export const buildLoadsViewModel = (loads) => {
+  const totals = loads?.totals ?? {}
+
+  return {
+    added: {
+      valid: loads?.added?.valid ?? [],
+      invalid: loads?.added?.invalid ?? [],
+      validCount: totals.added?.valid ?? 0,
+      invalidCount: totals.added?.invalid ?? 0,
+      total: (totals.added?.valid ?? 0) + (totals.added?.invalid ?? 0)
+    },
+    adjusted: {
+      valid: loads?.adjusted?.valid ?? [],
+      invalid: loads?.adjusted?.invalid ?? [],
+      validCount: totals.adjusted?.valid ?? 0,
+      invalidCount: totals.adjusted?.invalid ?? 0,
+      total: (totals.adjusted?.valid ?? 0) + (totals.adjusted?.invalid ?? 0)
+    }
   }
-})
+}
 
 /**
  * Determines view data based on backend status
