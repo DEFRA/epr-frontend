@@ -16,6 +16,27 @@ const SUCCESS_VIEW_NAME = 'summary-log/success'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
 /**
+ * Transforms raw loads data from backend into a view model with computed totals
+ * @param {object} [loads] - Raw loads data from backend API
+ * @returns {object} View model with row IDs and computed totals
+ */
+export const buildLoadsViewModel = (loads) => ({
+  added: {
+    valid: loads?.added?.valid ?? [],
+    invalid: loads?.added?.invalid ?? [],
+    total:
+      (loads?.added?.valid?.length ?? 0) + (loads?.added?.invalid?.length ?? 0)
+  },
+  adjusted: {
+    valid: loads?.adjusted?.valid ?? [],
+    invalid: loads?.adjusted?.invalid ?? [],
+    total:
+      (loads?.adjusted?.valid?.length ?? 0) +
+      (loads?.adjusted?.invalid?.length ?? 0)
+  }
+})
+
+/**
  * Determines view data based on backend status
  * @param {(key: string) => string} localise - The i18n translation function
  * @param {string} status - Backend status
@@ -64,7 +85,7 @@ const getViewData = (localise, status, failureReason) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} summaryLogId - Summary log ID
- * @returns {Promise<{status: string, failureReason?: string, accreditationNumber?: string, loadCounts?: object}>}
+ * @returns {Promise<{status: string, failureReason?: string, accreditationNumber?: string, loads?: object}>}
  */
 const getStatusData = async (
   request,
@@ -76,28 +97,23 @@ const getStatusData = async (
   const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
   const freshData = summaryLogsSession.freshData
 
-  if (freshData) {
-    // Use fresh data from session and clear it
-    const { status, accreditationNumber, failureReason, loadCounts } = freshData
+  const data = freshData
+    ? freshData
+    : await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
 
+  if (freshData) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { freshData: _, ...remainingSession } = summaryLogsSession
     request.yar.set(sessionNames.summaryLogs, remainingSession)
-
-    return { status, accreditationNumber, failureReason, loadCounts }
   }
 
-  // Poll backend for status
-  const response = await fetchSummaryLogStatus(
-    organisationId,
-    registrationId,
-    summaryLogId
-  )
+  const { status, failureReason, accreditationNumber, loads } = data
+
   return {
-    status: response.status,
-    failureReason: response.failureReason,
-    accreditationNumber: response.accreditationNumber,
-    loadCounts: response.loadCounts
+    status,
+    failureReason,
+    accreditationNumber,
+    loads
   }
 }
 
@@ -139,7 +155,7 @@ const handleRejectedStatus = (
  * @param {string} options.status - Backend status
  * @param {string} [options.failureReason] - Failure reason from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
- * @param {object} [options.loadCounts] - Load counts for validated summary logs
+ * @param {object} [options.loads] - Loads data with row IDs for validated summary logs
  * @param {string} options.organisationId - Organisation ID
  * @param {string} options.registrationId - Registration ID
  * @param {string} options.summaryLogId - Summary log ID
@@ -152,7 +168,7 @@ const renderViewForStatus = ({
   status,
   failureReason,
   accreditationNumber,
-  loadCounts,
+  loads,
   organisationId,
   registrationId,
   summaryLogId,
@@ -162,12 +178,14 @@ const renderViewForStatus = ({
 
   // If validated, show check page
   if (status === backendSummaryLogStatuses.validated) {
+    const loadsViewModel = buildLoadsViewModel(loads)
+
     return h.view(CHECK_VIEW_NAME, {
       pageTitle: localise('summary-log:checkPageTitle'),
       organisationId,
       registrationId,
       summaryLogId,
-      loadCounts
+      loads: loadsViewModel
     })
   }
 
@@ -215,7 +233,7 @@ export const summaryLogUploadProgressController = {
     const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
     try {
-      const { status, failureReason, accreditationNumber, loadCounts } =
+      const { status, failureReason, accreditationNumber, loads } =
         await getStatusData(
           request,
           organisationId,
@@ -242,7 +260,7 @@ export const summaryLogUploadProgressController = {
         status,
         failureReason,
         accreditationNumber,
-        loadCounts,
+        loads,
         organisationId,
         registrationId,
         summaryLogId,

@@ -8,25 +8,93 @@
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
     <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
 
-    {% set addedValid = loadCounts.added.valid if loadCounts and loadCounts.added else 0 %}
-    {% set addedInvalid = loadCounts.added.invalid if loadCounts and loadCounts.added else 0 %}
-    {% set adjustedTotal = (loadCounts.adjusted.valid + loadCounts.adjusted.invalid) if loadCounts and loadCounts.adjusted else 0 %}
+    {% if loads.added.total > 0 %}
+    <h2 class="govuk-heading-l">{{ localise('summary-log:addedLoadsHeading', { count: loads.added.total }) }}</h2>
+    {% else %}
+    <h2 class="govuk-heading-l">{{ localise('summary-log:noAddedLoadsHeading') }}</h2>
+    {% endif %}
 
-    <h2 class="govuk-heading-l">{{ localise('summary-log:wasteBalanceHeading') }}</h2>
+    {% if loads.added.total > 0 %}
+    <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-added-loads">
+      {% if loads.added.valid | length > 0 %}
+      <div class="govuk-accordion__section">
+        <div class="govuk-accordion__section-header">
+          <h3 class="govuk-accordion__section-heading">
+            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-valid">
+              {{ localise('summary-log:loadsAdded', { count: loads.added.valid | length }) }}
+            </span>
+          </h3>
+          <div class="govuk-accordion__section-summary govuk-body">
+            {{ localise('summary-log:loadsAddedExplanation') }}
+          </div>
+        </div>
+        <div id="accordion-added-loads-content-valid" class="govuk-accordion__section-content">
+          <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
+          <ul class="govuk-list govuk-list--bullet">
+            {% for rowId in loads.added.valid %}
+            <li>{{ rowId }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
 
-    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsAdded', { count: addedValid }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:loadsAddedExplanation') }}</p>
+      {% if loads.added.invalid | length > 0 %}
+      <div class="govuk-accordion__section">
+        <div class="govuk-accordion__section-header">
+          <h3 class="govuk-accordion__section-heading">
+            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-invalid">
+              {{ localise('summary-log:loadsNotAdded', { count: loads.added.invalid | length }) }}
+            </span>
+          </h3>
+          <div class="govuk-accordion__section-summary govuk-body">
+            {{ localise('summary-log:loadsNotAddedExplanation') }}
+          </div>
+        </div>
+        <div id="accordion-added-loads-content-invalid" class="govuk-accordion__section-content">
+          <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
+          <ul class="govuk-list govuk-list--bullet">
+            {% for rowId in loads.added.invalid %}
+            <li>{{ rowId }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
 
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    {% if loads.adjusted.total > 0 %}
+    <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
-    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsNotAdded', { count: addedInvalid }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:loadsNotAddedExplanation') }}</p>
+    <h2 class="govuk-heading-l">{{ localise('summary-log:adjustedLoadsHeading', { count: loads.adjusted.total }) }}</h2>
 
-    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-
-    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsAdjusted', { count: adjustedTotal }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:loadsAdjustedExplanation') }}</p>
-    <p class="govuk-body">{{ localise('summary-log:loadsAdjustedUpdate') }}</p>
+    <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-adjusted-loads">
+      <div class="govuk-accordion__section">
+        <div class="govuk-accordion__section-header">
+          <h3 class="govuk-accordion__section-heading">
+            <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-1">
+              {{ localise('summary-log:adjustmentsReflected') }}
+            </span>
+          </h3>
+          <div class="govuk-accordion__section-summary govuk-body">
+            {{ localise('summary-log:loadsAdjustedExplanation') }}
+          </div>
+        </div>
+        <div id="accordion-adjusted-loads-content-1" class="govuk-accordion__section-content">
+          <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
+          <ul class="govuk-list govuk-list--bullet">
+            {% for rowId in loads.adjusted.valid %}
+            <li>{{ rowId }}</li>
+            {% endfor %}
+            {% for rowId in loads.adjusted.invalid %}
+            <li>{{ rowId }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
