@@ -8,18 +8,18 @@
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
     <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
 
-    {% set newValid = loadCounts.new.valid if loadCounts and loadCounts.new else 0 %}
-    {% set newInvalid = loadCounts.new.invalid if loadCounts and loadCounts.new else 0 %}
+    {% set addedValid = loadCounts.added.valid if loadCounts and loadCounts.added else 0 %}
+    {% set addedInvalid = loadCounts.added.invalid if loadCounts and loadCounts.added else 0 %}
     {% set adjustedTotal = (loadCounts.adjusted.valid + loadCounts.adjusted.invalid) if loadCounts and loadCounts.adjusted else 0 %}
 
     <h2 class="govuk-heading-l">{{ localise('summary-log:wasteBalanceHeading') }}</h2>
 
-    <h3 class="govuk-heading-m">{{ localise('summary-log:newLoadsAdded', { count: newValid }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:newLoadsAddedExplanation') }}</p>
+    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsAdded', { count: addedValid }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:loadsAddedExplanation') }}</p>
 
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 
-    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsNotAdded', { count: newInvalid }) }}</h3>
+    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsNotAdded', { count: addedInvalid }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:loadsNotAddedExplanation') }}</p>
 
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">

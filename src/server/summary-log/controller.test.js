@@ -153,7 +153,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loadCounts: {
-          new: { valid: 29, invalid: 0 },
+          added: { valid: 29, invalid: 0 },
           unchanged: { valid: 10, invalid: 0 },
           adjusted: { valid: 0, invalid: 0 }
         }
@@ -181,7 +181,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loadCounts: {
-          new: { valid: 0, invalid: 9 },
+          added: { valid: 0, invalid: 9 },
           unchanged: { valid: 10, invalid: 0 },
           adjusted: { valid: 0, invalid: 0 }
         }
@@ -209,7 +209,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loadCounts: {
-          new: { valid: 0, invalid: 0 },
+          added: { valid: 0, invalid: 0 },
           unchanged: { valid: 10, invalid: 0 },
           adjusted: { valid: 14, invalid: 0 }
         }
@@ -237,7 +237,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loadCounts: {
-          new: { valid: 29, invalid: 9 },
+          added: { valid: 29, invalid: 9 },
           unchanged: { valid: 10, invalid: 0 },
           adjusted: { valid: 14, invalid: 0 }
         }
@@ -270,7 +270,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loadCounts: {
-          new: { valid: 1, invalid: 1 },
+          added: { valid: 1, invalid: 1 },
           unchanged: { valid: 10, invalid: 0 },
           adjusted: { valid: 1, invalid: 0 }
         }
@@ -302,7 +302,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loadCounts: {
-          new: { valid: 0, invalid: 0 },
+          added: { valid: 0, invalid: 0 },
           unchanged: { valid: 10, invalid: 0 },
           adjusted: { valid: 0, invalid: 0 }
         }
