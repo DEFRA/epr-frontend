@@ -5,6 +5,7 @@ import { createServer } from '#server/index.js'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
+import { buildLoadsViewModel } from './controller.js'
 
 vi.mock(
   import('#server/common/helpers/upload/fetch-summary-log-status.js'),
@@ -149,13 +150,25 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: validated with loadCounts - should show waste balance section with new loads', async () => {
+    test('status: validated with new loads - should show new loads heading', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
-        loadCounts: {
-          added: { valid: 29, invalid: 0 },
-          unchanged: { valid: 10, invalid: 0 },
-          adjusted: { valid: 0, invalid: 0 }
+        loads: {
+          added: {
+            valid: {
+              count: 7,
+              rowIds: [1092, 1093, 1094, 1095, 1096, 1097, 1098]
+            },
+            invalid: { count: 2, rowIds: [1099, 1100] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          }
         }
       })
 
@@ -163,116 +176,39 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      // Should show total new loads (valid + invalid) in heading
+      expect(result).toStrictEqual(
+        expect.stringContaining('There are 9 new loads')
+      )
       expect(result).toStrictEqual(
         expect.stringContaining(
-          '29 new loads will be added to your waste balance'
+          '7 new loads will be added to your waste balance'
         )
       )
       expect(result).toStrictEqual(
         expect.stringContaining(
-          'These are loads that have been added since your summary log was last submitted'
-        )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    test('status: validated with loadCounts - should show invalid loads section', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
-        loadCounts: {
-          added: { valid: 0, invalid: 9 },
-          unchanged: { valid: 10, invalid: 0 },
-          adjusted: { valid: 0, invalid: 0 }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '9 loads will not be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          'These loads are missing information from section 1'
+          '2 new loads will not be added to your waste balance'
         )
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with loadCounts - should show adjusted loads section', async () => {
+    test('status: validated with no new loads - should show no new loads heading', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
-        loadCounts: {
-          added: { valid: 0, invalid: 0 },
-          unchanged: { valid: 10, invalid: 0 },
-          adjusted: { valid: 14, invalid: 0 }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '14 loads in your current reporting period have been adjusted'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          'Your waste balance will be updated to reflect these adjustments'
-        )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    test('status: validated with loadCounts - should show all sections when all counts present', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
-        loadCounts: {
-          added: { valid: 29, invalid: 9 },
-          unchanged: { valid: 10, invalid: 0 },
-          adjusted: { valid: 14, invalid: 0 }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '29 new loads will be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '9 loads will not be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '14 loads in your current reporting period have been adjusted'
-        )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    test('status: validated with loadCounts - should use singular form for single load', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
-        loadCounts: {
-          added: { valid: 1, invalid: 1 },
-          unchanged: { valid: 10, invalid: 0 },
-          adjusted: { valid: 1, invalid: 0 }
+        loads: {
+          added: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 3, rowIds: [1096, 1099, 1100] },
+            invalid: { count: 0, rowIds: [] }
+          }
         }
       })
 
@@ -281,30 +217,27 @@ describe('#summaryLogUploadProgressController', () => {
       expectCheckPageContent(result)
 
       expect(result).toStrictEqual(
-        expect.stringContaining(
-          '1 new load will be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '1 load will not be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '1 load in your current reporting period has been adjusted'
-        )
+        expect.stringContaining('There are no new loads')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with loadCounts - should show all sections even when counts are zero', async () => {
+    test('status: validated with adjusted loads - should show adjusted loads section', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
-        loadCounts: {
-          added: { valid: 0, invalid: 0 },
-          unchanged: { valid: 10, invalid: 0 },
-          adjusted: { valid: 0, invalid: 0 }
+        loads: {
+          added: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 3, rowIds: [1096, 1099, 1100] },
+            invalid: { count: 0, rowIds: [] }
+          }
         }
       })
 
@@ -312,49 +245,108 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
       expect(result).toStrictEqual(
-        expect.stringContaining(
-          '0 new loads will be added to your waste balance'
-        )
+        expect.stringContaining('There are 3 adjusted loads')
       )
       expect(result).toStrictEqual(
         expect.stringContaining(
-          '0 loads will not be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '0 loads in your current reporting period have been adjusted'
+          'All adjustments will be reflected in your waste balance'
         )
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated without loadCounts - should default to zero counts', async () => {
+    test('status: validated with row IDs - should display row IDs in bullet list', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated
+        status: backendSummaryLogStatuses.validated,
+        loads: {
+          added: {
+            valid: { count: 3, rowIds: [1092, 1093, 1094] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          }
+        }
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expectCheckPageContent(result)
 
-      expect(result).toStrictEqual(expect.stringContaining('Waste balance'))
+      // Row IDs should be in bullet list
+      expect(result).toStrictEqual(expect.stringContaining('<li>1092</li>'))
+      expect(result).toStrictEqual(expect.stringContaining('<li>1093</li>'))
+      expect(result).toStrictEqual(expect.stringContaining('<li>1094</li>'))
       expect(result).toStrictEqual(
-        expect.stringContaining(
-          '0 new loads will be added to your waste balance'
-        )
+        expect.stringContaining('found in the &#39;Row ID&#39; column')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with singular load - should use singular form', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loads: {
+          added: {
+            valid: { count: 1, rowIds: [1092] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 1, rowIds: [1093] },
+            invalid: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('There is 1 new load')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining(
-          '0 loads will not be added to your waste balance'
-        )
+        expect.stringContaining('There is 1 adjusted load')
       )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '0 loads in your current reporting period have been adjusted'
-        )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated without adjusted loads - should not show adjusted section', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.validated,
+        loads: {
+          added: {
+            valid: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should not show adjusted loads section when count is 0
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('adjusted loads')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -516,6 +508,162 @@ describe('#summaryLogUploadProgressController', () => {
       )
       expect(result).not.toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
+})
+
+describe('#buildLoadsViewModel', () => {
+  test('returns empty arrays and zero counts when loads is undefined', () => {
+    const result = buildLoadsViewModel(undefined)
+
+    expect(result).toStrictEqual({
+      added: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
+    })
+  })
+
+  test('returns empty arrays and zero counts when loads is null', () => {
+    const result = buildLoadsViewModel(null)
+
+    expect(result).toStrictEqual({
+      added: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
+    })
+  })
+
+  test('returns empty arrays and zero counts when loads has empty structure', () => {
+    const result = buildLoadsViewModel({
+      added: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      }
+    })
+
+    expect(result).toStrictEqual({
+      added: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
+    })
+  })
+
+  test('uses count from backend (rowIds may be truncated)', () => {
+    const result = buildLoadsViewModel({
+      added: {
+        valid: { count: 150, rowIds: [1001, 1002, 1003] },
+        invalid: { count: 50, rowIds: [1004, 1005] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      }
+    })
+
+    // rowIds contain truncated data, but counts come from count field
+    expect(result.added).toStrictEqual({
+      valid: [1001, 1002, 1003],
+      invalid: [1004, 1005],
+      validCount: 150,
+      invalidCount: 50,
+      total: 200
+    })
+  })
+
+  test('uses count for adjusted loads', () => {
+    const result = buildLoadsViewModel({
+      added: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 120, rowIds: [2001, 2002] },
+        invalid: { count: 30, rowIds: [2003] }
+      }
+    })
+
+    expect(result.adjusted).toStrictEqual({
+      valid: [2001, 2002],
+      invalid: [2003],
+      validCount: 120,
+      invalidCount: 30,
+      total: 150
+    })
+  })
+
+  test('handles partial loads data gracefully', () => {
+    const result = buildLoadsViewModel({
+      added: {
+        valid: { count: 1, rowIds: [1001] }
+        // missing invalid
+      }
+      // missing unchanged, adjusted
+    })
+
+    expect(result).toStrictEqual({
+      added: {
+        valid: [1001],
+        invalid: [],
+        validCount: 1,
+        invalidCount: 0,
+        total: 1
+      },
+      adjusted: {
+        valid: [],
+        invalid: [],
+        validCount: 0,
+        invalidCount: 0,
+        total: 0
+      }
     })
   })
 })
