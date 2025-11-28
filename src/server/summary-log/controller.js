@@ -17,27 +17,28 @@ const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
 /**
  * Transforms raw loads data from backend into a view model
- * Uses totals from backend (not array lengths) because arrays are truncated at 100 items
+ * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
  * @param {object} [loads] - Raw loads data from backend API
- * @returns {object} View model with row IDs and counts from totals
+ * @returns {object} View model with row IDs and counts
  */
 export const buildLoadsViewModel = (loads) => {
-  const totals = loads?.totals ?? {}
-
   return {
     added: {
-      valid: loads?.added?.valid ?? [],
-      invalid: loads?.added?.invalid ?? [],
-      validCount: totals.added?.valid ?? 0,
-      invalidCount: totals.added?.invalid ?? 0,
-      total: (totals.added?.valid ?? 0) + (totals.added?.invalid ?? 0)
+      valid: loads?.added?.valid?.rowIds ?? [],
+      invalid: loads?.added?.invalid?.rowIds ?? [],
+      validCount: loads?.added?.valid?.count ?? 0,
+      invalidCount: loads?.added?.invalid?.count ?? 0,
+      total:
+        (loads?.added?.valid?.count ?? 0) + (loads?.added?.invalid?.count ?? 0)
     },
     adjusted: {
-      valid: loads?.adjusted?.valid ?? [],
-      invalid: loads?.adjusted?.invalid ?? [],
-      validCount: totals.adjusted?.valid ?? 0,
-      invalidCount: totals.adjusted?.invalid ?? 0,
-      total: (totals.adjusted?.valid ?? 0) + (totals.adjusted?.invalid ?? 0)
+      valid: loads?.adjusted?.valid?.rowIds ?? [],
+      invalid: loads?.adjusted?.invalid?.rowIds ?? [],
+      validCount: loads?.adjusted?.valid?.count ?? 0,
+      invalidCount: loads?.adjusted?.invalid?.count ?? 0,
+      total:
+        (loads?.adjusted?.valid?.count ?? 0) +
+        (loads?.adjusted?.invalid?.count ?? 0)
     }
   }
 }

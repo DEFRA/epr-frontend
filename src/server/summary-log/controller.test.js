@@ -155,15 +155,19 @@ describe('#summaryLogUploadProgressController', () => {
         status: backendSummaryLogStatuses.validated,
         loads: {
           added: {
-            valid: [1092, 1093, 1094, 1095, 1096, 1097, 1098],
-            invalid: [1099, 1100]
+            valid: {
+              count: 7,
+              rowIds: [1092, 1093, 1094, 1095, 1096, 1097, 1098]
+            },
+            invalid: { count: 2, rowIds: [1099, 1100] }
           },
-          unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [], invalid: [] },
-          totals: {
-            added: { valid: 7, invalid: 2 },
-            unchanged: { valid: 0, invalid: 0 },
-            adjusted: { valid: 0, invalid: 0 }
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
           }
         }
       })
@@ -193,13 +197,17 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loads: {
-          added: { valid: [], invalid: [] },
-          unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [1096, 1099, 1100], invalid: [] },
-          totals: {
-            added: { valid: 0, invalid: 0 },
-            unchanged: { valid: 0, invalid: 0 },
-            adjusted: { valid: 3, invalid: 0 }
+          added: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 3, rowIds: [1096, 1099, 1100] },
+            invalid: { count: 0, rowIds: [] }
           }
         }
       })
@@ -218,13 +226,17 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loads: {
-          added: { valid: [], invalid: [] },
-          unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [1096, 1099, 1100], invalid: [] },
-          totals: {
-            added: { valid: 0, invalid: 0 },
-            unchanged: { valid: 0, invalid: 0 },
-            adjusted: { valid: 3, invalid: 0 }
+          added: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 3, rowIds: [1096, 1099, 1100] },
+            invalid: { count: 0, rowIds: [] }
           }
         }
       })
@@ -248,13 +260,17 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loads: {
-          added: { valid: [1092, 1093, 1094], invalid: [] },
-          unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [], invalid: [] },
-          totals: {
-            added: { valid: 3, invalid: 0 },
-            unchanged: { valid: 0, invalid: 0 },
-            adjusted: { valid: 0, invalid: 0 }
+          added: {
+            valid: { count: 3, rowIds: [1092, 1093, 1094] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
           }
         }
       })
@@ -277,13 +293,17 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loads: {
-          added: { valid: [1092], invalid: [] },
-          unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [1093], invalid: [] },
-          totals: {
-            added: { valid: 1, invalid: 0 },
-            unchanged: { valid: 0, invalid: 0 },
-            adjusted: { valid: 1, invalid: 0 }
+          added: {
+            valid: { count: 1, rowIds: [1092] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 1, rowIds: [1093] },
+            invalid: { count: 0, rowIds: [] }
           }
         }
       })
@@ -305,13 +325,17 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.validated,
         loads: {
-          added: { valid: [1092, 1093, 1094, 1095, 1096], invalid: [] },
-          unchanged: { valid: [], invalid: [] },
-          adjusted: { valid: [], invalid: [] },
-          totals: {
-            added: { valid: 5, invalid: 0 },
-            unchanged: { valid: 0, invalid: 0 },
-            adjusted: { valid: 0, invalid: 0 }
+          added: {
+            valid: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] }
           }
         }
       })
@@ -531,11 +555,20 @@ describe('#buildLoadsViewModel', () => {
     })
   })
 
-  test('returns empty arrays and zero counts when loads has empty arrays and no totals', () => {
+  test('returns empty arrays and zero counts when loads has empty structure', () => {
     const result = buildLoadsViewModel({
-      added: { valid: [], invalid: [] },
-      unchanged: { valid: [], invalid: [] },
-      adjusted: { valid: [], invalid: [] }
+      added: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      }
     })
 
     expect(result).toStrictEqual({
@@ -556,19 +589,23 @@ describe('#buildLoadsViewModel', () => {
     })
   })
 
-  test('uses totals from backend for counts (arrays may be truncated)', () => {
+  test('uses count from backend (rowIds may be truncated)', () => {
     const result = buildLoadsViewModel({
-      added: { valid: [1001, 1002, 1003], invalid: [1004, 1005] },
-      unchanged: { valid: [], invalid: [] },
-      adjusted: { valid: [], invalid: [] },
-      totals: {
-        added: { valid: 150, invalid: 50 },
-        unchanged: { valid: 0, invalid: 0 },
-        adjusted: { valid: 0, invalid: 0 }
+      added: {
+        valid: { count: 150, rowIds: [1001, 1002, 1003] },
+        invalid: { count: 50, rowIds: [1004, 1005] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
       }
     })
 
-    // Arrays contain truncated data, but counts come from totals
+    // rowIds contain truncated data, but counts come from count field
     expect(result.added).toStrictEqual({
       valid: [1001, 1002, 1003],
       invalid: [1004, 1005],
@@ -578,15 +615,19 @@ describe('#buildLoadsViewModel', () => {
     })
   })
 
-  test('uses totals for adjusted loads counts', () => {
+  test('uses count for adjusted loads', () => {
     const result = buildLoadsViewModel({
-      added: { valid: [], invalid: [] },
-      unchanged: { valid: [], invalid: [] },
-      adjusted: { valid: [2001, 2002], invalid: [2003] },
-      totals: {
-        added: { valid: 0, invalid: 0 },
-        unchanged: { valid: 0, invalid: 0 },
-        adjusted: { valid: 120, invalid: 30 }
+      added: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 120, rowIds: [2001, 2002] },
+        invalid: { count: 30, rowIds: [2003] }
       }
     })
 
@@ -601,17 +642,20 @@ describe('#buildLoadsViewModel', () => {
 
   test('handles partial loads data gracefully', () => {
     const result = buildLoadsViewModel({
-      added: { valid: [1001] }
-      // missing invalid, unchanged, adjusted, totals
+      added: {
+        valid: { count: 1, rowIds: [1001] }
+        // missing invalid
+      }
+      // missing unchanged, adjusted
     })
 
     expect(result).toStrictEqual({
       added: {
         valid: [1001],
         invalid: [],
-        validCount: 0,
+        validCount: 1,
         invalidCount: 0,
-        total: 0
+        total: 1
       },
       adjusted: {
         valid: [],
