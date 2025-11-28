@@ -16,6 +16,24 @@ const SUCCESS_VIEW_NAME = 'summary-log/success'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
 /**
+ * Builds view model for a single load category (added or adjusted)
+ * @param {object} [category] - Category data from backend (e.g. loads.added)
+ * @returns {object} View model with rowIds, counts, and total
+ */
+const buildCategoryViewModel = (category) => {
+  const validCount = category?.valid?.count ?? 0
+  const invalidCount = category?.invalid?.count ?? 0
+
+  return {
+    valid: category?.valid?.rowIds ?? [],
+    invalid: category?.invalid?.rowIds ?? [],
+    validCount,
+    invalidCount,
+    total: validCount + invalidCount
+  }
+}
+
+/**
  * Transforms raw loads data from backend into a view model
  * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
  * @param {object} [loads] - Raw loads data from backend API
@@ -23,23 +41,8 @@ const PAGE_TITLE_KEY = 'summary-log:pageTitle'
  */
 export const buildLoadsViewModel = (loads) => {
   return {
-    added: {
-      valid: loads?.added?.valid?.rowIds ?? [],
-      invalid: loads?.added?.invalid?.rowIds ?? [],
-      validCount: loads?.added?.valid?.count ?? 0,
-      invalidCount: loads?.added?.invalid?.count ?? 0,
-      total:
-        (loads?.added?.valid?.count ?? 0) + (loads?.added?.invalid?.count ?? 0)
-    },
-    adjusted: {
-      valid: loads?.adjusted?.valid?.rowIds ?? [],
-      invalid: loads?.adjusted?.invalid?.rowIds ?? [],
-      validCount: loads?.adjusted?.valid?.count ?? 0,
-      invalidCount: loads?.adjusted?.invalid?.count ?? 0,
-      total:
-        (loads?.adjusted?.valid?.count ?? 0) +
-        (loads?.adjusted?.invalid?.count ?? 0)
-    }
+    added: buildCategoryViewModel(loads?.added),
+    adjusted: buildCategoryViewModel(loads?.adjusted)
   }
 }
 
@@ -104,9 +107,9 @@ const getStatusData = async (
   const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
   const freshData = summaryLogsSession.freshData
 
-  const data = freshData
-    ? freshData
-    : await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+  const data =
+    freshData ??
+    (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId))
 
   if (freshData) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
