@@ -28,12 +28,25 @@ export default defineConfig({
     indentation: 2,
     defaultValue: ''
   },
+  sync: {
+    input: [
+      'src/server/account/{{language}}.json',
+      'src/server/auth/{{language}}.json',
+      'src/server/common/{{language}}.json',
+      'src/server/error/{{language}}.json',
+      'src/server/home/{{language}}.json',
+      'src/server/login/{{language}}.json',
+      'src/server/logout/{{language}}.json',
+      'src/server/registration/{{language}}.json',
+      'src/server/summary-log/{{language}}.json',
+      'src/server/summary-log-upload/{{language}}.json'
+    ],
+    locales: ['en', 'cy'],
+    primaryLocale: 'en'
+  },
   types: {
     input: ['src/server/**/{{language}}.json'],
     output: 'src/types/i18next.d.ts'
   },
-  plugins: [
-    nunjucksPlugin(),
-    exportPlugin({ output: 'aftersync-results.json' })
-  ]
+  plugins: [nunjucksPlugin(), exportPlugin({ output: 'translation-keys.json' })]
 })
