@@ -43,11 +43,9 @@
     "prestart": "npm run build",
     "start": "NODE_ENV=production node --use-strict .",
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
-    "check:translations": "i18n-check --locales 'src/server/**' -s en && i18n-check --locales 'src/server/**' -s cy",
-    "i18n:extract": "npx i18next-cli extract",
+    "i18n:extract": "node scripts/export-translations.js --out translations.xlsx",
     "i18n:extract:dry": "npx i18next-cli extract --dry-run",
-    "i18n:status": "npx i18next-cli status",
-    "export:translations": "node scripts/export-translations.js"
+    "i18n:status": "npx i18next-cli status"
   },
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",

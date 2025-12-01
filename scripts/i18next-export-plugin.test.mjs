@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { existsSync, unlinkSync, readFileSync } from 'node:fs'
+import { existsSync, unlinkSync } from 'node:fs'
 import exportPlugin, {
   transformToExcelFormat
 } from './i18next-export-plugin.mjs'
@@ -355,11 +355,10 @@ describe('i18next-export-plugin', () => {
   })
 
   describe('exportPlugin', () => {
-    const testOutputPath = join(currentDir, '..', 'test-output.json')
+    let testOutputPath
 
     afterEach(() => {
-      // Clean up test files
-      if (existsSync(testOutputPath)) {
+      if (testOutputPath && existsSync(testOutputPath)) {
         unlinkSync(testOutputPath)
       }
     })
@@ -380,8 +379,9 @@ describe('i18next-export-plugin', () => {
       expect(plugin.name).toBe('export-plugin')
     })
 
-    it('should export JSON file with translation data', async () => {
-      const plugin = exportPlugin({ output: 'test-output.json' })
+    it('should export Excel file with translation data', async () => {
+      const plugin = exportPlugin()
+      testOutputPath = join(currentDir, '..', 'test-output.xlsx')
 
       const mockResults = [
         {
@@ -394,48 +394,60 @@ describe('i18next-export-plugin', () => {
         }
       ]
 
-      await plugin.afterSync(mockResults)
+      await plugin.afterSync(mockResults, { out: 'test-output.xlsx' })
 
-      // Verify file exists
       expect(existsSync(testOutputPath)).toBe(true)
 
-      // Verify JSON content
-      const content = readFileSync(testOutputPath, 'utf-8')
-      const data = JSON.parse(content)
+      const ExcelJS = await import('exceljs')
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.readFile(testOutputPath)
+      const worksheet = workbook.getWorksheet('Translations')
 
-      expect(data).toHaveLength(2)
-      expect(data[0].path).toBe('/path/to/src/server/home/en.json')
-      expect(data[0].newTranslations).toEqual({
-        pageTitle: 'Home',
-        heading: 'Welcome'
-      })
+      expect(worksheet.rowCount).toBe(3)
+    })
+
+    it('should handle single untranslated string', async () => {
+      const plugin = exportPlugin()
+      testOutputPath = join(currentDir, '..', 'test-single.xlsx')
+
+      const mockResults = [
+        {
+          path: '/path/to/src/server/home/en.json',
+          newTranslations: { pageTitle: 'Home' }
+        },
+        {
+          path: '/path/to/src/server/home/cy.json',
+          newTranslations: { pageTitle: '' }
+        }
+      ]
+
+      await plugin.afterSync(mockResults, { out: 'test-single.xlsx' })
+
+      expect(existsSync(testOutputPath)).toBe(true)
     })
 
     it('should handle empty results', async () => {
-      const plugin = exportPlugin({ output: 'test-output.json' })
+      const plugin = exportPlugin()
+      testOutputPath = join(currentDir, '..', 'test-empty.xlsx')
 
-      await plugin.afterSync([])
+      await plugin.afterSync([], { out: 'test-empty.xlsx' })
 
       expect(existsSync(testOutputPath)).toBe(true)
 
-      const content = readFileSync(testOutputPath, 'utf-8')
-      const data = JSON.parse(content)
+      const ExcelJS = await import('exceljs')
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.readFile(testOutputPath)
+      const worksheet = workbook.getWorksheet('Translations')
 
-      expect(data).toEqual([])
+      expect(worksheet.rowCount).toBe(1)
     })
 
     it('should use default filename when no output specified', async () => {
-      const defaultOutputPath = join(currentDir, '..', 'translation-keys.json')
+      const defaultOutputPath = join(currentDir, '..', 'translations.xlsx')
       const plugin = exportPlugin()
 
       try {
-        await plugin.afterSync([
-          {
-            path: '/test.json',
-            newTranslations: { key: 'value' }
-          }
-        ])
-
+        await plugin.afterSync([])
         expect(existsSync(defaultOutputPath)).toBe(true)
       } finally {
         if (existsSync(defaultOutputPath)) {

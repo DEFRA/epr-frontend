@@ -1,6 +1,7 @@
-import { writeFile } from 'node:fs/promises'
 import { join, dirname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
+// eslint-disable-next-line n/no-unpublished-import
+import ExcelJS from 'exceljs'
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
@@ -80,21 +81,48 @@ export function transformToExcelFormat(results) {
 }
 
 /**
- * @param {object} options
- * @param {string} options.output
  * @returns {import('i18next-cli').Plugin}
  */
-export default function exportPlugin(options = {}) {
-  const { output = 'translation-keys.json' } = options
-
+export default function exportPlugin() {
   return {
     name: 'export-plugin',
     version: '1.0.0',
 
-    async afterSync(results) {
+    async afterSync(results, config) {
+      const output =
+        config?.out || process.env.I18NEXT_EXPORT_OUTPUT || 'translations.xlsx'
+      const translationData = transformToExcelFormat(results)
       const outputPath = join(currentDir, '..', output)
-      await writeFile(outputPath, JSON.stringify(results, null, 2))
-      console.log(`\n✓ Exported translation keys to ${output}`)
+
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Translations')
+
+      worksheet.columns = [
+        { header: 'field name', key: 'field name', width: 50 },
+        { header: 'en', key: 'en', width: 60 },
+        { header: 'cy', key: 'cy', width: 60 }
+      ]
+
+      const headerRow = worksheet.getRow(1)
+      headerRow.font = { bold: true }
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' }
+      }
+
+      translationData.forEach((row) => {
+        worksheet.addRow(row)
+      })
+
+      await workbook.xlsx.writeFile(outputPath)
+
+      const message =
+        translationData.length === 0
+          ? '\n✓ No untranslated strings found. All translations are in sync!'
+          : `\n✓ Exported ${translationData.length} untranslated string${translationData.length === 1 ? '' : 's'} to ${output}`
+
+      console.log(message)
     }
   }
 }
