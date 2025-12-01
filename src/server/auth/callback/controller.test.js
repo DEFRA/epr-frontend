@@ -39,7 +39,8 @@ describe('#authCallbackController', () => {
           set: vi.fn()
         },
         logger: {
-          info: vi.fn()
+          info: vi.fn(),
+          error: vi.fn()
         },
         yar: {
           flash: vi.fn().mockReturnValue(['/dashboard'])
@@ -101,7 +102,8 @@ describe('#authCallbackController', () => {
           set: vi.fn()
         },
         logger: {
-          info: vi.fn()
+          info: vi.fn(),
+          error: vi.fn()
         },
         yar: {
           flash: vi.fn().mockReturnValue([])

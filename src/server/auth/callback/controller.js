@@ -1,4 +1,5 @@
 import { buildSessionFromProfile } from '#server/auth/helpers/build-session.js'
+import { fetchUserOrganisations } from '#server/common/helpers/organisations/fetch-user-organisations.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
 
@@ -21,6 +22,21 @@ const controller = {
         isAuthenticated: request.auth.isAuthenticated,
         profile
       })
+
+      try {
+        // FIXME to remove along with param when we're happy
+        const isLocal = false
+
+        const organisationsData = await fetchUserOrganisations(isLocal)(
+          session.idToken
+        )
+        session.organisations = organisationsData.organisations
+      } catch (error) {
+        request.logger.error(
+          { error },
+          'Failed to fetch user organisations during authentication'
+        )
+      }
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
