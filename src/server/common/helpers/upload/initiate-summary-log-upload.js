@@ -3,12 +3,13 @@ import fetch from 'node-fetch'
 import { config } from '#config/config.js'
 
 /**
- * Initiates a summary log upload via the backend
+ * Initiates a summary log upload via the backend.
+ * The frontend only uses uploadUrl from the response.
  * @param {Object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {string} options.redirectUrl
- * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
+ * @returns {Promise<{uploadUrl: string}>}
  */
 async function initiateSummaryLogUpload({
   organisationId,

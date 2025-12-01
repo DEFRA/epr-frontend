@@ -7,10 +7,7 @@ vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
   () => ({
     initiateSummaryLogUpload: vi.fn().mockResolvedValue({
-      summaryLogId: 'sl-789',
-      uploadId: 'abc123',
-      uploadUrl: 'http://cdp/upload',
-      statusUrl: 'http://cdp/status'
+      uploadUrl: 'http://cdp/upload'
     })
   })
 )
@@ -60,17 +57,6 @@ describe('#summaryLogUploadController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('should store uploadId in the summaryLog session', async () => {
-    overrideRequest(server, yar)
-
-    await server.inject({ method: 'GET', url })
-
-    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
-      'summaryLogs',
-      expect.objectContaining({ uploadId: 'abc123' })
-    )
-  })
-
   test('should redirect to error', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
@@ -106,16 +92,13 @@ describe('#summaryLogUploadController', () => {
     )
   })
 
-  test('should not set lastError if none exists', async () => {
+  test('should not call yar.set if no lastError exists', async () => {
     yar.get.mockImplementation(() => ({}))
     overrideRequest(server, yar)
 
     await server.inject({ method: 'GET', url })
 
-    expect(yar.set).toHaveBeenCalledExactlyOnceWith(
-      'summaryLogs',
-      expect.not.objectContaining({ lastError: expect.anything() })
-    )
+    expect(yar.set).not.toHaveBeenCalled()
   })
 
   test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {

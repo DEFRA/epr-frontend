@@ -1,6 +1,5 @@
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
-import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -11,22 +10,10 @@ export const summaryLogUploadController = {
     const { organisationId, registrationId } = request.params
 
     try {
-      const { summaryLogId, uploadId, uploadUrl, statusUrl } =
-        await initiateSummaryLogUpload({
-          organisationId,
-          registrationId,
-          redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
-        })
-
-      const existingSession = request.yar.get(sessionNames.summaryLogs) || {}
-
-      request.yar.set(sessionNames.summaryLogs, {
-        ...existingSession,
-        summaryLogId,
-        summaryLogStatus: summaryLogStatuses.initiated,
-        statusUrl,
-        uploadId,
-        uploadUrl
+      const { uploadUrl } = await initiateSummaryLogUpload({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
       })
 
       const session = request.yar.get(sessionNames.summaryLogs) || {}
@@ -40,10 +27,6 @@ export const summaryLogUploadController = {
         pageTitle: localise('summary-log-upload:pageTitle'),
         heading: localise('summary-log-upload:heading'),
         siteName: localise('summary-log-upload:siteName'),
-        organisationId,
-        registrationId,
-        summaryLogId,
-        uploadId,
         uploadUrl,
         formErrors
       })
