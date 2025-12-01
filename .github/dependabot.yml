@@ -40,8 +40,11 @@ updates:
 
     # Schedule run nightly
     schedule:
-      interval: "cron"
-      cronjob: "0 0 * * *"
+      interval: 'cron'
+      cronjob: '0 0 * * *'
+
+    cooldown:
+      default-days: 3
 
     versioning-strategy: increase
 
@@ -55,5 +58,5 @@ updates:
 
     # Schedule run nightly
     schedule:
-      interval: "cron"
-      cronjob: "0 0 * * *"
+      interval: 'cron'
+      cronjob: '0 0 * * *'
