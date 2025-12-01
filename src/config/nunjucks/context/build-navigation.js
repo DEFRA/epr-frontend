@@ -24,7 +24,7 @@ const yourSites = ({ localiseUrl, path, t: localise }) => {
     {
       active: path === '/account',
       href: localiseUrl('/account'),
-      text: localise('common:navigation.yourSites')
+      text: localise('common:navigation:yourSites')
     }
   ]
 }
@@ -39,7 +39,7 @@ const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
     return [
       {
         href: localiseUrl('/auth/organisation'),
-        text: localise('common:navigation.switchOrganisation')
+        text: localise('common:navigation:switchOrganisation')
       }
     ]
   }
@@ -54,7 +54,7 @@ const logout = ({ localiseUrl, t: localise }) => {
   return [
     {
       href: localiseUrl('/logout'),
-      text: localise('common:navigation.signOut')
+      text: localise('common:navigation:signOut')
     }
   ]
 }

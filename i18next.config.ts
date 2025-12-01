@@ -32,8 +32,5 @@ export default defineConfig({
     input: ['src/server/**/{{language}}.json'],
     output: 'src/types/i18next.d.ts'
   },
-  plugins: [
-    nunjucksPlugin(),
-    exportPlugin({ output: 'aftersync-results.json' })
-  ]
+  plugins: [nunjucksPlugin(), exportPlugin({ output: 'translation-keys.json' })]
 })

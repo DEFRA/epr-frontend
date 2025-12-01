@@ -3,8 +3,7 @@ import { glob } from 'glob'
 import { readFile } from 'node:fs/promises'
 
 /**
- * i18next-cli plugin for parsing Nunjucks templates
- * @returns {import('i18next-cli').Plugin} i18next-cli plugin instance
+ * @returns {import('i18next-cli').Plugin}
  */
 export default function nunjucksPlugin() {
   return {
@@ -13,17 +12,14 @@ export default function nunjucksPlugin() {
 
     async onEnd(keys) {
       const nunjucksFiles = await glob('src/**/*.njk')
+      const functionRegex =
+        /(localise|t)\s*\(\s*["']([^"']+)["']\s*(?:,\s*[^)]*)?\)/g
 
       for (const file of nunjucksFiles) {
         const content = await readFile(file, 'utf-8')
-        const functionRegex =
-          /(localise|t)\s*\(\s*["']([^"']+)["']\s*(?:,\s*[^)]*)?\)/g
 
         for (const match of content.matchAll(functionRegex)) {
           const key = match[2]
-
-          // Convert colons to dots after the namespace separator
-          // e.g., "home:services:accreditations" -> "home:services.accreditations"
           const firstColonIndex = key.indexOf(':')
           let namespace = 'common'
           let transformedKey = key
