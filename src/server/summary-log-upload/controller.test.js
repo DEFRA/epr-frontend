@@ -1,13 +1,19 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { initUpload } from '#server/common/helpers/upload/init-upload.js'
+import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { createServer } from '#server/index.js'
 
-vi.mock(import('#server/common/helpers/upload/init-upload.js'), () => ({
-  initUpload: vi.fn().mockResolvedValue({
-    uploadId: 'abc123'
+vi.mock(
+  import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
+  () => ({
+    initiateSummaryLogUpload: vi.fn().mockResolvedValue({
+      summaryLogId: 'sl-789',
+      uploadId: 'abc123',
+      uploadUrl: 'http://cdp/upload',
+      statusUrl: 'http://cdp/status'
+    })
   })
-}))
+)
 
 function overrideRequest(server, yar) {
   server.ext({
@@ -66,7 +72,7 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should redirect to error', async () => {
-    initUpload.mockRejectedValueOnce(new Error('Mock error'))
+    initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
     const { result } = await server.inject({ method: 'GET', url })
 
@@ -112,19 +118,15 @@ describe('#summaryLogUploadController', () => {
     )
   })
 
-  test('should call initUpload with callback containing organisation and registration ids', async () => {
+  test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {
     await server.inject({ method: 'GET', url })
 
-    expect(initUpload).toHaveBeenCalledWith(
-      expect.objectContaining({
-        callback: expect.stringContaining('/organisations/123/')
-      })
-    )
-    expect(initUpload).toHaveBeenCalledWith(
-      expect.objectContaining({
-        callback: expect.stringContaining('/registrations/456/')
-      })
-    )
+    expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+      organisationId: '123',
+      registrationId: '456',
+      redirectUrl:
+        '/organisations/123/registrations/456/summary-logs/{summaryLogId}'
+    })
   })
 })
 
