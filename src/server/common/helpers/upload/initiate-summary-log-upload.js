@@ -5,7 +5,7 @@ import { config } from '#config/config.js'
 /**
  * Initiates a summary log upload via the backend.
  * The frontend only uses uploadUrl from the response.
- * @param {Object} options
+ * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {string} options.redirectUrl
