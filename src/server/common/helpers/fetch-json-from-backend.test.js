@@ -5,7 +5,7 @@ import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-describe('fetchJsonFromBackend', () => {
+describe(fetchJsonFromBackend, () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

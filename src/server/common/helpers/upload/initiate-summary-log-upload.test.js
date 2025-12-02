@@ -5,7 +5,7 @@ import { initiateSummaryLogUpload } from './initiate-summary-log-upload.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-describe('initiateSummaryLogUpload', () => {
+describe(initiateSummaryLogUpload, () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

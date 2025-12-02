@@ -5,7 +5,7 @@ import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-describe('fetchSummaryLogStatus', () => {
+describe(fetchSummaryLogStatus, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
