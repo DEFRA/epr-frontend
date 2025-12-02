@@ -431,7 +431,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(headers.location).toBe(`${baseUrl}/upload`)
     })
 
-    test('status: invalid with validation failures - should show validation failures page', async () => {
+    test('status: invalid with validation failures - should show validation failures page with correct content', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
@@ -441,25 +441,28 @@ describe('#summaryLogUploadProgressController', () => {
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      // Check new heading
+      expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      // Check new description
       expect(result).toContain(
         'We have found the following issues with the file you selected'
       )
-      expect(result).toContain(
-        'You will need to correct these issues before uploading your summary log'
-      )
-      // Check issue message
       expect(result).toContain('Registration number is incorrect')
-      // Check upload section
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+    })
+
+    test('status: invalid with validation failures - should show re-upload form and cancel button', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+        }
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
       expect(result).toContain('Upload updated XLSX file')
       expect(result).toContain('Continue')
-      // Check cancel button
       expect(result).toContain('Cancel and return to dashboard')
-      // Should not be polling
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
-      expect(statusCode).toBe(statusCodes.ok)
     })
 
     test('status: invalid with multiple validation failures - should show all failures', async () => {

@@ -201,6 +201,9 @@ const renderSuccessView = (
  * @param {object} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {object} context - View context
+ * @param {object} context.validation - Validation result containing failures
+ * @param {string} context.uploadUrl - URL for re-uploading the file
+ * @param {string} context.cancelUrl - URL for cancelling and returning to dashboard
  * @returns {object} Hapi view response
  */
 const renderValidationFailuresView = (
