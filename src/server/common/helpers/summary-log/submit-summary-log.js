@@ -1,6 +1,4 @@
-import fetch from 'node-fetch'
-
-import { config } from '#config/config.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
  * Submits summary log to EPR Backend
@@ -10,23 +8,9 @@ import { config } from '#config/config.js'
  * @returns {Promise<{status: string, accreditationNumber: string}>}
  */
 async function submitSummaryLog(organisationId, registrationId, summaryLogId) {
-  const baseUrl = config.get('eprBackendUrl')
-  const url = `${baseUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
+  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-
-  if (!response.ok) {
-    const error = new Error(
-      `Backend returned ${response.status}: ${response.statusText}`
-    )
-    error.status = response.status
-    throw error
-  }
-
-  return response.json()
+  return fetchJsonFromBackend(path, { method: 'POST' })
 }
 
 export { submitSummaryLog }
