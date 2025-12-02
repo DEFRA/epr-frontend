@@ -1,4 +1,3 @@
-import { StatusCodes } from 'http-status-codes'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { backendSummaryLogStatuses } from '#server/common/constants/statuses.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
@@ -240,69 +239,35 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
     const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
-    try {
-      const { status, failureReason, accreditationNumber, loads } =
-        await getStatusData(
-          request,
-          organisationId,
-          registrationId,
-          summaryLogId
-        )
+    const { status, failureReason, accreditationNumber, loads } =
+      await getStatusData(request, organisationId, registrationId, summaryLogId)
 
-      // If upload rejected, redirect back to upload page with error
-      if (status === backendSummaryLogStatuses.rejected) {
-        return handleRejectedStatus(
-          request,
-          h,
-          localise,
-          failureReason,
-          organisationId,
-          registrationId
-        )
-      }
-
-      // Render appropriate view based on status
-      return renderViewForStatus({
+    // If upload rejected, redirect back to upload page with error
+    if (status === backendSummaryLogStatuses.rejected) {
+      return handleRejectedStatus(
+        request,
         h,
         localise,
-        status,
         failureReason,
-        accreditationNumber,
-        loads,
         organisationId,
-        registrationId,
-        summaryLogId,
-        pollUrl
-      })
-    } catch (err) {
-      // 404 means summary log not created yet - treat as preprocessing
-      if (err.status === StatusCodes.NOT_FOUND) {
-        const viewData = getViewData(
-          localise,
-          backendSummaryLogStatuses.preprocessing
-        )
-
-        return h.view(VIEW_NAME, {
-          ...viewData,
-          pageTitle: PAGE_TITLE,
-          shouldPoll: true,
-          pollUrl
-        })
-      }
-
-      // Other errors - show error page
-      request.server.log(['error', 'upload-progress'], err)
-
-      return h.view(VIEW_NAME, {
-        pageTitle: PAGE_TITLE,
-        heading: localise('summary-log:errorHeading'),
-        message: localise('summary-log:errorMessage'),
-        isProcessing: false,
-        shouldPoll: false
-      })
+        registrationId
+      )
     }
+
+    // Render appropriate view based on status
+    return renderViewForStatus({
+      h,
+      localise,
+      status,
+      failureReason,
+      accreditationNumber,
+      loads,
+      organisationId,
+      registrationId,
+      summaryLogId,
+      pollUrl
+    })
   }
 }
 

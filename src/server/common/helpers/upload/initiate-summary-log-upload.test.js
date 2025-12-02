@@ -1,16 +1,9 @@
-import fetch from 'node-fetch'
 import { describe, expect, test, vi, beforeEach } from 'vitest'
+
 import { initiateSummaryLogUpload } from './initiate-summary-log-upload.js'
 
-vi.mock(import('node-fetch'), () => ({
-  default: vi.fn()
-}))
-
-vi.mock(import('#config/config.js'), () => ({
-  config: {
-    get: vi.fn().mockReturnValue('http://backend.test')
-  }
-}))
+const mockFetch = vi.fn()
+vi.stubGlobal('fetch', mockFetch)
 
 describe('initiateSummaryLogUpload', () => {
   beforeEach(() => {
@@ -18,7 +11,7 @@ describe('initiateSummaryLogUpload', () => {
   })
 
   test('calls backend summary-logs endpoint with redirectUrl', async () => {
-    fetch.mockResolvedValue({
+    mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
         summaryLogId: 'sl-123',
@@ -34,13 +27,15 @@ describe('initiateSummaryLogUpload', () => {
       redirectUrl: '/redirect/path'
     })
 
-    expect(fetch).toHaveBeenCalledWith(
-      'http://backend.test/v1/organisations/org-123/registrations/reg-456/summary-logs',
-      {
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '/v1/organisations/org-123/registrations/reg-456/summary-logs'
+      ),
+      expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ redirectUrl: '/redirect/path' })
-      }
+      })
     )
   })
 
@@ -52,7 +47,7 @@ describe('initiateSummaryLogUpload', () => {
       statusUrl: 'http://cdp/status/up-101'
     }
 
-    fetch.mockResolvedValue({
+    mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue(mockResponse)
     })
@@ -63,14 +58,15 @@ describe('initiateSummaryLogUpload', () => {
       redirectUrl: '/redirect/path'
     })
 
-    expect(result).toEqual(mockResponse)
+    expect(result).toStrictEqual(mockResponse)
   })
 
-  test('throws error when backend returns non-ok response', async () => {
-    fetch.mockResolvedValue({
+  test('throws Boom error when backend returns non-ok response', async () => {
+    mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
-      statusText: 'Internal Server Error'
+      statusText: 'Internal Server Error',
+      headers: new Map()
     })
 
     await expect(
@@ -79,6 +75,9 @@ describe('initiateSummaryLogUpload', () => {
         registrationId: 'reg-456',
         redirectUrl: '/redirect/path'
       })
-    ).rejects.toThrow('Backend returned 500: Internal Server Error')
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 500 }
+    })
   })
 })
