@@ -417,22 +417,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: rejected with failureReason - should redirect to upload page with error in session', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.rejected,
-        failureReason: 'File rejected by virus scanner'
-      })
-
-      const { headers, statusCode } = await server.inject({
-        method: 'GET',
-        url
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(`${baseUrl}/upload`)
-    })
-
-    test('status: rejected without failureReason - should redirect to upload page with default error in session', async () => {
+    test('status: rejected - should redirect to upload page with error in session', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.rejected
       })
@@ -446,34 +431,107 @@ describe('#summaryLogUploadProgressController', () => {
       expect(headers.location).toBe(`${baseUrl}/upload`)
     })
 
-    test('status: invalid - should show validation error and stop polling', async () => {
+    test('status: invalid with validation failures - should show validation failures page', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      // Check new heading
+      expect(result).toContain('Your summary log cannot be uploaded')
+      // Check new description
+      expect(result).toContain(
+        'We have found the following issues with the file you selected'
+      )
+      expect(result).toContain(
+        'You will need to correct these issues before uploading your summary log'
+      )
+      // Check issue message
+      expect(result).toContain('Registration number is incorrect')
+      // Check upload section
+      expect(result).toContain('Upload updated XLSX file')
+      expect(result).toContain('Continue')
+      // Check cancel button
+      expect(result).toContain('Cancel and return to dashboard')
+      // Should not be polling
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: invalid with multiple validation failures - should show all failures', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: 'MATERIAL_REQUIRED' }, { code: 'HEADER_REQUIRED' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('Material type is missing')
+      expect(result).toContain('The column headings in the file you selected')
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: invalid with unknown failure code - should show fallback message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: 'SOME_UNKNOWN_CODE' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('An unexpected validation error occurred')
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: invalid with empty validation failures - should show generic validation error', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: []
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain('Upload updated XLSX file')
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: invalid without validation object - should show generic validation error', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      expect(result).toStrictEqual(expect.stringContaining('Validation failed'))
-      expect(result).toStrictEqual(
-        expect.stringContaining('Please check your file and try again')
-      )
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('An unexpected validation error occurred')
       expect(statusCode).toBe(statusCodes.ok)
     })
+  })
 
-    test('status: invalid with failureReason - should show specific error message and stop polling', async () => {
-      const failureReason =
-        'The waste registration number in your summary log does not match your registration'
+  describe('unexpected status handling', () => {
+    test('unexpected status - should show error page', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
-        failureReason
+        status: 'some_unknown_status'
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      expect(result).toStrictEqual(expect.stringContaining('Validation failed'))
-      expect(result).toStrictEqual(expect.stringContaining(failureReason))
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
+      expect(result).toContain('Error checking status')
+      expect(result).toContain('Unable to check upload status')
       expect(statusCode).toBe(statusCodes.ok)
     })
   })
