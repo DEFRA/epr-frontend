@@ -1,8 +1,9 @@
+import Boom from '@hapi/boom'
+
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { createServer } from '#server/index.js'
-import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
 import { buildLoadsViewModel } from './controller.js'
@@ -478,36 +479,26 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('error handling', () => {
-    test('should treat 404 as preprocessing and continue polling', async () => {
-      const error = new Error('Backend returned 404: Not Found')
-      error.status = StatusCodes.NOT_FOUND
-      fetchSummaryLogStatus.mockRejectedValueOnce(error)
+    test('should show 404 error page when summary log not found', async () => {
+      fetchSummaryLogStatus.mockRejectedValueOnce(Boom.notFound())
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being uploaded')
-      )
-      expect(result).toStrictEqual(enablesClientSidePolling())
-      expect(result).toStrictEqual(
-        expect.stringContaining('Keep this page open')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toStrictEqual(expect.stringContaining('Page not found'))
+      expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    test('should show error page and stop polling when backend fetch fails', async () => {
-      fetchSummaryLogStatus.mockRejectedValueOnce(new Error('Network error'))
+    test('should show 500 error page when backend fetch fails', async () => {
+      fetchSummaryLogStatus.mockRejectedValueOnce(
+        Boom.internal('Failed to fetch')
+      )
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Error checking status')
+        expect.stringContaining('Something went wrong')
       )
-      expect(result).toStrictEqual(
-        expect.stringContaining('Unable to check upload status')
-      )
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
-      expect(statusCode).toBe(statusCodes.ok)
+      expect(statusCode).toBe(statusCodes.internalServerError)
     })
   })
 })
