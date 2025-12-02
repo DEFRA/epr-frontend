@@ -140,6 +140,10 @@ const handleRejectedStatus = (
  * @param {object} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
+ * @param {object} context.loads - Load statistics for the summary log
+ * @param {string} context.organisationId - Organisation ID
+ * @param {string} context.registrationId - Registration ID
+ * @param {string} context.summaryLogId - Summary log ID
  * @returns {object} Hapi view response
  */
 const renderCheckView = (
@@ -163,6 +167,7 @@ const renderCheckView = (
  * @param {object} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
+ * @param {string} context.pollUrl - URL for polling submission status
  * @returns {object} Hapi view response
  */
 const renderSubmittingView = (h, localise, { pollUrl }) => {
@@ -181,6 +186,9 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * @param {object} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
+ * @param {string} context.organisationId - Organisation ID
+ * @param {string} context.registrationId - Registration ID
+ * @param {string} context.accreditationNumber - Accreditation number for display
  * @returns {object} Hapi view response
  */
 const renderSuccessView = (
@@ -243,6 +251,8 @@ const renderValidationFailuresView = (
  * @param {object} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
+ * @param {string} context.status - Current summary log status
+ * @param {string} context.pollUrl - URL for polling status updates
  * @returns {object} Hapi view response
  */
 const renderProgressView = (h, localise, { status, pollUrl }) => {
