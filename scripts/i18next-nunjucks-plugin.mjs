@@ -3,7 +3,8 @@ import { glob } from 'glob'
 import { readFile } from 'node:fs/promises'
 
 /**
- * @returns {import('i18next-cli').Plugin}
+ * Returns an i18next-cli Plugin that extracts translation keys from Nunjucks files.
+ * @returns {import('i18next-cli').Plugin} The plugin instance.
  */
 export default function nunjucksPlugin() {
   return {

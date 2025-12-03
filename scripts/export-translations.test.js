@@ -4,6 +4,7 @@ import { parseArgs } from './export-translations.js'
 describe(parseArgs, () => {
   it('should parse --out argument', () => {
     const result = parseArgs(['--out', 'custom/path.xlsx'])
+
     expect(result).toBe('custom/path.xlsx')
   })
 
