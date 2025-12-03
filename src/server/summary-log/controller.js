@@ -287,9 +287,11 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
-    const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const uploadUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-    const cancelUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+    const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+
+    const uploadUrl = `${baseUrl}/summary-logs/upload`
+    const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
+    const cancelUrl = baseUrl
 
     const { status, validation, accreditationNumber, loads } =
       await getStatusData(request, organisationId, registrationId, summaryLogId)
