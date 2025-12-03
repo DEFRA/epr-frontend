@@ -17,7 +17,7 @@ describe(fetchSummaryLogStatus, () => {
   test('returns summary log status when backend responds successfully', async () => {
     const mockResponse = {
       status: 'validated',
-      failureReason: null
+      validation: null
     }
 
     mockFetch.mockResolvedValue({

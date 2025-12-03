@@ -108,34 +108,6 @@ const getStatusData = async (
 }
 
 /**
- * Handles rejected status by storing error in session and redirecting
- * @param {object} request - Hapi request object
- * @param {object} h - Hapi response toolkit
- * @param {(key: string) => string} localise - i18n localisation function
- * @param {string} organisationId - Organisation ID
- * @param {string} registrationId - Registration ID
- * @returns {object} Hapi redirect response
- */
-const handleRejectedStatus = (
-  request,
-  h,
-  localise,
-  organisationId,
-  registrationId
-) => {
-  const currentSession = request.yar.get(sessionNames.summaryLogs) || {}
-
-  request.yar.set(sessionNames.summaryLogs, {
-    ...currentSession,
-    lastError: localise('summary-log:rejectedDefaultReason')
-  })
-
-  return h.redirect(
-    `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-  )
-}
-
-/**
  * Renders the check page for validated summary logs
  * @param {object} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
@@ -221,22 +193,28 @@ const renderValidationFailuresView = (
 ) => {
   const failures = validation?.failures ?? []
 
-  const fallbackMessage = localise('summary-log:failure:UNKNOWN')
+  const fallbackMessage = localise('summary-log:failure.UNKNOWN')
 
   const issues =
     failures.length > 0
       ? failures.map(({ code }) =>
-          localise(`summary-log:failure:${code}`, {
+          localise(`summary-log:failure.${code}`, {
             defaultValue: fallbackMessage
           })
         )
       : [fallbackMessage]
 
+  const issueCount = issues.length
+
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
     heading: localise('summary-log:validationFailuresHeading'),
-    description1: localise('summary-log:validationFailuresDescription1'),
-    description2: localise('summary-log:validationFailuresDescription2'),
+    description1: localise('summary-log:validationFailuresDescription1', {
+      count: issueCount
+    }),
+    description2: localise('summary-log:validationFailuresDescription2', {
+      count: issueCount
+    }),
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),
     buttonText: localise('summary-log:reuploadButtonText'),
@@ -273,7 +251,8 @@ const viewResolvers = {
   [backendSummaryLogStatuses.validated]: renderCheckView,
   [backendSummaryLogStatuses.submitting]: renderSubmittingView,
   [backendSummaryLogStatuses.submitted]: renderSuccessView,
-  [backendSummaryLogStatuses.invalid]: renderValidationFailuresView
+  [backendSummaryLogStatuses.invalid]: renderValidationFailuresView,
+  [backendSummaryLogStatuses.rejected]: renderValidationFailuresView
 }
 
 /**
@@ -282,7 +261,7 @@ const viewResolvers = {
  * @param {object} options.h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} options.localise - i18n localisation function
  * @param {string} options.status - Backend status
- * @param {object} [options.validation] - Validation data from backend
+ * @param {object} [options.validation] - Validation object from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
  * @param {object} [options.loads] - Loads data with row IDs for validated summary logs
  * @param {string} options.organisationId - Organisation ID
@@ -315,18 +294,6 @@ export const summaryLogUploadProgressController = {
     const { status, validation, accreditationNumber, loads } =
       await getStatusData(request, organisationId, registrationId, summaryLogId)
 
-    // If upload rejected, redirect back to upload page with error
-    if (status === backendSummaryLogStatuses.rejected) {
-      return handleRejectedStatus(
-        request,
-        h,
-        localise,
-        organisationId,
-        registrationId
-      )
-    }
-
-    // Render appropriate view based on status
     return renderViewForStatus({
       h,
       localise,
