@@ -1,5 +1,4 @@
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { sessionNames } from '#server/common/constants/session-names.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -16,19 +15,11 @@ export const summaryLogUploadController = {
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
       })
 
-      const session = request.yar.get(sessionNames.summaryLogs) || {}
-      const formErrors = session.lastError || null
-      if (formErrors) {
-        delete session.lastError
-        request.yar.set(sessionNames.summaryLogs, session)
-      }
-
       return h.view('summary-log-upload/index', {
         pageTitle: localise('summary-log-upload:pageTitle'),
         heading: localise('summary-log-upload:heading'),
         siteName: localise('summary-log-upload:siteName'),
-        uploadUrl,
-        formErrors
+        uploadUrl
       })
     } catch (err) {
       // @todo: use structured logging

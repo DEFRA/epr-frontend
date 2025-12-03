@@ -417,18 +417,37 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: rejected - should redirect to upload page with error in session', async () => {
+    test('status: rejected with validation failure code - should show validation failures page', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.rejected
+        status: backendSummaryLogStatuses.rejected,
+        validation: {
+          failures: [{ code: 'FILE_VIRUS_DETECTED' }]
+        }
       })
 
-      const { headers, statusCode } = await server.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
         url
       })
 
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(`${baseUrl}/upload`)
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('contains a virus and cannot be uploaded')
+    })
+
+    test('status: rejected without validation - should show validation failures page with generic error', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.rejected
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('An unexpected validation error occurred')
     })
 
     test('status: invalid with validation failures - should show validation failures page with correct content', async () => {
@@ -444,9 +463,11 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain(
-        'We have found the following issues with the file you selected'
+        'We&#39;ve found the following issue with the file you selected'
       )
-      expect(result).toContain('Registration number is incorrect')
+      expect(result).toContain(
+        'Summary log material, registration or accreditation is missing or incorrect'
+      )
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
@@ -469,14 +490,19 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'MATERIAL_REQUIRED' }, { code: 'HEADER_REQUIRED' }]
+          failures: [
+            { code: 'SEQUENTIAL_ROW_REMOVED' },
+            { code: 'HEADER_REQUIRED' }
+          ]
         }
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('Material type is missing')
+      expect(result).toContain(
+        'Rows have been removed since your summary log was last submitted'
+      )
       expect(result).toContain('The column headings in the file you selected')
       expect(statusCode).toBe(statusCodes.ok)
     })

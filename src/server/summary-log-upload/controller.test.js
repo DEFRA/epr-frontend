@@ -12,23 +12,6 @@ vi.mock(
   })
 )
 
-function overrideRequest(server, yar) {
-  server.ext({
-    type: 'onRequest',
-    method: (request, h) => {
-      request.yar.get = yar.get
-      request.yar.set = yar.set
-
-      return h.continue
-    }
-  })
-}
-
-const yar = {
-  get: vi.fn(),
-  set: vi.fn()
-}
-
 describe('#summaryLogUploadController', () => {
   const organisationId = '123'
   const registrationId = '456'
@@ -65,40 +48,6 @@ describe('#summaryLogUploadController', () => {
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log upload error')
     )
-  })
-
-  test('should display formErrors when lastError exists in session', async () => {
-    const errorMessage = 'Something went wrong'
-    yar.get.mockImplementation(() => ({ lastError: errorMessage }))
-    overrideRequest(server, yar)
-
-    const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-    expect(result).toStrictEqual(expect.stringContaining(errorMessage))
-    expect(statusCode).toBe(statusCodes.ok)
-  })
-
-  test('should clear lastError after it has been read once', async () => {
-    const errorMessage = 'Flash error'
-    const sessionData = { lastError: errorMessage }
-    yar.get.mockImplementation(() => sessionData)
-    overrideRequest(server, yar)
-
-    await server.inject({ method: 'GET', url })
-
-    expect(yar.set).toHaveBeenLastCalledWith(
-      'summaryLogs',
-      expect.not.objectContaining({ lastError: errorMessage })
-    )
-  })
-
-  test('should not call yar.set if no lastError exists', async () => {
-    yar.get.mockImplementation(() => ({}))
-    overrideRequest(server, yar)
-
-    await server.inject({ method: 'GET', url })
-
-    expect(yar.set).not.toHaveBeenCalled()
   })
 
   test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {

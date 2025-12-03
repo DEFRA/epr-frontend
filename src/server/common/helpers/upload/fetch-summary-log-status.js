@@ -5,7 +5,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} summaryLogId
- * @returns {Promise<{status: string, validation?: object}>}
+ * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
  */
 async function fetchSummaryLogStatus(
   organisationId,
