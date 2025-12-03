@@ -1,7 +1,7 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/accordion/macro.njk" import govukAccordion %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
-{% from "summary-log-reupload/macro.njk" import summaryLogReupload %}
+{% from "summary-log-upload/macro.njk" import summaryLogUpload %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -74,7 +74,7 @@
           text: localise("summary-log-upload:insetText")
         }) }}
 
-        {{ summaryLogReupload({
+        {{ summaryLogUpload({
           uploadUrl: uploadUrl,
           fileUploadLabel: localise("summary-log-upload:fileUploadLabel"),
           buttonText: localise("summary-log-upload:continueButton")

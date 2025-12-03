@@ -12,7 +12,7 @@
     - cancelUrl: (optional) URL for cancel button - if provided with cancelButtonText, renders a secondary button
     - cancelButtonText: (optional) Text for cancel button
 #}
-{% macro summaryLogReupload(params) %}
+{% macro summaryLogUpload(params) %}
   <form
     class="form"
     action="{{ params.uploadUrl }}"
@@ -32,7 +32,8 @@
       label: { text: params.fileUploadLabel },
       javascript: true,
       attributes: {
-        accept: ".xlsx"
+        accept: ".xlsx",
+        required: true
       },
       errorMessage: summaryLogUploadError
     }) }}
