@@ -465,9 +465,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(
         'We&#39;ve found the following issue with the file you selected'
       )
-      expect(result).toContain(
-        'Summary log material, registration or accreditation is missing or incorrect'
-      )
+      expect(result).toContain('Registration number is incorrect')
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
