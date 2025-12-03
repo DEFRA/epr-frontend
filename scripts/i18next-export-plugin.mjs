@@ -6,9 +6,10 @@ import ExcelJS from 'exceljs'
 const currentDir = dirname(fileURLToPath(import.meta.url))
 
 /**
- * @param {object} obj
- * @param {string} prefix
- * @returns {object}
+ * Flattens a nested object into dot notation
+ * @param {object} obj - Nested object to flatten
+ * @param {string} prefix - Prefix for keys (used recursively)
+ * @returns {object} Flattened object with dot-notation keys
  */
 function flattenObject(obj, prefix = '') {
   const flattened = {}
@@ -27,8 +28,9 @@ function flattenObject(obj, prefix = '') {
 }
 
 /**
- * @param {string} filePath
- * @returns {string}
+ * Extracts namespace from file path (e.g., "/path/to/src/server/home/en.json" → "home")
+ * @param {string} filePath - Path to translation file
+ * @returns {string} Namespace extracted from path
  */
 function extractNamespace(filePath) {
   const parts = filePath.split('/')
@@ -42,8 +44,9 @@ function extractNamespace(filePath) {
 }
 
 /**
- * @param {Array} results
- * @returns {Array<object>}
+ * Transforms i18next-cli afterSync results into Excel-ready format with only untranslated strings
+ * @param {Array} results - afterSync results from i18next-cli containing translation data
+ * @returns {Array<object>} Array of translation objects with field name, en, and cy columns
  */
 export function transformToExcelFormat(results) {
   const translationMap = new Map()
@@ -81,7 +84,8 @@ export function transformToExcelFormat(results) {
 }
 
 /**
- * @returns {import('i18next-cli').Plugin}
+ * i18next-cli plugin for exporting untranslated strings to Excel format
+ * @returns {import('i18next-cli').Plugin} Plugin instance with afterSync hook
  */
 export default function exportPlugin() {
   return {
