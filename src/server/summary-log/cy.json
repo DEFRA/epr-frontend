@@ -2,6 +2,7 @@
   "addedLoadsHeading": "",
   "adjustedLoadsHeading": "",
   "adjustmentsReflected": "",
+  "cancelButtonText": "",
   "checkHeading": "",
   "checkIntro": "",
   "checkIntro2": "",
@@ -16,6 +17,7 @@
   "declarationIntro": "",
   "errorHeading": "",
   "errorMessage": "",
+  "failure:UNKNOWN": "",
   "invalidHeading": "",
   "invalidMessage": "",
   "loadsAdded": "",
@@ -31,6 +33,8 @@
   "rejectedDefaultReason": "",
   "returnToHome": "",
   "reuploadButton": "",
+  "reuploadButtonText": "",
+  "reuploadFileLabel": "",
   "rowIdExplanation": "",
   "submittedHeading": "",
   "submittedMessage": "",
@@ -40,5 +44,8 @@
   "successPageTitle": "",
   "successPanelTitle": "",
   "validatedHeading": "",
-  "validatedMessage": ""
+  "validatedMessage": "",
+  "validationFailuresDescription1": "",
+  "validationFailuresDescription2": "",
+  "validationFailuresHeading": ""
 }
