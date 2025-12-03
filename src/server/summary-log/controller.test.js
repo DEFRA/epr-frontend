@@ -469,7 +469,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: invalid with validation failures - should show re-upload form and cancel button', async () => {
+    test('status: invalid with validation failures - should show re-upload form and cancel button with correct URLs', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
@@ -482,6 +482,12 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Upload updated XLSX file')
       expect(result).toContain('Continue')
       expect(result).toContain('Cancel and return to dashboard')
+      expect(result).toContain(
+        `action="/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload"`
+      )
+      expect(result).toContain(
+        `href="/organisations/${organisationId}/registrations/${registrationId}"`
+      )
     })
 
     test('status: invalid with multiple validation failures - should show all failures', async () => {

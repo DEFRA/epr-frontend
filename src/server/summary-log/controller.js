@@ -289,7 +289,7 @@ export const summaryLogUploadProgressController = {
 
     const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
     const uploadUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-    const cancelUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
+    const cancelUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 
     const { status, validation, accreditationNumber, loads } =
       await getStatusData(request, organisationId, registrationId, summaryLogId)
