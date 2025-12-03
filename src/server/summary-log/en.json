@@ -1,11 +1,47 @@
 {
-  "addedLoadsHeading": "",
-  "addedLoadsHeading_one": "There is {{count}} new load",
-  "addedLoadsHeading_other": "There are {{count}} new loads",
-  "adjustedLoadsHeading": "",
-  "adjustedLoadsHeading_one": "There is {{count}} adjusted load",
-  "adjustedLoadsHeading_other": "There are {{count}} adjusted loads",
-  "adjustmentsReflected": "All adjustments will be reflected in your waste balance",
+  "pageTitle": "Summary log",
+
+  "processingHeading": "Your file is being uploaded",
+  "processingMessage": "Your summary log is being uploaded and automatically validated",
+  "processingKeepOpen": "Keep this page open and do not refresh it",
+
+  "submittingHeading": "Your file is being submitted",
+  "submittingMessage": "Your summary log is being submitted",
+
+  "rejectedDefaultReason": "File rejected by virus scanner",
+
+  "validationFailuresHeading": "Your summary log cannot be uploaded",
+  "validationFailuresDescription1": "We have found the following issues with the file you selected.",
+  "validationFailuresDescription2": "You will need to correct these issues before uploading your summary log.",
+  "reuploadFileLabel": "Upload updated XLSX file",
+  "reuploadButtonText": "Continue",
+  "cancelButtonText": "Cancel and return to dashboard",
+
+  "failure": {
+    "REGISTRATION_REQUIRED": "Registration number is missing",
+    "REGISTRATION_DATA_INVALID": "There is a problem with your registration - please contact support",
+    "REGISTRATION_MISMATCH": "Registration number is incorrect",
+    "ACCREDITATION_MISSING": "Accreditation number is missing",
+    "ACCREDITATION_MISMATCH": "Accreditation number is incorrect",
+    "ACCREDITATION_UNEXPECTED": "Accreditation number was provided but is not expected",
+    "MATERIAL_REQUIRED": "Material type is missing",
+    "MATERIAL_DATA_INVALID": "There is a problem with your registration - please contact support",
+    "MATERIAL_MISMATCH": "Material type is incorrect",
+    "PROCESSING_TYPE_REQUIRED": "The spreadsheet type could not be determined",
+    "PROCESSING_TYPE_INVALID": "The spreadsheet type is not recognised",
+    "PROCESSING_TYPE_DATA_INVALID": "There is a problem with your registration - please contact support",
+    "PROCESSING_TYPE_MISMATCH": "The spreadsheet type does not match your registration",
+    "TEMPLATE_VERSION_REQUIRED": "The template version could not be determined",
+    "TEMPLATE_VERSION_INVALID": "The template version is not recognised",
+    "SEQUENTIAL_ROW_REMOVED": "Rows have been removed since your summary log was last submitted - these must be re-added before you can submit your file",
+    "HEADER_REQUIRED": "The column headings in the file you selected have been changed - they must match the headings of the summary log template you originally downloaded",
+    "UNKNOWN": "An unexpected validation error occurred"
+  },
+
+  "errorHeading": "Error checking status",
+  "errorMessage": "Unable to check upload status",
+
+  "checkPageTitle": "Summary log",
   "checkHeading": "Check before you submit",
   "checkIntro": "Your summary log has been validated and is ready to submit.",
   "checkIntro2": "Before submitting, you need to confirm that you're aware of the following.",
