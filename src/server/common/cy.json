@@ -7,6 +7,9 @@
     "switchOrganisation": "Sefydliad switsh",
     "yourSites": "Eich gwefannau"
   },
+  "navigation:signOut": "",
+  "navigation:switchOrganisation": "",
+  "navigation:yourSites": "",
   "serviceName": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
   "submit": "Cyflwyno"
 }
