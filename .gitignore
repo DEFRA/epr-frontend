@@ -10,3 +10,4 @@ coverage
 .cache
 .envrc
 tsconfig.tsbuildinfo
+.env
