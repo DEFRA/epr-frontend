@@ -1,4 +1,5 @@
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { backendSummaryLogStatuses } from '#server/common/constants/statuses.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 
@@ -6,6 +7,11 @@ const PROCESSING_STATES = new Set([
   backendSummaryLogStatuses.preprocessing,
   backendSummaryLogStatuses.validating,
   backendSummaryLogStatuses.submitting
+])
+
+const REUPLOAD_STATES = new Set([
+  backendSummaryLogStatuses.invalid,
+  backendSummaryLogStatuses.rejected
 ])
 
 const VIEW_NAME = 'summary-log/progress'
@@ -280,6 +286,33 @@ const renderViewForStatus = (options) => {
 }
 
 /**
+ * Gets a pre-signed upload URL for re-uploading a summary log
+ * @param {string} status - Current summary log status
+ * @param {string} organisationId - Organisation ID
+ * @param {string} registrationId - Registration ID
+ * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
+ * @returns {Promise<string | undefined>} Pre-signed upload URL, or undefined if not needed
+ */
+const getUploadUrl = async (
+  status,
+  organisationId,
+  registrationId,
+  redirectUrl
+) => {
+  if (!REUPLOAD_STATES.has(status)) {
+    return undefined
+  }
+
+  const { uploadUrl } = await initiateSummaryLogUpload({
+    organisationId,
+    registrationId,
+    redirectUrl
+  })
+
+  return uploadUrl
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const summaryLogUploadProgressController = {
@@ -287,14 +320,20 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
-    const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-
-    const uploadUrl = `${baseUrl}/summary-logs/upload`
-    const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
-    const cancelUrl = baseUrl
-
     const { status, validation, accreditationNumber, loads } =
       await getStatusData(request, organisationId, registrationId, summaryLogId)
+
+    const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+    const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
+    const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
+    const cancelUrl = baseUrl
+
+    const uploadUrl = await getUploadUrl(
+      status,
+      organisationId,
+      registrationId,
+      redirectUrl
+    )
 
     return renderViewForStatus({
       h,
