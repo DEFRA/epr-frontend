@@ -177,7 +177,7 @@ describe('#refreshAccessToken', () => {
       }
     }
 
-    await expect(refreshAccessToken(mockRequest)).rejects.toThrow(
+    await expect(refreshAccessToken(mockRequest)).rejects.toThrowError(
       'Cannot refresh token: no user session found'
     )
 
