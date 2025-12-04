@@ -2,17 +2,29 @@ import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
 import { buildLoadsViewModel } from './controller.js'
 
+const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
+
 vi.mock(
   import('#server/common/helpers/upload/fetch-summary-log-status.js'),
   () => ({
     fetchSummaryLogStatus: vi.fn().mockResolvedValue({
       status: 'preprocessing'
+    })
+  })
+)
+
+vi.mock(
+  import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
+  () => ({
+    initiateSummaryLogUpload: vi.fn().mockResolvedValue({
+      uploadUrl: 'https://storage.example.com/upload?signature=abc123'
     })
   })
 )
@@ -435,6 +447,24 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('contains a virus and cannot be uploaded')
     })
 
+    test('status: rejected - should initiate upload with pre-signed URL', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.rejected,
+        validation: {
+          failures: [{ code: 'FILE_VIRUS_DETECTED' }]
+        }
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain(`action="${mockUploadUrl}"`)
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+      })
+    })
+
     test('status: rejected without validation - should show validation failures page with generic error', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.rejected
@@ -469,7 +499,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: invalid with validation failures - should show re-upload form and cancel button with correct URLs', async () => {
+    test('status: invalid with validation failures - should show re-upload form and cancel button', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
@@ -483,11 +513,26 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Continue')
       expect(result).toContain('Cancel and return to dashboard')
       expect(result).toContain(
-        `action="/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload"`
-      )
-      expect(result).toContain(
         `href="/organisations/${organisationId}/registrations/${registrationId}"`
       )
+    })
+
+    test('status: invalid - should initiate upload with pre-signed URL', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+        }
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain(`action="${mockUploadUrl}"`)
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+      })
     })
 
     test('status: invalid with multiple validation failures - should show all failures', async () => {

@@ -1,5 +1,5 @@
 {% extends 'layouts/page.njk' %}
-{% from "summary-log-reupload/macro.njk" import summaryLogReupload %}
+{% from "summary-log-upload/macro.njk" import summaryLogUpload %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -23,7 +23,7 @@
 
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
-      {{ summaryLogReupload({
+      {{ summaryLogUpload({
         uploadUrl: uploadUrl,
         fileUploadLabel: fileUploadLabel,
         buttonText: buttonText,
