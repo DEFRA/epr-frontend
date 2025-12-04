@@ -46,7 +46,7 @@ describe(createUpdateUserSession, () => {
 
     await expect(
       updateUserSession(mockRequest, refreshedSession)
-    ).rejects.toThrow(
+    ).rejects.toThrowError(
       'Cannot update session: session was deleted during token refresh'
     )
 

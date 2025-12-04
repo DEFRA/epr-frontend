@@ -142,7 +142,7 @@ describe('#defraId', () => {
         return Promise.reject(new Error('Unmocked URL: ' + url))
       })
 
-      await expect(defraId.plugin.register(mockServer)).rejects.toThrow(
+      await expect(defraId.plugin.register(mockServer)).rejects.toThrowError(
         'OIDC config fetch failed: 404 Not Found'
       )
     })
@@ -159,7 +159,7 @@ describe('#defraId', () => {
         return Promise.reject(new Error('Unmocked URL: ' + url))
       })
 
-      await expect(defraId.plugin.register(mockServer)).rejects.toThrow(
+      await expect(defraId.plugin.register(mockServer)).rejects.toThrowError(
         'OIDC config fetch failed: 500 Internal Server Error'
       )
     })
