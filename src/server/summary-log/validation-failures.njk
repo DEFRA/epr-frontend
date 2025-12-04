@@ -1,0 +1,36 @@
+{% extends 'layouts/page.njk' %}
+{% from "summary-log-reupload/macro.njk" import summaryLogReupload %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: "javascript:window.history.back()"
+  }) }}
+{% endblock %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-body" data-testid="app-page-body">
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <p>{{ description1 }}</p>
+      <p>{{ description2 }}</p>
+
+      {% for issue in issues %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <p class="govuk-body govuk-!-font-weight-bold">{{ issue }}</p>
+      {% endfor %}
+
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+      {{ summaryLogReupload({
+        uploadUrl: uploadUrl,
+        fileUploadLabel: fileUploadLabel,
+        buttonText: buttonText,
+        cancelUrl: cancelUrl,
+        cancelButtonText: cancelButtonText
+      }) }}
+    </div>
+  </div>
+</div>
+{% endblock %}

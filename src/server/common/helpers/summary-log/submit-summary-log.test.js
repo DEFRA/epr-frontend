@@ -1,12 +1,9 @@
-import fetch from 'node-fetch'
-import { StatusCodes } from 'http-status-codes'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { submitSummaryLog } from './submit-summary-log.js'
 
-vi.mock(import('node-fetch'), () => ({
-  default: vi.fn()
-}))
+const mockFetch = vi.fn()
+vi.stubGlobal('fetch', mockFetch)
 
 describe(submitSummaryLog, () => {
   const organisationId = 'org-123'
@@ -17,13 +14,13 @@ describe(submitSummaryLog, () => {
     vi.clearAllMocks()
   })
 
-  test('should successfully submit summary log and return response data', async () => {
+  test('submits summary log and returns response data', async () => {
     const mockResponse = {
       status: 'submitted',
       accreditationNumber: '493021'
     }
 
-    fetch.mockResolvedValue({
+    mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue(mockResponse)
     })
@@ -34,34 +31,29 @@ describe(submitSummaryLog, () => {
       summaryLogId
     )
 
-    expect(fetch).toHaveBeenCalledWith(
+    expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(/\/summary-logs\/log-789\/submit$/),
-      {
+      expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
-      }
+      })
     )
     expect(result).toStrictEqual(mockResponse)
   })
 
-  test('should throw error when backend returns non-ok response', async () => {
-    fetch.mockResolvedValue({
+  test('throws Boom error when backend returns non-ok response', async () => {
+    mockFetch.mockResolvedValue({
       ok: false,
-      status: StatusCodes.INTERNAL_SERVER_ERROR,
-      statusText: 'Internal Server Error'
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: new Map()
     })
 
     await expect(
       submitSummaryLog(organisationId, registrationId, summaryLogId)
-    ).rejects.toThrow('Backend returned 500: Internal Server Error')
-
-    let error
-    try {
-      await submitSummaryLog(organisationId, registrationId, summaryLogId)
-    } catch (err) {
-      error = err
-    }
-
-    expect(error.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 500 }
+    })
   })
 })

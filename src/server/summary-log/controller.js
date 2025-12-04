@@ -1,4 +1,3 @@
-import { StatusCodes } from 'http-status-codes'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { backendSummaryLogStatuses } from '#server/common/constants/statuses.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
@@ -13,6 +12,7 @@ const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
 const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
 const SUCCESS_VIEW_NAME = 'summary-log/success'
+const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
 /**
@@ -47,14 +47,12 @@ export const buildLoadsViewModel = (loads) => {
 }
 
 /**
- * Determines view data based on backend status
+ * Gets view data for progress page (processing or error states)
  * @param {(key: string) => string} localise - The i18n translation function
  * @param {string} status - Backend status
- * @param {string} [failureReason] - Error message from backend
  * @returns {{heading: string, message: string, isProcessing: boolean}}
  */
-const getViewData = (localise, status, failureReason) => {
-  // Processing states - show designed message
+const getProgressViewData = (localise, status) => {
   if (PROCESSING_STATES.has(status)) {
     return {
       heading: localise('summary-log:processingHeading'),
@@ -63,28 +61,10 @@ const getViewData = (localise, status, failureReason) => {
     }
   }
 
-  // Terminal states
-  const placeholders = {
-    [backendSummaryLogStatuses.validated]: {
-      heading: localise('summary-log:validatedHeading'),
-      message: localise('summary-log:validatedMessage')
-    },
-    [backendSummaryLogStatuses.submitted]: {
-      heading: localise('summary-log:submittedHeading'),
-      message: localise('summary-log:submittedMessage')
-    },
-    [backendSummaryLogStatuses.rejected]: {
-      heading: localise('summary-log:invalidHeading'),
-      message: failureReason || localise('summary-log:rejectedDefaultReason')
-    },
-    [backendSummaryLogStatuses.invalid]: {
-      heading: localise('summary-log:invalidHeading'),
-      message: failureReason || localise('summary-log:invalidMessage')
-    }
-  }
-
+  // Fallback for unexpected statuses (should not occur in normal flow)
   return {
-    ...placeholders[status],
+    heading: localise('summary-log:errorHeading'),
+    message: localise('summary-log:errorMessage'),
     isProcessing: false
   }
 }
@@ -95,7 +75,7 @@ const getViewData = (localise, status, failureReason) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} summaryLogId - Summary log ID
- * @returns {Promise<{status: string, failureReason?: string, accreditationNumber?: string, loads?: object}>}
+ * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
  */
 const getStatusData = async (
   request,
@@ -117,119 +97,186 @@ const getStatusData = async (
     request.yar.set(sessionNames.summaryLogs, remainingSession)
   }
 
-  const { status, failureReason, accreditationNumber, loads } = data
+  const { status, validation, accreditationNumber, loads } = data
 
   return {
     status,
-    failureReason,
+    validation,
     accreditationNumber,
     loads
   }
 }
 
 /**
- * Handles rejected status by storing error in session and redirecting
- * @param {object} request - Hapi request object
+ * Renders the check page for validated summary logs
  * @param {object} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
- * @param {string} failureReason - Failure reason from backend
- * @param {string} organisationId - Organisation ID
- * @param {string} registrationId - Registration ID
- * @returns {object} Hapi redirect response
+ * @param {object} context - View context
+ * @param {object} context.loads - Load statistics for the summary log
+ * @param {string} context.organisationId - Organisation ID
+ * @param {string} context.registrationId - Registration ID
+ * @param {string} context.summaryLogId - Summary log ID
+ * @returns {object} Hapi view response
  */
-const handleRejectedStatus = (
-  request,
+const renderCheckView = (
   h,
   localise,
-  failureReason,
-  organisationId,
-  registrationId
+  { loads, organisationId, registrationId, summaryLogId }
 ) => {
-  const currentSession = request.yar.get(sessionNames.summaryLogs) || {}
+  const loadsViewModel = buildLoadsViewModel(loads)
 
-  request.yar.set(sessionNames.summaryLogs, {
-    ...currentSession,
-    lastError: failureReason || localise('summary-log:rejectedDefaultReason')
+  return h.view(CHECK_VIEW_NAME, {
+    pageTitle: localise('summary-log:checkPageTitle'),
+    organisationId,
+    registrationId,
+    summaryLogId,
+    loads: loadsViewModel
   })
+}
 
-  return h.redirect(
-    `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-  )
+/**
+ * Renders the submitting page while submission is in progress
+ * @param {object} h - Hapi response toolkit
+ * @param {(key: string) => string} localise - i18n localisation function
+ * @param {object} context - View context
+ * @param {string} context.pollUrl - URL for polling submission status
+ * @returns {object} Hapi view response
+ */
+const renderSubmittingView = (h, localise, { pollUrl }) => {
+  return h.view(SUBMITTING_VIEW_NAME, {
+    pageTitle: localise(PAGE_TITLE_KEY),
+    heading: localise('summary-log:submittingHeading'),
+    message: localise('summary-log:submittingMessage'),
+    isProcessing: true,
+    shouldPoll: true,
+    pollUrl
+  })
+}
+
+/**
+ * Renders the success page after successful submission
+ * @param {object} h - Hapi response toolkit
+ * @param {(key: string) => string} localise - i18n localisation function
+ * @param {object} context - View context
+ * @param {string} context.organisationId - Organisation ID
+ * @param {string} context.registrationId - Registration ID
+ * @param {string} context.accreditationNumber - Accreditation number for display
+ * @returns {object} Hapi view response
+ */
+const renderSuccessView = (
+  h,
+  localise,
+  { organisationId, registrationId, accreditationNumber }
+) => {
+  return h.view(SUCCESS_VIEW_NAME, {
+    pageTitle: localise('summary-log:successPageTitle'),
+    organisationId,
+    registrationId,
+    accreditationNumber
+  })
+}
+
+/**
+ * Renders the validation failures page for invalid summary logs
+ * @param {object} h - Hapi response toolkit
+ * @param {(key: string, params?: object) => string} localise - i18n localisation function
+ * @param {object} context - View context
+ * @param {object} context.validation - Validation result containing failures
+ * @param {string} context.uploadUrl - URL for re-uploading the file
+ * @param {string} context.cancelUrl - URL for cancelling and returning to dashboard
+ * @returns {object} Hapi view response
+ */
+const renderValidationFailuresView = (
+  h,
+  localise,
+  { validation, uploadUrl, cancelUrl }
+) => {
+  const failures = validation?.failures ?? []
+
+  const fallbackMessage = localise('summary-log:failure.UNKNOWN')
+
+  const issues =
+    failures.length > 0
+      ? failures.map(({ code }) =>
+          localise(`summary-log:failure.${code}`, {
+            defaultValue: fallbackMessage
+          })
+        )
+      : [fallbackMessage]
+
+  const issueCount = issues.length
+
+  return h.view(VALIDATION_FAILURES_VIEW_NAME, {
+    pageTitle: localise(PAGE_TITLE_KEY),
+    heading: localise('summary-log:validationFailuresHeading'),
+    description1: localise('summary-log:validationFailuresDescription1', {
+      count: issueCount
+    }),
+    description2: localise('summary-log:validationFailuresDescription2', {
+      count: issueCount
+    }),
+    issues,
+    fileUploadLabel: localise('summary-log:reuploadFileLabel'),
+    buttonText: localise('summary-log:reuploadButtonText'),
+    cancelUrl,
+    cancelButtonText: localise('summary-log:cancelButtonText'),
+    uploadUrl
+  })
+}
+
+/**
+ * Renders the progress page for processing states or unexpected statuses
+ * @param {object} h - Hapi response toolkit
+ * @param {(key: string) => string} localise - i18n localisation function
+ * @param {object} context - View context
+ * @param {string} context.status - Current summary log status
+ * @param {string} context.pollUrl - URL for polling status updates
+ * @returns {object} Hapi view response
+ */
+const renderProgressView = (h, localise, { status, pollUrl }) => {
+  const viewData = getProgressViewData(localise, status)
+
+  return h.view(VIEW_NAME, {
+    ...viewData,
+    pageTitle: localise(PAGE_TITLE_KEY),
+    shouldPoll: PROCESSING_STATES.has(status),
+    pollUrl
+  })
+}
+
+/**
+ * View resolver mapping - maps backend statuses to their render functions
+ */
+const viewResolvers = {
+  [backendSummaryLogStatuses.validated]: renderCheckView,
+  [backendSummaryLogStatuses.submitting]: renderSubmittingView,
+  [backendSummaryLogStatuses.submitted]: renderSuccessView,
+  [backendSummaryLogStatuses.invalid]: renderValidationFailuresView,
+  [backendSummaryLogStatuses.rejected]: renderValidationFailuresView
 }
 
 /**
  * Renders appropriate view based on status
  * @param {object} options - Rendering options
  * @param {object} options.h - Hapi response toolkit
- * @param {(key: string) => string} options.localise - i18n localisation function
+ * @param {(key: string, params?: object) => string} options.localise - i18n localisation function
  * @param {string} options.status - Backend status
- * @param {string} [options.failureReason] - Failure reason from backend
+ * @param {object} [options.validation] - Validation object from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
  * @param {object} [options.loads] - Loads data with row IDs for validated summary logs
  * @param {string} options.organisationId - Organisation ID
  * @param {string} options.registrationId - Registration ID
  * @param {string} options.summaryLogId - Summary log ID
  * @param {string} options.pollUrl - URL for polling status
+ * @param {string} options.uploadUrl - URL for re-uploading
+ * @param {string} options.cancelUrl - URL for cancel button
  * @returns {object} Hapi view response
  */
-const renderViewForStatus = ({
-  h,
-  localise,
-  status,
-  failureReason,
-  accreditationNumber,
-  loads,
-  organisationId,
-  registrationId,
-  summaryLogId,
-  pollUrl
-}) => {
-  const PAGE_TITLE = localise(PAGE_TITLE_KEY)
+const renderViewForStatus = (options) => {
+  const { h, localise, status } = options
+  const resolver = viewResolvers[status] ?? renderProgressView
 
-  // If validated, show check page
-  if (status === backendSummaryLogStatuses.validated) {
-    const loadsViewModel = buildLoadsViewModel(loads)
-
-    return h.view(CHECK_VIEW_NAME, {
-      pageTitle: localise('summary-log:checkPageTitle'),
-      organisationId,
-      registrationId,
-      summaryLogId,
-      loads: loadsViewModel
-    })
-  }
-
-  // If submitting, show submitting page
-  if (status === backendSummaryLogStatuses.submitting) {
-    return h.view(SUBMITTING_VIEW_NAME, {
-      pageTitle: localise(PAGE_TITLE_KEY),
-      heading: localise('summary-log:submittingHeading'),
-      message: localise('summary-log:submittingMessage'),
-      isProcessing: true,
-      shouldPoll: true,
-      pollUrl
-    })
-  }
-
-  // If submitted, show success page
-  if (status === backendSummaryLogStatuses.submitted) {
-    return h.view(SUCCESS_VIEW_NAME, {
-      pageTitle: localise('summary-log:successPageTitle'),
-      organisationId,
-      registrationId,
-      accreditationNumber
-    })
-  }
-
-  // Show progress page for all other statuses
-  const viewData = getViewData(localise, status, failureReason)
-
-  return h.view(VIEW_NAME, {
-    ...viewData,
-    pageTitle: PAGE_TITLE,
-    shouldPoll: PROCESSING_STATES.has(status),
-    pollUrl
-  })
+  return resolver(h, localise, options)
 }
 
 /**
@@ -239,70 +286,30 @@ export const summaryLogUploadProgressController = {
   handler: async (request, h) => {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
-    const pollUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const PAGE_TITLE = localise(PAGE_TITLE_KEY)
 
-    try {
-      const { status, failureReason, accreditationNumber, loads } =
-        await getStatusData(
-          request,
-          organisationId,
-          registrationId,
-          summaryLogId
-        )
+    const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 
-      // If upload rejected, redirect back to upload page with error
-      if (status === backendSummaryLogStatuses.rejected) {
-        return handleRejectedStatus(
-          request,
-          h,
-          localise,
-          failureReason,
-          organisationId,
-          registrationId
-        )
-      }
+    const uploadUrl = `${baseUrl}/summary-logs/upload`
+    const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
+    const cancelUrl = baseUrl
 
-      // Render appropriate view based on status
-      return renderViewForStatus({
-        h,
-        localise,
-        status,
-        failureReason,
-        accreditationNumber,
-        loads,
-        organisationId,
-        registrationId,
-        summaryLogId,
-        pollUrl
-      })
-    } catch (err) {
-      // 404 means summary log not created yet - treat as preprocessing
-      if (err.status === StatusCodes.NOT_FOUND) {
-        const viewData = getViewData(
-          localise,
-          backendSummaryLogStatuses.preprocessing
-        )
+    const { status, validation, accreditationNumber, loads } =
+      await getStatusData(request, organisationId, registrationId, summaryLogId)
 
-        return h.view(VIEW_NAME, {
-          ...viewData,
-          pageTitle: PAGE_TITLE,
-          shouldPoll: true,
-          pollUrl
-        })
-      }
-
-      // Other errors - show error page
-      request.server.log(['error', 'upload-progress'], err)
-
-      return h.view(VIEW_NAME, {
-        pageTitle: PAGE_TITLE,
-        heading: localise('summary-log:errorHeading'),
-        message: localise('summary-log:errorMessage'),
-        isProcessing: false,
-        shouldPoll: false
-      })
-    }
+    return renderViewForStatus({
+      h,
+      localise,
+      status,
+      validation,
+      accreditationNumber,
+      loads,
+      organisationId,
+      registrationId,
+      summaryLogId,
+      pollUrl,
+      uploadUrl,
+      cancelUrl
+    })
   }
 }
 

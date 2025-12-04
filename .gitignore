@@ -10,4 +10,5 @@ coverage
 .cache
 .envrc
 tsconfig.tsbuildinfo
+translations.xlsx
 .env

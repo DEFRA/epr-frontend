@@ -49,6 +49,6 @@ describe(initI18n, function () {
   test('throws if init rejects', async () => {
     i18next.init.mockRejectedValueOnce(new Error('init failed'))
 
-    await expect(initI18n()).rejects.toThrow('init failed')
+    await expect(initI18n()).rejects.toThrowError('init failed')
   })
 })

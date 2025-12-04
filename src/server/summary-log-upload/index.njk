@@ -1,7 +1,7 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/accordion/macro.njk" import govukAccordion %}
-{% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "summary-log-reupload/macro.njk" import summaryLogReupload %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -74,34 +74,11 @@
           text: localise("summary-log-upload:insetText")
         }) }}
 
-        <form
-          class="form"
-          action="{{ uploadUrl }}"
-          method="post"
-          enctype="multipart/form-data"
-        >
-          {% set summaryLogUploadError = null %}
-          {% if formErrors %}
-            {% set summaryLogUploadError = {
-              text: formErrors
-            } %}
-          {% endif %}
-
-          {{ govukFileUpload({
-            id: "summary-log-upload",
-            name: "summaryLogUpload",
-            label: { text: localise("summary-log-upload:fileUploadLabel") },
-            javascript: true,
-            attributes: {
-              accept: ".xlsx"
-            },
-            errorMessage: summaryLogUploadError
-          }) }}
-
-          {{ govukButton({
-            text: localise("summary-log-upload:continueButton")
-          }) }}
-        </form>
+        {{ summaryLogReupload({
+          uploadUrl: uploadUrl,
+          fileUploadLabel: localise("summary-log-upload:fileUploadLabel"),
+          buttonText: localise("summary-log-upload:continueButton")
+        }) }}
       </div>
     </div>
   </div>

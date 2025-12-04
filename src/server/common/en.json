@@ -7,6 +7,9 @@
     "switchOrganisation": "Switch organisation",
     "yourSites": "Your sites"
   },
+  "navigation:signOut": "navigation:signOut",
+  "navigation:switchOrganisation": "navigation:switchOrganisation",
+  "navigation:yourSites": "navigation:yourSites",
   "serviceName": "Manage your packaging waste responsibilities",
   "submit": "Submit"
 }

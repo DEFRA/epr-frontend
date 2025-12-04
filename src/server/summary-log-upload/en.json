@@ -1,35 +1,26 @@
 {
-  "pageTitle": "Summary log: upload",
-  "heading": "Upload your summary log",
-  "siteName": "Test site",
-
-  "checkStepsIntro1": "Check you’ve completed the following steps before uploading your summary log.",
-  "checkStepsIntro2": "This will ensure that your waste balance is correct and you’re meeting regulatory requirements.",
-
-  "accordionWhyNeeded": "Why this is needed",
-
   "accordionSection1Heading": "You’ve completed section 1 for each load",
   "accordionSection1Text": "A load will only be added to your waste balance when you’ve provided all the information in this section.",
-
-  "accordionSection2Heading": "You’ve included all known information in sections 2, 3 and 4",
-  "accordionSection2Intro": "By completing these sections you’re ensuring that:",
   "accordionSection2Bullet1": "you’re meeting your regulatory requirements",
   "accordionSection2Bullet2": "reports you submit to your regulator will be accurate",
-
+  "accordionSection2Heading": "You’ve included all known information in sections 2, 3 and 4",
+  "accordionSection2Intro": "By completing these sections you’re ensuring that:",
   "accordionSection3Heading": "You’ve adjusted any out-of-date information",
   "accordionSection3Paragraph1": "You should always submit the most up-to-date information you have, to ensure that your waste balance is accurate.",
   "accordionSection3Paragraph2": "Any adjustments for this reporting period will be reflected straight away in your waste balance.",
   "accordionSection3Paragraph3": "Any adjustments made to loads from previous reporting periods will need to be confirmed by an approved person at your company.",
-
   "accordionSection4Heading": "You’ve included any waste sent on in section 5, if applicable",
   "accordionSection4Text": "You only need to complete this section if packaging waste has been sent on. These loads will be removed from your waste balance when all the information is provided.",
-
-  "insetText": "You can submit an updated summary log whenever you need to add or adjust your waste records.",
-
-  "fileUploadLabel": "Upload XLSX file",
+  "accordionWhyNeeded": "Why this is needed",
+  "checkStepsIntro1": "Check you’ve completed the following steps before uploading your summary log.",
+  "checkStepsIntro2": "This will ensure that your waste balance is correct and you’re meeting regulatory requirements.",
   "continueButton": "Continue",
-
-  "errorPageTitle": "Summary log: upload error",
+  "errorGeneric": "Failed to initialize upload",
   "errorHeading": "Summary log upload error",
-  "errorGeneric": "Failed to initialize upload"
+  "errorPageTitle": "Summary log: upload error",
+  "fileUploadLabel": "Upload XLSX file",
+  "heading": "Upload your summary log",
+  "insetText": "You can submit an updated summary log whenever you need to add or adjust your waste records.",
+  "pageTitle": "Summary log: upload",
+  "siteName": "Test site"
 }

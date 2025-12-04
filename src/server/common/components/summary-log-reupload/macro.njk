@@ -1,0 +1,54 @@
+{% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{#
+  Summary log file upload form macro
+
+  Parameters:
+    - uploadUrl: (required) Form action URL
+    - fileUploadLabel: (required) Label text for file input
+    - buttonText: (required) Submit button text
+    - formErrors: (optional) Error message to display
+    - cancelUrl: (optional) URL for cancel button - if provided with cancelButtonText, renders a secondary button
+    - cancelButtonText: (optional) Text for cancel button
+#}
+{% macro summaryLogReupload(params) %}
+  <form
+    class="form"
+    action="{{ params.uploadUrl }}"
+    method="post"
+    enctype="multipart/form-data"
+  >
+    {% set summaryLogUploadError = null %}
+    {% if params.formErrors %}
+      {% set summaryLogUploadError = {
+        text: params.formErrors
+      } %}
+    {% endif %}
+
+    {{ govukFileUpload({
+      id: "summary-log-upload",
+      name: "summaryLogUpload",
+      label: { text: params.fileUploadLabel },
+      javascript: true,
+      attributes: {
+        accept: ".xlsx"
+      },
+      errorMessage: summaryLogUploadError
+    }) }}
+
+    <div class="govuk-button-group">
+      {{ govukButton({
+        text: params.buttonText
+      }) }}
+
+      {% if params.cancelUrl and params.cancelButtonText %}
+        {{ govukButton({
+          text: params.cancelButtonText,
+          href: params.cancelUrl,
+          classes: "govuk-button--secondary"
+        }) }}
+      {% endif %}
+    </div>
+  </form>
+{% endmacro %}

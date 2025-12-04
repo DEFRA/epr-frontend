@@ -1,36 +1,20 @@
-import fetch from 'node-fetch'
-
-import { config } from '#config/config.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
  * Fetches summary log status from EPR Backend
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} summaryLogId
- * @returns {Promise<{status: string, failureReason?: string}>}
+ * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
  */
 async function fetchSummaryLogStatus(
   organisationId,
   registrationId,
   summaryLogId
 ) {
-  const baseUrl = config.get('eprBackendUrl')
-  const url = `${baseUrl}/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' }
-  })
-
-  if (!response.ok) {
-    const error = new Error(
-      `Backend returned ${response.status}: ${response.statusText}`
-    )
-    error.status = response.status
-    throw error
-  }
-
-  return response.json()
+  return fetchJsonFromBackend(path, { method: 'GET' })
 }
 
 export { fetchSummaryLogStatus }

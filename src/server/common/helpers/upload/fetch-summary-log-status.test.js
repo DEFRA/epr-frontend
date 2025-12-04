@@ -1,12 +1,9 @@
-import fetch from 'node-fetch'
-import { StatusCodes } from 'http-status-codes'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
-vi.mock(import('node-fetch'), () => ({
-  default: vi.fn()
-}))
+const mockFetch = vi.fn()
+vi.stubGlobal('fetch', mockFetch)
 
 describe(fetchSummaryLogStatus, () => {
   const organisationId = 'org-123'
@@ -17,13 +14,13 @@ describe(fetchSummaryLogStatus, () => {
     vi.clearAllMocks()
   })
 
-  test('should successfully fetch summary log status', async () => {
+  test('returns summary log status when backend responds successfully', async () => {
     const mockResponse = {
       status: 'validated',
-      failureReason: null
+      validation: null
     }
 
-    fetch.mockResolvedValue({
+    mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue(mockResponse)
     })
@@ -34,34 +31,45 @@ describe(fetchSummaryLogStatus, () => {
       summaryLogId
     )
 
-    expect(fetch).toHaveBeenCalledWith(
+    expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(/\/summary-logs\/log-789$/),
-      {
+      expect.objectContaining({
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
-      }
+      })
     )
     expect(result).toStrictEqual(mockResponse)
   })
 
-  test('should throw error when backend returns non-ok response', async () => {
-    fetch.mockResolvedValue({
+  test('throws Boom notFound error when backend returns 404', async () => {
+    mockFetch.mockResolvedValue({
       ok: false,
-      status: StatusCodes.NOT_FOUND,
-      statusText: 'Not Found'
+      status: 404,
+      statusText: 'Not Found',
+      headers: new Map()
     })
 
     await expect(
       fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
-    ).rejects.toThrow('Backend returned 404: Not Found')
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 404 }
+    })
+  })
 
-    let error
-    try {
-      await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
-    } catch (err) {
-      error = err
-    }
+  test('throws Boom error when backend returns other error status', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: new Map()
+    })
 
-    expect(error.status).toBe(StatusCodes.NOT_FOUND)
+    await expect(
+      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 500 }
+    })
   })
 })

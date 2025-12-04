@@ -1,14 +1,14 @@
 {
-  "pageTitle": "Hafan",
   "heading": "Rheoli eich cyfrifoldebau gwastraff pecynnu",
-  "subheading": "Mae'r gwasanaeth hwn yn helpu ailbroseswyr ac allforwyr yn y DU i fodloni rheoliadau gwastraff pecynnu.",
+  "pageTitle": "Hafan",
   "services": {
-    "description": "Defnyddiwch y gwasanaeth i reoli eich:",
-    "registrations": "cofrestriadau",
     "accreditations": "achrediadau",
-    "summaryLog": "log cryno",
+    "description": "Defnyddiwch y gwasanaeth i reoli eich:",
+    "prns": "PRNs neu PERNs",
+    "registrations": "cofrestriadau",
     "regulatorReports": "adroddiadau rheolydd",
-    "prns": "PRNs neu PERNs"
+    "summaryLog": "log cryno"
   },
-  "startNow": "Dechreuwch nawr"
+  "startNow": "Dechreuwch nawr",
+  "subheading": "Mae'r gwasanaeth hwn yn helpu ailbroseswyr ac allforwyr yn y DU i fodloni rheoliadau gwastraff pecynnu."
 }
