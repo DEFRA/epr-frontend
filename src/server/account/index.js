@@ -1,4 +1,5 @@
 import { controller } from './controller.js'
+import { controller as linkingController } from './linking/controller.js'
 
 /**
  * Sets up the routes used in the page.
@@ -17,6 +18,11 @@ export const account = {
           ...controller,
           method: 'GET',
           path: '/account'
+        },
+        {
+          ...linkingController,
+          method: 'GET',
+          path: '/account/linking'
         }
       ])
     }

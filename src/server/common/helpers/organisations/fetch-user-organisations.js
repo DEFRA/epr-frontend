@@ -19,14 +19,10 @@ import fetch from 'node-fetch'
 
 /**
  * Fetches user's organisations from EPR Backend
- * @param {boolean} isLocal
  * @returns {(string: accessToken) => Promise<{organisations: UserOrganisations}>}
  */
-const fetchUserOrganisations = (isLocal) => {
-  // TODO this is temporary whilst we use our own endpoint
-  const url = isLocal
-    ? `${config.get('appBaseUrl')}/me/organisations`
-    : `${config.get('eprBackendUrl')}/v1/me/organisations`
+const fetchUserOrganisations = () => {
+  const url = `${config.get('eprBackendUrl')}/v1/me/organisations`
 
   /**
    * Fetches user's organisations from EPR Backend

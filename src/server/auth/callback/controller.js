@@ -24,12 +24,10 @@ const controller = {
       })
 
       try {
-        // FIXME to remove along with param when we're happy
-        const isLocal = false
-
-        const organisationsData = await fetchUserOrganisations(isLocal)(
+        const organisationsData = await fetchUserOrganisations()(
           session.idToken
         )
+        console.log('organisationsData :>> ', organisationsData)
         session.organisations = organisationsData.organisations
       } catch (error) {
         request.logger.error(
@@ -38,12 +36,20 @@ const controller = {
         )
       }
 
+      console.log('session.organisations :>> ', session.organisations)
+
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
       request.cookieAuth.set({ sessionId })
 
       request.logger.info('User has been successfully authenticated')
+
+      // redirect to linking if they need it..
+      // FIXME more detailed logic here please!
+      if (session.organisations.unlinked.length === 1) {
+        return h.redirect('/account/linking')
+      }
     }
 
     const redirect = request.yar.flash('referrer')?.at(0) ?? '/'

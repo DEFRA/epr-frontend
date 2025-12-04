@@ -10,7 +10,6 @@ import { registration } from '#server/registration/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
 import inert from '@hapi/inert'
-import { meOrganisations } from './me/organisations/index.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -33,7 +32,6 @@ export const router = {
       await server.register([
         account,
         home,
-        meOrganisations,
         registration,
         summaryLog,
         summaryLogUpload
