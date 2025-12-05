@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -433,7 +434,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.rejected,
         validation: {
-          failures: [{ code: 'FILE_VIRUS_DETECTED' }]
+          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
         }
       })
 
@@ -451,7 +452,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.rejected,
         validation: {
-          failures: [{ code: 'FILE_VIRUS_DETECTED' }]
+          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
         }
       })
 
@@ -484,7 +485,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
       })
 
@@ -503,7 +504,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
       })
 
@@ -521,7 +522,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
       })
 
@@ -540,8 +541,8 @@ describe('#summaryLogUploadProgressController', () => {
         status: backendSummaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: 'SEQUENTIAL_ROW_REMOVED' },
-            { code: 'HEADER_REQUIRED' }
+            { code: validationFailureCodes.SEQUENTIAL_ROW_REMOVED },
+            { code: validationFailureCodes.HEADER_REQUIRED }
           ]
         }
       })
@@ -569,6 +570,57 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain('An unexpected validation error occurred')
       expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: invalid with data entry failures - should show single deduplicated message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
+            { code: validationFailureCodes.INVALID_TYPE },
+            { code: validationFailureCodes.VALUE_OUT_OF_RANGE }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Your summary log cannot be uploaded')
+      // All data entry codes should map to single DATA_ENTRY_INVALID message
+      expect(result).toContain(
+        'The selected file contains data that&#39;s been entered incorrectly'
+      )
+
+      // Should only appear once (deduplicated)
+      const matches = result.match(
+        /The selected file contains data that&#39;s been entered incorrectly/g
+      )
+
+      expect(matches).toHaveLength(1)
+    })
+
+    test('status: invalid with mixed failures - should show data entry message and other failures', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
+            { code: validationFailureCodes.REGISTRATION_MISMATCH },
+            { code: validationFailureCodes.INVALID_TYPE }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      // Should show both the data entry message and the registration mismatch
+      expect(result).toContain(
+        'The selected file contains data that&#39;s been entered incorrectly'
+      )
+      expect(result).toContain('Registration number is incorrect')
     })
 
     test('status: invalid with empty validation failures - should show generic validation error', async () => {
