@@ -1,22 +1,54 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
         {% if isDefraIdEnabled %}
-          <h1 class="govuk-heading-l">Link Gaskells Waste Services to its registration</h1>
-          <p class="govuk-body">As you're the first person from your organisation to access this service, you need to link the organisation to a registration we've previously received.</p>
-          <p class="govuk-body">You'll only need to confirm this once, on behalf of the organisation you represent.</p>
-          <h2 class="govuk-heading-m">Select the registration to link to Gaskells Waste Services</h2>
+          {% if errorSummary %}
+            {{ govukErrorSummary({
+              titleText: localise('common:errorSummaryTitle'),
+              errorList: errorSummary
+            }) }}
+          {% endif %}
 
-          {# TODO insert a radio group to select the org - can be a list of one #}
+          {# FIXME use a proper service name - what is this? #}
+          <h1 class="govuk-heading-l">{{ localise('account:linking:heading', { serviceName: organisationName }) }}</h1>
+          <p class="govuk-body">{{ localise('account:linking:bodyOne') }}</p>
+          <p class="govuk-body">{{ localise('account:linking:bodyTwo') }}</p>
 
-          {# TODO add values for organisation name #}
-          {# TODO add translations #}
+          <form method="POST" action="{{ localiseUrl('/account/linking') }}">
+            {% set radioItems = [] %}
+            {% for org in unlinked %}
+              {% set radioItems = (radioItems.push({
+                value: org.id,
+                text: org.companyDetails.tradingName
+              }), radioItems) %}
+            {% endfor %}
 
-          {# <h1 class="govuk-heading-l">{{ localise('account:linking:heading') }}</h1> #}
-          {# <p class="govuk-body">{{ localise('account:linking:subheading') }}</p> #}
+            {# FIXME use a proper service name - what is this? #}
+            {# TODO order alphabetically as per design system guidance #}
+            {{ govukRadios({
+              name: "organisationId",
+              idPrefix: "organisation-id",
+              fieldset: {
+                legend: {
+                  text: localise('account:linking:subheading', { serviceName: organisationName }),
+                  isPageHeading: false,
+                  classes: "govuk-fieldset__legend--m"
+                }
+              },
+              items: radioItems,
+              errorMessage: errors.organisationId if errors and errors.organisationId
+            }) }}
+
+            {{ govukButton({
+              text: localise('account:linking:confirmButton')
+            }) }}
+          </form>
         {% endif %}
       </div>
     </div>

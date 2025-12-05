@@ -1,11 +1,18 @@
+import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
+import { buildLinkingViewData } from './view-data.js'
+
 /**
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
-  handler({ t: localise }, h) {
-    return h.view('account/linking/index', {
-      pageTitle: localise('account:linking:pageTitle')
-    })
+  options: {
+    pre: [provideAuthedUser]
+  },
+  handler(request, h) {
+    const authedUser = request.pre.authedUser
+    const viewData = buildLinkingViewData(request, authedUser)
+
+    return h.view('account/linking/index', viewData)
   }
 }
 

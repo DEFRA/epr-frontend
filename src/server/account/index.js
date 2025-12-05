@@ -1,5 +1,6 @@
 import { controller } from './controller.js'
-import { controller as linkingController } from './linking/controller.js'
+import { controller as linkingGetController } from './linking/controller.js'
+import { controller as linkingPostController } from './linking/post-controller.js'
 
 /**
  * Sets up the routes used in the page.
@@ -20,8 +21,13 @@ export const account = {
           path: '/account'
         },
         {
-          ...linkingController,
+          ...linkingGetController,
           method: 'GET',
+          path: '/account/linking'
+        },
+        {
+          ...linkingPostController,
+          method: 'POST',
           path: '/account/linking'
         }
       ])

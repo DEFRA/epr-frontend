@@ -23,11 +23,11 @@ const controller = {
         profile
       })
 
+      // TODO move this to its own handler
       try {
         const organisationsData = await fetchUserOrganisations()(
           session.idToken
         )
-        console.log('organisationsData :>> ', organisationsData)
         session.organisations = organisationsData.organisations
       } catch (error) {
         request.logger.error(
@@ -35,8 +35,6 @@ const controller = {
           'Failed to fetch user organisations during authentication'
         )
       }
-
-      console.log('session.organisations :>> ', session.organisations)
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
@@ -47,7 +45,7 @@ const controller = {
 
       // redirect to linking if they need it..
       // FIXME more detailed logic here please!
-      if (session.organisations.unlinked.length === 1) {
+      if (session.organisations?.unlinked?.length === 1) {
         return h.redirect('/account/linking')
       }
     }

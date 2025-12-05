@@ -19,7 +19,7 @@ import fetch from 'node-fetch'
 
 /**
  * Fetches user's organisations from EPR Backend
- * @returns {(string: accessToken) => Promise<{organisations: UserOrganisations}>}
+ * @returns {(accessToken: string) => Promise<{organisations: UserOrganisations}>}
  */
 const fetchUserOrganisations = () => {
   const url = `${config.get('eprBackendUrl')}/v1/me/organisations`
