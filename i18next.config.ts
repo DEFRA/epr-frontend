@@ -2,6 +2,8 @@ import { defineConfig } from 'i18next-cli'
 // eslint-disable-next-line n/no-missing-import
 import nunjucksPlugin from './scripts/i18next-nunjucks-plugin.mjs'
 // eslint-disable-next-line n/no-missing-import
+import dynamicKeysPlugin from './scripts/i18next-dynamic-keys-plugin.mjs'
+// eslint-disable-next-line n/no-missing-import
 import exportPlugin from './scripts/i18next-export-plugin.mjs'
 
 export default defineConfig({
@@ -26,11 +28,12 @@ export default defineConfig({
     sort: true,
     removeUnusedKeys: false,
     indentation: 2,
-    defaultValue: ''
+    defaultValue: '',
+    preservePatterns: ['*:*.*']
   },
   types: {
     input: ['src/server/**/{{language}}.json'],
     output: 'src/types/i18next.d.ts'
   },
-  plugins: [nunjucksPlugin(), exportPlugin()]
+  plugins: [nunjucksPlugin(), dynamicKeysPlugin(), exportPlugin()]
 })
