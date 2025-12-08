@@ -25,6 +25,7 @@
     "ACCREDITATION_MISMATCH": "Accreditation number is incorrect",
     "ACCREDITATION_MISSING": "Accreditation number is missing",
     "ACCREDITATION_UNEXPECTED": "Accreditation number was provided but is not expected",
+    "DATA_ENTRY_INVALID": "The selected file contains data that's been entered incorrectly - check that the data you've entered matches the examples provided in the summary log",
     "FILE_DOWNLOAD_FAILED": "The selected file could not be downloaded",
     "FILE_EMPTY": "The selected file is empty",
     "FILE_REJECTED": "The selected file could not be uploaded – try again",
