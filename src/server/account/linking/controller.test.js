@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
-describe('#accountController', () => {
+describe('#accountLinkingController', () => {
   describe('auth disabled', () => {
     /** @type {Server} */
     let server
@@ -22,17 +22,24 @@ describe('#accountController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('should provide expected response with correct status', async () => {
+    test('should render page when no auth required', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
+        ok: true,
+        value: {
+          organisations: {
+            unlinked: []
+          }
+        }
       })
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/account'
+        url: '/account/linking'
       })
 
-      expect(result).toStrictEqual(expect.stringContaining('Account |'))
+      expect(result).toStrictEqual(
+        expect.stringContaining('Registration Linking |')
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
   })
@@ -67,55 +74,54 @@ describe('#accountController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    describe('when user is not authenticated', () => {
-      test('should provide expected response with correct status', async () => {
+    describe('when user has no organisations', () => {
+      test('should render page with empty organisation list', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-          found: false,
-          data: null
+          ok: true,
+          value: {
+            organisations: {
+              unlinked: []
+            }
+          }
         })
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: '/account'
+          url: '/account/linking'
         })
 
         const $ = load(result)
 
-        expect($('h1').text()).toBe('Sites')
         expect($('title').text().trim()).toStrictEqual(
-          expect.stringMatching(/^Account \|/)
+          expect.stringMatching(/^Registration Linking \|/)
         )
+        expect($('input[type="radio"]')).toHaveLength(0)
         expect(statusCode).toBe(statusCodes.ok)
-      })
-
-      test('should render page with login link and guest welcome', async () => {
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-          found: false,
-          data: null
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/'
-        })
-
-        const $ = load(result)
-
-        // Page structure
-        expect($('[data-testid="app-page-body"]')).toHaveLength(1)
-
-        // No authenticated welcome panel
-        expect($('.govuk-panel--confirmation').text()).not.toContain('Welcome,')
       })
     })
 
     describe('when user is authenticated', () => {
-      test('should render page with user welcome', async () => {
-        // Mock getUserSession to return authenticated user
+      test('should render linking page with organisation radio buttons', async () => {
         const mockUserSession = {
           displayName: 'John Doe',
           email: 'john.doe@example.com',
-          userId: 'user-123'
+          userId: 'user-123',
+          organisations: {
+            unlinked: [
+              {
+                id: 'org-1',
+                companyDetails: {
+                  tradingName: 'Test Company Ltd'
+                }
+              },
+              {
+                id: 'org-2',
+                companyDetails: {
+                  tradingName: 'Another Company Ltd'
+                }
+              }
+            ]
+          }
         }
 
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
@@ -125,29 +131,16 @@ describe('#accountController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: '/account'
+          url: '/account/linking'
         })
 
         const $ = load(result)
 
-        // Authenticated welcome panel should exist
-        const welcomePanel = $('.govuk-panel--confirmation')
-
-        expect(welcomePanel).toHaveLength(1)
-        expect(welcomePanel.text()).toContain('Welcome, John Doe')
-
-        // Logout link should exist
-        const logoutLink = $('a[href="/logout"]')
-
-        expect(logoutLink).toHaveLength(1)
-        expect(logoutLink.text()).toContain('Sign out')
-
-        expect($('.govuk-details__summary-text').text()).toContain(
-          'View your account details'
-        )
-
-        // eslint-disable-next-line vitest/max-expects
-        expect($('.govuk-summary-list')).toHaveLength(1)
+        expect($('h1').first().text()).toContain('Link')
+        expect($('input[type="radio"][name="organisationId"]')).toHaveLength(2)
+        expect($('label').text()).toContain('Test Company Ltd')
+        expect($('label').text()).toContain('Another Company Ltd')
+        expect($('button[type="submit"]').text()).toContain('Confirm')
       })
     })
   })
