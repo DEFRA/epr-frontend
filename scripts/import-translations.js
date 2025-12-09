@@ -1,4 +1,4 @@
-// eslint-disable-next-line n/no-unpublished-import
+/* eslint-disable no-console, n/no-process-exit, n/no-unpublished-import */
 import ExcelJS from 'exceljs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -34,9 +34,7 @@ function parseArgs(args) {
 async function importTranslations(inputFile) {
   const inputPath = join(__dirname, '..', inputFile)
 
-  /* eslint-disable no-console */
   console.log(`Reading ${inputFile}...`)
-
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.readFile(inputPath)
 
@@ -124,7 +122,6 @@ async function importTranslations(inputFile) {
   console.log(`Imported translations to ${updatedFiles} files`)
 }
 
-/* eslint-disable no-console, n/no-process-exit */
 /* v8 ignore next 9 */
 if (import.meta.url === `file://${process.argv[1]}`) {
   try {
@@ -135,6 +132,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1)
   }
 }
-/* eslint-enable no-console, n/no-process-exit */
 
 export { importTranslations, parseArgs }
