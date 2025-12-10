@@ -46,7 +46,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockReturnValue(vi.fn().mockResolvedValue(mockOrganisations))
+      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -135,7 +135,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockReturnValue(vi.fn().mockResolvedValue(mockOrganisations))
+      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -210,7 +210,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockReturnValue(vi.fn().mockResolvedValue(mockOrganisations))
+      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -283,7 +283,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockReturnValue(vi.fn().mockResolvedValue(mockOrganisations))
+      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -364,6 +364,66 @@ describe('#authCallbackController', () => {
     })
   })
 
+  describe('error handling', () => {
+    it('should throw error when fetching organisations fails', async () => {
+      const mockProfile = {
+        id: 'user-123',
+        email: 'test@example.com',
+        displayName: 'Test User'
+      }
+
+      const mockError = new Error('Backend returned 500: Internal Server Error')
+      mockError.status = 500
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockImplementation(() => vi.fn().mockRejectedValue(mockError))
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: 'mock-access-token',
+            refreshToken: 'mock-refresh-token',
+            expiresIn: 3600
+          }
+        },
+        server: {
+          app: {
+            cache: {
+              set: vi.fn().mockResolvedValue(undefined)
+            }
+          }
+        },
+        cookieAuth: {
+          set: vi.fn()
+        },
+        logger: {
+          info: vi.fn(),
+          error: vi.fn()
+        },
+        yar: {
+          flash: vi.fn().mockReturnValue(['/dashboard'])
+        }
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      await expect(controller.handler(mockRequest, mockH)).rejects.toThrow(
+        'Backend returned 500: Internal Server Error'
+      )
+
+      expect(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).toHaveBeenCalledExactlyOnceWith({ logger: mockRequest.logger })
+      expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
+      expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
+    })
+  })
+
   describe('organisation linking flow with new API structure', () => {
     it('should not redirect to /account/linking when organisation has linked organisation', async () => {
       const mockProfile = {
@@ -402,7 +462,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockReturnValue(vi.fn().mockResolvedValue(mockOrganisations))
+      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -480,7 +540,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockReturnValue(vi.fn().mockResolvedValue(mockOrganisations))
+      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -543,7 +603,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockReturnValue(vi.fn().mockResolvedValue(mockOrganisations))
+      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
 
       const mockRequest = {
         auth: {

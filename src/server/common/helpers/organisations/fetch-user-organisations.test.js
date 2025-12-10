@@ -121,6 +121,77 @@ describe('fetchUserOrganisations', () => {
       'Backend returned 404: Not Found'
     )
   })
+
+  describe('with logger', () => {
+    it('should log error and rethrow when backend returns error', async () => {
+      const mockLogger = {
+        error: vi.fn()
+      }
+
+      const mockError = new Error('Backend returned 500: Internal Server Error')
+      mockError.status = 500
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error'
+      })
+
+      const fetchOrgs = fetchUserOrganisations({ logger: mockLogger })
+
+      await expect(fetchOrgs(mockAccessToken)).rejects.toThrow(
+        'Backend returned 500: Internal Server Error'
+      )
+
+      expect(mockLogger.error).toHaveBeenCalledExactlyOnceWith(
+        { error: expect.objectContaining({ status: 500 }) },
+        'Failed to fetch user organisations during authentication'
+      )
+    })
+
+    it('should log error and rethrow when fetch throws', async () => {
+      const mockLogger = {
+        error: vi.fn()
+      }
+
+      const networkError = new Error('Network error')
+      vi.mocked(fetch).mockRejectedValue(networkError)
+
+      const fetchOrgs = fetchUserOrganisations({ logger: mockLogger })
+
+      await expect(fetchOrgs(mockAccessToken)).rejects.toThrow('Network error')
+
+      expect(mockLogger.error).toHaveBeenCalledExactlyOnceWith(
+        { error: networkError },
+        'Failed to fetch user organisations during authentication'
+      )
+    })
+
+    it('should not log when request is successful', async () => {
+      const mockLogger = {
+        error: vi.fn()
+      }
+
+      const mockOrganisations = {
+        organisations: {
+          linked: [],
+          unlinked: []
+        }
+      }
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: vi.fn().mockResolvedValue(mockOrganisations)
+      })
+
+      const fetchOrgs = fetchUserOrganisations({ logger: mockLogger })
+      await fetchOrgs(mockAccessToken)
+
+      expect(mockLogger.error).not.toHaveBeenCalled()
+    })
+  })
 })
 
 /**

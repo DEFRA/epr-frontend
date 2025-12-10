@@ -23,18 +23,10 @@ const controller = {
         profile
       })
 
-      // TODO move this to its own handler
-      try {
-        const organisationsData = await fetchUserOrganisations()(
-          session.idToken
-        )
-        session.organisations = organisationsData.organisations
-      } catch (error) {
-        request.logger.error(
-          { error },
-          'Failed to fetch user organisations during authentication'
-        )
-      }
+      const organisationsData = await fetchUserOrganisations({
+        logger: request.logger
+      })(session.idToken)
+      session.organisations = organisationsData.organisations
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
@@ -43,9 +35,7 @@ const controller = {
 
       request.logger.info('User has been successfully authenticated')
 
-      const hasLinkedOrganisation = session.organisations?.linked != null
-
-      if (!hasLinkedOrganisation) {
+      if (!session.organisations.linked) {
         return h.redirect('/account/linking')
       }
     }
