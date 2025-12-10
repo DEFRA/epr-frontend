@@ -1,7 +1,45 @@
+import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { buildSessionFromProfile } from '#server/auth/helpers/build-session.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
+
+/**
+ * @typedef {{
+ *   id: string
+ *   name: string
+ *   relationshipId: string
+ * }} DefraOrgSummary
+ */
+
+/**
+ * @typedef {{
+ *   id: string
+ *   name: string
+ *   tradingName?: string
+ *   companiesHouseNumber?: string
+ * }} EprOrganisationSummary
+ */
+
+/**
+ * @typedef {{
+ *   id: string
+ *   name: string
+ *   linkedBy: {
+ *     email: string
+ *     id: string
+ *   }
+ *   linkedAt: string
+ * }} LinkedDefraOrganisation
+ */
+
+/**
+ * @typedef {{
+ *   current: DefraOrgSummary
+ *   linked: LinkedDefraOrganisation | null
+ *   unlinked: EprOrganisationSummary[]
+ * }} UserOrganisations
+ */
 
 /**
  * Decorates session with user organisations
@@ -9,6 +47,7 @@ import { randomUUID } from 'node:crypto'
  * @returns {Promise<void>}
  */
 const decorateSessionWithOrganisations = async (session) => {
+  /** @type {{ organisations: UserOrganisations }} */
   const data = await fetchJsonFromBackend('/v1/me/organisations', {
     method: 'GET',
     headers: {
@@ -48,7 +87,7 @@ const controller = {
       request.logger.info('User has been successfully authenticated')
 
       if (!session.organisations.linked) {
-        return h.redirect('/account/linking')
+        return h.redirect(ACCOUNT_LINKING_PATH)
       }
     }
 

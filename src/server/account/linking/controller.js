@@ -1,6 +1,8 @@
 import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
 import { buildLinkingViewData } from './view-data.js'
 
+export const ACCOUNT_LINKING_PATH = '/account/linking'
+
 /**
  * @satisfies {Partial<ServerRoute>}
  */

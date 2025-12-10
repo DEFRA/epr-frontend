@@ -25,14 +25,13 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         organisations: {
           current: {
-            id: 'current-org-id',
-            name: 'Test Company',
-            tradingName: 'Test Trading Name',
-            companiesHouseNumber: '12345678'
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
+            relationshipId: 'rel-123'
           },
           linked: {
-            id: 'linked-org-id',
-            name: 'Linked Company',
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
             linkedBy: {
               email: 'user@example.com',
               id: 'user-123'
@@ -114,14 +113,13 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         organisations: {
           current: {
-            id: 'current-org-id',
-            name: 'Test Company',
-            tradingName: 'Test Trading Name',
-            companiesHouseNumber: '12345678'
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
+            relationshipId: 'rel-123'
           },
           linked: {
-            id: 'linked-org-id',
-            name: 'Linked Company',
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
             linkedBy: {
               email: 'user@example.com',
               id: 'user-123'
@@ -264,11 +262,11 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         organisations: {
           current: {
-            id: 'current-org-id',
-            name: 'Current Organisation',
-            tradingName: 'Current Trading Name',
-            companiesHouseNumber: '12345678'
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
+            relationshipId: 'rel-123'
           },
+          linked: null,
           unlinked: [
             {
               id: 'org-1',
@@ -443,13 +441,12 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         organisations: {
           current: {
-            id: 'current-org-id',
-            name: 'Gaskells Waste Services',
-            tradingName: 'Gaskells Trading',
-            companiesHouseNumber: '12345678'
+            id: 'defra-org-uuid',
+            name: 'Defra Registered Company Ltd',
+            relationshipId: 'rel-123'
           },
           linked: {
-            id: 'linked-org-id',
+            id: 'defra-org-uuid',
             name: 'Defra Registered Company Ltd',
             linkedBy: {
               email: 'admin@example.com',
@@ -521,26 +518,23 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         organisations: {
           current: {
-            id: 'current-org-id',
-            companyDetails: {
-              name: 'Gaskells Waste Services',
-              number: '12345678'
-            }
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
+            relationshipId: 'rel-123'
           },
+          linked: null,
           unlinked: [
             {
               id: 'unlinked-org-1',
-              companyDetails: {
-                name: 'Unlinked Organisation 1',
-                number: '11111111'
-              }
+              name: 'Unlinked Organisation 1',
+              tradingName: 'Unlinked Trading 1',
+              companiesHouseNumber: '11111111'
             },
             {
               id: 'unlinked-org-2',
-              companyDetails: {
-                name: 'Unlinked Organisation 2',
-                number: '22222222'
-              }
+              name: 'Unlinked Organisation 2',
+              tradingName: 'Unlinked Trading 2',
+              companiesHouseNumber: '22222222'
             }
           ]
         }
@@ -599,12 +593,11 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         organisations: {
           current: {
-            id: 'current-org-id',
-            companyDetails: {
-              name: 'Gaskells Waste Services',
-              number: '12345678'
-            }
+            id: 'defra-org-uuid',
+            name: 'Test Defra Organisation',
+            relationshipId: 'rel-123'
           },
+          linked: null,
           unlinked: []
         }
       }
