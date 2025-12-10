@@ -161,7 +161,7 @@ describe('i18next-dynamic-keys-plugin', () => {
 
       expect(() => {
         plugin.extractKeysFromExpression(expression, {}, mockLogger)
-      }).toThrow(/ENOENT/)
+      }).toThrowError(/ENOENT/)
     })
 
     it('should throw error for malformed JSON', () => {
@@ -178,7 +178,7 @@ describe('i18next-dynamic-keys-plugin', () => {
 
       expect(() => {
         plugin.extractKeysFromExpression(expression, {}, mockLogger)
-      }).toThrow(/Expected property name/)
+      }).toThrowError(/Expected property name/)
     })
 
     it('should handle missing parent object gracefully', () => {

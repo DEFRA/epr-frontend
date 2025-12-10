@@ -575,7 +575,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with data entry failures - should show single deduplicated message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [
             { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
@@ -604,7 +604,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with mixed failures - should show data entry message and other failures', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [
             { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
