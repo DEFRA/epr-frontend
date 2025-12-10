@@ -29,12 +29,18 @@ describe('account linking POST controller', () => {
       const mockAuthedUser = {
         displayName: 'Test User',
         organisations: {
+          current: {
+            id: 'defra-org-123',
+            name: 'My Defra Organisation',
+            relationshipId: 'rel-456'
+          },
+          linked: null,
           unlinked: [
             {
               id: 'org-1',
-              companyDetails: {
-                tradingName: 'Test Company'
-              }
+              name: 'Test Company Ltd',
+              tradingName: 'Test Company',
+              companiesHouseNumber: '12345678'
             }
           ]
         }
@@ -75,16 +81,13 @@ describe('account linking POST controller', () => {
 
       expect(mockH.view).toHaveBeenCalledWith('account/linking/index', {
         pageTitle: 'Link Organisation',
-        session: mockAuthedUser,
         unlinked: [
           {
             id: 'org-1',
-            companyDetails: {
-              tradingName: 'Test Company'
-            }
+            name: 'Test Company Ltd (ID: 12345678)'
           }
         ],
-        organisationName: '[PLACEHOLDER] Gaskells Waste Services',
+        organisationName: 'My Defra Organisation',
         errors: {
           organisationId: {
             text: 'Select an organisation to link'

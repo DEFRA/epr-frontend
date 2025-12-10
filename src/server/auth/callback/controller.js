@@ -5,43 +5,6 @@ import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
 
 /**
- * @typedef {{
- *   id: string
- *   name: string
- *   relationshipId: string
- * }} DefraOrgSummary
- */
-
-/**
- * @typedef {{
- *   id: string
- *   name: string
- *   tradingName?: string
- *   companiesHouseNumber?: string
- * }} EprOrganisationSummary
- */
-
-/**
- * @typedef {{
- *   id: string
- *   name: string
- *   linkedBy: {
- *     email: string
- *     id: string
- *   }
- *   linkedAt: string
- * }} LinkedDefraOrganisation
- */
-
-/**
- * @typedef {{
- *   current: DefraOrgSummary
- *   linked: LinkedDefraOrganisation | null
- *   unlinked: EprOrganisationSummary[]
- * }} UserOrganisations
- */
-
-/**
  * Decorates session with user organisations
  * @param {UserSession} session
  * @returns {Promise<void>}
@@ -103,4 +66,5 @@ export { controller }
 /**
  * @import { ServerRoute } from '@hapi/hapi'
  * @import { UserProfile, UserSession } from '../types/session.js'
+ * @import { UserOrganisations } from '../types/organisations.js'
  */

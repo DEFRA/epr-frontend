@@ -25,11 +25,10 @@
             {% for org in unlinked %}
               {% set radioItems = (radioItems.push({
                 value: org.id,
-                text: org.companyDetails.tradingName
+                text: org.name
               }), radioItems) %}
             {% endfor %}
 
-            {# FIXME use a proper service name - what is this? #}
             {# TODO order alphabetically as per design system guidance #}
             {{ govukRadios({
               name: "organisationId",

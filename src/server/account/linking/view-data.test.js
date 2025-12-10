@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildLinkingViewData } from './view-data.js'
 
 describe(buildLinkingViewData, () => {
-  it('should build view data with organisations', () => {
+  it('should build view data with current organisation and unlinked organisations', () => {
     const mockRequest = {
       t: vi.fn((key) => `translated:${key}`)
     }
@@ -10,18 +10,24 @@ describe(buildLinkingViewData, () => {
     const mockAuthedUser = {
       displayName: 'Test User',
       organisations: {
+        current: {
+          id: 'defra-org-123',
+          name: 'Test Defra Organisation',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
         unlinked: [
           {
             id: 'org-1',
-            companyDetails: {
-              tradingName: 'Company One'
-            }
+            name: 'Company One Ltd',
+            tradingName: 'Company One',
+            companiesHouseNumber: '12345678'
           },
           {
             id: 'org-2',
-            companyDetails: {
-              tradingName: 'Company Two'
-            }
+            name: 'Company Two Ltd',
+            tradingName: 'Company Two',
+            companiesHouseNumber: '87654321'
           }
         ]
       }
@@ -31,66 +37,89 @@ describe(buildLinkingViewData, () => {
 
     expect(result).toStrictEqual({
       pageTitle: 'translated:account:linking:pageTitle',
-      session: mockAuthedUser,
       unlinked: [
         {
           id: 'org-1',
-          companyDetails: {
-            tradingName: 'Company One'
-          }
+          name: 'Company One Ltd (ID: 12345678)'
         },
         {
           id: 'org-2',
-          companyDetails: {
-            tradingName: 'Company Two'
-          }
+          name: 'Company Two Ltd (ID: 87654321)'
         }
       ],
-      organisationName: '[PLACEHOLDER] Gaskells Waste Services'
+      organisationName: 'Test Defra Organisation'
     })
   })
 
-  it('should handle null authedUser', () => {
-    const mockRequest = {
-      t: vi.fn((key) => `translated:${key}`)
-    }
-
-    const result = buildLinkingViewData(mockRequest, null)
-
-    expect(result).toStrictEqual({
-      pageTitle: 'translated:account:linking:pageTitle',
-      session: null,
-      unlinked: [],
-      organisationName: '[PLACEHOLDER] Gaskells Waste Services'
-    })
-  })
-
-  it('should handle authedUser with no organisations', () => {
-    const mockRequest = {
-      t: vi.fn((key) => `translated:${key}`)
-    }
-
-    const mockAuthedUser = {
-      displayName: 'Test User'
-    }
-
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
-
-    expect(result).toStrictEqual({
-      pageTitle: 'translated:account:linking:pageTitle',
-      session: mockAuthedUser,
-      unlinked: [],
-      organisationName: '[PLACEHOLDER] Gaskells Waste Services'
-    })
-  })
-
-  it('should include errors when provided', () => {
+  it('should format unlinked organisations with companies house numbers in name', () => {
     const mockRequest = {
       t: vi.fn((key) => `translated:${key}`)
     }
 
     const mockAuthedUser = {
       organisations: {
+        current: {
+          id: 'defra-org-123',
+          name: 'Current Org',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
+        unlinked: [
+          {
+            id: 'org-1',
+            name: 'Waste Services Ltd',
+            companiesHouseNumber: 'WS123456'
+          }
+        ]
+      }
+    }
+
+    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+
+    expect(result.unlinked).toStrictEqual([
+      {
+        id: 'org-1',
+        name: 'Waste Services Ltd (ID: WS123456)'
+      }
+    ])
+  })
+
+  it('should handle empty unlinked organisations list', () => {
+    const mockRequest = {
+      t: vi.fn((key) => `translated:${key}`)
+    }
+
+    const mockAuthedUser = {
+      organisations: {
+        current: {
+          id: 'defra-org-123',
+          name: 'Test Organisation',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
+        unlinked: []
+      }
+    }
+
+    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+
+    expect(result.unlinked).toStrictEqual([])
+    expect(result.organisationName).toBe('Test Organisation')
+  })
+
+  it('should include errors and error summary when provided', () => {
+    const mockRequest = {
+      t: vi.fn((key) => `translated:${key}`)
+    }
+
+    const mockAuthedUser = {
+      organisations: {
+        current: {
+          id: 'defra-org-123',
+          name: 'Test Organisation',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
         unlinked: []
       }
     }
@@ -134,6 +163,12 @@ describe(buildLinkingViewData, () => {
 
     const mockAuthedUser = {
       organisations: {
+        current: {
+          id: 'defra-org-123',
+          name: 'Test Organisation',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
         unlinked: []
       }
     }
@@ -142,5 +177,68 @@ describe(buildLinkingViewData, () => {
 
     expect(result.errors).toBeUndefined()
     expect(result.errorSummary).toBeUndefined()
+  })
+
+  it('should use current organisation name from Defra ID token', () => {
+    const mockRequest = {
+      t: vi.fn((key) => `translated:${key}`)
+    }
+
+    const mockAuthedUser = {
+      organisations: {
+        current: {
+          id: 'defra-org-uuid',
+          name: 'My Defra Organisation Name',
+          relationshipId: 'rel-123'
+        },
+        linked: null,
+        unlinked: []
+      }
+    }
+
+    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+
+    expect(result.organisationName).toBe('My Defra Organisation Name')
+  })
+
+  it('should handle multiple unlinked organisations with different data', () => {
+    const mockRequest = {
+      t: vi.fn((key) => `translated:${key}`)
+    }
+
+    const mockAuthedUser = {
+      organisations: {
+        current: {
+          id: 'defra-org-123',
+          name: 'Current Org',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
+        unlinked: [
+          {
+            id: 'org-1',
+            name: 'First Company',
+            companiesHouseNumber: 'FC111111'
+          },
+          {
+            id: 'org-2',
+            name: 'Second Company',
+            companiesHouseNumber: 'SC222222'
+          },
+          {
+            id: 'org-3',
+            name: 'Third Company',
+            companiesHouseNumber: 'TC333333'
+          }
+        ]
+      }
+    }
+
+    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+
+    expect(result.unlinked).toHaveLength(3)
+    expect(result.unlinked[0].name).toBe('First Company (ID: FC111111)')
+    expect(result.unlinked[1].name).toBe('Second Company (ID: SC222222)')
+    expect(result.unlinked[2].name).toBe('Third Company (ID: TC333333)')
   })
 })
