@@ -38,6 +38,7 @@ export const validationFailureCodes = Object.freeze({
   VALUE_OUT_OF_RANGE: 'VALUE_OUT_OF_RANGE',
   INVALID_FORMAT: 'INVALID_FORMAT',
   INVALID_DATE: 'INVALID_DATE',
+  CALCULATED_VALUE_MISMATCH: 'CALCULATED_VALUE_MISMATCH',
   ROW_ID_MISMATCH: 'ROW_ID_MISMATCH',
   SEQUENTIAL_ROW_REMOVED: 'SEQUENTIAL_ROW_REMOVED',
   TABLE_UNRECOGNISED: 'TABLE_UNRECOGNISED',
@@ -56,7 +57,8 @@ export const DATA_ENTRY_CODES = new Set([
   validationFailureCodes.INVALID_TYPE,
   validationFailureCodes.VALUE_OUT_OF_RANGE,
   validationFailureCodes.INVALID_FORMAT,
-  validationFailureCodes.INVALID_DATE
+  validationFailureCodes.INVALID_DATE,
+  validationFailureCodes.CALCULATED_VALUE_MISMATCH
 ])
 
 /**

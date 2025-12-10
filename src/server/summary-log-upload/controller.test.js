@@ -7,7 +7,8 @@ vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
   () => ({
     initiateSummaryLogUpload: vi.fn().mockResolvedValue({
-      uploadUrl: 'http://cdp/upload'
+      uploadUrl: 'http://cdp/upload',
+      uploadId: 'cdp-upload-123'
     })
   })
 )

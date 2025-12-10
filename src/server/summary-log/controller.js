@@ -1,6 +1,6 @@
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { backendSummaryLogStatuses } from '#server/common/constants/statuses.js'
+import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import {
   validationFailureCodes,
@@ -9,14 +9,15 @@ import {
 } from '#server/common/constants/validation-codes.js'
 
 const PROCESSING_STATES = new Set([
-  backendSummaryLogStatuses.preprocessing,
-  backendSummaryLogStatuses.validating,
-  backendSummaryLogStatuses.submitting
+  summaryLogStatuses.preprocessing,
+  summaryLogStatuses.validating,
+  summaryLogStatuses.submitting
 ])
 
 const REUPLOAD_STATES = new Set([
-  backendSummaryLogStatuses.invalid,
-  backendSummaryLogStatuses.rejected
+  summaryLogStatuses.invalid,
+  summaryLogStatuses.rejected,
+  summaryLogStatuses.validationFailed
 ])
 
 const VIEW_NAME = 'summary-log/progress'
@@ -96,11 +97,13 @@ const getStatusData = async (
 ) => {
   // Check session for fresh data first (prevents race condition after POST submit)
   const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
-  const freshData = summaryLogsSession.freshData
+  const { freshData, uploadId } = summaryLogsSession
 
   const data =
     freshData ??
-    (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId))
+    (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
+      uploadId
+    }))
 
   if (freshData) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -269,11 +272,12 @@ const renderProgressView = (h, localise, { status, pollUrl }) => {
  * View resolver mapping - maps backend statuses to their render functions
  */
 const viewResolvers = {
-  [backendSummaryLogStatuses.validated]: renderCheckView,
-  [backendSummaryLogStatuses.submitting]: renderSubmittingView,
-  [backendSummaryLogStatuses.submitted]: renderSuccessView,
-  [backendSummaryLogStatuses.invalid]: renderValidationFailuresView,
-  [backendSummaryLogStatuses.rejected]: renderValidationFailuresView
+  [summaryLogStatuses.validated]: renderCheckView,
+  [summaryLogStatuses.submitting]: renderSubmittingView,
+  [summaryLogStatuses.submitted]: renderSuccessView,
+  [summaryLogStatuses.invalid]: renderValidationFailuresView,
+  [summaryLogStatuses.rejected]: renderValidationFailuresView,
+  [summaryLogStatuses.validationFailed]: renderValidationFailuresView
 }
 
 /**

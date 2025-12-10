@@ -2,12 +2,11 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 
 /**
  * Initiates a summary log upload via the backend.
- * The frontend only uses uploadUrl from the response.
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {string} options.redirectUrl
- * @returns {Promise<{uploadUrl: string}>}
+ * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
  */
 async function initiateSummaryLogUpload({
   organisationId,
