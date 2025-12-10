@@ -10,8 +10,8 @@
  * @typedef {{
  *   id: string
  *   name: string
+ *   orgId: string
  *   tradingName?: string
- *   companiesHouseNumber?: string
  * }} EprOrganisationSummary
  */
 

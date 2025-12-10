@@ -15,13 +15,11 @@ export function buildLinkingViewData(request, authedUser, options = {}) {
   // TODO assert this value and throw if not set
   const { organisations } = authedUser
 
-  // TODO is this the companies house number or something else?
-  // FIXME is this an optional field in the data? do we need a fallback or to omit it?
   const unlinked = organisations.unlinked
     .toSorted((a, b) => a.name.localeCompare(b.name))
     .map((o) => ({
       id: o.id,
-      name: `${o.name} (ID: ${o.companiesHouseNumber})`
+      name: `${o.name} (ID: ${o.orgId})`
     }))
 
   const viewData = {

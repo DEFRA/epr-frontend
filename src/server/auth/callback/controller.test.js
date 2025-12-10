@@ -186,20 +186,20 @@ describe('#authCallbackController', () => {
             id: 'current-org-id',
             name: 'Current Organisation',
             tradingName: 'Current Trading Name',
-            companiesHouseNumber: '12345678'
+            orgId: '12345678'
           },
           unlinked: [
             {
               id: 'org-1',
               name: 'Test Company',
               tradingName: 'Test Trading',
-              companiesHouseNumber: '11111111'
+              orgId: '11111111'
             },
             {
               id: 'org-2',
               name: 'Another Company',
               tradingName: 'Another Trading',
-              companiesHouseNumber: '22222222'
+              orgId: '22222222'
             }
           ]
         }
@@ -272,7 +272,7 @@ describe('#authCallbackController', () => {
               id: 'org-1',
               name: 'Test Company',
               tradingName: 'Test Trading',
-              companiesHouseNumber: '11111111'
+              orgId: '11111111'
             }
           ]
         }
@@ -459,7 +459,7 @@ describe('#authCallbackController', () => {
               id: 'unlinked-org-1',
               name: 'Unlinked Organisation 1',
               tradingName: 'Unlinked Trading 1',
-              companiesHouseNumber: '11111111'
+              orgId: '11111111'
             }
           ]
         }
@@ -528,13 +528,13 @@ describe('#authCallbackController', () => {
               id: 'unlinked-org-1',
               name: 'Unlinked Organisation 1',
               tradingName: 'Unlinked Trading 1',
-              companiesHouseNumber: '11111111'
+              orgId: '11111111'
             },
             {
               id: 'unlinked-org-2',
               name: 'Unlinked Organisation 2',
               tradingName: 'Unlinked Trading 2',
-              companiesHouseNumber: '22222222'
+              orgId: '22222222'
             }
           ]
         }

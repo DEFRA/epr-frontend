@@ -129,14 +129,14 @@ describe('#accountLinkingController', () => {
               {
                 id: 'org-1',
                 name: 'Test Company Ltd',
-                tradingName: 'Test Company',
-                companiesHouseNumber: '12345678'
+                orgId: '12345678',
+                tradingName: 'Test Company'
               },
               {
                 id: 'org-2',
                 name: 'Another Company Ltd',
-                tradingName: 'Another Company',
-                companiesHouseNumber: '87654321'
+                orgId: '87654321',
+                tradingName: 'Another Company'
               }
             ]
           }
@@ -176,7 +176,7 @@ describe('#accountLinkingController', () => {
               {
                 id: 'org-1',
                 name: 'Test Company Ltd',
-                companiesHouseNumber: '12345678'
+                orgId: '12345678'
               }
             ]
           }
@@ -215,17 +215,17 @@ describe('#accountLinkingController', () => {
               {
                 id: 'org-1',
                 name: 'First Company',
-                companiesHouseNumber: 'FC111111'
+                orgId: 'FC111111'
               },
               {
                 id: 'org-2',
                 name: 'Second Company',
-                companiesHouseNumber: 'SC222222'
+                orgId: 'SC222222'
               },
               {
                 id: 'org-3',
                 name: 'Third Company',
-                companiesHouseNumber: 'TC333333'
+                orgId: 'TC333333'
               }
             ]
           }

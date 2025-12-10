@@ -21,13 +21,13 @@ describe(buildLinkingViewData, () => {
             id: 'org-1',
             name: 'Company One Ltd',
             tradingName: 'Company One',
-            companiesHouseNumber: '12345678'
+            orgId: '12345678'
           },
           {
             id: 'org-2',
             name: 'Company Two Ltd',
             tradingName: 'Company Two',
-            companiesHouseNumber: '87654321'
+            orgId: '87654321'
           }
         ]
       }
@@ -68,7 +68,7 @@ describe(buildLinkingViewData, () => {
           {
             id: 'org-1',
             name: 'Waste Services Ltd',
-            companiesHouseNumber: 'WS123456'
+            orgId: 'WS123456'
           }
         ]
       }
@@ -218,17 +218,17 @@ describe(buildLinkingViewData, () => {
           {
             id: 'org-1',
             name: 'First Company',
-            companiesHouseNumber: 'FC111111'
+            orgId: 'FC111111'
           },
           {
             id: 'org-2',
             name: 'Second Company',
-            companiesHouseNumber: 'SC222222'
+            orgId: 'SC222222'
           },
           {
             id: 'org-3',
             name: 'Third Company',
-            companiesHouseNumber: 'TC333333'
+            orgId: 'TC333333'
           }
         ]
       }
@@ -259,17 +259,17 @@ describe(buildLinkingViewData, () => {
           {
             id: 'org-1',
             name: 'Zebra Waste Ltd',
-            companiesHouseNumber: 'ZW111111'
+            orgId: 'ZW111111'
           },
           {
             id: 'org-2',
             name: 'Alpha Recycling Ltd',
-            companiesHouseNumber: 'AR222222'
+            orgId: 'AR222222'
           },
           {
             id: 'org-3',
             name: 'Mike Services Ltd',
-            companiesHouseNumber: 'MS333333'
+            orgId: 'MS333333'
           }
         ]
       }
