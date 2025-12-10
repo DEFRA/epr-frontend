@@ -39,7 +39,6 @@ describe('account linking POST controller', () => {
             {
               id: 'org-1',
               name: 'Test Company Ltd',
-              tradingName: 'Test Company',
               orgId: '12345678'
             }
           ]

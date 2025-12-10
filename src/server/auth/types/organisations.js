@@ -11,7 +11,6 @@
  *   id: string
  *   name: string
  *   orgId: string
- *   tradingName?: string
  * }} EprOrganisationSummary
  */
 

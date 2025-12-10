@@ -20,13 +20,11 @@ describe(buildLinkingViewData, () => {
           {
             id: 'org-1',
             name: 'Company One Ltd',
-            tradingName: 'Company One',
             orgId: '12345678'
           },
           {
             id: 'org-2',
             name: 'Company Two Ltd',
-            tradingName: 'Company Two',
             orgId: '87654321'
           }
         ]

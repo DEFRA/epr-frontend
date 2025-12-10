@@ -129,14 +129,12 @@ describe('#accountLinkingController', () => {
               {
                 id: 'org-1',
                 name: 'Test Company Ltd',
-                orgId: '12345678',
-                tradingName: 'Test Company'
+                orgId: '12345678'
               },
               {
                 id: 'org-2',
                 name: 'Another Company Ltd',
-                orgId: '87654321',
-                tradingName: 'Another Company'
+                orgId: '87654321'
               }
             ]
           }
