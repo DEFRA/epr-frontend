@@ -43,9 +43,9 @@ const controller = {
 
       request.logger.info('User has been successfully authenticated')
 
-      // redirect to linking if they need it..
-      // FIXME more detailed logic here please!
-      if (session.organisations?.unlinked?.length === 1) {
+      const hasLinkedOrganisation = session.organisations?.linked != null
+
+      if (!hasLinkedOrganisation) {
         return h.redirect('/account/linking')
       }
     }

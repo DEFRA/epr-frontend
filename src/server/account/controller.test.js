@@ -4,7 +4,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -22,7 +22,7 @@ describe('#accountController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('should provide expected response with correct status', async () => {
+    it('should provide expected response with correct status', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
       })
@@ -68,7 +68,7 @@ describe('#accountController', () => {
     })
 
     describe('when user is not authenticated', () => {
-      test('should provide expected response with correct status', async () => {
+      it('should provide expected response with correct status', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           found: false,
           data: null
@@ -88,7 +88,7 @@ describe('#accountController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      test('should render page with login link and guest welcome', async () => {
+      it('should render page with login link and guest welcome', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           found: false,
           data: null
@@ -110,7 +110,7 @@ describe('#accountController', () => {
     })
 
     describe('when user is authenticated', () => {
-      test('should render page with user welcome', async () => {
+      it('should render page with user welcome', async () => {
         // Mock getUserSession to return authenticated user
         const mockUserSession = {
           displayName: 'John Doe',
@@ -148,6 +148,133 @@ describe('#accountController', () => {
 
         // eslint-disable-next-line vitest/max-expects
         expect($('.govuk-summary-list')).toHaveLength(1)
+      })
+    })
+
+    describe('linking', () => {
+      it('should not redirect to /account/linking when organisation has linked organisation', async () => {
+        const mockUserSession = {
+          displayName: 'John Doe',
+          email: 'john.doe@example.com',
+          userId: 'user-123',
+          organisations: {
+            current: {
+              id: 'current-org-id',
+              name: 'Gaskells Waste Services',
+              tradingName: 'Gaskells Trading',
+              companiesHouseNumber: '12345678'
+            },
+            linked: {
+              id: 'linked-org-id',
+              name: 'Defra Registered Company Ltd',
+              linkedBy: {
+                email: 'admin@example.com',
+                id: 'admin-user-123'
+              },
+              linkedAt: '2025-12-09T10:30:00.000Z'
+            },
+            unlinked: [
+              {
+                id: 'unlinked-org-1',
+                name: 'Unlinked Org 1',
+                tradingName: 'Unlinked Trading 1',
+                companiesHouseNumber: '11111111'
+              }
+            ]
+          }
+        }
+
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          ok: true,
+          value: mockUserSession
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/account'
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('should not redirect to /account/linking when current organisation has no linked organisation but multiple unlinked', async () => {
+        const mockUserSession = {
+          displayName: 'John Doe',
+          email: 'john.doe@example.com',
+          userId: 'user-123',
+          organisations: {
+            current: {
+              id: 'current-org-id',
+              name: 'Gaskells Waste Services',
+              tradingName: 'Gaskells Trading',
+              companiesHouseNumber: '12345678'
+            },
+            unlinked: [
+              {
+                id: 'unlinked-org-1',
+                name: 'Unlinked Org 1',
+                tradingName: 'Unlinked Trading 1',
+                companiesHouseNumber: '11111111'
+              },
+              {
+                id: 'unlinked-org-2',
+                name: 'Unlinked Org 2',
+                tradingName: 'Unlinked Trading 2',
+                companiesHouseNumber: '22222222'
+              }
+            ]
+          }
+        }
+
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          ok: true,
+          value: mockUserSession
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/account'
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('should not redirect to /account/linking when no unlinked organisations', async () => {
+        const mockUserSession = {
+          displayName: 'John Doe',
+          email: 'john.doe@example.com',
+          userId: 'user-123',
+          organisations: {
+            current: {
+              id: 'current-org-id',
+              name: 'Gaskells Waste Services',
+              tradingName: 'Gaskells Trading',
+              companiesHouseNumber: '12345678'
+            },
+            linked: {
+              id: 'linked-org-id',
+              name: 'Defra Registered Company Ltd',
+              linkedBy: {
+                email: 'admin@example.com',
+                id: 'admin-user-123'
+              },
+              linkedAt: '2025-12-09T10:30:00.000Z'
+            },
+            unlinked: []
+          }
+        }
+
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          ok: true,
+          value: mockUserSession
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/account'
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
       })
     })
   })
