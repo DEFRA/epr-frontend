@@ -1,7 +1,22 @@
 import { buildSessionFromProfile } from '#server/auth/helpers/build-session.js'
-import { fetchUserOrganisations } from '#server/common/helpers/organisations/fetch-user-organisations.js'
+import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
+
+/**
+ * Decorates session with user organisations
+ * @param {UserSession} session
+ * @returns {Promise<void>}
+ */
+const decorateSessionWithOrganisations = async (session) => {
+  const data = await fetchJsonFromBackend('/v1/me/organisations', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${session.idToken}`
+    }
+  })
+  session.organisations = data.organisations
+}
 
 /**
  * Auth callback controller
@@ -23,10 +38,7 @@ const controller = {
         profile
       })
 
-      const organisationsData = await fetchUserOrganisations({
-        logger: request.logger
-      })(session.idToken)
-      session.organisations = organisationsData.organisations
+      await decorateSessionWithOrganisations(session)
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)

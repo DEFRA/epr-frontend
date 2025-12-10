@@ -1,14 +1,13 @@
+import Boom from '@hapi/boom'
 import { controller } from '#server/auth/callback/controller.js'
-import * as fetchUserOrganisationsModule from '#server/common/helpers/organisations/fetch-user-organisations.js'
+import * as fetchJsonFromBackendModule from '#server/common/helpers/fetch-json-from-backend.js'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('node:crypto'), () => ({
   randomUUID: vi.fn(() => 'mock-uuid-1234')
 }))
 
-vi.mock(
-  import('#server/common/helpers/organisations/fetch-user-organisations.js')
-)
+vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'))
 
 describe('#authCallbackController', () => {
   describe('when user is authenticated', () => {
@@ -45,8 +44,8 @@ describe('#authCallbackController', () => {
       }
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         auth: {
@@ -134,8 +133,8 @@ describe('#authCallbackController', () => {
       }
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         auth: {
@@ -209,8 +208,8 @@ describe('#authCallbackController', () => {
       }
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         auth: {
@@ -282,8 +281,8 @@ describe('#authCallbackController', () => {
       }
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         auth: {
@@ -365,19 +364,18 @@ describe('#authCallbackController', () => {
   })
 
   describe('error handling', () => {
-    it('should throw error when fetching organisations fails', async () => {
+    it('should throw Boom error when fetching organisations fails', async () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
         displayName: 'Test User'
       }
 
-      const mockError = new Error('Backend returned 500: Internal Server Error')
-      mockError.status = 500
+      const boomError = Boom.badImplementation('Internal Server Error')
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockRejectedValue(mockError))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockRejectedValue(boomError)
 
       const mockRequest = {
         auth: {
@@ -412,13 +410,23 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      await expect(controller.handler(mockRequest, mockH)).rejects.toThrow(
-        'Backend returned 500: Internal Server Error'
-      )
+      await expect(
+        controller.handler(mockRequest, mockH)
+      ).rejects.toMatchObject({
+        isBoom: true,
+        output: {
+          statusCode: 500
+        }
+      })
 
       expect(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith({ logger: mockRequest.logger })
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).toHaveBeenCalledExactlyOnceWith('/v1/me/organisations', {
+        method: 'GET',
+        headers: {
+          Authorization: expect.stringContaining('Bearer')
+        }
+      })
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
     })
@@ -461,8 +469,8 @@ describe('#authCallbackController', () => {
       }
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         auth: {
@@ -539,8 +547,8 @@ describe('#authCallbackController', () => {
       }
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         auth: {
@@ -602,8 +610,8 @@ describe('#authCallbackController', () => {
       }
 
       vi.mocked(
-        fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockImplementation(() => vi.fn().mockResolvedValue(mockOrganisations))
+        fetchJsonFromBackendModule.fetchJsonFromBackend
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         auth: {
