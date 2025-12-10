@@ -1,18 +1,31 @@
 import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
 import { buildLoadsViewModel } from './controller.js'
 
+const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
+
 vi.mock(
   import('#server/common/helpers/upload/fetch-summary-log-status.js'),
   () => ({
     fetchSummaryLogStatus: vi.fn().mockResolvedValue({
       status: 'preprocessing'
+    })
+  })
+)
+
+vi.mock(
+  import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
+  () => ({
+    initiateSummaryLogUpload: vi.fn().mockResolvedValue({
+      uploadUrl: 'https://storage.example.com/upload?signature=abc123'
     })
   })
 )
@@ -421,7 +434,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.rejected,
         validation: {
-          failures: [{ code: 'FILE_VIRUS_DETECTED' }]
+          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
         }
       })
 
@@ -433,6 +446,24 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain('contains a virus and cannot be uploaded')
+    })
+
+    test('status: rejected - should initiate upload with pre-signed URL', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.rejected,
+        validation: {
+          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
+        }
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain(`action="${mockUploadUrl}"`)
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+      })
     })
 
     test('status: rejected without validation - should show validation failures page with generic error', async () => {
@@ -454,7 +485,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
       })
 
@@ -469,11 +500,11 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: invalid with validation failures - should show re-upload form and cancel button with correct URLs', async () => {
+    test('status: invalid with validation failures - should show re-upload form and cancel button', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: backendSummaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'REGISTRATION_MISMATCH' }]
+          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
       })
 
@@ -483,11 +514,26 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Continue')
       expect(result).toContain('Cancel and return to dashboard')
       expect(result).toContain(
-        `action="/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload"`
-      )
-      expect(result).toContain(
         `href="/organisations/${organisationId}/registrations/${registrationId}"`
       )
+    })
+
+    test('status: invalid - should initiate upload with pre-signed URL', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+        }
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain(`action="${mockUploadUrl}"`)
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+      })
     })
 
     test('status: invalid with multiple validation failures - should show all failures', async () => {
@@ -495,8 +541,8 @@ describe('#summaryLogUploadProgressController', () => {
         status: backendSummaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: 'SEQUENTIAL_ROW_REMOVED' },
-            { code: 'HEADER_REQUIRED' }
+            { code: validationFailureCodes.SEQUENTIAL_ROW_REMOVED },
+            { code: validationFailureCodes.HEADER_REQUIRED }
           ]
         }
       })
@@ -524,6 +570,57 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain('An unexpected validation error occurred')
       expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: invalid with data entry failures - should show single deduplicated message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
+            { code: validationFailureCodes.INVALID_TYPE },
+            { code: validationFailureCodes.VALUE_OUT_OF_RANGE }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Your summary log cannot be uploaded')
+      // All data entry codes should map to single DATA_ENTRY_INVALID message
+      expect(result).toContain(
+        'The selected file contains data that&#39;s been entered incorrectly'
+      )
+
+      // Should only appear once (deduplicated)
+      const matches = result.match(
+        /The selected file contains data that&#39;s been entered incorrectly/g
+      )
+
+      expect(matches).toHaveLength(1)
+    })
+
+    test('status: invalid with mixed failures - should show data entry message and other failures', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: backendSummaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
+            { code: validationFailureCodes.REGISTRATION_MISMATCH },
+            { code: validationFailureCodes.INVALID_TYPE }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      // Should show both the data entry message and the registration mismatch
+      expect(result).toContain(
+        'The selected file contains data that&#39;s been entered incorrectly'
+      )
+      expect(result).toContain('Registration number is incorrect')
     })
 
     test('status: invalid with empty validation failures - should show generic validation error', async () => {
