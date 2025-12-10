@@ -2,6 +2,11 @@ import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summa
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
+import {
+  validationFailureCodes,
+  DATA_ENTRY_CODES,
+  DATA_ENTRY_DISPLAY_CODE
+} from '#server/common/constants/validation-codes.js'
 
 const PROCESSING_STATES = new Set([
   summaryLogStatuses.preprocessing,
@@ -202,15 +207,25 @@ const renderValidationFailuresView = (
 ) => {
   const failures = validation?.failures ?? []
 
-  const fallbackMessage = localise('summary-log:failure.UNKNOWN')
+  const fallbackMessage = localise(
+    `summary-log:failure.${validationFailureCodes.UNKNOWN}`
+  )
 
+  // Data entry codes are grouped into a single user-friendly message
   const issues =
     failures.length > 0
-      ? failures.map(({ code }) =>
-          localise(`summary-log:failure.${code}`, {
-            defaultValue: fallbackMessage
-          })
-        )
+      ? [
+          ...new Set(
+            failures.map(({ code }) => {
+              const displayCode = DATA_ENTRY_CODES.has(code)
+                ? DATA_ENTRY_DISPLAY_CODE
+                : code
+              return localise(`summary-log:failure.${displayCode}`, {
+                defaultValue: fallbackMessage
+              })
+            })
+          )
+        ]
       : [fallbackMessage]
 
   const issueCount = issues.length
