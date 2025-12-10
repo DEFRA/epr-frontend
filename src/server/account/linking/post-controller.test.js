@@ -1,10 +1,36 @@
+import { config } from '#config/config.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import { describe, expect, it, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { setupServer } from 'msw/node'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest'
 import { controller } from './post-controller.js'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 describe('account linking POST controller', () => {
+  const backendUrl = config.get('eprBackendUrl')
+  const mockBackendServer = setupServer()
+
+  beforeAll(() => {
+    mockBackendServer.listen()
+  })
+
+  afterEach(() => {
+    mockBackendServer.resetHandlers()
+  })
+
+  afterAll(() => {
+    mockBackendServer.close()
+  })
+
   describe('when validation passes', () => {
     it('should redirect to /account', async () => {
       const mockRequest = {
@@ -26,29 +52,34 @@ describe('account linking POST controller', () => {
 
   describe('when validation fails', () => {
     it('should render error view with error messages', async () => {
-      const mockAuthedUser = {
-        displayName: 'Test User',
-        organisations: {
-          current: {
-            id: 'defra-org-123',
-            name: 'My Defra Organisation',
-            relationshipId: 'rel-456'
-          },
-          linked: null,
-          unlinked: [
-            {
-              id: 'org-1',
-              name: 'Test Company Ltd',
-              orgId: '12345678'
-            }
-          ]
-        }
+      const mockOrganisations = {
+        current: {
+          id: 'defra-org-123',
+          name: 'My Defra Organisation',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
+        unlinked: [
+          {
+            id: 'org-1',
+            name: 'Test Company Ltd',
+            orgId: '12345678'
+          }
+        ]
       }
 
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: true,
-        value: mockAuthedUser
+        value: {
+          idToken: 'mock-id-token'
+        }
       })
+
+      mockBackendServer.use(
+        http.get(`${backendUrl}/v1/me/organisations`, () => {
+          return HttpResponse.json({ organisations: mockOrganisations })
+        })
+      )
 
       const mockRequest = {
         payload: {},

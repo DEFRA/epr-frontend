@@ -7,31 +7,28 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      displayName: 'Test User',
-      organisations: {
-        current: {
-          id: 'defra-org-123',
-          name: 'Test Defra Organisation',
-          relationshipId: 'rel-456'
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Test Defra Organisation',
+        relationshipId: 'rel-456'
+      },
+      linked: null,
+      unlinked: [
+        {
+          id: 'org-1',
+          name: 'Company One Ltd',
+          orgId: '12345678'
         },
-        linked: null,
-        unlinked: [
-          {
-            id: 'org-1',
-            name: 'Company One Ltd',
-            orgId: '12345678'
-          },
-          {
-            id: 'org-2',
-            name: 'Company Two Ltd',
-            orgId: '87654321'
-          }
-        ]
-      }
+        {
+          id: 'org-2',
+          name: 'Company Two Ltd',
+          orgId: '87654321'
+        }
+      ]
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result).toStrictEqual({
       pageTitle: 'translated:account:linking:pageTitle',
@@ -54,25 +51,23 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      organisations: {
-        current: {
-          id: 'defra-org-123',
-          name: 'Current Org',
-          relationshipId: 'rel-456'
-        },
-        linked: null,
-        unlinked: [
-          {
-            id: 'org-1',
-            name: 'Waste Services Ltd',
-            orgId: 'WS123456'
-          }
-        ]
-      }
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Current Org',
+        relationshipId: 'rel-456'
+      },
+      linked: null,
+      unlinked: [
+        {
+          id: 'org-1',
+          name: 'Waste Services Ltd',
+          orgId: 'WS123456'
+        }
+      ]
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result.unlinked).toStrictEqual([
       {
@@ -87,19 +82,17 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      organisations: {
-        current: {
-          id: 'defra-org-123',
-          name: 'Test Organisation',
-          relationshipId: 'rel-456'
-        },
-        linked: null,
-        unlinked: []
-      }
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Test Organisation',
+        relationshipId: 'rel-456'
+      },
+      linked: null,
+      unlinked: []
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result.unlinked).toStrictEqual([])
     expect(result.organisationName).toBe('Test Organisation')
@@ -110,19 +103,17 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      organisations: {
-        current: {
-          id: 'defra-org-123',
-          name: 'Test Organisation',
-          relationshipId: 'rel-456'
-        },
-        linked: null,
-        unlinked: []
-      }
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Test Organisation',
+        relationshipId: 'rel-456'
+      },
+      linked: null,
+      unlinked: []
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser, {
+    const result = buildLinkingViewData(mockRequest, mockOrganisations, {
       errors: {
         organisationId: {
           text: 'Select an organisation'
@@ -159,19 +150,17 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      organisations: {
-        current: {
-          id: 'defra-org-123',
-          name: 'Test Organisation',
-          relationshipId: 'rel-456'
-        },
-        linked: null,
-        unlinked: []
-      }
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Test Organisation',
+        relationshipId: 'rel-456'
+      },
+      linked: null,
+      unlinked: []
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result.errors).toBeUndefined()
     expect(result.errorSummary).toBeUndefined()
@@ -182,19 +171,17 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      organisations: {
-        current: {
-          id: 'defra-org-uuid',
-          name: 'My Defra Organisation Name',
-          relationshipId: 'rel-123'
-        },
-        linked: null,
-        unlinked: []
-      }
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-uuid',
+        name: 'My Defra Organisation Name',
+        relationshipId: 'rel-123'
+      },
+      linked: null,
+      unlinked: []
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result.organisationName).toBe('My Defra Organisation Name')
   })
@@ -204,35 +191,33 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      organisations: {
-        current: {
-          id: 'defra-org-123',
-          name: 'Current Org',
-          relationshipId: 'rel-456'
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Current Org',
+        relationshipId: 'rel-456'
+      },
+      linked: null,
+      unlinked: [
+        {
+          id: 'org-1',
+          name: 'First Company',
+          orgId: 'FC111111'
         },
-        linked: null,
-        unlinked: [
-          {
-            id: 'org-1',
-            name: 'First Company',
-            orgId: 'FC111111'
-          },
-          {
-            id: 'org-2',
-            name: 'Second Company',
-            orgId: 'SC222222'
-          },
-          {
-            id: 'org-3',
-            name: 'Third Company',
-            orgId: 'TC333333'
-          }
-        ]
-      }
+        {
+          id: 'org-2',
+          name: 'Second Company',
+          orgId: 'SC222222'
+        },
+        {
+          id: 'org-3',
+          name: 'Third Company',
+          orgId: 'TC333333'
+        }
+      ]
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result.unlinked).toHaveLength(3)
     expect(result.unlinked[0].name).toBe('First Company (ID: FC111111)')
@@ -245,35 +230,33 @@ describe(buildLinkingViewData, () => {
       t: vi.fn((key) => `translated:${key}`)
     }
 
-    const mockAuthedUser = {
-      organisations: {
-        current: {
-          id: 'defra-org-123',
-          name: 'Current Org',
-          relationshipId: 'rel-456'
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Current Org',
+        relationshipId: 'rel-456'
+      },
+      linked: null,
+      unlinked: [
+        {
+          id: 'org-1',
+          name: 'Zebra Waste Ltd',
+          orgId: 'ZW111111'
         },
-        linked: null,
-        unlinked: [
-          {
-            id: 'org-1',
-            name: 'Zebra Waste Ltd',
-            orgId: 'ZW111111'
-          },
-          {
-            id: 'org-2',
-            name: 'Alpha Recycling Ltd',
-            orgId: 'AR222222'
-          },
-          {
-            id: 'org-3',
-            name: 'Mike Services Ltd',
-            orgId: 'MS333333'
-          }
-        ]
-      }
+        {
+          id: 'org-2',
+          name: 'Alpha Recycling Ltd',
+          orgId: 'AR222222'
+        },
+        {
+          id: 'org-3',
+          name: 'Mike Services Ltd',
+          orgId: 'MS333333'
+        }
+      ]
     }
 
-    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result.unlinked[0].name).toBe('Alpha Recycling Ltd (ID: AR222222)')
     expect(result.unlinked[1].name).toBe('Mike Services Ltd (ID: MS333333)')

@@ -1,20 +1,17 @@
 /**
  * @import { Request } from '@hapi/hapi'
- * @import { UserSession } from '#server/auth/types/session.js'
+ * @import { UserOrganisations } from '#server/auth/types/organisations.js'
  */
 
 /**
  * Build view data for the account linking page
  * @param {Request} request
- * @param {UserSession} authedUser
+ * @param {UserOrganisations} organisations
  * @param {object} [options]
  * @param {object} [options.errors]
  * @returns {object}
  */
-export function buildLinkingViewData(request, authedUser, options = {}) {
-  // TODO assert this value and throw if not set
-  const { organisations } = authedUser
-
+export function buildLinkingViewData(request, organisations, options = {}) {
   const unlinked = organisations.unlinked
     .toSorted((a, b) => a.name.localeCompare(b.name))
     .map((o) => ({

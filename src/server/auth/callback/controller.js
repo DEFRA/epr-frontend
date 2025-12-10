@@ -1,24 +1,8 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { buildSessionFromProfile } from '#server/auth/helpers/build-session.js'
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
-
-/**
- * Decorates session with user organisations
- * @param {UserSession} session
- * @returns {Promise<void>}
- */
-const decorateSessionWithOrganisations = async (session) => {
-  /** @type {{ organisations: UserOrganisations }} */
-  const data = await fetchJsonFromBackend('/v1/me/organisations', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${session.idToken}`
-    }
-  })
-  session.organisations = data.organisations
-}
 
 /**
  * Auth callback controller
@@ -40,8 +24,6 @@ const controller = {
         profile
       })
 
-      await decorateSessionWithOrganisations(session)
-
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
@@ -49,7 +31,9 @@ const controller = {
 
       request.logger.info('User has been successfully authenticated')
 
-      if (!session.organisations.linked) {
+      const organisations = await fetchUserOrganisations(session.idToken)
+
+      if (!organisations.linked) {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
     }
@@ -65,6 +49,4 @@ export { controller }
 
 /**
  * @import { ServerRoute } from '@hapi/hapi'
- * @import { UserProfile, UserSession } from '../types/session.js'
- * @import { UserOrganisations } from '../types/organisations.js'
  */

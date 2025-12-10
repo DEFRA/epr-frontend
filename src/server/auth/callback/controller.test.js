@@ -1,13 +1,13 @@
-import Boom from '@hapi/boom'
 import { controller } from '#server/auth/callback/controller.js'
-import * as fetchJsonFromBackendModule from '#server/common/helpers/fetch-json-from-backend.js'
+import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
+import Boom from '@hapi/boom'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('node:crypto'), () => ({
   randomUUID: vi.fn(() => 'mock-uuid-1234')
 }))
 
-vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'))
+vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
 
 describe('#authCallbackController', () => {
   describe('when user is authenticated', () => {
@@ -17,33 +17,32 @@ describe('#authCallbackController', () => {
         email: 'test@example.com',
         displayName: 'Test User',
         firstName: 'Test',
-        lastName: 'User'
+        lastName: 'User',
+        idToken: 'mock-id-token'
       }
 
       const mockExpiresInSeconds = 3600
 
       const mockOrganisations = {
-        organisations: {
-          current: {
-            id: 'defra-org-uuid',
-            name: 'Test Defra Organisation',
-            relationshipId: 'rel-123'
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation',
+          relationshipId: 'rel-123'
+        },
+        linked: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation',
+          linkedBy: {
+            email: 'user@example.com',
+            id: 'user-123'
           },
-          linked: {
-            id: 'defra-org-uuid',
-            name: 'Test Defra Organisation',
-            linkedBy: {
-              email: 'user@example.com',
-              id: 'user-123'
-            },
-            linkedAt: '2025-12-10T09:00:00.000Z'
-          },
-          unlinked: []
-        }
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
       }
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
@@ -89,8 +88,7 @@ describe('#authCallbackController', () => {
           token: 'mock-access-token',
           refreshToken: 'mock-refresh-token',
           expiresIn: mockExpiresInSeconds * 1000,
-          expiresAt: expect.any(Date),
-          organisations: mockOrganisations.organisations
+          expiresAt: expect.any(Date)
         }
       )
 
@@ -107,31 +105,30 @@ describe('#authCallbackController', () => {
     it('should redirect to home when no flash referrer', async () => {
       const mockProfile = {
         id: 'user-123',
-        email: 'test@example.com'
+        email: 'test@example.com',
+        idToken: 'mock-id-token'
       }
 
       const mockOrganisations = {
-        organisations: {
-          current: {
-            id: 'defra-org-uuid',
-            name: 'Test Defra Organisation',
-            relationshipId: 'rel-123'
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation',
+          relationshipId: 'rel-123'
+        },
+        linked: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation',
+          linkedBy: {
+            email: 'user@example.com',
+            id: 'user-123'
           },
-          linked: {
-            id: 'defra-org-uuid',
-            name: 'Test Defra Organisation',
-            linkedBy: {
-              email: 'user@example.com',
-              id: 'user-123'
-            },
-            linkedAt: '2025-12-10T09:00:00.000Z'
-          },
-          unlinked: []
-        }
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
       }
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
@@ -173,37 +170,45 @@ describe('#authCallbackController', () => {
       expect(result).toBe('redirect-response')
     })
 
-    it('should fetch user organisations and add to session', async () => {
+    it('should fetch user organisations and check linking status', async () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User'
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
       }
 
       const mockOrganisations = {
-        organisations: {
-          current: {
-            id: 'current-org-id',
-            name: 'Current Organisation',
-            orgId: '12345678'
+        current: {
+          id: 'current-org-id',
+          name: 'Current Organisation',
+          relationshipId: 'rel-123'
+        },
+        linked: {
+          id: 'linked-org-id',
+          name: 'Linked Organisation',
+          linkedBy: {
+            email: 'user@example.com',
+            id: 'user-123'
           },
-          unlinked: [
-            {
-              id: 'org-1',
-              name: 'Test Company',
-              orgId: '11111111'
-            },
-            {
-              id: 'org-2',
-              name: 'Another Company',
-              orgId: '22222222'
-            }
-          ]
-        }
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: [
+          {
+            id: 'org-1',
+            name: 'Test Company',
+            orgId: '11111111'
+          },
+          {
+            id: 'org-2',
+            name: 'Another Company',
+            orgId: '22222222'
+          }
+        ]
       }
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
@@ -241,10 +246,14 @@ describe('#authCallbackController', () => {
 
       await controller.handler(mockRequest, mockH)
 
+      expect(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
-        expect.objectContaining({
-          organisations: mockOrganisations.organisations
+        expect.not.objectContaining({
+          organisations: expect.anything()
         })
       )
     })
@@ -253,29 +262,28 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User'
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
       }
 
       const mockOrganisations = {
-        organisations: {
-          current: {
-            id: 'defra-org-uuid',
-            name: 'Test Defra Organisation',
-            relationshipId: 'rel-123'
-          },
-          linked: null,
-          unlinked: [
-            {
-              id: 'org-1',
-              name: 'Test Company',
-              orgId: '11111111'
-            }
-          ]
-        }
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation',
+          relationshipId: 'rel-123'
+        },
+        linked: null,
+        unlinked: [
+          {
+            id: 'org-1',
+            name: 'Test Company',
+            orgId: '11111111'
+          }
+        ]
       }
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
@@ -362,13 +370,14 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User'
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
       }
 
       const boomError = Boom.badImplementation('Internal Server Error')
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockRejectedValue(boomError)
 
       const mockRequest = {
@@ -414,15 +423,15 @@ describe('#authCallbackController', () => {
       })
 
       expect(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
-      ).toHaveBeenCalledExactlyOnceWith('/v1/me/organisations', {
-        method: 'GET',
-        headers: {
-          Authorization: expect.stringContaining('Bearer')
-        }
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
+        'mock-uuid-1234',
+        expect.any(Object)
+      )
+      expect(mockRequest.cookieAuth.set).toHaveBeenCalledWith({
+        sessionId: 'mock-uuid-1234'
       })
-      expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
-      expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
     })
   })
 
@@ -431,37 +440,36 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User'
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
       }
 
       const mockOrganisations = {
-        organisations: {
-          current: {
-            id: 'defra-org-uuid',
-            name: 'Defra Registered Company Ltd',
-            relationshipId: 'rel-123'
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Defra Registered Company Ltd',
+          relationshipId: 'rel-123'
+        },
+        linked: {
+          id: 'defra-org-uuid',
+          name: 'Defra Registered Company Ltd',
+          linkedBy: {
+            email: 'admin@example.com',
+            id: 'admin-user-123'
           },
-          linked: {
-            id: 'defra-org-uuid',
-            name: 'Defra Registered Company Ltd',
-            linkedBy: {
-              email: 'admin@example.com',
-              id: 'admin-user-123'
-            },
-            linkedAt: '2025-12-09T10:30:00.000Z'
-          },
-          unlinked: [
-            {
-              id: 'unlinked-org-1',
-              name: 'Unlinked Organisation 1',
-              orgId: '11111111'
-            }
-          ]
-        }
+          linkedAt: '2025-12-09T10:30:00.000Z'
+        },
+        unlinked: [
+          {
+            id: 'unlinked-org-1',
+            name: 'Unlinked Organisation 1',
+            orgId: '11111111'
+          }
+        ]
       }
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
@@ -507,34 +515,33 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User'
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
       }
 
       const mockOrganisations = {
-        organisations: {
-          current: {
-            id: 'defra-org-uuid',
-            name: 'Test Defra Organisation',
-            relationshipId: 'rel-123'
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation',
+          relationshipId: 'rel-123'
+        },
+        linked: null,
+        unlinked: [
+          {
+            id: 'unlinked-org-1',
+            name: 'Unlinked Organisation 1',
+            orgId: '11111111'
           },
-          linked: null,
-          unlinked: [
-            {
-              id: 'unlinked-org-1',
-              name: 'Unlinked Organisation 1',
-              orgId: '11111111'
-            },
-            {
-              id: 'unlinked-org-2',
-              name: 'Unlinked Organisation 2',
-              orgId: '22222222'
-            }
-          ]
-        }
+          {
+            id: 'unlinked-org-2',
+            name: 'Unlinked Organisation 2',
+            orgId: '22222222'
+          }
+        ]
       }
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
@@ -580,23 +587,22 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User'
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
       }
 
       const mockOrganisations = {
-        organisations: {
-          current: {
-            id: 'defra-org-uuid',
-            name: 'Test Defra Organisation',
-            relationshipId: 'rel-123'
-          },
-          linked: null,
-          unlinked: []
-        }
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation',
+          relationshipId: 'rel-123'
+        },
+        linked: null,
+        unlinked: []
       }
 
       vi.mocked(
-        fetchJsonFromBackendModule.fetchJsonFromBackend
+        fetchUserOrganisationsModule.fetchUserOrganisations
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {

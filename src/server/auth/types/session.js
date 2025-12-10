@@ -51,7 +51,6 @@
  * @property {string} expiresAt - ISO date string
  * @property {string} tokenUrl - OIDC token endpoint URL
  * @property {string} logoutUrl - OIDC logout endpoint URL
- * @property {import('./organisations.js').UserOrganisations} [organisations] - User's organisations
  */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

@@ -4,11 +4,36 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { setupServer } from 'msw/node'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 describe('#accountLinkingController', () => {
+  const backendUrl = config.get('eprBackendUrl')
+  const mockBackendServer = setupServer()
+
+  beforeAll(() => {
+    mockBackendServer.listen()
+  })
+
+  afterEach(() => {
+    mockBackendServer.resetHandlers()
+  })
+
+  afterAll(() => {
+    mockBackendServer.close()
+  })
+
   describe('auth disabled', () => {
     /** @type {Server} */
     let server
@@ -23,20 +48,28 @@ describe('#accountLinkingController', () => {
     })
 
     it('should render page when no auth required', async () => {
+      const mockOrganisations = {
+        current: {
+          id: 'defra-org-123',
+          name: 'Test Organisation',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
+        unlinked: []
+      }
+
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: true,
         value: {
-          organisations: {
-            current: {
-              id: 'defra-org-123',
-              name: 'Test Organisation',
-              relationshipId: 'rel-456'
-            },
-            linked: null,
-            unlinked: []
-          }
+          idToken: 'mock-id-token'
         }
       })
+
+      mockBackendServer.use(
+        http.get(`${backendUrl}/v1/me/organisations`, () => {
+          return HttpResponse.json({ organisations: mockOrganisations })
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -82,20 +115,28 @@ describe('#accountLinkingController', () => {
 
     describe('when user has no unlinked organisations', () => {
       it('should render page with empty organisation list', async () => {
+        const mockOrganisations = {
+          current: {
+            id: 'defra-org-123',
+            name: 'My Defra Organisation',
+            relationshipId: 'rel-456'
+          },
+          linked: null,
+          unlinked: []
+        }
+
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           ok: true,
           value: {
-            organisations: {
-              current: {
-                id: 'defra-org-123',
-                name: 'My Defra Organisation',
-                relationshipId: 'rel-456'
-              },
-              linked: null,
-              unlinked: []
-            }
+            idToken: 'mock-id-token'
           }
         })
+
+        mockBackendServer.use(
+          http.get(`${backendUrl}/v1/me/organisations`, () => {
+            return HttpResponse.json({ organisations: mockOrganisations })
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -114,36 +155,39 @@ describe('#accountLinkingController', () => {
 
     describe('when user has unlinked organisations', () => {
       it('should render linking page with organisation radio buttons including companies house numbers', async () => {
-        const mockUserSession = {
-          displayName: 'John Doe',
-          email: 'john.doe@example.com',
-          userId: 'user-123',
-          organisations: {
-            current: {
-              id: 'defra-org-123',
-              name: 'My Defra Organisation',
-              relationshipId: 'rel-456'
+        const mockOrganisations = {
+          current: {
+            id: 'defra-org-123',
+            name: 'My Defra Organisation',
+            relationshipId: 'rel-456'
+          },
+          linked: null,
+          unlinked: [
+            {
+              id: 'org-1',
+              name: 'Test Company Ltd',
+              orgId: '12345678'
             },
-            linked: null,
-            unlinked: [
-              {
-                id: 'org-1',
-                name: 'Test Company Ltd',
-                orgId: '12345678'
-              },
-              {
-                id: 'org-2',
-                name: 'Another Company Ltd',
-                orgId: '87654321'
-              }
-            ]
-          }
+            {
+              id: 'org-2',
+              name: 'Another Company Ltd',
+              orgId: '87654321'
+            }
+          ]
         }
 
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           ok: true,
-          value: mockUserSession
+          value: {
+            idToken: 'mock-id-token'
+          }
         })
+
+        mockBackendServer.use(
+          http.get(`${backendUrl}/v1/me/organisations`, () => {
+            return HttpResponse.json({ organisations: mockOrganisations })
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -162,28 +206,34 @@ describe('#accountLinkingController', () => {
       })
 
       it('should display current Defra organisation name in heading', async () => {
-        const mockUserSession = {
-          organisations: {
-            current: {
-              id: 'defra-org-123',
-              name: 'My Defra Organisation Name',
-              relationshipId: 'rel-456'
-            },
-            linked: null,
-            unlinked: [
-              {
-                id: 'org-1',
-                name: 'Test Company Ltd',
-                orgId: '12345678'
-              }
-            ]
-          }
+        const mockOrganisations = {
+          current: {
+            id: 'defra-org-123',
+            name: 'My Defra Organisation Name',
+            relationshipId: 'rel-456'
+          },
+          linked: null,
+          unlinked: [
+            {
+              id: 'org-1',
+              name: 'Test Company Ltd',
+              orgId: '12345678'
+            }
+          ]
         }
 
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           ok: true,
-          value: mockUserSession
+          value: {
+            idToken: 'mock-id-token'
+          }
         })
+
+        mockBackendServer.use(
+          http.get(`${backendUrl}/v1/me/organisations`, () => {
+            return HttpResponse.json({ organisations: mockOrganisations })
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -201,38 +251,44 @@ describe('#accountLinkingController', () => {
       })
 
       it('should render multiple unlinked organisations with unique IDs', async () => {
-        const mockUserSession = {
-          organisations: {
-            current: {
-              id: 'defra-org-123',
-              name: 'Current Org',
-              relationshipId: 'rel-456'
+        const mockOrganisations = {
+          current: {
+            id: 'defra-org-123',
+            name: 'Current Org',
+            relationshipId: 'rel-456'
+          },
+          linked: null,
+          unlinked: [
+            {
+              id: 'org-1',
+              name: 'First Company',
+              orgId: 'FC111111'
             },
-            linked: null,
-            unlinked: [
-              {
-                id: 'org-1',
-                name: 'First Company',
-                orgId: 'FC111111'
-              },
-              {
-                id: 'org-2',
-                name: 'Second Company',
-                orgId: 'SC222222'
-              },
-              {
-                id: 'org-3',
-                name: 'Third Company',
-                orgId: 'TC333333'
-              }
-            ]
-          }
+            {
+              id: 'org-2',
+              name: 'Second Company',
+              orgId: 'SC222222'
+            },
+            {
+              id: 'org-3',
+              name: 'Third Company',
+              orgId: 'TC333333'
+            }
+          ]
         }
 
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           ok: true,
-          value: mockUserSession
+          value: {
+            idToken: 'mock-id-token'
+          }
         })
+
+        mockBackendServer.use(
+          http.get(`${backendUrl}/v1/me/organisations`, () => {
+            return HttpResponse.json({ organisations: mockOrganisations })
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
