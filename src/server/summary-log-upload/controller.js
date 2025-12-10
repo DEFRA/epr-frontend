@@ -1,4 +1,5 @@
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import { sessionNames } from '#server/common/constants/session-names.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -9,10 +10,17 @@ export const summaryLogUploadController = {
     const { organisationId, registrationId } = request.params
 
     try {
-      const { uploadUrl } = await initiateSummaryLogUpload({
+      const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+      })
+
+      // Store uploadId in session for status polling reconciliation
+      const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
+      request.yar.set(sessionNames.summaryLogs, {
+        ...summaryLogsSession,
+        uploadId
       })
 
       return h.view('summary-log-upload/index', {

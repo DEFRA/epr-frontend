@@ -7,7 +7,7 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { backendSummaryLogStatuses } from '../common/constants/statuses.js'
+import { summaryLogStatuses } from '../common/constants/statuses.js'
 import { buildLoadsViewModel } from './controller.js'
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -65,7 +65,8 @@ describe('#summaryLogUploadProgressController', () => {
     expect(fetchSummaryLogStatus).toHaveBeenCalledWith(
       organisationId,
       registrationId,
-      summaryLogId
+      summaryLogId,
+      { uploadId: undefined }
     )
     expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -74,7 +75,7 @@ describe('#summaryLogUploadProgressController', () => {
   describe('processing states', () => {
     test('status: preprocessing - should show processing message and poll', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.preprocessing
+        status: summaryLogStatuses.preprocessing
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
@@ -96,7 +97,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validating - should show processing message and poll', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validating
+        status: summaryLogStatuses.validating
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
@@ -110,7 +111,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: submitting - should show submitting message and poll', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.submitting
+        status: summaryLogStatuses.submitting
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
@@ -146,7 +147,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validated - should show check page and stop polling', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated
+        status: summaryLogStatuses.validated
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
@@ -166,7 +167,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validated with new loads - should show new loads heading', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
+        status: summaryLogStatuses.validated,
         loads: {
           added: {
             valid: {
@@ -209,7 +210,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validated with no new loads - should show no new loads heading', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
+        status: summaryLogStatuses.validated,
         loads: {
           added: {
             valid: { count: 0, rowIds: [] },
@@ -238,7 +239,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validated with adjusted loads - should show adjusted loads section', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
+        status: summaryLogStatuses.validated,
         loads: {
           added: {
             valid: { count: 0, rowIds: [] },
@@ -272,7 +273,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validated with row IDs - should display row IDs in bullet list', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
+        status: summaryLogStatuses.validated,
         loads: {
           added: {
             valid: { count: 3, rowIds: [1092, 1093, 1094] },
@@ -305,7 +306,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validated with singular load - should use singular form', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
+        status: summaryLogStatuses.validated,
         loads: {
           added: {
             valid: { count: 1, rowIds: [1092] },
@@ -337,7 +338,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: validated without adjusted loads - should not show adjusted section', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.validated,
+        status: summaryLogStatuses.validated,
         loads: {
           added: {
             valid: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
@@ -367,7 +368,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: submitted - should show success page and stop polling', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.submitted,
+        status: summaryLogStatuses.submitted,
         accreditationNumber: '493021'
       })
 
@@ -389,7 +390,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       // Mock the backend submit call for the POST
       submitSummaryLog.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.submitted,
+        status: summaryLogStatuses.submitted,
         accreditationNumber: '999888'
       })
 
@@ -432,7 +433,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: rejected with validation failure code - should show validation failures page', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.rejected,
+        status: summaryLogStatuses.rejected,
         validation: {
           failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
         }
@@ -450,7 +451,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: rejected - should initiate upload with pre-signed URL', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.rejected,
+        status: summaryLogStatuses.rejected,
         validation: {
           failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
         }
@@ -468,7 +469,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: rejected without validation - should show validation failures page with generic error', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.rejected
+        status: summaryLogStatuses.rejected
       })
 
       const { result, statusCode } = await server.inject({
@@ -483,7 +484,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with validation failures - should show validation failures page with correct content', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
@@ -502,7 +503,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with validation failures - should show re-upload form and cancel button', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
@@ -520,7 +521,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid - should initiate upload with pre-signed URL', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
         }
@@ -538,7 +539,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with multiple validation failures - should show all failures', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [
             { code: validationFailureCodes.SEQUENTIAL_ROW_REMOVED },
@@ -559,7 +560,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with unknown failure code - should show fallback message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ code: 'SOME_UNKNOWN_CODE' }]
         }
@@ -574,7 +575,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with data entry failures - should show single deduplicated message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [
             { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
@@ -603,7 +604,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with mixed failures - should show data entry message and other failures', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: [
             { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
@@ -625,7 +626,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid with empty validation failures - should show generic validation error', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid,
+        status: summaryLogStatuses.invalid,
         validation: {
           failures: []
         }
@@ -641,7 +642,7 @@ describe('#summaryLogUploadProgressController', () => {
 
     test('status: invalid without validation object - should show generic validation error', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: backendSummaryLogStatuses.invalid
+        status: summaryLogStatuses.invalid
       })
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
@@ -649,6 +650,35 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain('An unexpected validation error occurred')
       expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validation_failed - should show validation failures page with re-upload option', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validationFailed,
+        validation: {
+          failures: [{ code: 'PROCESSING_FAILED' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('Upload updated XLSX file')
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validation_failed - should initiate upload for re-upload', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validationFailed
+      })
+
+      await server.inject({ method: 'GET', url })
+
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+      })
     })
   })
 
