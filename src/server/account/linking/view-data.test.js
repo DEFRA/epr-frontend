@@ -241,4 +241,44 @@ describe(buildLinkingViewData, () => {
     expect(result.unlinked[1].name).toBe('Second Company (ID: SC222222)')
     expect(result.unlinked[2].name).toBe('Third Company (ID: TC333333)')
   })
+
+  it('should sort unlinked organisations alphabetically by name', () => {
+    const mockRequest = {
+      t: vi.fn((key) => `translated:${key}`)
+    }
+
+    const mockAuthedUser = {
+      organisations: {
+        current: {
+          id: 'defra-org-123',
+          name: 'Current Org',
+          relationshipId: 'rel-456'
+        },
+        linked: null,
+        unlinked: [
+          {
+            id: 'org-1',
+            name: 'Zebra Waste Ltd',
+            companiesHouseNumber: 'ZW111111'
+          },
+          {
+            id: 'org-2',
+            name: 'Alpha Recycling Ltd',
+            companiesHouseNumber: 'AR222222'
+          },
+          {
+            id: 'org-3',
+            name: 'Mike Services Ltd',
+            companiesHouseNumber: 'MS333333'
+          }
+        ]
+      }
+    }
+
+    const result = buildLinkingViewData(mockRequest, mockAuthedUser)
+
+    expect(result.unlinked[0].name).toBe('Alpha Recycling Ltd (ID: AR222222)')
+    expect(result.unlinked[1].name).toBe('Mike Services Ltd (ID: MS333333)')
+    expect(result.unlinked[2].name).toBe('Zebra Waste Ltd (ID: ZW111111)')
+  })
 })
