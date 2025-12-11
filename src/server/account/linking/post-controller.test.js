@@ -32,10 +32,35 @@ describe('account linking POST controller', () => {
   })
 
   describe('when validation passes', () => {
-    it('should redirect to /account', async () => {
+    it('should call backend link endpoint and redirect to /account', async () => {
+      const organisationId = 'org-123'
+      const mockIdToken = 'mock-id-token'
+
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: true,
+        value: {
+          idToken: mockIdToken
+        }
+      })
+
+      mockBackendServer.use(
+        http.post(
+          `${backendUrl}/v1/organisations/${organisationId}/link`,
+          ({ request }) => {
+            const authHeader = request.headers.get('Authorization')
+
+            if (authHeader === `Bearer ${mockIdToken}`) {
+              return HttpResponse.json({})
+            }
+
+            return HttpResponse.json({ error: 'Unauthorised' }, { status: 401 })
+          }
+        )
+      )
+
       const mockRequest = {
         payload: {
-          organisationId: 'org-123'
+          organisationId
         }
       }
 
@@ -45,8 +70,54 @@ describe('account linking POST controller', () => {
 
       const result = await controller.handler(mockRequest, mockH)
 
+      expect(
+        getUserSessionModule.getUserSession
+      ).toHaveBeenCalledExactlyOnceWith(mockRequest)
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account')
       expect(result).toBe('redirect-response')
+    })
+
+    it('should redirect to /login when user is not authenticated', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: false
+      })
+
+      const mockRequest = {
+        payload: {
+          organisationId: 'org-123'
+        }
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-to-login')
+      }
+
+      const result = await controller.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/login')
+      expect(result).toBe('redirect-to-login')
+    })
+
+    it('should redirect to /login when session has no value', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: true,
+        value: null
+      })
+
+      const mockRequest = {
+        payload: {
+          organisationId: 'org-123'
+        }
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-to-login')
+      }
+
+      const result = await controller.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/login')
+      expect(result).toBe('redirect-to-login')
     })
   })
 
@@ -55,8 +126,7 @@ describe('account linking POST controller', () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-123',
-          name: 'My Defra Organisation',
-          relationshipId: 'rel-456'
+          name: 'My Defra Organisation'
         },
         linked: null,
         unlinked: [
