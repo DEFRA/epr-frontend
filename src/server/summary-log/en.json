@@ -69,6 +69,8 @@
   "rejectedDefaultReason": "File rejected by virus scanner",
   "returnToHome": "Return to home",
   "reuploadButton": "Re-upload summary log",
+  "supersededHeading": "This summary log has been replaced",
+  "supersededMessage": "A newer summary log has been uploaded. This upload is no longer being processed.",
   "reuploadButtonText": "Continue",
   "reuploadFileLabel": "Upload updated XLSX file",
   "rowIdExplanation": "These reference numbers are found in the 'Row ID' column of your summary log.",
