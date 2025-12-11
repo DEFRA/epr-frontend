@@ -90,22 +90,8 @@ describe('#context', () => {
 
       expect(contextResult).toStrictEqual(
         expect.objectContaining({
-          authedUser: null,
           navigation: []
         })
-      )
-    })
-
-    it('should add the authed user to the context', async () => {
-      mockGetUserSession.mockResolvedValue({
-        ok: true,
-        value: { token: 'token-val' }
-      })
-
-      contextResult = await contextImport.context(mockRequest())
-
-      expect(contextResult).toStrictEqual(
-        expect.objectContaining({ authedUser: { token: 'token-val' } })
       )
     })
 
@@ -160,7 +146,6 @@ describe('#context', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
-        authedUser: null,
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
@@ -238,7 +223,6 @@ describe('#context cache', () => {
     test('should provide expected context', () => {
       expect(contextResult).toStrictEqual({
         assetPath: '/public/assets',
-        authedUser: null,
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
