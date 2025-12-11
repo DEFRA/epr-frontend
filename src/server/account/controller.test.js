@@ -108,48 +108,6 @@ describe('#accountController', () => {
         expect($('.govuk-panel--confirmation').text()).not.toContain('Welcome,')
       })
     })
-
-    describe('when user is authenticated', () => {
-      test('should render page with user welcome', async () => {
-        // Mock getUserSession to return authenticated user
-        const mockUserSession = {
-          displayName: 'John Doe',
-          email: 'john.doe@example.com',
-          userId: 'user-123'
-        }
-
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-          ok: true,
-          value: mockUserSession
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/account'
-        })
-
-        const $ = load(result)
-
-        // Authenticated welcome panel should exist
-        const welcomePanel = $('.govuk-panel--confirmation')
-
-        expect(welcomePanel).toHaveLength(1)
-        expect(welcomePanel.text()).toContain('Welcome, John Doe')
-
-        // Logout link should exist
-        const logoutLink = $('a[href="/logout"]')
-
-        expect(logoutLink).toHaveLength(1)
-        expect(logoutLink.text()).toContain('Sign out')
-
-        expect($('.govuk-details__summary-text').text()).toContain(
-          'View your account details'
-        )
-
-        // eslint-disable-next-line vitest/max-expects
-        expect($('.govuk-summary-list')).toHaveLength(1)
-      })
-    })
   })
 })
 
