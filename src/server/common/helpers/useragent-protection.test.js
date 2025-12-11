@@ -1,19 +1,23 @@
-import { describe, beforeEach, afterEach, test, expect } from 'vitest'
-import http2 from 'node:http2'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
+import http2 from 'node:http2'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 const { constants: httpConstants } = http2
 const MAX_USER_AGENT_LENGTH = 150
 
 describe('user-agent protection', () => {
   let server
+  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
   beforeEach(async () => {
+    mockOidcServer.listen()
     server = await createServer()
     await server.initialize()
   })
 
   afterEach(async () => {
+    mockOidcServer.close()
     if (server) {
       await server.stop()
     }

@@ -43,7 +43,7 @@ describe('#accountController', () => {
     const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
     beforeAll(async () => {
-      mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
+      mockOidcServer.listen()
       config.load({
         defraId: {
           clientId: 'test-client-id',

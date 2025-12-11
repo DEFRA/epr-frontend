@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createOidcHandlers } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
@@ -19,19 +19,19 @@ import {
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 describe('#accountLinkingController', () => {
+  const mswServer = setupServer(...createOidcHandlers('http://defra-id.auth'))
   const backendUrl = config.get('eprBackendUrl')
-  const mockBackendServer = setupServer()
 
   beforeAll(() => {
-    mockBackendServer.listen()
+    mswServer.listen()
   })
 
   afterEach(() => {
-    mockBackendServer.resetHandlers()
+    mswServer.resetHandlers()
   })
 
   afterAll(() => {
-    mockBackendServer.close()
+    mswServer.close()
   })
 
   describe('auth disabled', () => {
@@ -65,7 +65,7 @@ describe('#accountLinkingController', () => {
         }
       })
 
-      mockBackendServer.use(
+      mswServer.use(
         http.get(`${backendUrl}/v1/me/organisations`, () => {
           return HttpResponse.json({ organisations: mockOrganisations })
         })
@@ -86,10 +86,8 @@ describe('#accountLinkingController', () => {
   describe('when auth is enabled', () => {
     /** @type {Server} */
     let server
-    const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
     beforeAll(async () => {
-      mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
       config.load({
         defraId: {
           clientId: 'test-client-id',
@@ -109,7 +107,6 @@ describe('#accountLinkingController', () => {
       config.reset('defraId.clientSecret')
       config.reset('defraId.oidcConfigurationUrl')
       config.reset('defraId.serviceId')
-      mockOidcServer.close()
       await server.stop({ timeout: 0 })
     })
 
@@ -132,7 +129,7 @@ describe('#accountLinkingController', () => {
           }
         })
 
-        mockBackendServer.use(
+        mswServer.use(
           http.get(`${backendUrl}/v1/me/organisations`, () => {
             return HttpResponse.json({ organisations: mockOrganisations })
           })
@@ -183,7 +180,7 @@ describe('#accountLinkingController', () => {
           }
         })
 
-        mockBackendServer.use(
+        mswServer.use(
           http.get(`${backendUrl}/v1/me/organisations`, () => {
             return HttpResponse.json({ organisations: mockOrganisations })
           })
@@ -229,7 +226,7 @@ describe('#accountLinkingController', () => {
           }
         })
 
-        mockBackendServer.use(
+        mswServer.use(
           http.get(`${backendUrl}/v1/me/organisations`, () => {
             return HttpResponse.json({ organisations: mockOrganisations })
           })
@@ -284,7 +281,7 @@ describe('#accountLinkingController', () => {
           }
         })
 
-        mockBackendServer.use(
+        mswServer.use(
           http.get(`${backendUrl}/v1/me/organisations`, () => {
             return HttpResponse.json({ organisations: mockOrganisations })
           })

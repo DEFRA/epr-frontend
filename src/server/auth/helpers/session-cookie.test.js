@@ -86,7 +86,7 @@ describe('#sessionCookie - integration', () => {
     // Add the handler to the server
     mockOidcServer.use(defaultTokenHandler)
 
-    mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
+    mockOidcServer.listen()
 
     // Configure auth
     config.load({

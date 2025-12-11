@@ -1,6 +1,7 @@
-import { describe, beforeAll, afterAll, it, expect } from 'vitest'
-import { createServer } from '#server/index.js'
 import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/index.js'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 describe(cspFormAction, () => {
   it.each([
@@ -13,13 +14,16 @@ describe(cspFormAction, () => {
 
 describe('#contentSecurityPolicy', () => {
   let server
+  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
   beforeAll(async () => {
+    mockOidcServer.listen()
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
+    mockOidcServer.close()
     await server.stop({ timeout: 0 })
   })
 
