@@ -133,7 +133,7 @@ export default [
       'n/no-unpublished-import': [
         'error',
         {
-          allowModules: ['vitest']
+          allowModules: ['vitest', 'exceljs']
         }
       ],
 

@@ -11,3 +11,4 @@ coverage
 .envrc
 tsconfig.tsbuildinfo
 translations.xlsx
+import-translations.xlsx
