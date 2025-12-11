@@ -680,6 +680,35 @@ describe('#summaryLogUploadProgressController', () => {
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
       })
     })
+
+    test('status: superseded - should show superseded page with link to organisation', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.superseded
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('This summary log has been replaced')
+      expect(result).toContain(
+        'A newer summary log has been uploaded. This upload is no longer being processed.'
+      )
+      expect(result).toContain(`href="/organisations/${organisationId}"`)
+      expect(result).toContain('Return to home')
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
+    })
+
+    test('status: superseded - should not initiate upload', async () => {
+      const initialCallCount = initiateSummaryLogUpload.mock.calls.length
+
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.superseded
+      })
+
+      await server.inject({ method: 'GET', url })
+
+      expect(initiateSummaryLogUpload.mock.calls).toHaveLength(initialCallCount)
+    })
   })
 
   describe('unexpected status handling', () => {
