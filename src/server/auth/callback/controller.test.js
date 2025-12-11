@@ -26,8 +26,7 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-uuid',
-          name: 'Test Defra Organisation',
-          relationshipId: 'rel-123'
+          name: 'Test Defra Organisation'
         },
         linked: {
           id: 'defra-org-uuid',
@@ -112,8 +111,7 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-uuid',
-          name: 'Test Defra Organisation',
-          relationshipId: 'rel-123'
+          name: 'Test Defra Organisation'
         },
         linked: {
           id: 'defra-org-uuid',
@@ -181,8 +179,7 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         current: {
           id: 'current-org-id',
-          name: 'Current Organisation',
-          relationshipId: 'rel-123'
+          name: 'Current Organisation'
         },
         linked: {
           id: 'linked-org-id',
@@ -269,8 +266,7 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-uuid',
-          name: 'Test Defra Organisation',
-          relationshipId: 'rel-123'
+          name: 'Test Defra Organisation'
         },
         linked: null,
         unlinked: [
@@ -447,8 +443,7 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-uuid',
-          name: 'Defra Registered Company Ltd',
-          relationshipId: 'rel-123'
+          name: 'Defra Registered Company Ltd'
         },
         linked: {
           id: 'defra-org-uuid',
@@ -522,8 +517,7 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-uuid',
-          name: 'Test Defra Organisation',
-          relationshipId: 'rel-123'
+          name: 'Test Defra Organisation'
         },
         linked: null,
         unlinked: [
@@ -594,8 +588,7 @@ describe('#authCallbackController', () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-uuid',
-          name: 'Test Defra Organisation',
-          relationshipId: 'rel-123'
+          name: 'Test Defra Organisation'
         },
         linked: null,
         unlinked: []

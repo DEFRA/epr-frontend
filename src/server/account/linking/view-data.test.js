@@ -10,8 +10,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Test Defra Organisation',
-        relationshipId: 'rel-456'
+        name: 'Test Defra Organisation'
       },
       linked: null,
       unlinked: [
@@ -54,8 +53,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Current Org',
-        relationshipId: 'rel-456'
+        name: 'Current Org'
       },
       linked: null,
       unlinked: [
@@ -85,8 +83,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Test Organisation',
-        relationshipId: 'rel-456'
+        name: 'Test Organisation'
       },
       linked: null,
       unlinked: []
@@ -106,8 +103,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Test Organisation',
-        relationshipId: 'rel-456'
+        name: 'Test Organisation'
       },
       linked: null,
       unlinked: []
@@ -153,8 +149,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Test Organisation',
-        relationshipId: 'rel-456'
+        name: 'Test Organisation'
       },
       linked: null,
       unlinked: []
@@ -174,8 +169,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-uuid',
-        name: 'My Defra Organisation Name',
-        relationshipId: 'rel-123'
+        name: 'My Defra Organisation Name'
       },
       linked: null,
       unlinked: []
@@ -194,8 +188,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Current Org',
-        relationshipId: 'rel-456'
+        name: 'Current Org'
       },
       linked: null,
       unlinked: [
@@ -233,8 +226,7 @@ describe(buildLinkingViewData, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Current Org',
-        relationshipId: 'rel-456'
+        name: 'Current Org'
       },
       linked: null,
       unlinked: [

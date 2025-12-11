@@ -11,8 +11,7 @@ describe(provideUserOrganisations, () => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
-        name: 'Test Organisation',
-        relationshipId: 'rel-456'
+        name: 'Test Organisation'
       },
       linked: null,
       unlinked: []

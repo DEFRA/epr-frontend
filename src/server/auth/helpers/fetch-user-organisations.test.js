@@ -16,8 +16,7 @@ describe('#fetchUserOrganisations', () => {
     organisations: {
       current: {
         id: 'defra-org-123',
-        name: 'Test Defra Organisation',
-        relationshipId: 'rel-456'
+        name: 'Test Defra Organisation'
       },
       linked: {
         id: 'epr-org-789',
@@ -78,8 +77,7 @@ describe('#fetchUserOrganisations', () => {
 
     expect(result.current).toStrictEqual({
       id: 'defra-org-123',
-      name: 'Test Defra Organisation',
-      relationshipId: 'rel-456'
+      name: 'Test Defra Organisation'
     })
 
     expect(result.linked).toStrictEqual({
@@ -100,8 +98,7 @@ describe('#fetchUserOrganisations', () => {
           organisations: {
             current: {
               id: 'defra-org-999',
-              name: 'Another Defra Org',
-              relationshipId: 'rel-999'
+              name: 'Another Defra Org'
             },
             linked: null,
             unlinked: [
@@ -129,8 +126,7 @@ describe('#fetchUserOrganisations', () => {
           organisations: {
             current: {
               id: 'defra-org-linked',
-              name: 'Linked Defra Org',
-              relationshipId: 'rel-linked'
+              name: 'Linked Defra Org'
             },
             linked: {
               id: 'epr-org-linked',

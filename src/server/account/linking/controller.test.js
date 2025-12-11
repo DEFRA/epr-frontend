@@ -251,8 +251,7 @@ describe('#accountLinkingController', () => {
         const mockOrganisations = {
           current: {
             id: 'defra-org-123',
-            name: 'Current Org',
-            relationshipId: 'rel-456'
+            name: 'Current Org'
           },
           linked: null,
           unlinked: [

@@ -2,7 +2,6 @@
  * @typedef {{
  *   id: string
  *   name: string
- *   relationshipId: string
  * }} DefraOrgSummary
  */
 
@@ -15,9 +14,7 @@
  */
 
 /**
- * @typedef {{
- *   id: string
- *   name: string
+ * @typedef { DefraOrgSummary & {
  *   linkedBy: {
  *     email: string
  *     id: string
