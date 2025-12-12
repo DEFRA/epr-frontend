@@ -1,5 +1,8 @@
 {
-  "accordionSection1Heading": "You’ve completed section 1 for each load",
+  "accordionSection1Heading": "You've completed section 1 for each load",
+  "conflictHeading": "A submission is in progress",
+  "conflictMessage": "Please wait until the current submission is complete before uploading a new summary log.",
+  "conflictPageTitle": "Summary log: submission in progress",
   "accordionSection1Text": "A load will only be added to your waste balance when you’ve provided all the information in this section.",
   "accordionSection2Bullet1": "you’re meeting your regulatory requirements",
   "accordionSection2Bullet2": "reports you submit to your regulator will be accurate",
