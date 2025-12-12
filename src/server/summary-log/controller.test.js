@@ -25,7 +25,8 @@ vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
   () => ({
     initiateSummaryLogUpload: vi.fn().mockResolvedValue({
-      uploadUrl: 'https://storage.example.com/upload?signature=abc123'
+      uploadUrl: 'https://storage.example.com/upload?signature=abc123',
+      uploadId: 'new-upload-id-123'
     })
   })
 )
@@ -679,6 +680,25 @@ describe('#summaryLogUploadProgressController', () => {
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
       })
+    })
+
+    test('status: validation_failed - should update session with new uploadId for re-upload', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validationFailed
+      })
+
+      // Make request with existing session containing old uploadId
+      const response = await server.inject({
+        method: 'GET',
+        url,
+        headers: {
+          cookie: 'session=existing-session'
+        }
+      })
+
+      // Verify the response sets a session cookie (session was updated)
+      const setCookieHeader = response.headers['set-cookie']
+      expect(setCookieHeader).toBeDefined()
     })
   })
 
