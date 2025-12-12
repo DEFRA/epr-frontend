@@ -2,6 +2,7 @@
   "back": "Yn ôl",
   "cancel": "Canslo",
   "continue": "Parhau",
+  "errorSummaryTitle": "Mae problem wedi codi",
   "navigation": {
     "signOut": "Allgofnodi",
     "switchOrganisation": "Sefydliad switsh",

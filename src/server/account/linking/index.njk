@@ -1,0 +1,55 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if isDefraIdEnabled %}
+          {% if errorSummary %}
+            {{ govukErrorSummary({
+              titleText: localise('common:errorSummaryTitle'),
+              errorList: errorSummary
+            }) }}
+          {% endif %}
+
+          {# FIXME use a proper service name - what is this? #}
+          <h1 class="govuk-heading-l">{{ localise('account:linking:heading', { serviceName: organisationName }) }}</h1>
+          <p class="govuk-body">{{ localise('account:linking:bodyOne') }}</p>
+          <p class="govuk-body">{{ localise('account:linking:bodyTwo') }}</p>
+
+          <form method="POST" action="{{ localiseUrl('/account/linking') }}">
+            {% set radioItems = [] %}
+            {% for org in unlinked %}
+              {% set radioItems = (radioItems.push({
+                value: org.id,
+                text: org.name
+              }), radioItems) %}
+            {% endfor %}
+
+            {{ govukRadios({
+              name: "organisationId",
+              idPrefix: "organisation-id",
+              fieldset: {
+                legend: {
+                  text: localise('account:linking:subheading', { serviceName: organisationName }),
+                  isPageHeading: false,
+                  classes: "govuk-fieldset__legend--m"
+                }
+              },
+              items: radioItems,
+              errorMessage: errors.organisationId if errors and errors.organisationId
+            }) }}
+
+            {{ govukButton({
+              text: localise('account:linking:confirmButton')
+            }) }}
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

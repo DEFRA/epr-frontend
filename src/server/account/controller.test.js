@@ -4,7 +4,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -22,7 +22,7 @@ describe('#accountController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('should provide expected response with correct status', async () => {
+    it('should provide expected response with correct status', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
       })
@@ -43,7 +43,7 @@ describe('#accountController', () => {
     const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
     beforeAll(async () => {
-      mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
+      mockOidcServer.listen()
       config.load({
         defraId: {
           clientId: 'test-client-id',
@@ -68,7 +68,7 @@ describe('#accountController', () => {
     })
 
     describe('when user is not authenticated', () => {
-      test('should provide expected response with correct status', async () => {
+      it('should provide expected response with correct status', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           found: false,
           data: null
@@ -88,7 +88,7 @@ describe('#accountController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      test('should render page with login link and guest welcome', async () => {
+      it('should render page with login link and guest welcome', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           found: false,
           data: null

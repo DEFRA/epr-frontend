@@ -7,8 +7,8 @@ import { home } from '#server/home/index.js'
 import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
 import { registration } from '#server/registration/index.js'
-import { summaryLog } from '#server/summary-log/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
+import { summaryLog } from '#server/summary-log/index.js'
 import inert from '@hapi/inert'
 
 /**
@@ -33,8 +33,8 @@ export const router = {
         account,
         home,
         registration,
-        summaryLogUpload,
-        summaryLog
+        summaryLog,
+        summaryLogUpload
       ])
 
       // Static assets

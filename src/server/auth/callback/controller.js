@@ -1,4 +1,6 @@
+import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { buildSessionFromProfile } from '#server/auth/helpers/build-session.js'
+import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
 
@@ -28,6 +30,12 @@ const controller = {
       request.cookieAuth.set({ sessionId })
 
       request.logger.info('User has been successfully authenticated')
+
+      const organisations = await fetchUserOrganisations(session.idToken)
+
+      if (!organisations.linked) {
+        return h.redirect(ACCOUNT_LINKING_PATH)
+      }
     }
 
     const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
@@ -41,5 +49,4 @@ export { controller }
 
 /**
  * @import { ServerRoute } from '@hapi/hapi'
- * @import { UserProfile, UserSession } from '../types/session.js'
  */

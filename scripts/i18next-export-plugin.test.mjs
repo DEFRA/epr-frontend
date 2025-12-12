@@ -1,7 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { existsSync, unlinkSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import exportPlugin, {
   transformToExcelFormat
 } from './i18next-export-plugin.mjs'
@@ -355,9 +355,15 @@ describe('i18next-export-plugin', () => {
   })
 
   describe('exportPlugin', () => {
+    let consoleLogSpy
     let testOutputPath
 
+    beforeEach(() => {
+      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    })
+
     afterEach(() => {
+      consoleLogSpy.mockRestore()
       if (testOutputPath && existsSync(testOutputPath)) {
         unlinkSync(testOutputPath)
       }
@@ -397,6 +403,9 @@ describe('i18next-export-plugin', () => {
       await plugin.afterSync(mockResults, { out: 'test-output.xlsx' })
 
       expect(existsSync(testOutputPath)).toBe(true)
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '\n✓ Exported 2 untranslated strings to test-output.xlsx'
+      )
 
       const ExcelJS = await import('exceljs')
       const workbook = new ExcelJS.Workbook()
@@ -424,6 +433,9 @@ describe('i18next-export-plugin', () => {
       await plugin.afterSync(mockResults, { out: 'test-single.xlsx' })
 
       expect(existsSync(testOutputPath)).toBe(true)
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '\n✓ Exported 1 untranslated string to test-single.xlsx'
+      )
     })
 
     it('should handle empty results', async () => {
@@ -433,6 +445,9 @@ describe('i18next-export-plugin', () => {
       await plugin.afterSync([], { out: 'test-empty.xlsx' })
 
       expect(existsSync(testOutputPath)).toBe(true)
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        '\n✓ No untranslated strings found. All translations are in sync!'
+      )
 
       const ExcelJS = await import('exceljs')
       const workbook = new ExcelJS.Workbook()
@@ -449,6 +464,9 @@ describe('i18next-export-plugin', () => {
       try {
         await plugin.afterSync([])
         expect(existsSync(defaultOutputPath)).toBe(true)
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+          '\n✓ No untranslated strings found. All translations are in sync!'
+        )
       } finally {
         if (existsSync(defaultOutputPath)) {
           unlinkSync(defaultOutputPath)
