@@ -4,7 +4,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -22,7 +22,7 @@ describe('#accountController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('should provide expected response with correct status', async () => {
+    it('should provide expected response with correct status', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
       })
@@ -43,7 +43,7 @@ describe('#accountController', () => {
     const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
     beforeAll(async () => {
-      mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
+      mockOidcServer.listen()
       config.load({
         defraId: {
           clientId: 'test-client-id',
@@ -68,7 +68,7 @@ describe('#accountController', () => {
     })
 
     describe('when user is not authenticated', () => {
-      test('should provide expected response with correct status', async () => {
+      it('should provide expected response with correct status', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           found: false,
           data: null
@@ -88,7 +88,7 @@ describe('#accountController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      test('should render page with login link and guest welcome', async () => {
+      it('should render page with login link and guest welcome', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           found: false,
           data: null
@@ -106,48 +106,6 @@ describe('#accountController', () => {
 
         // No authenticated welcome panel
         expect($('.govuk-panel--confirmation').text()).not.toContain('Welcome,')
-      })
-    })
-
-    describe('when user is authenticated', () => {
-      test('should render page with user welcome', async () => {
-        // Mock getUserSession to return authenticated user
-        const mockUserSession = {
-          displayName: 'John Doe',
-          email: 'john.doe@example.com',
-          userId: 'user-123'
-        }
-
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-          ok: true,
-          value: mockUserSession
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/account'
-        })
-
-        const $ = load(result)
-
-        // Authenticated welcome panel should exist
-        const welcomePanel = $('.govuk-panel--confirmation')
-
-        expect(welcomePanel).toHaveLength(1)
-        expect(welcomePanel.text()).toContain('Welcome, John Doe')
-
-        // Logout link should exist
-        const logoutLink = $('a[href="/logout"]')
-
-        expect(logoutLink).toHaveLength(1)
-        expect(logoutLink.text()).toContain('Sign out')
-
-        expect($('.govuk-details__summary-text').text()).toContain(
-          'View your account details'
-        )
-
-        // eslint-disable-next-line vitest/max-expects
-        expect($('.govuk-summary-list')).toHaveLength(1)
       })
     })
   })

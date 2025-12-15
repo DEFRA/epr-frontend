@@ -35,7 +35,7 @@ describe('#loginController - integration', () => {
       const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
       beforeEach(async () => {
-        mockOidcServer.listen({ onUnhandledRequest: 'bypass' })
+        mockOidcServer.listen()
       })
 
       afterEach(async () => {

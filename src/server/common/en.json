@@ -2,6 +2,7 @@
   "back": "Back",
   "cancel": "Cancel",
   "continue": "Continue",
+  "errorSummaryTitle": "There is a problem",
   "navigation": {
     "signOut": "Sign out",
     "switchOrganisation": "Switch organisation",
