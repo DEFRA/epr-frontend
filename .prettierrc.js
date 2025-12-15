@@ -11,7 +11,7 @@ export default {
       files: ['src/server/**/en.json', 'src/server/**/cy.json'],
       options: {
         plugins: ['prettier-plugin-sort-json'],
-        jsonRecursiveSort: true
+        jsonRecursiveSort: false
       }
     }
   ]

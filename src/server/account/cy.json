@@ -1,13 +1,13 @@
 {
   "greeting": "Croeso",
   "linking": {
+    "pageTitle": "Cysylltu Cofrestru",
+    "heading": "Cysylltu {{ serviceName }} â'i gofrestru",
     "bodyOne": "Gan mai chi yw'r person cyntaf o'ch sefydliad i gael mynediad at y gwasanaeth hwn, mae angen i chi gysylltu'r sefydliad â chofrestru rydym wedi'i dderbyn o'r blaen.",
     "bodyTwo": "Bydd angen i chi gadarnhau hyn unwaith yn unig, ar ran y sefydliad rydych chi'n ei gynrychioli.",
+    "subheading": "Dewiswch y cofrestriad i'w gysylltu â {{ serviceName }}",
     "confirmButton": "Cadarnhau",
-    "errorNoSelection": "Dewiswch sefydliad i'w gysylltu",
-    "heading": "Cysylltu {{ serviceName }} â'i gofrestru",
-    "pageTitle": "Cysylltu Cofrestru",
-    "subheading": "Dewiswch y cofrestriad i'w gysylltu â {{ serviceName }}"
+    "errorNoSelection": "Dewiswch sefydliad i'w gysylltu"
   },
   "pageTitle": "Cyfrif"
 }
