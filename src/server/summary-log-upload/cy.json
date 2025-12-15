@@ -1,8 +1,5 @@
 {
   "accordionSection1Heading": "",
-  "conflictHeading": "",
-  "conflictMessage": "",
-  "conflictPageTitle": "",
   "accordionSection1Text": "",
   "accordionSection2Bullet1": "",
   "accordionSection2Bullet2": "",
@@ -18,6 +15,9 @@
   "checkStepsIntro1": "",
   "checkStepsIntro2": "",
   "continueButton": "",
+  "conflictHeading": "",
+  "conflictMessage": "",
+  "conflictPageTitle": "",
   "errorGeneric": "",
   "errorHeading": "",
   "errorPageTitle": "",
