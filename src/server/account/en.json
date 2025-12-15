@@ -1,13 +1,13 @@
 {
   "greeting": "Welcome",
-  "pageTitle": "Account",
   "linking": {
-    "pageTitle": "Registration Linking",
-    "heading": "Link {{ serviceName }} to its registration",
     "bodyOne": "As you're the first person from your organisation to access this service, you need to link the organisation to a registration we've previously received.",
     "bodyTwo": "You'll only need to confirm this once, on behalf of the organisation you represent.",
-    "subheading": "Select the registration to link to {{ serviceName }}",
     "confirmButton": "Confirm",
-    "errorNoSelection": "Select an organisation to link"
-  }
+    "errorNoSelection": "Select an organisation to link",
+    "heading": "Link {{ serviceName }} to its registration",
+    "pageTitle": "Registration Linking",
+    "subheading": "Select the registration to link to {{ serviceName }}"
+  },
+  "pageTitle": "Account"
 }
