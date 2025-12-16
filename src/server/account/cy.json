@@ -1,6 +1,5 @@
 {
   "greeting": "Croeso",
-  "pageTitle": "Cyfrif",
   "linking": {
     "pageTitle": "Cysylltu Cofrestru",
     "heading": "Cysylltu {{ serviceName }} â'i gofrestru",
@@ -9,5 +8,6 @@
     "subheading": "Dewiswch y cofrestriad i'w gysylltu â {{ serviceName }}",
     "confirmButton": "Cadarnhau",
     "errorNoSelection": "Dewiswch sefydliad i'w gysylltu"
-  }
+  },
+  "pageTitle": "Cyfrif"
 }

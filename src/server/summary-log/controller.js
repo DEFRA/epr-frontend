@@ -36,6 +36,7 @@ const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
 const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
 const SUCCESS_VIEW_NAME = 'summary-log/success'
+const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
@@ -208,6 +209,27 @@ const renderSuccessView = (
 }
 
 /**
+ * Renders the superseded page for summary logs replaced by a newer upload
+ * @param {object} h - Hapi response toolkit
+ * @param {(key: string) => string} localise - i18n localisation function
+ * @param {object} context - View context
+ * @param {string} context.organisationId - Organisation ID
+ * @param {string} context.registrationId - Registration ID
+ * @returns {object} Hapi view response
+ */
+const renderSupersededView = (
+  h,
+  localise,
+  { organisationId, registrationId }
+) => {
+  return h.view(SUPERSEDED_VIEW_NAME, {
+    pageTitle: localise(PAGE_TITLE_KEY),
+    organisationId,
+    registrationId
+  })
+}
+
+/**
  * Renders the validation failures page for invalid summary logs
  * @param {object} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
@@ -292,6 +314,7 @@ const viewResolvers = {
   [summaryLogStatuses.validated]: renderCheckView,
   [summaryLogStatuses.submitting]: renderSubmittingView,
   [summaryLogStatuses.submitted]: renderSuccessView,
+  [summaryLogStatuses.superseded]: renderSupersededView,
   [summaryLogStatuses.invalid]: renderValidationFailuresView,
   [summaryLogStatuses.rejected]: renderValidationFailuresView,
   [summaryLogStatuses.validationFailed]: renderValidationFailuresView
