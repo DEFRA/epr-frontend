@@ -934,33 +934,49 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    test('status: superseded - should show superseded page with link to organisation', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.superseded
+    describe('status: superseded', () => {
+      test('shows superseded page with link to organisation', async () => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.superseded
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('This summary log has been replaced')
+        expect(result).toContain(
+          'A newer summary log has been uploaded. This upload is no longer being processed.'
+        )
+        expect(result).toContain(`href="/organisations/${organisationId}"`)
+        expect(result).toContain('Return to home')
       })
 
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
+      test('does not enable client-side polling', async () => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.superseded
+        })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('This summary log has been replaced')
-      expect(result).toContain(
-        'A newer summary log has been uploaded. This upload is no longer being processed.'
-      )
-      expect(result).toContain(`href="/organisations/${organisationId}"`)
-      expect(result).toContain('Return to home')
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
-    })
+        const { result } = await server.inject({ method: 'GET', url })
 
-    test('status: superseded - should not initiate upload', async () => {
-      const initialCallCount = initiateSummaryLogUpload.mock.calls.length
-
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.superseded
+        expect(result).not.toStrictEqual(enablesClientSidePolling())
       })
 
-      await server.inject({ method: 'GET', url })
+      test('does not initiate upload', async () => {
+        const initialCallCount = initiateSummaryLogUpload.mock.calls.length
 
-      expect(initiateSummaryLogUpload.mock.calls).toHaveLength(initialCallCount)
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.superseded
+        })
+
+        await server.inject({ method: 'GET', url })
+
+        expect(initiateSummaryLogUpload.mock.calls).toHaveLength(
+          initialCallCount
+        )
+      })
     })
 
     test('status: validation_failed - should update session with new uploadId for re-upload', async () => {
@@ -979,6 +995,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       // Verify the response sets a session cookie (session was updated)
       const setCookieHeader = response.headers['set-cookie']
+
       expect(setCookieHeader).toBeDefined()
     })
   })
