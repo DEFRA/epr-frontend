@@ -7,6 +7,7 @@ export default defineConfig({
     clearMocks: true,
     hookTimeout: 60000,
     fileParallelism: !process.env.CI,
+    setupFiles: ['.vite/setup-files.js'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',
