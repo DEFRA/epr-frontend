@@ -8,6 +8,13 @@
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
     <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
 
+    <div class="govuk-inset-text">
+      {{ localise('summary-log:checkWarning', {
+        uploadLink: '/organisations/' + organisationId + '/registrations/' + registrationId + '/summary-logs/upload',
+        homeLink: '/organisations/' + organisationId + '/registrations/' + registrationId
+      }) | safe }}
+    </div>
+
     <p class="govuk-body">
       <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
     </p>

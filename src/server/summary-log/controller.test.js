@@ -182,6 +182,30 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    test('status: validated - should show warning inset text with both links', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      // Should have GDS inset text component with warning message
+      expect(result).toStrictEqual(expect.stringContaining('govuk-inset-text'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'This data will not be saved until you confirm upload'
+        )
+      )
+
+      // Both links should be present in the inset text
+      expect(result).toStrictEqual(
+        expect.stringContaining('upload an updated summary log')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('return to home'))
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
