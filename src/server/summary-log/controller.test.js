@@ -518,6 +518,34 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    test('status: validated with adjusted included loads - should show Show loads link', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: {
+              count: 5,
+              rowIds: [3001, 3002, 3003, 3004, 3005]
+            },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show "Show X loads" for adjusted included loads
+      expect(result).toStrictEqual(expect.stringContaining('Show 5 loads'))
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated without adjusted loads - should not show adjusted section', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,

@@ -96,12 +96,25 @@
           </div>
         </div>
         <div id="accordion-adjusted-loads-content-included" class="govuk-accordion__section-content">
-          <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
-          <ul class="govuk-list govuk-list--bullet">
-            {% for rowId in loads.adjusted.included %}
-            <li>{{ rowId }}</li>
-            {% endfor %}
-          </ul>
+          {% if loads.adjusted.includedCount > 99 %}
+          <p class="govuk-body">{{ localise('summary-log:tooManyLoadsToList') | safe }}</p>
+          {% else %}
+          <details class="govuk-details">
+            <summary class="govuk-details__summary">
+              <span class="govuk-details__summary-text">
+                {{ localise('summary-log:showLoads', { count: loads.adjusted.includedCount }) }}
+              </span>
+            </summary>
+            <div class="govuk-details__text">
+              <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
+              <ul class="govuk-list govuk-list--bullet">
+                {% for rowId in loads.adjusted.included %}
+                <li>{{ rowId }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </details>
+          {% endif %}
         </div>
       </div>
       {% endif %}
