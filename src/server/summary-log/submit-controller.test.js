@@ -97,6 +97,37 @@ describe('#submitSummaryLogController', () => {
     // Hapi will show an error page (500)
     expect(response.statusCode).toBe(statusCodes.internalServerError)
   })
+
+  describe('session validation', () => {
+    test('should redirect to login when session is invalid', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: false
+      })
+
+      const response = await server.inject({
+        method: 'POST',
+        url
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe('/login')
+    })
+
+    test('should redirect to login when session value is null', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: true,
+        value: null
+      })
+
+      const response = await server.inject({
+        method: 'POST',
+        url
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe('/login')
+    })
+  })
 })
 
 /**

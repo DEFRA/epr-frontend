@@ -792,6 +792,37 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
   })
+
+  describe('session validation', () => {
+    test('should redirect to login when session is invalid', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: false
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/login')
+    })
+
+    test('should redirect to login when session value is null', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: true,
+        value: null
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/login')
+    })
+  })
 })
 
 describe('#buildLoadsViewModel', () => {
