@@ -16,22 +16,22 @@
 
     {% if loads.added.total > 0 %}
     <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-added-loads">
-      {% if loads.added.validCount > 0 %}
+      {% if loads.added.includedCount > 0 %}
       <div class="govuk-accordion__section">
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
-            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-valid">
-              {{ localise('summary-log:loadsAdded', { count: loads.added.validCount }) }}
+            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-included">
+              {{ localise('summary-log:loadsAdded', { count: loads.added.includedCount }) }}
             </span>
           </h3>
           <div class="govuk-accordion__section-summary govuk-body">
-            {{ localise('summary-log:loadsAddedExplanation') }}
+            {{ localise('summary-log:loadsAddedExplanation', { sectionNumber: sectionNumber }) }}
           </div>
         </div>
-        <div id="accordion-added-loads-content-valid" class="govuk-accordion__section-content">
+        <div id="accordion-added-loads-content-included" class="govuk-accordion__section-content">
           <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
           <ul class="govuk-list govuk-list--bullet">
-            {% for rowId in loads.added.valid %}
+            {% for rowId in loads.added.included %}
             <li>{{ rowId }}</li>
             {% endfor %}
           </ul>
@@ -39,25 +39,38 @@
       </div>
       {% endif %}
 
-      {% if loads.added.invalidCount > 0 %}
+      {% if loads.added.excludedCount > 0 %}
       <div class="govuk-accordion__section">
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
-            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-invalid">
-              {{ localise('summary-log:loadsNotAdded', { count: loads.added.invalidCount }) }}
+            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-excluded">
+              {{ localise('summary-log:loadsNotAdded', { count: loads.added.excludedCount }) }}
             </span>
           </h3>
           <div class="govuk-accordion__section-summary govuk-body">
-            {{ localise('summary-log:loadsNotAddedExplanation') }}
+            {{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}
           </div>
         </div>
-        <div id="accordion-added-loads-content-invalid" class="govuk-accordion__section-content">
-          <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
-          <ul class="govuk-list govuk-list--bullet">
-            {% for rowId in loads.added.invalid %}
-            <li>{{ rowId }}</li>
-            {% endfor %}
-          </ul>
+        <div id="accordion-added-loads-content-excluded" class="govuk-accordion__section-content">
+          {% if loads.added.excludedCount > 99 %}
+          <p class="govuk-body">{{ localise('summary-log:tooManyLoadsToList') | safe }}</p>
+          {% else %}
+          <details class="govuk-details">
+            <summary class="govuk-details__summary">
+              <span class="govuk-details__summary-text">
+                {{ localise('summary-log:showLoads', { count: loads.added.excludedCount }) }}
+              </span>
+            </summary>
+            <div class="govuk-details__text">
+              <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
+              <ul class="govuk-list govuk-list--bullet">
+                {% for rowId in loads.added.excluded %}
+                <li>{{ rowId }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </details>
+          {% endif %}
         </div>
       </div>
       {% endif %}
@@ -78,16 +91,16 @@
             </span>
           </h3>
           <div class="govuk-accordion__section-summary govuk-body">
-            {{ localise('summary-log:loadsAdjustedExplanation') }}
+            {{ localise('summary-log:loadsAdjustedExplanation', { sectionNumber: sectionNumber }) }}
           </div>
         </div>
         <div id="accordion-adjusted-loads-content-1" class="govuk-accordion__section-content">
           <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
           <ul class="govuk-list govuk-list--bullet">
-            {% for rowId in loads.adjusted.valid %}
+            {% for rowId in loads.adjusted.included %}
             <li>{{ rowId }}</li>
             {% endfor %}
-            {% for rowId in loads.adjusted.invalid %}
+            {% for rowId in loads.adjusted.excluded %}
             <li>{{ rowId }}</li>
             {% endfor %}
           </ul>

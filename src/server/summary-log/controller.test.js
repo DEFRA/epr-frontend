@@ -8,7 +8,7 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { summaryLogStatuses } from '../common/constants/statuses.js'
-import { buildLoadsViewModel } from './controller.js'
+import { buildLoadsViewModel, getSectionNumber } from './controller.js'
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
@@ -166,24 +166,92 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
+    test('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT',
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('section 1 of your summary log')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with REPROCESSOR_OUTPUT - should show section 3 in explanation text', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_OUTPUT',
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('section 3 of your summary log')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with EXPORTER - should show section 1 in explanation text', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('section 1 of your summary log')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated with new loads - should show new loads heading', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: {
+            included: {
               count: 7,
               rowIds: [1092, 1093, 1094, 1095, 1096, 1097, 1098]
             },
-            invalid: { count: 2, rowIds: [1099, 1100] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            excluded: { count: 2, rowIds: [1099, 1100] }
           },
           adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -192,7 +260,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      // Should show total new loads (valid + invalid) in heading
+      // Should show total new loads (included + excluded) in heading
       expect(result).toStrictEqual(
         expect.stringContaining('There are 9 new loads')
       )
@@ -214,16 +282,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 3, rowIds: [1096, 1099, 1100] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -243,16 +307,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 3, rowIds: [1096, 1099, 1100] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -277,16 +337,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 3, rowIds: [1092, 1093, 1094] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 3, rowIds: [1092, 1093, 1094] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -310,16 +366,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 1, rowIds: [1092] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 1, rowIds: [1092] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 1, rowIds: [1093] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 1, rowIds: [1093] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -337,21 +389,84 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    test('status: validated with 100+ excluded loads - should show supplementary guidance instead of row IDs', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: {
+              count: 100,
+              rowIds: Array.from({ length: 100 }, (_, i) => 2000 + i)
+            }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show supplementary guidance message instead of row IDs
+      expect(result).toStrictEqual(
+        expect.stringContaining('100 or more loads are missing data')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('supplementary guidance')
+      )
+      // Should NOT show "Show X loads" link
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('Show 100 loads')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with 99 excluded loads - should show Show loads link with row IDs', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: {
+              count: 99,
+              rowIds: Array.from({ length: 99 }, (_, i) => 2000 + i)
+            }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show "Show X loads" when 99 or fewer
+      expect(result).toStrictEqual(expect.stringContaining('Show 99 loads'))
+      // Should NOT show supplementary guidance
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('100 or more loads are missing data')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated without adjusted loads - should not show adjusted section', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -747,17 +862,17 @@ describe('#buildLoadsViewModel', () => {
 
     expect(result).toStrictEqual({
       added: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: [],
+        excluded: [],
+        includedCount: 0,
+        excludedCount: 0,
         total: 0
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: [],
+        excluded: [],
+        includedCount: 0,
+        excludedCount: 0,
         total: 0
       }
     })
@@ -768,17 +883,17 @@ describe('#buildLoadsViewModel', () => {
 
     expect(result).toStrictEqual({
       added: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: [],
+        excluded: [],
+        includedCount: 0,
+        excludedCount: 0,
         total: 0
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: [],
+        excluded: [],
+        includedCount: 0,
+        excludedCount: 0,
         total: 0
       }
     })
@@ -787,32 +902,28 @@ describe('#buildLoadsViewModel', () => {
   test('returns empty arrays and zero counts when loads has empty structure', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       }
     })
 
     expect(result).toStrictEqual({
       added: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: [],
+        excluded: [],
+        includedCount: 0,
+        excludedCount: 0,
         total: 0
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: [],
+        excluded: [],
+        includedCount: 0,
+        excludedCount: 0,
         total: 0
       }
     })
@@ -821,25 +932,21 @@ describe('#buildLoadsViewModel', () => {
   test('uses count from backend (rowIds may be truncated)', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 150, rowIds: [1001, 1002, 1003] },
-        invalid: { count: 50, rowIds: [1004, 1005] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 150, rowIds: [1001, 1002, 1003] },
+        excluded: { count: 50, rowIds: [1004, 1005] }
       },
       adjusted: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       }
     })
 
     // rowIds contain truncated data, but counts come from count field
     expect(result.added).toStrictEqual({
-      valid: [1001, 1002, 1003],
-      invalid: [1004, 1005],
-      validCount: 150,
-      invalidCount: 50,
+      included: [1001, 1002, 1003],
+      excluded: [1004, 1005],
+      includedCount: 150,
+      excludedCount: 50,
       total: 200
     })
   })
@@ -847,24 +954,20 @@ describe('#buildLoadsViewModel', () => {
   test('uses count for adjusted loads', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        valid: { count: 120, rowIds: [2001, 2002] },
-        invalid: { count: 30, rowIds: [2003] }
+        included: { count: 120, rowIds: [2001, 2002] },
+        excluded: { count: 30, rowIds: [2003] }
       }
     })
 
     expect(result.adjusted).toStrictEqual({
-      valid: [2001, 2002],
-      invalid: [2003],
-      validCount: 120,
-      invalidCount: 30,
+      included: [2001, 2002],
+      excluded: [2003],
+      includedCount: 120,
+      excludedCount: 30,
       total: 150
     })
   })
@@ -872,28 +975,66 @@ describe('#buildLoadsViewModel', () => {
   test('handles partial loads data gracefully', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 1, rowIds: [1001] }
-        // missing invalid
+        included: { count: 1, rowIds: [1001] }
+        // missing excluded
       }
-      // missing unchanged, adjusted
+      // missing adjusted
     })
 
     expect(result).toStrictEqual({
       added: {
-        valid: [1001],
-        invalid: [],
-        validCount: 1,
-        invalidCount: 0,
+        included: [1001],
+        excluded: [],
+        includedCount: 1,
+        excludedCount: 0,
         total: 1
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: [],
+        excluded: [],
+        includedCount: 0,
+        excludedCount: 0,
         total: 0
       }
     })
+  })
+
+  test('calculates total from included + excluded counts', () => {
+    const result = buildLoadsViewModel({
+      added: {
+        included: { count: 8, rowIds: [1001, 1002, 1003] },
+        excluded: { count: 7, rowIds: [1004, 1005] }
+      },
+      adjusted: {
+        included: { count: 4, rowIds: [2001, 2002, 2003, 2004] },
+        excluded: { count: 3, rowIds: [2005, 2006, 2007] }
+      }
+    })
+
+    expect(result.added.total).toBe(15)
+    expect(result.adjusted.total).toBe(7)
+  })
+})
+
+describe('#getSectionNumber', () => {
+  test('returns section 1 for REPROCESSOR_INPUT', () => {
+    expect(getSectionNumber('REPROCESSOR_INPUT')).toBe(1)
+  })
+
+  test('returns section 3 for REPROCESSOR_OUTPUT', () => {
+    expect(getSectionNumber('REPROCESSOR_OUTPUT')).toBe(3)
+  })
+
+  test('returns section 1 for EXPORTER', () => {
+    expect(getSectionNumber('EXPORTER')).toBe(1)
+  })
+
+  test('returns section 1 for undefined processingType', () => {
+    expect(getSectionNumber(undefined)).toBe(1)
+  })
+
+  test('returns section 1 for unknown processingType', () => {
+    expect(getSectionNumber('UNKNOWN_TYPE')).toBe(1)
   })
 })
 
