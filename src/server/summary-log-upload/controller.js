@@ -1,6 +1,7 @@
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -10,11 +11,18 @@ export const summaryLogUploadController = {
     const localise = request.t
     const { organisationId, registrationId } = request.params
 
+    const { ok, value: session } = await getUserSession(request)
+
+    if (!ok || !session) {
+      return h.redirect('/login')
+    }
+
     try {
       const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
         organisationId,
         registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        idToken: session.idToken
       })
 
       // Store uploadId in session for status polling reconciliation

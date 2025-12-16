@@ -2,9 +2,12 @@ import Boom from '@hapi/boom'
 
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+
+vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
@@ -28,6 +31,14 @@ describe('#summaryLogUploadController', () => {
     mockOidcServer.listen()
     server = await createServer()
     await server.initialize()
+
+    // Mock getUserSession to return a valid session
+    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+      ok: true,
+      value: {
+        idToken: 'test-id-token'
+      }
+    })
   })
 
   afterAll(async () => {
@@ -64,7 +75,8 @@ describe('#summaryLogUploadController', () => {
       organisationId: '123',
       registrationId: '456',
       redirectUrl:
-        '/organisations/123/registrations/456/summary-logs/{summaryLogId}'
+        '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
+      idToken: 'test-id-token'
     })
   })
 

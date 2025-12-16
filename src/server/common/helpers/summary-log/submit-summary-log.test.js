@@ -28,14 +28,18 @@ describe(submitSummaryLog, () => {
     const result = await submitSummaryLog(
       organisationId,
       registrationId,
-      summaryLogId
+      summaryLogId,
+      'test-id-token'
     )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(/\/summary-logs\/log-789\/submit$/),
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-id-token'
+        }
       })
     )
     expect(result).toStrictEqual(mockResponse)
@@ -50,7 +54,12 @@ describe(submitSummaryLog, () => {
     })
 
     await expect(
-      submitSummaryLog(organisationId, registrationId, summaryLogId)
+      submitSummaryLog(
+        organisationId,
+        registrationId,
+        summaryLogId,
+        'test-id-token'
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }

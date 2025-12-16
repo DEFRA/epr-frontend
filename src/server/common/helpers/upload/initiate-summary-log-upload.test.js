@@ -24,7 +24,8 @@ describe(initiateSummaryLogUpload, () => {
     await initiateSummaryLogUpload({
       organisationId: 'org-123',
       registrationId: 'reg-456',
-      redirectUrl: '/redirect/path'
+      redirectUrl: '/redirect/path',
+      idToken: 'test-id-token'
     })
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -33,7 +34,10 @@ describe(initiateSummaryLogUpload, () => {
       ),
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-id-token'
+        },
         body: JSON.stringify({ redirectUrl: '/redirect/path' })
       })
     )
@@ -55,7 +59,8 @@ describe(initiateSummaryLogUpload, () => {
     const result = await initiateSummaryLogUpload({
       organisationId: 'org-123',
       registrationId: 'reg-456',
-      redirectUrl: '/redirect/path'
+      redirectUrl: '/redirect/path',
+      idToken: 'test-id-token'
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -73,7 +78,8 @@ describe(initiateSummaryLogUpload, () => {
       initiateSummaryLogUpload({
         organisationId: 'org-123',
         registrationId: 'reg-456',
-        redirectUrl: '/redirect/path'
+        redirectUrl: '/redirect/path',
+        idToken: 'test-id-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,
