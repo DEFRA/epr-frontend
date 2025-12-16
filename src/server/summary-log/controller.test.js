@@ -166,6 +166,22 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
+    test('status: validated - should show return to home link to registration dashboard', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(expect.stringContaining('Return to home'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          `href="/organisations/${organisationId}/registrations/${registrationId}"`
+        )
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,

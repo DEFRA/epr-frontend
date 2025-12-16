@@ -8,6 +8,10 @@
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
     <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
 
+    <p class="govuk-body">
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
+    </p>
+
     {% if loads.added.total > 0 %}
     <h2 class="govuk-heading-l">{{ localise('summary-log:addedLoadsHeading', { count: loads.added.total }) }}</h2>
     {% else %}
