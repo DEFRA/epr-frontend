@@ -37,7 +37,7 @@ describe(provideUserOrganisations, () => {
     )
     expect(
       fetchUserOrganisationsModule.fetchUserOrganisations
-    ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+    ).toHaveBeenCalledExactlyOnceWith(mockRequest)
     expect(result).toStrictEqual(mockOrganisations)
   })
 

@@ -10,6 +10,7 @@ export const submitSummaryLogController = {
 
     // Submit the summary log to the backend
     const responseData = await submitSummaryLog(
+      request,
       organisationId,
       registrationId,
       summaryLogId

@@ -1,7 +1,12 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
+ * @import { Request } from '@hapi/hapi'
+ */
+
+/**
  * Fetches summary log status from EPR Backend
+ * @param {Request} request - Hapi request object
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} summaryLogId
@@ -10,6 +15,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
  */
 async function fetchSummaryLogStatus(
+  request,
   organisationId,
   registrationId,
   summaryLogId,
@@ -20,7 +26,7 @@ async function fetchSummaryLogStatus(
   const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
   const query = uploadId ? `?uploadId=${encodeURIComponent(uploadId)}` : ''
 
-  return fetchJsonFromBackend(`${path}${query}`, { method: 'GET' })
+  return fetchJsonFromBackend(request, `${path}${query}`, { method: 'GET' })
 }
 
 export { fetchSummaryLogStatus }

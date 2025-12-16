@@ -245,7 +245,9 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith(mockRequest, {
+        idToken: 'mock-id-token'
+      })
 
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
@@ -420,7 +422,9 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith(mockRequest, {
+        idToken: 'mock-id-token'
+      })
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
         expect.any(Object)

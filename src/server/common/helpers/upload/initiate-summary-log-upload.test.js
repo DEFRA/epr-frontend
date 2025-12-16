@@ -5,12 +5,26 @@ import { initiateSummaryLogUpload } from './initiate-summary-log-upload.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+/**
+ * Creates a mock Hapi request object
+ * @param {object} [options]
+ * @param {string} [options.token] - Auth token to include in credentials
+ * @returns {object} Mock request object
+ */
+const createMockRequest = (options = {}) => ({
+  auth: {
+    credentials: options.token ? { token: options.token } : undefined
+  }
+})
+
 describe(initiateSummaryLogUpload, () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   test('calls backend summary-logs endpoint with redirectUrl', async () => {
+    const mockRequest = createMockRequest({ token: 'test-token' })
+
     mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -21,7 +35,7 @@ describe(initiateSummaryLogUpload, () => {
       })
     })
 
-    await initiateSummaryLogUpload({
+    await initiateSummaryLogUpload(mockRequest, {
       organisationId: 'org-123',
       registrationId: 'reg-456',
       redirectUrl: '/redirect/path'
@@ -33,13 +47,17 @@ describe(initiateSummaryLogUpload, () => {
       ),
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json'
+        }),
         body: JSON.stringify({ redirectUrl: '/redirect/path' })
       })
     )
   })
 
   test('returns summaryLogId, uploadId, uploadUrl, and statusUrl from response', async () => {
+    const mockRequest = createMockRequest({ token: 'test-token' })
     const mockResponse = {
       summaryLogId: 'sl-789',
       uploadId: 'up-101',
@@ -52,7 +70,7 @@ describe(initiateSummaryLogUpload, () => {
       json: vi.fn().mockResolvedValue(mockResponse)
     })
 
-    const result = await initiateSummaryLogUpload({
+    const result = await initiateSummaryLogUpload(mockRequest, {
       organisationId: 'org-123',
       registrationId: 'reg-456',
       redirectUrl: '/redirect/path'
@@ -62,6 +80,8 @@ describe(initiateSummaryLogUpload, () => {
   })
 
   test('throws Boom error when backend returns non-ok response', async () => {
+    const mockRequest = createMockRequest({ token: 'test-token' })
+
     mockFetch.mockResolvedValue({
       ok: false,
       status: 500,
@@ -70,7 +90,7 @@ describe(initiateSummaryLogUpload, () => {
     })
 
     await expect(
-      initiateSummaryLogUpload({
+      initiateSummaryLogUpload(mockRequest, {
         organisationId: 'org-123',
         registrationId: 'reg-456',
         redirectUrl: '/redirect/path'

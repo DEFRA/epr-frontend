@@ -11,7 +11,7 @@ export const summaryLogUploadController = {
     const { organisationId, registrationId } = request.params
 
     try {
-      const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
+      const { uploadUrl, uploadId } = await initiateSummaryLogUpload(request, {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`

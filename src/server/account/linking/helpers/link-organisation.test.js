@@ -4,6 +4,18 @@ import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { linkOrganisation } from './link-organisation.js'
 
+/**
+ * Creates a mock Hapi request object
+ * @param {object} [options]
+ * @param {string} [options.token] - Auth token to include in credentials
+ * @returns {object} Mock request object
+ */
+const createMockRequest = (options = {}) => ({
+  auth: {
+    credentials: options.token ? { token: options.token } : undefined
+  }
+})
+
 describe(linkOrganisation, () => {
   const backendUrl = config.get('eprBackendUrl')
   const mockBackendServer = setupServer()
@@ -22,7 +34,8 @@ describe(linkOrganisation, () => {
 
   it('should successfully link organisation with correct auth token', async () => {
     const organisationId = 'org-123'
-    const idToken = 'valid-id-token'
+    const token = 'valid-token'
+    const mockRequest = createMockRequest({ token })
 
     mockBackendServer.use(
       http.post(
@@ -30,7 +43,7 @@ describe(linkOrganisation, () => {
         ({ request }) => {
           const authHeader = request.headers.get('Authorization')
 
-          if (authHeader === `Bearer ${idToken}`) {
+          if (authHeader === `Bearer ${token}`) {
             return HttpResponse.json({})
           }
 
@@ -40,13 +53,13 @@ describe(linkOrganisation, () => {
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(mockRequest, organisationId)
     ).resolves.toBeUndefined()
   })
 
   it('should throw error when backend returns 401', async () => {
     const organisationId = 'org-456'
-    const idToken = 'invalid-token'
+    const mockRequest = createMockRequest({ token: 'invalid-token' })
 
     mockBackendServer.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
@@ -55,7 +68,7 @@ describe(linkOrganisation, () => {
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(mockRequest, organisationId)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -66,7 +79,7 @@ describe(linkOrganisation, () => {
 
   it('should throw error when backend returns 404', async () => {
     const organisationId = 'non-existent-org'
-    const idToken = 'valid-token'
+    const mockRequest = createMockRequest({ token: 'valid-token' })
 
     mockBackendServer.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
@@ -78,7 +91,7 @@ describe(linkOrganisation, () => {
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(mockRequest, organisationId)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -89,7 +102,7 @@ describe(linkOrganisation, () => {
 
   it('should throw error when backend returns 500', async () => {
     const organisationId = 'org-789'
-    const idToken = 'valid-token'
+    const mockRequest = createMockRequest({ token: 'valid-token' })
 
     mockBackendServer.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
@@ -101,7 +114,7 @@ describe(linkOrganisation, () => {
     )
 
     await expect(
-      linkOrganisation(idToken, organisationId)
+      linkOrganisation(mockRequest, organisationId)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {

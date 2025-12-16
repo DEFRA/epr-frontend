@@ -34,12 +34,12 @@ describe('account linking POST controller', () => {
   describe('when validation passes', () => {
     it('should call backend link endpoint and redirect to /account', async () => {
       const organisationId = 'org-123'
-      const mockIdToken = 'mock-id-token'
+      const mockToken = 'mock-token'
 
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: true,
         value: {
-          idToken: mockIdToken
+          idToken: 'mock-id-token'
         }
       })
 
@@ -49,7 +49,7 @@ describe('account linking POST controller', () => {
           ({ request }) => {
             const authHeader = request.headers.get('Authorization')
 
-            if (authHeader === `Bearer ${mockIdToken}`) {
+            if (authHeader === `Bearer ${mockToken}`) {
               return HttpResponse.json({})
             }
 
@@ -61,6 +61,11 @@ describe('account linking POST controller', () => {
       const mockRequest = {
         payload: {
           organisationId
+        },
+        auth: {
+          credentials: {
+            token: mockToken
+          }
         }
       }
 

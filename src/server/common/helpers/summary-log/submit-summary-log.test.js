@@ -5,10 +5,23 @@ import { submitSummaryLog } from './submit-summary-log.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+/**
+ * Creates a mock Hapi request object
+ * @param {object} [options]
+ * @param {string} [options.token] - Auth token to include in credentials
+ * @returns {object} Mock request object
+ */
+const createMockRequest = (options = {}) => ({
+  auth: {
+    credentials: options.token ? { token: options.token } : undefined
+  }
+})
+
 describe(submitSummaryLog, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
+  const mockRequest = createMockRequest({ token: 'test-token' })
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -26,6 +39,7 @@ describe(submitSummaryLog, () => {
     })
 
     const result = await submitSummaryLog(
+      mockRequest,
       organisationId,
       registrationId,
       summaryLogId
@@ -35,7 +49,10 @@ describe(submitSummaryLog, () => {
       expect.stringMatching(/\/summary-logs\/log-789\/submit$/),
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json'
+        })
       })
     )
     expect(result).toStrictEqual(mockResponse)
@@ -50,7 +67,12 @@ describe(submitSummaryLog, () => {
     })
 
     await expect(
-      submitSummaryLog(organisationId, registrationId, summaryLogId)
+      submitSummaryLog(
+        mockRequest,
+        organisationId,
+        registrationId,
+        summaryLogId
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }

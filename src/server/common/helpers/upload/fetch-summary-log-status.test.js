@@ -5,10 +5,23 @@ import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+/**
+ * Creates a mock Hapi request object
+ * @param {object} [options]
+ * @param {string} [options.token] - Auth token to include in credentials
+ * @returns {object} Mock request object
+ */
+const createMockRequest = (options = {}) => ({
+  auth: {
+    credentials: options.token ? { token: options.token } : undefined
+  }
+})
+
 describe(fetchSummaryLogStatus, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
+  const mockRequest = createMockRequest({ token: 'test-token' })
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -26,6 +39,7 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     const result = await fetchSummaryLogStatus(
+      mockRequest,
       organisationId,
       registrationId,
       summaryLogId
@@ -35,7 +49,10 @@ describe(fetchSummaryLogStatus, () => {
       expect.stringMatching(/\/summary-logs\/log-789$/),
       expect.objectContaining({
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-token',
+          'Content-Type': 'application/json'
+        })
       })
     )
     expect(result).toStrictEqual(mockResponse)
@@ -52,9 +69,15 @@ describe(fetchSummaryLogStatus, () => {
       json: vi.fn().mockResolvedValue(mockResponse)
     })
 
-    await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      uploadId: 'cdp-upload-123'
-    })
+    await fetchSummaryLogStatus(
+      mockRequest,
+      organisationId,
+      registrationId,
+      summaryLogId,
+      {
+        uploadId: 'cdp-upload-123'
+      }
+    )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(
@@ -77,7 +100,12 @@ describe(fetchSummaryLogStatus, () => {
       json: vi.fn().mockResolvedValue(mockResponse)
     })
 
-    await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+    await fetchSummaryLogStatus(
+      mockRequest,
+      organisationId,
+      registrationId,
+      summaryLogId
+    )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(/\/summary-logs\/log-789$/),
@@ -94,7 +122,12 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+      fetchSummaryLogStatus(
+        mockRequest,
+        organisationId,
+        registrationId,
+        summaryLogId
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -110,7 +143,12 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+      fetchSummaryLogStatus(
+        mockRequest,
+        organisationId,
+        registrationId,
+        summaryLogId
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }

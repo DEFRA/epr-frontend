@@ -102,9 +102,15 @@ const getStatusData = async (
 
   const data =
     freshData ??
-    (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      uploadId
-    }))
+    (await fetchSummaryLogStatus(
+      request,
+      organisationId,
+      registrationId,
+      summaryLogId,
+      {
+        uploadId
+      }
+    ))
 
   if (freshData) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -328,7 +334,12 @@ const renderViewForStatus = (options) => {
 }
 
 /**
+ * @import { Request } from '@hapi/hapi'
+ */
+
+/**
  * Gets a pre-signed upload URL and upload ID for re-uploading a summary log
+ * @param {Request} request - Hapi request object
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
@@ -336,6 +347,7 @@ const renderViewForStatus = (options) => {
  * @returns {Promise<{uploadUrl?: string, uploadId?: string}>} Upload URL and ID, or empty object if not needed
  */
 const getUploadData = async (
+  request,
   status,
   organisationId,
   registrationId,
@@ -345,7 +357,7 @@ const getUploadData = async (
     return {}
   }
 
-  const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
+  const { uploadUrl, uploadId } = await initiateSummaryLogUpload(request, {
     organisationId,
     registrationId,
     redirectUrl
@@ -371,6 +383,7 @@ export const summaryLogUploadProgressController = {
     const cancelUrl = baseUrl
 
     const { uploadId, uploadUrl } = await getUploadData(
+      request,
       status,
       organisationId,
       registrationId,

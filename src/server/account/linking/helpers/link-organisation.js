@@ -1,19 +1,21 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
- * @import { Organisation } from '#types/organisation.d.ts'
+ * @import { Request } from '@hapi/hapi'
  */
 
 /**
- * @param {string} idToken
+ * Links an organisation to the current user
+ * @param {Request} request - Hapi request object
  * @param {string} organisationId
  * @returns {Promise<void>}
  */
-export async function linkOrganisation(idToken, organisationId) {
-  await fetchJsonFromBackend(`/v1/organisations/${organisationId}/link`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${idToken}`
+export async function linkOrganisation(request, organisationId) {
+  await fetchJsonFromBackend(
+    request,
+    `/v1/organisations/${organisationId}/link`,
+    {
+      method: 'POST'
     }
-  })
+  )
 }

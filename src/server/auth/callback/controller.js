@@ -31,7 +31,9 @@ const controller = {
 
       request.logger.info('User has been successfully authenticated')
 
-      const organisations = await fetchUserOrganisations(session.idToken)
+      const organisations = await fetchUserOrganisations(request, {
+        idToken: session.idToken
+      })
 
       if (!organisations.linked) {
         return h.redirect(ACCOUNT_LINKING_PATH)

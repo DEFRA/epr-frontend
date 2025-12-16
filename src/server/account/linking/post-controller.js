@@ -23,7 +23,7 @@ export const controller = {
           return h.redirect('/login').takeover()
         }
 
-        const organisations = await fetchUserOrganisations(session.idToken)
+        const organisations = await fetchUserOrganisations(request)
 
         const viewData = buildLinkingViewData(request, organisations, {
           errors: {
@@ -46,7 +46,7 @@ export const controller = {
       return h.redirect('/login')
     }
 
-    await linkOrganisation(session.idToken, organisationId)
+    await linkOrganisation(request, organisationId)
 
     return h.redirect('/account')
   }

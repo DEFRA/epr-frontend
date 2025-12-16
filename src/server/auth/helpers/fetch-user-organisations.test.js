@@ -8,9 +8,21 @@ import { fetchUserOrganisations } from './fetch-user-organisations.js'
  * @import { UserOrganisations } from '../types/organisations.js'
  */
 
+/**
+ * Creates a mock Hapi request object
+ * @param {object} [options]
+ * @param {string} [options.token] - Auth token to include in credentials
+ * @returns {object} Mock request object
+ */
+const createMockRequest = (options = {}) => ({
+  auth: {
+    credentials: options.token ? { token: options.token } : undefined
+  }
+})
+
 describe('#fetchUserOrganisations', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const mockIdToken = 'mock-id-token-12345'
+  const mockToken = 'mock-token-12345'
 
   const mockOrganisationsResponse = {
     organisations: {
@@ -46,7 +58,7 @@ describe('#fetchUserOrganisations', () => {
     http.get(`${backendUrl}/v1/me/organisations`, ({ request }) => {
       const authHeader = request.headers.get('Authorization')
 
-      if (authHeader === `Bearer ${mockIdToken}`) {
+      if (authHeader === `Bearer ${mockToken}`) {
         return HttpResponse.json(mockOrganisationsResponse)
       }
 
@@ -67,13 +79,17 @@ describe('#fetchUserOrganisations', () => {
   })
 
   it('should fetch user organisations successfully with valid token', async () => {
-    const result = await fetchUserOrganisations(mockIdToken)
+    const mockRequest = createMockRequest({ token: mockToken })
+
+    const result = await fetchUserOrganisations(mockRequest)
 
     expect(result).toStrictEqual(mockOrganisationsResponse.organisations)
   })
 
   it('should handle organisations with linked organisation', async () => {
-    const result = await fetchUserOrganisations(mockIdToken)
+    const mockRequest = createMockRequest({ token: mockToken })
+
+    const result = await fetchUserOrganisations(mockRequest)
 
     expect(result.current).toStrictEqual({
       id: 'defra-org-123',
@@ -92,6 +108,8 @@ describe('#fetchUserOrganisations', () => {
   })
 
   it('should handle organisations with no linked organisation', async () => {
+    const mockRequest = createMockRequest({ token: mockToken })
+
     mockServer.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json({
@@ -113,13 +131,15 @@ describe('#fetchUserOrganisations', () => {
       })
     )
 
-    const result = await fetchUserOrganisations(mockIdToken)
+    const result = await fetchUserOrganisations(mockRequest)
 
     expect(result.linked).toBeNull()
     expect(result.unlinked).toHaveLength(1)
   })
 
   it('should handle empty unlinked organisations array', async () => {
+    const mockRequest = createMockRequest({ token: mockToken })
+
     mockServer.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json({
@@ -143,24 +163,36 @@ describe('#fetchUserOrganisations', () => {
       })
     )
 
-    const result = await fetchUserOrganisations(mockIdToken)
+    const result = await fetchUserOrganisations(mockRequest)
 
     expect(result.unlinked).toStrictEqual([])
     expect(result.linked).not.toBeNull()
   })
 
+  it('should use idToken override when provided (for auth callback)', async () => {
+    const mockRequest = createMockRequest() // No session token
+
+    const result = await fetchUserOrganisations(mockRequest, {
+      idToken: mockToken
+    })
+
+    expect(result).toStrictEqual(mockOrganisationsResponse.organisations)
+  })
+
   it('should throw error when backend returns 401', async () => {
-    await expect(fetchUserOrganisations('invalid-token')).rejects.toMatchObject(
-      {
-        isBoom: true,
-        output: {
-          statusCode: 401
-        }
+    const mockRequest = createMockRequest({ token: 'invalid-token' })
+
+    await expect(fetchUserOrganisations(mockRequest)).rejects.toMatchObject({
+      isBoom: true,
+      output: {
+        statusCode: 401
       }
-    )
+    })
   })
 
   it('should throw error when backend returns 500', async () => {
+    const mockRequest = createMockRequest({ token: mockToken })
+
     mockServer.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json(
@@ -170,7 +202,7 @@ describe('#fetchUserOrganisations', () => {
       })
     )
 
-    await expect(fetchUserOrganisations(mockIdToken)).rejects.toMatchObject({
+    await expect(fetchUserOrganisations(mockRequest)).rejects.toMatchObject({
       isBoom: true,
       output: {
         statusCode: 500
@@ -179,13 +211,15 @@ describe('#fetchUserOrganisations', () => {
   })
 
   it('should throw error when network request fails', async () => {
+    const mockRequest = createMockRequest({ token: mockToken })
+
     mockServer.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.error()
       })
     )
 
-    await expect(fetchUserOrganisations(mockIdToken)).rejects.toMatchObject({
+    await expect(fetchUserOrganisations(mockRequest)).rejects.toMatchObject({
       isBoom: true,
       output: {
         statusCode: 500
