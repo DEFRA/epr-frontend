@@ -461,7 +461,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
-      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith(expect.anything(), {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
@@ -531,7 +531,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
-      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith(expect.anything(), {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
@@ -675,7 +675,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       await server.inject({ method: 'GET', url })
 
-      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith(expect.anything(), {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
