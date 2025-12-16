@@ -10,5 +10,11 @@
     "strictNullChecks": true
   },
   "exclude": [".cache", ".public", ".server", "coverage", "node_modules"],
-  "include": ["**/*.cjs", "**/*.js", ".eslintrc.*", ".prettierrc.*"]
+  "include": [
+    "**/*.cjs",
+    "**/*.js",
+    ".eslintrc.*",
+    ".prettierrc.*",
+    ".vite/**/*.js"
+  ]
 }
