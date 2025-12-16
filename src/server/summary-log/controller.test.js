@@ -5,10 +5,13 @@ import { validationFailureCodes } from '#server/common/constants/validation-code
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import { buildLoadsViewModel } from './controller.js'
+
+vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
@@ -54,6 +57,14 @@ describe('#summaryLogUploadProgressController', () => {
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
+
+    // Mock getUserSession to return a valid session
+    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+      ok: true,
+      value: {
+        idToken: 'test-id-token'
+      }
+    })
   })
 
   afterAll(async () => {
@@ -67,7 +78,7 @@ describe('#summaryLogUploadProgressController', () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { uploadId: undefined }
+      { uploadId: undefined, idToken: 'test-id-token' }
     )
     expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -464,7 +475,8 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
         registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        idToken: 'test-id-token'
       })
     })
 
@@ -534,7 +546,8 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
         registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        idToken: 'test-id-token'
       })
     })
 
@@ -678,7 +691,8 @@ describe('#summaryLogUploadProgressController', () => {
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
         registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        idToken: 'test-id-token'
       })
     })
 
@@ -696,7 +710,6 @@ describe('#summaryLogUploadProgressController', () => {
       )
       expect(result).toContain(`href="/organisations/${organisationId}"`)
       expect(result).toContain('Return to home')
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
     test('status: superseded - should not initiate upload', async () => {
@@ -709,6 +722,16 @@ describe('#summaryLogUploadProgressController', () => {
       await server.inject({ method: 'GET', url })
 
       expect(initiateSummaryLogUpload.mock.calls).toHaveLength(initialCallCount)
+    })
+
+    test('status: superseded - should not enable client-side polling', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.superseded
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
     test('status: validation_failed - should update session with new uploadId for re-upload', async () => {
@@ -727,6 +750,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       // Verify the response sets a session cookie (session was updated)
       const setCookieHeader = response.headers['set-cookie']
+
       expect(setCookieHeader).toBeDefined()
     })
   })
@@ -766,6 +790,37 @@ describe('#summaryLogUploadProgressController', () => {
         expect.stringContaining('Something went wrong')
       )
       expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+  })
+
+  describe('session validation', () => {
+    test('should redirect to login when session is invalid', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: false
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/login')
+    })
+
+    test('should redirect to login when session value is null', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: true,
+        value: null
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/login')
     })
   })
 })

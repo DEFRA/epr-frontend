@@ -7,6 +7,7 @@ import {
   DATA_ENTRY_CODES,
   DATA_ENTRY_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
+import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 const PROCESSING_STATES = new Set([
   summaryLogStatuses.preprocessing,
@@ -88,13 +89,15 @@ const getProgressViewData = (localise, status) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} summaryLogId - Summary log ID
+ * @param {string} idToken - JWT ID token for authorization
  * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
  */
 const getStatusData = async (
   request,
   organisationId,
   registrationId,
-  summaryLogId
+  summaryLogId,
+  idToken
 ) => {
   // Check session for fresh data first (prevents race condition after POST submit)
   const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
@@ -103,7 +106,8 @@ const getStatusData = async (
   const data =
     freshData ??
     (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      uploadId
+      uploadId,
+      idToken
     }))
 
   if (freshData) {
@@ -333,13 +337,15 @@ const renderViewForStatus = (options) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
+ * @param {string} idToken - JWT ID token for authorization
  * @returns {Promise<{uploadUrl?: string, uploadId?: string}>} Upload URL and ID, or empty object if not needed
  */
 const getUploadData = async (
   status,
   organisationId,
   registrationId,
-  redirectUrl
+  redirectUrl,
+  idToken
 ) => {
   if (!REUPLOAD_STATES.has(status)) {
     return {}
@@ -348,7 +354,8 @@ const getUploadData = async (
   const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
     organisationId,
     registrationId,
-    redirectUrl
+    redirectUrl,
+    idToken
   })
 
   return { uploadUrl, uploadId }
@@ -362,8 +369,20 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
+    const { ok, value: session } = await getUserSession(request)
+
+    if (!ok || !session) {
+      return h.redirect('/login')
+    }
+
     const { status, validation, accreditationNumber, loads } =
-      await getStatusData(request, organisationId, registrationId, summaryLogId)
+      await getStatusData(
+        request,
+        organisationId,
+        registrationId,
+        summaryLogId,
+        session.idToken
+      )
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
@@ -374,7 +393,8 @@ export const summaryLogUploadProgressController = {
       status,
       organisationId,
       registrationId,
-      redirectUrl
+      redirectUrl,
+      session.idToken
     )
 
     if (uploadId) {

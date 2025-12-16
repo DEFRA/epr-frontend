@@ -28,14 +28,18 @@ describe(fetchSummaryLogStatus, () => {
     const result = await fetchSummaryLogStatus(
       organisationId,
       registrationId,
-      summaryLogId
+      summaryLogId,
+      { idToken: 'test-id-token' }
     )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(/\/summary-logs\/log-789$/),
       expect.objectContaining({
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-id-token'
+        }
       })
     )
     expect(result).toStrictEqual(mockResponse)
@@ -53,7 +57,8 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      uploadId: 'cdp-upload-123'
+      uploadId: 'cdp-upload-123',
+      idToken: 'test-id-token'
     })
 
     expect(mockFetch).toHaveBeenCalledWith(
@@ -77,7 +82,9 @@ describe(fetchSummaryLogStatus, () => {
       json: vi.fn().mockResolvedValue(mockResponse)
     })
 
-    await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+    await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
+      idToken: 'test-id-token'
+    })
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(/\/summary-logs\/log-789$/),
@@ -94,7 +101,9 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
+        idToken: 'test-id-token'
+      })
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -110,7 +119,9 @@ describe(fetchSummaryLogStatus, () => {
     })
 
     await expect(
-      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId)
+      fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
+        idToken: 'test-id-token'
+      })
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }
