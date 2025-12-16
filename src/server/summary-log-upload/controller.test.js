@@ -9,10 +9,10 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
   () => ({
-    initiateSummaryLogUpload: vi.fn().mockResolvedValue({
+    initiateSummaryLogUpload: vi.fn(async () => ({
       uploadUrl: 'http://cdp/upload',
       uploadId: 'cdp-upload-123'
-    })
+    }))
   })
 )
 
@@ -60,7 +60,7 @@ describe('#summaryLogUploadController', () => {
   test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {
     await server.inject({ method: 'GET', url })
 
-    expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+    expect(initiateSummaryLogUpload).toHaveBeenCalledWith(expect.anything(), {
       organisationId: '123',
       registrationId: '456',
       redirectUrl:
