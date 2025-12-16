@@ -456,6 +456,36 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    test('status: validated with 100+ adjusted excluded loads - should show supplementary guidance', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 2, rowIds: [3001, 3002] },
+            excluded: {
+              count: 100,
+              rowIds: Array.from({ length: 100 }, (_, i) => 4000 + i)
+            }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show supplementary guidance for adjusted excluded loads
+      expect(result).toStrictEqual(
+        expect.stringContaining('100 or more loads are missing data')
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated without adjusted loads - should not show adjusted section', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,

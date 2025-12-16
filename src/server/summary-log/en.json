@@ -6,6 +6,7 @@
   "adjustedLoadsHeading_one": "There is {{count}} adjusted load",
   "adjustedLoadsHeading_other": "There are {{count}} adjusted loads",
   "adjustmentsReflected": "All adjustments will be reflected in your waste balance",
+  "adjustmentsNotReflected": "Some adjustments will not be reflected in your waste balance",
   "cancelButtonText": "Cancel and return to dashboard",
   "checkHeading": "Check before you submit",
   "checkIntro": "Your summary log has been validated and is ready to submit.",

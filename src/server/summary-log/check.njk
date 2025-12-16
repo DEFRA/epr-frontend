@@ -83,10 +83,11 @@
     <h2 class="govuk-heading-l">{{ localise('summary-log:adjustedLoadsHeading', { count: loads.adjusted.total }) }}</h2>
 
     <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-adjusted-loads">
+      {% if loads.adjusted.includedCount > 0 %}
       <div class="govuk-accordion__section">
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
-            <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-1">
+            <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-included">
               {{ localise('summary-log:adjustmentsReflected') }}
             </span>
           </h3>
@@ -94,18 +95,52 @@
             {{ localise('summary-log:loadsAdjustedExplanation', { sectionNumber: sectionNumber }) }}
           </div>
         </div>
-        <div id="accordion-adjusted-loads-content-1" class="govuk-accordion__section-content">
+        <div id="accordion-adjusted-loads-content-included" class="govuk-accordion__section-content">
           <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
           <ul class="govuk-list govuk-list--bullet">
             {% for rowId in loads.adjusted.included %}
             <li>{{ rowId }}</li>
             {% endfor %}
-            {% for rowId in loads.adjusted.excluded %}
-            <li>{{ rowId }}</li>
-            {% endfor %}
           </ul>
         </div>
       </div>
+      {% endif %}
+
+      {% if loads.adjusted.excludedCount > 0 %}
+      <div class="govuk-accordion__section">
+        <div class="govuk-accordion__section-header">
+          <h3 class="govuk-accordion__section-heading">
+            <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-excluded">
+              {{ localise('summary-log:adjustmentsNotReflected') }}
+            </span>
+          </h3>
+          <div class="govuk-accordion__section-summary govuk-body">
+            {{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}
+          </div>
+        </div>
+        <div id="accordion-adjusted-loads-content-excluded" class="govuk-accordion__section-content">
+          {% if loads.adjusted.excludedCount > 99 %}
+          <p class="govuk-body">{{ localise('summary-log:tooManyLoadsToList') | safe }}</p>
+          {% else %}
+          <details class="govuk-details">
+            <summary class="govuk-details__summary">
+              <span class="govuk-details__summary-text">
+                {{ localise('summary-log:showLoads', { count: loads.adjusted.excludedCount }) }}
+              </span>
+            </summary>
+            <div class="govuk-details__text">
+              <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
+              <ul class="govuk-list govuk-list--bullet">
+                {% for rowId in loads.adjusted.excluded %}
+                <li>{{ rowId }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </details>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
     {% endif %}
 
