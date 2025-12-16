@@ -562,7 +562,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated without adjusted loads - should not show adjusted section', async () => {
+    test('status: validated without adjusted loads - should show no adjusted loads message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -581,9 +581,9 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      // Should not show adjusted loads section when count is 0
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('adjusted loads')
+      // Should show "There are no adjusted loads" message when count is 0
+      expect(result).toStrictEqual(
+        expect.stringContaining('There are no adjusted loads')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
