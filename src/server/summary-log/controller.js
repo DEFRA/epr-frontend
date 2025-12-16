@@ -44,8 +44,7 @@ const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
-/** Default empty load data */
-const EMPTY_LOAD_DATA = { count: 0, rowIds: [] }
+const NO_ROWS = { count: 0, rowIds: [] }
 
 /**
  * Builds view model for a single load category (added or adjusted)
@@ -53,8 +52,8 @@ const EMPTY_LOAD_DATA = { count: 0, rowIds: [] }
  * @returns {object} View model with included/excluded objects and total
  */
 const buildCategoryViewModel = (category) => {
-  const included = category?.included ?? EMPTY_LOAD_DATA
-  const excluded = category?.excluded ?? EMPTY_LOAD_DATA
+  const included = category?.included ?? NO_ROWS
+  const excluded = category?.excluded ?? NO_ROWS
 
   return {
     included,

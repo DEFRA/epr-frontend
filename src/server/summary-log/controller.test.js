@@ -1023,37 +1023,37 @@ describe('#summaryLogUploadProgressController', () => {
 })
 
 describe('#buildLoadsViewModel', () => {
-  const emptyLoadData = { count: 0, rowIds: [] }
+  const noRows = { count: 0, rowIds: [] }
 
-  test('returns empty structure when loads is undefined', () => {
+  test('returns no rows when loads is undefined', () => {
     const result = buildLoadsViewModel(undefined)
 
     expect(result).toStrictEqual({
       added: {
-        included: emptyLoadData,
-        excluded: emptyLoadData,
+        included: noRows,
+        excluded: noRows,
         total: 0
       },
       adjusted: {
-        included: emptyLoadData,
-        excluded: emptyLoadData,
+        included: noRows,
+        excluded: noRows,
         total: 0
       }
     })
   })
 
-  test('returns empty structure when loads is null', () => {
+  test('returns no rows when loads is null', () => {
     const result = buildLoadsViewModel(null)
 
     expect(result).toStrictEqual({
       added: {
-        included: emptyLoadData,
-        excluded: emptyLoadData,
+        included: noRows,
+        excluded: noRows,
         total: 0
       },
       adjusted: {
-        included: emptyLoadData,
-        excluded: emptyLoadData,
+        included: noRows,
+        excluded: noRows,
         total: 0
       }
     })
@@ -1135,12 +1135,12 @@ describe('#buildLoadsViewModel', () => {
     expect(result).toStrictEqual({
       added: {
         included: { count: 1, rowIds: [1001] },
-        excluded: emptyLoadData,
+        excluded: noRows,
         total: 1
       },
       adjusted: {
-        included: emptyLoadData,
-        excluded: emptyLoadData,
+        included: noRows,
+        excluded: noRows,
         total: 0
       }
     })
