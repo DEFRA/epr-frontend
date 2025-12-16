@@ -3,6 +3,7 @@ import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
+    setupFiles: ['./src/test-setup.js'],
     environment: 'node',
     clearMocks: true,
     hookTimeout: 60000,
