@@ -1,6 +1,5 @@
 {
   "greeting": "Welcome",
-  "pageTitle": "Account",
   "linking": {
     "pageTitle": "Registration Linking",
     "heading": "Link {{ serviceName }} to its registration",
@@ -9,5 +8,6 @@
     "subheading": "Select the registration to link to {{ serviceName }}",
     "confirmButton": "Confirm",
     "errorNoSelection": "Select an organisation to link"
-  }
+  },
+  "pageTitle": "Account"
 }
