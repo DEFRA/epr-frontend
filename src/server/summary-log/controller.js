@@ -8,6 +8,11 @@ import {
   DATA_ENTRY_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
 
+/** Section number for reprocessor output processing type */
+const REPROCESSOR_OUTPUT_SECTION = 3
+/** Default section number for standard processing types */
+const DEFAULT_SECTION = 1
+
 const PROCESSING_STATES = new Set([
   summaryLogStatuses.preprocessing,
   summaryLogStatuses.validating,
@@ -27,9 +32,9 @@ const REUPLOAD_STATES = new Set([
  */
 export const getSectionNumber = (processingType) => {
   if (processingType === 'REPROCESSOR_OUTPUT') {
-    return 3
+    return REPROCESSOR_OUTPUT_SECTION
   }
-  return 1
+  return DEFAULT_SECTION
 }
 
 const VIEW_NAME = 'summary-log/progress'
