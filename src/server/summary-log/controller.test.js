@@ -710,7 +710,6 @@ describe('#summaryLogUploadProgressController', () => {
       )
       expect(result).toContain(`href="/organisations/${organisationId}"`)
       expect(result).toContain('Return to home')
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
     test('status: superseded - should not initiate upload', async () => {
@@ -723,6 +722,16 @@ describe('#summaryLogUploadProgressController', () => {
       await server.inject({ method: 'GET', url })
 
       expect(initiateSummaryLogUpload.mock.calls).toHaveLength(initialCallCount)
+    })
+
+    test('status: superseded - should not enable client-side polling', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.superseded
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
     test('status: validation_failed - should update session with new uploadId for re-upload', async () => {
@@ -741,6 +750,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       // Verify the response sets a session cookie (session was updated)
       const setCookieHeader = response.headers['set-cookie']
+
       expect(setCookieHeader).toBeDefined()
     })
   })
