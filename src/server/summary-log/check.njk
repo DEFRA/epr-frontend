@@ -9,15 +9,11 @@
     <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
 
     <div class="govuk-inset-text">
-      {{ localise('summary-log:checkWarning', {
-        uploadLink: '/organisations/' + organisationId + '/registrations/' + registrationId + '/summary-logs/upload',
-        homeLink: '/organisations/' + organisationId + '/registrations/' + registrationId
-      }) | safe }}
+      {{ localise('summary-log:checkWarningStart') }}
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
+      {{ localise('summary-log:checkWarningOr') }}
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
     </div>
-
-    <p class="govuk-body">
-      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
-    </p>
 
     {% if loads.added.total > 0 %}
     <h2 class="govuk-heading-l">{{ localise('summary-log:addedLoadsHeading', { count: loads.added.total }) }}</h2>

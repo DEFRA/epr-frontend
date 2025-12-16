@@ -173,7 +173,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
-      expect(result).toStrictEqual(expect.stringContaining('Return to home'))
+      expect(result).toStrictEqual(expect.stringContaining('return to home'))
       expect(result).toStrictEqual(
         expect.stringContaining(
           `href="/organisations/${organisationId}/registrations/${registrationId}"`
