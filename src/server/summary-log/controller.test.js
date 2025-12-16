@@ -348,7 +348,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with row IDs - should display row IDs in bullet list', async () => {
+    test('status: validated with new included loads - should NOT display row IDs', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -367,12 +367,16 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      // Row IDs should be in bullet list
-      expect(result).toStrictEqual(expect.stringContaining('<li>1092</li>'))
-      expect(result).toStrictEqual(expect.stringContaining('<li>1093</li>'))
-      expect(result).toStrictEqual(expect.stringContaining('<li>1094</li>'))
+      // New included loads should NOT show row IDs (per spec Note 3)
+      // Only adjusted included loads show "Show X loads" expandable
+      expect(result).not.toStrictEqual(expect.stringContaining('<li>1092</li>'))
+      expect(result).not.toStrictEqual(expect.stringContaining('<li>1093</li>'))
+      expect(result).not.toStrictEqual(expect.stringContaining('<li>1094</li>'))
+      // Should still show the count message
       expect(result).toStrictEqual(
-        expect.stringContaining('found in the &#39;Row ID&#39; column')
+        expect.stringContaining(
+          '3 new loads will be added to your waste balance'
+        )
       )
       expect(statusCode).toBe(statusCodes.ok)
     })

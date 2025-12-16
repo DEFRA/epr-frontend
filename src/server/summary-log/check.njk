@@ -33,12 +33,7 @@
           </div>
         </div>
         <div id="accordion-added-loads-content-included" class="govuk-accordion__section-content">
-          <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
-          <ul class="govuk-list govuk-list--bullet">
-            {% for rowId in loads.added.included %}
-            <li>{{ rowId }}</li>
-            {% endfor %}
-          </ul>
+          {# New included loads do NOT show row IDs per spec Note 3 #}
         </div>
       </div>
       {% endif %}
