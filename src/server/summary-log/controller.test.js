@@ -8,7 +8,10 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { summaryLogStatuses } from '../common/constants/statuses.js'
-import { buildLoadsViewModel, getSectionNumber } from './controller.js'
+import {
+  buildLoadsViewModel,
+  getWasteRecordSectionNumber
+} from './controller.js'
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
@@ -1179,25 +1182,25 @@ describe('#buildLoadsViewModel', () => {
   })
 })
 
-describe('#getSectionNumber', () => {
+describe('#getWasteRecordSectionNumber', () => {
   test('returns section 1 for REPROCESSOR_INPUT', () => {
-    expect(getSectionNumber('REPROCESSOR_INPUT')).toBe(1)
+    expect(getWasteRecordSectionNumber('REPROCESSOR_INPUT')).toBe(1)
   })
 
   test('returns section 3 for REPROCESSOR_OUTPUT', () => {
-    expect(getSectionNumber('REPROCESSOR_OUTPUT')).toBe(3)
+    expect(getWasteRecordSectionNumber('REPROCESSOR_OUTPUT')).toBe(3)
   })
 
   test('returns section 1 for EXPORTER', () => {
-    expect(getSectionNumber('EXPORTER')).toBe(1)
+    expect(getWasteRecordSectionNumber('EXPORTER')).toBe(1)
   })
 
-  test('returns section 1 for undefined processingType', () => {
-    expect(getSectionNumber(undefined)).toBe(1)
+  test('returns undefined for undefined processingType', () => {
+    expect(getWasteRecordSectionNumber(undefined)).toBeUndefined()
   })
 
-  test('returns section 1 for unknown processingType', () => {
-    expect(getSectionNumber('UNKNOWN_TYPE')).toBe(1)
+  test('returns undefined for unknown processingType', () => {
+    expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
   })
 })
 

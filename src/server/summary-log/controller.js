@@ -8,10 +8,12 @@ import {
   DATA_ENTRY_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
 
-/** Section number for reprocessor output processing type */
-const REPROCESSOR_OUTPUT_SECTION = 3
-/** Default section number for standard processing types */
-const DEFAULT_SECTION = 1
+/** Waste record section number to display in UI copy, mapped by processing type */
+const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
+  EXPORTER: 1,
+  REPROCESSOR_INPUT: 1,
+  REPROCESSOR_OUTPUT: 3
+}
 
 const PROCESSING_STATES = new Set([
   summaryLogStatuses.preprocessing,
@@ -26,15 +28,12 @@ const REUPLOAD_STATES = new Set([
 ])
 
 /**
- * Gets the section number to display in UI copy based on processing type
- * @param {string} [processingType] - Processing type from summary log meta
- * @returns {number} Section number (1 or 3)
+ * Gets the waste record section number to display in UI copy based on processing type
+ * @param {string} processingType - Processing type from summary log meta
+ * @returns {number} Waste record section number (1 or 3)
  */
-export const getSectionNumber = (processingType) => {
-  if (processingType === 'REPROCESSOR_OUTPUT') {
-    return REPROCESSOR_OUTPUT_SECTION
-  }
-  return DEFAULT_SECTION
+export const getWasteRecordSectionNumber = (processingType) => {
+  return WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
 }
 
 const VIEW_NAME = 'summary-log/progress'
@@ -159,7 +158,7 @@ const renderCheckView = (
   { loads, organisationId, registrationId, summaryLogId, processingType }
 ) => {
   const loadsViewModel = buildLoadsViewModel(loads)
-  const sectionNumber = getSectionNumber(processingType)
+  const sectionNumber = getWasteRecordSectionNumber(processingType)
 
   return h.view(CHECK_VIEW_NAME, {
     pageTitle: localise('summary-log:checkPageTitle'),
