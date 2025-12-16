@@ -49,7 +49,6 @@ export async function context(request) {
 
   return {
     assetPath: `${assetPath}/assets`,
-    authedUser: authedUser ?? null,
     breadcrumbs: [],
     isDefraIdEnabled: isDefraIdEnabled(),
     navigation: buildNavigation(request, authedUser ?? null),
