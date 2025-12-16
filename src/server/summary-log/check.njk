@@ -18,62 +18,37 @@
     <h2 class="govuk-heading-l">{{ localise('summary-log:noAddedLoadsHeading') }}</h2>
     {% endif %}
 
-    {% if loads.added.total > 0 %}
-    <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-added-loads">
-      {% if loads.added.includedCount > 0 %}
-      <div class="govuk-accordion__section">
-        <div class="govuk-accordion__section-header">
-          <h3 class="govuk-accordion__section-heading">
-            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-included">
-              {{ localise('summary-log:loadsAdded', { count: loads.added.includedCount }) }}
-            </span>
-          </h3>
-          <div class="govuk-accordion__section-summary govuk-body">
-            {{ localise('summary-log:loadsAddedExplanation', { sectionNumber: sectionNumber }) }}
-          </div>
-        </div>
-        <div id="accordion-added-loads-content-included" class="govuk-accordion__section-content">
-          {# New included loads do NOT show row IDs per spec Note 3 #}
-        </div>
-      </div>
-      {% endif %}
+    {% if loads.added.includedCount > 0 %}
+    <p class="govuk-body">
+      <strong>{{ localise('summary-log:loadsAdded', { count: loads.added.includedCount }) }}</strong>
+    </p>
+    <p class="govuk-body">{{ localise('summary-log:loadsAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
+    {% endif %}
 
-      {% if loads.added.excludedCount > 0 %}
-      <div class="govuk-accordion__section">
-        <div class="govuk-accordion__section-header">
-          <h3 class="govuk-accordion__section-heading">
-            <span class="govuk-accordion__section-button" id="accordion-added-loads-heading-excluded">
-              {{ localise('summary-log:loadsNotAdded', { count: loads.added.excludedCount }) }}
-            </span>
-          </h3>
-          <div class="govuk-accordion__section-summary govuk-body">
-            {{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}
-          </div>
-        </div>
-        <div id="accordion-added-loads-content-excluded" class="govuk-accordion__section-content">
-          {% if loads.added.excludedCount > 99 %}
-          <p class="govuk-body">{{ localise('summary-log:tooManyLoadsToList') | safe }}</p>
-          {% else %}
-          <details class="govuk-details">
-            <summary class="govuk-details__summary">
-              <span class="govuk-details__summary-text">
-                {{ localise('summary-log:showLoads', { count: loads.added.excludedCount }) }}
-              </span>
-            </summary>
-            <div class="govuk-details__text">
-              <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
-              <ul class="govuk-list govuk-list--bullet">
-                {% for rowId in loads.added.excluded %}
-                <li>{{ rowId }}</li>
-                {% endfor %}
-              </ul>
-            </div>
-          </details>
-          {% endif %}
-        </div>
+    {% if loads.added.excludedCount > 0 %}
+    <p class="govuk-body">
+      <strong>{{ localise('summary-log:loadsNotAdded', { count: loads.added.excludedCount }) }}</strong>
+    </p>
+    <p class="govuk-body">{{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
+    {% if loads.added.excludedCount > 99 %}
+    <p class="govuk-body">{{ localise('summary-log:tooManyLoadsToList') | safe }}</p>
+    {% else %}
+    <details class="govuk-details">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">
+          {{ localise('summary-log:showLoads', { count: loads.added.excludedCount }) }}
+        </span>
+      </summary>
+      <div class="govuk-details__text">
+        <p class="govuk-body">{{ localise('summary-log:rowIdExplanation') }}</p>
+        <ul class="govuk-list govuk-list--bullet">
+          {% for rowId in loads.added.excluded %}
+          <li>{{ rowId }}</li>
+          {% endfor %}
+        </ul>
       </div>
-      {% endif %}
-    </div>
+    </details>
+    {% endif %}
     {% endif %}
 
     {% if loads.adjusted.total > 0 %}
