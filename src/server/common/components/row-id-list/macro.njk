@@ -2,14 +2,13 @@
   Row ID list macro - displays a collapsible list of row IDs
 
   Parameters:
-    - rowIds: (required) Array of row ID strings to display
-    - count: (required) Total count of items (may differ from rowIds.length if truncated)
+    - rows: (required) Object with { count, rowIds }
     - tooManyMessage: (required) HTML message shown when count > 99
     - showLoadsText: (required) Text for "Show X loads" summary
     - explanationText: (required) Explanation text shown above the list
 #}
 {% macro rowIdList(params) %}
-  {% if params.count > 99 %}
+  {% if params.rows.count > 99 %}
   <p class="govuk-body">{{ params.tooManyMessage | safe }}</p>
   {% else %}
   <details class="govuk-details">
@@ -21,7 +20,7 @@
     <div class="govuk-details__text">
       <p class="govuk-body">{{ params.explanationText }}</p>
       <ul class="govuk-list govuk-list--bullet">
-        {% for rowId in params.rowIds %}
+        {% for rowId in params.rows.rowIds %}
         <li>{{ rowId }}</li>
         {% endfor %}
       </ul>

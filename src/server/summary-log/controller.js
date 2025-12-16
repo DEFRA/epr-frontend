@@ -44,21 +44,22 @@ const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
+/** Default empty load data */
+const EMPTY_LOAD_DATA = { count: 0, rowIds: [] }
+
 /**
  * Builds view model for a single load category (added or adjusted)
  * @param {object} [category] - Category data from backend (e.g. loads.added)
- * @returns {object} View model with rowIds and counts for waste balance impact
+ * @returns {object} View model with included/excluded objects and total
  */
 const buildCategoryViewModel = (category) => {
-  const includedCount = category?.included?.count ?? 0
-  const excludedCount = category?.excluded?.count ?? 0
+  const included = category?.included ?? EMPTY_LOAD_DATA
+  const excluded = category?.excluded ?? EMPTY_LOAD_DATA
 
   return {
-    included: category?.included?.rowIds ?? [],
-    excluded: category?.excluded?.rowIds ?? [],
-    includedCount,
-    excludedCount,
-    total: includedCount + excludedCount
+    included,
+    excluded,
+    total: included.count + excluded.count
   }
 }
 

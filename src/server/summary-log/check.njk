@@ -22,23 +22,22 @@
     <h2 class="govuk-heading-l">{{ localise('summary-log:noAddedLoadsHeading') }}</h2>
     {% endif %}
 
-    {% if loads.added.includedCount > 0 %}
+    {% if loads.added.included.count > 0 %}
     <p class="govuk-body">
-      <strong>{{ localise('summary-log:loadsAdded', { count: loads.added.includedCount }) }}</strong>
+      <strong>{{ localise('summary-log:loadsAdded', { count: loads.added.included.count }) }}</strong>
     </p>
     <p class="govuk-body">{{ localise('summary-log:loadsAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
     {% endif %}
 
-    {% if loads.added.excludedCount > 0 %}
+    {% if loads.added.excluded.count > 0 %}
     <p class="govuk-body">
-      <strong>{{ localise('summary-log:loadsNotAdded', { count: loads.added.excludedCount }) }}</strong>
+      <strong>{{ localise('summary-log:loadsNotAdded', { count: loads.added.excluded.count }) }}</strong>
     </p>
     <p class="govuk-body">{{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
     {{ rowIdList({
-      rowIds: loads.added.excluded,
-      count: loads.added.excludedCount,
+      rows: loads.added.excluded,
       tooManyMessage: localise('summary-log:tooManyLoadsToList'),
-      showLoadsText: localise('summary-log:showLoads', { count: loads.added.excludedCount }),
+      showLoadsText: localise('summary-log:showLoads', { count: loads.added.excluded.count }),
       explanationText: localise('summary-log:rowIdExplanation')
     }) }}
     {% endif %}
@@ -49,7 +48,7 @@
     <h2 class="govuk-heading-l">{{ localise('summary-log:adjustedLoadsHeading', { count: loads.adjusted.total }) }}</h2>
 
     <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-adjusted-loads">
-      {% if loads.adjusted.includedCount > 0 %}
+      {% if loads.adjusted.included.count > 0 %}
       <div class="govuk-accordion__section">
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
@@ -63,17 +62,16 @@
         </div>
         <div id="accordion-adjusted-loads-content-included" class="govuk-accordion__section-content">
           {{ rowIdList({
-            rowIds: loads.adjusted.included,
-            count: loads.adjusted.includedCount,
+            rows: loads.adjusted.included,
             tooManyMessage: localise('summary-log:tooManyLoadsToList'),
-            showLoadsText: localise('summary-log:showLoads', { count: loads.adjusted.includedCount }),
+            showLoadsText: localise('summary-log:showLoads', { count: loads.adjusted.included.count }),
             explanationText: localise('summary-log:rowIdExplanation')
           }) }}
         </div>
       </div>
       {% endif %}
 
-      {% if loads.adjusted.excludedCount > 0 %}
+      {% if loads.adjusted.excluded.count > 0 %}
       <div class="govuk-accordion__section">
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
@@ -87,10 +85,9 @@
         </div>
         <div id="accordion-adjusted-loads-content-excluded" class="govuk-accordion__section-content">
           {{ rowIdList({
-            rowIds: loads.adjusted.excluded,
-            count: loads.adjusted.excludedCount,
+            rows: loads.adjusted.excluded,
             tooManyMessage: localise('summary-log:tooManyLoadsToList'),
-            showLoadsText: localise('summary-log:showLoads', { count: loads.adjusted.excludedCount }),
+            showLoadsText: localise('summary-log:showLoads', { count: loads.adjusted.excluded.count }),
             explanationText: localise('summary-log:rowIdExplanation')
           }) }}
         </div>

@@ -1023,49 +1023,43 @@ describe('#summaryLogUploadProgressController', () => {
 })
 
 describe('#buildLoadsViewModel', () => {
-  test('returns empty arrays and zero counts when loads is undefined', () => {
+  const emptyLoadData = { count: 0, rowIds: [] }
+
+  test('returns empty structure when loads is undefined', () => {
     const result = buildLoadsViewModel(undefined)
 
     expect(result).toStrictEqual({
       added: {
-        included: [],
-        excluded: [],
-        includedCount: 0,
-        excludedCount: 0,
+        included: emptyLoadData,
+        excluded: emptyLoadData,
         total: 0
       },
       adjusted: {
-        included: [],
-        excluded: [],
-        includedCount: 0,
-        excludedCount: 0,
+        included: emptyLoadData,
+        excluded: emptyLoadData,
         total: 0
       }
     })
   })
 
-  test('returns empty arrays and zero counts when loads is null', () => {
+  test('returns empty structure when loads is null', () => {
     const result = buildLoadsViewModel(null)
 
     expect(result).toStrictEqual({
       added: {
-        included: [],
-        excluded: [],
-        includedCount: 0,
-        excludedCount: 0,
+        included: emptyLoadData,
+        excluded: emptyLoadData,
         total: 0
       },
       adjusted: {
-        included: [],
-        excluded: [],
-        includedCount: 0,
-        excludedCount: 0,
+        included: emptyLoadData,
+        excluded: emptyLoadData,
         total: 0
       }
     })
   })
 
-  test('returns empty arrays and zero counts when loads has empty structure', () => {
+  test('returns empty structure when loads has empty structure', () => {
     const result = buildLoadsViewModel({
       added: {
         included: { count: 0, rowIds: [] },
@@ -1079,23 +1073,19 @@ describe('#buildLoadsViewModel', () => {
 
     expect(result).toStrictEqual({
       added: {
-        included: [],
-        excluded: [],
-        includedCount: 0,
-        excludedCount: 0,
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] },
         total: 0
       },
       adjusted: {
-        included: [],
-        excluded: [],
-        includedCount: 0,
-        excludedCount: 0,
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] },
         total: 0
       }
     })
   })
 
-  test('uses count from backend (rowIds may be truncated)', () => {
+  test('preserves count and rowIds from backend', () => {
     const result = buildLoadsViewModel({
       added: {
         included: { count: 150, rowIds: [1001, 1002, 1003] },
@@ -1107,17 +1097,14 @@ describe('#buildLoadsViewModel', () => {
       }
     })
 
-    // rowIds contain truncated data, but counts come from count field
     expect(result.added).toStrictEqual({
-      included: [1001, 1002, 1003],
-      excluded: [1004, 1005],
-      includedCount: 150,
-      excludedCount: 50,
+      included: { count: 150, rowIds: [1001, 1002, 1003] },
+      excluded: { count: 50, rowIds: [1004, 1005] },
       total: 200
     })
   })
 
-  test('uses count for adjusted loads', () => {
+  test('preserves count and rowIds for adjusted loads', () => {
     const result = buildLoadsViewModel({
       added: {
         included: { count: 0, rowIds: [] },
@@ -1130,10 +1117,8 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result.adjusted).toStrictEqual({
-      included: [2001, 2002],
-      excluded: [2003],
-      includedCount: 120,
-      excludedCount: 30,
+      included: { count: 120, rowIds: [2001, 2002] },
+      excluded: { count: 30, rowIds: [2003] },
       total: 150
     })
   })
@@ -1149,17 +1134,13 @@ describe('#buildLoadsViewModel', () => {
 
     expect(result).toStrictEqual({
       added: {
-        included: [1001],
-        excluded: [],
-        includedCount: 1,
-        excludedCount: 0,
+        included: { count: 1, rowIds: [1001] },
+        excluded: emptyLoadData,
         total: 1
       },
       adjusted: {
-        included: [],
-        excluded: [],
-        includedCount: 0,
-        excludedCount: 0,
+        included: emptyLoadData,
+        excluded: emptyLoadData,
         total: 0
       }
     })
