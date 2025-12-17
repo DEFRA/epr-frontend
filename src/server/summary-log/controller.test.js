@@ -137,7 +137,7 @@ describe('#summaryLogUploadProgressController', () => {
   describe('terminal states', () => {
     const expectCheckPageContent = (result) => {
       expect(result).toStrictEqual(
-        expect.stringContaining('Check before you submit')
+        expect.stringContaining('Check before confirming upload')
       )
       expect(result).toStrictEqual(expect.stringContaining('Compliance'))
       expect(result).toStrictEqual(expect.stringContaining('Declaration'))
@@ -169,7 +169,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: validated - should show return to home link to registration dashboard', async () => {
+    test('status: validated - should show return to home link to organisation home', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated
       })
@@ -178,9 +178,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toStrictEqual(expect.stringContaining('return to home'))
       expect(result).toStrictEqual(
-        expect.stringContaining(
-          `href="/organisations/${organisationId}/registrations/${registrationId}"`
-        )
+        expect.stringContaining(`href="/organisations/${organisationId}"`)
       )
       expect(statusCode).toBe(statusCodes.ok)
     })

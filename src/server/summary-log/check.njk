@@ -13,7 +13,7 @@
       {{ localise('summary-log:checkWarningStart') }}
       <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
       {{ localise('summary-log:checkWarningOr') }}
-      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
+      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
     </div>
 
     {% if loads.added.total > 0 %}

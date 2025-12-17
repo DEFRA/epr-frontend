@@ -8,7 +8,7 @@
   "adjustmentsNotReflected": "Some adjustments will not be reflected in your waste balance",
   "adjustmentsReflected": "All adjustments will be reflected in your waste balance",
   "cancelButtonText": "Cancel and return to dashboard",
-  "checkHeading": "Check before you submit",
+  "checkHeading": "Check before confirming upload",
   "checkIntro": "Your summary log has been validated and is ready to submit.",
   "checkIntro2": "Before submitting, you need to confirm that you're aware of the following.",
   "checkPageTitle": "Summary log",
