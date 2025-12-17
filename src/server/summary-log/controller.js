@@ -9,6 +9,13 @@ import {
 } from '#server/common/constants/validation-codes.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
+/** Waste record section number to display in UI copy, mapped by processing type */
+const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
+  EXPORTER: 1,
+  REPROCESSOR_INPUT: 1,
+  REPROCESSOR_OUTPUT: 3
+}
+
 const PROCESSING_STATES = new Set([
   summaryLogStatuses.preprocessing,
   summaryLogStatuses.validating,
@@ -21,6 +28,15 @@ const REUPLOAD_STATES = new Set([
   summaryLogStatuses.validationFailed
 ])
 
+/**
+ * Gets the waste record section number to display in UI copy based on processing type
+ * @param {string} processingType - Processing type from summary log meta
+ * @returns {number} Waste record section number (1 or 3)
+ */
+export const getWasteRecordSectionNumber = (processingType) => {
+  return WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
+}
+
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
 const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
@@ -29,21 +45,21 @@ const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
+const NO_ROWS = { count: 0, rowIds: [] }
+
 /**
  * Builds view model for a single load category (added or adjusted)
  * @param {object} [category] - Category data from backend (e.g. loads.added)
- * @returns {object} View model with rowIds, counts, and total
+ * @returns {object} View model with included/excluded objects and total
  */
 const buildCategoryViewModel = (category) => {
-  const validCount = category?.valid?.count ?? 0
-  const invalidCount = category?.invalid?.count ?? 0
+  const included = category?.included ?? NO_ROWS
+  const excluded = category?.excluded ?? NO_ROWS
 
   return {
-    valid: category?.valid?.rowIds ?? [],
-    invalid: category?.invalid?.rowIds ?? [],
-    validCount,
-    invalidCount,
-    total: validCount + invalidCount
+    included,
+    excluded,
+    total: included.count + excluded.count
   }
 }
 
@@ -116,13 +132,15 @@ const getStatusData = async (
     request.yar.set(sessionNames.summaryLogs, remainingSession)
   }
 
-  const { status, validation, accreditationNumber, loads } = data
+  const { status, validation, accreditationNumber, loads, processingType } =
+    data
 
   return {
     status,
     validation,
     accreditationNumber,
-    loads
+    loads,
+    processingType
   }
 }
 
@@ -135,21 +153,24 @@ const getStatusData = async (
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
+ * @param {string} [context.processingType] - Processing type from summary log meta
  * @returns {object} Hapi view response
  */
 const renderCheckView = (
   h,
   localise,
-  { loads, organisationId, registrationId, summaryLogId }
+  { loads, organisationId, registrationId, summaryLogId, processingType }
 ) => {
   const loadsViewModel = buildLoadsViewModel(loads)
+  const sectionNumber = getWasteRecordSectionNumber(processingType)
 
   return h.view(CHECK_VIEW_NAME, {
     pageTitle: localise('summary-log:checkPageTitle'),
     organisationId,
     registrationId,
     summaryLogId,
-    loads: loadsViewModel
+    loads: loadsViewModel,
+    sectionNumber
   })
 }
 
@@ -375,7 +396,7 @@ export const summaryLogUploadProgressController = {
       return h.redirect('/login')
     }
 
-    const { status, validation, accreditationNumber, loads } =
+    const { status, validation, accreditationNumber, loads, processingType } =
       await getStatusData(
         request,
         organisationId,
@@ -412,6 +433,7 @@ export const summaryLogUploadProgressController = {
       validation,
       accreditationNumber,
       loads,
+      processingType,
       organisationId,
       registrationId,
       summaryLogId,
