@@ -102,9 +102,14 @@ describe('#submitSummaryLogController', () => {
       Boom.conflict('Summary log must be validated before submission')
     )
 
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
     const { result, statusCode } = await server.inject({
       method: 'POST',
-      url
+      url,
+      headers: { cookie },
+      payload: { crumb }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
