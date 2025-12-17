@@ -132,10 +132,10 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being submitted')
+        expect.stringContaining('Your waste records are being updated')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Your summary log is being submitted')
+        expect.stringContaining('This may take a few minutes.')
       )
       expect(result).toStrictEqual(
         expect.stringContaining('Keep this page open and do not refresh it')
