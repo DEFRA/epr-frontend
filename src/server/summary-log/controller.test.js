@@ -638,13 +638,29 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Summary log submitted')
+        expect.stringContaining('Summary log uploaded')
       )
-      expect(result).toStrictEqual(expect.stringContaining('493021'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'You can upload an updated summary log whenever you need to provide new data.'
+        )
+      )
       expect(result).toStrictEqual(expect.stringContaining('Return to home'))
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toStrictEqual(enablesClientSidePolling())
+    })
+
+    test('status: submitted - should link to organisation root', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining(`href="/organisations/${organisationId}"`)
+      )
     })
 
     test('status: submitted with freshData from POST - should use freshData and not call backend', async () => {
@@ -691,11 +707,10 @@ describe('#summaryLogUploadProgressController', () => {
       // Verify fetchSummaryLogStatus was NOT called (freshData was used instead)
       expect(fetchSummaryLogStatus.mock.calls).toHaveLength(initialCallCount)
 
-      // Verify success page with accreditation number from freshData
+      // Verify success page rendered
       expect(result).toStrictEqual(
-        expect.stringContaining('Summary log submitted')
+        expect.stringContaining('Summary log uploaded')
       )
-      expect(result).toStrictEqual(expect.stringContaining('999888'))
       expect(statusCode).toBe(statusCodes.ok)
     })
 
