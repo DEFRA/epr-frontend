@@ -104,7 +104,7 @@ describe('#summaryLogUploadProgressController', () => {
         )
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Keep this page open and do not refresh it')
+        expect.stringContaining('Keep this page open and do not refresh it.')
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
@@ -138,7 +138,7 @@ describe('#summaryLogUploadProgressController', () => {
         expect.stringContaining('This may take a few minutes.')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Keep this page open and do not refresh it')
+        expect.stringContaining('Keep this page open and do not refresh it.')
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
