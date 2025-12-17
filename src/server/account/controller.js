@@ -3,6 +3,9 @@ import {
   getStatusClass,
   getCurrentStatus
 } from './helpers/status-helpers.js'
+import { getUserSession } from '#server/auth/helpers/get-user-session.js'
+import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { config } from '#config/config.js'
 
 /**
  * Organizes accreditations by site for a given waste processing type
@@ -72,7 +75,48 @@ function organizeAccreditationsBySite(data, wasteProcessingType) {
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
-  handler({ t: localise }, h) {
+  async handler(request, h) {
+    const { t: localise } = request
+
+    // Feature flag: set to true to use backend data, false to use fixture
+    const USE_BACKEND_DATA = true
+
+    // Get user session and fetch organisation data from backend
+    const { ok, value: session } = await getUserSession(request)
+
+    // Try to get session from auth credentials if getUserSession failed
+    const userSession = ok && session ? session : request.auth?.credentials
+
+    // Declare backendData outside try-catch so it's accessible later
+    let backendData = null
+
+    if (USE_BACKEND_DATA) {
+      try {
+        // Using ObjectId from fixture (not orgId)
+        backendData = await fetchOrganisationById(
+          fixtureData.id,
+          userSession?.idToken || 'randomstring'
+        )
+        request.logger.info(
+          { backendData },
+          'Backend organisation data retrieved'
+        )
+      } catch (error) {
+        request.logger.error(
+          {
+            error: {
+              message: error.message,
+              statusCode: error.statusCode,
+              response: error.response,
+              data: error.data
+            }
+          },
+          'Failed to fetch organisation from backend - falling back to fixture'
+        )
+      }
+    }
+
+    // Use backend data if available, otherwise fall back to fixture
     const organisationData = fixtureData
 
     // Extract organisation name
