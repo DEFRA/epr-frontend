@@ -11,7 +11,10 @@ export async function getCsrfToken(server, getUrl) {
   const crumbCookie = cookies.find((cookie) => cookie.startsWith('crumb='))
   if (!crumbCookie) throw new Error('No crumb cookie found')
   const crumbValue = crumbCookie.split(';')[0].split('=')[1]
-  return { cookie: crumbCookie.split(';')[0], crumb: crumbValue }
+  // Preserve all cookies from the response (e.g., session + crumb)
+  // to accurately represent multi-cookie scenarios in tests
+  const cookieHeader = cookies.map((c) => c.split(';')[0]).join('; ')
+  return { cookie: cookieHeader, crumb: crumbValue }
 }
 
 /**
