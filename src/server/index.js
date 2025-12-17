@@ -14,6 +14,7 @@ import { secureContext } from '#server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '#server/common/helpers/session-cache/session-cache.js'
 import { userAgentProtection } from '#server/common/helpers/useragent-protection.js'
+import Crumb from '@hapi/crumb'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import path from 'path'
@@ -103,7 +104,30 @@ export async function createServer() {
     plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
   }
 
-  plugins.push(nunjucksConfig, router)
+  plugins.push(nunjucksConfig)
+
+  // CSRF protection
+  plugins.push({
+    plugin: Crumb,
+    options: {
+      cookieOptions: {
+        isSecure: config.get('isProduction'),
+        isHttpOnly: true,
+        isSameSite: 'Strict'
+      },
+      skip: (request) => {
+        const path = request.path
+        return (
+          path.startsWith('/health') ||
+          path.startsWith('/public') ||
+          path.startsWith('/.well-known') ||
+          path === '/favicon.ico'
+        )
+      }
+    }
+  })
+
+  plugins.push(router)
 
   await server.register(plugins)
 
