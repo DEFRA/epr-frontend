@@ -1,7 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createServer } from '#server/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+
+vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 vi.mock(
   import('#server/common/helpers/summary-log/submit-summary-log.js'),
@@ -21,6 +24,14 @@ describe('#submitSummaryLogController', () => {
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
+
+    // Mock getUserSession to return a valid session
+    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+      ok: true,
+      value: {
+        idToken: 'test-id-token'
+      }
+    })
   })
 
   afterAll(async () => {
@@ -43,7 +54,8 @@ describe('#submitSummaryLogController', () => {
     expect(submitSummaryLog).toHaveBeenCalledWith(
       organisationId,
       registrationId,
-      summaryLogId
+      summaryLogId,
+      'test-id-token'
     )
     expect(response.statusCode).toBe(statusCodes.found)
     expect(response.headers.location).toBe(
@@ -84,6 +96,37 @@ describe('#submitSummaryLogController', () => {
 
     // Hapi will show an error page (500)
     expect(response.statusCode).toBe(statusCodes.internalServerError)
+  })
+
+  describe('session validation', () => {
+    test('should redirect to login when session is invalid', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: false
+      })
+
+      const response = await server.inject({
+        method: 'POST',
+        url
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe('/login')
+    })
+
+    test('should redirect to login when session value is null', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+        ok: true,
+        value: null
+      })
+
+      const response = await server.inject({
+        method: 'POST',
+        url
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe('/login')
+    })
   })
 })
 
