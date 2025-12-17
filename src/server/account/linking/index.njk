@@ -21,6 +21,7 @@
           <p class="govuk-body">{{ localise('account:linking:bodyTwo') }}</p>
 
           <form method="POST" action="{{ localiseUrl('/account/linking') }}">
+            <input type="hidden" name="crumb" value="{{ crumb }}" />
             {% set radioItems = [] %}
             {% for org in unlinked %}
               {% set radioItems = (radioItems.push({
