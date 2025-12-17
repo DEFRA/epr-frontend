@@ -70,7 +70,7 @@
   "noAdjustedLoadsHeading": "There are no adjusted loads",
   "pageTitle": "Summary log",
   "processingHeading": "Your file is being uploaded",
-  "processingKeepOpen": "Keep this page open and do not refresh it",
+  "processingKeepOpen": "Keep this page open and do not refresh it.",
   "processingMessage": "Your summary log is being uploaded and automatically validated",
   "rejectedDefaultReason": "File rejected by virus scanner",
   "returnToHome": "Return to home",
