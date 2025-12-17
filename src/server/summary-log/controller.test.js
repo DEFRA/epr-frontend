@@ -7,6 +7,7 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createServer } from '#server/index.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
@@ -132,10 +133,10 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being submitted')
+        expect.stringContaining('Your waste records are being updated')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Your summary log is being submitted')
+        expect.stringContaining('This may take a few minutes.')
       )
       expect(result).toStrictEqual(
         expect.stringContaining('Keep this page open and do not refresh it')
@@ -656,10 +657,15 @@ describe('#summaryLogUploadProgressController', () => {
         accreditationNumber: '999888'
       })
 
+      // Get CSRF token
+      const { cookie, crumb } = await getCsrfToken(server, url)
+
       // Make POST request to set up freshData in session
       const postResponse = await server.inject({
         method: 'POST',
-        url: submitUrl
+        url: submitUrl,
+        headers: { cookie },
+        payload: { crumb }
       })
 
       // Verify POST redirected

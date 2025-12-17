@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createOidcHandlers } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
@@ -297,6 +298,84 @@ describe('#accountLinkingController', () => {
         expect($('label').text()).toContain('First Company (ID: FC111111)')
         expect($('label').text()).toContain('Second Company (ID: SC222222)')
         expect($('label').text()).toContain('Third Company (ID: TC333333)')
+      })
+    })
+
+    describe('post /account/linking', () => {
+      it('should successfully link organisation with valid CSRF token', async () => {
+        const mockOrganisations = {
+          current: {
+            id: 'defra-org-123',
+            name: 'My Defra Organisation'
+          },
+          linked: null,
+          unlinked: [
+            {
+              id: 'org-1',
+              name: 'Test Company Ltd',
+              orgId: '12345678'
+            }
+          ]
+        }
+
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          ok: true,
+          value: {
+            idToken: 'mock-id-token'
+          }
+        })
+
+        mswServer.use(
+          http.get(`${backendUrl}/v1/me/organisations`, () => {
+            return HttpResponse.json({ organisations: mockOrganisations })
+          }),
+          http.post(`${backendUrl}/v1/organisations/org-1/link`, () => {
+            return HttpResponse.json({})
+          })
+        )
+
+        const { cookie, crumb } = await getCsrfToken(server, '/account/linking')
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: '/account/linking',
+          headers: { cookie },
+          payload: {
+            crumb,
+            organisationId: 'org-1'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe('/account')
+      })
+
+      it('should reject POST request without CSRF token', async () => {
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: '/account/linking',
+          payload: {
+            organisationId: 'org-1'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
+      })
+
+      it('should reject POST request with invalid CSRF token', async () => {
+        const { cookie } = await getCsrfToken(server, '/account/linking')
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: '/account/linking',
+          headers: { cookie },
+          payload: {
+            crumb: 'invalid-token',
+            organisationId: 'org-1'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
       })
     })
   })
