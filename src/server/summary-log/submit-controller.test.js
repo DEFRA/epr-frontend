@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import Boom from '@hapi/boom'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createServer } from '#server/index.js'
@@ -96,7 +97,34 @@ describe('#submitSummaryLogController', () => {
     ).toContain('session')
   })
 
-  test('should allow backend errors to bubble up', async () => {
+  test('should render conflict view when backend returns 409', async () => {
+    submitSummaryLog.mockRejectedValueOnce(
+      Boom.conflict('Summary log must be validated before submission')
+    )
+
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
+    const { result, statusCode } = await server.inject({
+      method: 'POST',
+      url,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toStrictEqual(
+      expect.stringContaining('Your waste records cannot be updated')
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining('someone else from your organisation')
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining(`/organisations/${organisationId}`)
+    )
+  })
+
+  test('should allow non-conflict backend errors to bubble up', async () => {
     const error = new Error('Backend error')
     submitSummaryLog.mockRejectedValueOnce(error)
 
