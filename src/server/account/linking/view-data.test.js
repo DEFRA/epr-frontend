@@ -34,18 +34,20 @@ describe(buildLinkingViewData, () => {
       unlinked: [
         {
           id: 'org-1',
-          name: 'Company One Ltd (ID: 12345678)'
+          displayName: 'Company One Ltd (ID: 12345678)',
+          name: 'Company One Ltd'
         },
         {
           id: 'org-2',
-          name: 'Company Two Ltd (ID: 87654321)'
+          displayName: 'Company Two Ltd (ID: 87654321)',
+          name: 'Company Two Ltd'
         }
       ],
       organisationName: 'Test Defra Organisation'
     })
   })
 
-  it('should format unlinked organisations with companies house numbers in name', () => {
+  it('should format unlinked organisations with org-id in display-name', () => {
     const mockRequest = {
       t: vi.fn((key) => `translated:${key}`)
     }
@@ -70,7 +72,8 @@ describe(buildLinkingViewData, () => {
     expect(result.unlinked).toStrictEqual([
       {
         id: 'org-1',
-        name: 'Waste Services Ltd (ID: WS123456)'
+        displayName: 'Waste Services Ltd (ID: WS123456)',
+        name: 'Waste Services Ltd'
       }
     ])
   })
@@ -213,9 +216,9 @@ describe(buildLinkingViewData, () => {
     const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
     expect(result.unlinked).toHaveLength(3)
-    expect(result.unlinked[0].name).toBe('First Company (ID: FC111111)')
-    expect(result.unlinked[1].name).toBe('Second Company (ID: SC222222)')
-    expect(result.unlinked[2].name).toBe('Third Company (ID: TC333333)')
+    expect(result.unlinked[0].displayName).toBe('First Company (ID: FC111111)')
+    expect(result.unlinked[1].displayName).toBe('Second Company (ID: SC222222)')
+    expect(result.unlinked[2].displayName).toBe('Third Company (ID: TC333333)')
   })
 
   it('should sort unlinked organisations alphabetically by name', () => {
@@ -250,8 +253,14 @@ describe(buildLinkingViewData, () => {
 
     const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
-    expect(result.unlinked[0].name).toBe('Alpha Recycling Ltd (ID: AR222222)')
-    expect(result.unlinked[1].name).toBe('Mike Services Ltd (ID: MS333333)')
-    expect(result.unlinked[2].name).toBe('Zebra Waste Ltd (ID: ZW111111)')
+    expect(result.unlinked[0].displayName).toBe(
+      'Alpha Recycling Ltd (ID: AR222222)'
+    )
+    expect(result.unlinked[1].displayName).toBe(
+      'Mike Services Ltd (ID: MS333333)'
+    )
+    expect(result.unlinked[2].displayName).toBe(
+      'Zebra Waste Ltd (ID: ZW111111)'
+    )
   })
 })

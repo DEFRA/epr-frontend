@@ -16,7 +16,8 @@ export function buildLinkingViewData(request, organisations, options = {}) {
     .toSorted((a, b) => a.name.localeCompare(b.name))
     .map((o) => ({
       id: o.id,
-      name: `${o.name} (ID: ${o.orgId})`
+      displayName: `${o.name} (ID: ${o.orgId})`,
+      name: o.name
     }))
 
   const viewData = {
