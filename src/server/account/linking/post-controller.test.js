@@ -184,7 +184,8 @@ describe('account linking POST controller', () => {
         unlinked: [
           {
             id: 'org-1',
-            name: 'Test Company Ltd (ID: 12345678)'
+            displayName: 'Test Company Ltd (ID: 12345678)',
+            name: 'Test Company Ltd'
           }
         ],
         organisationName: 'My Defra Organisation',
