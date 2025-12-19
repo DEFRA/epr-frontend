@@ -199,20 +199,12 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
  * @param {string} context.organisationId - Organisation ID
- * @param {string} context.registrationId - Registration ID
- * @param {string} context.accreditationNumber - Accreditation number for display
  * @returns {object} Hapi view response
  */
-const renderSuccessView = (
-  h,
-  localise,
-  { organisationId, registrationId, accreditationNumber }
-) => {
+const renderSuccessView = (h, localise, { organisationId }) => {
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: localise('summary-log:successPageTitle'),
-    organisationId,
-    registrationId,
-    accreditationNumber
+    organisationId
   })
 }
 
