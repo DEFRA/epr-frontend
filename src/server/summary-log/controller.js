@@ -246,12 +246,24 @@ const renderSupersededView = (
  * @returns {string} The display code to use for translation lookup
  */
 const getDisplayCode = (code) => {
-  if (DATA_ENTRY_CODES.has(code)) return DATA_ENTRY_DISPLAY_CODE
-  if (MATERIAL_CODES.has(code)) return MATERIAL_DISPLAY_CODE
-  if (REGISTRATION_CODES.has(code)) return REGISTRATION_DISPLAY_CODE
-  if (ACCREDITATION_CODES.has(code)) return ACCREDITATION_DISPLAY_CODE
-  if (STRUCTURE_CODES.has(code)) return STRUCTURE_DISPLAY_CODE
-  if (PROCESSING_TYPE_CODES.has(code)) return PROCESSING_TYPE_DISPLAY_CODE
+  if (DATA_ENTRY_CODES.has(code)) {
+    return DATA_ENTRY_DISPLAY_CODE
+  }
+  if (MATERIAL_CODES.has(code)) {
+    return MATERIAL_DISPLAY_CODE
+  }
+  if (REGISTRATION_CODES.has(code)) {
+    return REGISTRATION_DISPLAY_CODE
+  }
+  if (ACCREDITATION_CODES.has(code)) {
+    return ACCREDITATION_DISPLAY_CODE
+  }
+  if (STRUCTURE_CODES.has(code)) {
+    return STRUCTURE_DISPLAY_CODE
+  }
+  if (PROCESSING_TYPE_CODES.has(code)) {
+    return PROCESSING_TYPE_DISPLAY_CODE
+  }
   return code
 }
 
