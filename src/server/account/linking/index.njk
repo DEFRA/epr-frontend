@@ -27,7 +27,7 @@
             {% for org in unlinked %}
               {% set radioItems = (radioItems.push({
                 value: org.id,
-                text: org.name
+                text: org.displayName
               }), radioItems) %}
             {% endfor %}
 
@@ -49,7 +49,17 @@
               text: localise('account:linking:confirmButton')
             }) }}
 
-            {# TODO list the system references at the end as per the design #}
+            {% set unlinkedList %}
+              <ul class="govuk-list">
+                {% for org in unlinked %}
+                  <li>
+                    {{ org.name }} –
+                    <strong>{{ org.id }}</strong>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endset %}
+
             {{ govukDetails({
               summaryText: "Problems linking a registration?",
               html: "
@@ -73,6 +83,10 @@
                     eprcustomerservice@defra.gov.uk
                   </a>
                 </p>
+                <p class=\"govuk-body\">
+                  You'll need to quote the relevant system reference:
+                </p>
+                " ~ unlinkedList ~ "
               "
             }) }}
           </form>
