@@ -751,7 +751,7 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    test('status: rejected without validation - should show validation failures page with generic error', async () => {
+    test('status: rejected without validation - should show validation failures page with technical error', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected
       })
@@ -763,7 +763,9 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
     })
 
     test('status: invalid with validation failures - should show validation failures page with correct content', async () => {
@@ -847,7 +849,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: invalid with unknown failure code - should show fallback message', async () => {
+    test('status: invalid with unknown failure code - should show technical error message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -858,7 +860,9 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -961,7 +965,59 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: invalid with empty validation failures - should show generic validation error', async () => {
+    test.each([
+      'FILE_UPLOAD_FAILED',
+      'FILE_DOWNLOAD_FAILED',
+      'FILE_REJECTED',
+      'VALIDATION_SYSTEM_ERROR',
+      'UNKNOWN'
+    ])('%s - should show technical error message', async (errorCode) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes[errorCode] }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+    })
+
+    test('status: invalid with multiple technical errors - should show single deduplicated message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.FILE_UPLOAD_FAILED },
+            { code: validationFailureCodes.FILE_DOWNLOAD_FAILED },
+            { code: validationFailureCodes.VALIDATION_SYSTEM_ERROR }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+
+      // Should only appear once (deduplicated)
+      const matches = result.match(
+        /Sorry, there is a problem with the service - try again later/g
+      )
+
+      expect(matches).toHaveLength(1)
+    })
+
+    test('status: invalid with empty validation failures - should show technical error message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -972,12 +1028,14 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
       expect(result).toContain('Upload updated XLSX file')
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: invalid without validation object - should show generic validation error', async () => {
+    test('status: invalid without validation object - should show technical error message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid
       })
@@ -985,7 +1043,9 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
