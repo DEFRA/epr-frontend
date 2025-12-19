@@ -16,8 +16,9 @@ ARG PORT_DEBUG
 ENV PORT=${PORT}
 EXPOSE ${PORT} ${PORT_DEBUG}
 
-COPY --chown=node:node --chmod=755 package*.json nodemon.json tsconfig.json babel.config.cjs webpack.config.js .browserslistrc ./
+COPY --chown=node:node --chmod=755 package*.json nodemon.json tsconfig.json babel.config.cjs webpack.config.js .browserslistrc eslint.config.js ./
 COPY --chown=node:node --chmod=755 src/ ./src/
+COPY --chown=node:node --chmod=755 fixtures/ ./fixtures/
 RUN npm install --ignore-scripts
 
 CMD [ "npm", "run", "dev" ]

@@ -1,0 +1,86 @@
+{
+  "id": "6507f1f77bcf86cd79943905",
+  "orgId": 50005,
+  "schemaVersion": 1,
+  "version": 1,
+  "statusHistory": [
+    {
+      "status": "created",
+      "updatedAt": "2025-08-22T19:34:44.944Z"
+    }
+  ],
+  "wasteProcessingTypes": ["reprocessor"],
+  "reprocessingNations": ["england"],
+  "businessType": "company",
+  "submittedToRegulator": "ea",
+  "formSubmissionTime": "2025-08-22T19:34:44.944Z",
+  "submitterContactDetails": {
+    "fullName": "Test User",
+    "email": "test@example.com",
+    "jobTitle": "Manager",
+    "phone": "1234567890"
+  },
+  "registrations": [
+    {
+      "id": "reg-no-site-001",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Test Company",
+      "accreditationId": "acc-no-site-001"
+    }
+  ],
+  "accreditations": [
+    {
+      "id": "acc-no-site-001",
+      "wasteProcessingType": "reprocessor",
+      "material": "plastic",
+      "statusHistory": [
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "acc-with-site-001",
+      "wasteProcessingType": "reprocessor",
+      "material": "wood",
+      "statusHistory": [
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "site": {
+        "address": {
+          "line1": "Site With Address",
+          "line2": "",
+          "townOrCity": "Leeds",
+          "postcode": "LS1 1AA",
+          "country": "England"
+        }
+      }
+    }
+  ],
+  "companyDetails": {
+    "registeredCompanyNumber": "11223344",
+    "tradingName": "Missing Fields Company",
+    "registeredAddress": {
+      "line1": "3 Missing Fields Road",
+      "line2": "",
+      "townOrCity": "Leeds",
+      "county": "West Yorkshire",
+      "postcode": "LS1 1AA",
+      "country": "England"
+    }
+  }
+}

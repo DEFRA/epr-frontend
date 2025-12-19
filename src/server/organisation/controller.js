@@ -1,18 +1,16 @@
-import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
-import {
-  getStatusClass,
-  getCurrentStatus
-} from './helpers/status-helpers.js'
+import { getStatusClass, getCurrentStatus } from './helpers/status-helpers.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
 /**
  * Organizes accreditations by site for a given waste processing type
- * @param {Object} data - The organisation data
+ * @param {object} data - The organisation data
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @returns {Array} Array of sites with their materials
  */
 function organizeAccreditationsBySite(data, wasteProcessingType) {
+  const EXCLUDED_STATUSES = ['created', 'rejected']
+
   // Filter accreditations by waste processing type
   const filteredAccreditations = data.accreditations.filter(
     (acc) => acc.wasteProcessingType === wasteProcessingType
@@ -26,6 +24,19 @@ function organizeAccreditationsBySite(data, wasteProcessingType) {
     const registration = data.registrations.find(
       (reg) => reg.accreditationId === accreditation.id
     )
+
+    const registrationStatus = getCurrentStatus(
+      registration?.statusHistory || accreditation.statusHistory
+    )
+    const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
+
+    // Skip if EITHER status is created or rejected
+    if (
+      EXCLUDED_STATUSES.includes(registrationStatus.toLowerCase()) ||
+      EXCLUDED_STATUSES.includes(accreditationStatus.toLowerCase())
+    ) {
+      return
+    }
 
     // Get site name from accreditation or fall back to registration
     let siteName = 'Unknown site'
@@ -42,11 +53,6 @@ function organizeAccreditationsBySite(data, wasteProcessingType) {
       })
     }
 
-    const registrationStatus = getCurrentStatus(
-      registration?.statusHistory || accreditation.statusHistory
-    )
-    const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
-
     const material =
       accreditation.material.charAt(0).toUpperCase() +
       accreditation.material.slice(1)
@@ -60,7 +66,6 @@ function organizeAccreditationsBySite(data, wasteProcessingType) {
       {
         html: `<strong class="govuk-tag govuk-tag--${getStatusClass(accreditationStatus)}">${accreditationStatus}</strong>`
       },
-      { text: '0.00', format: 'numeric' },
       {
         html: `<a href="/organisations/${data.orgId}/accreditations/${accreditation.id}" class="govuk-link">Select</a>`
       }
@@ -77,6 +82,10 @@ export const controller = {
   async handler(request, h) {
     const { t: localise } = request
     const { id: organisationId } = request.params
+
+    // Determine active tab based on route
+    const isExportingTab = request.path.endsWith('/exporting')
+    const activeTab = isExportingTab ? 'exporting' : 'reprocessing'
 
     // Feature flag: set to true to use backend data, false to use fixture
     const USE_BACKEND_DATA = true
@@ -98,6 +107,7 @@ export const controller = {
 
     if (USE_BACKEND_DATA) {
       try {
+        // Use the organisation ID from the URL parameter
         backendData = await fetchOrganisationById(
           organisationId,
           userSession?.idToken || 'randomstring'
@@ -122,7 +132,7 @@ export const controller = {
     }
 
     // Use backend data if available, otherwise fall back to fixture
-    const organisationData = backendData || fixtureData
+    const organisationData = backendData
 
     // Extract organisation name
     const organisationName = organisationData.companyDetails.tradingName
@@ -140,8 +150,13 @@ export const controller = {
     return h.view('organisation/index', {
       pageTitle: localise('organisation:pageTitle'),
       organisationName,
-      reprocessingSites,
-      exportingSites,
+      organisationId,
+      activeTab,
+      reprocessingUrl: request.localiseUrl(`/organisation/${organisationId}`),
+      exportingUrl: request.localiseUrl(
+        `/organisation/${organisationId}/exporting`
+      ),
+      sites: activeTab === 'reprocessing' ? reprocessingSites : exportingSites,
       hasReprocessing: reprocessingSites.length > 0,
       hasExporting: exportingSites.length > 0
     })

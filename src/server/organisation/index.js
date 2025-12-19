@@ -17,6 +17,11 @@ export const organisation = {
           ...controller,
           method: 'GET',
           path: '/organisation/{id}'
+        },
+        {
+          ...controller,
+          method: 'GET',
+          path: '/organisation/{id}/exporting'
         }
       ])
     }

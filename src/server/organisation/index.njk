@@ -36,65 +36,40 @@
 
         <h1 class="govuk-heading-xl">{{ organisationName }}</h1>
 
-        {% if hasReprocessing %}
-          <h2 class="govuk-heading-l">Reprocessing sites</h2>
-          {% for site in reprocessingSites %}
-            <h3 class="govuk-heading-m">{{ site.name }}</h3>
-            {{ govukTable({
-              head: [
-                {
-                  text: "Material"
-                },
-                {
-                  text: "Registration status"
-                },
-                {
-                  text: "Accreditation status"
-                },
-                {
-                  text: "Total tonnage",
-                  format: "numeric"
-                },
-                {
-                  text: "Actions"
-                }
-              ],
-              rows: site.tableRows
-            }) }}
-          {% endfor %}
-        {% endif %}
+          <div class="govuk-tabs" data-module="govuk-tabs">
+            <ul class="govuk-tabs__list">
+                <li class="govuk-tabs__list-item{% if activeTab == 'reprocessing' %} govuk-tabs__list-item--selected{% endif %}">
+                  <a class="govuk-tabs__tab" href="{{ reprocessingUrl }}">
+                    Reprocessing
+                  </a>
+                </li>
 
-        {% if hasExporting %}
-          <h2 class="govuk-heading-l">Exporting</h2>
-          {% for site in exportingSites %}
-            <h3 class="govuk-heading-m">{{ site.name }}</h3>
-            {{ govukTable({
-              head: [
-                {
-                  text: "Material"
-                },
-                {
-                  text: "Registration status"
-                },
-                {
-                  text: "Accreditation status"
-                },
-                {
-                  text: "Total tonnage",
-                  format: "numeric"
-                },
-                {
-                  text: "Actions"
-                }
-              ],
-              rows: site.tableRows
-            }) }}
-          {% endfor %}
-        {% endif %}
+                <li class="govuk-tabs__list-item{% if activeTab == 'exporting' %} govuk-tabs__list-item--selected{% endif %}">
+                  <a class="govuk-tabs__tab" href="{{ exportingUrl }}">
+                    Exporting
+                  </a>
+                </li>
+            </ul>
 
-        {% if not hasReprocessing and not hasExporting %}
-          <p class="govuk-body">No sites found for this organisation.</p>
-        {% endif %}
+            <div class="govuk-tabs__panel">
+              {% if sites and sites.length > 0 %}
+                {% for site in sites %}
+                  <h2 class="govuk-heading-m">{{ site.name }}</h2>
+                  {{ govukTable({
+                    head: [
+                      { text: "Material" },
+                      { text: "Registration status" },
+                      { text: "Accreditation status" },
+                      { text: "Actions" }
+                    ],
+                    rows: site.tableRows
+                  }) }}
+                {% endfor %}
+              {% else %}
+                <p class="govuk-body">No sites found.</p>
+              {% endif %}
+            </div>
+          </div>
       </div>
     </div>
   </div>
