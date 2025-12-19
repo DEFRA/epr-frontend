@@ -1,6 +1,5 @@
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 /**
@@ -41,14 +40,6 @@ export const summaryLogUploadController = {
     } catch (err) {
       // @todo: use structured logging
       request.server.log(['error', 'upload'], err)
-
-      if (err.output?.statusCode === statusCodes.conflict) {
-        return h.view('error/index', {
-          pageTitle: localise('summary-log-upload:conflictPageTitle'),
-          heading: localise('summary-log-upload:conflictHeading'),
-          message: localise('summary-log-upload:conflictMessage')
-        })
-      }
 
       return h.view('error/index', {
         pageTitle: localise('summary-log-upload:errorPageTitle'),
