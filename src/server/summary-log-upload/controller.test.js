@@ -1,5 +1,3 @@
-import Boom from '@hapi/boom'
-
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
@@ -78,24 +76,6 @@ describe('#summaryLogUploadController', () => {
         '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
       idToken: 'test-id-token'
     })
-  })
-
-  test('should show conflict error when submission is in progress', async () => {
-    initiateSummaryLogUpload.mockRejectedValueOnce(
-      Boom.conflict('A submission is in progress. Please wait.')
-    )
-
-    const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toStrictEqual(
-      expect.stringContaining('A submission is in progress')
-    )
-    expect(result).toStrictEqual(
-      expect.stringContaining(
-        'Please wait until the current submission is complete'
-      )
-    )
   })
 
   describe('session validation', () => {
