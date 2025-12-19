@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import Boom from '@hapi/boom'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createServer } from '#server/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -46,9 +48,14 @@ describe('#submitSummaryLogController', () => {
 
     submitSummaryLog.mockResolvedValueOnce(mockResponse)
 
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
     const response = await server.inject({
       method: 'POST',
-      url
+      url,
+      headers: { cookie },
+      payload: { crumb }
     })
 
     expect(submitSummaryLog).toHaveBeenCalledWith(
@@ -71,9 +78,14 @@ describe('#submitSummaryLogController', () => {
 
     submitSummaryLog.mockResolvedValueOnce(mockResponse)
 
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
     const response = await server.inject({
       method: 'POST',
-      url
+      url,
+      headers: { cookie },
+      payload: { crumb }
     })
 
     // Verify session cookie was set
@@ -85,48 +97,98 @@ describe('#submitSummaryLogController', () => {
     ).toContain('session')
   })
 
-  test('should allow backend errors to bubble up', async () => {
+  test('should render conflict view when backend returns 409', async () => {
+    submitSummaryLog.mockRejectedValueOnce(
+      Boom.conflict('Summary log must be validated before submission')
+    )
+
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
+    const { result, statusCode } = await server.inject({
+      method: 'POST',
+      url,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toStrictEqual(
+      expect.stringContaining('Your waste records cannot be updated')
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining('someone else from your organisation')
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining(`/organisations/${organisationId}`)
+    )
+  })
+
+  test('should allow non-conflict backend errors to bubble up', async () => {
     const error = new Error('Backend error')
     submitSummaryLog.mockRejectedValueOnce(error)
 
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
     const response = await server.inject({
       method: 'POST',
-      url
+      url,
+      headers: { cookie },
+      payload: { crumb }
     })
 
     // Hapi will show an error page (500)
     expect(response.statusCode).toBe(statusCodes.internalServerError)
   })
 
-  describe('session validation', () => {
-    test('should redirect to login when session is invalid', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: false
-      })
+  test('should reject POST request without CSRF token', async () => {
+    const response = await server.inject({ method: 'POST', url })
 
-      const response = await server.inject({
-        method: 'POST',
-        url
-      })
+    expect(response.statusCode).toBe(statusCodes.forbidden)
+  })
 
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers.location).toBe('/login')
+  test('should redirect to login when session is invalid', async () => {
+    // Get CSRF token first with valid session
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
+    // Now mock invalid session for the POST request
+    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+      ok: false
     })
 
-    test('should redirect to login when session value is null', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: true,
-        value: null
-      })
-
-      const response = await server.inject({
-        method: 'POST',
-        url
-      })
-
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers.location).toBe('/login')
+    const response = await server.inject({
+      method: 'POST',
+      url,
+      headers: { cookie },
+      payload: { crumb }
     })
+
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe('/login')
+  })
+
+  test('should redirect to login when session value is null', async () => {
+    // Get CSRF token first with valid session
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+
+    // Now mock null session value for the POST request
+    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
+      ok: true,
+      value: null
+    })
+
+    const response = await server.inject({
+      method: 'POST',
+      url,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers.location).toBe('/login')
   })
 })
 

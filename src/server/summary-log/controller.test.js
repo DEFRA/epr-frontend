@@ -7,9 +7,13 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createServer } from '#server/index.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { summaryLogStatuses } from '../common/constants/statuses.js'
-import { buildLoadsViewModel } from './controller.js'
+import {
+  buildLoadsViewModel,
+  getWasteRecordSectionNumber
+} from './controller.js'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -101,7 +105,7 @@ describe('#summaryLogUploadProgressController', () => {
         )
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Keep this page open and do not refresh it')
+        expect.stringContaining('Keep this page open and do not refresh it.')
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
@@ -129,13 +133,13 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being submitted')
+        expect.stringContaining('Your waste records are being updated')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Your summary log is being submitted')
+        expect.stringContaining('This may take a few minutes.')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Keep this page open and do not refresh it')
+        expect.stringContaining('Keep this page open and do not refresh it.')
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
@@ -145,7 +149,7 @@ describe('#summaryLogUploadProgressController', () => {
   describe('terminal states', () => {
     const expectCheckPageContent = (result) => {
       expect(result).toStrictEqual(
-        expect.stringContaining('Check before you submit')
+        expect.stringContaining('Check before confirming upload')
       )
       expect(result).toStrictEqual(expect.stringContaining('Compliance'))
       expect(result).toStrictEqual(expect.stringContaining('Declaration'))
@@ -153,7 +157,7 @@ describe('#summaryLogUploadProgressController', () => {
         expect.stringContaining('Confirm and submit')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('Re-upload summary log')
+        expect.stringContaining('upload an updated summary log')
       )
     }
 
@@ -177,24 +181,130 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
+    test('status: validated - should show return to home link to organisation home', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(expect.stringContaining('return to home'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(`href="/organisations/${organisationId}"`)
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated - should show warning inset text with both links', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      // Should have GDS inset text component with warning message
+      expect(result).toStrictEqual(expect.stringContaining('govuk-inset-text'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'This data will not be saved until you confirm upload'
+        )
+      )
+
+      // Both links should be present in the inset text
+      expect(result).toStrictEqual(
+        expect.stringContaining('upload an updated summary log')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('return to home'))
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT',
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('section 1 of your summary log')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with REPROCESSOR_OUTPUT - should show section 3 in explanation text', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_OUTPUT',
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('section 3 of your summary log')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with EXPORTER - should show section 1 in explanation text', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('section 1 of your summary log')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated with new loads - should show new loads heading', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: {
+            included: {
               count: 7,
               rowIds: [1092, 1093, 1094, 1095, 1096, 1097, 1098]
             },
-            invalid: { count: 2, rowIds: [1099, 1100] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            excluded: { count: 2, rowIds: [1099, 1100] }
           },
           adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -203,7 +313,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      // Should show total new loads (valid + invalid) in heading
+      // Should show total new loads (included + excluded) in heading
       expect(result).toStrictEqual(
         expect.stringContaining('There are 9 new loads')
       )
@@ -225,16 +335,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 3, rowIds: [1096, 1099, 1100] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -254,16 +360,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 3, rowIds: [1096, 1099, 1100] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -283,21 +385,17 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with row IDs - should display row IDs in bullet list', async () => {
+    test('status: validated with new included loads - should NOT display row IDs', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 3, rowIds: [1092, 1093, 1094] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 3, rowIds: [1092, 1093, 1094] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -306,12 +404,16 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      // Row IDs should be in bullet list
-      expect(result).toStrictEqual(expect.stringContaining('<li>1092</li>'))
-      expect(result).toStrictEqual(expect.stringContaining('<li>1093</li>'))
-      expect(result).toStrictEqual(expect.stringContaining('<li>1094</li>'))
+      // New included loads should NOT show row IDs (per spec Note 3)
+      // Only adjusted included loads show "Show X loads" expandable
+      expect(result).not.toStrictEqual(expect.stringContaining('<li>1092</li>'))
+      expect(result).not.toStrictEqual(expect.stringContaining('<li>1093</li>'))
+      expect(result).not.toStrictEqual(expect.stringContaining('<li>1094</li>'))
+      // Should still show the count message
       expect(result).toStrictEqual(
-        expect.stringContaining('found in the &#39;Row ID&#39; column')
+        expect.stringContaining(
+          '3 new loads will be added to your waste balance'
+        )
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -321,16 +423,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 1, rowIds: [1092] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 1, rowIds: [1092] },
+            excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 1, rowIds: [1093] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 1, rowIds: [1093] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -348,21 +446,20 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated without adjusted loads - should not show adjusted section', async () => {
+    test('status: validated with 100+ excluded loads - should show supplementary guidance instead of row IDs', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            valid: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
-            invalid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            excluded: {
+              count: 100,
+              rowIds: Array.from({ length: 100 }, (_, i) => 2000 + i)
+            }
           },
           adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] }
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
           }
         }
       })
@@ -371,9 +468,163 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      // Should not show adjusted loads section when count is 0
+      // Should show supplementary guidance message instead of row IDs
+      expect(result).toStrictEqual(
+        expect.stringContaining('100 or more loads are missing data')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('supplementary guidance')
+      )
+      // Should NOT show "Show X loads" link
       expect(result).not.toStrictEqual(
-        expect.stringContaining('adjusted loads')
+        expect.stringContaining('Show 100 loads')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with 99 excluded loads - should show Show loads link with row IDs', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: {
+              count: 99,
+              rowIds: Array.from({ length: 99 }, (_, i) => 2000 + i)
+            }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show "Show X loads" when 99 or fewer
+      expect(result).toStrictEqual(expect.stringContaining('Show 99 loads'))
+      // Should NOT show supplementary guidance
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('100 or more loads are missing data')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with 100+ adjusted excluded loads - should show supplementary guidance', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 2, rowIds: [3001, 3002] },
+            excluded: {
+              count: 100,
+              rowIds: Array.from({ length: 100 }, (_, i) => 4000 + i)
+            }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show supplementary guidance for adjusted excluded loads
+      expect(result).toStrictEqual(
+        expect.stringContaining('100 or more loads are missing data')
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with 99 adjusted excluded loads - should show Show loads link', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: {
+              count: 99,
+              rowIds: Array.from({ length: 99 }, (_, i) => 4000 + i)
+            }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show "Show X loads" for adjusted excluded loads
+      expect(result).toStrictEqual(expect.stringContaining('Show 99 loads'))
+      // Should NOT show supplementary guidance
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('100 or more loads are missing data')
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated with adjusted included loads - should show Show loads link', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: {
+              count: 5,
+              rowIds: [3001, 3002, 3003, 3004, 3005]
+            },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show "Show X loads" for adjusted included loads
+      expect(result).toStrictEqual(expect.stringContaining('Show 5 loads'))
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('status: validated without adjusted loads - should show no adjusted loads message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should show "There are no adjusted loads" message when count is 0
+      expect(result).toStrictEqual(
+        expect.stringContaining('There are no adjusted loads')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -387,13 +638,29 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Summary log submitted')
+        expect.stringContaining('Summary log uploaded')
       )
-      expect(result).toStrictEqual(expect.stringContaining('493021'))
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'You can upload an updated summary log whenever you need to provide new data.'
+        )
+      )
       expect(result).toStrictEqual(expect.stringContaining('Return to home'))
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toStrictEqual(enablesClientSidePolling())
+    })
+
+    test('status: submitted - should link to organisation root', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining(`href="/organisations/${organisationId}"`)
+      )
     })
 
     test('status: submitted with freshData from POST - should use freshData and not call backend', async () => {
@@ -406,10 +673,15 @@ describe('#summaryLogUploadProgressController', () => {
         accreditationNumber: '999888'
       })
 
+      // Get CSRF token
+      const { cookie, crumb } = await getCsrfToken(server, url)
+
       // Make POST request to set up freshData in session
       const postResponse = await server.inject({
         method: 'POST',
-        url: submitUrl
+        url: submitUrl,
+        headers: { cookie },
+        payload: { crumb }
       })
 
       // Verify POST redirected
@@ -435,11 +707,10 @@ describe('#summaryLogUploadProgressController', () => {
       // Verify fetchSummaryLogStatus was NOT called (freshData was used instead)
       expect(fetchSummaryLogStatus.mock.calls).toHaveLength(initialCallCount)
 
-      // Verify success page with accreditation number from freshData
+      // Verify success page rendered
       expect(result).toStrictEqual(
-        expect.stringContaining('Summary log submitted')
+        expect.stringContaining('Summary log uploaded')
       )
-      expect(result).toStrictEqual(expect.stringContaining('999888'))
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -458,7 +729,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('contains a virus and cannot be uploaded')
+      expect(result).toContain('The selected file contains a virus')
     })
 
     test('status: rejected - should initiate upload with pre-signed URL', async () => {
@@ -480,7 +751,7 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    test('status: rejected without validation - should show validation failures page with generic error', async () => {
+    test('status: rejected without validation - should show validation failures page with technical error', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected
       })
@@ -492,7 +763,9 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
     })
 
     test('status: invalid with validation failures - should show validation failures page with correct content', async () => {
@@ -510,7 +783,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(
         'We&#39;ve found the following issue with the file you selected'
       )
-      expect(result).toContain('Registration number is incorrect')
+      expect(result).toContain(
+        'Summary log registration is missing or incorrect'
+      )
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
@@ -526,7 +801,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toContain('Upload updated XLSX file')
       expect(result).toContain('Continue')
-      expect(result).toContain('Cancel and return to dashboard')
+      expect(result).toContain('Cancel and return to home')
       expect(result).toContain(
         `href="/organisations/${organisationId}/registrations/${registrationId}"`
       )
@@ -568,11 +843,13 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(
         'Rows have been removed since your summary log was last submitted'
       )
-      expect(result).toContain('The column headings in the file you selected')
+      expect(result).toContain(
+        'The columns in the file you selected have been changed'
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: invalid with unknown failure code - should show fallback message', async () => {
+    test('status: invalid with unknown failure code - should show technical error message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -583,7 +860,9 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -635,10 +914,110 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(
         'The selected file contains data that&#39;s been entered incorrectly'
       )
-      expect(result).toContain('Registration number is incorrect')
+      expect(result).toContain(
+        'Summary log registration is missing or incorrect'
+      )
     })
 
-    test('status: invalid with empty validation failures - should show generic validation error', async () => {
+    test('status: invalid with material failure - should show material invalid message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.MATERIAL_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Summary log material is missing or incorrect')
+    })
+
+    test('status: invalid with accreditation failure - should show accreditation invalid message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.ACCREDITATION_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Summary log accreditation is missing or incorrect'
+      )
+    })
+
+    test('status: invalid with processing type failure - should show template incorrect message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.PROCESSING_TYPE_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
+    })
+
+    test.each([
+      'FILE_UPLOAD_FAILED',
+      'FILE_DOWNLOAD_FAILED',
+      'FILE_REJECTED',
+      'VALIDATION_SYSTEM_ERROR',
+      'UNKNOWN'
+    ])('%s - should show technical error message', async (errorCode) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes[errorCode] }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+    })
+
+    test('status: invalid with multiple technical errors - should show single deduplicated message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.FILE_UPLOAD_FAILED },
+            { code: validationFailureCodes.FILE_DOWNLOAD_FAILED },
+            { code: validationFailureCodes.VALIDATION_SYSTEM_ERROR }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+
+      // Should only appear once (deduplicated)
+      const matches = result.match(
+        /Sorry, there is a problem with the service - try again later/g
+      )
+
+      expect(matches).toHaveLength(1)
+    })
+
+    test('status: invalid with empty validation failures - should show technical error message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -649,12 +1028,14 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
       expect(result).toContain('Upload updated XLSX file')
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: invalid without validation object - should show generic validation error', async () => {
+    test('status: invalid without validation object - should show technical error message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid
       })
@@ -662,7 +1043,9 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('An unexpected validation error occurred')
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -696,32 +1079,49 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    test('status: superseded - should show superseded page with link to organisation', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.superseded
+    describe('status: superseded', () => {
+      test('shows superseded page with link to organisation', async () => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.superseded
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('This summary log has been replaced')
+        expect(result).toContain(
+          'A newer summary log has been uploaded. This upload is no longer being processed.'
+        )
+        expect(result).toContain(`href="/organisations/${organisationId}"`)
+        expect(result).toContain('Return to home')
       })
 
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
+      test('does not enable client-side polling', async () => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.superseded
+        })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('This summary log has been replaced')
-      expect(result).toContain(
-        'A newer summary log has been uploaded. This upload is no longer being processed.'
-      )
-      expect(result).toContain(`href="/organisations/${organisationId}"`)
-      expect(result).toContain('Return to home')
-    })
+        const { result } = await server.inject({ method: 'GET', url })
 
-    test('status: superseded - should not initiate upload', async () => {
-      const initialCallCount = initiateSummaryLogUpload.mock.calls.length
-
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.superseded
+        expect(result).not.toStrictEqual(enablesClientSidePolling())
       })
 
-      await server.inject({ method: 'GET', url })
+      test('does not initiate upload', async () => {
+        const initialCallCount = initiateSummaryLogUpload.mock.calls.length
 
-      expect(initiateSummaryLogUpload.mock.calls).toHaveLength(initialCallCount)
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.superseded
+        })
+
+        await server.inject({ method: 'GET', url })
+
+        expect(initiateSummaryLogUpload.mock.calls).toHaveLength(
+          initialCallCount
+        )
+      })
     })
 
     test('status: superseded - should not enable client-side polling', async () => {
@@ -826,129 +1226,102 @@ describe('#summaryLogUploadProgressController', () => {
 })
 
 describe('#buildLoadsViewModel', () => {
-  test('returns empty arrays and zero counts when loads is undefined', () => {
+  const noRows = { count: 0, rowIds: [] }
+
+  test('returns no rows when loads is undefined', () => {
     const result = buildLoadsViewModel(undefined)
 
     expect(result).toStrictEqual({
       added: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: noRows,
+        excluded: noRows,
         total: 0
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: noRows,
+        excluded: noRows,
         total: 0
       }
     })
   })
 
-  test('returns empty arrays and zero counts when loads is null', () => {
+  test('returns no rows when loads is null', () => {
     const result = buildLoadsViewModel(null)
 
     expect(result).toStrictEqual({
       added: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: noRows,
+        excluded: noRows,
         total: 0
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: noRows,
+        excluded: noRows,
         total: 0
       }
     })
   })
 
-  test('returns empty arrays and zero counts when loads has empty structure', () => {
+  test('returns empty structure when loads has empty structure', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       }
     })
 
     expect(result).toStrictEqual({
       added: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] },
         total: 0
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] },
         total: 0
       }
     })
   })
 
-  test('uses count from backend (rowIds may be truncated)', () => {
+  test('preserves count and rowIds from backend', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 150, rowIds: [1001, 1002, 1003] },
-        invalid: { count: 50, rowIds: [1004, 1005] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 150, rowIds: [1001, 1002, 1003] },
+        excluded: { count: 50, rowIds: [1004, 1005] }
       },
       adjusted: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       }
     })
 
-    // rowIds contain truncated data, but counts come from count field
     expect(result.added).toStrictEqual({
-      valid: [1001, 1002, 1003],
-      invalid: [1004, 1005],
-      validCount: 150,
-      invalidCount: 50,
+      included: { count: 150, rowIds: [1001, 1002, 1003] },
+      excluded: { count: 50, rowIds: [1004, 1005] },
       total: 200
     })
   })
 
-  test('uses count for adjusted loads', () => {
+  test('preserves count and rowIds for adjusted loads', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] }
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        valid: { count: 120, rowIds: [2001, 2002] },
-        invalid: { count: 30, rowIds: [2003] }
+        included: { count: 120, rowIds: [2001, 2002] },
+        excluded: { count: 30, rowIds: [2003] }
       }
     })
 
     expect(result.adjusted).toStrictEqual({
-      valid: [2001, 2002],
-      invalid: [2003],
-      validCount: 120,
-      invalidCount: 30,
+      included: { count: 120, rowIds: [2001, 2002] },
+      excluded: { count: 30, rowIds: [2003] },
       total: 150
     })
   })
@@ -956,28 +1329,62 @@ describe('#buildLoadsViewModel', () => {
   test('handles partial loads data gracefully', () => {
     const result = buildLoadsViewModel({
       added: {
-        valid: { count: 1, rowIds: [1001] }
-        // missing invalid
+        included: { count: 1, rowIds: [1001] }
+        // missing excluded
       }
-      // missing unchanged, adjusted
+      // missing adjusted
     })
 
     expect(result).toStrictEqual({
       added: {
-        valid: [1001],
-        invalid: [],
-        validCount: 1,
-        invalidCount: 0,
+        included: { count: 1, rowIds: [1001] },
+        excluded: noRows,
         total: 1
       },
       adjusted: {
-        valid: [],
-        invalid: [],
-        validCount: 0,
-        invalidCount: 0,
+        included: noRows,
+        excluded: noRows,
         total: 0
       }
     })
+  })
+
+  test('calculates total from included + excluded counts', () => {
+    const result = buildLoadsViewModel({
+      added: {
+        included: { count: 8, rowIds: [1001, 1002, 1003] },
+        excluded: { count: 7, rowIds: [1004, 1005] }
+      },
+      adjusted: {
+        included: { count: 4, rowIds: [2001, 2002, 2003, 2004] },
+        excluded: { count: 3, rowIds: [2005, 2006, 2007] }
+      }
+    })
+
+    expect(result.added.total).toBe(15)
+    expect(result.adjusted.total).toBe(7)
+  })
+})
+
+describe('#getWasteRecordSectionNumber', () => {
+  test('returns section 1 for REPROCESSOR_INPUT', () => {
+    expect(getWasteRecordSectionNumber('REPROCESSOR_INPUT')).toBe(1)
+  })
+
+  test('returns section 3 for REPROCESSOR_OUTPUT', () => {
+    expect(getWasteRecordSectionNumber('REPROCESSOR_OUTPUT')).toBe(3)
+  })
+
+  test('returns section 1 for EXPORTER', () => {
+    expect(getWasteRecordSectionNumber('EXPORTER')).toBe(1)
+  })
+
+  test('returns undefined for undefined processingType', () => {
+    expect(getWasteRecordSectionNumber(undefined)).toBeUndefined()
+  })
+
+  test('returns undefined for unknown processingType', () => {
+    expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
   })
 })
 

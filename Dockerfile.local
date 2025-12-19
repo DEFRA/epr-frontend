@@ -20,5 +20,6 @@ COPY --chown=node:node --chmod=755 package*.json nodemon.json tsconfig.json babe
 COPY --chown=node:node --chmod=755 src/ ./src/
 COPY --chown=node:node --chmod=755 fixtures/ ./fixtures/
 RUN npm install --ignore-scripts
+RUN NODE_ENV=production npm run build
 
-CMD [ "npm", "run", "dev" ]
+CMD [ "node", "--use-strict", "." ]
