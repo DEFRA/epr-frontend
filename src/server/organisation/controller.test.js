@@ -293,7 +293,7 @@ describe('#organisationController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('should handle missing session with fallback token', async () => {
+    it('should handle missing session with undefined token', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
       })
@@ -307,10 +307,10 @@ describe('#organisationController', () => {
         url: '/organisation/6507f1f77bcf86cd79943901'
       })
 
-      // Should call backend with fallback token
+      // Should call backend with undefined token when session is missing
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(expect.any(String), 'randomstring')
+      ).toHaveBeenCalledWith(expect.any(String), undefined)
     })
 
     it('should handle backend 404 error', async () => {

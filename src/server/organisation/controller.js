@@ -87,9 +87,6 @@ export const controller = {
     const isExportingTab = request.path.endsWith('/exporting')
     const activeTab = isExportingTab ? 'exporting' : 'reprocessing'
 
-    // Feature flag: set to true to use backend data, false to use fixture
-    const USE_BACKEND_DATA = true
-
     // Get user session
     const { ok, value: session } = await getUserSession(request)
     const userSession = ok && session ? session : request.auth?.credentials
@@ -103,36 +100,26 @@ export const controller = {
       'Organisation page accessed'
     )
 
-    let backendData = null
+    let organisationData = null
 
-    if (USE_BACKEND_DATA) {
-      try {
-        // Use the organisation ID from the URL parameter
-        backendData = await fetchOrganisationById(
-          organisationId,
-          userSession?.idToken || 'randomstring'
-        )
-        request.logger.info(
-          { backendData },
-          'Backend organisation data retrieved'
-        )
-      } catch (error) {
-        request.logger.error(
-          {
-            error: {
-              message: error.message,
-              statusCode: error.statusCode,
-              response: error.response,
-              data: error.data
-            }
-          },
-          'Failed to fetch organisation from backend - falling back to fixture'
-        )
-      }
+    try {
+      organisationData = await fetchOrganisationById(
+        organisationId,
+        userSession?.idToken
+      )
+    } catch (error) {
+      request.logger.error(
+        {
+          error: {
+            message: error.message,
+            statusCode: error.statusCode,
+            response: error.response,
+            data: error.data
+          }
+        },
+        'Failed to fetch organisation from backend'
+      )
     }
-
-    // Use backend data if available, otherwise fall back to fixture
-    const organisationData = backendData
 
     // Extract organisation name
     const organisationName = organisationData.companyDetails.tradingName
