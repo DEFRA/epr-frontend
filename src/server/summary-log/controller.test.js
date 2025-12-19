@@ -729,7 +729,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain('contains a virus and cannot be uploaded')
+      expect(result).toContain('The selected file contains a virus')
     })
 
     test('status: rejected - should initiate upload with pre-signed URL', async () => {
@@ -781,7 +781,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(
         'We&#39;ve found the following issue with the file you selected'
       )
-      expect(result).toContain('Registration number is incorrect')
+      expect(result).toContain(
+        'Summary log registration is missing or incorrect'
+      )
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
@@ -797,7 +799,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toContain('Upload updated XLSX file')
       expect(result).toContain('Continue')
-      expect(result).toContain('Cancel and return to dashboard')
+      expect(result).toContain('Cancel and return to home')
       expect(result).toContain(
         `href="/organisations/${organisationId}/registrations/${registrationId}"`
       )
@@ -839,7 +841,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(
         'Rows have been removed since your summary log was last submitted'
       )
-      expect(result).toContain('The column headings in the file you selected')
+      expect(result).toContain(
+        'The columns in the file you selected have been changed'
+      )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
@@ -906,7 +910,55 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain(
         'The selected file contains data that&#39;s been entered incorrectly'
       )
-      expect(result).toContain('Registration number is incorrect')
+      expect(result).toContain(
+        'Summary log registration is missing or incorrect'
+      )
+    })
+
+    test('status: invalid with material failure - should show material invalid message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.MATERIAL_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Summary log material is missing or incorrect')
+    })
+
+    test('status: invalid with accreditation failure - should show accreditation invalid message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.ACCREDITATION_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Summary log accreditation is missing or incorrect'
+      )
+    })
+
+    test('status: invalid with processing type failure - should show template incorrect message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.PROCESSING_TYPE_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
     })
 
     test('status: invalid with empty validation failures - should show generic validation error', async () => {

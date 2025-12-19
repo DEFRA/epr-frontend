@@ -5,7 +5,17 @@ import { sessionNames } from '#server/common/constants/session-names.js'
 import {
   validationFailureCodes,
   DATA_ENTRY_CODES,
-  DATA_ENTRY_DISPLAY_CODE
+  DATA_ENTRY_DISPLAY_CODE,
+  MATERIAL_CODES,
+  MATERIAL_DISPLAY_CODE,
+  REGISTRATION_CODES,
+  REGISTRATION_DISPLAY_CODE,
+  ACCREDITATION_CODES,
+  ACCREDITATION_DISPLAY_CODE,
+  STRUCTURE_CODES,
+  STRUCTURE_DISPLAY_CODE,
+  PROCESSING_TYPE_CODES,
+  PROCESSING_TYPE_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
@@ -44,6 +54,7 @@ const SUCCESS_VIEW_NAME = 'summary-log/success'
 const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
+const MAX_FILE_SIZE_MB = 100
 
 const NO_ROWS = { count: 0, rowIds: [] }
 
@@ -230,13 +241,41 @@ const renderSupersededView = (
 }
 
 /**
+ * Maps a validation failure code to its display code for user-friendly messaging.
+ * Related codes are grouped to show a single combined message.
+ * @param {string} code - The validation failure code from the backend
+ * @returns {string} The display code to use for translation lookup
+ */
+const getDisplayCode = (code) => {
+  if (DATA_ENTRY_CODES.has(code)) {
+    return DATA_ENTRY_DISPLAY_CODE
+  }
+  if (MATERIAL_CODES.has(code)) {
+    return MATERIAL_DISPLAY_CODE
+  }
+  if (REGISTRATION_CODES.has(code)) {
+    return REGISTRATION_DISPLAY_CODE
+  }
+  if (ACCREDITATION_CODES.has(code)) {
+    return ACCREDITATION_DISPLAY_CODE
+  }
+  if (STRUCTURE_CODES.has(code)) {
+    return STRUCTURE_DISPLAY_CODE
+  }
+  if (PROCESSING_TYPE_CODES.has(code)) {
+    return PROCESSING_TYPE_DISPLAY_CODE
+  }
+  return code
+}
+
+/**
  * Renders the validation failures page for invalid summary logs
  * @param {object} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {object} context - View context
  * @param {object} context.validation - Validation result containing failures
  * @param {string} context.uploadUrl - URL for re-uploading the file
- * @param {string} context.cancelUrl - URL for cancelling and returning to dashboard
+ * @param {string} context.cancelUrl - URL for cancelling and returning to home
  * @returns {object} Hapi view response
  */
 const renderValidationFailuresView = (
@@ -250,17 +289,16 @@ const renderValidationFailuresView = (
     `summary-log:failure.${validationFailureCodes.UNKNOWN}`
   )
 
-  // Data entry codes are grouped into a single user-friendly message
+  // Related codes are grouped into single user-friendly messages
   const issues =
     failures.length > 0
       ? [
           ...new Set(
             failures.map(({ code }) => {
-              const displayCode = DATA_ENTRY_CODES.has(code)
-                ? DATA_ENTRY_DISPLAY_CODE
-                : code
+              const displayCode = getDisplayCode(code)
               return localise(`summary-log:failure.${displayCode}`, {
-                defaultValue: fallbackMessage
+                defaultValue: fallbackMessage,
+                maxSize: MAX_FILE_SIZE_MB
               })
             })
           )
