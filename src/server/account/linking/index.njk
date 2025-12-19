@@ -1,7 +1,8 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
-{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -46,6 +47,33 @@
 
             {{ govukButton({
               text: localise('account:linking:confirmButton')
+            }) }}
+
+            {# TODO list the system references at the end as per the design #}
+            {{ govukDetails({
+              summaryText: "Problems linking a registration?",
+              html: "
+                <h2 class=\"govuk-heading-m\">If the relevant registration is missing</h2>
+                <p class=\"govuk-body\">
+                  If you're signed into the correct account and the relevant registration is not showing,
+                  contact your regulator to check that the registration has been completed.
+                </p>
+                <p class=\"govuk-body\">
+                  If you're a consultant and need to change the business you selected when signing in,
+                  sign out and sign in again as another business.
+                </p>
+
+                <h2 class=\"govuk-heading-m\">If you have any other problems</h2>
+                <p class=\"govuk-body\">
+                  If you're having any other issues, contact the EPR packaging helpdesk.
+                </p>
+                <p class=\"govuk-body\">
+                  Phone: 0300 060 0002 (Monday to Friday, 8:00am to 4:30pm)<br>
+                  Email: <a class=\"govuk-link\" href=\"mailto:eprcustomerservice@defra.gov.uk\">
+                    eprcustomerservice@defra.gov.uk
+                  </a>
+                </p>
+              "
             }) }}
           </form>
         {% endif %}
