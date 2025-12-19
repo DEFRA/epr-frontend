@@ -65,3 +65,57 @@ export const DATA_ENTRY_CODES = new Set([
  * Display code for grouped data entry errors
  */
 export const DATA_ENTRY_DISPLAY_CODE = 'DATA_ENTRY_INVALID'
+
+/**
+ * Material-related codes that map to a single user message
+ */
+export const MATERIAL_CODES = new Set([
+  validationFailureCodes.MATERIAL_REQUIRED,
+  validationFailureCodes.MATERIAL_MISMATCH,
+  validationFailureCodes.MATERIAL_DATA_INVALID
+])
+
+export const MATERIAL_DISPLAY_CODE = 'MATERIAL_INVALID'
+
+/**
+ * Registration-related codes that map to a single user message
+ */
+export const REGISTRATION_CODES = new Set([
+  validationFailureCodes.REGISTRATION_REQUIRED,
+  validationFailureCodes.REGISTRATION_MISMATCH,
+  validationFailureCodes.REGISTRATION_DATA_INVALID
+])
+
+export const REGISTRATION_DISPLAY_CODE = 'REGISTRATION_INVALID'
+
+/**
+ * Accreditation-related codes that map to a single user message
+ */
+export const ACCREDITATION_CODES = new Set([
+  validationFailureCodes.ACCREDITATION_MISSING,
+  validationFailureCodes.ACCREDITATION_MISMATCH,
+  validationFailureCodes.ACCREDITATION_UNEXPECTED
+])
+
+export const ACCREDITATION_DISPLAY_CODE = 'ACCREDITATION_INVALID'
+
+/**
+ * Column structure codes that map to a single user message
+ */
+export const STRUCTURE_CODES = new Set([
+  validationFailureCodes.HEADER_REQUIRED,
+  validationFailureCodes.TABLE_UNRECOGNISED
+])
+
+export const STRUCTURE_DISPLAY_CODE = 'STRUCTURE_INVALID'
+
+/**
+ * Processing type codes that map to template mismatch message
+ */
+export const PROCESSING_TYPE_CODES = new Set([
+  validationFailureCodes.PROCESSING_TYPE_INVALID,
+  validationFailureCodes.PROCESSING_TYPE_MISMATCH,
+  validationFailureCodes.PROCESSING_TYPE_REQUIRED
+])
+
+export const PROCESSING_TYPE_DISPLAY_CODE = 'PROCESSING_TYPE_INVALID'
