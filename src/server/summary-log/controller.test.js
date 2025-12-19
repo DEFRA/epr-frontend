@@ -919,35 +919,51 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test.each([
-      ['MATERIAL_MISMATCH', 'Summary log material is missing or incorrect'],
-      [
-        'ACCREDITATION_MISMATCH',
+    test('status: invalid with material failure - should show material invalid message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.MATERIAL_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Summary log material is missing or incorrect')
+    })
+
+    test('status: invalid with accreditation failure - should show accreditation invalid message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.ACCREDITATION_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
         'Summary log accreditation is missing or incorrect'
-      ],
-      [
-        'PROCESSING_TYPE_MISMATCH',
+      )
+    })
+
+    test('status: invalid with processing type failure - should show template incorrect message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.PROCESSING_TYPE_MISMATCH }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
         'The summary log template you&#39;re uploading is incorrect'
-      ]
-    ])(
-      'status: invalid with %s - should show grouped error message',
-      async (errorCode, expectedMessage) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [{ code: validationFailureCodes[errorCode] }]
-          }
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain(expectedMessage)
-      }
-    )
+      )
+    })
 
     test.each([
       ['rejected', 'FILE_UPLOAD_FAILED'],
