@@ -965,85 +965,33 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: rejected with FILE_UPLOAD_FAILED - should show generic technical error message', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected,
-        validation: {
-          failures: [{ code: validationFailureCodes.FILE_UPLOAD_FAILED }]
-        }
-      })
+    test.each([
+      ['rejected', 'FILE_UPLOAD_FAILED'],
+      ['rejected', 'FILE_DOWNLOAD_FAILED'],
+      ['rejected', 'FILE_REJECTED'],
+      ['invalid', 'VALIDATION_SYSTEM_ERROR'],
+      ['invalid', 'UNKNOWN']
+    ])(
+      'status: %s with %s - should show technical error message',
+      async (status, errorCode) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses[status],
+          validation: {
+            failures: [{ code: validationFailureCodes[errorCode] }]
+          }
+        })
 
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url
+        })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-    })
-
-    test('status: rejected with FILE_DOWNLOAD_FAILED - should show generic technical error message', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected,
-        validation: {
-          failures: [{ code: validationFailureCodes.FILE_DOWNLOAD_FAILED }]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-    })
-
-    test('status: rejected with FILE_REJECTED - should show generic technical error message', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.rejected,
-        validation: {
-          failures: [{ code: validationFailureCodes.FILE_REJECTED }]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-    })
-
-    test('status: invalid with VALIDATION_SYSTEM_ERROR - should show generic technical error message', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ code: validationFailureCodes.VALIDATION_SYSTEM_ERROR }]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-    })
-
-    test('status: invalid with UNKNOWN - should show generic technical error message', async () => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ code: validationFailureCodes.UNKNOWN }]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({ method: 'GET', url })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-    })
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain(
+          'Sorry, there is a problem with the service - try again later'
+        )
+      }
+    )
 
     test('status: invalid with multiple technical errors - should show single deduplicated message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
