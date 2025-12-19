@@ -32,7 +32,7 @@
     "FILE_DOWNLOAD_FAILED": "The selected file could not be downloaded",
     "FILE_EMPTY": "The selected file is empty",
     "FILE_REJECTED": "The selected file could not be uploaded – try again",
-    "FILE_TOO_LARGE": "The selected file must be smaller than 100MB",
+    "FILE_TOO_LARGE": "The selected file must be smaller than {{maxSize}}MB",
     "FILE_UPLOAD_FAILED": "The selected file could not be uploaded – try again",
     "FILE_VIRUS_DETECTED": "The selected file contains a virus",
     "FILE_WRONG_TYPE": "The selected file must be a .XLSX",

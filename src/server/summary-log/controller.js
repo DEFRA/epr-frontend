@@ -54,6 +54,7 @@ const SUCCESS_VIEW_NAME = 'summary-log/success'
 const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
+const MAX_FILE_SIZE_MB = 100
 
 const NO_ROWS = { count: 0, rowIds: [] }
 
@@ -296,7 +297,8 @@ const renderValidationFailuresView = (
             failures.map(({ code }) => {
               const displayCode = getDisplayCode(code)
               return localise(`summary-log:failure.${displayCode}`, {
-                defaultValue: fallbackMessage
+                defaultValue: fallbackMessage,
+                maxSize: MAX_FILE_SIZE_MB
               })
             })
           )
