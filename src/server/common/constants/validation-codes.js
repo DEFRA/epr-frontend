@@ -2,120 +2,98 @@
  * Validation failure codes from backend API
  * Must match codes in epr-backend/src/common/enums/validation.js
  */
-export const validationFailureCodes = Object.freeze({
-  // File upload failures (CDP uploader rejections)
+
+const fileUploadCodes = Object.freeze({
   FILE_DOWNLOAD_FAILED: 'FILE_DOWNLOAD_FAILED',
   FILE_EMPTY: 'FILE_EMPTY',
   FILE_REJECTED: 'FILE_REJECTED',
   FILE_TOO_LARGE: 'FILE_TOO_LARGE',
   FILE_UPLOAD_FAILED: 'FILE_UPLOAD_FAILED',
   FILE_VIRUS_DETECTED: 'FILE_VIRUS_DETECTED',
-  FILE_WRONG_TYPE: 'FILE_WRONG_TYPE',
+  FILE_WRONG_TYPE: 'FILE_WRONG_TYPE'
+})
 
-  // Meta-level syntax failures
-  HEADER_REQUIRED: 'HEADER_REQUIRED',
+const templateVersionCodes = Object.freeze({
   TEMPLATE_VERSION_INVALID: 'TEMPLATE_VERSION_INVALID',
-  TEMPLATE_VERSION_REQUIRED: 'TEMPLATE_VERSION_REQUIRED',
-  PROCESSING_TYPE_INVALID: 'PROCESSING_TYPE_INVALID',
-  PROCESSING_TYPE_REQUIRED: 'PROCESSING_TYPE_REQUIRED',
+  TEMPLATE_VERSION_REQUIRED: 'TEMPLATE_VERSION_REQUIRED'
+})
 
-  // Meta-level business failures
-  REGISTRATION_DATA_INVALID: 'REGISTRATION_DATA_INVALID',
-  REGISTRATION_MISMATCH: 'REGISTRATION_MISMATCH',
-  REGISTRATION_REQUIRED: 'REGISTRATION_REQUIRED',
-  ACCREDITATION_MISMATCH: 'ACCREDITATION_MISMATCH',
-  ACCREDITATION_MISSING: 'ACCREDITATION_MISSING',
-  ACCREDITATION_UNEXPECTED: 'ACCREDITATION_UNEXPECTED',
-  MATERIAL_DATA_INVALID: 'MATERIAL_DATA_INVALID',
-  MATERIAL_MISMATCH: 'MATERIAL_MISMATCH',
-  MATERIAL_REQUIRED: 'MATERIAL_REQUIRED',
+const rowValidationCodes = Object.freeze({
+  ROW_ID_MISMATCH: 'ROW_ID_MISMATCH',
+  SEQUENTIAL_ROW_REMOVED: 'SEQUENTIAL_ROW_REMOVED'
+})
+
+const systemCodes = Object.freeze({
   PROCESSING_TYPE_DATA_INVALID: 'PROCESSING_TYPE_DATA_INVALID',
-  PROCESSING_TYPE_MISMATCH: 'PROCESSING_TYPE_MISMATCH',
+  VALIDATION_SYSTEM_ERROR: 'VALIDATION_SYSTEM_ERROR',
+  UNKNOWN: 'UNKNOWN'
+})
 
-  // Data-level failures (row/cell validation)
+const dataEntryCodes = Object.freeze({
   FIELD_REQUIRED: 'FIELD_REQUIRED',
   INVALID_TYPE: 'INVALID_TYPE',
   VALUE_OUT_OF_RANGE: 'VALUE_OUT_OF_RANGE',
   INVALID_FORMAT: 'INVALID_FORMAT',
   INVALID_DATE: 'INVALID_DATE',
-  CALCULATED_VALUE_MISMATCH: 'CALCULATED_VALUE_MISMATCH',
-  ROW_ID_MISMATCH: 'ROW_ID_MISMATCH',
-  SEQUENTIAL_ROW_REMOVED: 'SEQUENTIAL_ROW_REMOVED',
-  TABLE_UNRECOGNISED: 'TABLE_UNRECOGNISED',
-
-  // System/fallback
-  VALIDATION_SYSTEM_ERROR: 'VALIDATION_SYSTEM_ERROR',
-  UNKNOWN: 'UNKNOWN'
+  CALCULATED_VALUE_MISMATCH: 'CALCULATED_VALUE_MISMATCH'
 })
 
-/**
- * Data entry codes that map to a generic user message
- * These are cell/row validation failures that users can fix by correcting spreadsheet data
- */
-export const DATA_ENTRY_CODES = new Set([
-  validationFailureCodes.FIELD_REQUIRED,
-  validationFailureCodes.INVALID_TYPE,
-  validationFailureCodes.VALUE_OUT_OF_RANGE,
-  validationFailureCodes.INVALID_FORMAT,
-  validationFailureCodes.INVALID_DATE,
-  validationFailureCodes.CALCULATED_VALUE_MISMATCH
-])
+const materialCodes = Object.freeze({
+  MATERIAL_REQUIRED: 'MATERIAL_REQUIRED',
+  MATERIAL_MISMATCH: 'MATERIAL_MISMATCH',
+  MATERIAL_DATA_INVALID: 'MATERIAL_DATA_INVALID'
+})
 
-/**
- * Display code for grouped data entry errors
- */
+const registrationCodes = Object.freeze({
+  REGISTRATION_REQUIRED: 'REGISTRATION_REQUIRED',
+  REGISTRATION_MISMATCH: 'REGISTRATION_MISMATCH',
+  REGISTRATION_DATA_INVALID: 'REGISTRATION_DATA_INVALID'
+})
+
+const accreditationCodes = Object.freeze({
+  ACCREDITATION_MISSING: 'ACCREDITATION_MISSING',
+  ACCREDITATION_MISMATCH: 'ACCREDITATION_MISMATCH',
+  ACCREDITATION_UNEXPECTED: 'ACCREDITATION_UNEXPECTED'
+})
+
+const structureCodes = Object.freeze({
+  HEADER_REQUIRED: 'HEADER_REQUIRED',
+  TABLE_UNRECOGNISED: 'TABLE_UNRECOGNISED'
+})
+
+const processingTypeCodes = Object.freeze({
+  PROCESSING_TYPE_INVALID: 'PROCESSING_TYPE_INVALID',
+  PROCESSING_TYPE_MISMATCH: 'PROCESSING_TYPE_MISMATCH',
+  PROCESSING_TYPE_REQUIRED: 'PROCESSING_TYPE_REQUIRED'
+})
+
+export const validationFailureCodes = Object.freeze({
+  ...fileUploadCodes,
+  ...templateVersionCodes,
+  ...rowValidationCodes,
+  ...systemCodes,
+  ...dataEntryCodes,
+  ...materialCodes,
+  ...registrationCodes,
+  ...accreditationCodes,
+  ...structureCodes,
+  ...processingTypeCodes
+})
+
+export const DATA_ENTRY_CODES = new Set(Object.values(dataEntryCodes))
 export const DATA_ENTRY_DISPLAY_CODE = 'DATA_ENTRY_INVALID'
 
-/**
- * Material-related codes that map to a single user message
- */
-export const MATERIAL_CODES = new Set([
-  validationFailureCodes.MATERIAL_REQUIRED,
-  validationFailureCodes.MATERIAL_MISMATCH,
-  validationFailureCodes.MATERIAL_DATA_INVALID
-])
-
+export const MATERIAL_CODES = new Set(Object.values(materialCodes))
 export const MATERIAL_DISPLAY_CODE = 'MATERIAL_INVALID'
 
-/**
- * Registration-related codes that map to a single user message
- */
-export const REGISTRATION_CODES = new Set([
-  validationFailureCodes.REGISTRATION_REQUIRED,
-  validationFailureCodes.REGISTRATION_MISMATCH,
-  validationFailureCodes.REGISTRATION_DATA_INVALID
-])
-
+export const REGISTRATION_CODES = new Set(Object.values(registrationCodes))
 export const REGISTRATION_DISPLAY_CODE = 'REGISTRATION_INVALID'
 
-/**
- * Accreditation-related codes that map to a single user message
- */
-export const ACCREDITATION_CODES = new Set([
-  validationFailureCodes.ACCREDITATION_MISSING,
-  validationFailureCodes.ACCREDITATION_MISMATCH,
-  validationFailureCodes.ACCREDITATION_UNEXPECTED
-])
-
+export const ACCREDITATION_CODES = new Set(Object.values(accreditationCodes))
 export const ACCREDITATION_DISPLAY_CODE = 'ACCREDITATION_INVALID'
 
-/**
- * Column structure codes that map to a single user message
- */
-export const STRUCTURE_CODES = new Set([
-  validationFailureCodes.HEADER_REQUIRED,
-  validationFailureCodes.TABLE_UNRECOGNISED
-])
-
+export const STRUCTURE_CODES = new Set(Object.values(structureCodes))
 export const STRUCTURE_DISPLAY_CODE = 'STRUCTURE_INVALID'
 
-/**
- * Processing type codes that map to template mismatch message
- */
-export const PROCESSING_TYPE_CODES = new Set([
-  validationFailureCodes.PROCESSING_TYPE_INVALID,
-  validationFailureCodes.PROCESSING_TYPE_MISMATCH,
-  validationFailureCodes.PROCESSING_TYPE_REQUIRED
-])
-
+export const PROCESSING_TYPE_CODES = new Set(Object.values(processingTypeCodes))
 export const PROCESSING_TYPE_DISPLAY_CODE = 'PROCESSING_TYPE_INVALID'
