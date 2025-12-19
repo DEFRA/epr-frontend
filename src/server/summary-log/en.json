@@ -29,11 +29,8 @@
   "failure": {
     "ACCREDITATION_INVALID": "Summary log accreditation is missing or incorrect",
     "DATA_ENTRY_INVALID": "The selected file contains data that's been entered incorrectly - check that the data you've entered matches the examples provided in the summary log",
-    "FILE_DOWNLOAD_FAILED": "The selected file could not be downloaded",
     "FILE_EMPTY": "The selected file is empty",
-    "FILE_REJECTED": "The selected file could not be uploaded – try again",
     "FILE_TOO_LARGE": "The selected file must be smaller than {{maxSize}}MB",
-    "FILE_UPLOAD_FAILED": "The selected file could not be uploaded – try again",
     "FILE_VIRUS_DETECTED": "The selected file contains a virus",
     "FILE_WRONG_TYPE": "The selected file must be a .XLSX",
     "MATERIAL_INVALID": "Summary log material is missing or incorrect",
@@ -43,10 +40,9 @@
     "ROW_ID_MISMATCH": "The selected file contains different row IDs to the last summary log you submitted - check that you have been working in the same spreadsheet",
     "SEQUENTIAL_ROW_REMOVED": "Rows have been removed since your summary log was last submitted - these must be re-added before you can submit your file",
     "STRUCTURE_INVALID": "The columns in the file you selected have been changed - they must match the columns of the summary log template you originally downloaded",
+    "TECHNICAL_ERROR": "Sorry, there is a problem with the service - try again later",
     "TEMPLATE_VERSION_INVALID": "The template version is not recognised",
-    "TEMPLATE_VERSION_REQUIRED": "The template version could not be determined",
-    "UNKNOWN": "An unexpected validation error occurred",
-    "VALIDATION_SYSTEM_ERROR": "Something went wrong – try again"
+    "TEMPLATE_VERSION_REQUIRED": "The template version could not be determined"
   },
   "failure:UNKNOWN": "failure:UNKNOWN",
   "homePage": "home page",

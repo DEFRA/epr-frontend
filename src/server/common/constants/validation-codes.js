@@ -67,6 +67,18 @@ const processingTypeCodes = Object.freeze({
   PROCESSING_TYPE_REQUIRED: 'PROCESSING_TYPE_REQUIRED'
 })
 
+/**
+ * Technical error codes - service failures that the user cannot fix.
+ * These are mapped to a generic "try again later" message.
+ */
+const technicalErrorCodes = Object.freeze({
+  FILE_DOWNLOAD_FAILED: 'FILE_DOWNLOAD_FAILED',
+  FILE_REJECTED: 'FILE_REJECTED',
+  FILE_UPLOAD_FAILED: 'FILE_UPLOAD_FAILED',
+  VALIDATION_SYSTEM_ERROR: 'VALIDATION_SYSTEM_ERROR',
+  UNKNOWN: 'UNKNOWN'
+})
+
 export const validationFailureCodes = Object.freeze({
   ...fileUploadCodes,
   ...templateVersionCodes,
@@ -97,3 +109,6 @@ export const STRUCTURE_DISPLAY_CODE = 'STRUCTURE_INVALID'
 
 export const PROCESSING_TYPE_CODES = new Set(Object.values(processingTypeCodes))
 export const PROCESSING_TYPE_DISPLAY_CODE = 'PROCESSING_TYPE_INVALID'
+
+export const TECHNICAL_ERROR_CODES = new Set(Object.values(technicalErrorCodes))
+export const TECHNICAL_ERROR_DISPLAY_CODE = 'TECHNICAL_ERROR'

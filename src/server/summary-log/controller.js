@@ -3,7 +3,6 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import {
-  validationFailureCodes,
   DATA_ENTRY_CODES,
   DATA_ENTRY_DISPLAY_CODE,
   MATERIAL_CODES,
@@ -15,7 +14,9 @@ import {
   STRUCTURE_CODES,
   STRUCTURE_DISPLAY_CODE,
   PROCESSING_TYPE_CODES,
-  PROCESSING_TYPE_DISPLAY_CODE
+  PROCESSING_TYPE_DISPLAY_CODE,
+  TECHNICAL_ERROR_CODES,
+  TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
@@ -247,6 +248,9 @@ const renderSupersededView = (
  * @returns {string} The display code to use for translation lookup
  */
 const getDisplayCode = (code) => {
+  if (TECHNICAL_ERROR_CODES.has(code)) {
+    return TECHNICAL_ERROR_DISPLAY_CODE
+  }
   if (DATA_ENTRY_CODES.has(code)) {
     return DATA_ENTRY_DISPLAY_CODE
   }
@@ -286,7 +290,7 @@ const renderValidationFailuresView = (
   const failures = validation?.failures ?? []
 
   const fallbackMessage = localise(
-    `summary-log:failure.${validationFailureCodes.UNKNOWN}`
+    `summary-log:failure.${TECHNICAL_ERROR_DISPLAY_CODE}`
   )
 
   // Related codes are grouped into single user-friendly messages
