@@ -379,7 +379,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
       expect(result).toStrictEqual(
         expect.stringContaining(
-          'All adjustments will be reflected in your waste balance'
+          '3 adjusted loads will be reflected in your waste balance'
         )
       )
       expect(statusCode).toBe(statusCodes.ok)

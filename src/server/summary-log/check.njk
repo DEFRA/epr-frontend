@@ -53,7 +53,7 @@
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
             <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-included">
-              {{ localise('summary-log:adjustmentsReflected') }}
+              {{ localise('summary-log:adjustmentsReflected', { count: loads.adjusted.included.count }) }}
             </span>
           </h3>
           <div class="govuk-accordion__section-summary govuk-body">
@@ -76,7 +76,7 @@
         <div class="govuk-accordion__section-header">
           <h3 class="govuk-accordion__section-heading">
             <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-excluded">
-              {{ localise('summary-log:adjustmentsNotReflected') }}
+              {{ localise('summary-log:adjustmentsNotReflected', { count: loads.adjusted.excluded.count }) }}
             </span>
           </h3>
           <div class="govuk-accordion__section-summary govuk-body">
