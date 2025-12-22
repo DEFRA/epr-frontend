@@ -33,7 +33,7 @@ function organiseAccreditationsBySite(data, wasteProcessingType) {
 
     // Skip if EITHER status is created or rejected
     if (
-      EXCLUDED_STATUSES.includes(registrationStatus.toLowerCase()) ||
+      EXCLUDED_STATUSES.includes(registrationStatus.toLowerCase()) &&
       EXCLUDED_STATUSES.includes(accreditationStatus.toLowerCase())
     ) {
       return

@@ -475,6 +475,15 @@ describe('#organisationController', () => {
               { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
             ]
           }
+        ],
+        registrations: [
+          {
+            ...fixtureData.registrations[0],
+            accreditationId: fixtureData.accreditations[0].id,
+            statusHistory: [
+              { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
+            ]
+          }
         ]
       }
 
@@ -487,7 +496,7 @@ describe('#organisationController', () => {
         url: '/organisation/6507f1f77bcf86cd79943901'
       })
 
-      // Should show no sites because Created status is excluded
+      // Should show no sites because both registration and accreditation have Created status (excluded)
       expect(result).toContain('No sites found.')
     })
 
@@ -655,7 +664,7 @@ describe('#organisationController', () => {
       expect(tableRows).toHaveLength(1)
     })
 
-    it('should exclude items where EITHER registration OR accreditation has excluded status', async () => {
+    it('should show items when only ONE of registration or accreditation has excluded status', async () => {
       const dataWithMixedStatuses = {
         ...fixtureData,
         accreditations: [
@@ -707,10 +716,15 @@ describe('#organisationController', () => {
         url: '/organisation/6507f1f77bcf86cd79943901'
       })
 
-      // Both items should be excluded:
-      // - acc-1 has Approved status but reg-1 has Created status
-      // - acc-2 has Created status but reg-2 has Approved status
-      expect(result).toContain('No sites found.')
+      const $ = load(result)
+
+      // Items should NOT be excluded when only ONE has excluded status:
+      // - acc-1 has Approved status but reg-1 has Created status - NOT filtered
+      // - acc-2 has Created status but reg-2 has Approved status - NOT filtered
+      // Both sites should be shown
+      const siteHeadings = $('h2.govuk-heading-m')
+
+      expect(siteHeadings).toHaveLength(2)
     })
   })
 
