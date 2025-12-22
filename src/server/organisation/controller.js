@@ -39,11 +39,13 @@ function organizeAccreditationsBySite(data, wasteProcessingType) {
     }
 
     // Get site name from accreditation or fall back to registration
-    let siteName = 'Unknown site'
+    let siteName
     if (accreditation.site?.address?.line1) {
       siteName = accreditation.site.address.line1
     } else if (registration?.site?.address?.line1) {
       siteName = registration.site.address.line1
+    } else {
+      siteName = 'Unknown site'
     }
 
     if (!siteMap.has(siteName)) {
