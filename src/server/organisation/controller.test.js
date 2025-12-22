@@ -284,13 +284,17 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(backendError)
 
-      const { statusCode } = await server.inject({
+      const { statusCode, result } = await server.inject({
         method: 'GET',
         url: '/organisation/6507f1f77bcf86cd79943901'
       })
 
-      // Should return a server error
-      expect(statusCode).toBe(statusCodes.internalServerError)
+      // Should return error result
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result.ok).toBe(false)
+      expect(result.error.message).toBe(
+        'Failed to fetch organisation from backend'
+      )
     })
 
     it('should handle missing session with undefined token', async () => {
@@ -326,12 +330,17 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(notFoundError)
 
-      const { statusCode } = await server.inject({
+      const { statusCode, result } = await server.inject({
         method: 'GET',
         url: '/organisation/nonexistent-id'
       })
 
-      expect(statusCode).toBe(statusCodes.internalServerError)
+      // Should return error result
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result.ok).toBe(false)
+      expect(result.error.message).toBe(
+        'Failed to fetch organisation from backend'
+      )
     })
 
     it('should handle backend timeout error', async () => {
@@ -347,12 +356,17 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(timeoutError)
 
-      const { statusCode } = await server.inject({
+      const { statusCode, result } = await server.inject({
         method: 'GET',
         url: '/organisation/6507f1f77bcf86cd79943901'
       })
 
-      expect(statusCode).toBe(statusCodes.internalServerError)
+      // Should return error result
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result.ok).toBe(false)
+      expect(result.error.message).toBe(
+        'Failed to fetch organisation from backend'
+      )
     })
 
     it('should handle malformed backend response', async () => {
@@ -451,14 +465,14 @@ describe('#organisationController', () => {
       expect(tableRows).toHaveLength(0)
     })
 
-    it('should filter out items with "created" status (case-insensitive)', async () => {
+    it('should filter out items with "Created" status', async () => {
       const dataWithCreatedStatus = {
         ...fixtureData,
         accreditations: [
           {
             ...fixtureData.accreditations[0],
             statusHistory: [
-              { status: 'Created', updatedAt: '2025-08-20T19:34:44.944Z' }
+              { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
             ]
           }
         ]
@@ -473,18 +487,18 @@ describe('#organisationController', () => {
         url: '/organisation/6507f1f77bcf86cd79943901'
       })
 
-      // Should show no sites because created status is excluded
+      // Should show no sites because Created status is excluded
       expect(result).toContain('No sites found.')
     })
 
-    it('should filter out items with "rejected" status (case-insensitive)', async () => {
+    it('should filter out items with "Rejected" status', async () => {
       const dataWithRejectedStatus = {
         ...fixtureData,
         accreditations: [
           {
             ...fixtureData.accreditations[0],
             statusHistory: [
-              { status: 'Rejected', updatedAt: '2025-08-20T19:34:44.944Z' }
+              { status: 'rejected', updatedAt: '2025-08-20T19:34:44.944Z' }
             ]
           }
         ],
@@ -493,7 +507,7 @@ describe('#organisationController', () => {
             ...fixtureData.registrations[0],
             accreditationId: fixtureData.accreditations[0].id,
             statusHistory: [
-              { status: 'Rejected', updatedAt: '2025-08-20T19:34:44.944Z' }
+              { status: 'rejected', updatedAt: '2025-08-20T19:34:44.944Z' }
             ]
           }
         ]
@@ -508,7 +522,7 @@ describe('#organisationController', () => {
         url: '/organisation/6507f1f77bcf86cd79943901'
       })
 
-      // Should show no sites because rejected status is excluded
+      // Should show no sites because Rejected status is excluded
       expect(result).toContain('No sites found.')
     })
 
@@ -694,8 +708,8 @@ describe('#organisationController', () => {
       })
 
       // Both items should be excluded:
-      // - acc-1 has approved status but reg-1 has created status
-      // - acc-2 has created status but reg-2 has approved status
+      // - acc-1 has Approved status but reg-1 has Created status
+      // - acc-2 has Created status but reg-2 has Approved status
       expect(result).toContain('No sites found.')
     })
   })

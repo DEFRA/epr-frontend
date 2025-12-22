@@ -1,6 +1,7 @@
 import { getStatusClass, getCurrentStatus } from './helpers/status-helpers.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { err } from '#server/common/helpers/result.js'
 
 /**
  * Organizes accreditations by site for a given waste processing type
@@ -8,7 +9,7 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @returns {Array} Array of sites with their materials
  */
-function organizeAccreditationsBySite(data, wasteProcessingType) {
+function organiseAccreditationsBySite(data, wasteProcessingType) {
   const EXCLUDED_STATUSES = ['created', 'rejected']
 
   // Filter accreditations by waste processing type
@@ -97,7 +98,7 @@ export const controller = {
       {
         organisationId,
         hasSession: ok,
-        hasIdToken: userSession?.idToken ? true : false
+        hasIdToken: !!userSession?.idToken
       },
       'Organisation page accessed'
     )
@@ -110,28 +111,21 @@ export const controller = {
         userSession?.idToken
       )
     } catch (error) {
-      request.logger.error(
-        {
-          error: {
-            message: error.message,
-            statusCode: error.statusCode,
-            response: error.response,
-            data: error.data
-          }
-        },
-        'Failed to fetch organisation from backend'
-      )
+      return err({
+        message: 'Failed to fetch organisation from backend',
+        cause: error
+      })
     }
 
     // Extract organisation name
     const organisationName = organisationData.companyDetails.tradingName
 
     // Organize data for reprocessing and exporting
-    const reprocessingSites = organizeAccreditationsBySite(
+    const reprocessingSites = organiseAccreditationsBySite(
       organisationData,
       'reprocessor'
     )
-    const exportingSites = organizeAccreditationsBySite(
+    const exportingSites = organiseAccreditationsBySite(
       organisationData,
       'exporter'
     )
