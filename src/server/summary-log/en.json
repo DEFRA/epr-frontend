@@ -76,6 +76,7 @@
   "successPageTitle": "Summary log uploaded",
   "supersededHeading": "This summary log has been replaced",
   "supersededMessage": "A newer summary log has been uploaded. This upload is no longer being processed.",
+  "tooManyAdjustedLoadsToList": "As there are 100 or more adjusted loads, we are not able to list them all here.",
   "tooManyLoadsToList": "As 100 or more loads are missing data, we are not able to list them here. If you need detailed guidance on how to record all the necessary data in your summary log, you can read the <a href=\"https://www.gov.uk/government/publications/summary-log-templates-for-uk-packaging-waste/recording-uk-packaging-waste-in-summary-logs-supplementary-guidance\" class=\"govuk-link\">supplementary guidance</a>.",
   "uploadConflictHeading": "Your waste records cannot be updated",
   "uploadConflictIntro": "A summary log that includes different data has already been uploaded.",

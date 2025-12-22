@@ -603,6 +603,46 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    test('status: validated with 100+ adjusted included loads - should NOT show missing data message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        loads: {
+          added: {
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            included: {
+              count: 100,
+              rowIds: Array.from({ length: 100 }, (_, i) => 3000 + i)
+            },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({ method: 'GET', url })
+
+      expectCheckPageContent(result)
+
+      // Should NOT show "missing data" message for successful adjustments
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('loads are missing data')
+      )
+      // Should show the correct message for 100+ adjusted loads
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'As there are 100 or more adjusted loads, we are not able to list them all here'
+        )
+      )
+      // Should NOT show "Show X loads" link (too many to list)
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('Show 100 loads')
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('status: validated without adjusted loads - should show no adjusted loads message', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
