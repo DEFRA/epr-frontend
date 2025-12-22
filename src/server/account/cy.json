@@ -1,14 +1,14 @@
 {
   "emailNotRecognised": {
-    "pageTitle": "Nid ydym yn adnabod eich cyfeiriad e-bost",
-    "heading": "Nid ydym yn adnabod eich cyfeiriad e-bost",
-    "bodyOne": "Nid oedd y cyfeiriad e-bost rydych wedi mewngofnodi ag ef wedi'i gynnwys mewn ffurflen gofrestru neu achredu.",
-    "bodyTwo": "Rhaid i'r busnes gael ei sefydlu i ddefnyddio'r gwasanaeth hwn gan rywun a enwyd ar un o'r ffurflenni hyn.",
-    "youCan": "Gallwch:",
-    "listItemOne": "gwirio eich bod wedi mewngofnodi i'r cyfrif Defra cywir",
-    "listItemTwo": "gofyn i rywun a enwyd ar y ffurflenni gwblhau'r cam hwn cyn i chi geisio cyrchu'r gwasanaeth eto",
-    "listItemThree": "{contactLink} os oes angen i chi wirio bod cofrestriad neu achrediad y busnes wedi'i gymeradwyo",
-    "contactLinkText": "cysylltu â'ch rheoleiddiwr",
+    "pageTitle": "",
+    "heading": "",
+    "bodyOne": "",
+    "bodyTwo": "",
+    "youCan": "",
+    "listItemOne": "",
+    "listItemTwo": "",
+    "listItemThree": "{{contactLink}}",
+    "contactLinkText": "",
     "regulatorUrl": "#"
   },
   "greeting": "Croeso",
