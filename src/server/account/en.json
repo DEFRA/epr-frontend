@@ -1,4 +1,16 @@
 {
+  "emailNotRecognised": {
+    "pageTitle": "We do not recognise your email address",
+    "heading": "We do not recognise your email address",
+    "bodyOne": "The email address you've signed in with was not included in a registration or accreditation form.",
+    "bodyTwo": "The business must be set up to use this service by someone who was named on one of these forms.",
+    "youCan": "You can:",
+    "listItemOne": "check that you've signed in to the correct Defra account",
+    "listItemTwo": "ask someone who was named on the forms to complete this step before you try to access the service again",
+    "listItemThree": "{contactLink} if you need to check that the business's registration or accreditation has been approved",
+    "contactLinkText": "contact your regulator",
+    "regulatorUrl": "#"
+  },
   "greeting": "Welcome",
   "linking": {
     "pageTitle": "Registration Linking",
