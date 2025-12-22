@@ -358,6 +358,7 @@ describe('#summaryLogUploadProgressController', () => {
     test('status: validated with adjusted loads - should show adjusted loads section', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT',
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
@@ -376,6 +377,11 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(result).toStrictEqual(
         expect.stringContaining('There are 3 adjusted loads')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'These loads have had data added, removed, or changed in section 1 of your summary log since it was last submitted.'
+        )
       )
       expect(result).toStrictEqual(
         expect.stringContaining(
