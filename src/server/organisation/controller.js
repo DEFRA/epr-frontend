@@ -70,7 +70,7 @@ function organiseAccreditationsBySite(data, wasteProcessingType) {
         html: `<strong class="govuk-tag govuk-tag--${getStatusClass(accreditationStatus)}">${accreditationStatus}</strong>`
       },
       {
-        html: `<a href="/organisations/${data.orgId}/accreditations/${accreditation.id}" class="govuk-link">Select</a>`
+        html: `<a href="/organisations/${data.id}/accreditations/${accreditation.id}" class="govuk-link">Select</a>`
       }
     ])
   })

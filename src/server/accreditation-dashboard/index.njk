@@ -1,0 +1,135 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <span class="govuk-caption-xl">{{ siteName }}</span>
+        <h1 class="govuk-heading-xl">{{ material }}</h1>
+
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            {% if hasRegistrationStatus %}
+              <p class="govuk-body govuk-!-margin-bottom-1">
+                <strong>{{ localise("accreditation-dashboard:registration") }}:</strong>
+                {{ govukTag({
+                  text: registrationStatus,
+                  classes: "govuk-tag--" + registrationStatusClass
+                }) }}
+              </p>
+            {% endif %}
+            {% if hasRegistrationNumber %}
+              <p class="govuk-body govuk-!-margin-bottom-0">
+                <strong>{{ localise("accreditation-dashboard:registrationNumber") }}:</strong> {{ registrationNumber }}
+              </p>
+            {% endif %}
+          </div>
+          <div class="govuk-grid-column-one-half">
+            {% if hasAccreditationStatus %}
+              <p class="govuk-body govuk-!-margin-bottom-1">
+                <strong>{{ localise("accreditation-dashboard:accreditation") }}:</strong>
+                {{ govukTag({
+                  text: accreditationStatus,
+                  classes: "govuk-tag--" + accreditationStatusClass
+                }) }}
+              </p>
+            {% endif %}
+            {% if hasAccreditationNumber %}
+              <p class="govuk-body govuk-!-margin-bottom-0">
+                <strong>{{ localise("accreditation-dashboard:accreditationNumber") }}:</strong> {{ accreditationNumber }}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="govuk-!-margin-top-6 govuk-!-margin-bottom-6 govuk-!-padding-4" style="background-color: #0b7a75;">
+          <h2 class="govuk-heading-m govuk-!-margin-bottom-1" style="color: white;">
+            {{ localise("accreditation-dashboard:wasteBalanceTitle") }}
+          </h2>
+          <p class="govuk-body govuk-!-margin-bottom-0" style="color: white;">
+            {{ localise("accreditation-dashboard:wasteBalanceDescription") }}
+          </p>
+        </div>
+
+        <h2 class="govuk-heading-m">{{ localise("accreditation-dashboard:chooseTask") }}</h2>
+
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-!-padding-4 govuk-!-margin-bottom-4" style="background-color: #f3f2f1;">
+              <h3 class="govuk-heading-s govuk-!-margin-bottom-2">
+                {{ localise("accreditation-dashboard:summaryLog") }}
+              </h3>
+              <p class="govuk-body-s govuk-!-margin-bottom-4">
+                {{ localise("accreditation-dashboard:summaryLogDescription") }}
+              </p>
+              {% if hasUploadLink %}
+                <p class="govuk-body-s govuk-!-margin-bottom-0">
+                  <a href="{{ uploadSummaryLogUrl }}" class="govuk-link">
+                    {{ localise("accreditation-dashboard:uploadSummaryLog") }}
+                  </a>
+                </p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-!-padding-4 govuk-!-margin-bottom-4" style="background-color: #f3f2f1;">
+              <h3 class="govuk-heading-s govuk-!-margin-bottom-2">
+                {{ prnLabel }}
+              </h3>
+              <p class="govuk-body-s govuk-!-margin-bottom-4">
+                {{ prnDescription }}
+              </p>
+              <p class="govuk-body-s govuk-!-margin-bottom-0" style="color: #505a5f;">
+                {{ prnNotAvailable }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-!-padding-4 govuk-!-margin-bottom-4" style="background-color: #f3f2f1;">
+              <h3 class="govuk-heading-s govuk-!-margin-bottom-2">
+                {{ localise("accreditation-dashboard:reports") }}
+              </h3>
+              <p class="govuk-body-s govuk-!-margin-bottom-4">
+                {{ localise("accreditation-dashboard:reportsDescription") }}
+              </p>
+              <p class="govuk-body-s govuk-!-margin-bottom-0" style="color: #505a5f;">
+                {{ localise("accreditation-dashboard:reportsNotAvailable") }}
+              </p>
+            </div>
+          </div>
+          <div class="govuk-grid-column-one-half">
+            <div class="govuk-!-padding-4 govuk-!-margin-bottom-4" style="background-color: #f3f2f1;">
+              <h3 class="govuk-heading-s govuk-!-margin-bottom-2">
+                {{ localise("accreditation-dashboard:registrationAndAccreditation") }}
+              </h3>
+              <p class="govuk-body-s govuk-!-margin-bottom-4">
+                {{ localise("accreditation-dashboard:registrationAndAccreditationDescription") }}
+              </p>
+              <p class="govuk-body-s govuk-!-margin-bottom-0" style="color: #505a5f;">
+                {{ localise("accreditation-dashboard:registrationNotAvailablePart1") }}
+              </p>
+              <p class="govuk-body-s govuk-!-margin-bottom-0">
+                {{ localise("accreditation-dashboard:registrationNotAvailablePart2") }}
+                <a href="{{ contactRegulatorUrl }}" class="govuk-link">{{ localise("accreditation-dashboard:contactRegulator") }}</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}

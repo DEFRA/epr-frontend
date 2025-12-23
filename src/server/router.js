@@ -1,5 +1,6 @@
 import { isDefraIdEnabled } from '#config/config.js'
 import { account } from '#server/account/index.js'
+import { accreditationDashboard } from '#server/accreditation-dashboard/index.js'
 import { organisation } from '#server/organisation/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
@@ -32,6 +33,7 @@ export const router = {
       // Application specific routes, add your own routes here
       await server.register([
         account,
+        accreditationDashboard,
         organisation,
         home,
         registration,
