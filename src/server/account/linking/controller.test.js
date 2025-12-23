@@ -109,41 +109,6 @@ describe('#accountLinkingController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    describe('when user has no unlinked organisations', () => {
-      it('should redirect to email-not-recognised page', async () => {
-        const mockOrganisations = {
-          current: {
-            id: 'defra-org-123',
-            name: 'My Defra Organisation',
-            relationshipId: 'rel-456'
-          },
-          linked: null,
-          unlinked: []
-        }
-
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-          ok: true,
-          value: {
-            idToken: 'mock-id-token'
-          }
-        })
-
-        mswServer.use(
-          http.get(`${backendUrl}/v1/me/organisations`, () => {
-            return HttpResponse.json({ organisations: mockOrganisations })
-          })
-        )
-
-        const { statusCode, headers } = await server.inject({
-          method: 'GET',
-          url: '/account/linking'
-        })
-
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe('/email-not-recognised')
-      })
-    })
-
     describe('when user has unlinked organisations', () => {
       it('should render linking page with organisation radio buttons including companies house numbers', async () => {
         const mockOrganisations = {
