@@ -95,7 +95,7 @@ describe('#emailNotRecognisedController', () => {
       expect($('title').text().trim()).toStrictEqual(
         expect.stringMatching(/^We do not recognise your email address \|/)
       )
-      expect($('h1.govuk-heading-l').text().trim()).toBe(
+      expect($('h1.govuk-heading-xl').text().trim()).toBe(
         'We do not recognise your email address'
       )
       expect(statusCode).toBe(statusCodes.ok)
@@ -149,10 +149,12 @@ describe('#emailNotRecognisedController', () => {
       expect(secondItem).toContain('ask someone who was named')
 
       // Check for contact link in the third list item
-      const thirdItemHtml = $('ul.govuk-list--bullet li').eq(2).html()
+      const thirdItem = $('ul.govuk-list--bullet li').eq(2)
+      const link = thirdItem.find('a.govuk-link')
 
-      expect(thirdItemHtml).toContain('contact your regulator')
-      expect(thirdItemHtml).toContain('govuk-link')
+      expect(link).toHaveLength(1)
+      expect(link.text()).toBe('contact your regulator')
+      expect(link.attr('href')).toBe('#')
     })
   })
 })

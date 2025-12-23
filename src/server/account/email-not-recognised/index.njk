@@ -3,7 +3,7 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-l">{{ localise('account:emailNotRecognised:heading') }}</h1>
+      <h1 class="govuk-heading-xl">{{ localise('account:emailNotRecognised:heading') }}</h1>
 
       <p class="govuk-body">{{ localise('account:emailNotRecognised:bodyOne') }}</p>
 
@@ -14,7 +14,10 @@
       <ul class="govuk-list govuk-list--bullet">
         <li>{{ localise('account:emailNotRecognised:listItemOne') }}</li>
         <li>{{ localise('account:emailNotRecognised:listItemTwo') }}</li>
-        <li>{{ localise('account:emailNotRecognised:listItemThree', { contactLink: '<a href="' + localise('account:emailNotRecognised:regulatorUrl') + '" class="govuk-link">' + localise('account:emailNotRecognised:contactLinkText') + '</a>' }) | safe }}</li>
+        <li>
+          <a href="{{ localise('account:emailNotRecognised:regulatorUrl') }}" class="govuk-link">{{ localise('account:emailNotRecognised:contactLinkText') }}</a>
+          {{ localise('account:emailNotRecognised:listItemThreeAfterLink') }}
+        </li>
       </ul>
     </div>
   </div>

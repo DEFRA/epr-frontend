@@ -7,8 +7,8 @@
     "youCan": "You can:",
     "listItemOne": "check that you've signed in to the correct Defra account",
     "listItemTwo": "ask someone who was named on the forms to complete this step before you try to access the service again",
-    "listItemThree": "{{contactLink}} if you need to check that the business's registration or accreditation has been approved",
     "contactLinkText": "contact your regulator",
+    "listItemThreeAfterLink": "if you need to check that the business's registration or accreditation has been approved",
     "regulatorUrl": "#"
   },
   "greeting": "Welcome",

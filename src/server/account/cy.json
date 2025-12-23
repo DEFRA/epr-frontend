@@ -7,8 +7,8 @@
     "youCan": "",
     "listItemOne": "",
     "listItemTwo": "",
-    "listItemThree": "{{contactLink}}",
     "contactLinkText": "",
+    "listItemThreeAfterLink": "",
     "regulatorUrl": "#"
   },
   "greeting": "Croeso",
