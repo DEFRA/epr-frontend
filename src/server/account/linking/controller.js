@@ -13,6 +13,12 @@ export const controller = {
   },
   handler(request, h) {
     const organisations = request.pre.userOrganisations
+
+    // If there are no unlinked organisations, redirect to email-not-recognised page
+    if (!organisations.unlinked || organisations.unlinked.length === 0) {
+      return h.redirect('/email-not-recognised')
+    }
+
     const viewData = buildLinkingViewData(request, organisations)
 
     return h.view('account/linking/index', viewData)

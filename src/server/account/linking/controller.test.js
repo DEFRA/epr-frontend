@@ -48,7 +48,7 @@ describe('#accountLinkingController', () => {
       await server.stop({ timeout: 0 })
     })
 
-    it('should render page when no auth required', async () => {
+    it('should redirect to email-not-recognised when no unlinked organisations', async () => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-123',
@@ -72,15 +72,13 @@ describe('#accountLinkingController', () => {
         })
       )
 
-      const { result, statusCode } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/account/linking'
       })
 
-      expect(result).toStrictEqual(
-        expect.stringContaining('Registration Linking |')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/email-not-recognised')
     })
   })
 
@@ -109,46 +107,6 @@ describe('#accountLinkingController', () => {
       config.reset('defraId.oidcConfigurationUrl')
       config.reset('defraId.serviceId')
       await server.stop({ timeout: 0 })
-    })
-
-    describe('when user has no unlinked organisations', () => {
-      it('should render page with empty organisation list', async () => {
-        const mockOrganisations = {
-          current: {
-            id: 'defra-org-123',
-            name: 'My Defra Organisation',
-            relationshipId: 'rel-456'
-          },
-          linked: null,
-          unlinked: []
-        }
-
-        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-          ok: true,
-          value: {
-            idToken: 'mock-id-token'
-          }
-        })
-
-        mswServer.use(
-          http.get(`${backendUrl}/v1/me/organisations`, () => {
-            return HttpResponse.json({ organisations: mockOrganisations })
-          })
-        )
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/account/linking'
-        })
-
-        const $ = load(result)
-
-        expect($('title').text().trim()).toStrictEqual(
-          expect.stringMatching(/^Registration Linking \|/)
-        )
-        expect($('input[type="radio"]')).toHaveLength(0)
-        expect(statusCode).toBe(statusCodes.ok)
-      })
     })
 
     describe('when user has unlinked organisations', () => {
