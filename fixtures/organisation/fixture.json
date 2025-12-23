@@ -1,0 +1,679 @@
+{
+  "id": "6507f1f77bcf86cd79943901",
+  "orgId": 50002,
+  "schemaVersion": 1,
+  "version": 1,
+  "statusHistory": [
+    {
+      "status": "created",
+      "updatedAt": "2025-08-22T19:34:44.944Z"
+    }
+  ],
+  "wasteProcessingTypes": ["reprocessor", "exporter"],
+  "reprocessingNations": ["england", "wales"],
+  "businessType": "partnership",
+  "partnership": {
+    "type": "ltd",
+    "partners": [
+      {
+        "name": "Luke Skywalker",
+        "type": "individual"
+      },
+      {
+        "name": "Darth Vader Inc",
+        "type": "company"
+      }
+    ]
+  },
+  "submittedToRegulator": "ea",
+  "formSubmissionTime": "2025-08-22T19:34:44.944Z",
+  "submitterContactDetails": {
+    "fullName": "Luke Skywalker",
+    "email": "anakin.skywalker@starwars.com",
+    "jobTitle": "Partner",
+    "phone": "823456789"
+  },
+  "registrations": [
+    {
+      "id": "reg-001-glass-approved",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-08-20T19:34:44.944Z",
+      "site": {
+        "address": {
+          "line1": "Manchester Glass Recycling Facility",
+          "town": "Manchester",
+          "postcode": "M1 1AA"
+        },
+        "gridReference": "SJ8398",
+        "siteCapacity": [
+          {
+            "material": "glass",
+            "siteCapacityInTonnes": 25000,
+            "siteCapacityTimescale": "yearly"
+          }
+        ]
+      },
+      "material": "glass",
+      "wasteProcessingType": "reprocessor",
+      "accreditationId": "acc-001-glass-approved",
+      "cbduNumber": "CBDU001234",
+      "submitterContactDetails": {
+        "fullName": "Luke Skywalker",
+        "email": "luke.skywalker@starwars.com",
+        "jobTitle": "Operations Manager",
+        "phone": "1234567890"
+      },
+      "noticeAddress": {
+        "line1": "Manchester Glass Recycling Facility",
+        "town": "Manchester",
+        "postcode": "M1 1AA"
+      }
+    },
+    {
+      "id": "reg-002-plastic-suspended",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-07-15T14:22:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-07-20T09:30:00.000Z"
+        },
+        {
+          "status": "suspended",
+          "updatedAt": "2025-11-10T16:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-07-15T14:22:00.000Z",
+      "site": {
+        "address": {
+          "line1": "Birmingham Plastics Centre",
+          "town": "Birmingham",
+          "postcode": "B2 5HQ"
+        },
+        "gridReference": "SP0687",
+        "siteCapacity": [
+          {
+            "material": "plastic",
+            "siteCapacityInTonnes": 18500,
+            "siteCapacityTimescale": "yearly"
+          }
+        ]
+      },
+      "material": "plastic",
+      "wasteProcessingType": "reprocessor",
+      "accreditationId": "acc-002-plastic-suspended",
+      "cbduNumber": "CBDU002345",
+      "submitterContactDetails": {
+        "fullName": "Han Solo",
+        "email": "han.solo@starwars.com",
+        "jobTitle": "Site Manager",
+        "phone": "2345678901"
+      },
+      "noticeAddress": {
+        "line1": "Birmingham Plastics Centre",
+        "town": "Birmingham",
+        "postcode": "B2 5HQ"
+      }
+    },
+    {
+      "id": "reg-003-paper-rejected",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-09-05T11:10:00.000Z"
+        },
+        {
+          "status": "rejected",
+          "updatedAt": "2025-09-12T14:20:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-09-05T11:10:00.000Z",
+      "site": {
+        "address": {
+          "line1": "Leeds Paper Mill",
+          "town": "Leeds",
+          "postcode": "LS1 4AP"
+        },
+        "gridReference": "SE2933",
+        "siteCapacity": [
+          {
+            "material": "paper",
+            "siteCapacityInTonnes": 12000,
+            "siteCapacityTimescale": "yearly"
+          }
+        ]
+      },
+      "material": "paper",
+      "wasteProcessingType": "reprocessor",
+      "accreditationId": "acc-003-paper-created",
+      "cbduNumber": "CBDU003456",
+      "submitterContactDetails": {
+        "fullName": "Leia Organa",
+        "email": "leia.organa@starwars.com",
+        "jobTitle": "Compliance Officer",
+        "phone": "3456789012"
+      },
+      "noticeAddress": {
+        "line1": "Leeds Paper Mill",
+        "town": "Leeds",
+        "postcode": "LS1 4AP"
+      }
+    },
+    {
+      "id": "reg-004-aluminium-cancelled",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-06-10T08:15:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-06-18T10:30:00.000Z"
+        },
+        {
+          "status": "cancelled",
+          "updatedAt": "2025-10-05T13:25:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-06-10T08:15:00.000Z",
+      "site": {
+        "address": {
+          "line1": "Sheffield Metal Works",
+          "town": "Sheffield",
+          "postcode": "S1 2JE"
+        },
+        "gridReference": "SK3587",
+        "siteCapacity": [
+          {
+            "material": "aluminium",
+            "siteCapacityInTonnes": 8500,
+            "siteCapacityTimescale": "yearly"
+          }
+        ]
+      },
+      "material": "aluminium",
+      "wasteProcessingType": "reprocessor",
+      "accreditationId": "acc-004-aluminium-archived",
+      "cbduNumber": "CBDU004567",
+      "submitterContactDetails": {
+        "fullName": "Chewbacca",
+        "email": "chewie@starwars.com",
+        "jobTitle": "Technical Lead",
+        "phone": "4567890123"
+      },
+      "noticeAddress": {
+        "line1": "Sheffield Metal Works",
+        "town": "Sheffield",
+        "postcode": "S1 2JE"
+      }
+    },
+    {
+      "id": "reg-005-steel-approved",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-05-12T09:20:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-05-20T11:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-05-12T09:20:00.000Z",
+      "site": {
+        "address": {
+          "line1": "Sheffield Metal Works",
+          "town": "Sheffield",
+          "postcode": "S1 2JE"
+        },
+        "gridReference": "SK3587",
+        "siteCapacity": [
+          {
+            "material": "steel",
+            "siteCapacityInTonnes": 32000,
+            "siteCapacityTimescale": "yearly"
+          }
+        ]
+      },
+      "material": "steel",
+      "wasteProcessingType": "reprocessor",
+      "accreditationId": "acc-005-steel-approved",
+      "cbduNumber": "CBDU005678",
+      "submitterContactDetails": {
+        "fullName": "Obi-Wan Kenobi",
+        "email": "obiwan@starwars.com",
+        "jobTitle": "Director",
+        "phone": "5678901234"
+      },
+      "noticeAddress": {
+        "line1": "Sheffield Metal Works",
+        "town": "Sheffield",
+        "postcode": "S1 2JE"
+      }
+    },
+    {
+      "id": "reg-006-plastic-export-created",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-11-01T15:30:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-11-01T15:30:00.000Z",
+      "material": "plastic",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU006789",
+      "exportPorts": ["Felixstowe", "Southampton"],
+      "submitterContactDetails": {
+        "fullName": "Rey Skywalker",
+        "email": "rey@starwars.com",
+        "jobTitle": "Export Manager",
+        "phone": "6789012345"
+      },
+      "noticeAddress": {
+        "line1": "London Export Hub",
+        "town": "London",
+        "postcode": "E14 9SS"
+      }
+    },
+    {
+      "id": "reg-007-wood-export-approved",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-04-08T10:10:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-04-15T12:30:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-04-08T10:10:00.000Z",
+      "material": "wood",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU007890",
+      "exportPorts": ["Liverpool", "Bristol"],
+      "submitterContactDetails": {
+        "fullName": "Finn Storm",
+        "email": "finn@starwars.com",
+        "jobTitle": "Logistics Manager",
+        "phone": "7890123456"
+      },
+      "noticeAddress": {
+        "line1": "Liverpool Docks",
+        "town": "Liverpool",
+        "postcode": "L3 1BP"
+      }
+    },
+    {
+      "id": "reg-008-paper-export-rejected",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-10-20T14:45:00.000Z"
+        },
+        {
+          "status": "rejected",
+          "updatedAt": "2025-10-28T09:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-10-20T14:45:00.000Z",
+      "material": "paper",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU008901",
+      "exportPorts": ["Dover"],
+      "submitterContactDetails": {
+        "fullName": "Poe Dameron",
+        "email": "poe@starwars.com",
+        "jobTitle": "Operations Lead",
+        "phone": "8901234567"
+      },
+      "noticeAddress": {
+        "line1": "Dover Export Terminal",
+        "town": "Dover",
+        "postcode": "CT16 1JA"
+      }
+    }
+  ],
+  "accreditations": [
+    {
+      "id": "acc-001-glass-approved",
+      "accreditationNumber": "ACC001234",
+      "formSubmissionTime": "2025-08-25T10:15:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Manchester Glass Recycling Facility",
+          "postcode": "M1 1AA"
+        }
+      },
+      "material": "glass",
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "over_10000",
+        "signatories": [
+          {
+            "fullName": "Yoda",
+            "email": "yoda@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "1234567890"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Yoda",
+        "email": "yoda@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "1234567890"
+      }
+    },
+    {
+      "id": "acc-002-plastic-suspended",
+      "accreditationNumber": "ACC002345",
+      "formSubmissionTime": "2025-07-20T09:30:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-07-15T14:22:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-07-20T09:30:00.000Z"
+        },
+        {
+          "status": "suspended",
+          "updatedAt": "2025-11-10T16:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Birmingham Plastics Centre",
+          "postcode": "B2 5HQ"
+        }
+      },
+      "material": "plastic",
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "5001_to_10000",
+        "signatories": [
+          {
+            "fullName": "Mace Windu",
+            "email": "mace@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "2345678901"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Mace Windu",
+        "email": "mace@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "2345678901"
+      }
+    },
+    {
+      "id": "acc-003-paper-created",
+      "accreditationNumber": "ACC003456",
+      "formSubmissionTime": "2025-09-05T11:10:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-09-05T11:10:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Leeds Paper Mill",
+          "postcode": "LS1 4AP"
+        }
+      },
+      "material": "paper",
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "1001_to_5000",
+        "signatories": [
+          {
+            "fullName": "Qui-Gon Jinn",
+            "email": "quigon@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "3456789012"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Qui-Gon Jinn",
+        "email": "quigon@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "3456789012"
+      }
+    },
+    {
+      "id": "acc-004-aluminium-archived",
+      "accreditationNumber": "ACC004567",
+      "formSubmissionTime": "2025-06-18T10:30:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-06-10T08:15:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-06-18T10:30:00.000Z"
+        },
+        {
+          "status": "archived",
+          "updatedAt": "2025-10-05T13:25:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Sheffield Metal Works",
+          "postcode": "S1 2JE"
+        }
+      },
+      "material": "aluminium",
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "501_to_1000",
+        "signatories": [
+          {
+            "fullName": "Padme Amidala",
+            "email": "padme@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "4567890123"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Padme Amidala",
+        "email": "padme@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "4567890123"
+      }
+    },
+    {
+      "id": "acc-005-steel-approved",
+      "accreditationNumber": "ACC005678",
+      "formSubmissionTime": "2025-05-20T11:45:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-05-12T09:20:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-05-20T11:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Sheffield Metal Works",
+          "postcode": "S1 2JE"
+        }
+      },
+      "material": "steel",
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "over_10000",
+        "signatories": [
+          {
+            "fullName": "Anakin Skywalker",
+            "email": "anakin@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "5678901234"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Anakin Skywalker",
+        "email": "anakin@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "5678901234"
+      }
+    },
+    {
+      "id": "acc-006-glass-rejected",
+      "accreditationNumber": "ACC006789",
+      "formSubmissionTime": "2025-08-10T13:20:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-10T13:20:00.000Z"
+        },
+        {
+          "status": "rejected",
+          "updatedAt": "2025-08-18T15:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Bristol Glass Plant",
+          "postcode": "BS1 6XE"
+        }
+      },
+      "material": "glass",
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "up_to_500",
+        "signatories": [
+          {
+            "fullName": "Jyn Erso",
+            "email": "jyn@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "6789012345"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Jyn Erso",
+        "email": "jyn@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "6789012345"
+      }
+    },
+    {
+      "id": "acc-007-plastic-cancelled",
+      "accreditationNumber": "ACC007890",
+      "formSubmissionTime": "2025-03-15T09:30:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-03-15T09:30:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-03-22T11:20:00.000Z"
+        },
+        {
+          "status": "cancelled",
+          "updatedAt": "2025-09-01T14:10:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Cardiff Recycling Centre",
+          "postcode": "CF10 1EP"
+        }
+      },
+      "material": "plastic",
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "1001_to_5000",
+        "signatories": [
+          {
+            "fullName": "Cassian Andor",
+            "email": "cassian@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "7890123456"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Cassian Andor",
+        "email": "cassian@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "7890123456"
+      }
+    }
+  ],
+  "companyDetails": {
+    "name": "ACME ltd",
+    "tradingName": "ACME ltd",
+    "companiesHouseNumber": "AC012345",
+    "registeredAddress": {
+      "line1": "Palace of Westminster",
+      "town": "London",
+      "postcode": "SW1A 0AA"
+    }
+  }
+}
