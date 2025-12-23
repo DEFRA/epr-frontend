@@ -9,7 +9,7 @@
     "listItemTwo": "ask someone who was named on the forms to complete this step before you try to access the service again",
     "contactLinkText": "contact your regulator",
     "listItemThreeAfterLink": "if you need to check that the business's registration or accreditation has been approved",
-    "regulatorUrl": "#"
+    "regulatorUrl": "https://www.gov.uk/guidance/packaging-waste-apply-for-registration-and-accreditation-as-a-reprocessor-or-exporter#get-helpand-give-feedback"
   },
   "greeting": "Welcome",
   "linking": {

@@ -154,7 +154,9 @@ describe('#emailNotRecognisedController', () => {
 
       expect(link).toHaveLength(1)
       expect(link.text()).toBe('contact your regulator')
-      expect(link.attr('href')).toBe('#')
+      expect(link.attr('href')).toBe(
+        'https://www.gov.uk/guidance/packaging-waste-apply-for-registration-and-accreditation-as-a-reprocessor-or-exporter#get-helpand-give-feedback'
+      )
     })
   })
 })
