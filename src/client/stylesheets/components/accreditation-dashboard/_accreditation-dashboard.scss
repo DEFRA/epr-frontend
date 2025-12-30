@@ -1,13 +1,11 @@
 @use "govuk-frontend" as *;
 
-/* Organisation header panel override */
 .epr-org-panel {
   background: govuk-colour("white");
   border: 1px solid $govuk-border-colour;
   text-align: left;
 }
 
-/* Waste balance banner - uses summary card structure with custom colours */
 .epr-waste-balance-banner {
   border: none;
 
