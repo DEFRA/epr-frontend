@@ -1,0 +1,26 @@
+@use "govuk-frontend" as *;
+
+/* Organisation header panel override */
+.epr-org-panel {
+  background: govuk-colour("white");
+  border: 1px solid $govuk-border-colour;
+  text-align: left;
+}
+
+/* Waste balance banner - uses summary card structure with custom colours */
+.epr-waste-balance-banner {
+  border: none;
+
+  .govuk-summary-card__title-wrapper {
+    background: govuk-colour("light-grey");
+  }
+
+  .govuk-summary-card__title {
+    color: govuk-colour("blue");
+    @include govuk-font($size: 36, $weight: bold);
+  }
+
+  p {
+    color: govuk-colour("blue");
+  }
+}

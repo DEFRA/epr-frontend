@@ -203,6 +203,41 @@ describe('#accreditationDashboardController', () => {
       )
     })
 
+    it('should apply epr-waste-balance-banner class to waste balance banner', async () => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+      })
+
+      const $ = load(result)
+
+      const banner = $('.govuk-summary-card.epr-waste-balance-banner')
+
+      expect(banner.length).toBeGreaterThan(0)
+    })
+
+    it('should use govuk-summary-card for task cards', async () => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+      })
+
+      const $ = load(result)
+
+      // 4 task cards + 1 waste balance banner = 5 summary cards total
+      const summaryCards = $('.govuk-summary-card')
+
+      expect(summaryCards.length).toBe(5)
+    })
+
     it('should display all four task tiles', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
@@ -371,7 +406,7 @@ describe('#accreditationDashboardController', () => {
 
       const $ = load(result)
 
-      expect($('h1').text()).toMatch(/^[A-Z]/)
+      expect($('h1').text().trim()).toMatch(/^[A-Z]/)
     })
 
     it('should use registration site when accreditation site is missing', async () => {
