@@ -1,7 +1,4 @@
-import {
-  getStatusClass,
-  getCurrentStatus
-} from '#server/organisations/helpers/status-helpers.js'
+import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import Boom from '@hapi/boom'
@@ -86,12 +83,12 @@ function buildViewModel({
   accreditation,
   registration
 }) {
-  const siteName = getSiteName(accreditation, registration)
-  const material = capitalise(accreditation.material)
   const isExporter = accreditation.wasteProcessingType === 'exporter'
+  const siteName = getSiteName(accreditation, registration, isExporter)
+  const material = capitalise(accreditation.material)
 
-  const registrationStatus = getCurrentStatus(registration?.statusHistory || [])
-  const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
+  const registrationStatus = capitalise(registration?.status)
+  const accreditationStatus = capitalise(accreditation.status)
 
   const uploadSummaryLogUrl = registration
     ? request.localiseUrl(
@@ -110,10 +107,11 @@ function buildViewModel({
     accreditationStatusClass: getStatusClass(accreditationStatus),
     registrationNumber: registration?.cbduNumber,
     accreditationNumber: accreditation.accreditationNumber,
-    hasRegistrationStatus: registrationStatus !== 'Unknown',
-    hasAccreditationStatus: accreditationStatus !== 'Unknown',
+    hasRegistrationStatus: !!registrationStatus,
+    hasAccreditationStatus: !!accreditationStatus,
     hasRegistrationNumber: !!registration?.cbduNumber,
     hasAccreditationNumber: !!accreditation.accreditationNumber,
+    hasSiteName: !!siteName,
     hasUploadLink: !!uploadSummaryLogUrl,
     backUrl: isExporter
       ? request.localiseUrl(`/organisations/${organisationId}/exporting`)
@@ -147,18 +145,21 @@ function getPrnLabels(localise, isExporter) {
 
 /**
  * Get site name from accreditation or registration
+ * Site is only applicable for reprocessors, not exporters
  * @param {object} accreditation
  * @param {object|undefined} registration
- * @returns {string}
+ * @param {boolean} isExporter
+ * @returns {string|null}
  */
-function getSiteName(accreditation, registration) {
+function getSiteName(accreditation, registration, isExporter) {
   if (accreditation.site?.address?.line1) {
     return accreditation.site.address.line1
   }
   if (registration?.site?.address?.line1) {
     return registration.site.address.line1
   }
-  return 'Unknown site'
+  // Site is not applicable for exporters - return null instead of "Unknown site"
+  return isExporter ? null : 'Unknown site'
 }
 
 /**

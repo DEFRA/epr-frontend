@@ -348,6 +348,7 @@ describe('#accreditationDashboardController', () => {
             id: 'acc-no-site',
             wasteProcessingType: 'reprocessor',
             material: 'plastic',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ]
@@ -417,6 +418,7 @@ describe('#accreditationDashboardController', () => {
             id: 'acc-no-site',
             wasteProcessingType: 'reprocessor',
             material: 'wood',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ]
@@ -427,6 +429,7 @@ describe('#accreditationDashboardController', () => {
             id: 'reg-with-site',
             accreditationId: 'acc-no-site',
             cbduNumber: 'CBDU123456',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -459,6 +462,7 @@ describe('#accreditationDashboardController', () => {
             id: 'acc-empty-status',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
+            status: 'created',
             statusHistory: [],
             site: { address: { line1: 'Test Site' } }
           }
@@ -486,6 +490,7 @@ describe('#accreditationDashboardController', () => {
             id: 'acc-no-material',
             wasteProcessingType: 'reprocessor',
             material: '',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
