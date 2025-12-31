@@ -664,7 +664,7 @@ describe('#organisationController', () => {
       expect(tableRows).toHaveLength(1)
     })
 
-    it('should show items when only ONE of registration or accreditation has excluded status', async () => {
+    it('should hide items when EITHER registration or accreditation has excluded status', async () => {
       const dataWithMixedStatuses = {
         ...fixtureData,
         accreditations: [
@@ -718,13 +718,13 @@ describe('#organisationController', () => {
 
       const $ = load(result)
 
-      // Items should NOT be excluded when only ONE has excluded status:
-      // - acc-1 has Approved status but reg-1 has Created status - NOT filtered
-      // - acc-2 has Created status but reg-2 has Approved status - NOT filtered
-      // Both sites should be shown
+      // Items should be excluded when EITHER has excluded status:
+      // - acc-1 has Approved but reg-1 has Created - FILTERED (reg has excluded status)
+      // - acc-2 has Created but reg-2 has Approved - FILTERED (acc has excluded status)
+      // No sites should be shown
       const siteHeadings = $('h2.govuk-heading-m')
 
-      expect(siteHeadings).toHaveLength(2)
+      expect(siteHeadings).toHaveLength(0)
     })
   })
 
