@@ -12,16 +12,13 @@ import { err } from '#server/common/helpers/result.js'
 function organiseAccreditationsBySite(data, wasteProcessingType) {
   const EXCLUDED_STATUSES = ['created', 'rejected']
 
-  // Filter accreditations by waste processing type
   const filteredAccreditations = data.accreditations.filter(
     (acc) => acc.wasteProcessingType === wasteProcessingType
   )
 
-  // Group by site
   const siteMap = new Map()
 
   filteredAccreditations.forEach((accreditation) => {
-    // Find matching registration
     const registration = data.registrations.find(
       (reg) => reg.accreditationId === accreditation.id
     )
@@ -31,15 +28,13 @@ function organiseAccreditationsBySite(data, wasteProcessingType) {
     )
     const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
 
-    // Skip if EITHER status is created or rejected
     if (
-      EXCLUDED_STATUSES.includes(registrationStatus.toLowerCase()) &&
+      EXCLUDED_STATUSES.includes(registrationStatus.toLowerCase()) ||
       EXCLUDED_STATUSES.includes(accreditationStatus.toLowerCase())
     ) {
       return
     }
 
-    // Get site name from accreditation or fall back to registration
     let siteName
     if (accreditation.site?.address?.line1) {
       siteName = accreditation.site.address.line1
@@ -60,7 +55,6 @@ function organiseAccreditationsBySite(data, wasteProcessingType) {
       accreditation.material.charAt(0).toUpperCase() +
       accreditation.material.slice(1)
 
-    // Add pre-formatted row for govukTable
     siteMap.get(siteName).tableRows.push([
       { text: material },
       {
@@ -86,11 +80,9 @@ export const controller = {
     const { t: localise } = request
     const { id: organisationId } = request.params
 
-    // Determine active tab based on route
     const isExportingTab = request.path.endsWith('/exporting')
     const activeTab = isExportingTab ? 'exporting' : 'reprocessing'
 
-    // Get user session
     const { ok, value: session } = await getUserSession(request)
     const userSession = ok && session ? session : request.auth?.credentials
 
@@ -117,10 +109,8 @@ export const controller = {
       })
     }
 
-    // Extract organisation name
     const organisationName = organisationData.companyDetails.tradingName
 
-    // Organize data for reprocessing and exporting
     const reprocessingSites = organiseAccreditationsBySite(
       organisationData,
       'reprocessor'

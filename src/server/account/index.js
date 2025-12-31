@@ -1,4 +1,5 @@
 import { controller } from './controller.js'
+import { controller as emailNotRecognisedController } from './email-not-recognised/controller.js'
 import { controller as linkingGetController } from './linking/controller.js'
 import { controller as linkingPostController } from './linking/post-controller.js'
 
@@ -19,6 +20,11 @@ export const account = {
           ...controller,
           method: 'GET',
           path: '/account'
+        },
+        {
+          ...emailNotRecognisedController,
+          method: 'GET',
+          path: '/email-not-recognised'
         },
         {
           ...linkingGetController,
