@@ -6,6 +6,32 @@
   text-align: left;
 }
 
+.epr-task-cards {
+  display: flex;
+  flex-wrap: wrap;
+
+  > .govuk-grid-column-one-half {
+    display: flex;
+    float: none;
+  }
+
+  .govuk-summary-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 383px;
+  }
+
+  .govuk-summary-card__title-wrapper {
+    height: 144px;
+    min-height: 144px;
+  }
+
+  .govuk-summary-card__content {
+    flex-grow: 1;
+  }
+}
+
 .epr-waste-balance-banner {
   border: none;
 
