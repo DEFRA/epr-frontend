@@ -1,7 +1,7 @@
 import {
   getStatusClass,
   getCurrentStatus
-} from '#server/organisation/helpers/status-helpers.js'
+} from '#server/organisations/helpers/status-helpers.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import Boom from '@hapi/boom'
@@ -65,8 +65,8 @@ export const controller = {
     const accreditationStatusClass = getStatusClass(accreditationStatus)
 
     const backUrl = isExporter
-      ? request.localiseUrl(`/organisation/${organisationId}/exporting`)
-      : request.localiseUrl(`/organisation/${organisationId}`)
+      ? request.localiseUrl(`/organisations/${organisationId}/exporting`)
+      : request.localiseUrl(`/organisations/${organisationId}`)
 
     const uploadSummaryLogUrl = registration
       ? request.localiseUrl(

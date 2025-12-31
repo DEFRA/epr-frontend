@@ -1,27 +1,27 @@
 import { controller } from './controller.js'
 
 /**
- * Sets up the routes used in the organisation page.
+ * Sets up the routes used in the organisations page.
  * These routes are registered in src/server/router.js.
  */
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
-export const organisation = {
+export const organisations = {
   plugin: {
-    name: 'organisation',
+    name: 'organisations',
     register(server) {
       server.route([
         {
           ...controller,
           method: 'GET',
-          path: '/organisation/{id}'
+          path: '/organisations/{id}'
         },
         {
           ...controller,
           method: 'GET',
-          path: '/organisation/{id}/exporting'
+          path: '/organisations/{id}/exporting'
         }
       ])
     }

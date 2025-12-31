@@ -183,7 +183,7 @@ describe('#accreditationDashboardController', () => {
       const backLink = $('.govuk-back-link')
 
       expect(backLink.attr('href')).toBe(
-        '/organisation/6507f1f77bcf86cd79943901'
+        '/organisations/6507f1f77bcf86cd79943901'
       )
     })
 
@@ -286,7 +286,7 @@ describe('#accreditationDashboardController', () => {
       const backLink = $('.govuk-back-link')
 
       expect(backLink.attr('href')).toBe(
-        '/organisation/6507f1f77bcf86cd79943902/exporting'
+        '/organisations/6507f1f77bcf86cd79943902/exporting'
       )
     })
   })

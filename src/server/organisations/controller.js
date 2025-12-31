@@ -120,14 +120,14 @@ export const controller = {
       'exporter'
     )
 
-    return h.view('organisation/index', {
-      pageTitle: localise('organisation:pageTitle'),
+    return h.view('organisations/index', {
+      pageTitle: localise('organisations:pageTitle'),
       organisationName,
       organisationId,
       activeTab,
-      reprocessingUrl: request.localiseUrl(`/organisation/${organisationId}`),
+      reprocessingUrl: request.localiseUrl(`/organisations/${organisationId}`),
       exportingUrl: request.localiseUrl(
-        `/organisation/${organisationId}/exporting`
+        `/organisations/${organisationId}/exporting`
       ),
       sites: activeTab === 'reprocessing' ? reprocessingSites : exportingSites,
       hasReprocessing: reprocessingSites.length > 0,
