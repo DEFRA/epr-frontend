@@ -27,17 +27,11 @@ export const controller = {
       'Accreditation dashboard accessed'
     )
 
-    let organisationData = null
-
-    try {
-      organisationData = await fetchOrganisationById(
-        organisationId,
-        userSession?.idToken
-      )
-    } catch (error) {
-      request.logger.error({ error }, 'Failed to fetch organisation')
-      throw Boom.notFound('Organisation not found')
-    }
+    const organisationData = await getOrganisationData(
+      request,
+      organisationId,
+      userSession?.idToken
+    )
 
     const accreditation = organisationData.accreditations.find(
       (acc) => acc.id === accreditationId
@@ -52,59 +46,102 @@ export const controller = {
       (reg) => reg.accreditationId === accreditationId
     )
 
-    const siteName = getSiteName(accreditation, registration)
-    const material = capitalise(accreditation.material)
-    const isExporter = accreditation.wasteProcessingType === 'exporter'
-
-    const registrationStatus = getCurrentStatus(
-      registration?.statusHistory || []
-    )
-    const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
-
-    const registrationStatusClass = getStatusClass(registrationStatus)
-    const accreditationStatusClass = getStatusClass(accreditationStatus)
-
-    const backUrl = isExporter
-      ? request.localiseUrl(`/organisations/${organisationId}/exporting`)
-      : request.localiseUrl(`/organisations/${organisationId}`)
-
-    const uploadSummaryLogUrl = registration
-      ? request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
-        )
-      : null
-
-    const contactRegulatorUrl = request.localiseUrl('/contact')
-
-    return h.view('accreditation-dashboard/index', {
-      pageTitle: localise('accreditation-dashboard:pageTitle'),
-      siteName,
-      material,
-      isExporter,
-      registrationStatus,
-      registrationStatusClass,
-      accreditationStatus,
-      accreditationStatusClass,
-      registrationNumber: registration?.cbduNumber,
-      accreditationNumber: accreditation.accreditationNumber,
-      hasRegistrationStatus: registrationStatus !== 'Unknown',
-      hasAccreditationStatus: accreditationStatus !== 'Unknown',
-      hasRegistrationNumber: !!registration?.cbduNumber,
-      hasAccreditationNumber: !!accreditation.accreditationNumber,
-      hasUploadLink: !!uploadSummaryLogUrl,
-      backUrl,
-      uploadSummaryLogUrl,
-      contactRegulatorUrl,
-      prnLabel: isExporter
-        ? localise('accreditation-dashboard:perns')
-        : localise('accreditation-dashboard:prns'),
-      prnDescription: isExporter
-        ? localise('accreditation-dashboard:pernsDescription')
-        : localise('accreditation-dashboard:prnsDescription'),
-      prnNotAvailable: isExporter
-        ? localise('accreditation-dashboard:pernNotAvailable')
-        : localise('accreditation-dashboard:prnNotAvailable')
+    const viewModel = buildViewModel({
+      request,
+      localise,
+      organisationId,
+      accreditation,
+      registration
     })
+
+    return h.view('accreditation-dashboard/index', viewModel)
+  }
+}
+
+/**
+ * Fetch organisation data from backend
+ * @param {object} request - Hapi request object
+ * @param {string} organisationId - Organisation ID
+ * @param {string|undefined} idToken - User's ID token
+ * @returns {Promise<object>} Organisation data
+ */
+async function getOrganisationData(request, organisationId, idToken) {
+  try {
+    return await fetchOrganisationById(organisationId, idToken)
+  } catch (error) {
+    request.logger.error({ error }, 'Failed to fetch organisation')
+    throw Boom.notFound('Organisation not found')
+  }
+}
+
+/**
+ * Build view model for accreditation dashboard
+ * @param {object} params - Parameters for building view model
+ * @returns {object} View model
+ */
+function buildViewModel({
+  request,
+  localise,
+  organisationId,
+  accreditation,
+  registration
+}) {
+  const siteName = getSiteName(accreditation, registration)
+  const material = capitalise(accreditation.material)
+  const isExporter = accreditation.wasteProcessingType === 'exporter'
+
+  const registrationStatus = getCurrentStatus(registration?.statusHistory || [])
+  const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
+
+  const uploadSummaryLogUrl = registration
+    ? request.localiseUrl(
+        `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
+      )
+    : null
+
+  return {
+    pageTitle: localise('accreditation-dashboard:pageTitle'),
+    siteName,
+    material,
+    isExporter,
+    registrationStatus,
+    registrationStatusClass: getStatusClass(registrationStatus),
+    accreditationStatus,
+    accreditationStatusClass: getStatusClass(accreditationStatus),
+    registrationNumber: registration?.cbduNumber,
+    accreditationNumber: accreditation.accreditationNumber,
+    hasRegistrationStatus: registrationStatus !== 'Unknown',
+    hasAccreditationStatus: accreditationStatus !== 'Unknown',
+    hasRegistrationNumber: !!registration?.cbduNumber,
+    hasAccreditationNumber: !!accreditation.accreditationNumber,
+    hasUploadLink: !!uploadSummaryLogUrl,
+    backUrl: isExporter
+      ? request.localiseUrl(`/organisations/${organisationId}/exporting`)
+      : request.localiseUrl(`/organisations/${organisationId}`),
+    uploadSummaryLogUrl,
+    contactRegulatorUrl: request.localiseUrl('/contact'),
+    ...getPrnLabels(localise, isExporter)
+  }
+}
+
+/**
+ * Get PRN/PERN labels based on accreditation type
+ * @param {Function} localise - Localisation function
+ * @param {boolean} isExporter - Whether accreditation is for exporter
+ * @returns {object} PRN label properties
+ */
+function getPrnLabels(localise, isExporter) {
+  if (isExporter) {
+    return {
+      prnLabel: localise('accreditation-dashboard:perns'),
+      prnDescription: localise('accreditation-dashboard:pernsDescription'),
+      prnNotAvailable: localise('accreditation-dashboard:pernNotAvailable')
+    }
+  }
+  return {
+    prnLabel: localise('accreditation-dashboard:prns'),
+    prnDescription: localise('accreditation-dashboard:prnsDescription'),
+    prnNotAvailable: localise('accreditation-dashboard:prnNotAvailable')
   }
 }
 
@@ -130,7 +167,9 @@ function getSiteName(accreditation, registration) {
  * @returns {string}
  */
 function capitalise(str) {
-  if (!str) return ''
+  if (!str) {
+    return ''
+  }
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
