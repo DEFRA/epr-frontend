@@ -10,7 +10,7 @@ import { err } from '#server/common/helpers/result.js'
  * @returns {Array} Array of sites with their materials
  */
 function organiseAccreditationsBySite(data, wasteProcessingType) {
-  const EXCLUDED_STATUSES = ['created', 'rejected']
+  const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
 
   const filteredAccreditations = data.accreditations.filter(
     (acc) => acc.wasteProcessingType === wasteProcessingType
@@ -29,8 +29,8 @@ function organiseAccreditationsBySite(data, wasteProcessingType) {
     const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
 
     if (
-      EXCLUDED_STATUSES.includes(registrationStatus.toLowerCase()) ||
-      EXCLUDED_STATUSES.includes(accreditationStatus.toLowerCase())
+      EXCLUDED_STATUSES.has(registrationStatus.toLowerCase()) ||
+      EXCLUDED_STATUSES.has(accreditationStatus.toLowerCase())
     ) {
       return
     }

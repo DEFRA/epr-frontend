@@ -25,7 +25,7 @@ export function getCurrentStatus(statusHistory) {
   if (!statusHistory || statusHistory.length === 0) {
     return 'Unknown'
   }
-  const latestStatus = statusHistory[statusHistory.length - 1]
+  const latestStatus = statusHistory.at(-1)
   return (
     latestStatus.status.charAt(0).toUpperCase() + latestStatus.status.slice(1)
   )
