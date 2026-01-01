@@ -30,7 +30,7 @@ export const controller = {
       userSession?.idToken
     )
 
-    const accreditation = organisationData.accreditations.find(
+    const accreditation = organisationData.accreditations?.find(
       (acc) => acc.id === accreditationId
     )
 
@@ -39,7 +39,7 @@ export const controller = {
       throw Boom.notFound('Accreditation not found')
     }
 
-    const registration = organisationData.registrations.find(
+    const registration = organisationData.registrations?.find(
       (reg) => reg.accreditationId === accreditationId
     )
 
