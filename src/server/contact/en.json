@@ -1,11 +1,17 @@
 {
-  "pageTitle": "Contact",
-  "heading": "Contact",
-  "subheading": "For questions about your summary log, registration or accreditation",
-  "regulatorIntro": "If you have questions or feedback, contact your regulator.",
+  "digitalService": {
+    "heading": "For help with this digital service",
+    "intro": "If you are having problems using this service, contact customer services.",
+    "email": "EPRCustomerService@defra.gov.uk",
+    "phone": "0300 060 0002",
+    "hours": "Monday to Friday, 8am to 4:30pm."
+  },
   "email": "Email:",
-  "phone": "Phone:",
   "findCallCharges": "Find information on call charges",
+  "heading": "Contact",
+  "pageTitle": "Contact",
+  "phone": "Phone:",
+  "regulatorIntro": "If you have questions or feedback, contact your regulator.",
   "regulators": {
     "environmentAgency": {
       "name": "Environment Agency",
@@ -28,11 +34,5 @@
       "phone": "028 9056 9338"
     }
   },
-  "digitalService": {
-    "heading": "For help with this digital service",
-    "intro": "If you are having problems using this service, contact customer services.",
-    "email": "EPRCustomerService@defra.gov.uk",
-    "phone": "0300 060 0002",
-    "hours": "Monday to Friday, 8am to 4:30pm."
-  }
+  "subheading": "For questions about your summary log, registration or accreditation"
 }
