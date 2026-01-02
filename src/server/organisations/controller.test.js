@@ -82,7 +82,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -119,7 +119,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943902/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
       })
 
       const $ = load(result)
@@ -146,7 +146,7 @@ describe('#organisationController', () => {
       // Test reprocessing tab
       const reprocessingResponse = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $reprocessing = load(reprocessingResponse.result)
@@ -155,12 +155,14 @@ describe('#organisationController', () => {
         .find('a')
         .attr('href')
 
-      expect(reprocessingTabLink).toBe('/organisation/6507f1f77bcf86cd79943901')
+      expect(reprocessingTabLink).toBe(
+        '/organisations/6507f1f77bcf86cd79943901'
+      )
 
       // Test exporting tab
       const exportingResponse = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943901/exporting'
       })
 
       const $exporting = load(exportingResponse.result)
@@ -170,7 +172,7 @@ describe('#organisationController', () => {
         .attr('href')
 
       expect(exportingTabLink).toBe(
-        '/organisation/6507f1f77bcf86cd79943901/exporting'
+        '/organisations/6507f1f77bcf86cd79943901/exporting'
       )
     })
 
@@ -181,7 +183,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943906'
+        url: '/organisations/6507f1f77bcf86cd79943906'
       })
 
       const $ = load(result)
@@ -199,7 +201,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -222,7 +224,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -246,7 +248,7 @@ describe('#organisationController', () => {
 
       await server.inject({
         method: 'GET',
-        url: `/organisation/${organisationId}`
+        url: `/organisations/${organisationId}`
       })
 
       expect(
@@ -261,7 +263,7 @@ describe('#organisationController', () => {
 
       await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       expect(
@@ -286,7 +288,7 @@ describe('#organisationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       // Should return error result
@@ -308,7 +310,7 @@ describe('#organisationController', () => {
 
       await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       // Should call backend with undefined token when session is missing
@@ -332,7 +334,7 @@ describe('#organisationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: '/organisation/nonexistent-id'
+        url: '/organisations/nonexistent-id'
       })
 
       // Should return error result
@@ -358,7 +360,7 @@ describe('#organisationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       // Should return error result
@@ -384,7 +386,7 @@ describe('#organisationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -407,7 +409,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -434,7 +436,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943903'
+        url: '/organisations/6507f1f77bcf86cd79943903'
       })
 
       const $ = load(result)
@@ -451,7 +453,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943904'
+        url: '/organisations/6507f1f77bcf86cd79943904'
       })
 
       const $ = load(result)
@@ -493,7 +495,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       // Should show no sites because both registration and accreditation have Created status (excluded)
@@ -528,7 +530,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       // Should show no sites because Rejected status is excluded
@@ -542,7 +544,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943905'
+        url: '/organisations/6507f1f77bcf86cd79943905'
       })
 
       const $ = load(result)
@@ -570,7 +572,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -590,14 +592,14 @@ describe('#organisationController', () => {
 
       const reprocessingResponse = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943902'
+        url: '/organisations/6507f1f77bcf86cd79943902'
       })
 
       expect(reprocessingResponse.result).toContain('No sites found.')
 
       const exportingResponse = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943902/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
       })
 
       const $exporting = load(exportingResponse.result)
@@ -629,7 +631,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -644,7 +646,7 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943906'
+        url: '/organisations/6507f1f77bcf86cd79943906'
       })
 
       const $ = load(result)
@@ -664,7 +666,7 @@ describe('#organisationController', () => {
       expect(tableRows).toHaveLength(1)
     })
 
-    it('should show items when only ONE of registration or accreditation has excluded status', async () => {
+    it('should hide items when EITHER registration or accreditation has excluded status', async () => {
       const dataWithMixedStatuses = {
         ...fixtureData,
         accreditations: [
@@ -713,18 +715,18 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
 
-      // Items should NOT be excluded when only ONE has excluded status:
-      // - acc-1 has Approved status but reg-1 has Created status - NOT filtered
-      // - acc-2 has Created status but reg-2 has Approved status - NOT filtered
-      // Both sites should be shown
+      // Items should be excluded when EITHER has excluded status:
+      // - acc-1 has Approved but reg-1 has Created - FILTERED (reg has excluded status)
+      // - acc-2 has Created but reg-2 has Approved - FILTERED (acc has excluded status)
+      // No sites should be shown
       const siteHeadings = $('h2.govuk-heading-m')
 
-      expect(siteHeadings).toHaveLength(2)
+      expect(siteHeadings).toHaveLength(0)
     })
   })
 
@@ -743,7 +745,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -795,7 +797,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -871,7 +873,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)
@@ -895,7 +897,7 @@ describe('#organisationController', () => {
 
       await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       // Just verify the request succeeded (logging happens internally)
@@ -967,7 +969,7 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisation/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       const $ = load(result)

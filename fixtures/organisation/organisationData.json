@@ -36,6 +36,7 @@
   "registrations": [
     {
       "id": "reg-001-glass-approved",
+      "status": "approved",
       "statusHistory": [
         {
           "status": "created",
@@ -82,6 +83,7 @@
     },
     {
       "id": "reg-002-plastic-suspended",
+      "status": "suspended",
       "statusHistory": [
         {
           "status": "created",
@@ -132,6 +134,7 @@
     },
     {
       "id": "reg-003-paper-rejected",
+      "status": "rejected",
       "statusHistory": [
         {
           "status": "created",
@@ -178,6 +181,7 @@
     },
     {
       "id": "reg-004-aluminium-cancelled",
+      "status": "cancelled",
       "statusHistory": [
         {
           "status": "created",
@@ -228,6 +232,7 @@
     },
     {
       "id": "reg-005-steel-approved",
+      "status": "approved",
       "statusHistory": [
         {
           "status": "created",
@@ -274,6 +279,7 @@
     },
     {
       "id": "reg-006-plastic-export-created",
+      "status": "created",
       "statusHistory": [
         {
           "status": "created",
@@ -301,6 +307,7 @@
     },
     {
       "id": "reg-007-wood-export-approved",
+      "status": "approved",
       "statusHistory": [
         {
           "status": "created",
@@ -332,6 +339,7 @@
     },
     {
       "id": "reg-008-paper-export-rejected",
+      "status": "rejected",
       "statusHistory": [
         {
           "status": "created",
@@ -366,6 +374,7 @@
     {
       "id": "acc-001-glass-approved",
       "accreditationNumber": "ACC001234",
+      "status": "approved",
       "formSubmissionTime": "2025-08-25T10:15:00.000Z",
       "statusHistory": [
         {
@@ -408,6 +417,7 @@
     {
       "id": "acc-002-plastic-suspended",
       "accreditationNumber": "ACC002345",
+      "status": "suspended",
       "formSubmissionTime": "2025-07-20T09:30:00.000Z",
       "statusHistory": [
         {
@@ -454,6 +464,7 @@
     {
       "id": "acc-003-paper-created",
       "accreditationNumber": "ACC003456",
+      "status": "created",
       "formSubmissionTime": "2025-09-05T11:10:00.000Z",
       "statusHistory": [
         {
@@ -492,6 +503,7 @@
     {
       "id": "acc-004-aluminium-archived",
       "accreditationNumber": "ACC004567",
+      "status": "archived",
       "formSubmissionTime": "2025-06-18T10:30:00.000Z",
       "statusHistory": [
         {
@@ -538,6 +550,7 @@
     {
       "id": "acc-005-steel-approved",
       "accreditationNumber": "ACC005678",
+      "status": "approved",
       "formSubmissionTime": "2025-05-20T11:45:00.000Z",
       "statusHistory": [
         {
@@ -580,6 +593,7 @@
     {
       "id": "acc-006-glass-rejected",
       "accreditationNumber": "ACC006789",
+      "status": "rejected",
       "formSubmissionTime": "2025-08-10T13:20:00.000Z",
       "statusHistory": [
         {
@@ -622,6 +636,7 @@
     {
       "id": "acc-007-plastic-cancelled",
       "accreditationNumber": "ACC007890",
+      "status": "cancelled",
       "formSubmissionTime": "2025-03-15T09:30:00.000Z",
       "statusHistory": [
         {
