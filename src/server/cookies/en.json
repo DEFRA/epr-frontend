@@ -1,0 +1,30 @@
+{
+  "essentialCookies": {
+    "heading": "Essential cookies",
+    "description": "Essential cookies keep your information secure while you use this service. We do not need to ask permission to use them."
+  },
+  "heading": "Cookies",
+  "intro1": "Cookies are small files saved on your phone, tablet or computer when you visit a website.",
+  "intro2": "We use cookies to make 'Record reprocessed or exported packaging waste' work and collect information about how you use our service.",
+  "pageTitle": "Cookies",
+  "table": {
+    "name": "Name",
+    "purpose": "Purpose",
+    "expires": "Expires",
+    "crumb": {
+      "name": "crumb",
+      "purpose": "Cross Site Request Forgery (CSRF) token storage",
+      "expires": "At end of session"
+    },
+    "session": {
+      "name": "session",
+      "purpose": "Session identifier",
+      "expires": "4 hours"
+    },
+    "userSession": {
+      "name": "userSession",
+      "purpose": "Used to keep users signed in",
+      "expires": "4 hours"
+    }
+  }
+}

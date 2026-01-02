@@ -1,0 +1,42 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">{{ localise('cookies:heading') }}</h1>
+
+      <p class="govuk-body">{{ localise('cookies:intro1') }}</p>
+
+      <p class="govuk-body">{{ localise('cookies:intro2') }}</p>
+
+      <h2 class="govuk-heading-m">{{ localise('cookies:essentialCookies:heading') }}</h2>
+
+      <p class="govuk-body">{{ localise('cookies:essentialCookies:description') }}</p>
+
+      {{ govukTable({
+        head: [
+          { text: localise('cookies:table:name') },
+          { text: localise('cookies:table:purpose') },
+          { text: localise('cookies:table:expires') }
+        ],
+        rows: [
+          [
+            { text: localise('cookies:table:crumb:name') },
+            { text: localise('cookies:table:crumb:purpose') },
+            { text: localise('cookies:table:crumb:expires') }
+          ],
+          [
+            { text: localise('cookies:table:session:name') },
+            { text: localise('cookies:table:session:purpose') },
+            { text: localise('cookies:table:session:expires') }
+          ],
+          [
+            { text: localise('cookies:table:userSession:name') },
+            { text: localise('cookies:table:userSession:purpose') },
+            { text: localise('cookies:table:userSession:expires') }
+          ]
+        ]
+      }) }}
+    </div>
+  </div>
+{% endblock %}
