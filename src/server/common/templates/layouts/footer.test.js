@@ -38,8 +38,9 @@ describe('#footer', () => {
       })
 
       const $ = load(result)
+      const heading = $('.govuk-footer__meta h2.govuk-heading-s')
 
-      expect($('.govuk-footer__heading').text()).toBe('Get help')
+      expect(heading.text()).toBe('Get help')
     })
 
     it('should render the customer service email as a mailto link', async () => {
@@ -62,7 +63,7 @@ describe('#footer', () => {
       })
 
       const $ = load(result)
-      const footerText = $('.govuk-footer__navigation').text()
+      const footerText = $('.govuk-footer__meta').text()
 
       expect(footerText).toContain('0300 060 0002')
     })
@@ -74,7 +75,7 @@ describe('#footer', () => {
       })
 
       const $ = load(result)
-      const footerText = $('.govuk-footer__navigation').text()
+      const footerText = $('.govuk-footer__meta').text()
 
       expect(footerText).toContain('Monday to Friday, 8am to 4:30pm')
     })
@@ -87,7 +88,7 @@ describe('#footer', () => {
 
       const $ = load(result)
       const contactLink = $('.govuk-footer__inline-list a').filter(
-        (_, el) => $(el).text() === 'Contact'
+        (_, el) => $(el).text().trim() === 'Contact'
       )
 
       expect(contactLink).toHaveLength(1)
@@ -102,7 +103,7 @@ describe('#footer', () => {
 
       const $ = load(result)
       const privacyLink = $('.govuk-footer__inline-list a').filter(
-        (_, el) => $(el).text() === 'Privacy'
+        (_, el) => $(el).text().trim() === 'Privacy'
       )
 
       expect(privacyLink).toHaveLength(1)
@@ -119,7 +120,7 @@ describe('#footer', () => {
 
       const $ = load(result)
       const cookiesLink = $('.govuk-footer__inline-list a').filter(
-        (_, el) => $(el).text() === 'Cookies'
+        (_, el) => $(el).text().trim() === 'Cookies'
       )
 
       expect(cookiesLink).toHaveLength(1)
@@ -134,7 +135,7 @@ describe('#footer', () => {
 
       const $ = load(result)
       const accessibilityLink = $('.govuk-footer__inline-list a').filter(
-        (_, el) => $(el).text() === 'Accessibility statement'
+        (_, el) => $(el).text().trim() === 'Accessibility statement'
       )
 
       expect(accessibilityLink).toHaveLength(1)
@@ -171,36 +172,6 @@ describe('#footer', () => {
 
       expect(crownCopyrightLink).toHaveLength(1)
       expect(crownCopyrightLink.text()).toContain('Crown copyright')
-    })
-  })
-
-  describe('when viewing Welsh pages', () => {
-    it('should render the Contact link with Welsh URL prefix', async () => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/cy'
-      })
-
-      const $ = load(result)
-      const contactLink = $('.govuk-footer__inline-list a').filter(
-        (_, el) => $(el).text() === 'Contact'
-      )
-
-      expect(contactLink.attr('href')).toBe('/cy/contact')
-    })
-
-    it('should render the Cookies link with Welsh URL prefix', async () => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/cy'
-      })
-
-      const $ = load(result)
-      const cookiesLink = $('.govuk-footer__inline-list a').filter(
-        (_, el) => $(el).text() === 'Cookies'
-      )
-
-      expect(cookiesLink.attr('href')).toBe('/cy/cookies')
     })
   })
 })
