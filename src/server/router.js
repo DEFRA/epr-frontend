@@ -4,6 +4,7 @@ import { accreditationDashboard } from '#server/accreditation-dashboard/index.js
 import { organisations } from '#server/organisations/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
+import { contact } from '#server/contact/index.js'
 import { health } from '#server/health/index.js'
 import { home } from '#server/home/index.js'
 import { login } from '#server/login/index.js'
@@ -34,6 +35,7 @@ export const router = {
       await server.register([
         account,
         accreditationDashboard,
+        contact,
         organisations,
         home,
         registration,
