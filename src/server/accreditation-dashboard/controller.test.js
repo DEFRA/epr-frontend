@@ -163,7 +163,7 @@ describe('#accreditationDashboardController', () => {
 
       const $ = load(result)
 
-      const contactLink = $('a[href*="contact"]')
+      const contactLink = $('main a[href*="contact"]')
 
       expect(contactLink).toHaveLength(1)
     })
