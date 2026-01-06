@@ -10,6 +10,7 @@ import { health } from '#server/health/index.js'
 import { home } from '#server/home/index.js'
 import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
+import { signOut } from '#server/sign-out/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
 import inert from '@hapi/inert'
@@ -28,7 +29,7 @@ export const router = {
 
       // Authentication routes
       if (isDefraIdEnabled()) {
-        await server.register([login, auth, logout])
+        await server.register([login, auth, logout, signOut])
       }
 
       // Application specific routes, add your own routes here
