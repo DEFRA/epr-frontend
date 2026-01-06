@@ -90,13 +90,12 @@ describe('#accountController', () => {
 
       it('should render page with login link and guest welcome', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-          found: false,
-          data: null
+          ok: false
         })
 
         const { result } = await server.inject({
           method: 'GET',
-          url: '/'
+          url: '/start'
         })
 
         const $ = load(result)
