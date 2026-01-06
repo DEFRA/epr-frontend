@@ -6,6 +6,15 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
 import { err } from '#server/common/helpers/result.js'
 
 /**
+ *
+ * @param {string} status
+ * @returns {string}
+ */
+function createTag(status) {
+  return `<strong class="govuk-tag govuk-tag--${getStatusClass(status)}">${capitalize(status)}</strong>`
+}
+
+/**
  * Creates a row for a given registration
  * @param {(key: string) => string} localise - Localisation function
  * @param {string} id - Organisation ID
@@ -17,12 +26,12 @@ function createRow(localise, id, registration, accreditation) {
   return [
     { text: capitalize(registration.material) },
     {
-      html: `<strong class="govuk-tag govuk-tag--${getStatusClass(registration.status)}">${registration.status}</strong>`
+      html: createTag(registration.status)
     },
     {
-      html: accreditation
-        ? `<strong class="govuk-tag govuk-tag--${getStatusClass(accreditation?.status)}">${accreditation?.status}</strong>`
-        : ''
+      html: createTag(
+        accreditation?.status ?? localise('organisations:table:notAccredited')
+      )
     },
     {
       html: `<a href="/organisations/${id}/registrations/${registration.id}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
