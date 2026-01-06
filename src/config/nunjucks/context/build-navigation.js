@@ -1,3 +1,5 @@
+import { config } from '#config/config.js'
+
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
  */
@@ -17,40 +19,43 @@
 
 /**
  * @param {I18nRequest} request
+ * @param {UserSession} userSession
  * @returns {NavigationItem[]}
  */
-const yourSites = ({ localiseUrl, path, t: localise }) => {
+const home = ({ localiseUrl, t: localise }, userSession) => {
+  if (!userSession.linkedOrganisationId) {
+    return []
+  }
   return [
     {
-      active: path === '/account',
-      href: localiseUrl('/account'),
-      text: localise('common:navigation:yourSites')
+      href: localiseUrl(`/organisations/${userSession.linkedOrganisationId}`),
+      text: localise('common:navigation:home')
     }
   ]
 }
 
 /**
  * @param {I18nRequest} request
- * @param {UserSession} userSession
  * @returns {NavigationItem[]}
  */
-const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
-  if (userSession.relationships?.length > 1) {
-    return [
-      {
-        href: localiseUrl('/auth/organisation'),
-        text: localise('common:navigation:switchOrganisation')
-      }
-    ]
+const manageAccount = ({ t: localise }) => {
+  const manageAccountUrl = config.get('defraId.manageAccountUrl')
+  if (!manageAccountUrl) {
+    return []
   }
-  return []
+  return [
+    {
+      href: manageAccountUrl,
+      text: localise('common:navigation:manageAccount')
+    }
+  ]
 }
 
 /**
  * @param {I18nRequest} request
  * @returns {NavigationItem[]}
  */
-const logout = ({ localiseUrl, t: localise }) => {
+const signOut = ({ localiseUrl, t: localise }) => {
   return [
     {
       href: localiseUrl('/logout'),
@@ -69,9 +74,9 @@ export function buildNavigation(request, userSession) {
   }
 
   return [
-    ...yourSites(request),
-    ...switchOrganisation(request, userSession),
-    ...logout(request)
+    ...home(request, userSession),
+    ...manageAccount(request),
+    ...signOut(request)
   ]
 }
 

@@ -151,7 +151,7 @@ describe('#context', () => {
         isDefraIdEnabled: false,
         navigation: [],
         serviceName,
-        serviceUrl: '/'
+        serviceUrl: '/start'
       })
     })
 
@@ -228,7 +228,7 @@ describe('#context cache', () => {
         isDefraIdEnabled: false,
         navigation: [],
         serviceName,
-        serviceUrl: '/'
+        serviceUrl: '/start'
       })
     })
   })

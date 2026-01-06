@@ -30,7 +30,7 @@
 
   {{ govukServiceNavigation({
     serviceName: serviceName,
-    serviceUrl: "/",
+    serviceUrl: serviceUrl,
     navigation: navigation
   }) }}
 {% endblock %}
@@ -40,9 +40,9 @@
 {% block beforeContent %}
   {{ govukPhaseBanner({
     tag: {
-      text: "Alpha"
+      text: "Beta"
     },
-    html: 'This is a new service. Help us improve it and <a class="govuk-link" href="#">give your feedback by email</a>.'
+    html: 'This is a new service. Help us improve it and <a class="govuk-link" href="mailto:eprcustomerservice@defra.gov.uk">give your feedback by email</a>.'
   }) }}
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({

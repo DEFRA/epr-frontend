@@ -254,6 +254,12 @@ export const config = convict({
       sensitive: true,
       env: 'DEFRA_ID_CLIENT_SECRET',
       default: ''
+    },
+    manageAccountUrl: {
+      doc: 'DEFRA ID Manage Account URL',
+      format: String,
+      env: 'DEFRA_ID_MANAGE_ACCOUNT_URL',
+      default: ''
     }
   }
 })
