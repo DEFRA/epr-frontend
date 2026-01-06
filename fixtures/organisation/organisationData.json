@@ -37,6 +37,7 @@
     {
       "id": "reg-001-glass-approved",
       "status": "approved",
+      "registrationNumber": "REG001234",
       "statusHistory": [
         {
           "status": "created",
@@ -83,6 +84,7 @@
     },
     {
       "id": "reg-002-plastic-suspended",
+      "registrationNumber": "REG002345",
       "status": "suspended",
       "statusHistory": [
         {
@@ -134,6 +136,7 @@
     },
     {
       "id": "reg-003-paper-rejected",
+      "registrationNumber": "REG003456",
       "status": "rejected",
       "statusHistory": [
         {
@@ -181,6 +184,7 @@
     },
     {
       "id": "reg-004-aluminium-cancelled",
+      "registrationNumber": "REG004567",
       "status": "cancelled",
       "statusHistory": [
         {
@@ -232,6 +236,7 @@
     },
     {
       "id": "reg-005-steel-approved",
+      "registrationNumber": "REG005678",
       "status": "approved",
       "statusHistory": [
         {
@@ -279,6 +284,7 @@
     },
     {
       "id": "reg-006-plastic-export-created",
+      "registrationNumber": "REG006789",
       "status": "created",
       "statusHistory": [
         {
@@ -307,6 +313,7 @@
     },
     {
       "id": "reg-007-wood-export-approved",
+      "registrationNumber": "REG007890",
       "status": "approved",
       "statusHistory": [
         {
@@ -339,6 +346,7 @@
     },
     {
       "id": "reg-008-paper-export-rejected",
+      "registrationNumber": "REG007891",
       "status": "rejected",
       "statusHistory": [
         {

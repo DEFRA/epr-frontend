@@ -1,4 +1,24 @@
 {
-  "greeting": "Welcome",
-  "pageTitle": "Organisation"
+  "pageTitle": "Organisation",
+  "table": {
+    "titleReprocessor": "Select site and material",
+    "titleExporter": "Select material",
+    "noSitesFound": "No sites found",
+    "site": {
+      "unknown": "Unknown site",
+      "headings": {
+        "materials": "Material",
+        "registrationStatuses": "Registration",
+        "accreditationStatuses": "Accreditation"
+      },
+      "actions": {
+        "select": "Select"
+      }
+    }
+  },
+  "tabs": {
+    "reprocessor": "Reprocessing",
+    "exporter": "Exporting"
+  },
+  "titleCaption": "Home"
 }

@@ -16,12 +16,12 @@ export const organisations = {
         {
           ...controller,
           method: 'GET',
-          path: '/organisations/{id}'
+          path: '/organisations/{organisationId}'
         },
         {
           ...controller,
           method: 'GET',
-          path: '/organisations/{id}/exporting'
+          path: '/organisations/{organisationId}/exporting'
         }
       ])
     }

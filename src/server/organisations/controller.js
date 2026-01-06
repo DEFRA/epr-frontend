@@ -1,76 +1,107 @@
-import { getStatusClass, getCurrentStatus } from './helpers/status-helpers.js'
+import { capitalize } from 'lodash-es'
+
+import { getStatusClass } from './helpers/status-helpers.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { err } from '#server/common/helpers/result.js'
 
 /**
- * Organizes accreditations by site for a given waste processing type
+ * Creates a row for a given registration
+ * @param {(key: string) => string} localise - Localisation function
+ * @param {string} id - Organisation ID
+ * @param {object} registration - Registration data
+ * @param {accreditation | undefined} accreditation - Accreditation data
+ * @returns {[{text: string},{html: string},{html: (string|string)},{html: string, classes: string}]} - Array of table cells
+ */
+function createRow(localise, id, registration, accreditation) {
+  return [
+    { text: capitalize(registration.material) },
+    {
+      html: `<strong class="govuk-tag govuk-tag--${getStatusClass(registration.status)}">${registration.status}</strong>`
+    },
+    {
+      html: accreditation
+        ? `<strong class="govuk-tag govuk-tag--${getStatusClass(accreditation?.status)}">${accreditation?.status}</strong>`
+        : ''
+    },
+    {
+      html: `<a href="/organisations/${id}/registrations/${registration.id}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
+      classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
+    }
+  ]
+}
+
+/**
+ * Organises accreditations by site for a given waste processing type
+ * @param {(key: string) => string} localise - Localisation function
  * @param {object} data - The organisation data
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @returns {Array} Array of sites with their materials
  */
-function organiseAccreditationsBySite(data, wasteProcessingType) {
-  const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
+function getRegistrationSites(localise, data, wasteProcessingType) {
+  const excludedStatuses = new Set(['created', 'rejected'])
 
-  const filteredAccreditations = data.accreditations.filter(
-    (acc) => acc.wasteProcessingType === wasteProcessingType
-  )
+  return data.registrations.reduce((prev, registration) => {
+    const shouldRender =
+      registration.wasteProcessingType === wasteProcessingType &&
+      !excludedStatuses.has(registration.status)
+    const isExporter = registration.wasteProcessingType === 'exporter'
 
-  const siteMap = new Map()
+    if (!shouldRender) {
+      return prev
+    }
 
-  filteredAccreditations.forEach((accreditation) => {
-    const registration = data.registrations.find(
-      (reg) => reg.accreditationId === accreditation.id
+    const accreditation = data.accreditations.find(
+      ({ id }) => registration.accreditationId === id
     )
 
-    const registrationStatus = getCurrentStatus(
-      registration?.statusHistory || accreditation.statusHistory
-    )
-    const accreditationStatus = getCurrentStatus(accreditation.statusHistory)
+    const existingSite = isExporter
+      ? undefined
+      : prev.find(({ name }) => name === registration.site?.address?.line1)
 
-    if (
-      EXCLUDED_STATUSES.has(registrationStatus.toLowerCase()) ||
-      EXCLUDED_STATUSES.has(accreditationStatus.toLowerCase())
-    ) {
-      return
-    }
-
-    let siteName
-    if (accreditation.site?.address?.line1) {
-      siteName = accreditation.site.address.line1
-    } else if (registration?.site?.address?.line1) {
-      siteName = registration.site.address.line1
-    } else {
-      siteName = 'Unknown site'
-    }
-
-    if (!siteMap.has(siteName)) {
-      siteMap.set(siteName, {
-        name: siteName,
-        tableRows: []
-      })
-    }
-
-    const material =
-      accreditation.material.charAt(0).toUpperCase() +
-      accreditation.material.slice(1)
-
-    siteMap.get(siteName).tableRows.push([
-      { text: material },
-      {
-        html: `<strong class="govuk-tag govuk-tag--${getStatusClass(registrationStatus)}">${registrationStatus}</strong>`
-      },
-      {
-        html: `<strong class="govuk-tag govuk-tag--${getStatusClass(accreditationStatus)}">${accreditationStatus}</strong>`
-      },
-      {
-        html: `<a href="/organisations/${data.id}/accreditations/${accreditation.id}" class="govuk-link">Select</a>`
-      }
-    ])
-  })
-
-  return Array.from(siteMap.values())
+    return existingSite
+      ? prev.map((site) =>
+          site.name === existingSite.name
+            ? {
+                ...site,
+                rows: [
+                  ...site.rows,
+                  createRow(localise, data.id, registration, accreditation)
+                ]
+              }
+            : site
+        )
+      : [
+          ...prev,
+          {
+            name: isExporter
+              ? null
+              : (registration.site?.address?.line1 ??
+                localise('organisations:table:site:unknown')),
+            head: [
+              { text: localise('organisations:table:site:headings:materials') },
+              {
+                text: localise(
+                  'organisations:table:site:headings:registrationStatuses'
+                )
+              },
+              {
+                text: localise(
+                  'organisations:table:site:headings:accreditationStatuses'
+                )
+              },
+              { text: '' }
+            ],
+            rows: [createRow(localise, data.id, registration, accreditation)]
+          }
+        ]
+  }, [])
 }
+
+const tabTypes = Object.freeze({
+  EXPORTER: 'EXPORTER',
+  REPROCESSOR: 'REPROCESSOR'
+})
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -78,22 +109,13 @@ function organiseAccreditationsBySite(data, wasteProcessingType) {
 export const controller = {
   async handler(request, h) {
     const { t: localise } = request
-    const { id: organisationId } = request.params
+    const { organisationId } = request.params
 
-    const isExportingTab = request.path.endsWith('/exporting')
-    const activeTab = isExportingTab ? 'exporting' : 'reprocessing'
+    const isExporterTab = request.path.endsWith('/exporting')
+    const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
 
     const { ok, value: session } = await getUserSession(request)
     const userSession = ok && session ? session : request.auth?.credentials
-
-    request.logger.info(
-      {
-        organisationId,
-        hasSession: ok,
-        hasIdToken: !!userSession?.idToken
-      },
-      'Organisation page accessed'
-    )
 
     let organisationData = null
 
@@ -111,27 +133,53 @@ export const controller = {
 
     const organisationName = organisationData.companyDetails.tradingName
 
-    const reprocessingSites = organiseAccreditationsBySite(
+    const reprocessorSites = getRegistrationSites(
+      localise,
       organisationData,
       'reprocessor'
     )
-    const exportingSites = organiseAccreditationsBySite(
+
+    const exporterSites = getRegistrationSites(
+      localise,
       organisationData,
       'exporter'
     )
+
+    const hasReprocessorSites = reprocessorSites.length > 0
+    const hasExporterSites = exporterSites.length > 0
+    const shouldRenderTabs = hasReprocessorSites && hasExporterSites
+    let sites = []
+    let tableTitle = ''
+
+    if (
+      (!shouldRenderTabs && hasReprocessorSites) ||
+      (shouldRenderTabs && activeTab === tabTypes.REPROCESSOR)
+    ) {
+      sites = reprocessorSites
+      tableTitle = localise('organisations:table:titleReprocessor')
+    }
+
+    if (
+      (!shouldRenderTabs && hasExporterSites) ||
+      (shouldRenderTabs && activeTab === tabTypes.EXPORTER)
+    ) {
+      sites = exporterSites
+      tableTitle = localise('organisations:table:titleExporter')
+    }
 
     return h.view('organisations/index', {
       pageTitle: localise('organisations:pageTitle'),
       organisationName,
       organisationId,
       activeTab,
-      reprocessingUrl: request.localiseUrl(`/organisations/${organisationId}`),
-      exportingUrl: request.localiseUrl(
+      reprocessorUrl: request.localiseUrl(`/organisations/${organisationId}`),
+      exporterUrl: request.localiseUrl(
         `/organisations/${organisationId}/exporting`
       ),
-      sites: activeTab === 'reprocessing' ? reprocessingSites : exportingSites,
-      hasReprocessing: reprocessingSites.length > 0,
-      hasExporting: exportingSites.length > 0
+      shouldRenderTabs,
+      sites,
+      tableTitle,
+      tabTypes
     })
   }
 }

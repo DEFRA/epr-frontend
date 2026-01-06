@@ -5,71 +5,46 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <div class="govuk-body" data-testid="app-page-body">
-        {% if isDefraIdEnabled %}
-          {% if authedUser and authedUser.displayName %}
-            <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
-              <div class="govuk-panel__body" style="color: #0b0c0c;">
-                {{ localise('organisation:greeting') }}, <strong>{{ authedUser.displayName }}</strong>
-              </div>
-            </div>
-            <details class="govuk-details">
-              <summary class="govuk-details__summary">
-                <span class="govuk-details__summary-text">
-                  View your account details
-                </span>
-              </summary>
-              <div class="govuk-details__text">
-                <dl class="govuk-summary-list">
-                  {% for key, value in authedUser %}
-                    <div class="govuk-summary-list__row">
-                      <dt class="govuk-summary-list__key">{{ key }}</dt>
-                      <dd class="govuk-summary-list__value">
-                        <code>{{ value }}</code>
-                      </dd>
-                    </div>
-                  {% endfor %}
-                </dl>
-              </div>
-            </details>
-          {% endif %}
-        {% endif %}
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-xl">{{ localise('organisations:titleCaption') }}</span>
+          {{ organisationName }}
+        </h1>
 
-        <h1 class="govuk-heading-xl">{{ organisationName }}</h1>
+        <hr class="govuk-section-break govuk-section-break--xl govuk-section-break--visible">
 
+        {% if shouldRenderTabs %}
           <div class="govuk-tabs" data-module="govuk-tabs">
             <ul class="govuk-tabs__list">
-                <li class="govuk-tabs__list-item{% if activeTab == 'reprocessing' %} govuk-tabs__list-item--selected{% endif %}">
-                  <a class="govuk-tabs__tab" href="{{ reprocessingUrl }}">
-                    Reprocessing
+                <li class="govuk-tabs__list-item{% if activeTab == tabTypes.REPROCESSOR %} govuk-tabs__list-item--selected{% endif %}">
+                  <a class="govuk-tabs__tab" href="{{ reprocessorUrl }}">
+                    {{ localise('organisations:tabs:reprocessor') }}
                   </a>
                 </li>
 
-                <li class="govuk-tabs__list-item{% if activeTab == 'exporting' %} govuk-tabs__list-item--selected{% endif %}">
-                  <a class="govuk-tabs__tab" href="{{ exportingUrl }}">
-                    Exporting
+                <li class="govuk-tabs__list-item{% if activeTab == tabTypes.EXPORTER %} govuk-tabs__list-item--selected{% endif %}">
+                  <a class="govuk-tabs__tab" href="{{ exporterUrl }}">
+                    {{ localise('organisations:tabs:exporter') }}
                   </a>
                 </li>
             </ul>
 
             <div class="govuk-tabs__panel">
+        {%  endif %}
               {% if sites and sites.length > 0 %}
+                <h2 class="govuk-heading-l">
+                  {{ tableTitle }}
+                </h2>
                 {% for site in sites %}
-                  <h2 class="govuk-heading-m">{{ site.name }}</h2>
-                  {{ govukTable({
-                    head: [
-                      { text: "Material" },
-                      { text: "Registration status" },
-                      { text: "Accreditation status" },
-                      { text: "Actions" }
-                    ],
-                    rows: site.tableRows
-                  }) }}
+                  <h3 class="govuk-heading-m">{{ site.name }}</h3>
+                  {{ govukTable(site) }}
                 {% endfor %}
               {% else %}
-                <p class="govuk-body">No sites found.</p>
+                <p class="govuk-body">{{ localise('organisations:table:noSitesFound') }}.</p>
               {% endif %}
+        {% if shouldRenderTabs %}
             </div>
           </div>
+        {% endif %}
       </div>
     </div>
   </div>

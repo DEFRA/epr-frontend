@@ -1,4 +1,4 @@
-@use "govuk-frontend" as *;
+@use "../../../../node_modules/govuk-frontend/dist/govuk/index" as *;
 
 .epr-org-panel {
   background: govuk-colour("white");
@@ -19,12 +19,11 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 383px;
+    min-height: 383px;
   }
 
   .govuk-summary-card__title-wrapper {
-    height: 144px;
-    min-height: 144px;
+    min-height: 114px;
   }
 
   .govuk-summary-card__content {
@@ -41,7 +40,7 @@
 
   .govuk-summary-card__title {
     color: govuk-colour("blue");
-    @include govuk-font($size: 36, $weight: bold);
+    @include govuk-font($size: 48, $weight: bold);
   }
 
   p {

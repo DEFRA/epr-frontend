@@ -22,44 +22,17 @@
   },
   "registrations": [
     {
+      "accreditationId": "acc-no-site-001",
       "id": "reg-no-site-001",
-      "statusHistory": [
-        {
-          "status": "created",
-          "updatedAt": "2025-08-20T19:34:44.944Z"
-        },
-        {
-          "status": "approved",
-          "updatedAt": "2025-08-25T10:15:00.000Z"
-        }
-      ],
+      "status": "approved",
       "submittedToRegulator": "ea",
-      "orgName": "Test Company",
-      "accreditationId": "acc-no-site-001"
-    }
-  ],
-  "accreditations": [
-    {
-      "id": "acc-no-site-001",
-      "wasteProcessingType": "reprocessor",
-      "material": "plastic",
-      "statusHistory": [
-        {
-          "status": "approved",
-          "updatedAt": "2025-08-25T10:15:00.000Z"
-        }
-      ]
+      "wasteProcessingType": "reprocessor"
     },
     {
-      "id": "acc-with-site-001",
-      "wasteProcessingType": "reprocessor",
-      "material": "wood",
-      "statusHistory": [
-        {
-          "status": "approved",
-          "updatedAt": "2025-08-25T10:15:00.000Z"
-        }
-      ],
+      "accreditationId": "acc-no-site-001",
+      "id": "reg-with-site-001",
+      "status": "approved",
+      "submittedToRegulator": "ea",
       "site": {
         "address": {
           "line1": "Site With Address",
@@ -68,7 +41,22 @@
           "postcode": "LS1 1AA",
           "country": "England"
         }
-      }
+      },
+      "wasteProcessingType": "reprocessor"
+    }
+  ],
+  "accreditations": [
+    {
+      "id": "acc-no-site-001",
+      "wasteProcessingType": "reprocessor",
+      "material": "plastic",
+      "status": "approved"
+    },
+    {
+      "id": "acc-with-site-001",
+      "wasteProcessingType": "reprocessor",
+      "material": "wood",
+      "status": "approved"
     }
   ],
   "companyDetails": {

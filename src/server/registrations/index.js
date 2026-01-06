@@ -8,15 +8,15 @@ import { controller } from './controller.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
-export const accreditationDashboard = {
+export const registrations = {
   plugin: {
-    name: 'accreditation-dashboard',
+    name: 'registrations',
     register(server) {
       server.route([
         {
           ...controller,
           method: 'GET',
-          path: '/organisations/{organisationId}/accreditations/{accreditationId}'
+          path: '/organisations/{organisationId}/registrations/{registrationId}'
         }
       ])
     }
