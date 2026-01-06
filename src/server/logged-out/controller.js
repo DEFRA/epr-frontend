@@ -8,8 +8,8 @@ const controller = {
   handler(request, h) {
     const { t: localise } = request
 
-    return h.view('sign-out/index', {
-      pageTitle: localise('sign-out:pageTitle')
+    return h.view('logged-out/index', {
+      pageTitle: localise('logged-out:pageTitle')
     })
   }
 }

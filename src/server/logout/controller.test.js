@@ -6,6 +6,10 @@ import { describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
+const appBaseUrl = 'http://localhost:3000'
+const loggedOutSlug = 'logged-out'
+const loggedOutUrl = `${appBaseUrl}/${loggedOutSlug}`
+
 describe('#logoutController', () => {
   describe('when user is not authenticated', () => {
     test('should redirect to home when authedUser is null', async () => {
@@ -22,7 +26,9 @@ describe('#logoutController', () => {
       const result = await logoutController.handler(mockRequest, mockH)
 
       expect(dropUserSession).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
+        `/${loggedOutSlug}`
+      )
       expect(result).toBe('redirect-response')
     })
   })
@@ -55,7 +61,7 @@ describe('#logoutController', () => {
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
         new URL(
-          'http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2F'
+          `http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(loggedOutUrl)}`
         )
       )
       expect(result).toBe('redirect-response')

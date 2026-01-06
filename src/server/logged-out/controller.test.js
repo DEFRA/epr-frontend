@@ -38,7 +38,7 @@ describe('#signOutController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  describe('when navigating to /sign-out', () => {
+  describe('when navigating to /logged-out', () => {
     it('should return 200 status', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
@@ -46,7 +46,7 @@ describe('#signOutController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/sign-out'
+        url: '/logged-out'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -59,7 +59,7 @@ describe('#signOutController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/sign-out'
+        url: '/logged-out'
       })
 
       const $ = load(result)
@@ -74,7 +74,7 @@ describe('#signOutController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/sign-out'
+        url: '/logged-out'
       })
 
       const $ = load(result)
@@ -89,7 +89,7 @@ describe('#signOutController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/sign-out'
+        url: '/logged-out'
       })
 
       const $ = load(result)
