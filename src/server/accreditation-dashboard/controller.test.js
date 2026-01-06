@@ -235,7 +235,7 @@ describe('#accreditationDashboardController', () => {
       // 4 task cards + 1 waste balance banner = 5 summary cards total
       const summaryCards = $('.govuk-summary-card')
 
-      expect(summaryCards.length).toBe(5)
+      expect(summaryCards).toHaveLength(5)
     })
 
     it('should display all four task tiles', async () => {
