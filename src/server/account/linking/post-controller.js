@@ -48,7 +48,7 @@ export const controller = {
 
     await linkOrganisation(session.idToken, organisationId)
 
-    return h.redirect('/account')
+    return h.redirect(`/organisations/${organisationId}`)
   }
 }
 
