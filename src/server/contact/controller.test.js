@@ -102,7 +102,7 @@ describe('#contactController', () => {
         'mailto:producer.responsibility@sepa.org.uk'
       )
       expect(mailtoLinks).toContain('mailto:repackaging@daera-ni.gov.uk')
-      expect(mailtoLinks).toContain('mailto:EPRCustomerService@defra.gov.uk')
+      expect(mailtoLinks).toContain('mailto:eprcustomerservice@defra.gov.uk')
     })
 
     it('should render call charges links', async () => {
