@@ -1,4 +1,8 @@
 {
+  "exporting": "Exporting",
   "greeting": "Welcome",
-  "pageTitle": "Organisation"
+  "noSitesFound": "No sites found.",
+  "pageTitle": "Organisation",
+  "reprocessing": "Reprocessing",
+  "viewAccountDetails": "View your account details"
 }

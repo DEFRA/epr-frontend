@@ -2,20 +2,20 @@
 {% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% block content %}
-  <div class="govuk-grid-row">
+  <div class="govuk-grid-row epr-organisations-page">
     <div class="govuk-grid-column-full">
       <div class="govuk-body" data-testid="app-page-body">
         {% if isDefraIdEnabled %}
           {% if authedUser and authedUser.displayName %}
-            <div class="govuk-panel govuk-panel--confirmation" style="background-color: #f3f2f1; border: 2px solid #1d70b8;">
-              <div class="govuk-panel__body" style="color: #0b0c0c;">
-                {{ localise('organisation:greeting') }}, <strong>{{ authedUser.displayName }}</strong>
+            <div class="govuk-panel govuk-panel--confirmation epr-welcome-panel">
+              <div class="govuk-panel__body epr-welcome-panel__body">
+                {{ localise('organisations:greeting') }}, <strong>{{ authedUser.displayName }}</strong>
               </div>
             </div>
             <details class="govuk-details">
               <summary class="govuk-details__summary">
                 <span class="govuk-details__summary-text">
-                  View your account details
+                  {{ localise('organisations:viewAccountDetails') }}
                 </span>
               </summary>
               <div class="govuk-details__text">
@@ -40,13 +40,13 @@
             <ul class="govuk-tabs__list">
                 <li class="govuk-tabs__list-item{% if activeTab == 'reprocessing' %} govuk-tabs__list-item--selected{% endif %}">
                   <a class="govuk-tabs__tab" href="{{ reprocessingUrl }}">
-                    Reprocessing
+                    {{ localise('organisations:reprocessing') }}
                   </a>
                 </li>
 
                 <li class="govuk-tabs__list-item{% if activeTab == 'exporting' %} govuk-tabs__list-item--selected{% endif %}">
                   <a class="govuk-tabs__tab" href="{{ exportingUrl }}">
-                    Exporting
+                    {{ localise('organisations:exporting') }}
                   </a>
                 </li>
             </ul>
@@ -66,7 +66,7 @@
                   }) }}
                 {% endfor %}
               {% else %}
-                <p class="govuk-body">No sites found.</p>
+                <p class="govuk-body">{{ localise('organisations:noSitesFound') }}</p>
               {% endif %}
             </div>
           </div>

@@ -1,0 +1,12 @@
+@use 'govuk-frontend' as *;
+
+.epr-organisations-page {
+  .epr-welcome-panel {
+    background: govuk-colour('light-grey');
+    border: 2px solid govuk-colour('blue');
+
+    .epr-welcome-panel__body {
+      color: govuk-colour('black');
+    }
+  }
+}
