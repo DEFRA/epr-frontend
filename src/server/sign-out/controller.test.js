@@ -3,6 +3,7 @@ import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
+import { load } from 'cheerio'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
@@ -37,104 +38,65 @@ describe('#signOutController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  describe('when user navigates directly to /sign-out', () => {
-    it('should redirect to home when signedOut flash is not set', async () => {
+  describe('when navigating to /sign-out', () => {
+    it('should return 200 status', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
       })
 
-      const { statusCode, headers } = await server.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
         url: '/sign-out'
       })
 
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/')
+      expect(statusCode).toBe(statusCodes.ok)
     })
-  })
 
-  describe('when user arrives via proper logout flow', () => {
-    it('should render sign-out page with correct content', async () => {
+    it('should render page with correct title', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
       })
 
-      // Since we can't easily set flash externally via server.inject,
-      // we test the controller directly with mocked yar
-      const { controller } = await import('./controller.js')
-
-      const mockRequest = {
-        t: (key) => {
-          const translations = {
-            'sign-out:pageTitle': 'Signed out'
-          }
-          return translations[key] || key
-        },
-        localiseUrl: (path) => path,
-        yar: {
-          flash: vi.fn().mockReturnValue([true])
-        }
-      }
-
-      const mockH = {
-        view: vi.fn().mockReturnValue('view-response'),
-        redirect: vi.fn().mockReturnValue('redirect-response')
-      }
-
-      const result = controller.handler(mockRequest, mockH)
-
-      expect(mockH.view).toHaveBeenCalledWith('sign-out/index', {
-        pageTitle: 'Signed out'
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/sign-out'
       })
-      expect(result).toBe('view-response')
+
+      const $ = load(result)
+
+      expect($('title').text()).toContain('Signed out')
     })
-  })
 
-  describe('when signedOut flash is empty array', () => {
-    it('should redirect to home', async () => {
-      const { controller } = await import('./controller.js')
+    it('should render page with correct heading', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: false
+      })
 
-      const mockRequest = {
-        t: (key) => key,
-        localiseUrl: (path) => path,
-        yar: {
-          flash: vi.fn().mockReturnValue([])
-        }
-      }
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/sign-out'
+      })
 
-      const mockH = {
-        view: vi.fn().mockReturnValue('view-response'),
-        redirect: vi.fn().mockReturnValue('redirect-response')
-      }
+      const $ = load(result)
 
-      const result = controller.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledWith('/')
-      expect(result).toBe('redirect-response')
+      expect($('h1').text()).toBe('You have signed out')
     })
-  })
 
-  describe('when signedOut flash is undefined', () => {
-    it('should redirect to home', async () => {
-      const { controller } = await import('./controller.js')
+    it('should render sign in again button linking to login', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: false
+      })
 
-      const mockRequest = {
-        t: (key) => key,
-        localiseUrl: (path) => path,
-        yar: {
-          flash: vi.fn().mockReturnValue(undefined)
-        }
-      }
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/sign-out'
+      })
 
-      const mockH = {
-        view: vi.fn().mockReturnValue('view-response'),
-        redirect: vi.fn().mockReturnValue('redirect-response')
-      }
+      const $ = load(result)
+      const button = $('.govuk-button')
 
-      const result = controller.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledWith('/')
-      expect(result).toBe('redirect-response')
+      expect(button.text().trim()).toBe('Sign in again')
+      expect(button.attr('href')).toBe('/login')
     })
   })
 })
