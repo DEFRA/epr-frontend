@@ -3,8 +3,8 @@
  */
 export const controller = {
   handler({ t: localise }, h) {
-    return h.view('account/index', {
-      pageTitle: localise('account:pageTitle')
+    return h.view('contact/index', {
+      pageTitle: localise('contact:pageTitle')
     })
   }
 }

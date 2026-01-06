@@ -14,16 +14,18 @@
     <div class="govuk-grid-column-full">
       <div class="govuk-body" data-testid="app-page-body">
 
-        {% if hasSiteName %}
-          <span class="govuk-caption-xl">{{ siteName }}</span>
-        {% endif %}
-        <h1 class="govuk-heading-xl">{{ material }}</h1>
+        <h1 class="govuk-heading-xl">
+          {% if hasSiteName %}
+            <span class="govuk-caption-xl">{{ siteName }}</span>
+          {% endif %}
+          {{ material }}
+        </h1>
 
         <div class="govuk-grid-row">
-          <div class="govuk-grid-column-one-half">
+          <div class="govuk-grid-column-one-half govuk-!-margin-bottom-4">
             {% if hasRegistrationStatus %}
               <p class="govuk-body govuk-!-margin-bottom-4">
-                <strong>{{ localise("accreditation-dashboard:registration") }}:</strong>
+                <span class="govuk-!-font-weight-bold">{{ localise("registrations:registration") }}:</span>
                 {{ govukTag({
                   text: registrationStatus,
                   classes: "govuk-tag--" + registrationStatusClass
@@ -32,7 +34,7 @@
             {% endif %}
             {% if hasRegistrationNumber %}
                 <p class="govuk-body govuk-!-margin-bottom-0">
-                  <strong>{{ localise("accreditation-dashboard:registrationNumber") }}:</strong>
+                  <span class="govuk-!-font-weight-bold">{{ localise("registrations:registrationNumber") }}:</span>
                   {{ registrationNumber }}
                 </p>
               {% endif %}
@@ -40,7 +42,7 @@
           <div class="govuk-grid-column-one-half">
             {% if hasAccreditationStatus %}
               <p class="govuk-body govuk-!-margin-bottom-4">
-                <strong>{{ localise("accreditation-dashboard:accreditation") }}:</strong>
+                <span class="govuk-!-font-weight-bold">{{ localise("registrations:accreditation") }}:</span>
                 {{ govukTag({
                   text: accreditationStatus,
                   classes: "govuk-tag--" + accreditationStatusClass
@@ -49,27 +51,29 @@
             {% endif %}
             {% if hasAccreditationNumber %}
               <p class="govuk-body govuk-!-margin-bottom-0">
-                <strong>{{ localise("accreditation-dashboard:accreditationNumber") }}:</strong>
+                <span class="govuk-!-font-weight-bold">{{ localise("registrations:accreditationNumber") }}:</span>
                 {{ accreditationNumber }}
               </p>
             {% endif %}
           </div>
         </div>
 
-        <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-6">
-          <div class="govuk-summary-card__title-wrapper">
+        <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+          <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
             <div>
-              <h2 class="govuk-summary-card__title govuk-heading-l govuk-!-margin-bottom-2">
-                {{ localise("accreditation-dashboard:wasteBalanceTitle") }}
+              <h2 class="govuk-summary-card__title">
+                {{ localise("registrations:wasteBalanceTitle") }}
               </h2>
-              <p class="govuk-body-l govuk-!-margin-bottom-0">
-                {{ localise("accreditation-dashboard:wasteBalanceDescription") }}
+              <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold">
+                {{ localise("registrations:wasteBalanceDescription") }}
               </p>
             </div>
           </div>
         </div>
 
-        <h2 class="govuk-heading-l">{{ localise("accreditation-dashboard:chooseTask") }}</h2>
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+        <h2 class="govuk-heading-l">{{ localise("registrations:chooseTask") }}</h2>
 
         <div class="govuk-grid-row epr-task-cards">
           <div class="govuk-grid-column-one-half">
@@ -77,21 +81,19 @@
               <div class="govuk-summary-card__title-wrapper">
                 <div>
                   <h3 class="govuk-summary-card__title">
-                    {{ localise("accreditation-dashboard:summaryLog") }}
+                    {{ localise("registrations:summaryLog") }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ localise("accreditation-dashboard:summaryLogDescription") }}
+                    {{ localise("registrations:summaryLogDescription") }}
                   </p>
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                {% if hasUploadLink %}
-                  <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    <a href="{{ uploadSummaryLogUrl }}" class="govuk-link">
-                      {{ localise("accreditation-dashboard:uploadSummaryLog") }}
-                    </a>
-                  </p>
-                {% endif %}
+                <p class="govuk-body">
+                  <a href="{{ uploadSummaryLogUrl }}" class="govuk-link">
+                    {{ localise("registrations:uploadSummaryLog") }}
+                  </a>
+                </p>
               </div>
             </div>
           </div>
@@ -108,7 +110,7 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                <p class="govuk-body-s govuk-!-margin-bottom-0 app-colour-secondary">
+                <p class="govuk-body">
                   {{ prnNotAvailable }}
                 </p>
               </div>
@@ -122,16 +124,16 @@
               <div class="govuk-summary-card__title-wrapper">
                 <div>
                   <h3 class="govuk-summary-card__title">
-                    {{ localise("accreditation-dashboard:reports") }}
+                    {{ localise("registrations:reports") }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ localise("accreditation-dashboard:reportsDescription") }}
+                    {{ localise("registrations:reportsDescription") }}
                   </p>
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                <p class="govuk-body-s govuk-!-margin-bottom-0 app-colour-secondary">
-                  {{ localise("accreditation-dashboard:reportsNotAvailable") }}
+                <p class="govuk-body">
+                  {{ localise("registrations:reportsNotAvailable") }}
                 </p>
               </div>
             </div>
@@ -141,20 +143,20 @@
               <div class="govuk-summary-card__title-wrapper">
                 <div>
                   <h3 class="govuk-summary-card__title">
-                    {{ localise("accreditation-dashboard:registrationAndAccreditation") }}
+                    {{ localise("registrations:registrationAndAccreditation") }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ localise("accreditation-dashboard:registrationAndAccreditationDescription") }}
+                    {{ localise("registrations:registrationAndAccreditationDescription") }}
                   </p>
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                <p class="govuk-body-s govuk-!-margin-bottom-0 app-colour-secondary">
-                  {{ localise("accreditation-dashboard:registrationNotAvailablePart1") }}
+                <p class="govuk-body">
+                  {{ localise("registrations:registrationNotAvailablePart1") }}
                 </p>
-                <p class="govuk-body-s govuk-!-margin-bottom-0">
-                  {{ localise("accreditation-dashboard:registrationNotAvailablePart2") }}
-                  <a href="{{ contactRegulatorUrl }}" class="govuk-link">{{ localise("accreditation-dashboard:contactRegulator") }}</a>
+                <p class="govuk-body">
+                  {{ localise("registrations:registrationNotAvailablePart2") }}
+                  <a href="{{ contactRegulatorUrl }}" class="govuk-link">{{ localise("registrations:contactRegulator") }}</a>
                 </p>
               </div>
             </div>

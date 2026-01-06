@@ -1,22 +1,22 @@
 import { controller } from './controller.js'
 
 /**
- * Sets up the routes used in the accreditation dashboard page.
+ * Sets up the routes used in the contact page.
  * These routes are registered in src/server/router.js.
  */
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
-export const accreditationDashboard = {
+export const contact = {
   plugin: {
-    name: 'accreditation-dashboard',
+    name: 'contact',
     register(server) {
       server.route([
         {
           ...controller,
           method: 'GET',
-          path: '/organisations/{organisationId}/accreditations/{accreditationId}'
+          path: '/contact'
         }
       ])
     }

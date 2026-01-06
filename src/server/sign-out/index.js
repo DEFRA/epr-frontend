@@ -5,7 +5,7 @@ import { controller } from './controller.js'
  * Registers the /sign-out route that displays confirmation after logout
  * @satisfies {ServerRegisterPluginObject<void>}
  */
-const signOut = {
+const loggedOut = {
   plugin: {
     name: 'sign-out',
     register(server) {
@@ -20,7 +20,7 @@ const signOut = {
   }
 }
 
-export { signOut }
+export { loggedOut }
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'

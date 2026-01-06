@@ -15,18 +15,3 @@ export function getStatusClass(status) {
 
   return statusMap[status.toLowerCase()] || 'grey'
 }
-
-/**
- * Gets the current status from statusHistory
- * @param {Array} statusHistory - Array of status history objects
- * @returns {string} The current status
- */
-export function getCurrentStatus(statusHistory) {
-  if (!statusHistory || statusHistory.length === 0) {
-    return 'Unknown'
-  }
-  const latestStatus = statusHistory.at(-1)
-  return (
-    latestStatus.status.charAt(0).toUpperCase() + latestStatus.status.slice(1)
-  )
-}
