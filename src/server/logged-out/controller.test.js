@@ -98,6 +98,20 @@ describe('#signOutController', () => {
       expect(button.text().trim()).toBe('Sign in again')
       expect(button.attr('href')).toBe('/login')
     })
+
+    it('should redirect to home page if user not logged out', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        value: {}
+      })
+
+      const { headers, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/logged-out'
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/')
+    })
   })
 })
 

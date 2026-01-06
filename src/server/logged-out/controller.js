@@ -1,12 +1,20 @@
+import { getUserSession } from '#server/auth/helpers/get-user-session.js'
+
 /**
- * Sign out confirmation controller
- * Displays confirmation page after user has been signed out
+ * Logged out confirmation controller
+ * Displays confirmation page after user has been logged out
  * @satisfies {Partial<ServerRoute>}
  */
 
 const controller = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t: localise } = request
+    const { value: userSession } = await getUserSession(request)
+
+    if (userSession) {
+      // If user is not logged out, redirect to home page
+      return h.redirect('/')
+    }
 
     return h.view('logged-out/index', {
       pageTitle: localise('logged-out:pageTitle')

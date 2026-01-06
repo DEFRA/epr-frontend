@@ -1,9 +1,4 @@
-import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
+import Boom from '@hapi/boom'
 import { load } from 'cheerio'
 import {
   afterAll,
@@ -14,6 +9,13 @@ import {
   it,
   vi
 } from 'vitest'
+
+import { config } from '#config/config.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
+import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/index.js'
 
 // Import fixtures
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -298,17 +300,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(backendError)
 
-      const { statusCode, result } = await server.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
-      // Should return error result
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result.ok).toBe(false)
-      expect(result.error.message).toBe(
-        'Failed to fetch organisation from backend'
-      )
+      expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
     it('should handle missing session with undefined token', async () => {
@@ -337,24 +334,16 @@ describe('#organisationController', () => {
         value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
       })
 
-      const notFoundError = new Error('Organisation not found')
-      notFoundError.statusCode = 404
-
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
-      ).mockRejectedValue(notFoundError)
+      ).mockRejectedValue(Boom.notFound('Organisation not found'))
 
-      const { statusCode, result } = await server.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
         url: '/organisations/nonexistent-id'
       })
 
-      // Should return error result
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result.ok).toBe(false)
-      expect(result.error.message).toBe(
-        'Failed to fetch organisation from backend'
-      )
+      expect(statusCode).toBe(statusCodes.notFound)
     })
 
     it('should handle backend timeout error', async () => {
@@ -370,17 +359,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(timeoutError)
 
-      const { statusCode, result } = await server.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
-      // Should return error result
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result.ok).toBe(false)
-      expect(result.error.message).toBe(
-        'Failed to fetch organisation from backend'
-      )
+      expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
     it('should handle malformed backend response', async () => {
