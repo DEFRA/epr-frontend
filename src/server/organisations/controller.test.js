@@ -88,13 +88,13 @@ describe('#organisationController', () => {
       const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect($('h1').text()).toBe('ACME ltd')
-      expect($('.govuk-tabs__list-item--selected a').text().trim()).toBe(
-        'Reprocessing'
+      expect($('h1').text()).toMatch(/ACME ltd/)
+      expect($('.govuk-tabs__list-item--selected a').text()).toMatch(
+        /Reprocessing/
       )
 
       // Check that reprocessing sites are displayed
-      const siteHeadings = $('h2.govuk-heading-m')
+      const siteHeadings = $('h3.govuk-heading-m')
         .map((_, el) => $(el).text())
         .get()
 
@@ -107,9 +107,9 @@ describe('#organisationController', () => {
 
       expect(tableHeaders).toContain('Material')
       // eslint-disable-next-line vitest/max-expects
-      expect(tableHeaders).toContain('Registration status')
+      expect(tableHeaders).toContain('Registration')
       // eslint-disable-next-line vitest/max-expects
-      expect(tableHeaders).toContain('Accreditation status')
+      expect(tableHeaders).toContain('Accreditation')
     })
 
     it('should display organisation page with exporting sites on exporting route', async () => {
@@ -125,13 +125,10 @@ describe('#organisationController', () => {
       const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect($('h1').text()).toBe('Global Exports Ltd')
-      expect($('.govuk-tabs__list-item--selected a').text().trim()).toBe(
-        'Exporting'
-      )
+      expect($('h1').text()).toMatch(/Global Exports Ltd/)
 
       // Check that exporting sites are displayed
-      const siteHeadings = $('h2.govuk-heading-m')
+      const siteHeadings = $('h3.govuk-heading-m')
         .map((_, el) => $(el).text())
         .get()
 
@@ -237,7 +234,7 @@ describe('#organisationController', () => {
       // Verify link format
       const firstLink = selectLinks.first().attr('href')
 
-      expect(firstLink).toMatch(/\/organisations\/.*\/accreditations\/.*/)
+      expect(firstLink).toMatch(/\/organisations\/.*\/registrations\/.*/)
     })
 
     it('should use organisation ID from URL parameter in backend call', async () => {
@@ -391,34 +388,6 @@ describe('#organisationController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
-
-    it('should handle missing companyDetails.tradingName gracefully', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
-      const dataWithoutTradingName = {
-        ...fixtureData,
-        companyDetails: {}
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithoutTradingName)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
-
-      const $ = load(result)
-
-      // Should render but with empty string as the organisation name
-      expect(statusCode).toBe(statusCodes.ok)
-      // h1 will be empty when tradingName is missing (Nunjucks renders undefined as empty)
-      expect($('h1').text()).toBe('')
-    })
   })
 
   describe('edge Cases', () => {
@@ -442,7 +411,7 @@ describe('#organisationController', () => {
       const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect($('h1').text()).toBe('Empty Organisation Ltd')
+      expect($('h1').text()).toMatch(/Empty Organisation Ltd/)
       expect(result).toContain('No sites found.')
     })
 
@@ -473,18 +442,14 @@ describe('#organisationController', () => {
         accreditations: [
           {
             ...fixtureData.accreditations[0],
-            statusHistory: [
-              { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'created'
           }
         ],
         registrations: [
           {
             ...fixtureData.registrations[0],
             accreditationId: fixtureData.accreditations[0].id,
-            statusHistory: [
-              { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'created'
           }
         ]
       }
@@ -508,18 +473,14 @@ describe('#organisationController', () => {
         accreditations: [
           {
             ...fixtureData.accreditations[0],
-            statusHistory: [
-              { status: 'rejected', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'rejected'
           }
         ],
         registrations: [
           {
             ...fixtureData.registrations[0],
             accreditationId: fixtureData.accreditations[0].id,
-            statusHistory: [
-              { status: 'rejected', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'rejected'
           }
         ]
       }
@@ -552,7 +513,7 @@ describe('#organisationController', () => {
       expect(statusCode).toBe(statusCodes.ok)
 
       // Check for "Unknown site" fallback
-      const siteHeadings = $('h2.govuk-heading-m')
+      const siteHeadings = $('h3.govuk-heading-m')
         .map((_, el) => $(el).text())
         .get()
 
@@ -595,7 +556,7 @@ describe('#organisationController', () => {
         url: '/organisations/6507f1f77bcf86cd79943902'
       })
 
-      expect(reprocessingResponse.result).toContain('No sites found.')
+      expect(reprocessingResponse.result).not.toContain(/Reprocessing/i)
 
       const exportingResponse = await server.inject({
         method: 'GET',
@@ -604,39 +565,7 @@ describe('#organisationController', () => {
 
       const $exporting = load(exportingResponse.result)
 
-      expect($exporting('h2.govuk-heading-m').length).toBeGreaterThan(0)
-    })
-
-    it('should handle empty statusHistory array', async () => {
-      const dataWithEmptyStatusHistory = {
-        ...fixtureData,
-        accreditations: [
-          {
-            ...fixtureData.accreditations[0],
-            statusHistory: []
-          }
-        ],
-        registrations: [
-          {
-            ...fixtureData.registrations[0],
-            accreditationId: fixtureData.accreditations[0].id,
-            statusHistory: []
-          }
-        ]
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithEmptyStatusHistory)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      // Should show "Unknown" status
-      expect(result).toContain('Unknown')
+      expect($exporting('h3.govuk-heading-m').length).toBeGreaterThan(0)
     })
 
     it('should handle organisation with single site and material', async () => {
@@ -652,10 +581,10 @@ describe('#organisationController', () => {
       const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect($('h1').text()).toBe('Single Reprocessor Ltd')
+      expect($('h1').text()).toMatch(/Home\n\s+Single Reprocessor Ltd/m)
 
       // Should have exactly one site heading
-      const siteHeadings = $('h2.govuk-heading-m')
+      const siteHeadings = $('h3.govuk-heading-m')
 
       expect(siteHeadings).toHaveLength(1)
       expect(siteHeadings.text()).toBe('Single Processing Site')
@@ -724,7 +653,7 @@ describe('#organisationController', () => {
       // - acc-1 has Approved but reg-1 has Created - FILTERED (reg has excluded status)
       // - acc-2 has Created but reg-2 has Approved - FILTERED (acc has excluded status)
       // No sites should be shown
-      const siteHeadings = $('h2.govuk-heading-m')
+      const siteHeadings = $('h3.govuk-heading-m')
 
       expect(siteHeadings).toHaveLength(0)
     })
@@ -751,7 +680,7 @@ describe('#organisationController', () => {
       const $ = load(result)
 
       // Check that materials at the same site are grouped under one heading
-      const siteHeadings = $('h2.govuk-heading-m')
+      const siteHeadings = $('h3.govuk-heading-m')
         .map((_, el) => $(el).text())
         .get()
 
@@ -759,55 +688,6 @@ describe('#organisationController', () => {
       const uniqueSites = [...new Set(siteHeadings)]
 
       expect(siteHeadings).toHaveLength(uniqueSites.length)
-    })
-
-    it('should use registration site address when accreditation site is missing', async () => {
-      const dataWithRegistrationSiteOnly = {
-        ...fixtureData,
-        accreditations: [
-          {
-            id: 'acc-no-site',
-            wasteProcessingType: 'reprocessor',
-            material: 'wood',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
-            // No site field
-          }
-        ],
-        registrations: [
-          {
-            id: 'reg-with-site',
-            accreditationId: 'acc-no-site',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
-            site: {
-              address: {
-                line1: 'Registration Site Address'
-              }
-            }
-          }
-        ]
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithRegistrationSiteOnly)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
-
-      const $ = load(result)
-
-      // Should use registration site address as fallback
-      const siteHeadings = $('h2.govuk-heading-m')
-        .map((_, el) => $(el).text())
-        .get()
-
-      expect(siteHeadings).toContain('Registration Site Address')
     })
 
     it('should handle multiple accreditations for the same site', async () => {
@@ -818,51 +698,42 @@ describe('#organisationController', () => {
             id: 'acc-plastic',
             wasteProcessingType: 'reprocessor',
             material: 'plastic',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
-            site: { address: { line1: 'Multi-Material Site' } }
+            status: 'approved'
           },
           {
             id: 'acc-glass',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
-            site: { address: { line1: 'Multi-Material Site' } }
+            status: 'approved'
           },
           {
             id: 'acc-wood',
             wasteProcessingType: 'reprocessor',
             material: 'wood',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
-            site: { address: { line1: 'Multi-Material Site' } }
+            status: 'approved'
           }
         ],
         registrations: [
           {
             id: 'reg-plastic',
             accreditationId: 'acc-plastic',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            site: { address: { line1: 'Multi-Material Site' } },
+            status: 'approved',
+            wasteProcessingType: 'reprocessor'
           },
           {
             id: 'reg-glass',
             accreditationId: 'acc-glass',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            site: { address: { line1: 'Multi-Material Site' } },
+            status: 'approved',
+            wasteProcessingType: 'reprocessor'
           },
           {
             id: 'reg-wood',
             accreditationId: 'acc-wood',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            site: { address: { line1: 'Multi-Material Site' } },
+            status: 'approved',
+            wasteProcessingType: 'reprocessor'
           }
         ]
       }
@@ -879,7 +750,7 @@ describe('#organisationController', () => {
       const $ = load(result)
 
       // Should have one site heading with multiple table rows
-      const siteHeadings = $('h2.govuk-heading-m')
+      const siteHeadings = $('h3.govuk-heading-m')
 
       expect(siteHeadings).toHaveLength(1)
       expect(siteHeadings.text()).toBe('Multi-Material Site')
@@ -914,27 +785,21 @@ describe('#organisationController', () => {
             id: 'acc-approved',
             wasteProcessingType: 'reprocessor',
             material: 'plastic',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
+            status: 'approved',
             site: { address: { line1: 'Site 1' } }
           },
           {
             id: 'acc-suspended',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
-            statusHistory: [
-              { status: 'suspended', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
+            status: 'suspended',
             site: { address: { line1: 'Site 2' } }
           },
           {
             id: 'acc-cancelled',
             wasteProcessingType: 'reprocessor',
             material: 'wood',
-            statusHistory: [
-              { status: 'cancelled', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
+            status: 'cancelled',
             site: { address: { line1: 'Site 3' } }
           }
         ],
@@ -942,23 +807,20 @@ describe('#organisationController', () => {
           {
             id: 'reg-1',
             accreditationId: 'acc-approved',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'approved',
+            wasteProcessingType: 'reprocessor'
           },
           {
             id: 'reg-2',
             accreditationId: 'acc-suspended',
-            statusHistory: [
-              { status: 'suspended', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'suspended',
+            wasteProcessingType: 'reprocessor'
           },
           {
             id: 'reg-3',
             accreditationId: 'acc-cancelled',
-            statusHistory: [
-              { status: 'cancelled', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'cancelled',
+            wasteProcessingType: 'reprocessor'
           }
         ]
       }

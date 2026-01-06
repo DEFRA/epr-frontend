@@ -3,12 +3,7 @@
   "orgId": 50006,
   "schemaVersion": 1,
   "version": 1,
-  "statusHistory": [
-    {
-      "status": "created",
-      "updatedAt": "2025-08-22T19:34:44.944Z"
-    }
-  ],
+  "status": "approved",
   "wasteProcessingTypes": ["reprocessor"],
   "reprocessingNations": ["england"],
   "businessType": "company",
@@ -23,17 +18,10 @@
   "registrations": [
     {
       "id": "reg-single-001",
-      "statusHistory": [
-        {
-          "status": "created",
-          "updatedAt": "2025-08-20T19:34:44.944Z"
-        },
-        {
-          "status": "approved",
-          "updatedAt": "2025-08-25T10:15:00.000Z"
-        }
-      ],
+      "wasteProcessingType": "reprocessor",
+      "status": "approved",
       "submittedToRegulator": "ea",
+      "material": "aluminium",
       "orgName": "Single Reprocessor Ltd",
       "accreditationId": "acc-single-001",
       "site": {
@@ -51,17 +39,7 @@
     {
       "id": "acc-single-001",
       "wasteProcessingType": "reprocessor",
-      "material": "aluminium",
-      "statusHistory": [
-        {
-          "status": "created",
-          "updatedAt": "2025-08-20T19:34:44.944Z"
-        },
-        {
-          "status": "approved",
-          "updatedAt": "2025-08-25T10:15:00.000Z"
-        }
-      ],
+      "status": "approved",
       "site": {
         "address": {
           "line1": "Single Processing Site",
