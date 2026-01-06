@@ -32,9 +32,6 @@ export const router = {
         await server.register([login, auth, logout, signOut])
       }
 
-      // Sign out confirmation page
-      await server.register([signOut])
-
       // Application specific routes, add your own routes here
       await server.register([
         account,
