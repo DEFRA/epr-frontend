@@ -52,7 +52,6 @@ export async function context(request) {
     breadcrumbs: [],
     isDefraIdEnabled: isDefraIdEnabled(),
     navigation: buildNavigation(request, authedUser ?? null),
-    serviceName: config.get('serviceName'),
     serviceUrl: '/start',
     ...getI18nContext(request),
 
