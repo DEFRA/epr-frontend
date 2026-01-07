@@ -3,7 +3,7 @@
   "accreditationNumber": "Accreditation number",
   "chooseTask": "Choose a task",
   "contactRegulator": "contact your regulator",
-  "pageTitle": "Accreditation dashboard",
+  "pageTitle": "{{ siteName }}: {{ material }}",
   "pernNotAvailable": "PERN management is not yet available.",
   "perns": "PERNs",
   "pernsDescription": "Raise, issue and manage PERNs.",

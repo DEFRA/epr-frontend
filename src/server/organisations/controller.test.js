@@ -75,6 +75,21 @@ describe('#organisationController', () => {
       })
     })
 
+    it('should use Organisation name in the page title', async () => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901'
+      })
+
+      const $ = load(result)
+
+      expect($('title').text()).toMatch(/^Home: ACME ltd/)
+    })
+
     it('should display organisation page with reprocessing sites on default route', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById

@@ -1,5 +1,5 @@
 {
-  "pageTitle": "Organisation",
+  "pageTitle": "Home: {{name}}",
   "table": {
     "titleReprocessor": "Select site and material",
     "titleExporter": "Select material",
