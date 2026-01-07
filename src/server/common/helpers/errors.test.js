@@ -1,13 +1,9 @@
 import { vi, describe, expect, it, beforeEach } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 
 import { catchAll } from '#server/common/helpers/errors.js'
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'), () => ({
-  getUserSession: vi.fn().mockResolvedValue({ ok: true, value: {} })
-}))
 vi.mock(import('#server/auth/helpers/user-session.js'), () => ({
   removeUserSession: vi.fn()
 }))
@@ -48,7 +44,6 @@ describe(catchAll, () => {
   it.each([
     [statusCodes.notFound, 'error:notFound'],
     [statusCodes.forbidden, 'error:forbidden'],
-    [statusCodes.unauthorized, 'error:unauthorized'],
     [statusCodes.badRequest, 'error:badRequest'],
     [statusCodes.imATeapot, 'error:generic']
   ])('renders expected error page for %i', async (code, expectedKey) => {
@@ -66,11 +61,6 @@ describe(catchAll, () => {
   })
 
   it('logs user out when session is missing', async () => {
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: false,
-      session: undefined
-    })
-
     const req = makeRequest(statusCodes.unauthorized)
     await catchAll(req, mockToolkit)
 
