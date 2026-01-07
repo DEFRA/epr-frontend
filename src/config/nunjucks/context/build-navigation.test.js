@@ -102,21 +102,6 @@ describe('#buildNavigation', () => {
       })
     })
 
-    it('should not include manage account link when config URL is not set', () => {
-      config.reset('defraId.manageAccountUrl')
-
-      const navigation = buildNavigation(
-        mockRequest(),
-        users.authedWithLinkedOrg
-      )
-
-      expect(navigation).not.toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ text: 'Manage account' })
-        ])
-      )
-    })
-
     it('should not include manage account link when user is not authenticated', () => {
       const navigation = buildNavigation(mockRequest(), users.unauthed)
 

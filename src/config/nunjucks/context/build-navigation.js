@@ -39,13 +39,9 @@ const home = ({ localiseUrl, t: localise }, userSession) => {
  * @returns {NavigationItem[]}
  */
 const manageAccount = ({ t: localise }) => {
-  const manageAccountUrl = config.get('defraId.manageAccountUrl')
-  if (!manageAccountUrl) {
-    return []
-  }
   return [
     {
-      href: manageAccountUrl,
+      href: config.get('defraId.manageAccountUrl'),
       text: localise('common:navigation:manageAccount')
     }
   ]
