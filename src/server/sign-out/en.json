@@ -1,5 +1,5 @@
 {
-  "body": "You have signed out of the 'Record reprocessed or exported packaging waste' service.",
+  "body": "You have signed out of the '{{ serviceName }}' service.",
   "heading": "You have signed out",
   "pageTitle": "Signed out",
   "signInAgain": "Sign in again"

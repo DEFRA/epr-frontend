@@ -93,7 +93,7 @@ function buildViewModel({
   )
 
   return {
-    pageTitle: localise('registrations:pageTitle'),
+    pageTitle: localise('registrations:pageTitle', { siteName, material }),
     siteName,
     material,
     isExporter,

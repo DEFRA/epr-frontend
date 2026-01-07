@@ -58,9 +58,22 @@ describe('account linking POST controller', () => {
         )
       )
 
+      const mockCacheSet = vi.fn().mockResolvedValue(undefined)
       const mockRequest = {
         payload: {
           organisationId
+        },
+        state: {
+          userSession: {
+            sessionId: 'mock-session-id'
+          }
+        },
+        server: {
+          app: {
+            cache: {
+              set: mockCacheSet
+            }
+          }
         }
       }
 
@@ -73,6 +86,10 @@ describe('account linking POST controller', () => {
       expect(
         getUserSessionModule.getUserSession
       ).toHaveBeenCalledExactlyOnceWith(mockRequest)
+      expect(mockCacheSet).toHaveBeenCalledExactlyOnceWith('mock-session-id', {
+        idToken: mockIdToken,
+        linkedOrganisationId: organisationId
+      })
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
         `/organisations/${organisationId}`
       )

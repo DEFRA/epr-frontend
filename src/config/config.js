@@ -80,7 +80,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'Manage your packaging waste responsibilities'
+    default: 'Record reprocessed or exported packaging waste'
   },
   root: {
     doc: 'Project root',
@@ -289,6 +289,12 @@ export const config = convict({
       format: String,
       sensitive: true,
       default: clientSecret || ''
+    },
+    manageAccountUrl: {
+      doc: 'DEFRA ID Manage Account URL',
+      format: String,
+      env: 'DEFRA_ID_MANAGE_ACCOUNT_URL',
+      default: ''
     }
   }
 })

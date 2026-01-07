@@ -177,7 +177,9 @@ export const controller = {
     }
 
     return h.view('organisations/index', {
-      pageTitle: localise('organisations:pageTitle'),
+      pageTitle: localise('organisations:pageTitle', {
+        name: organisationName
+      }),
       organisationName,
       organisationId,
       activeTab,
