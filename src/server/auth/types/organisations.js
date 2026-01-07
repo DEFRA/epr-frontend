@@ -14,7 +14,7 @@
  */
 
 /**
- * @typedef { DefraOrgSummary & {
+ * @typedef { EprOrganisationSummary & {
  *   linkedBy: {
  *     email: string
  *     id: string
