@@ -1,27 +1,15 @@
-const getPath = ({ localiseUrl }) => localiseUrl('/account')
-
 /**
  * Login controller
  * Triggers OIDC authentication flow by using 'defra-id' auth strategy
- * After successful authentication, redirects to home page
+ * After successful authentication, auth callback redirects to organisation home (linked) or linking page (unlinked)
  * @satisfies {Partial<ServerRoute>}
  */
 const loginController = {
   options: {
-    auth: 'defra-id',
-    ext: {
-      onPreAuth: {
-        method: (request, h) => {
-          request.yar.flash('referrer', getPath(request))
-
-          return h.continue
-        }
-      }
-    }
+    auth: 'defra-id'
   },
-  /* @fixme: code coverage */
-  /* v8 ignore next */
-  handler: async (request, h) => h.redirect(getPath(request))
+  /* v8 ignore next - handler is fallback; defra-id auth strategy handles redirect */
+  handler: async (request, h) => h.redirect(request.localiseUrl('/start'))
 }
 
 export { loginController }
