@@ -1,6 +1,6 @@
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { dropUserSession } from './drop-user-session.js'
 
 describe('#dropUserSession', () => {
@@ -34,6 +34,17 @@ describe('#dropUserSession', () => {
     await dropUserSession(mockRequest)
 
     await expect(server.app.cache.get('session-123')).resolves.toBeNull()
+  })
+
+  it('should not drop if userSession is nullish', async () => {
+    const mockRequest = {
+      state: { userSession: undefined },
+      server
+    }
+
+    await dropUserSession(mockRequest)
+
+    expect(vi.spyOn(server.app.cache, 'drop')).not.toHaveBeenCalled()
   })
 })
 
