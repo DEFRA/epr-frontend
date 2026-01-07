@@ -155,7 +155,8 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue([])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {
@@ -164,6 +165,9 @@ describe('#authCallbackController', () => {
 
       const result = await controller.handler(mockRequest, mockH)
 
+      expect(mockRequest.localiseUrl).toHaveBeenCalledExactlyOnceWith(
+        '/organisations/linked-org-uuid'
+      )
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
         '/organisations/linked-org-uuid'
       )
@@ -236,7 +240,8 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue([])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {

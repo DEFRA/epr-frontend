@@ -42,7 +42,9 @@ const controller = {
         return h.redirect(getSafeRedirect(referrer))
       }
 
-      return h.redirect(`/organisations/${organisations.linked.id}`)
+      return h.redirect(
+        request.localiseUrl(`/organisations/${organisations.linked.id}`)
+      )
     }
 
     const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
