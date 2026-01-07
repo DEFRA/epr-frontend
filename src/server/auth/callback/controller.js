@@ -36,6 +36,15 @@ const controller = {
       if (!organisations.linked) {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
+
+      const referrer = request.yar.flash('referrer')?.at(0)
+      if (referrer) {
+        return h.redirect(getSafeRedirect(referrer))
+      }
+
+      return h.redirect(
+        request.localiseUrl(`/organisations/${organisations.linked.id}`)
+      )
     }
 
     const redirect = request.yar.flash('referrer')?.at(0) ?? '/'

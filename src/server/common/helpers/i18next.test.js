@@ -20,13 +20,13 @@ describe('#i18nPlugin - integration', () => {
   describe('language detection and html lang attribute', () => {
     it.each([
       {
-        url: '/',
+        url: '/start',
         expectedLang: 'en',
         description: 'english',
         heading: 'Manage your packaging waste responsibilities'
       },
       {
-        url: '/cy',
+        url: '/cy/start',
         expectedLang: 'cy',
         description: 'welsh',
         // TODO placeholder welsh translation
@@ -134,7 +134,7 @@ describe('#i18nPlugin - integration', () => {
     it('should handle language with region code via Accept-Language header', async () => {
       const response = await server.inject({
         method: 'GET',
-        url: '/',
+        url: '/start',
         headers: {
           'Accept-Language': 'en-GB,en;q=0.9'
         }
@@ -149,7 +149,7 @@ describe('#i18nPlugin - integration', () => {
     it('should handle Welsh with region code', async () => {
       const response = await server.inject({
         method: 'GET',
-        url: '/cy',
+        url: '/cy/start',
         headers: {
           'Accept-Language': 'cy-GB,cy;q=0.9'
         }
