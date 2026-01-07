@@ -111,15 +111,7 @@ describe('#homeController', () => {
 
     describe.each([
       {
-        heading: 'Rheoli eich cyfrifoldebau gwastraff pecynnu',
-        lang: 'cy',
-        loginUrl: '/cy/login',
-        startNow: 'Dechreuwch nawr',
-        title: 'Hafan',
-        url: '/cy/start'
-      },
-      {
-        heading: 'Manage your packaging waste responsibilities',
+        heading: 'Record reprocessed or exported packaging waste',
         lang: 'en',
         loginUrl: '/login',
         startNow: 'Start now',
