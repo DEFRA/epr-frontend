@@ -51,7 +51,7 @@ export async function catchAll(request, h) {
   if (statusCode === statusCodes.unauthorized) {
     removeUserSession(request)
 
-    return h.redirect('/logged-out').takeover()
+    return h.redirect(request.localiseUrl('/logged-out')).takeover()
   }
 
   const errorMessage = statusCodeMessage(statusCode, request.t)

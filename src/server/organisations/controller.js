@@ -15,13 +15,18 @@ function createTag(status) {
 
 /**
  * Creates a row for a given registration
- * @param {(key: string) => string} localise - Localisation function
+ * @param {Request} request
  * @param {string} id - Organisation ID
  * @param {object} registration - Registration data
  * @param {accreditation | undefined} accreditation - Accreditation data
  * @returns {[{text: string},{html: string},{html: (string|string)},{html: string, classes: string}]} - Array of table cells
  */
-function createRow(localise, id, registration, accreditation) {
+function createRow(request, id, registration, accreditation) {
+  const { t: localise } = request
+  const registrationUrl = request.localiseUrl(
+    `/organisations/${id}/registrations/${registration.id}`
+  )
+
   return [
     { text: capitalize(registration.material) },
     {
@@ -33,7 +38,7 @@ function createRow(localise, id, registration, accreditation) {
       )
     },
     {
-      html: `<a href="/organisations/${id}/registrations/${registration.id}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
+      html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
       classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
     }
   ]
@@ -41,12 +46,13 @@ function createRow(localise, id, registration, accreditation) {
 
 /**
  * Organises accreditations by site for a given waste processing type
- * @param {(key: string) => string} localise - Localisation function
+ * @param {Request} request
  * @param {object} data - The organisation data
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @returns {Array} Array of sites with their materials
  */
-function getRegistrationSites(localise, data, wasteProcessingType) {
+function getRegistrationSites(request, data, wasteProcessingType) {
+  const { t: localise } = request
   const excludedStatuses = new Set(['created', 'rejected'])
 
   return data.registrations.reduce((prev, registration) => {
@@ -74,7 +80,7 @@ function getRegistrationSites(localise, data, wasteProcessingType) {
                 ...site,
                 rows: [
                   ...site.rows,
-                  createRow(localise, data.id, registration, accreditation)
+                  createRow(request, data.id, registration, accreditation)
                 ]
               }
             : site
@@ -87,7 +93,9 @@ function getRegistrationSites(localise, data, wasteProcessingType) {
               : (registration.site?.address?.line1 ??
                 localise('organisations:table:site:unknown')),
             head: [
-              { text: localise('organisations:table:site:headings:materials') },
+              {
+                text: localise('organisations:table:site:headings:materials')
+              },
               {
                 text: localise(
                   'organisations:table:site:headings:registrationStatuses'
@@ -100,7 +108,7 @@ function getRegistrationSites(localise, data, wasteProcessingType) {
               },
               { text: '' }
             ],
-            rows: [createRow(localise, data.id, registration, accreditation)]
+            rows: [createRow(request, data.id, registration, accreditation)]
           }
         ]
   }, [])
@@ -135,13 +143,13 @@ export const controller = {
     const organisationName = organisationData.companyDetails.tradingName
 
     const reprocessorSites = getRegistrationSites(
-      localise,
+      request,
       organisationData,
       'reprocessor'
     )
 
     const exporterSites = getRegistrationSites(
-      localise,
+      request,
       organisationData,
       'exporter'
     )
@@ -188,5 +196,5 @@ export const controller = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { Request, ServerRoute } from '@hapi/hapi'
  */

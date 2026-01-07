@@ -13,7 +13,7 @@ const logoutController = {
   },
   handler: async (request, h) => {
     const authedUser = request.pre.authedUser
-    const loggedOutUrl = '/logged-out'
+    const loggedOutUrl = request.localiseUrl('/logged-out')
 
     if (!authedUser) {
       return h.redirect(loggedOutUrl)
