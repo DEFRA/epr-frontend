@@ -20,6 +20,5 @@
     "subheading": "Select the registration to link to {{ serviceName }}",
     "confirmButton": "Confirm",
     "errorNoSelection": "Select an organisation to link"
-  },
-  "pageTitle": "Account"
+  }
 }

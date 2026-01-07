@@ -1,22 +1,22 @@
-import { registrationController } from '#server/registration/controller.js'
+import { controller } from './controller.js'
 
 /**
- * Sets up the routes used in the registration page.
+ * Sets up the routes used in the accreditation dashboard page.
  * These routes are registered in src/server/router.js.
  */
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
-export const registration = {
+export const registrations = {
   plugin: {
-    name: 'registration',
+    name: 'registrations',
     register(server) {
       server.route([
         {
+          ...controller,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}',
-          ...registrationController
+          path: '/organisations/{organisationId}/registrations/{registrationId}'
         }
       ])
     }

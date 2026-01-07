@@ -19,6 +19,5 @@ EXPOSE ${PORT} ${PORT_DEBUG}
 COPY --chown=node:node --chmod=755 package*.json nodemon.json tsconfig.json babel.config.cjs webpack.config.js .browserslistrc ./
 COPY --chown=node:node --chmod=755 src/ ./src/
 RUN npm install --ignore-scripts
-RUN NODE_ENV=production npm run build
 
-CMD [ "node", "--use-strict", "." ]
+CMD [ "npm", "run", "dev" ]

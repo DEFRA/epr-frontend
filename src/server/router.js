@@ -1,7 +1,7 @@
 import { isDefraIdEnabled } from '#config/config.js'
 import { account } from '#server/account/index.js'
-import { accreditationDashboard } from '#server/accreditation-dashboard/index.js'
 import { organisations } from '#server/organisations/index.js'
+import { registrations } from '#server/registrations/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
 import { contact } from '#server/contact/index.js'
@@ -10,7 +10,7 @@ import { health } from '#server/health/index.js'
 import { home } from '#server/home/index.js'
 import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
-import { registration } from '#server/registration/index.js'
+import { loggedOut } from '#server/sign-out/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
 import inert from '@hapi/inert'
@@ -35,13 +35,13 @@ export const router = {
       // Application specific routes, add your own routes here
       await server.register([
         account,
-        accreditationDashboard,
         contact,
         cookies,
         organisations,
+        registrations,
         home,
-        registration,
         summaryLog,
+        loggedOut,
         summaryLogUpload
       ])
 

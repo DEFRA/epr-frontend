@@ -101,7 +101,7 @@ describe('#contactController', () => {
       expect(mailtoLinks).toContain(
         'mailto:producer.responsibility@sepa.org.uk'
       )
-      expect(mailtoLinks).toContain('mailto:repackaging@daera-ni.gov.uk')
+      expect(mailtoLinks).toContain('mailto:repandexp@daera-ni.gov.uk')
       expect(mailtoLinks).toContain('mailto:eprcustomerservice@defra.gov.uk')
     })
 

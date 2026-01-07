@@ -20,6 +20,5 @@
     "subheading": "Dewiswch y cofrestriad i'w gysylltu â {{ serviceName }}",
     "confirmButton": "Cadarnhau",
     "errorNoSelection": "Dewiswch sefydliad i'w gysylltu"
-  },
-  "pageTitle": "Cyfrif"
+  }
 }

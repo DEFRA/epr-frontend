@@ -74,7 +74,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -93,7 +93,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -109,7 +109,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       expect(result).toContain('PRNs')
@@ -124,10 +124,10 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
-      expect(result).toContain('CBDU001234')
+      expect(result).toContain('REG001234')
       expect(result).toContain('ACC001234')
     })
 
@@ -138,7 +138,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -158,7 +158,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -175,7 +175,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -194,7 +194,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       expect(result).toContain('Your waste balance is not yet available')
@@ -210,7 +210,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -227,7 +227,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -245,7 +245,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       expect(result).toContain('Summary log')
@@ -263,7 +263,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/accreditations/acc-export-001-plastic-approved'
+        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -278,7 +278,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/accreditations/acc-export-001-plastic-approved'
+        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved'
       })
 
       const $ = load(result)
@@ -299,20 +299,20 @@ describe('#accreditationDashboardController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/nonexistent-org/accreditations/acc-001'
+        url: '/organisations/nonexistent-org/registrations/reg-001'
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it('should return 404 when accreditation not found', async () => {
+    it('should return 404 when registration not found', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/nonexistent-acc'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/nonexistent-acc'
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
@@ -329,7 +329,7 @@ describe('#accreditationDashboardController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -343,18 +343,15 @@ describe('#accreditationDashboardController', () => {
     it('should display Unknown site when site address is missing', async () => {
       const dataWithMissingSite = {
         ...fixtureData,
-        accreditations: [
+        accreditations: [],
+        registrations: [
           {
-            id: 'acc-no-site',
+            id: 'reg-no-site',
             wasteProcessingType: 'reprocessor',
             material: 'plastic',
-            status: 'approved',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
+            status: 'approved'
           }
-        ],
-        registrations: []
+        ]
       }
 
       vi.mocked(
@@ -363,36 +360,11 @@ describe('#accreditationDashboardController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-no-site'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-site'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Unknown site')
-    })
-
-    it('should handle missing registration for accreditation', async () => {
-      const dataWithNoRegistration = {
-        ...fixtureData,
-        registrations: []
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithNoRegistration)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
-      })
-
-      const $ = load(result)
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).not.toContain('CBDU001234')
-
-      const uploadLink = $('a[href*="summary-logs/upload"]')
-
-      expect(uploadLink).toHaveLength(0)
     })
 
     it('should capitalize material name', async () => {
@@ -402,7 +374,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
       const $ = load(result)
@@ -410,94 +382,19 @@ describe('#accreditationDashboardController', () => {
       expect($('h1').text().trim()).toMatch(/^[A-Z]/)
     })
 
-    it('should use registration site when accreditation site is missing', async () => {
-      const dataWithRegistrationSiteOnly = {
-        ...fixtureData,
-        accreditations: [
-          {
-            id: 'acc-no-site',
-            wasteProcessingType: 'reprocessor',
-            material: 'wood',
-            status: 'approved',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ]
-          }
-        ],
-        registrations: [
-          {
-            id: 'reg-with-site',
-            accreditationId: 'acc-no-site',
-            cbduNumber: 'CBDU123456',
-            status: 'approved',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
-            site: {
-              address: {
-                line1: 'Registration Site Address'
-              }
-            }
-          }
-        ]
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithRegistrationSiteOnly)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-no-site'
-      })
-
-      expect(result).toContain('Registration Site Address')
-    })
-
-    it('should handle empty statusHistory array', async () => {
-      const dataWithEmptyStatusHistory = {
-        ...fixtureData,
-        accreditations: [
-          {
-            id: 'acc-empty-status',
-            wasteProcessingType: 'reprocessor',
-            material: 'glass',
-            status: 'created',
-            statusHistory: [],
-            site: { address: { line1: 'Test Site' } }
-          }
-        ],
-        registrations: []
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithEmptyStatusHistory)
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-empty-status'
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
     it('should handle missing material gracefully', async () => {
       const dataWithMissingMaterial = {
         ...fixtureData,
-        accreditations: [
+        registrations: [
           {
-            id: 'acc-no-material',
+            id: 'reg-no-material',
             wasteProcessingType: 'reprocessor',
             material: '',
             status: 'approved',
-            statusHistory: [
-              { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
-            ],
             site: { address: { line1: 'Test Site' } }
           }
         ],
-        registrations: []
+        accreditations: []
       }
 
       vi.mocked(
@@ -506,7 +403,7 @@ describe('#accreditationDashboardController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-no-material'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-material'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -519,7 +416,7 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/accreditations/acc-002-plastic-suspended'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-002-plastic-suspended'
       })
 
       const $ = load(result)
