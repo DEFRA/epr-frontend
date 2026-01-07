@@ -35,9 +35,7 @@
   }) }}
 {% endblock %}
 
-{% block pageTitle %}
-  {{ pageTitle }} | {{ serviceName }}
-{% endblock %}
+{% block pageTitle %}{{ pageTitle }} | {{ serviceName }}{% endblock %}
 
 {% block beforeContent %}
   {{ govukPhaseBanner({
