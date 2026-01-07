@@ -20,7 +20,7 @@ describe('#footer', () => {
     it('should render the footer', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -34,7 +34,7 @@ describe('#footer', () => {
     it('should render the Get help section with heading', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -46,7 +46,7 @@ describe('#footer', () => {
     it('should render the customer service email as a mailto link', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -59,7 +59,7 @@ describe('#footer', () => {
     it('should render the phone number', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -71,7 +71,7 @@ describe('#footer', () => {
     it('should render the opening hours', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -83,7 +83,7 @@ describe('#footer', () => {
     it('should render the Contact link pointing to /contact', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -98,7 +98,7 @@ describe('#footer', () => {
     it('should render the Privacy link pointing to GOV.UK privacy policy', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -115,7 +115,7 @@ describe('#footer', () => {
     it('should render the Cookies link pointing to /cookies', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -130,7 +130,7 @@ describe('#footer', () => {
     it('should render the Accessibility statement link pointing to GOV.UK', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -147,7 +147,7 @@ describe('#footer', () => {
     it('should render the OGL license link', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)
@@ -162,7 +162,7 @@ describe('#footer', () => {
     it('should render the Crown copyright link', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: '/'
+        url: '/start'
       })
 
       const $ = load(result)

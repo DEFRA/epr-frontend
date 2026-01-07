@@ -101,7 +101,7 @@ describe('#authCallbackController', () => {
       expect(result).toBe('redirect-response')
     })
 
-    it('should redirect to home when no flash referrer', async () => {
+    it('should redirect to organisation account home when no flash referrer and has linked org', async () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
@@ -114,7 +114,7 @@ describe('#authCallbackController', () => {
           name: 'Test Defra Organisation'
         },
         linked: {
-          id: 'defra-org-uuid',
+          id: 'linked-org-uuid',
           name: 'Test Defra Organisation',
           linkedBy: {
             email: 'user@example.com',
@@ -155,7 +155,8 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue([])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {
@@ -164,7 +165,12 @@ describe('#authCallbackController', () => {
 
       const result = await controller.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
+      expect(mockRequest.localiseUrl).toHaveBeenCalledExactlyOnceWith(
+        '/organisations/linked-org-uuid'
+      )
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
+        '/organisations/linked-org-uuid'
+      )
       expect(result).toBe('redirect-response')
     })
 
@@ -234,7 +240,8 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue([])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {
@@ -323,7 +330,7 @@ describe('#authCallbackController', () => {
   })
 
   describe('when user is not authenticated', () => {
-    it('should redirect without creating session', async () => {
+    it('should redirect to referrer without creating session', async () => {
       const mockRequest = {
         auth: {
           isAuthenticated: false
@@ -357,6 +364,43 @@ describe('#authCallbackController', () => {
       expect(mockRequest.logger.info).not.toHaveBeenCalled()
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/login')
+      expect(result).toBe('redirect-response')
+    })
+
+    it('should redirect to home when no referrer and not authenticated', async () => {
+      const mockRequest = {
+        auth: {
+          isAuthenticated: false
+        },
+        server: {
+          app: {
+            cache: {
+              set: vi.fn()
+            }
+          }
+        },
+        cookieAuth: {
+          set: vi.fn()
+        },
+        logger: {
+          info: vi.fn()
+        },
+        yar: {
+          flash: vi.fn().mockReturnValue([])
+        }
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      const result = await controller.handler(mockRequest, mockH)
+
+      expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
+      expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
+      expect(mockRequest.logger.info).not.toHaveBeenCalled()
+
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
       expect(result).toBe('redirect-response')
     })
   })

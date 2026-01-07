@@ -32,7 +32,7 @@ describe('account linking POST controller', () => {
   })
 
   describe('when validation passes', () => {
-    it('should call backend link endpoint and redirect to /account', async () => {
+    it('should call backend link endpoint and redirect to organisation account home', async () => {
       const organisationId = 'org-123'
       const mockIdToken = 'mock-id-token'
 
@@ -73,7 +73,9 @@ describe('account linking POST controller', () => {
       expect(
         getUserSessionModule.getUserSession
       ).toHaveBeenCalledExactlyOnceWith(mockRequest)
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account')
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
+        `/organisations/${organisationId}`
+      )
       expect(result).toBe('redirect-response')
     })
 

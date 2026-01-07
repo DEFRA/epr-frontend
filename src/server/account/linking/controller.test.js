@@ -305,7 +305,7 @@ describe('#accountLinkingController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe('/account')
+        expect(headers.location).toBe('/organisations/org-1')
       })
 
       it('should reject POST request without CSRF token', async () => {
