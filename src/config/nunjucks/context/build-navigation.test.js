@@ -1,7 +1,8 @@
+import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { languages } from '#server/common/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -12,8 +13,8 @@ function mockRequest(options) {
   return {
     t: vi.fn((key) => {
       const translations = {
-        'common:navigation:yourSites': 'Your sites',
-        'common:navigation:switchOrganisation': 'Switch organisation',
+        'common:navigation:home': 'Home',
+        'common:navigation:manageAccount': 'Manage account',
         'common:navigation:signOut': 'Sign out'
       }
       return translations[key] || key
@@ -25,146 +26,118 @@ function mockRequest(options) {
 
 describe('#buildNavigation', () => {
   const users = {
-    authed: {
+    authedWithLinkedOrg: {
       displayName: 'Test User',
-      relationships: ['0:123:ABCs:0:Employee:0', '1:456:DEFs:0:Employee:0']
+      linkedOrganisationId: 'org-123'
+    },
+    authedWithoutLinkedOrg: {
+      displayName: 'Test User'
     },
     unauthed: null
   }
+
+  beforeEach(() => {
+    config.set('defraId.manageAccountUrl', 'https://defraid.example.com/manage')
+  })
+
+  afterEach(() => {
+    config.reset('defraId.manageAccountUrl')
+  })
 
   it('should show that navigation is now dependant on the request', () => {
     expect(buildNavigation(null)).toStrictEqual([])
   })
 
-  describe('your sites', () => {
-    it('should provide expected navigation details', () => {
-      const [yourSites] = buildNavigation(
-        mockRequest({ path: '/non-existent-path' }),
-        users.authed
-      )
+  describe('home', () => {
+    it('should provide home link when user has linked organisation', () => {
+      const [home] = buildNavigation(mockRequest(), users.authedWithLinkedOrg)
 
-      expect(yourSites).toStrictEqual({
-        active: false,
-        href: '/account',
-        text: 'Your sites'
+      expect(home).toStrictEqual({
+        href: '/organisations/org-123',
+        text: 'Home'
       })
     })
 
-    it('should not include link when user is not authenticated', () => {
-      const request = mockRequest({ path: '/' })
-
-      const [yourSites] = buildNavigation(request, users.unauthed)
-
-      expect(yourSites).toBeUndefined()
-    })
-
-    it('should provide expected highlighted navigation details', () => {
-      const [yourSites] = buildNavigation(
-        mockRequest({ path: '/account' }),
-        users.authed
+    it('should not include home link when user has no linked organisation', () => {
+      const navigation = buildNavigation(
+        mockRequest(),
+        users.authedWithoutLinkedOrg
       )
 
-      expect(yourSites).toStrictEqual({
-        active: true,
-        href: '/account',
-        text: 'Your sites'
-      })
+      expect(navigation).not.toStrictEqual(
+        expect.arrayContaining([expect.objectContaining({ text: 'Home' })])
+      )
+    })
+
+    it('should not include home link when user is not authenticated', () => {
+      const navigation = buildNavigation(mockRequest(), users.unauthed)
+
+      expect(navigation).toStrictEqual([])
     })
 
     it('should localise url correctly', () => {
       const request = mockRequest({
-        path: '/cy',
         localiseUrl: localiseUrl(languages.WELSH)
       })
 
-      const [yourSites] = buildNavigation(request, users.authed)
+      const [home] = buildNavigation(request, users.authedWithLinkedOrg)
 
-      expect(yourSites.href).toBe('/cy/account')
+      expect(home.href).toBe('/cy/organisations/org-123')
     })
   })
 
-  describe('switch organisation', () => {
-    it('should include switch organisation link when user is authenticated and has > 1 relationship', () => {
-      const request = mockRequest({ path: '/' })
+  describe('manage account', () => {
+    it('should include manage account link when config URL is set', () => {
+      const navigation = buildNavigation(
+        mockRequest(),
+        users.authedWithLinkedOrg
+      )
+      const manageAccount = navigation.find(
+        (item) => item.text === 'Manage account'
+      )
 
-      const [, switchOrg] = buildNavigation(request, users.authed)
-
-      expect(switchOrg).toStrictEqual({
-        href: '/auth/organisation',
-        text: 'Switch organisation'
+      expect(manageAccount).toStrictEqual({
+        href: 'https://defraid.example.com/manage',
+        text: 'Manage account'
       })
     })
 
-    it('should not include switch organisation link when user is not authenticated', () => {
-      const request = mockRequest({ path: '/' })
+    it('should not include manage account link when user is not authenticated', () => {
+      const navigation = buildNavigation(mockRequest(), users.unauthed)
 
-      const navigation = buildNavigation(request, users.unauthed)
-
-      expect(navigation).not.toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ href: '/auth/organisation' })
-        ])
-      )
-    })
-
-    it('should not include switch organisation link when user has <= 1 relationships', () => {
-      const request = mockRequest({ path: '/' })
-
-      const soleTrader = {
-        displayName: 'Sole Trader',
-        relationships: ['0:123:ABCs:0:Employee:0']
-      }
-
-      const navigation = buildNavigation(request, soleTrader)
-
-      expect(navigation).not.toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ href: '/auth/organisation' })
-        ])
-      )
-    })
-
-    it('should localise url correctly', () => {
-      const request = mockRequest({
-        path: '/cy',
-        localiseUrl: localiseUrl(languages.WELSH)
-      })
-
-      const [, switchOrg] = buildNavigation(request, users.authed)
-
-      expect(switchOrg.href).toBe('/cy/auth/organisation')
+      expect(navigation).toStrictEqual([])
     })
   })
 
   describe('sign out', () => {
     it('should include sign out link when user is authenticated', () => {
-      const request = mockRequest({ path: '/' })
+      const navigation = buildNavigation(
+        mockRequest(),
+        users.authedWithLinkedOrg
+      )
+      const signOut = navigation.find((item) => item.text === 'Sign out')
 
-      const [, , signout] = buildNavigation(request, users.authed)
-
-      expect(signout).toStrictEqual({
+      expect(signOut).toStrictEqual({
         href: '/logout',
         text: 'Sign out'
       })
     })
 
     it('should not include sign out link when user is not authenticated', () => {
-      const request = mockRequest({ path: '/' })
+      const navigation = buildNavigation(mockRequest(), users.unauthed)
 
-      const [, , signout] = buildNavigation(request, users.unauthed)
-
-      expect(signout).toBeUndefined()
+      expect(navigation).toStrictEqual([])
     })
 
     it('should localise url correctly', () => {
       const request = mockRequest({
-        path: '/cy',
         localiseUrl: localiseUrl(languages.WELSH)
       })
 
-      const [, , signout] = buildNavigation(request, users.authed)
+      const navigation = buildNavigation(request, users.authedWithLinkedOrg)
+      const signOut = navigation.find((item) => item.text === 'Sign out')
 
-      expect(signout.href).toBe('/cy/logout')
+      expect(signOut.href).toBe('/cy/logout')
     })
   })
 })
