@@ -15,8 +15,7 @@ export const controller = {
     const { ok, value: session } = await getUserSession(request)
     const userSession = ok && session ? session : request.auth?.credentials
 
-    const organisationData = await getOrganisationData(
-      request,
+    const organisationData = await fetchOrganisationById(
       organisationId,
       userSession?.idToken
     )
@@ -43,22 +42,6 @@ export const controller = {
     })
 
     return h.view('registrations/index', viewModel)
-  }
-}
-
-/**
- * Fetch organisation data from backend
- * @param {object} request - Hapi request object
- * @param {string} organisationId - Organisation ID
- * @param {string|undefined} idToken - User's ID token
- * @returns {Promise<object>} Organisation data
- */
-async function getOrganisationData(request, organisationId, idToken) {
-  try {
-    return await fetchOrganisationById(organisationId, idToken)
-  } catch (error) {
-    request.logger.error({ error }, 'Failed to fetch organisation')
-    throw Boom.notFound('Organisation not found')
   }
 }
 
