@@ -23,14 +23,14 @@ describe('#i18nPlugin - integration', () => {
         url: '/start',
         expectedLang: 'en',
         description: 'english',
-        heading: 'Manage your packaging waste responsibilities'
+        heading: 'Record reprocessed or exported packaging waste'
       },
       {
         url: '/cy/start',
         expectedLang: 'cy',
         description: 'welsh',
-        // TODO placeholder welsh translation
-        heading: 'Rheoli eich cyfrifoldebau gwastraff pecynnu'
+        // TODO placeholder welsh translation as only en.json files exist
+        heading: 'Record reprocessed or exported packaging waste'
       }
     ])(
       'should set lang="$expectedLang" for $description pages ($url)',

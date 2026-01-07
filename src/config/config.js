@@ -43,7 +43,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'Manage your packaging waste responsibilities'
+    default: 'Record reprocessed or exported packaging waste'
   },
   root: {
     doc: 'Project root',

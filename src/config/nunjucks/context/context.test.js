@@ -25,7 +25,7 @@ vi.mock(import('#server/auth/helpers/get-user-session.js'), () => ({
   getUserSession: (...args) => mockGetUserSession(...args)
 }))
 
-const serviceName = 'Manage your packaging waste responsibilities'
+const serviceName = 'Record reprocessed or exported packaging waste'
 
 /**
  * @param {Partial<Request>} [options]
