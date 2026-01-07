@@ -67,6 +67,23 @@ describe('#accreditationDashboardController', () => {
   })
 
   describe('happy path - reprocessor', () => {
+    it('should use the Site and Material in the page title', async () => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+      })
+
+      const $ = load(result)
+
+      expect($('title').text()).toMatch(
+        /^Manchester Glass Recycling Facility: Glass/
+      )
+    })
+
     it('should display accreditation dashboard for reprocessor', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
