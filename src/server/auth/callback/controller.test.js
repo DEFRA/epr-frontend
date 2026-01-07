@@ -79,7 +79,10 @@ describe('#authCallbackController', () => {
 
       const result = await controller.handler(mockRequest, mockH)
 
-      expect(mockRequest.server.app.cache.set).toHaveBeenCalledExactlyOnceWith(
+      // First call stores initial session, second call adds linkedOrganisationId
+      expect(mockRequest.server.app.cache.set).toHaveBeenCalledTimes(2)
+      expect(mockRequest.server.app.cache.set).toHaveBeenNthCalledWith(
+        2,
         'mock-uuid-1234',
         {
           ...mockProfile,
@@ -87,7 +90,8 @@ describe('#authCallbackController', () => {
           token: 'mock-access-token',
           refreshToken: 'mock-refresh-token',
           expiresIn: mockExpiresInSeconds * 1000,
-          expiresAt: expect.any(Date)
+          expiresAt: expect.any(Date),
+          linkedOrganisationId: 'defra-org-uuid'
         }
       )
 

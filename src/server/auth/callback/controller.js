@@ -37,6 +37,10 @@ const controller = {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
+      // Store linked organisation ID in session for navigation
+      session.linkedOrganisationId = organisations.linked.id
+      await request.server.app.cache.set(sessionId, session)
+
       const referrer = request.yar.flash('referrer')?.at(0)
       if (referrer) {
         return h.redirect(getSafeRedirect(referrer))

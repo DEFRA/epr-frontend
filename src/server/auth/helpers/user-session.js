@@ -58,7 +58,7 @@ function buildSessionFromPayload({ payload, tokens }) {
  */
 async function removeUserSession(request) {
   await dropUserSession(request)
-  request.cookieAuth.clear()
+  request.cookieAuth?.clear()
 }
 
 /**

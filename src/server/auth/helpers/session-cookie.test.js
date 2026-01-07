@@ -14,11 +14,14 @@ import {
   it,
   vi
 } from 'vitest'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 // Mock getVerifyToken to return a simple decoder that returns just the payload
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
   getVerifyToken: vi.fn(async () => (token) => jose.decodeJwt(token))
 }))
+
+const loggedOutUrl = '/logged-out'
 
 describe('#sessionCookie - integration', () => {
   /** @type {import('@hapi/hapi').Server} */
@@ -272,8 +275,9 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
-      // Should return 401 when refresh fails
-      expect(response.statusCode).toBe(401)
+      // Should redirect to logged-out when refresh fails
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
 
       // Session should be removed from cache
       const removedSession = await server.app.cache.get(sessionId)
@@ -493,8 +497,9 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
-      // Should return 401 when session not found
-      expect(response.statusCode).toBe(401)
+      // Should redirect to logged-out when session not found
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
     })
 
     it('should return invalid and log error when token refresh throws exception', async () => {
@@ -555,8 +560,9 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
-      // Should return 401 when refresh throws exception
-      expect(response.statusCode).toBe(401)
+      // Should redirect to logged-out when refresh throws exception
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
 
       // Verify session is cleaned up
       const cachedSession = await server.app.cache.get(sessionId)
@@ -601,8 +607,9 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
-      // Should return 401 when session is deleted during validation
-      expect(response.statusCode).toBe(401)
+      // Should redirect to logged-out when session is deleted during validation
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
 
       // Restore original cache.get
       server.app.cache.get = originalGet

@@ -1,8 +1,8 @@
 import { capitalize } from 'lodash-es'
+import Boom from '@hapi/boom'
 
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import Boom from '@hapi/boom'
 
 /**
  * @satisfies {Partial<ServerRoute>}

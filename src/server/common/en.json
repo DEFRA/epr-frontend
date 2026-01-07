@@ -24,13 +24,17 @@
     "crownCopyright": "Crown copyright"
   },
   "navigation": {
+    "home": "Home",
+    "manageAccount": "Manage account",
     "signOut": "Sign out",
     "switchOrganisation": "Switch organisation",
     "yourSites": "Your sites"
   },
+  "navigation:home": "navigation:home",
+  "navigation:manageAccount": "navigation:manageAccount",
   "navigation:signOut": "navigation:signOut",
   "navigation:switchOrganisation": "navigation:switchOrganisation",
   "navigation:yourSites": "navigation:yourSites",
-  "serviceName": "Manage your packaging waste responsibilities",
+  "serviceName": "Record reprocessed or exported packaging waste",
   "submit": "Submit"
 }

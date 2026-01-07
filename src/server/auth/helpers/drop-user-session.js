@@ -4,7 +4,9 @@
  * @returns {Promise<void>}
  */
 async function dropUserSession(request) {
-  await request.server.app.cache.drop(request.state.userSession.sessionId)
+  if (request.state.userSession?.sessionId) {
+    await request.server.app.cache.drop(request.state.userSession.sessionId)
+  }
 }
 
 export { dropUserSession }

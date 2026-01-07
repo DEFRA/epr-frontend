@@ -50,7 +50,9 @@ describe('#footer', () => {
       })
 
       const $ = load(result)
-      const emailLink = $('a[href="mailto:eprcustomerservice@defra.gov.uk"]')
+      const emailLink = $(
+        '.govuk-footer a[href="mailto:eprcustomerservice@defra.gov.uk"]'
+      )
 
       expect(emailLink).toHaveLength(1)
       expect(emailLink.text()).toBe('eprcustomerservice@defra.gov.uk')

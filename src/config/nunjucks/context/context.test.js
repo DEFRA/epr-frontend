@@ -25,8 +25,6 @@ vi.mock(import('#server/auth/helpers/get-user-session.js'), () => ({
   getUserSession: (...args) => mockGetUserSession(...args)
 }))
 
-const serviceName = 'Manage your packaging waste responsibilities'
-
 /**
  * @param {Partial<Request>} [options]
  */
@@ -150,8 +148,7 @@ describe('#context', () => {
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
         navigation: [],
-        serviceName,
-        serviceUrl: '/'
+        serviceUrl: '/start'
       })
     })
 
@@ -227,8 +224,7 @@ describe('#context cache', () => {
         getAssetPath: expect.any(Function),
         isDefraIdEnabled: false,
         navigation: [],
-        serviceName,
-        serviceUrl: '/'
+        serviceUrl: '/start'
       })
     })
   })

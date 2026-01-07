@@ -2,7 +2,6 @@ import { capitalize } from 'lodash-es'
 
 import { getStatusClass } from './helpers/status-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { err } from '#server/common/helpers/result.js'
 
 /**
  *
@@ -126,17 +125,10 @@ export const controller = {
 
     let organisationData = null
 
-    try {
-      organisationData = await fetchOrganisationById(
-        organisationId,
-        userSession?.idToken
-      )
-    } catch (error) {
-      return err({
-        message: 'Failed to fetch organisation from backend',
-        cause: error
-      })
-    }
+    organisationData = await fetchOrganisationById(
+      organisationId,
+      userSession?.idToken
+    )
 
     const organisationName = organisationData.companyDetails.tradingName
 

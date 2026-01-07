@@ -48,6 +48,13 @@ export const controller = {
 
     await linkOrganisation(session.idToken, organisationId)
 
+    // Store linked organisation ID in session for navigation
+    const sessionId = request.state?.userSession?.sessionId
+    if (sessionId) {
+      session.linkedOrganisationId = organisationId
+      await request.server.app.cache.set(sessionId, session)
+    }
+
     return h.redirect(`/organisations/${organisationId}`)
   }
 }
