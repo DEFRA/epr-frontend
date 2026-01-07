@@ -1,6 +1,5 @@
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -10,9 +9,9 @@ export const summaryLogUploadController = {
     const localise = request.t
     const { organisationId, registrationId } = request.params
 
-    const { ok, value: session } = await getUserSession(request)
+    const session = request.auth?.credentials
 
-    if (!ok || !session) {
+    if (!session) {
       return h.redirect('/login')
     }
 

@@ -18,7 +18,6 @@ import {
   TECHNICAL_ERROR_CODES,
   TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
@@ -424,9 +423,9 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
-    const { ok, value: session } = await getUserSession(request)
+    const session = request.auth?.credentials
 
-    if (!ok || !session) {
+    if (!session) {
       return h.redirect('/login')
     }
 
