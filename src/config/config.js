@@ -19,26 +19,37 @@ const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
 
-const conv = convict({
-  audience: {
-    doc: 'DEFRA ID audience',
-    format: ['internal', 'public'],
-    default: 'internal',
-    env: 'DEFRA_ID_AUDIENCE'
-  }
-})
+const getDefraIdCredentials = () => {
+  const audience = Object.freeze({
+    internal: 'internal',
+    public: 'public'
+  })
 
-conv.validate({ allowed: 'strict' })
+  const conv = convict({
+    audience: {
+      doc: 'DEFRA ID audience',
+      format: Object.values(audience),
+      default: audience.internal,
+      env: 'DEFRA_ID_AUDIENCE'
+    }
+  })
 
-const clientId =
-  conv.get('audience') === 'internal'
-    ? process.env.DEFRA_ID_CLIENT_ID
-    : process.env.DEFRA_ID_CLIENT_ID_PUBLIC
+  conv.validate({ allowed: 'strict' })
 
-const clientSecret =
-  conv.get('audience') === 'internal'
-    ? process.env.DEFRA_ID_CLIENT_SECRET
-    : process.env.DEFRA_ID_CLIENT_SECRET_PUBLIC
+  const clientId =
+    conv.get('audience') === audience.internal
+      ? process.env.DEFRA_ID_CLIENT_ID
+      : process.env.DEFRA_ID_CLIENT_ID_PUBLIC
+
+  const clientSecret =
+    conv.get('audience') === audience.internal
+      ? process.env.DEFRA_ID_CLIENT_SECRET
+      : process.env.DEFRA_ID_CLIENT_SECRET_PUBLIC
+
+  return { clientId, clientSecret }
+}
+
+const { clientId, clientSecret } = getDefraIdCredentials()
 
 export const config = convict({
   serviceVersion: {
