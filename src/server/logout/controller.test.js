@@ -1,6 +1,4 @@
 import { dropUserSession } from '#server/auth/helpers/drop-user-session.js'
-import { languages } from '#server/common/constants/languages.js'
-import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { logoutController } from '#server/logout/controller.js'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -16,7 +14,8 @@ describe('#logoutController', () => {
       const mockRequest = {
         pre: {
           authedUser: null
-        }
+        },
+        localiseUrl: vi.fn((key) => key)
       }
 
       const mockH = {
@@ -44,7 +43,7 @@ describe('#logoutController', () => {
         cookieAuth: {
           clear: vi.fn()
         },
-        localiseUrl: localiseUrl(languages.ENGLISH),
+        localiseUrl: vi.fn((key) => key),
         pre: {
           authedUser: mockAuthedUser
         }

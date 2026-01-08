@@ -26,7 +26,8 @@ describe(catchAll, () => {
       redirect: mockRedirect
     },
     logger: { error: mockErrorLogger },
-    t: vi.fn((key) => key)
+    t: vi.fn((key) => key),
+    localiseUrl: vi.fn((key) => key)
   })
 
   beforeEach(() => {
