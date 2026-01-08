@@ -105,6 +105,150 @@ describe('#authCallbackController', () => {
       expect(result).toBe('redirect-response')
     })
 
+    it('should redirect to organisation dashboard when referrer is /start (not back to start page)', async () => {
+      const mockProfile = {
+        id: 'user-123',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
+      }
+
+      const mockOrganisations = {
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation'
+        },
+        linked: {
+          id: 'linked-org-uuid',
+          name: 'Test Defra Organisation',
+          linkedBy: {
+            email: 'user@example.com',
+            id: 'user-123'
+          },
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
+      }
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(mockOrganisations)
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: 'mock-access-token',
+            refreshToken: 'mock-refresh-token',
+            expiresIn: 3600
+          }
+        },
+        server: {
+          app: {
+            cache: {
+              set: vi.fn().mockResolvedValue(undefined)
+            }
+          }
+        },
+        cookieAuth: {
+          set: vi.fn()
+        },
+        logger: {
+          info: vi.fn(),
+          error: vi.fn()
+        },
+        yar: {
+          flash: vi.fn().mockReturnValue(['/start'])
+        },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      const result = await controller.handler(mockRequest, mockH)
+
+      // Should redirect to dashboard, NOT back to /start
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
+        '/organisations/linked-org-uuid'
+      )
+      expect(result).toBe('redirect-response')
+    })
+
+    it('should redirect to organisation dashboard when referrer is /cy/start (Welsh start page)', async () => {
+      const mockProfile = {
+        id: 'user-123',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        idToken: 'mock-id-token'
+      }
+
+      const mockOrganisations = {
+        current: {
+          id: 'defra-org-uuid',
+          name: 'Test Defra Organisation'
+        },
+        linked: {
+          id: 'linked-org-uuid',
+          name: 'Test Defra Organisation',
+          linkedBy: {
+            email: 'user@example.com',
+            id: 'user-123'
+          },
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
+      }
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(mockOrganisations)
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            token: 'mock-access-token',
+            refreshToken: 'mock-refresh-token',
+            expiresIn: 3600
+          }
+        },
+        server: {
+          app: {
+            cache: {
+              set: vi.fn().mockResolvedValue(undefined)
+            }
+          }
+        },
+        cookieAuth: {
+          set: vi.fn()
+        },
+        logger: {
+          info: vi.fn(),
+          error: vi.fn()
+        },
+        yar: {
+          flash: vi.fn().mockReturnValue(['/cy/start'])
+        },
+        localiseUrl: vi.fn((url) => `/cy${url}`)
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      const result = await controller.handler(mockRequest, mockH)
+
+      // Should redirect to Welsh dashboard, NOT back to /cy/start
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
+        '/cy/organisations/linked-org-uuid'
+      )
+      expect(result).toBe('redirect-response')
+    })
+
     it('should redirect to organisation account home when no flash referrer and has linked org', async () => {
       const mockProfile = {
         id: 'user-123',

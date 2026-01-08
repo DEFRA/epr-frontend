@@ -42,7 +42,10 @@ const controller = {
       await request.server.app.cache.set(sessionId, session)
 
       const referrer = request.yar.flash('referrer')?.at(0)
-      if (referrer) {
+      const isStartPage = referrer === '/start' || referrer === '/cy/start'
+
+      // Don't redirect linked users back to start page - take them to dashboard
+      if (referrer && !isStartPage) {
         return h.redirect(getSafeRedirect(referrer))
       }
 
