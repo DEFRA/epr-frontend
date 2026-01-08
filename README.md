@@ -1,10 +1,10 @@
 # epr-frontend
 
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-frontend)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-frontend)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-frontend)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-frontend&metric=security_rating&token=4b04dbd4d92dd728767f9547481526fa4481eb30)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-frontend)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-frontend&metric=alert_status&token=4b04dbd4d92dd728767f9547481526fa4481eb30)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-frontend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_epr-frontend&metric=coverage&token=4b04dbd4d92dd728767f9547481526fa4481eb30)](https://sonarcloud.io/summary/new_code?id=DEFRA_epr-frontend)
 
-Core delivery platform Node.js Frontend Template.
+Frontend for: Packaging Extended Producer Responsibilities
 
 - [Requirements](#requirements)
   - [Node.js](#nodejs)

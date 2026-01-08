@@ -257,6 +257,70 @@ describe('#accountLinkingController', () => {
         expect($('label').text()).toContain('Second Company (ID: SC222222)')
         expect($('label').text()).toContain('Third Company (ID: TC333333)')
       })
+
+      it('should render troubleshooting panel with unlinked organisations list', async () => {
+        const mockOrganisations = {
+          current: {
+            id: 'defra-org-123',
+            name: 'Current Org'
+          },
+          linked: null,
+          unlinked: [
+            {
+              id: 'org-1',
+              name: 'First Company',
+              orgId: 'FC111111'
+            },
+            {
+              id: 'org-2',
+              name: 'Second Company',
+              orgId: 'SC222222'
+            }
+          ]
+        }
+
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          ok: true,
+          value: {
+            idToken: 'mock-id-token'
+          }
+        })
+
+        mswServer.use(
+          http.get(`${backendUrl}/v1/me/organisations`, () => {
+            return HttpResponse.json({ organisations: mockOrganisations })
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/account/linking'
+        })
+
+        const $ = load(result)
+
+        expect($('.govuk-details__summary-text').text().trim()).toBe(
+          'Problems linking a registration?'
+        )
+
+        expect($('.govuk-details h2').eq(0).text().trim()).toBe(
+          'If the relevant registration is missing'
+        )
+        expect($('.govuk-details h2').eq(1).text().trim()).toBe(
+          'If you have any other problems'
+        )
+
+        expect($('.govuk-details ul.govuk-list li')).toHaveLength(2)
+
+        const listHtml = $('.govuk-details ul.govuk-list')
+          .html()
+          .trim()
+          .replace(/\s+/g, ' ')
+
+        expect(listHtml).toMatchInlineSnapshot(
+          `"<li>First Company - <strong>org-1</strong></li> <li>Second Company - <strong>org-2</strong></li>"`
+        )
+      })
     })
 
     describe('post /account/linking', () => {

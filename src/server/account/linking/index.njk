@@ -49,45 +49,31 @@
               text: localise('account:linking:confirmButton')
             }) }}
 
-            {% set unlinkedList %}
+            {% set unlinkedOrgsList %}
               <ul class="govuk-list">
-                {% for org in unlinked %}
-                  <li>
-                    {{ org.name }} –
-                    <strong>{{ org.id }}</strong>
-                  </li>
+                {% for org in troubleshooting.unlinkedOrganisations %}
+                  <li>{{ org.name }} - <strong>{{ org.id }}</strong></li>
                 {% endfor %}
               </ul>
             {% endset %}
 
             {{ govukDetails({
-              summaryText: "Problems linking a registration?",
-              html: "
-                <h2 class=\"govuk-heading-m\">If the relevant registration is missing</h2>
-                <p class=\"govuk-body\">
-                  If you're signed into the correct account and the relevant registration is not showing,
-                  contact your regulator to check that the registration has been completed.
-                </p>
-                <p class=\"govuk-body\">
-                  If you're a consultant and need to change the business you selected when signing in,
-                  sign out and sign in again as another business.
-                </p>
+              summaryText: troubleshooting.summary,
+              html: '
+                <h2 class="govuk-heading-m">' ~ troubleshooting.missing.heading ~ '</h2>
+                <p class="govuk-body">' ~ troubleshooting.missing.bodyOne ~ '</p>
+                <p class="govuk-body">' ~ troubleshooting.missing.bodyTwo ~ '</p>
 
-                <h2 class=\"govuk-heading-m\">If you have any other problems</h2>
-                <p class=\"govuk-body\">
-                  If you're having any other issues, contact the EPR packaging helpdesk.
-                </p>
-                <p class=\"govuk-body\">
-                  Phone: 0300 060 0002 (Monday to Friday, 8:00am to 4:30pm)<br>
-                  Email: <a class=\"govuk-link\" href=\"mailto:eprcustomerservice@defra.gov.uk\">
-                    eprcustomerservice@defra.gov.uk
+                <h2 class="govuk-heading-m">' ~ troubleshooting.otherProblems.heading ~ '</h2>
+                <p class="govuk-body">' ~ troubleshooting.otherProblems.bodyOne ~ '</p>
+                <p class="govuk-body">
+                  ' ~ troubleshooting.otherProblems.bodyTwo ~ '<br>
+                  Email: <a class="govuk-link" href="mailto:' ~ troubleshooting.otherProblems.email ~ '">
+                    ' ~ troubleshooting.otherProblems.email ~ '
                   </a>
                 </p>
-                <p class=\"govuk-body\">
-                  You'll need to quote the relevant system reference:
-                </p>
-                " ~ unlinkedList ~ "
-              "
+                <p class="govuk-body">' ~ troubleshooting.otherProblems.bodyThree ~ '</p>
+              ' ~ unlinkedOrgsList
             }) }}
           </form>
         {% endif %}
