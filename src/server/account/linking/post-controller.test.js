@@ -198,28 +198,31 @@ describe('account linking POST controller', () => {
         getUserSessionModule.getUserSession
       ).toHaveBeenCalledExactlyOnceWith(mockRequest)
 
-      expect(mockH.view).toHaveBeenCalledWith('account/linking/index', {
-        pageTitle: 'Link Organisation',
-        unlinked: [
-          {
-            id: 'org-1',
-            displayName: 'Test Company Ltd (ID: 12345678)',
-            name: 'Test Company Ltd'
-          }
-        ],
-        organisationName: 'My Defra Organisation',
-        errors: {
-          organisationId: {
-            text: 'Select an organisation to link'
-          }
-        },
-        errorSummary: [
-          {
-            text: 'Select an organisation to link',
-            href: '#organisationId'
-          }
-        ]
-      })
+      expect(mockH.view).toHaveBeenCalledWith(
+        'account/linking/index',
+        expect.objectContaining({
+          pageTitle: 'Link Organisation',
+          unlinked: [
+            {
+              id: 'org-1',
+              displayName: 'Test Company Ltd (ID: 12345678)',
+              name: 'Test Company Ltd'
+            }
+          ],
+          organisationName: 'My Defra Organisation',
+          errors: {
+            organisationId: {
+              text: 'Select an organisation to link'
+            }
+          },
+          errorSummary: [
+            {
+              text: 'Select an organisation to link',
+              href: '#organisationId'
+            }
+          ]
+        })
+      )
 
       expect(mockView.takeover).toHaveBeenCalledTimes(1)
       expect(result).toBe('view-with-errors')

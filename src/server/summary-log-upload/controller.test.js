@@ -56,6 +56,18 @@ describe('#summaryLogUploadController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
+  test('should render back link to registration dashboard', async () => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url
+    })
+
+    expect(result).toContain('govuk-back-link')
+    expect(result).toContain(
+      `href="/organisations/${organisationId}/registrations/${registrationId}"`
+    )
+  })
+
   test('should redirect to error', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 

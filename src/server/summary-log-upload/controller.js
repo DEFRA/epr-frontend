@@ -31,11 +31,14 @@ export const summaryLogUploadController = {
         uploadId
       })
 
+      const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+
       return h.view('summary-log-upload/index', {
         pageTitle: localise('summary-log-upload:pageTitle'),
         heading: localise('summary-log-upload:heading'),
         siteName: localise('summary-log-upload:siteName'),
-        uploadUrl
+        uploadUrl,
+        backUrl
       })
     } catch (err) {
       // @todo: use structured logging
