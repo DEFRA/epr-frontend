@@ -1,0 +1,6 @@
+@use "../../../../node_modules/govuk-frontend/dist/govuk/index" as *;
+
+.app-related-items {
+  border-top: 2px solid govuk-colour("blue");
+  padding-top: govuk-spacing(3);
+}
