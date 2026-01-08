@@ -426,7 +426,7 @@ export const summaryLogUploadProgressController = {
     const session = request.auth?.credentials
 
     if (!session) {
-      return h.redirect('/login')
+      return h.redirect('/logged-out')
     }
 
     const { status, validation, accreditationNumber, loads, processingType } =

@@ -123,6 +123,10 @@ export const controller = {
 
     const userSession = request.auth?.credentials
 
+    if (!userSession) {
+      return h.redirect('/logged-out')
+    }
+
     let organisationData = null
 
     organisationData = await fetchOrganisationById(

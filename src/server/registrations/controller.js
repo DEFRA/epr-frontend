@@ -13,6 +13,10 @@ export const controller = {
 
     const userSession = request.auth?.credentials
 
+    if (!userSession) {
+      return h.redirect('/logged-out')
+    }
+
     const organisationData = await getOrganisationData(
       request,
       organisationId,
