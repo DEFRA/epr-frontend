@@ -853,6 +853,22 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    test('status: invalid - should render back link to registration dashboard', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+        }
+      })
+
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('govuk-back-link')
+      expect(result).toContain(
+        `href="/organisations/${organisationId}/registrations/${registrationId}"`
+      )
+    })
+
     test('status: invalid - should initiate upload with pre-signed URL', async () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
