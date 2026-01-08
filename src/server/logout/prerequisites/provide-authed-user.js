@@ -11,7 +11,10 @@ const provideAuthedUser = {
     const { value } = await getUserSession(request)
     return value
   },
-  assign: 'authedUser'
+  assign: 'authedUser',
+  failAction: async () => {
+    // Allow page to be rendered
+  }
 }
 
 export { provideAuthedUser }
