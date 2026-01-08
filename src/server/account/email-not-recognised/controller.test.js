@@ -158,6 +158,20 @@ describe('#emailNotRecognisedController', () => {
         'https://www.gov.uk/guidance/packaging-waste-apply-for-registration-and-accreditation-as-a-reprocessor-or-exporter#get-helpand-give-feedback'
       )
     })
+
+    it('should display page regardless of auth state', async () => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: false,
+        value: undefined
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/email-not-recognised'
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 })
 
