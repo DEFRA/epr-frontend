@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
@@ -18,7 +17,6 @@ import {
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
@@ -28,7 +26,7 @@ describe('#accreditationDashboardController', () => {
   let server
   const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
-  const mockSession = {
+  const mockCredentials = {
     idToken: 'mock-jwt-token',
     displayName: 'Test User'
   }
@@ -51,10 +49,6 @@ describe('#accreditationDashboardController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-      ok: true,
-      value: mockSession
-    })
   })
 
   afterAll(async () => {
@@ -74,7 +68,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -91,7 +86,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -110,7 +106,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -126,7 +123,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(result).toContain('PRNs')
@@ -141,7 +139,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(result).toContain('REG001234')
@@ -155,7 +154,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -175,7 +175,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -192,7 +193,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -211,7 +213,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(result).toContain('Your waste balance is not yet available')
@@ -227,7 +230,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -244,7 +248,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -262,7 +267,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(result).toContain('Summary log')
@@ -280,7 +286,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved'
+        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -295,7 +302,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved'
+        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -316,7 +324,8 @@ describe('#accreditationDashboardController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/nonexistent-org/registrations/reg-001'
+        url: '/organisations/nonexistent-org/registrations/reg-001',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
@@ -329,30 +338,22 @@ describe('#accreditationDashboardController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/nonexistent-acc'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/nonexistent-acc',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it('should handle missing session gracefully', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
-
-      const { statusCode } = await server.inject({
+    it('should redirect to logged-out when no credentials provided', async () => {
+      // No auth credentials provided
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(
-        fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', undefined)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/logged-out')
     })
   })
 
@@ -377,7 +378,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-site'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-site',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -391,7 +393,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -420,7 +423,8 @@ describe('#accreditationDashboardController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-material'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-material',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -433,7 +437,8 @@ describe('#accreditationDashboardController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-002-plastic-suspended'
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-002-plastic-suspended',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)

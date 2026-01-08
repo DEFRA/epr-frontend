@@ -1,11 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
@@ -25,18 +22,14 @@ describe('#summaryLogUploadController', () => {
   let server
   const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
+  const mockCredentials = {
+    idToken: 'test-id-token'
+  }
+
   beforeAll(async () => {
     mockOidcServer.listen()
     server = await createServer()
     await server.initialize()
-
-    // Mock getUserSession to return a valid session
-    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        idToken: 'test-id-token'
-      }
-    })
   })
 
   afterAll(async () => {
@@ -47,7 +40,8 @@ describe('#summaryLogUploadController', () => {
   test('should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url
+      url,
+      auth: { strategy: 'session', credentials: mockCredentials }
     })
 
     expect(result).toStrictEqual(
@@ -59,7 +53,11 @@ describe('#summaryLogUploadController', () => {
   test('should redirect to error', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
-    const { result } = await server.inject({ method: 'GET', url })
+    const { result } = await server.inject({
+      method: 'GET',
+      url,
+      auth: { strategy: 'session', credentials: mockCredentials }
+    })
 
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log upload error')
@@ -67,7 +65,11 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {
-    await server.inject({ method: 'GET', url })
+    await server.inject({
+      method: 'GET',
+      url,
+      auth: { strategy: 'session', credentials: mockCredentials }
+    })
 
     expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
       organisationId: '123',
@@ -79,33 +81,15 @@ describe('#summaryLogUploadController', () => {
   })
 
   describe('session validation', () => {
-    test('should redirect to login when session is invalid', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: false
-      })
-
+    test('should redirect to login when no credentials provided', async () => {
+      // No auth credentials provided
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url
       })
 
       expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/login')
-    })
-
-    test('should redirect to login when session value is null', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: true,
-        value: null
-      })
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/login')
+      expect(headers.location).toBe('/logged-out')
     })
   })
 })

@@ -11,7 +11,6 @@ import {
 } from 'vitest'
 
 import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
@@ -25,7 +24,6 @@ import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-stat
 import fixtureMissingFields from '../../../fixtures/organisation/missing-fields.json' with { type: 'json' }
 import fixtureSingleReprocessing from '../../../fixtures/organisation/single-reprocessing.json' with { type: 'json' }
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
@@ -65,17 +63,10 @@ describe('#organisationController', () => {
   })
 
   describe('happy Path', () => {
-    const mockSession = {
+    const mockCredentials = {
       idToken: 'mock-jwt-token',
       displayName: 'Test User'
     }
-
-    beforeEach(() => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: mockSession
-      })
-    })
 
     it('should use Organisation name in the page title', async () => {
       vi.mocked(
@@ -84,7 +75,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -99,7 +91,8 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -136,7 +129,8 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943902/exporting',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -160,7 +154,8 @@ describe('#organisationController', () => {
       // Test reprocessing tab
       const reprocessingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $reprocessing = load(reprocessingResponse.result)
@@ -176,7 +171,8 @@ describe('#organisationController', () => {
       // Test exporting tab
       const exportingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943901/exporting',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $exporting = load(exportingResponse.result)
@@ -197,7 +193,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906'
+        url: '/organisations/6507f1f77bcf86cd79943906',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -215,7 +212,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -238,7 +236,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -262,7 +261,8 @@ describe('#organisationController', () => {
 
       await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}`
+        url: `/organisations/${organisationId}`,
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(
@@ -277,7 +277,8 @@ describe('#organisationController', () => {
 
       await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(
@@ -287,12 +288,12 @@ describe('#organisationController', () => {
   })
 
   describe('unhappy Paths', () => {
-    it('should handle backend fetch failure gracefully', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
+    const mockCredentials = {
+      idToken: 'mock-jwt-token',
+      displayName: 'Test User'
+    }
 
+    it('should handle backend fetch failure gracefully', async () => {
       const backendError = new Error('Backend service unavailable')
       backendError.statusCode = 503
 
@@ -302,56 +303,39 @@ describe('#organisationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('should handle missing session with undefined token', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
-
-      await server.inject({
+    it('should redirect to logged-out when no credentials provided', async () => {
+      // No auth credentials provided
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
-      // Should call backend with undefined token when session is missing
-      expect(
-        fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(expect.any(String), undefined)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/logged-out')
     })
 
     it('should handle backend 404 error', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(Boom.notFound('Organisation not found'))
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/nonexistent-id'
+        url: '/organisations/nonexistent-id',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
     it('should handle backend timeout error', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
       const timeoutError = new Error('Request timeout')
       timeoutError.code = 'ETIMEDOUT'
 
@@ -361,18 +345,14 @@ describe('#organisationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
     it('should handle malformed backend response', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
       // Return invalid data structure
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
@@ -382,7 +362,8 @@ describe('#organisationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -390,12 +371,10 @@ describe('#organisationController', () => {
   })
 
   describe('edge Cases', () => {
-    beforeEach(() => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-    })
+    const mockCredentials = {
+      idToken: 'mock-jwt-token',
+      displayName: 'Test User'
+    }
 
     it('should display "No sites found" when organisation has no accreditations', async () => {
       vi.mocked(
@@ -404,7 +383,8 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943903'
+        url: '/organisations/6507f1f77bcf86cd79943903',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -421,7 +401,8 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943904'
+        url: '/organisations/6507f1f77bcf86cd79943904',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -459,7 +440,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       // Should show no sites because both registration and accreditation have Created status (excluded)
@@ -490,7 +472,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       // Should show no sites because Rejected status is excluded
@@ -504,7 +487,8 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943905'
+        url: '/organisations/6507f1f77bcf86cd79943905',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -532,7 +516,8 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -552,14 +537,16 @@ describe('#organisationController', () => {
 
       const reprocessingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902'
+        url: '/organisations/6507f1f77bcf86cd79943902',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       expect(reprocessingResponse.result).not.toContain(/Reprocessing/i)
 
       const exportingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943902/exporting',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $exporting = load(exportingResponse.result)
@@ -574,7 +561,8 @@ describe('#organisationController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906'
+        url: '/organisations/6507f1f77bcf86cd79943906',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -643,7 +631,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -659,12 +648,10 @@ describe('#organisationController', () => {
   })
 
   describe('coverage - Additional Paths', () => {
-    beforeEach(() => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-    })
+    const mockCredentials = {
+      idToken: 'mock-jwt-token',
+      displayName: 'Test User'
+    }
 
     it('should group multiple materials by site correctly', async () => {
       vi.mocked(
@@ -673,7 +660,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -743,7 +731,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
@@ -767,7 +756,8 @@ describe('#organisationController', () => {
 
       await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       // Just verify the request succeeded (logging happens internally)
@@ -830,7 +820,8 @@ describe('#organisationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: { strategy: 'session', credentials: mockCredentials }
       })
 
       const $ = load(result)
