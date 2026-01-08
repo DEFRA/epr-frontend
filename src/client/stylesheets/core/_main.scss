@@ -5,7 +5,7 @@
 .app-main-wrapper {
   display: block;
   padding-top: govuk-spacing(9);
-  padding-bottom: govuk-spacing(3);
+  padding-bottom: govuk-spacing(7);
 }
 
 .text-wrap-pretty {
@@ -18,4 +18,8 @@
 
 .app-colour-secondary {
   color: $govuk-secondary-text-colour;
+}
+
+.app-content-width {
+  max-width: 602px;
 }
