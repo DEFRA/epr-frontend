@@ -1,9 +1,3 @@
-import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
 import {
   afterAll,
@@ -14,6 +8,14 @@ import {
   it,
   vi
 } from 'vitest'
+
+import { config } from '#config/config.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
+import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
+import { createServer } from '#server/index.js'
+import Boom from '@hapi/boom'
 
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
@@ -309,17 +311,17 @@ describe('#accreditationDashboardController', () => {
   })
 
   describe('unhappy paths', () => {
-    it('should return 404 when organisation not found', async () => {
+    it('should return 403 when unauthorised access to an organisation is attempted', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
-      ).mockRejectedValue(new Error('Not found'))
+      ).mockRejectedValue(Boom.forbidden())
 
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/organisations/nonexistent-org/registrations/reg-001'
       })
 
-      expect(statusCode).toBe(statusCodes.notFound)
+      expect(statusCode).toBe(statusCodes.forbidden)
     })
 
     it('should return 404 when registration not found', async () => {
