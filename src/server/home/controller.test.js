@@ -314,7 +314,7 @@ describe('#homeController', () => {
         )
       })
 
-      it('should render quick links section', async () => {
+      it('should render quick links section with two links', async () => {
         vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
           ok: false
         })
@@ -333,11 +333,26 @@ describe('#homeController', () => {
         expect(quickLinks.eq(0).text()).toBe(
           'Apply for registration and accreditation'
         )
-        expect(quickLinks.eq(0).attr('href')).toBe(
-          'https://www.gov.uk/guidance/packaging-waste-apply-for-registration-and-accreditation-as-a-reprocessor-or-exporter'
-        )
         expect(quickLinks.eq(1).text()).toBe(
           'Summary logs for UK packaging waste: an overview'
+        )
+      })
+
+      it('should render quick links with correct GOV.UK URLs', async () => {
+        vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+          ok: false
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/start'
+        })
+
+        const $ = load(result)
+        const quickLinks = $('.govuk-grid-column-one-third ul li a')
+
+        expect(quickLinks.eq(0).attr('href')).toBe(
+          'https://www.gov.uk/guidance/packaging-waste-apply-for-registration-and-accreditation-as-a-reprocessor-or-exporter'
         )
         expect(quickLinks.eq(1).attr('href')).toBe(
           'https://www.gov.uk/guidance/summary-logs-for-uk-packaging-waste-an-overview'
