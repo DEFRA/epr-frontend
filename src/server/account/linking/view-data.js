@@ -20,10 +20,36 @@ export function buildLinkingViewData(request, organisations, options = {}) {
       name: o.name
     }))
 
+  const troubleshooting = {
+    summary: request.t('account:linking:troubleshooting:summary'),
+    missing: {
+      heading: request.t('account:linking:troubleshooting:missingHeading'),
+      bodyOne: request.t('account:linking:troubleshooting:missingBodyOne'),
+      bodyTwo: request.t('account:linking:troubleshooting:missingBodyTwo')
+    },
+    otherProblems: {
+      heading: request.t(
+        'account:linking:troubleshooting:otherProblemsHeading'
+      ),
+      bodyOne: request.t(
+        'account:linking:troubleshooting:otherProblemsBodyOne'
+      ),
+      bodyTwo: request.t(
+        'account:linking:troubleshooting:otherProblemsBodyTwo'
+      ),
+      email: request.t('account:linking:troubleshooting:otherProblemsEmail'),
+      bodyThree: request.t(
+        'account:linking:troubleshooting:otherProblemsBodyThree'
+      )
+    },
+    unlinkedOrganisations: unlinked
+  }
+
   const viewData = {
     pageTitle: request.t('account:linking:pageTitle'),
     unlinked,
-    organisationName: organisations.current.name
+    organisationName: organisations.current.name,
+    troubleshooting
   }
 
   if (options.errors) {
