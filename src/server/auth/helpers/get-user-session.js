@@ -12,15 +12,24 @@ import { err, ok } from '#server/common/helpers/result.js'
  * @returns {Promise<Result<UserSession>>}
  */
 async function getUserSession(request) {
-  if (!request.state?.userSession?.sessionId) {
+  const sessionId = request.state?.userSession?.sessionId
+
+  if (!sessionId) {
+    request.logger.debug('No sessionId in cookie state')
     return err()
   }
 
-  const session = await request.server.app.cache.get(
-    request.state.userSession.sessionId
-  )
+  const session = await request.server.app.cache.get(sessionId)
 
-  return session ? ok(session) : err()
+  if (!session) {
+    request.logger.info(
+      { sessionId },
+      'Session not found in cache - may have expired or been cleared'
+    )
+    return err()
+  }
+
+  return ok(session)
 }
 
 export { getUserSession }

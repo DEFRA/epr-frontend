@@ -57,6 +57,8 @@ describe('#summaryLogUploadProgressController', () => {
     idToken: 'test-id-token'
   }
 
+  const auth = { strategy: 'session', credentials: mockCredentials }
+
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
@@ -70,7 +72,7 @@ describe('#summaryLogUploadProgressController', () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url,
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     expect(fetchSummaryLogStatus).toHaveBeenCalledWith(
@@ -92,7 +94,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -118,7 +120,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -136,7 +138,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -176,7 +178,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -200,7 +202,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(expect.stringContaining('return to home'))
@@ -218,7 +220,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       // Should have GDS inset text component with warning message
@@ -257,7 +259,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -285,7 +287,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -313,7 +315,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -343,7 +345,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -383,7 +385,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -413,7 +415,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -452,7 +454,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -489,7 +491,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -524,7 +526,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -564,7 +566,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -599,7 +601,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -633,7 +635,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -669,7 +671,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -701,7 +703,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -742,7 +744,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expectCheckPageContent(result)
@@ -763,7 +765,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -788,7 +790,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(
@@ -806,7 +808,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       // Verify success page rendered
@@ -827,7 +829,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -846,7 +848,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
@@ -866,7 +868,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -887,7 +889,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -912,7 +914,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain('Upload updated XLSX file')
@@ -934,7 +936,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
@@ -960,7 +962,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -984,7 +986,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1009,7 +1011,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1042,7 +1044,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1066,7 +1068,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1084,7 +1086,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1104,7 +1106,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1130,7 +1132,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1154,7 +1156,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1181,7 +1183,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1200,7 +1202,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1221,7 +1223,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1237,7 +1239,7 @@ describe('#summaryLogUploadProgressController', () => {
       await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
@@ -1257,7 +1259,7 @@ describe('#summaryLogUploadProgressController', () => {
         const { result, statusCode } = await server.inject({
           method: 'GET',
           url,
-          auth: { strategy: 'session', credentials: mockCredentials }
+          auth
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -1277,7 +1279,7 @@ describe('#summaryLogUploadProgressController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url,
-          auth: { strategy: 'session', credentials: mockCredentials }
+          auth
         })
 
         expect(result).not.toStrictEqual(enablesClientSidePolling())
@@ -1293,7 +1295,7 @@ describe('#summaryLogUploadProgressController', () => {
         await server.inject({
           method: 'GET',
           url,
-          auth: { strategy: 'session', credentials: mockCredentials }
+          auth
         })
 
         expect(initiateSummaryLogUpload.mock.calls).toHaveLength(
@@ -1310,7 +1312,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).not.toStrictEqual(enablesClientSidePolling())
@@ -1325,7 +1327,7 @@ describe('#summaryLogUploadProgressController', () => {
       const response = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials },
+        auth,
         headers: {
           cookie: 'session=existing-session'
         }
@@ -1347,7 +1349,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toContain('Error checking status')
@@ -1363,7 +1365,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(expect.stringContaining('Page not found'))
@@ -1378,7 +1380,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(result).toStrictEqual(

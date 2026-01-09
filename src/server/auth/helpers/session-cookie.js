@@ -33,17 +33,33 @@ const createSessionCookie = (verifyToken) => {
    */
   const handleExpiredTokenRefresh = async (request, userSession) => {
     // Check if token will expire in less than 1 minute
-    const tokenHasExpired = isPast(
-      subMinutes(parseISO(userSession.expiresAt), 1)
+    const expiresAt = parseISO(userSession.expiresAt)
+    const refreshThreshold = subMinutes(expiresAt, 1)
+    const tokenHasExpired = isPast(refreshThreshold)
+
+    request.logger.info(
+      {
+        expiresAt: userSession.expiresAt,
+        refreshThreshold: refreshThreshold.toISOString(),
+        tokenHasExpired,
+        now: new Date().toISOString()
+      },
+      'Token expiry check'
     )
 
     if (!tokenHasExpired) {
       return ok(userSession)
     }
 
+    request.logger.info('Token near expiry, attempting refresh...')
+
     try {
-      const response = await refreshAccessToken(request)
+      const response = await refreshAccessToken(request, userSession)
       if (!response.ok) {
+        request.logger.warn(
+          { status: response.status, statusText: response.statusText },
+          'Token refresh failed - server returned error'
+        )
         return err({ message: 'Failed to refresh session', cause: response })
       }
 
@@ -54,8 +70,14 @@ const createSessionCookie = (verifyToken) => {
         refreshAccessTokenJson
       )
 
+      request.logger.info(
+        { newExpiresAt: refreshedSession.expiresAt },
+        'Token refreshed successfully'
+      )
+
       return ok(refreshedSession)
     } catch (error) {
+      request.logger.error({ error }, 'Token refresh failed with exception')
       return err({ message: 'Failed to refresh session', cause: error })
     }
   }

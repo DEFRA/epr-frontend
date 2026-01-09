@@ -456,7 +456,8 @@ describe('#defraId', () => {
         roles: ['admin', 'user'],
         idToken: 'mock-id-token',
         tokenUrl: 'http://test.auth/token',
-        logoutUrl: 'http://test.auth/logout'
+        logoutUrl: 'http://test.auth/logout',
+        jwtExp: undefined
       })
     })
 
@@ -508,7 +509,8 @@ describe('#defraId', () => {
         roles: ['editor', 'viewer', 'admin'],
         idToken: 'id-token-456',
         tokenUrl: 'http://test.auth/token',
-        logoutUrl: 'http://test.auth/logout'
+        logoutUrl: 'http://test.auth/logout',
+        jwtExp: undefined
       })
     })
   })

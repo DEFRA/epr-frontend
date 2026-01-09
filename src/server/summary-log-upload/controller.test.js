@@ -26,6 +26,8 @@ describe('#summaryLogUploadController', () => {
     idToken: 'test-id-token'
   }
 
+  const auth = { strategy: 'session', credentials: mockCredentials }
+
   beforeAll(async () => {
     mockOidcServer.listen()
     server = await createServer()
@@ -41,7 +43,7 @@ describe('#summaryLogUploadController', () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url,
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     expect(result).toStrictEqual(
@@ -56,7 +58,7 @@ describe('#summaryLogUploadController', () => {
     const { result } = await server.inject({
       method: 'GET',
       url,
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     expect(result).toStrictEqual(
@@ -68,7 +70,7 @@ describe('#summaryLogUploadController', () => {
     await server.inject({
       method: 'GET',
       url,
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     expect(initiateSummaryLogUpload).toHaveBeenCalledWith({

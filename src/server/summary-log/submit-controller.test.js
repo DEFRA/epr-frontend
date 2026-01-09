@@ -24,6 +24,8 @@ describe('#submitSummaryLogController', () => {
     idToken: 'test-id-token'
   }
 
+  const auth = { strategy: 'session', credentials: mockCredentials }
+
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
@@ -49,7 +51,7 @@ describe('#submitSummaryLogController', () => {
       url,
       headers: { cookie },
       payload: { crumb },
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     expect(submitSummaryLog).toHaveBeenCalledWith(
@@ -80,7 +82,7 @@ describe('#submitSummaryLogController', () => {
       url,
       headers: { cookie },
       payload: { crumb },
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     // Verify session cookie was set
@@ -105,7 +107,7 @@ describe('#submitSummaryLogController', () => {
       url,
       headers: { cookie },
       payload: { crumb },
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -132,7 +134,7 @@ describe('#submitSummaryLogController', () => {
       url,
       headers: { cookie },
       payload: { crumb },
-      auth: { strategy: 'session', credentials: mockCredentials }
+      auth
     })
 
     // Hapi will show an error page (500)
@@ -181,7 +183,7 @@ describe('#submitSummaryLogController', () => {
         url,
         headers: { cookie },
         payload: { crumb },
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(postResponse.statusCode).toBe(statusCodes.found)
@@ -198,7 +200,7 @@ describe('#submitSummaryLogController', () => {
             ? sessionCookie.join('; ')
             : sessionCookie
         },
-        auth: { strategy: 'session', credentials: mockCredentials }
+        auth
       })
 
       expect(getResponse.statusCode).toBe(statusCodes.ok)

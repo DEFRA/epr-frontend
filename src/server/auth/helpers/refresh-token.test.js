@@ -1,24 +1,17 @@
 import { config } from '#config/config.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { refreshAccessToken } from '#server/auth/helpers/refresh-token.js'
 import fetch from 'node-fetch'
 import { describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('node-fetch'))
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#config/config.js'))
 
 describe('#refreshAccessToken', () => {
   test('should refresh access token with correct parameters', async () => {
-    const mockAuthedUser = {
+    const mockUserSession = {
       refreshToken: 'refresh-token-123',
       tokenUrl: 'http://localhost:3200/token'
     }
-
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: mockAuthedUser
-    })
 
     const mockConfig = {
       get: vi.fn((key) => {
@@ -49,11 +42,10 @@ describe('#refreshAccessToken', () => {
       }
     }
 
-    const result = await refreshAccessToken(mockRequest)
-
-    expect(getUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
+    const result = await refreshAccessToken(mockRequest, mockUserSession)
 
     expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
+      { tokenUrl: 'http://localhost:3200/token' },
       'Access token expired, refreshing...'
     )
 
@@ -84,16 +76,11 @@ describe('#refreshAccessToken', () => {
   })
 
   test('should handle null refresh token', async () => {
-    const mockAuthedUser = {
+    const mockUserSession = {
       refreshToken: null,
       tokenUrl: 'http://localhost:3200/token'
     }
 
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: mockAuthedUser
-    })
-
     const mockConfig = {
       get: vi.fn((key) => {
         const values = {
@@ -118,7 +105,7 @@ describe('#refreshAccessToken', () => {
       }
     }
 
-    await refreshAccessToken(mockRequest)
+    await refreshAccessToken(mockRequest, mockUserSession)
 
     const fetchCall = vi.mocked(fetch).mock.calls[0]
     const params = fetchCall[1].body
@@ -126,16 +113,11 @@ describe('#refreshAccessToken', () => {
     expect(params.get('refresh_token')).toBe('null')
   })
 
-  test('should handle missing refresh token in authedUser', async () => {
-    const mockAuthedUser = {
+  test('should handle missing refresh token in userSession', async () => {
+    const mockUserSession = {
       tokenUrl: 'http://localhost:3200/token'
     }
 
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: mockAuthedUser
-    })
-
     const mockConfig = {
       get: vi.fn((key) => {
         const values = {
@@ -160,27 +142,11 @@ describe('#refreshAccessToken', () => {
       }
     }
 
-    await refreshAccessToken(mockRequest)
+    await refreshAccessToken(mockRequest, mockUserSession)
 
     const fetchCall = vi.mocked(fetch).mock.calls[0]
     const params = fetchCall[1].body
 
     expect(params.get('refresh_token')).toBe('null')
-  })
-
-  test('should throw error when getUserSession returns no session', async () => {
-    vi.mocked(getUserSession).mockResolvedValue({ ok: false })
-
-    const mockRequest = {
-      logger: {
-        info: vi.fn()
-      }
-    }
-
-    await expect(refreshAccessToken(mockRequest)).rejects.toThrowError(
-      'Cannot refresh token: no user session found'
-    )
-
-    expect(mockRequest.logger.info).not.toHaveBeenCalled()
   })
 })
