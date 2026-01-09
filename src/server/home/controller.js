@@ -2,6 +2,13 @@ import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
+const SUMMARY_LOG_GUIDANCE_URL =
+  'https://www.gov.uk/government/publications/summary-log-templates-for-uk-packaging-waste/recording-uk-packaging-waste-in-summary-logs-supplementary-guidance'
+const APPLY_FOR_REGISTRATION_URL =
+  'https://www.gov.uk/guidance/packaging-waste-apply-for-registration-and-accreditation-as-a-reprocessor-or-exporter'
+const SUMMARY_LOGS_OVERVIEW_URL =
+  'https://www.gov.uk/guidance/summary-logs-for-uk-packaging-waste-an-overview'
+
 /**
  * Determines the appropriate href for the "Start now" button based on auth state
  * @param {Request} request - Hapi request object
@@ -33,7 +40,10 @@ export const controller = {
 
     return h.view('home/index', {
       pageTitle: localise('home:pageTitle'),
-      startNowHref
+      startNowHref,
+      summaryLogGuidanceUrl: SUMMARY_LOG_GUIDANCE_URL,
+      applyForRegistrationUrl: APPLY_FOR_REGISTRATION_URL,
+      summaryLogsOverviewUrl: SUMMARY_LOGS_OVERVIEW_URL
     })
   }
 }

@@ -1,13 +1,32 @@
 {
+  "firstTime": {
+    "heading": "If you are using this service for the first time",
+    "intro": "If you're the first person from your business to access this service, you'll be taken through the following steps. If you're not the first person from your business to access the service, you'll only need to complete steps 1 and 2.",
+    "step1": {
+      "heading": "GOV.UK One Login",
+      "text": "You must use the same email address that was provided during registration."
+    },
+    "step2": {
+      "heading": "Defra account",
+      "text": "You'll need to set up a business account if you do not already have one. If none of the business types apply to you, choose the 'sole trader' option - it will not affect the way you use the service."
+    },
+    "step3": {
+      "heading": "Digital service access",
+      "text": "If asked, you'll need to select 'Record reprocessed or exported packaging waste' from the list of available services."
+    },
+    "step4": {
+      "heading": "Linking your account to its registration",
+      "text": "This will link your account to the original application we received."
+    }
+  },
+  "insetText": "Currently, you can only use this service to upload your {summaryLogLink}.",
   "pageTitle": "Home",
-  "services": {
-    "accreditations": "accreditations",
-    "description": "Use the service to manage your:",
-    "prns": "PRNs or PERNs",
-    "registrations": "registrations",
-    "regulatorReports": "regulator reports",
-    "summaryLog": "summary log"
+  "quickLinks": {
+    "heading": "Quick links",
+    "applyForRegistration": "Apply for registration and accreditation",
+    "summaryLogsOverview": "Summary logs for UK packaging waste: an overview"
   },
   "startNow": "Start now",
-  "subheading": "This service helps UK-based reprocessors and exporters meet packaging waste regulations."
+  "subheading": "This service helps reprocessors and exporters meet UK packaging waste regulations.",
+  "summaryLog": "summary log"
 }
