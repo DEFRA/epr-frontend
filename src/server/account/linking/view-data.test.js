@@ -295,33 +295,31 @@ describe(buildLinkingViewData, () => {
 
     const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
-    expect(result.troubleshooting).toBeDefined()
-    expect(result.troubleshooting.summary).toBe(
-      'translated:account:linking:troubleshooting:summary'
-    )
-    expect(result.troubleshooting.missing.heading).toBe(
-      'translated:account:linking:troubleshooting:missingHeading'
-    )
-    expect(result.troubleshooting.missing.bodyOne).toBe(
-      'translated:account:linking:troubleshooting:missingBodyOne'
-    )
-    expect(result.troubleshooting.missing.bodyTwo).toBe(
-      'translated:account:linking:troubleshooting:missingBodyTwo'
-    )
-    expect(result.troubleshooting.otherProblems.heading).toBe(
-      'translated:account:linking:troubleshooting:otherProblemsHeading'
-    )
-    expect(result.troubleshooting.otherProblems.bodyOne).toBe(
-      'translated:account:linking:troubleshooting:otherProblemsBodyOne'
-    )
-    expect(result.troubleshooting.otherProblems.email).toBe(
-      'translated:account:linking:troubleshooting:otherProblemsEmail'
-    )
-    expect(result.troubleshooting.unlinkedOrganisations).toHaveLength(1)
-    expect(result.troubleshooting.unlinkedOrganisations[0]).toStrictEqual({
-      id: 'org-1',
-      displayName: 'Test Company Ltd (ID: TC123456)',
-      name: 'Test Company Ltd'
+    expect(result.troubleshooting).toStrictEqual({
+      summary: 'translated:account:linking:troubleshooting:summary',
+      missing: {
+        heading: 'translated:account:linking:troubleshooting:missingHeading',
+        bodyOne: 'translated:account:linking:troubleshooting:missingBodyOne',
+        bodyTwo: 'translated:account:linking:troubleshooting:missingBodyTwo'
+      },
+      otherProblems: {
+        heading:
+          'translated:account:linking:troubleshooting:otherProblemsHeading',
+        bodyOne:
+          'translated:account:linking:troubleshooting:otherProblemsBodyOne',
+        bodyTwo:
+          'translated:account:linking:troubleshooting:otherProblemsBodyTwo',
+        bodyThree:
+          'translated:account:linking:troubleshooting:otherProblemsBodyThree',
+        email: 'translated:account:linking:troubleshooting:otherProblemsEmail'
+      },
+      unlinkedOrganisations: [
+        {
+          id: 'org-1',
+          displayName: 'Test Company Ltd (ID: TC123456)',
+          name: 'Test Company Ltd'
+        }
+      ]
     })
   })
 })
