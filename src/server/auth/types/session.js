@@ -21,6 +21,7 @@
  * @property {string} idToken
  * @property {string} tokenUrl - OIDC token endpoint URL
  * @property {string} logoutUrl - OIDC logout endpoint URL
+ * @property {number} [jwtExp] - JWT exp claim (Unix timestamp) for fallback expiry calculation
  */
 
 /**
@@ -52,6 +53,7 @@
  * @property {string} tokenUrl - OIDC token endpoint URL
  * @property {string} logoutUrl - OIDC logout endpoint URL
  * @property {string} [linkedOrganisationId] - ID of the user's linked organisation (set after auth/linking)
+ * @property {number} [jwtExp] - JWT exp claim (Unix timestamp) for fallback expiry calculation
  */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

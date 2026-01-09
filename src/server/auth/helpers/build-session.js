@@ -1,5 +1,35 @@
-import { addSeconds } from 'date-fns'
+import { addSeconds, fromUnixTime } from 'date-fns'
 import { getDisplayName } from './display.js'
+
+/**
+ * Calculate token expiry date from available sources
+ * Falls back to JWT exp claim if expiresIn is not available (common with ID tokens)
+ * @param {number | null | undefined} expiresIn - Seconds until expiry (from access token)
+ * @param {number | undefined} jwtExp - JWT exp claim (Unix timestamp)
+ * @returns {{ expiresAt: Date, expiresInMs: number }}
+ */
+function calculateExpiry(expiresIn, jwtExp) {
+  if (expiresIn != null && expiresIn > 0) {
+    return {
+      expiresAt: addSeconds(new Date(), expiresIn),
+      expiresInMs: expiresIn * 1000
+    }
+  }
+
+  // Fallback to JWT exp claim
+  if (jwtExp) {
+    const expiresAt = fromUnixTime(jwtExp)
+    const expiresInMs = expiresAt.getTime() - Date.now()
+    return { expiresAt, expiresInMs }
+  }
+
+  // Default to 1 hour if no expiry info available
+  const defaultExpiresIn = 3600
+  return {
+    expiresAt: addSeconds(new Date(), defaultExpiresIn),
+    expiresInMs: defaultExpiresIn * 1000
+  }
+}
 
 /**
  * Build user profile from JWT payload
@@ -33,7 +63,8 @@ function buildUserProfile({ payload, idToken, tokenUrl, logoutUrl }) {
     roles: payload.roles,
     idToken,
     tokenUrl,
-    logoutUrl
+    logoutUrl,
+    jwtExp: payload.exp // JWT expiry timestamp for fallback calculation
   }
 }
 
@@ -46,21 +77,22 @@ function buildUserProfile({ payload, idToken, tokenUrl, logoutUrl }) {
  * @returns {UserSession} Complete user session
  */
 function buildSessionFromProfile({ credentials, isAuthenticated, profile }) {
-  const expiresInSeconds = credentials.expiresIn
-  const expiresInMilliSeconds = expiresInSeconds * 1000
-  const expiresAt = addSeconds(new Date(), expiresInSeconds)
+  const { expiresAt, expiresInMs } = calculateExpiry(
+    credentials.expiresIn,
+    profile.jwtExp
+  )
 
   return {
     ...profile,
     isAuthenticated,
     token: credentials.token,
     refreshToken: credentials.refreshToken,
-    expiresIn: expiresInMilliSeconds,
+    expiresIn: expiresInMs,
     expiresAt
   }
 }
 
-export { buildSessionFromProfile, buildUserProfile }
+export { buildSessionFromProfile, buildUserProfile, calculateExpiry }
 
 /**
  * @import { DefraIdJwtPayload } from '../types/auth.js'

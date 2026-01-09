@@ -1,4 +1,4 @@
-import { addSeconds } from 'date-fns'
+import { calculateExpiry } from './build-session.js'
 import { getDisplayName } from './display.js'
 import { dropUserSession } from './drop-user-session.js'
 import { getUserSession } from './get-user-session.js'
@@ -19,9 +19,10 @@ import { getUserSession } from './get-user-session.js'
  * @returns {Partial<UserSession>} Partial user session object (missing tokenUrl and logoutUrl which are preserved from existing session)
  */
 function buildSessionFromPayload({ payload, tokens }) {
-  const expiresInSeconds = tokens.expires_in
-  const expiresInMilliSeconds = expiresInSeconds * 1000
-  const expiresAt = addSeconds(new Date(), expiresInSeconds)
+  const { expiresAt, expiresInMs } = calculateExpiry(
+    tokens.expires_in,
+    payload.exp
+  )
   const displayName = getDisplayName(payload)
 
   return {
@@ -46,8 +47,9 @@ function buildSessionFromPayload({ payload, tokens }) {
     idToken: tokens.id_token,
     token: tokens.access_token,
     refreshToken: tokens.refresh_token,
-    expiresIn: expiresInMilliSeconds,
-    expiresAt
+    expiresIn: expiresInMs,
+    expiresAt,
+    jwtExp: payload.exp // JWT expiry timestamp for fallback calculation
   }
 }
 
