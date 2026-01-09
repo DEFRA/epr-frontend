@@ -43,48 +43,9 @@ describe(buildLinkingViewData, () => {
       }
     ])
     expect(result.organisationName).toBe('Test Defra Organisation')
-    expect(result.troubleshooting).toBeDefined()
     expect(result.troubleshooting.summary).toBe(
       'translated:account:linking:troubleshooting:summary'
     )
-    expect(result.troubleshooting.unlinkedOrganisations).toHaveLength(2)
-    expect(result.troubleshooting.unlinkedOrganisations[0].name).toBe(
-      'Company One Ltd'
-    )
-    expect(result.troubleshooting.unlinkedOrganisations[1].name).toBe(
-      'Company Two Ltd'
-    )
-  })
-
-  it('should format unlinked organisations with org-id in display-name', () => {
-    const mockRequest = {
-      t: vi.fn((key) => `translated:${key}`)
-    }
-
-    const mockOrganisations = {
-      current: {
-        id: 'defra-org-123',
-        name: 'Current Org'
-      },
-      linked: null,
-      unlinked: [
-        {
-          id: 'org-1',
-          name: 'Waste Services Ltd',
-          orgId: 'WS123456'
-        }
-      ]
-    }
-
-    const result = buildLinkingViewData(mockRequest, mockOrganisations)
-
-    expect(result.unlinked).toStrictEqual([
-      {
-        id: 'org-1',
-        displayName: 'Waste Services Ltd (ID: WS123456)',
-        name: 'Waste Services Ltd'
-      }
-    ])
   })
 
   it('should handle empty unlinked organisations list', () => {
@@ -312,14 +273,7 @@ describe(buildLinkingViewData, () => {
         bodyThree:
           'translated:account:linking:troubleshooting:otherProblemsBodyThree',
         email: 'translated:account:linking:troubleshooting:otherProblemsEmail'
-      },
-      unlinkedOrganisations: [
-        {
-          id: 'org-1',
-          displayName: 'Test Company Ltd (ID: TC123456)',
-          name: 'Test Company Ltd'
-        }
-      ]
+      }
     })
   })
 })
