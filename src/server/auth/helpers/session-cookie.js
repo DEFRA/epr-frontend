@@ -72,7 +72,9 @@ const createSessionCookie = (verifyToken) => {
             path: '/',
             password: config.get('session.cookie.password'),
             isSecure: config.get('session.cookie.secure'),
-            ttl: config.get('session.cookie.ttl')
+            isSameSite: 'Lax',
+            ttl: config.get('session.cookie.ttl'),
+            clearInvalid: true
           },
           keepAlive: true,
           /**
