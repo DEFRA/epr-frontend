@@ -10,9 +10,12 @@ const logout = {
     register: (server) => {
       server.route([
         {
+          ...logoutController,
           method: 'GET',
           path: '/logout',
-          ...logoutController
+          options: {
+            auth: { mode: 'try' }
+          }
         }
       ])
     }

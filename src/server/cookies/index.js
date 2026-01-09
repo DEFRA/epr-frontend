@@ -16,7 +16,10 @@ export const cookies = {
         {
           ...controller,
           method: 'GET',
-          path: '/cookies'
+          path: '/cookies',
+          options: {
+            auth: false
+          }
         }
       ])
     }

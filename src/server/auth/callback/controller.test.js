@@ -102,6 +102,7 @@ describe('#authCallbackController', () => {
       expect(mockRequest.yar.flash).toHaveBeenCalledExactlyOnceWith('referrer')
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/dashboard')
+      // eslint-disable-next-line vitest/max-expects
       expect(result).toBe('redirect-response')
     })
 

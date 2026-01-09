@@ -2,7 +2,6 @@ import { capitalize } from 'lodash-es'
 import Boom from '@hapi/boom'
 
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
 /**
@@ -12,12 +11,11 @@ export const controller = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
-    const { ok, value: session } = await getUserSession(request)
-    const userSession = ok && session ? session : request.auth?.credentials
+    const userSession = request.auth.credentials
 
     const organisationData = await fetchOrganisationById(
       organisationId,
-      userSession?.idToken
+      userSession.idToken
     )
 
     const registration = organisationData.registrations?.find(

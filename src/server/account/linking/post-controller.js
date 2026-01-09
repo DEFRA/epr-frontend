@@ -1,5 +1,4 @@
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
 import Joi from 'joi'
 import { linkOrganisation } from './helpers/link-organisation.js'
@@ -17,9 +16,9 @@ export const controller = {
         organisationId: Joi.string().required()
       }),
       failAction: async (request, h) => {
-        const { ok, value: session } = await getUserSession(request)
+        const session = request.pre.authedUser
 
-        if (!ok || !session) {
+        if (!session) {
           return h.redirect('/login').takeover()
         }
 
@@ -40,9 +39,9 @@ export const controller = {
   async handler(request, h) {
     const { organisationId } = request.payload
 
-    const { ok, value: session } = await getUserSession(request)
+    const session = request.pre.authedUser
 
-    if (!ok || !session) {
+    if (!session) {
       return h.redirect('/login')
     }
 

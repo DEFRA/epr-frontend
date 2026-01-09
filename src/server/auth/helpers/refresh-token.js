@@ -24,6 +24,8 @@ async function refreshAccessToken(request) {
   params.append('client_secret', clientSecret)
   params.append('grant_type', 'refresh_token')
   params.append('refresh_token', refreshToken)
+
+  // FIXME why does this have a different scope to the initial request? that seems wrong
   params.append('scope', `${clientId} openid profile email offline_access`)
 
   request.logger.info('Access token expired, refreshing...')

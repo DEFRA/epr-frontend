@@ -14,6 +14,7 @@ import { config } from '#config/config.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 
@@ -33,6 +34,7 @@ vi.mock(
 describe('#organisationController', () => {
   /** @type {Server} */
   let server
+  let authHelper
   const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
   beforeAll(async () => {
@@ -49,10 +51,16 @@ describe('#organisationController', () => {
 
     server = await createServer()
     await server.initialize()
+
+    authHelper = createAuthSessionHelper(server)
+    await authHelper.createAuthCookie()
   })
 
   beforeEach(() => {
     vi.clearAllMocks()
+    authHelper.mockGetUserSession(
+      vi.mocked(getUserSessionModule.getUserSession)
+    )
   })
 
   afterAll(async () => {
@@ -65,24 +73,12 @@ describe('#organisationController', () => {
   })
 
   describe('happy Path', () => {
-    const mockSession = {
-      idToken: 'mock-jwt-token',
-      displayName: 'Test User'
-    }
-
-    beforeEach(() => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: mockSession
-      })
-    })
-
     it('should use Organisation name in the page title', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -97,7 +93,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -134,7 +130,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902/exporting'
       })
@@ -158,7 +154,7 @@ describe('#organisationController', () => {
       ).mockResolvedValue(fixtureData)
 
       // Test reprocessing tab
-      const reprocessingResponse = await server.inject({
+      const reprocessingResponse = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -174,7 +170,7 @@ describe('#organisationController', () => {
       )
 
       // Test exporting tab
-      const exportingResponse = await server.inject({
+      const exportingResponse = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/exporting'
       })
@@ -195,7 +191,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943906'
       })
@@ -213,7 +209,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -236,7 +232,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -260,14 +256,14 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await server.inject({
+      await authHelper.injectWithAuth({
         method: 'GET',
         url: `/organisations/${organisationId}`
       })
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(organisationId, 'mock-jwt-token')
+      ).toHaveBeenCalledWith(organisationId, 'test-id-token')
     })
 
     it('should pass JWT token to backend call', async () => {
@@ -275,24 +271,19 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await server.inject({
+      await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(expect.any(String), 'mock-jwt-token')
+      ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
     })
   })
 
   describe('unhappy Paths', () => {
     it('should handle backend fetch failure gracefully', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
       const backendError = new Error('Backend service unavailable')
       backendError.statusCode = 503
 
@@ -300,7 +291,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(backendError)
 
-      const { statusCode } = await server.inject({
+      const { statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -308,37 +299,26 @@ describe('#organisationController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('should handle missing session with undefined token', async () => {
+    it('should redirect to login when session is missing', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: false
       })
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
-
-      await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
 
-      // Should call backend with undefined token when session is missing
-      expect(
-        fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(expect.any(String), undefined)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe('/logged-out')
     })
 
     it('should handle backend 404 error', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(Boom.notFound('Organisation not found'))
 
-      const { statusCode } = await server.inject({
+      const { statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/nonexistent-id'
       })
@@ -347,11 +327,6 @@ describe('#organisationController', () => {
     })
 
     it('should handle backend timeout error', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
       const timeoutError = new Error('Request timeout')
       timeoutError.code = 'ETIMEDOUT'
 
@@ -359,7 +334,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(timeoutError)
 
-      const { statusCode } = await server.inject({
+      const { statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -368,11 +343,6 @@ describe('#organisationController', () => {
     })
 
     it('should handle malformed backend response', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
-
       // Return invalid data structure
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
@@ -380,7 +350,7 @@ describe('#organisationController', () => {
         invalidField: 'no company details'
       })
 
-      const { statusCode } = await server.inject({
+      const { statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -391,10 +361,9 @@ describe('#organisationController', () => {
 
   describe('edge Cases', () => {
     beforeEach(() => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
+      authHelper.mockGetUserSession(
+        vi.mocked(getUserSessionModule.getUserSession)
+      )
     })
 
     it('should display "No sites found" when organisation has no accreditations', async () => {
@@ -402,7 +371,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureEmpty)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943903'
       })
@@ -419,7 +388,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureAllExcluded)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943904'
       })
@@ -457,7 +426,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithCreatedStatus)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -488,7 +457,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithRejectedStatus)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -502,7 +471,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureMissingFields)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943905'
       })
@@ -530,7 +499,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithUnmatchedAccreditation)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -550,14 +519,14 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const reprocessingResponse = await server.inject({
+      const reprocessingResponse = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902'
       })
 
       expect(reprocessingResponse.result).not.toContain(/Reprocessing/i)
 
-      const exportingResponse = await server.inject({
+      const exportingResponse = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902/exporting'
       })
@@ -572,7 +541,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943906'
       })
@@ -641,7 +610,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMixedStatuses)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -660,10 +629,9 @@ describe('#organisationController', () => {
 
   describe('coverage - Additional Paths', () => {
     beforeEach(() => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: { idToken: 'mock-jwt-token', displayName: 'Test User' }
-      })
+      authHelper.mockGetUserSession(
+        vi.mocked(getUserSessionModule.getUserSession)
+      )
     })
 
     it('should group multiple materials by site correctly', async () => {
@@ -671,7 +639,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -741,7 +709,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMultipleMaterialsSameSite)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -765,7 +733,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await server.inject({
+      await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -773,7 +741,7 @@ describe('#organisationController', () => {
       // Just verify the request succeeded (logging happens internally)
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', 'mock-jwt-token')
+      ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', 'test-id-token')
     })
 
     it('should handle different status color mappings correctly', async () => {
@@ -828,7 +796,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithVariousStatuses)
 
-      const { result } = await server.inject({
+      const { result } = await authHelper.injectWithAuth({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })

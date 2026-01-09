@@ -1,6 +1,8 @@
+import { config } from '#config/config.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
+import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
@@ -24,28 +26,48 @@ describe('#summaryLogUploadController', () => {
   /** @type {Server} */
   let server
   const mockOidcServer = createMockOidcServer('http://defra-id.auth')
+  let authHelper
 
   beforeAll(async () => {
     mockOidcServer.listen()
+
+    // Configure OIDC
+    config.load({
+      defraId: {
+        clientId: 'test-client-id',
+        clientSecret: 'test-secret',
+        oidcConfigurationUrl:
+          'http://defra-id.auth/.well-known/openid-configuration',
+        serviceId: 'test-service-id'
+      }
+    })
+
     server = await createServer()
     await server.initialize()
 
+    // Setup auth helper
+    authHelper = createAuthSessionHelper(server)
+
     // Mock getUserSession to return a valid session
-    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        idToken: 'test-id-token'
-      }
-    })
+    authHelper.mockGetUserSession(
+      vi.mocked(getUserSessionModule.getUserSession)
+    )
+
+    // Create default auth session cookie
+    await authHelper.createAuthCookie()
   })
 
   afterAll(async () => {
+    config.reset('defraId.clientId')
+    config.reset('defraId.clientSecret')
+    config.reset('defraId.oidcConfigurationUrl')
+    config.reset('defraId.serviceId')
     mockOidcServer.close()
     await server.stop({ timeout: 0 })
   })
 
   test('should provide expected response', async () => {
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await authHelper.injectWithAuth({
       method: 'GET',
       url
     })
@@ -57,7 +79,7 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should render back link to registration dashboard', async () => {
-    const { result } = await server.inject({
+    const { result } = await authHelper.injectWithAuth({
       method: 'GET',
       url
     })
@@ -71,7 +93,10 @@ describe('#summaryLogUploadController', () => {
   test('should redirect to error', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
-    const { result } = await server.inject({ method: 'GET', url })
+    const { result } = await authHelper.injectWithAuth({
+      method: 'GET',
+      url
+    })
 
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log upload error')
@@ -79,7 +104,10 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {
-    await server.inject({ method: 'GET', url })
+    await authHelper.injectWithAuth({
+      method: 'GET',
+      url
+    })
 
     expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
       organisationId: '123',
@@ -91,7 +119,7 @@ describe('#summaryLogUploadController', () => {
   })
 
   describe('session validation', () => {
-    test('should redirect to login when session is invalid', async () => {
+    test('should redirect to logged-out when session is invalid', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
         ok: false
       })
@@ -102,22 +130,7 @@ describe('#summaryLogUploadController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/login')
-    })
-
-    test('should redirect to login when session value is null', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: true,
-        value: null
-      })
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/login')
+      expect(headers.location).toBe('/logged-out')
     })
   })
 })

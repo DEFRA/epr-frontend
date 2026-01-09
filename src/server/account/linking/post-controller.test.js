@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import {
@@ -12,8 +11,6 @@ import {
   vi
 } from 'vitest'
 import { controller } from './post-controller.js'
-
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 describe('account linking POST controller', () => {
   const backendUrl = config.get('eprBackendUrl')
@@ -35,13 +32,9 @@ describe('account linking POST controller', () => {
     it('should call backend link endpoint and redirect to organisation account home', async () => {
       const organisationId = 'org-123'
       const mockIdToken = 'mock-id-token'
-
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: {
-          idToken: mockIdToken
-        }
-      })
+      const mockSession = {
+        idToken: mockIdToken
+      }
 
       mockBackendServer.use(
         http.post(
@@ -63,6 +56,9 @@ describe('account linking POST controller', () => {
         payload: {
           organisationId
         },
+        pre: {
+          authedUser: mockSession
+        },
         state: {
           userSession: {
             sessionId: 'mock-session-id'
@@ -83,9 +79,6 @@ describe('account linking POST controller', () => {
 
       const result = await controller.handler(mockRequest, mockH)
 
-      expect(
-        getUserSessionModule.getUserSession
-      ).toHaveBeenCalledExactlyOnceWith(mockRequest)
       expect(mockCacheSet).toHaveBeenCalledExactlyOnceWith('mock-session-id', {
         idToken: mockIdToken,
         linkedOrganisationId: organisationId
@@ -97,13 +90,12 @@ describe('account linking POST controller', () => {
     })
 
     it('should redirect to /login when user is not authenticated', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
       const mockRequest = {
         payload: {
           organisationId: 'org-123'
+        },
+        pre: {
+          authedUser: null
         }
       }
 
@@ -118,14 +110,12 @@ describe('account linking POST controller', () => {
     })
 
     it('should redirect to /login when session has no value', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: null
-      })
-
       const mockRequest = {
         payload: {
           organisationId: 'org-123'
+        },
+        pre: {
+          authedUser: null
         }
       }
 
@@ -157,21 +147,21 @@ describe('account linking POST controller', () => {
         ]
       }
 
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: {
-          idToken: 'mock-id-token'
-        }
-      })
-
       mockBackendServer.use(
         http.get(`${backendUrl}/v1/me/organisations`, () => {
           return HttpResponse.json({ organisations: mockOrganisations })
         })
       )
 
+      const mockSession = {
+        idToken: 'mock-id-token'
+      }
+
       const mockRequest = {
         payload: {},
+        pre: {
+          authedUser: mockSession
+        },
         t: vi.fn((key) => {
           const translations = {
             'account:linking:pageTitle': 'Link Organisation',
@@ -193,10 +183,6 @@ describe('account linking POST controller', () => {
         mockRequest,
         mockH
       )
-
-      expect(
-        getUserSessionModule.getUserSession
-      ).toHaveBeenCalledExactlyOnceWith(mockRequest)
 
       expect(mockH.view).toHaveBeenCalledWith('account/linking/index', {
         pageTitle: 'Link Organisation',
@@ -226,12 +212,11 @@ describe('account linking POST controller', () => {
     })
 
     it('should redirect to login when user is not authenticated', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
       const mockRequest = {
-        payload: {}
+        payload: {},
+        pre: {
+          authedUser: null
+        }
       }
 
       const mockRedirect = {
@@ -253,13 +238,11 @@ describe('account linking POST controller', () => {
     })
 
     it('should redirect to login when session has no authedUser', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: null
-      })
-
       const mockRequest = {
-        payload: {}
+        payload: {},
+        pre: {
+          authedUser: null
+        }
       }
 
       const mockRedirect = {

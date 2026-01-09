@@ -8,9 +8,12 @@ export const health = {
     name: 'health',
     register(server) {
       server.route({
+        ...healthController,
         method: 'GET',
         path: '/health',
-        ...healthController
+        options: {
+          auth: false
+        }
       })
     }
   }

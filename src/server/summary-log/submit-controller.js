@@ -1,7 +1,6 @@
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
@@ -14,11 +13,7 @@ export const submitSummaryLogController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
-    const { ok, value: session } = await getUserSession(request)
-
-    if (!ok || !session) {
-      return h.redirect('/login')
-    }
+    const session = request.auth.credentials
 
     try {
       // Submit the summary log to the backend
