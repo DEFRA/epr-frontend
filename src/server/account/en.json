@@ -17,6 +17,17 @@
     "bodyTwo": "You'll only need to confirm this once, on behalf of the organisation you represent.",
     "subheading": "Select the registration to link to {{ serviceName }}",
     "confirmButton": "Confirm",
-    "errorNoSelection": "Select an organisation to link"
+    "errorNoSelection": "Select an organisation to link",
+    "troubleshooting": {
+      "summary": "Problems linking a registration?",
+      "missingHeading": "If the relevant registration is missing",
+      "missingBodyOne": "If you're signed into the correct account and the relevant registration is not showing, contact your regulator to check that the registration has been completed.",
+      "missingBodyTwo": "If you're a consultant and need to change the business you selected when signing in, sign out and sign in again as another business.",
+      "otherProblemsHeading": "If you have any other problems",
+      "otherProblemsBodyOne": "If you're having any other issues, contact the EPR packaging helpdesk.",
+      "otherProblemsBodyTwo": "Phone: 0300 060 0002 (Monday to Friday, 8:00am to 4:30pm)",
+      "otherProblemsBodyThree": "You'll need to quote the relevant system reference:",
+      "otherProblemsEmail": "eprcustomerservice@defra.gov.uk"
+    }
   }
 }

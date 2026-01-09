@@ -29,22 +29,31 @@ describe(buildLinkingViewData, () => {
 
     const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
-    expect(result).toStrictEqual({
-      pageTitle: 'translated:account:linking:pageTitle',
-      unlinked: [
-        {
-          id: 'org-1',
-          displayName: 'Company One Ltd (ID: 12345678)',
-          name: 'Company One Ltd'
-        },
-        {
-          id: 'org-2',
-          displayName: 'Company Two Ltd (ID: 87654321)',
-          name: 'Company Two Ltd'
-        }
-      ],
-      organisationName: 'Test Defra Organisation'
-    })
+    expect(result.pageTitle).toBe('translated:account:linking:pageTitle')
+    expect(result.unlinked).toStrictEqual([
+      {
+        id: 'org-1',
+        displayName: 'Company One Ltd (ID: 12345678)',
+        name: 'Company One Ltd'
+      },
+      {
+        id: 'org-2',
+        displayName: 'Company Two Ltd (ID: 87654321)',
+        name: 'Company Two Ltd'
+      }
+    ])
+    expect(result.organisationName).toBe('Test Defra Organisation')
+    expect(result.troubleshooting).toBeDefined()
+    expect(result.troubleshooting.summary).toBe(
+      'translated:account:linking:troubleshooting:summary'
+    )
+    expect(result.troubleshooting.unlinkedOrganisations).toHaveLength(2)
+    expect(result.troubleshooting.unlinkedOrganisations[0].name).toBe(
+      'Company One Ltd'
+    )
+    expect(result.troubleshooting.unlinkedOrganisations[1].name).toBe(
+      'Company Two Ltd'
+    )
   })
 
   it('should format unlinked organisations with org-id in display-name', () => {
@@ -262,5 +271,57 @@ describe(buildLinkingViewData, () => {
     expect(result.unlinked[2].displayName).toBe(
       'Zebra Waste Ltd (ID: ZW111111)'
     )
+  })
+
+  it('should build troubleshooting content with localised strings', () => {
+    const mockRequest = {
+      t: vi.fn((key) => `translated:${key}`)
+    }
+
+    const mockOrganisations = {
+      current: {
+        id: 'defra-org-123',
+        name: 'Test Organisation'
+      },
+      linked: null,
+      unlinked: [
+        {
+          id: 'org-1',
+          name: 'Test Company Ltd',
+          orgId: 'TC123456'
+        }
+      ]
+    }
+
+    const result = buildLinkingViewData(mockRequest, mockOrganisations)
+
+    expect(result.troubleshooting).toBeDefined()
+    expect(result.troubleshooting.summary).toBe(
+      'translated:account:linking:troubleshooting:summary'
+    )
+    expect(result.troubleshooting.missing.heading).toBe(
+      'translated:account:linking:troubleshooting:missingHeading'
+    )
+    expect(result.troubleshooting.missing.bodyOne).toBe(
+      'translated:account:linking:troubleshooting:missingBodyOne'
+    )
+    expect(result.troubleshooting.missing.bodyTwo).toBe(
+      'translated:account:linking:troubleshooting:missingBodyTwo'
+    )
+    expect(result.troubleshooting.otherProblems.heading).toBe(
+      'translated:account:linking:troubleshooting:otherProblemsHeading'
+    )
+    expect(result.troubleshooting.otherProblems.bodyOne).toBe(
+      'translated:account:linking:troubleshooting:otherProblemsBodyOne'
+    )
+    expect(result.troubleshooting.otherProblems.email).toBe(
+      'translated:account:linking:troubleshooting:otherProblemsEmail'
+    )
+    expect(result.troubleshooting.unlinkedOrganisations).toHaveLength(1)
+    expect(result.troubleshooting.unlinkedOrganisations[0]).toStrictEqual({
+      id: 'org-1',
+      displayName: 'Test Company Ltd (ID: TC123456)',
+      name: 'Test Company Ltd'
+    })
   })
 })

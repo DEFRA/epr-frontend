@@ -1,0 +1,11 @@
+@use "govuk-frontend" as *;
+
+.app-related-items {
+  border-top: 5px solid govuk-colour("blue");
+  padding-top: govuk-spacing(4);
+
+  @include govuk-media-query($from: tablet) {
+    max-width: 214px;
+    margin-left: auto;
+  }
+}

@@ -47,22 +47,25 @@ describe('account linking GET controller', () => {
 
       const result = controller.handler(mockRequest, mockH)
 
-      expect(mockView).toHaveBeenCalledWith('account/linking/index', {
-        pageTitle: 'Link Organisation',
-        unlinked: [
-          {
-            id: 'org-2',
-            displayName: 'Another Company Ltd (ID: 87654321)',
-            name: 'Another Company Ltd'
-          },
-          {
-            id: 'org-1',
-            displayName: 'Test Company Ltd (ID: 12345678)',
-            name: 'Test Company Ltd'
-          }
-        ],
-        organisationName: 'My Defra Organisation'
-      })
+      expect(mockView).toHaveBeenCalledWith(
+        'account/linking/index',
+        expect.objectContaining({
+          pageTitle: 'Link Organisation',
+          unlinked: [
+            {
+              id: 'org-2',
+              displayName: 'Another Company Ltd (ID: 87654321)',
+              name: 'Another Company Ltd'
+            },
+            {
+              id: 'org-1',
+              displayName: 'Test Company Ltd (ID: 12345678)',
+              name: 'Test Company Ltd'
+            }
+          ],
+          organisationName: 'My Defra Organisation'
+        })
+      )
       expect(result).toBe('view-response')
     })
 
@@ -167,6 +170,56 @@ describe('account linking GET controller', () => {
           ]
         })
       )
+    })
+
+    it('should pass unlinked organisations data for troubleshooting panel', () => {
+      const mockOrganisations = {
+        current: {
+          id: 'defra-org-123',
+          name: 'Current Org'
+        },
+        linked: null,
+        unlinked: [
+          {
+            id: 'org-1',
+            name: 'First Company',
+            orgId: 'FC111111'
+          },
+          {
+            id: 'org-2',
+            name: 'Second Company',
+            orgId: 'SC222222'
+          }
+        ]
+      }
+
+      const mockRequest = {
+        pre: {
+          userOrganisations: mockOrganisations
+        },
+        t: vi.fn((key) => key)
+      }
+
+      const mockView = vi.fn()
+      const mockH = {
+        view: mockView
+      }
+
+      controller.handler(mockRequest, mockH)
+
+      const viewData = mockView.mock.calls[0][1]
+
+      expect(viewData.unlinked).toHaveLength(2)
+      expect(viewData.unlinked[0]).toStrictEqual({
+        id: 'org-1',
+        displayName: 'First Company (ID: FC111111)',
+        name: 'First Company'
+      })
+      expect(viewData.unlinked[1]).toStrictEqual({
+        id: 'org-2',
+        displayName: 'Second Company (ID: SC222222)',
+        name: 'Second Company'
+      })
     })
   })
 
