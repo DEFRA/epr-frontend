@@ -12,7 +12,8 @@ vi.mock(
   () => ({
     initiateSummaryLogUpload: vi.fn().mockResolvedValue({
       uploadUrl: 'http://cdp/upload',
-      uploadId: 'cdp-upload-123'
+      uploadId: 'cdp-upload-123',
+      summaryLogId: 'sl-789'
     })
   })
 )
@@ -68,13 +69,16 @@ describe('#summaryLogUploadController', () => {
     )
   })
 
-  test('should redirect to error', async () => {
+  test('should display error page when upload initialisation fails', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
     const { result } = await server.inject({ method: 'GET', url })
 
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log upload error')
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining('Failed to initialize upload: Mock error')
     )
   })
 
@@ -87,6 +91,34 @@ describe('#summaryLogUploadController', () => {
       redirectUrl:
         '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
       idToken: 'test-id-token'
+    })
+  })
+
+  test('should render form with success URL data attribute for JS error handling', async () => {
+    const { result } = await server.inject({ method: 'GET', url })
+
+    expect(result).toContain(
+      'data-success-url="/organisations/123/registrations/456/summary-logs/sl-789"'
+    )
+  })
+
+  test('should render form with error URL data attribute for JS error handling', async () => {
+    const { result } = await server.inject({ method: 'GET', url })
+
+    expect(result).toContain(
+      'data-error-url="/organisations/123/registrations/456/summary-logs/upload?error=true"'
+    )
+  })
+
+  describe('CDP upload error handling', () => {
+    test('should show generic error page when error query param is present', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `${url}?error=true`
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Something went wrong')
     })
   })
 
