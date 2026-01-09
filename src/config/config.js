@@ -1,9 +1,14 @@
 import convict from 'convict'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-
 import { getLogFormatType, getLogRedactType } from './utils/log.js'
 import { getSessionCacheEngineType } from './utils/session.js'
+
+/**
+ * @import { Schema, SchemaObj } from 'convict'
+ * @import { RedisConfig } from '#server/common/helpers/redis-client.js'
+ * @import { HapiRequest } from '#common/hapi-types.js'
+ */
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -13,6 +18,38 @@ const oneWeekMs = 604800000
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
+
+const getDefraIdCredentials = () => {
+  const audience = Object.freeze({
+    internal: 'internal',
+    public: 'public'
+  })
+
+  const conv = convict({
+    audience: {
+      doc: 'DEFRA ID audience',
+      format: Object.values(audience),
+      default: audience.internal,
+      env: 'DEFRA_ID_AUDIENCE'
+    }
+  })
+
+  conv.validate({ allowed: 'strict' })
+
+  const clientId =
+    conv.get('audience') === audience.internal
+      ? process.env.DEFRA_ID_CLIENT_ID
+      : process.env.DEFRA_ID_CLIENT_ID_PUBLIC
+
+  const clientSecret =
+    conv.get('audience') === audience.internal
+      ? process.env.DEFRA_ID_CLIENT_SECRET
+      : process.env.DEFRA_ID_CLIENT_SECRET_PUBLIC
+
+  return { clientId, clientSecret }
+}
+
+const { clientId, clientSecret } = getDefraIdCredentials()
 
 export const config = convict({
   serviceVersion: {
@@ -245,15 +282,13 @@ export const config = convict({
     clientId: {
       doc: 'DEFRA ID Client ID',
       format: String,
-      env: 'DEFRA_ID_CLIENT_ID',
-      default: ''
+      default: clientId || ''
     },
     clientSecret: {
       doc: 'DEFRA ID Client Secret',
       format: String,
       sensitive: true,
-      env: 'DEFRA_ID_CLIENT_SECRET',
-      default: ''
+      default: clientSecret || ''
     },
     manageAccountUrl: {
       doc: 'DEFRA ID Manage Account URL',
@@ -270,8 +305,3 @@ export const isDefraIdEnabled = () => {
   const oidcUrl = config.get('defraId.oidcConfigurationUrl')
   return Boolean(oidcUrl && oidcUrl.trim() !== '')
 }
-
-/**
- * @import { Schema, SchemaObj } from 'convict'
- * @import { RedisConfig } from '#server/common/helpers/redis-client.js'
- */
