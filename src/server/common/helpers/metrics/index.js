@@ -32,6 +32,6 @@ async function metricsCounter(metricName, value = 1) {
 
 export const metrics = {
   async signOutSuccess() {
-    return await metricsCounter('signOutSuccess')
+    return metricsCounter('signOutSuccess')
   }
 }

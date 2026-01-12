@@ -25,14 +25,17 @@ const loggedOutUrl = `${appBaseUrl}/${loggedOutSlug}`
 const mockSignOutSuccessMetric = vi.fn()
 const mockCdpAuditing = vi.fn()
 
-vi.mock('#server/common/helpers/metrics/index.js', async (importOriginal) => ({
-  metrics: {
-    ...(await importOriginal()).metrics,
-    signOutSuccess: () => mockSignOutSuccessMetric()
-  }
-}))
+vi.mock(
+  import('#server/common/helpers/metrics/index.js'),
+  async (importOriginal) => ({
+    metrics: {
+      ...(await importOriginal()).metrics,
+      signOutSuccess: () => mockSignOutSuccessMetric()
+    }
+  })
+)
 
-vi.mock('@defra/cdp-auditing', () => ({
+vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mockCdpAuditing(...args)
 }))
 
@@ -70,6 +73,7 @@ describe('#logoutController - integration', () => {
 
   describe('when user is logged in', () => {
     let response
+
     beforeEach(async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: true,
@@ -96,6 +100,7 @@ describe('#logoutController - integration', () => {
       expect(response.statusCode).toBe(statusCodes.found)
 
       const redirectUrl = response.headers.location
+
       expect(redirectUrl).toBeInstanceOf(URL)
       expect(redirectUrl.host).toBe('defra-id.auth')
       expect(redirectUrl.pathname).toBe('/logout')

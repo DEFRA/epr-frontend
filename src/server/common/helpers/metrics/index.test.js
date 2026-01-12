@@ -21,23 +21,25 @@ vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
   }
 })
 
-vi.mock('#server/common/helpers/logging/logger.js', () => ({
+vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
 
 describe('#metrics', () => {
   const metricsNames = Object.keys(metrics)
 
-  describe('When metrics is not enabled', () =>
-    it.each(metricsNames)('Does not record metric - %s', async (name) => {
+  describe('when metrics is not enabled', () => {
+    it.each(metricsNames)('does not record metric - %s', async (name) => {
       config.set('isMetricsEnabled', false)
       await metrics[name]()
+
       expect(mockPutMetric).not.toHaveBeenCalled()
       expect(mockFlush).not.toHaveBeenCalled()
-    }))
+    })
+  })
 
-  describe('When metrics is enabled', () =>
-    it.each(metricsNames)('Record metric - %s', async (metricName) => {
+  describe('when metrics is enabled', () => {
+    it.each(metricsNames)('record metric - %s', async (metricName) => {
       config.set('isMetricsEnabled', true)
 
       await metrics[metricName]()
@@ -48,11 +50,12 @@ describe('#metrics', () => {
         Unit.Count,
         StorageResolution.Standard
       )
-      expect(mockFlush).toHaveBeenCalled()
-    }))
+      expect(mockFlush).toHaveBeenCalledWith()
+    })
+  })
 
-  describe('When metrics throws', () =>
-    it.each(metricsNames)('Logs expected error - %s', async (metricName) => {
+  describe('when metrics throws', () => {
+    it.each(metricsNames)('logs expected error - %s', async (metricName) => {
       config.set('isMetricsEnabled', true)
 
       const mockError = 'mock-metrics-put-error'
@@ -61,5 +64,6 @@ describe('#metrics', () => {
       await metrics[metricName]()
 
       expect(mockLoggerError).toHaveBeenCalledWith(Error(mockError), mockError)
-    }))
+    })
+  })
 })
