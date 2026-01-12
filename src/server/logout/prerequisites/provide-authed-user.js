@@ -8,7 +8,7 @@ const provideAuthedUser = {
   // @fixme: code coverage
   /* v8 ignore next */
   method: async (request) => {
-    const { ok , value } = await getUserSession(request)
+    const { ok, value } = await getUserSession(request)
     return ok ? value : null
   },
   assign: 'authedUser'
