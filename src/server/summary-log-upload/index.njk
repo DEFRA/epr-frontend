@@ -12,8 +12,10 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <span class="govuk-caption-xl">{{ caption }}</span>
-        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-xl">{{ caption }}</span>
+          {{ heading }}
+        </h1>
 
         <p>{{ introText }}</p>
 
