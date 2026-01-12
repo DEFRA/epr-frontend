@@ -36,7 +36,8 @@ export const summaryLogUploadController = {
       return h.view('summary-log-upload/index', {
         pageTitle: localise('summary-log-upload:pageTitle'),
         heading: localise('summary-log-upload:heading'),
-        siteName: localise('summary-log-upload:siteName'),
+        caption: localise('summary-log-upload:caption'),
+        introText: localise('summary-log-upload:introText'),
         uploadUrl,
         backUrl
       })

@@ -97,12 +97,18 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being uploaded')
+        expect.stringContaining('Your file is being checked')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining(
-          'Your summary log is being uploaded and automatically validated'
-        )
+        expect.stringContaining('Your summary log is being checked for:')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('errors'))
+      expect(result).toStrictEqual(expect.stringContaining('new data'))
+      expect(result).toStrictEqual(
+        expect.stringContaining('changes to previously uploaded data')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('This may take a few minutes.')
       )
       expect(result).toStrictEqual(
         expect.stringContaining('Keep this page open and do not refresh it.')
@@ -119,7 +125,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { result, statusCode } = await server.inject({ method: 'GET', url })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being uploaded')
+        expect.stringContaining('Your file is being checked')
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
