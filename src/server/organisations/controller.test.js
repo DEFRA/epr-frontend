@@ -12,18 +12,18 @@ import {
 
 import { config } from '#config/config.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 
 // Import fixtures
-import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
-import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
-import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
+import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
+import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureMissingFields from '../../../fixtures/organisation/missing-fields.json' with { type: 'json' }
+import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureSingleReprocessing from '../../../fixtures/organisation/single-reprocessing.json' with { type: 'json' }
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
@@ -78,7 +78,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -93,7 +93,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -130,7 +130,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902/exporting'
       })
@@ -154,7 +154,7 @@ describe('#organisationController', () => {
       ).mockResolvedValue(fixtureData)
 
       // Test reprocessing tab
-      const reprocessingResponse = await authHelper.injectWithAuth({
+      const reprocessingResponse = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -170,7 +170,7 @@ describe('#organisationController', () => {
       )
 
       // Test exporting tab
-      const exportingResponse = await authHelper.injectWithAuth({
+      const exportingResponse = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/exporting'
       })
@@ -191,7 +191,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943906'
       })
@@ -209,7 +209,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -232,7 +232,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -256,7 +256,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.injectWithAuth({
+      await authHelper.inject({
         method: 'GET',
         url: `/organisations/${organisationId}`
       })
@@ -271,7 +271,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.injectWithAuth({
+      await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -291,7 +291,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(backendError)
 
-      const { statusCode } = await authHelper.injectWithAuth({
+      const { statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -318,7 +318,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(Boom.notFound('Organisation not found'))
 
-      const { statusCode } = await authHelper.injectWithAuth({
+      const { statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/nonexistent-id'
       })
@@ -334,7 +334,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(timeoutError)
 
-      const { statusCode } = await authHelper.injectWithAuth({
+      const { statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -350,7 +350,7 @@ describe('#organisationController', () => {
         invalidField: 'no company details'
       })
 
-      const { statusCode } = await authHelper.injectWithAuth({
+      const { statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -371,7 +371,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureEmpty)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943903'
       })
@@ -388,7 +388,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureAllExcluded)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943904'
       })
@@ -426,7 +426,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithCreatedStatus)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -457,7 +457,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithRejectedStatus)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -471,7 +471,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureMissingFields)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943905'
       })
@@ -499,7 +499,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithUnmatchedAccreditation)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -519,14 +519,14 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const reprocessingResponse = await authHelper.injectWithAuth({
+      const reprocessingResponse = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902'
       })
 
       expect(reprocessingResponse.result).not.toContain(/Reprocessing/i)
 
-      const exportingResponse = await authHelper.injectWithAuth({
+      const exportingResponse = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902/exporting'
       })
@@ -541,7 +541,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943906'
       })
@@ -610,7 +610,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMixedStatuses)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -639,7 +639,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -709,7 +709,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMultipleMaterialsSameSite)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -733,7 +733,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.injectWithAuth({
+      await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })
@@ -796,7 +796,7 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithVariousStatuses)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
       })

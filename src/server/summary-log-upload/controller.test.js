@@ -68,7 +68,7 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should provide expected response', async () => {
-    const { result, statusCode } = await authHelper.injectWithAuth({
+    const { result, statusCode } = await authHelper.inject({
       method: 'GET',
       url
     })
@@ -80,7 +80,7 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should render back link to registration dashboard', async () => {
-    const { result } = await authHelper.injectWithAuth({
+    const { result } = await authHelper.inject({
       method: 'GET',
       url
     })
@@ -94,7 +94,7 @@ describe('#summaryLogUploadController', () => {
   test('should display error page when upload initialisation fails', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
-    const { result } = await authHelper.injectWithAuth({
+    const { result } = await authHelper.inject({
       method: 'GET',
       url
     })
@@ -108,7 +108,7 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {
-    await authHelper.injectWithAuth({
+    await authHelper.inject({
       method: 'GET',
       url
     })
@@ -124,19 +124,19 @@ describe('#summaryLogUploadController', () => {
 
   describe('page content', () => {
     test('should render caption "Upload summary log"', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Upload summary log')
     })
 
     test('should render heading "Choose file"', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Choose file')
     })
 
     test('should render intro text', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain(
         'You can upload the latest version of your summary log whenever you need to add or adjust waste records.'
@@ -144,32 +144,32 @@ describe('#summaryLogUploadController', () => {
     })
 
     test('should render file upload with label "Upload XLSX file"', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Upload XLSX file')
     })
 
     test('should render file upload label in bold', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('govuk-!-font-weight-bold')
     })
 
     test('should render Continue button', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Continue')
     })
 
     test('should not render accordion sections', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).not.toContain('govuk-accordion')
       expect(result).not.toContain('Why this is needed')
     })
 
     test('should not render inset text', async () => {
-      const { result } = await authHelper.injectWithAuth({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).not.toContain('govuk-inset-text')
     })

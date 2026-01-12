@@ -117,7 +117,7 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   test('should provide expected response', async () => {
-    const { result, statusCode } = await authHelper.injectWithAuth({
+    const { result, statusCode } = await authHelper.inject({
       method: 'GET',
       url
     })
@@ -138,7 +138,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.preprocessing
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -163,7 +163,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validating
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -180,7 +180,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.submitting
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -219,7 +219,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -242,7 +242,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -259,7 +259,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -297,7 +297,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -324,7 +324,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -351,7 +351,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -380,7 +380,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -419,7 +419,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -448,7 +448,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -486,7 +486,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -522,7 +522,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -556,7 +556,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -595,7 +595,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -629,7 +629,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -662,7 +662,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -697,7 +697,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -728,7 +728,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -768,7 +768,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -788,7 +788,7 @@ describe('#summaryLogUploadProgressController', () => {
         accreditationNumber: '493021'
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -812,7 +812,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.submitted
       })
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -885,7 +885,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -903,7 +903,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -922,7 +922,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.rejected
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -942,7 +942,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -966,7 +966,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -987,7 +987,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1006,7 +1006,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1031,7 +1031,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1054,7 +1054,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1078,7 +1078,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1110,7 +1110,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1133,7 +1133,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1150,7 +1150,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1169,7 +1169,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1194,7 +1194,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1217,7 +1217,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1243,7 +1243,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1261,7 +1261,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1281,7 +1281,7 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1296,7 +1296,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validationFailed
       })
 
-      await authHelper.injectWithAuth({
+      await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1315,7 +1315,7 @@ describe('#summaryLogUploadProgressController', () => {
           status: summaryLogStatuses.superseded
         })
 
-        const { result, statusCode } = await authHelper.injectWithAuth({
+        const { result, statusCode } = await authHelper.inject({
           method: 'GET',
           url
         })
@@ -1334,7 +1334,7 @@ describe('#summaryLogUploadProgressController', () => {
           status: summaryLogStatuses.superseded
         })
 
-        const { result } = await authHelper.injectWithAuth({
+        const { result } = await authHelper.inject({
           method: 'GET',
           url
         })
@@ -1349,7 +1349,7 @@ describe('#summaryLogUploadProgressController', () => {
           status: summaryLogStatuses.superseded
         })
 
-        await authHelper.injectWithAuth({
+        await authHelper.inject({
           method: 'GET',
           url
         })
@@ -1363,7 +1363,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.superseded
       })
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1398,7 +1398,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: 'some_unknown_status'
       })
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1413,7 +1413,7 @@ describe('#summaryLogUploadProgressController', () => {
     test('should show 404 error page when summary log not found', async () => {
       fetchSummaryLogStatus.mockRejectedValueOnce(Boom.notFound())
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1427,7 +1427,7 @@ describe('#summaryLogUploadProgressController', () => {
         Boom.internal('Failed to fetch')
       )
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url
       })
@@ -1445,7 +1445,7 @@ describe('#summaryLogUploadProgressController', () => {
         ok: false
       })
 
-      const { statusCode, headers } = await authHelper.injectWithAuth({
+      const { statusCode, headers } = await authHelper.inject({
         method: 'GET',
         url
       })

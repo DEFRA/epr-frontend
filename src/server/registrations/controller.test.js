@@ -11,15 +11,15 @@ import {
 
 import { config } from '#config/config.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import Boom from '@hapi/boom'
 
-import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
+import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(
@@ -73,7 +73,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -90,7 +90,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -109,7 +109,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -125,7 +125,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -140,7 +140,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -154,7 +154,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -174,7 +174,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -191,7 +191,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -210,7 +210,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -226,7 +226,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -243,7 +243,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -261,7 +261,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -279,7 +279,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved'
       })
@@ -294,7 +294,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved'
       })
@@ -315,7 +315,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(Boom.forbidden())
 
-      const { statusCode } = await authHelper.injectWithAuth({
+      const { statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/nonexistent-org/registrations/reg-001'
       })
@@ -328,7 +328,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { statusCode } = await authHelper.injectWithAuth({
+      const { statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/nonexistent-acc'
       })
@@ -376,7 +376,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMissingSite)
 
-      const { result, statusCode } = await authHelper.injectWithAuth({
+      const { result, statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-site'
       })
@@ -390,7 +390,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved'
       })
@@ -419,7 +419,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMissingMaterial)
 
-      const { statusCode } = await authHelper.injectWithAuth({
+      const { statusCode } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-material'
       })
@@ -432,7 +432,7 @@ describe('#accreditationDashboardController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.injectWithAuth({
+      const { result } = await authHelper.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-002-plastic-suspended'
       })

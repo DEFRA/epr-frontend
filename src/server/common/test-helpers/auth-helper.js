@@ -97,7 +97,7 @@ export const createAuthSessionHelper = (server) => {
    * @param {object} options - Hapi inject options
    * @returns {Promise} Response from server.inject
    */
-  const injectWithAuth = async (options) => {
+  const inject = async (options) => {
     if (!authCookie) {
       throw new Error(
         'Auth cookie not created. Call createAuthCookie() first in beforeAll.'
@@ -120,7 +120,7 @@ export const createAuthSessionHelper = (server) => {
   return {
     createAuthCookie,
     getAuthCookie,
-    injectWithAuth,
+    inject,
     mockGetUserSession
   }
 }
