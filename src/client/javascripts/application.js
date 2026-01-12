@@ -18,44 +18,13 @@ createAll(Radios)
 createAll(SkipLink)
 
 /**
- * Initialises CDP upload form error handling.
- * Intercepts form submission to handle CDP uploader errors gracefully,
- * redirecting to a user-friendly error page instead of displaying raw JSON.
+ * Prevents stale uploadId errors when user navigates back to upload page.
+ * When browser restores the page from bfcache (back-forward cache), the form
+ * contains the old uploadId which CDP will reject. Force a reload to get a
+ * fresh uploadId from the server.
  */
-function initCdpUploadHandler() {
-  const form = document.querySelector('form[data-success-url][data-error-url]')
-
-  if (!form) {
-    return
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    window.location.reload()
   }
-
-  const successUrl = form.dataset.successUrl
-  const errorUrl = form.dataset.errorUrl
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault()
-
-    const formData = new FormData(form)
-
-    try {
-      const response = await fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        redirect: 'manual'
-      })
-
-      if (response.type === 'opaqueredirect') {
-        // CDP returned a redirect (success) - go to success URL
-        window.location.href = successUrl
-      } else {
-        // CDP returned an error response - go to error URL
-        window.location.href = errorUrl
-      }
-    } catch {
-      // Network or CORS error - go to error URL
-      window.location.href = errorUrl
-    }
-  })
-}
-
-initCdpUploadHandler()
+})

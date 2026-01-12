@@ -94,34 +94,6 @@ describe('#summaryLogUploadController', () => {
     })
   })
 
-  test('should render form with success URL data attribute for JS error handling', async () => {
-    const { result } = await server.inject({ method: 'GET', url })
-
-    expect(result).toContain(
-      'data-success-url="/organisations/123/registrations/456/summary-logs/sl-789"'
-    )
-  })
-
-  test('should render form with error URL data attribute for JS error handling', async () => {
-    const { result } = await server.inject({ method: 'GET', url })
-
-    expect(result).toContain(
-      'data-error-url="/organisations/123/registrations/456/summary-logs/upload?error=true"'
-    )
-  })
-
-  describe('CDP upload error handling', () => {
-    test('should show generic error page when error query param is present', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: `${url}?error=true`
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Something went wrong')
-    })
-  })
-
   describe('session validation', () => {
     test('should redirect to login when session is invalid', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({

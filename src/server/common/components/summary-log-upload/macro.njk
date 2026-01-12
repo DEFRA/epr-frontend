@@ -6,8 +6,6 @@
 
   Parameters:
     - uploadUrl: (required) Form action URL
-    - successUrl: (optional) URL to redirect to on successful upload (for JS error handling)
-    - errorUrl: (optional) URL to redirect to on upload error (for JS error handling)
     - fileUploadLabel: (required) Label text for file input
     - buttonText: (required) Submit button text
     - formErrors: (optional) Error message to display
@@ -20,8 +18,6 @@
     action="{{ params.uploadUrl }}"
     method="post"
     enctype="multipart/form-data"
-    {% if params.successUrl %}data-success-url="{{ params.successUrl }}"{% endif %}
-    {% if params.errorUrl %}data-error-url="{{ params.errorUrl }}"{% endif %}
   >
     {% set summaryLogUploadError = null %}
     {% if params.formErrors %}

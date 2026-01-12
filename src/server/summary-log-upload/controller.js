@@ -9,17 +9,6 @@ export const summaryLogUploadController = {
   handler: async (request, h) => {
     const localise = request.t
     const { organisationId, registrationId } = request.params
-    const hasError = request.query.error === 'true'
-
-    // If redirected back due to CDP upload error, show generic error page
-    if (hasError) {
-      const genericError = localise('error:generic')
-      return h.view('error/index', {
-        pageTitle: genericError,
-        heading: genericError,
-        message: genericError
-      })
-    }
 
     const { ok, value: session } = await getUserSession(request)
 
@@ -28,13 +17,12 @@ export const summaryLogUploadController = {
     }
 
     try {
-      const { uploadUrl, uploadId, summaryLogId } =
-        await initiateSummaryLogUpload({
-          organisationId,
-          registrationId,
-          redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-          idToken: session.idToken
-        })
+      const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        idToken: session.idToken
+      })
 
       // Store uploadId in session for status polling reconciliation
       const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
@@ -43,18 +31,14 @@ export const summaryLogUploadController = {
         uploadId
       })
 
-      const registrationPath = `/organisations/${organisationId}/registrations/${registrationId}`
-      const successUrl = `${registrationPath}/summary-logs/${summaryLogId}`
-      const errorUrl = `${registrationPath}/summary-logs/upload?error=true`
+      const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 
       return h.view('summary-log-upload/index', {
         pageTitle: localise('summary-log-upload:pageTitle'),
         heading: localise('summary-log-upload:heading'),
         siteName: localise('summary-log-upload:siteName'),
         uploadUrl,
-        successUrl,
-        errorUrl,
-        backUrl: registrationPath
+        backUrl
       })
     } catch (err) {
       // @todo: use structured logging
