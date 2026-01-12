@@ -144,12 +144,18 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being uploaded')
+        expect.stringContaining('Your file is being checked')
       )
       expect(result).toStrictEqual(
-        expect.stringContaining(
-          'Your summary log is being uploaded and automatically validated'
-        )
+        expect.stringContaining('Your summary log is being checked for:')
+      )
+      expect(result).toStrictEqual(expect.stringContaining('errors'))
+      expect(result).toStrictEqual(expect.stringContaining('new data'))
+      expect(result).toStrictEqual(
+        expect.stringContaining('changes to previously uploaded data')
+      )
+      expect(result).toStrictEqual(
+        expect.stringContaining('This may take a few minutes.')
       )
       expect(result).toStrictEqual(
         expect.stringContaining('Keep this page open and do not refresh it.')
@@ -169,7 +175,7 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being uploaded')
+        expect.stringContaining('Your file is being checked')
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
@@ -204,11 +210,8 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Check before confirming upload')
       )
-      expect(result).toStrictEqual(expect.stringContaining('Compliance'))
       expect(result).toStrictEqual(expect.stringContaining('Declaration'))
-      expect(result).toStrictEqual(
-        expect.stringContaining('Confirm and submit')
-      )
+      expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
       expect(result).toStrictEqual(
         expect.stringContaining('upload an updated summary log')
       )
@@ -387,10 +390,8 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      // Should show total new loads (included + excluded) in heading
-      expect(result).toStrictEqual(
-        expect.stringContaining('There are 9 new loads')
-      )
+      // Should show new loads section heading
+      expect(result).toStrictEqual(expect.stringContaining('New loads'))
       expect(result).toStrictEqual(
         expect.stringContaining(
           '7 new loads will be added to your waste balance'
@@ -455,9 +456,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
-      expect(result).toStrictEqual(
-        expect.stringContaining('There are 3 adjusted loads')
-      )
+      expect(result).toStrictEqual(expect.stringContaining('Adjusted loads'))
       expect(result).toStrictEqual(
         expect.stringContaining(
           'These loads have had data added, removed, or changed in section 1 of your summary log since it was last submitted.'
@@ -529,11 +528,19 @@ describe('#summaryLogUploadProgressController', () => {
 
       expectCheckPageContent(result)
 
+      // Should show static section headings
+      expect(result).toStrictEqual(expect.stringContaining('New loads'))
+      expect(result).toStrictEqual(expect.stringContaining('Adjusted loads'))
+      // Should show singular form in load counts
       expect(result).toStrictEqual(
-        expect.stringContaining('There is 1 new load')
+        expect.stringContaining(
+          '1 new load will be added to your waste balance'
+        )
       )
       expect(result).toStrictEqual(
-        expect.stringContaining('There is 1 adjusted load')
+        expect.stringContaining(
+          '1 adjusted load will be reflected in your waste balance'
+        )
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
