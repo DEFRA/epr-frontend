@@ -96,6 +96,12 @@ describe('#logoutController - integration', () => {
       })
     })
 
+    afterEach(() => {
+      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
+        ok: false
+      })
+    })
+
     test('redirects to logged-out page via Defra ID', async () => {
       expect(response.statusCode).toBe(statusCodes.found)
 
