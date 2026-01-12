@@ -121,6 +121,12 @@ describe('#summaryLogUploadController', () => {
       expect(result).toContain('Upload XLSX file')
     })
 
+    test('should render file upload label in bold', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('govuk-!-font-weight-bold')
+    })
+
     test('should render Continue button', async () => {
       const { result } = await server.inject({ method: 'GET', url })
 

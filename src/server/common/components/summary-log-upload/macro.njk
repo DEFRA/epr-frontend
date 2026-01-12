@@ -29,7 +29,13 @@
     {{ govukFileUpload({
       id: "summary-log-upload",
       name: "summaryLogUpload",
-      label: { text: params.fileUploadLabel },
+      label: {
+        text: params.fileUploadLabel,
+        classes: "govuk-!-font-weight-bold"
+      },
+      formGroup: {
+        classes: "govuk-!-margin-top-6"
+      },
       javascript: true,
       attributes: {
         accept: ".xlsx",
