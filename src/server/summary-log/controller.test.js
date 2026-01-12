@@ -752,7 +752,7 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       // Verify fetchSummaryLogStatus was NOT called (freshData was used instead)
-      expect(fetchSummaryLogStatus.mock.calls).toHaveLength(initialCallCount)
+      expect(fetchSummaryLogStatus).toHaveBeenCalledTimes(initialCallCount)
 
       // Verify success page rendered
       expect(result).toStrictEqual(

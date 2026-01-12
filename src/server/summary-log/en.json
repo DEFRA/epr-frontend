@@ -30,7 +30,7 @@
   "declarationBullet1": "the information you are providing is as accurate as reasonably possible",
   "declarationBullet2": "you understand that submission of false or misleading information may result in enforcement action",
   "declarationHeading": "Declaration",
-  "declarationIntro": "By uploading your summary log data, you confirm that:",
+  "declarationIntro": "By uploading your summary log data, you confirm that",
   "errorHeading": "Error checking status",
   "errorMessage": "Unable to check upload status",
   "failure": {
