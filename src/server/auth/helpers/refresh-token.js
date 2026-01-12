@@ -3,18 +3,22 @@ import fetch from 'node-fetch'
 import { getUserSession } from './get-user-session.js'
 
 /**
- * Refresh access token using refresh token
+ * Refresh id token using refresh token
  * @param {Request} request - Hapi request object
  * @returns {Promise<Response>}
  */
-async function refreshAccessToken(request) {
-  const { ok, value: authedUser } = await getUserSession(request)
+async function refreshIdToken(request) {
+  const { ok, value: session } = await getUserSession(request)
 
   if (!ok) {
     throw new Error('Cannot refresh token: no user session found')
   }
 
-  const refreshToken = authedUser.refreshToken ?? null
+  if (!session.refreshToken) {
+    throw new Error('Cannot refresh token: no refresh token found')
+  }
+
+  const refreshToken = session.refreshToken
   const clientId = config.get('defraId.clientId')
   const clientSecret = config.get('defraId.clientSecret')
   const serviceId = config.get('defraId.serviceId')
@@ -28,9 +32,9 @@ async function refreshAccessToken(request) {
   params.append('scope', 'openid offline_access')
   params.append('serviceId', serviceId)
 
-  request.logger.info('Access token expired, refreshing...')
+  request.logger.info('ID token expired, refreshing...')
 
-  return fetch(authedUser.urls.token, {
+  return fetch(session.urls.token, {
     method: 'post',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -40,7 +44,7 @@ async function refreshAccessToken(request) {
   })
 }
 
-export { refreshAccessToken }
+export { refreshIdToken }
 
 /**
  * @import { Request } from '@hapi/hapi'

@@ -7,7 +7,7 @@ import { err, ok } from '#server/common/helpers/result.js'
 import authCookie from '@hapi/cookie'
 import { isPast, parseISO, subMinutes } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
-import { refreshAccessToken } from './refresh-token.js'
+import { refreshIdToken } from './refresh-token.js'
 
 /**
  * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
@@ -42,7 +42,7 @@ const createSessionCookie = (verifyToken) => {
     }
 
     try {
-      const response = await refreshAccessToken(request)
+      const response = await refreshIdToken(request)
 
       if (!response.ok) {
         const errorBody = await response.text()
@@ -53,11 +53,11 @@ const createSessionCookie = (verifyToken) => {
         })
       }
 
-      const refreshAccessTokenJson = await response.json()
+      const refreshIdTokenJson = await response.json()
 
       const refreshedSession = await updateUserSession(
         request,
-        refreshAccessTokenJson
+        refreshIdTokenJson
       )
 
       return ok(refreshedSession)

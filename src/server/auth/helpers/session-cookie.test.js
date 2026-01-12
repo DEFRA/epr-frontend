@@ -74,7 +74,6 @@ describe('#sessionCookie - integration', () => {
           const mockIdToken = `${header}.${payload}.${signature}`
 
           return HttpResponse.json({
-            access_token: 'new-access-token',
             refresh_token: 'new-refresh-token',
             id_token: mockIdToken,
             expires_in: 3600,
@@ -439,10 +438,9 @@ describe('#sessionCookie - integration', () => {
               const mockIdToken = `${header}.${payload}.${signature}`
 
               return HttpResponse.json({
-                access_token: 'new-access-token',
-                refresh_token: 'new-refresh-token',
-                id_token: mockIdToken,
                 expires_in: 3600,
+                id_token: mockIdToken,
+                refresh_token: 'new-refresh-token',
                 token_type: 'Bearer'
               })
             }
