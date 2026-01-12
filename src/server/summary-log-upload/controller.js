@@ -13,10 +13,11 @@ export const summaryLogUploadController = {
 
     // If redirected back due to CDP upload error, show generic error page
     if (hasError) {
+      const genericError = localise('error:generic')
       return h.view('error/index', {
-        pageTitle: localise('error:generic'),
-        heading: localise('error:generic'),
-        message: localise('error:generic')
+        pageTitle: genericError,
+        heading: genericError,
+        message: genericError
       })
     }
 
@@ -42,9 +43,9 @@ export const summaryLogUploadController = {
         uploadId
       })
 
-      const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-      const successUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-      const errorUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload?error=true`
+      const registrationPath = `/organisations/${organisationId}/registrations/${registrationId}`
+      const successUrl = `${registrationPath}/summary-logs/${summaryLogId}`
+      const errorUrl = `${registrationPath}/summary-logs/upload?error=true`
 
       return h.view('summary-log-upload/index', {
         pageTitle: localise('summary-log-upload:pageTitle'),
@@ -53,7 +54,7 @@ export const summaryLogUploadController = {
         uploadUrl,
         successUrl,
         errorUrl,
-        backUrl
+        backUrl: registrationPath
       })
     } catch (err) {
       // @todo: use structured logging
