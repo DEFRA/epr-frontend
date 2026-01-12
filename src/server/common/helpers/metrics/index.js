@@ -9,13 +9,9 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
  * Aws embedded metrics wrapper
- * @param {string} metricName
- * @param {number} value
- * @returns {Promise<void>}
  */
-export async function metricsCounter(metricName, value = 1) {
+async function metricsCounter(metricName, value = 1) {
   const isMetricsEnabled = config.get('isMetricsEnabled')
-
   if (!isMetricsEnabled) {
     return
   }
@@ -31,5 +27,11 @@ export async function metricsCounter(metricName, value = 1) {
     await metricsLogger.flush()
   } catch (error) {
     createLogger().error(error, error.message)
+  }
+}
+
+export const metrics = {
+  async signOutSuccess() {
+    return await metricsCounter('signOutSuccess')
   }
 }

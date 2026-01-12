@@ -9,7 +9,7 @@ const provideAuthedUser = {
   /* v8 ignore next */
   method: async (request) => {
     const { value } = await getUserSession(request)
-    return value
+    return value ?? null
   },
   assign: 'authedUser',
   failAction: async () => {
