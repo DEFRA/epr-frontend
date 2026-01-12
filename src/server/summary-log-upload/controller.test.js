@@ -14,7 +14,8 @@ vi.mock(
   () => ({
     initiateSummaryLogUpload: vi.fn().mockResolvedValue({
       uploadUrl: 'http://cdp/upload',
-      uploadId: 'cdp-upload-123'
+      uploadId: 'cdp-upload-123',
+      summaryLogId: 'sl-789'
     })
   })
 )
@@ -90,7 +91,7 @@ describe('#summaryLogUploadController', () => {
     )
   })
 
-  test('should redirect to error', async () => {
+  test('should display error page when upload initialisation fails', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
     const { result } = await authHelper.injectWithAuth({
@@ -100,6 +101,9 @@ describe('#summaryLogUploadController', () => {
 
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log upload error')
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining('Failed to initialize upload: Mock error')
     )
   })
 
@@ -115,6 +119,59 @@ describe('#summaryLogUploadController', () => {
       redirectUrl:
         '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
       idToken: 'test-id-token'
+    })
+  })
+
+  describe('page content', () => {
+    test('should render caption "Upload summary log"', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Upload summary log')
+    })
+
+    test('should render heading "Choose file"', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Choose file')
+    })
+
+    test('should render intro text', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain(
+        'You can upload the latest version of your summary log whenever you need to add or adjust waste records.'
+      )
+    })
+
+    test('should render file upload with label "Upload XLSX file"', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Upload XLSX file')
+    })
+
+    test('should render file upload label in bold', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('govuk-!-font-weight-bold')
+    })
+
+    test('should render Continue button', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Continue')
+    })
+
+    test('should not render accordion sections', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).not.toContain('govuk-accordion')
+      expect(result).not.toContain('Why this is needed')
+    })
+
+    test('should not render inset text', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).not.toContain('govuk-inset-text')
     })
   })
 

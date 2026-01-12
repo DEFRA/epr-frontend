@@ -31,7 +31,8 @@ export const summaryLogUploadController = {
       return h.view('summary-log-upload/index', {
         pageTitle: localise('summary-log-upload:pageTitle'),
         heading: localise('summary-log-upload:heading'),
-        siteName: localise('summary-log-upload:siteName'),
+        caption: localise('summary-log-upload:caption'),
+        introText: localise('summary-log-upload:introText'),
         uploadUrl,
         backUrl
       })
@@ -42,7 +43,7 @@ export const summaryLogUploadController = {
       return h.view('error/index', {
         pageTitle: localise('summary-log-upload:errorPageTitle'),
         heading: localise('summary-log-upload:errorHeading'),
-        error: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`
+        message: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`
       })
     }
   }
