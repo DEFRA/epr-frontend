@@ -90,6 +90,53 @@ describe('#summaryLogUploadController', () => {
     })
   })
 
+  describe('page content', () => {
+    test('should render caption "Upload summary log"', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Upload summary log')
+    })
+
+    test('should render heading "Choose file"', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Choose file')
+    })
+
+    test('should render intro text', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain(
+        'You can upload the latest version of your summary log whenever you need to add or adjust waste records.'
+      )
+    })
+
+    test('should render file upload with label "Upload XLSX file"', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Upload XLSX file')
+    })
+
+    test('should render Continue button', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).toContain('Continue')
+    })
+
+    test('should not render accordion sections', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).not.toContain('govuk-accordion')
+      expect(result).not.toContain('Why this is needed')
+    })
+
+    test('should not render inset text', async () => {
+      const { result } = await server.inject({ method: 'GET', url })
+
+      expect(result).not.toContain('govuk-inset-text')
+    })
+  })
+
   describe('session validation', () => {
     test('should redirect to login when session is invalid', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
