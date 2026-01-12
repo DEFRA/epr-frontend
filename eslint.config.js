@@ -37,6 +37,8 @@ export default [
       }
     },
     rules: {
+      '@typescript-eslint/no-floating-promises': ['error'],
+      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
       'no-console': 'error',
       'object-shorthand': ['error', 'properties'],
       'promise/prefer-await-to-then': ['error', { strict: true }],
@@ -47,7 +49,6 @@ export default [
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
 
       // JSDoc blocks are optional by default
       'jsdoc/require-jsdoc': 'off',

@@ -31,7 +31,7 @@ const logoutController = {
       postLogoutRedirectUrl
     )
 
-    removeUserSession(request)
+    await removeUserSession(request)
 
     return h.redirect(logoutUrl)
   }
