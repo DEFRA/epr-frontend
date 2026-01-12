@@ -4,7 +4,10 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
-    <h1 class="govuk-heading-xl">{{ localise('summary-log:checkHeading') }}</h1>
+    <h1 class="govuk-heading-xl">
+      <span class="govuk-caption-xl">{{ localise('summary-log:checkCaption') }}</span>
+      {{ localise('summary-log:checkHeading') }}
+    </h1>
 
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
     <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
@@ -16,10 +19,10 @@
       <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
     </div>
 
-    {% if loads.added.total > 0 %}
-    <h2 class="govuk-heading-l">{{ localise('summary-log:addedLoadsHeading', { count: loads.added.total }) }}</h2>
-    {% else %}
-    <h2 class="govuk-heading-l">{{ localise('summary-log:noAddedLoadsHeading') }}</h2>
+    <h2 class="govuk-heading-l">{{ localise('summary-log:newLoadsSectionHeading') }}</h2>
+
+    {% if loads.added.total == 0 %}
+    <p class="govuk-body"><strong>{{ localise('summary-log:noAddedLoadsHeading') }}</strong></p>
     {% endif %}
 
     {% if loads.added.included.count > 0 %}
@@ -42,10 +45,9 @@
     }) }}
     {% endif %}
 
-    {% if loads.adjusted.total > 0 %}
-    <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+    <h2 class="govuk-heading-l">{{ localise('summary-log:adjustedLoadsSectionHeading') }}</h2>
 
-    <h2 class="govuk-heading-l">{{ localise('summary-log:adjustedLoadsHeading', { count: loads.adjusted.total }) }}</h2>
+    {% if loads.adjusted.total > 0 %}
     <p class="govuk-body">{{ localise('summary-log:adjustedLoadsIntro', { sectionNumber: sectionNumber }) }}</p>
 
     <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-adjusted-loads">
@@ -96,15 +98,10 @@
       {% endif %}
     </div>
     {% else %}
-    <h2 class="govuk-heading-l">{{ localise('summary-log:noAdjustedLoadsHeading') }}</h2>
-    <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+    <p class="govuk-body"><strong>{{ localise('summary-log:noAdjustedLoadsHeading') }}</strong></p>
     {% endif %}
 
-    <h2 class="govuk-heading-l">{{ localise('summary-log:complianceHeading') }}</h2>
-    <h3 class="govuk-heading-s">{{ localise('summary-log:complianceSubheading') }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:complianceBody') }}</p>
-
-    <h2 class="govuk-heading-m">{{ localise('summary-log:declarationHeading') }}</h2>
+    <h2 class="govuk-heading-l">{{ localise('summary-log:declarationHeading') }}</h2>
     <p class="govuk-body">{{ localise('summary-log:declarationIntro') }}</p>
     <ul class="govuk-list govuk-list--bullet">
       <li>{{ localise('summary-log:declarationBullet1') }}</li>
