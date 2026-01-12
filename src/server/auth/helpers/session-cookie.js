@@ -17,22 +17,12 @@ import { refreshIdToken } from './refresh-token.js'
  */
 
 /**
- * Create session cookie authentication plugin
- * Factory function that creates a plugin with verifyToken closure
- * @param {VerifyToken} verifyToken - Token verification function
- * @returns {ServerRegisterPluginObject<void>}
+ * Creates a handler that checks if token is expired and refreshes it if needed
+ * @param {(request: Request, tokenResponse: object) => Promise<UserSession>} updateUserSession
+ * @returns {(request: Request, userSession: UserSession) => Promise<Result<UserSession>>}
  */
-const createSessionCookie = (verifyToken) => {
-  const updateUserSession = createUpdateUserSession(verifyToken)
-
-  /**
-   * Checks if token is expired and refreshes it if needed
-   * @param {Request} request - Hapi request object
-   * @param {UserSession} userSession - Current user session
-   * @returns {Promise<Result<UserSession>>} Result indicating success or failure
-   */
-  const handleExpiredTokenRefresh = async (request, userSession) => {
-    // Check if token will expire in less than 1 minute
+const createTokenRefreshHandler =
+  (updateUserSession) => async (request, userSession) => {
     const tokenWillExpireSoon = isPast(
       subMinutes(parseISO(userSession.expiresAt), 1)
     )
@@ -54,7 +44,6 @@ const createSessionCookie = (verifyToken) => {
       }
 
       const refreshIdTokenJson = await response.json()
-
       const refreshedSession = await updateUserSession(
         request,
         refreshIdTokenJson
@@ -65,6 +54,16 @@ const createSessionCookie = (verifyToken) => {
       return err({ message: 'Failed to refresh session', cause: error })
     }
   }
+
+/**
+ * Create session cookie authentication plugin
+ * Factory function that creates a plugin with verifyToken closure
+ * @param {VerifyToken} verifyToken - Token verification function
+ * @returns {ServerRegisterPluginObject<void>}
+ */
+const createSessionCookie = (verifyToken) => {
+  const updateUserSession = createUpdateUserSession(verifyToken)
+  const handleExpiredTokenRefresh = createTokenRefreshHandler(updateUserSession)
 
   return {
     plugin: {
