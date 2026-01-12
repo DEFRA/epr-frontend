@@ -48,7 +48,7 @@ export const summaryLogUploadController = {
       return h.view('error/index', {
         pageTitle: localise('summary-log-upload:errorPageTitle'),
         heading: localise('summary-log-upload:errorHeading'),
-        error: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`
+        message: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`
       })
     }
   }
