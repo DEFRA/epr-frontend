@@ -12,7 +12,7 @@
   <div class="govuk-grid-column-two-thirds">
     <div class="govuk-body" data-testid="app-page-body">
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
-      <p>{{ message }}</p>
+      <p>{{ message }}{% if isProcessing %}:{% endif %}</p>
 
       {% if isProcessing %}
         <ul class="govuk-list govuk-list--bullet govuk-!-margin-left-2">
