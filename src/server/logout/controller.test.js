@@ -7,6 +7,7 @@ vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 const appBaseUrl = 'http://localhost:3000'
 const loggedOutSlug = 'logged-out'
 const loggedOutUrl = `${appBaseUrl}/${loggedOutSlug}`
+const loggedOutUrlCy = `${appBaseUrl}/cy/${loggedOutSlug}`
 
 describe('#logoutController', () => {
   describe('when user is not authenticated', () => {
@@ -61,6 +62,39 @@ describe('#logoutController', () => {
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
         new URL(
           `http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(loggedOutUrl)}`
+        )
+      )
+      expect(result).toBe('redirect-response')
+    })
+
+    test('should redirect to localised logout URL', async () => {
+      const mockAuthedUser = {
+        idToken: 'id-token-123',
+        logoutUrl: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
+      }
+
+      const mockRequest = {
+        cookieAuth: {
+          clear: vi.fn()
+        },
+        localiseUrl: vi.fn((key) => `/cy${key}`),
+        pre: {
+          authedUser: mockAuthedUser
+        }
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      const result = await logoutController.handler(mockRequest, mockH)
+
+      expect(dropUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
+      expect(mockRequest.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
+
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
+        new URL(
+          `http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(loggedOutUrlCy)}`
         )
       )
       expect(result).toBe('redirect-response')

@@ -20,7 +20,7 @@ const logoutController = {
     }
 
     const { href: postLogoutRedirectUrl } = new URL(
-      request.localiseUrl(loggedOutUrl),
+      loggedOutUrl,
       config.get('appBaseUrl')
     )
 
