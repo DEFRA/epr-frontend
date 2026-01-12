@@ -12,7 +12,7 @@ describe('#refreshAccessToken', () => {
   test('should refresh access token with correct parameters', async () => {
     const mockAuthedUser = {
       refreshToken: 'refresh-token-123',
-      tokenUrl: 'http://localhost:3200/token'
+      urls: { token: 'http://localhost:3200/token' }
     }
 
     vi.mocked(getUserSession).mockResolvedValue({
@@ -24,7 +24,8 @@ describe('#refreshAccessToken', () => {
       get: vi.fn((key) => {
         const values = {
           'defraId.clientId': 'client-id-123',
-          'defraId.clientSecret': 'client-secret-456'
+          'defraId.clientSecret': 'client-secret-456',
+          'defraId.serviceId': 'service-id-789'
         }
         return values[key]
       })
@@ -77,7 +78,8 @@ describe('#refreshAccessToken', () => {
       client_secret: 'client-secret-456',
       grant_type: 'refresh_token',
       refresh_token: 'refresh-token-123',
-      scope: 'client-id-123 openid profile email offline_access'
+      scope: 'openid offline_access',
+      serviceId: 'service-id-789'
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -86,7 +88,7 @@ describe('#refreshAccessToken', () => {
   test('should handle null refresh token', async () => {
     const mockAuthedUser = {
       refreshToken: null,
-      tokenUrl: 'http://localhost:3200/token'
+      urls: { token: 'http://localhost:3200/token' }
     }
 
     vi.mocked(getUserSession).mockResolvedValue({
@@ -98,7 +100,8 @@ describe('#refreshAccessToken', () => {
       get: vi.fn((key) => {
         const values = {
           'defraId.clientId': 'client-id-123',
-          'defraId.clientSecret': 'client-secret-456'
+          'defraId.clientSecret': 'client-secret-456',
+          'defraId.serviceId': 'service-id-789'
         }
         return values[key]
       })
@@ -128,7 +131,7 @@ describe('#refreshAccessToken', () => {
 
   test('should handle missing refresh token in authedUser', async () => {
     const mockAuthedUser = {
-      tokenUrl: 'http://localhost:3200/token'
+      urls: { token: 'http://localhost:3200/token' }
     }
 
     vi.mocked(getUserSession).mockResolvedValue({
@@ -140,7 +143,8 @@ describe('#refreshAccessToken', () => {
       get: vi.fn((key) => {
         const values = {
           'defraId.clientId': 'client-id-123',
-          'defraId.clientSecret': 'client-secret-456'
+          'defraId.clientSecret': 'client-secret-456',
+          'defraId.serviceId': 'service-id-789'
         }
         return values[key]
       })

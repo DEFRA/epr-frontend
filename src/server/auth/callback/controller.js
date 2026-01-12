@@ -16,13 +16,7 @@ const controller = {
   },
   handler: async (request, h) => {
     if (request.auth.isAuthenticated) {
-      const { profile } = request.auth.credentials
-
-      const session = buildSessionFromProfile({
-        credentials: request.auth.credentials,
-        isAuthenticated: request.auth.isAuthenticated,
-        profile
-      })
+      const session = buildSessionFromProfile(request.auth.credentials)
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)

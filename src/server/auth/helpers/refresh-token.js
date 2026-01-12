@@ -1,5 +1,5 @@
-import fetch from 'node-fetch'
 import { config } from '#config/config.js'
+import fetch from 'node-fetch'
 import { getUserSession } from './get-user-session.js'
 
 /**
@@ -17,6 +17,7 @@ async function refreshAccessToken(request) {
   const refreshToken = authedUser.refreshToken ?? null
   const clientId = config.get('defraId.clientId')
   const clientSecret = config.get('defraId.clientSecret')
+  const serviceId = config.get('defraId.serviceId')
 
   const params = new URLSearchParams()
 
@@ -24,13 +25,12 @@ async function refreshAccessToken(request) {
   params.append('client_secret', clientSecret)
   params.append('grant_type', 'refresh_token')
   params.append('refresh_token', refreshToken)
-
-  // FIXME why does this have a different scope to the initial request? that seems wrong
-  params.append('scope', `${clientId} openid profile email offline_access`)
+  params.append('scope', 'openid offline_access')
+  params.append('serviceId', serviceId)
 
   request.logger.info('Access token expired, refreshing...')
 
-  return fetch(authedUser.tokenUrl, {
+  return fetch(authedUser.urls.token, {
     method: 'post',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',

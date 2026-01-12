@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import Iron from '@hapi/iron'
@@ -14,7 +15,6 @@ import {
   it,
   vi
 } from 'vitest'
-import { statusCodes } from '#server/common/constants/status-codes.js'
 
 // Mock getVerifyToken to return a simple decoder that returns just the payload
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
@@ -44,22 +44,23 @@ describe('#sessionCookie - integration', () => {
           // Create a valid JWT structure (header.payload.signature)
           // We're using a fake but properly formatted JWT
           const mockJwtPayload = {
-            sub: 'user-123',
-            email: 'test@example.com',
-            correlationId: 'corr-123',
-            sessionId: 'sess-123',
-            contactId: 'contact-123',
-            serviceId: 'test-service-id',
-            firstName: 'Test',
-            lastName: 'User',
-            uniqueReference: 'ref-123',
-            loa: '2',
             aal: '1',
+            contactId: 'contact-123',
+            correlationId: 'corr-123',
+            currentRelationshipId: 'rel-123',
+            email: 'test@example.com',
             enrolmentCount: 1,
             enrolmentRequestCount: 0,
-            currentRelationshipId: 'rel-123',
+            exp: Math.floor(Date.now() / 1000) + 3600,
+            firstName: 'Test',
+            lastName: 'User',
+            loa: '2',
             relationships: ['rel-123'],
-            roles: ['role1']
+            roles: ['role1'],
+            serviceId: 'test-service-id',
+            sessionId: 'sess-123',
+            sub: 'user-123',
+            uniqueReference: 'ref-123'
           }
 
           // Create a fake JWT (base64 encoded header.payload.signature)
@@ -70,11 +71,10 @@ describe('#sessionCookie - integration', () => {
             'base64url'
           )
           const signature = 'fake-signature'
-          const mockAccessToken = `${header}.${payload}.${signature}`
-          const mockIdToken = `${header}.${payload}.${signature}` // Same structure as access token
+          const mockIdToken = `${header}.${payload}.${signature}`
 
           return HttpResponse.json({
-            access_token: mockAccessToken,
+            access_token: 'new-access-token',
             refresh_token: 'new-refresh-token',
             id_token: mockIdToken,
             expires_in: 3600,
@@ -130,31 +130,32 @@ describe('#sessionCookie - integration', () => {
     const createExpiredRefreshSessionData = (userId, expiresAt) => ({
       sessionId: `test-session-${userId}`,
       sessionData: {
-        id: userId,
-        email: `${userId}@example.com`,
-        displayName: 'Test User',
-        token: `old-access-token-${userId}`,
-        refreshToken: `old-refresh-token-${userId}`,
-        idToken: `old-id-token-${userId}`,
+        profile: {
+          id: userId,
+          email: `${userId}@example.com`,
+          displayName: 'Test User',
+          correlationId: `corr-${userId}`,
+          sessionId: `sess-${userId}`,
+          contactId: `contact-${userId}`,
+          serviceId: 'test-service-id',
+          firstName: 'Test',
+          lastName: 'User',
+          uniqueReference: `ref-${userId}`,
+          loa: '2',
+          aal: '1',
+          enrolmentCount: 0,
+          enrolmentRequestCount: 0,
+          currentRelationshipId: `rel-${userId}`,
+          relationships: [],
+          roles: []
+        },
         expiresAt,
-        expiresIn: 3600000,
-        isAuthenticated: true,
-        correlationId: `corr-${userId}`,
-        sessionId: `sess-${userId}`,
-        contactId: `contact-${userId}`,
-        serviceId: 'test-service-id',
-        firstName: 'Test',
-        lastName: 'User',
-        uniqueReference: `ref-${userId}`,
-        loa: '2',
-        aal: '1',
-        enrolmentCount: 0,
-        enrolmentRequestCount: 0,
-        currentRelationshipId: `rel-${userId}`,
-        relationships: [],
-        roles: [],
-        tokenUrl: 'http://defra-id.auth/token',
-        logoutUrl: 'http://defra-id.auth/logout'
+        idToken: `old-id-token-${userId}`,
+        refreshToken: `old-refresh-token-${userId}`,
+        urls: {
+          token: 'http://defra-id.auth/token',
+          logout: 'http://defra-id.auth/logout'
+        }
       }
     })
 
@@ -168,9 +169,9 @@ describe('#sessionCookie - integration', () => {
         },
         handler: (request) => {
           return {
-            userId: request.auth.credentials.id,
-            email: request.auth.credentials.email,
-            token: request.auth.credentials.token
+            userId: request.auth.credentials.profile.id,
+            email: request.auth.credentials.profile.email,
+            idToken: request.auth.credentials.idToken
           }
         }
       })
@@ -184,9 +185,9 @@ describe('#sessionCookie - integration', () => {
       )
 
       // Override some fields for this specific test
-      sessionData.enrolmentCount = 1
-      sessionData.relationships = ['rel-123']
-      sessionData.roles = ['role1']
+      sessionData.profile.enrolmentCount = 1
+      sessionData.profile.relationships = ['rel-123']
+      sessionData.profile.roles = ['role1']
 
       // Set session in cache
       await server.app.cache.set(sessionId, sessionData)
@@ -215,7 +216,7 @@ describe('#sessionCookie - integration', () => {
       expect(payload.userId).toBe('user-123')
 
       // Decode the new token and verify its contents
-      const token = jose.decodeJwt(payload.token)
+      const token = jose.decodeJwt(payload.idToken)
 
       expect(token).toStrictEqual(
         expect.objectContaining({
@@ -290,31 +291,32 @@ describe('#sessionCookie - integration', () => {
       const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes in future
 
       const sessionData = {
-        id: 'user-789',
-        email: 'test3@example.com',
-        displayName: 'Test User 3',
-        token: 'valid-access-token',
-        refreshToken: 'valid-refresh-token',
-        idToken: 'valid-id-token',
+        profile: {
+          id: 'user-789',
+          email: 'test3@example.com',
+          displayName: 'Test User 3',
+          correlationId: 'corr-789',
+          sessionId: 'sess-789',
+          contactId: 'contact-789',
+          serviceId: 'test-service-id',
+          firstName: 'Test',
+          lastName: 'User',
+          uniqueReference: 'ref-789',
+          loa: '2',
+          aal: '1',
+          enrolmentCount: 1,
+          enrolmentRequestCount: 0,
+          currentRelationshipId: 'rel-789',
+          relationships: ['rel-789'],
+          roles: ['role1']
+        },
         expiresAt: futureExpiry,
-        expiresIn: 3600000,
-        isAuthenticated: true,
-        correlationId: 'corr-789',
-        sessionId: 'sess-789',
-        contactId: 'contact-789',
-        serviceId: 'test-service-id',
-        firstName: 'Test',
-        lastName: 'User',
-        uniqueReference: 'ref-789',
-        loa: '2',
-        aal: '1',
-        enrolmentCount: 1,
-        enrolmentRequestCount: 0,
-        currentRelationshipId: 'rel-789',
-        relationships: ['rel-789'],
-        roles: ['role1'],
-        tokenUrl: 'http://defra-id.auth/token',
-        logoutUrl: 'http://defra-id.auth/logout'
+        idToken: 'valid-id-token',
+        refreshToken: 'valid-refresh-token',
+        urls: {
+          token: 'http://defra-id.auth/token',
+          logout: 'http://defra-id.auth/logout'
+        }
       }
 
       await server.app.cache.set(sessionId, sessionData)
@@ -341,12 +343,12 @@ describe('#sessionCookie - integration', () => {
       const payload = JSON.parse(response.payload)
 
       // Should still have the original valid token
-      expect(payload.token).toBe('valid-access-token')
+      expect(payload.idToken).toBe('valid-id-token')
 
       // Session should remain unchanged
       const unchangedSession = await server.app.cache.get(sessionId)
 
-      expect(unchangedSession.token).toBe('valid-access-token')
+      expect(unchangedSession.idToken).toBe('valid-id-token')
       expect(unchangedSession.refreshToken).toBe('valid-refresh-token')
     })
 
@@ -370,31 +372,32 @@ describe('#sessionCookie - integration', () => {
         const expiredAt = subMinutes(new Date(), 30).toISOString()
 
         const sessionData = {
-          id: 'user-name-test',
-          email: 'test@example.com',
-          displayName: expectedDisplayName,
-          token: 'old-token',
-          refreshToken: 'old-refresh',
-          idToken: 'old-id',
+          profile: {
+            id: 'user-name-test',
+            email: 'test@example.com',
+            displayName: expectedDisplayName,
+            correlationId: 'corr-test',
+            sessionId: 'sess-test',
+            contactId: 'contact-test',
+            serviceId: 'test-service-id',
+            firstName,
+            lastName,
+            uniqueReference: 'ref-test',
+            loa: '1',
+            aal: '1',
+            enrolmentCount: 0,
+            enrolmentRequestCount: 0,
+            currentRelationshipId: 'rel-test',
+            relationships: [],
+            roles: []
+          },
           expiresAt: expiredAt,
-          expiresIn: 3600000,
-          isAuthenticated: true,
-          correlationId: 'corr-test',
-          sessionId: 'sess-test',
-          contactId: 'contact-test',
-          serviceId: 'test-service-id',
-          firstName,
-          lastName,
-          uniqueReference: 'ref-test',
-          loa: '1',
-          aal: '1',
-          enrolmentCount: 0,
-          enrolmentRequestCount: 0,
-          currentRelationshipId: 'rel-test',
-          relationships: [],
-          roles: [],
-          tokenUrl: 'http://defra-id.auth/token',
-          logoutUrl: 'http://defra-id.auth/logout'
+          idToken: 'old-id',
+          refreshToken: 'old-refresh',
+          urls: {
+            token: 'http://defra-id.auth/token',
+            logout: 'http://defra-id.auth/logout'
+          }
         }
 
         await server.app.cache.set(sessionId, sessionData)
@@ -422,7 +425,8 @@ describe('#sessionCookie - integration', () => {
                 enrolmentRequestCount: 0,
                 currentRelationshipId: 'rel-test',
                 relationships: [],
-                roles: []
+                roles: [],
+                exp: Math.floor(Date.now() / 1000) + 3600
               }
 
               const header = Buffer.from(
@@ -432,11 +436,10 @@ describe('#sessionCookie - integration', () => {
                 JSON.stringify(mockJwtPayload)
               ).toString('base64url')
               const signature = 'fake-signature'
-              const mockAccessToken = `${header}.${payload}.${signature}`
-              const mockIdToken = `${header}.${payload}.${signature}` // Same structure as access token
+              const mockIdToken = `${header}.${payload}.${signature}`
 
               return HttpResponse.json({
-                access_token: mockAccessToken,
+                access_token: 'new-access-token',
                 refresh_token: 'new-refresh-token',
                 id_token: mockIdToken,
                 expires_in: 3600,
@@ -471,9 +474,9 @@ describe('#sessionCookie - integration', () => {
         // Check that displayName is correct based on available name fields
         const updatedSession = await server.app.cache.get(sessionId)
 
-        expect(updatedSession.displayName).toBe(expectedDisplayName)
-        expect(updatedSession.firstName).toBe(firstName)
-        expect(updatedSession.lastName).toBe(lastName)
+        expect(updatedSession.profile.displayName).toBe(expectedDisplayName)
+        expect(updatedSession.profile.firstName).toBe(firstName)
+        expect(updatedSession.profile.lastName).toBe(lastName)
       }
     )
 
@@ -514,31 +517,32 @@ describe('#sessionCookie - integration', () => {
       const expiredAt = subMinutes(new Date(), 2).toISOString()
 
       const sessionData = {
-        id: 'user-exception',
-        email: 'exception@example.com',
-        displayName: 'Exception User',
-        token: 'old-access-token',
-        refreshToken: 'old-refresh-token',
-        idToken: 'old-id-token',
+        profile: {
+          id: 'user-exception',
+          email: 'exception@example.com',
+          displayName: 'Exception User',
+          correlationId: 'corr-exception',
+          sessionId: 'sess-exception',
+          contactId: 'contact-exception',
+          serviceId: 'test-service-id',
+          firstName: 'Exception',
+          lastName: 'User',
+          uniqueReference: 'ref-exception',
+          loa: '2',
+          aal: '1',
+          enrolmentCount: 0,
+          enrolmentRequestCount: 0,
+          currentRelationshipId: 'rel-exception',
+          relationships: [],
+          roles: []
+        },
         expiresAt: expiredAt,
-        expiresIn: 3600000,
-        isAuthenticated: true,
-        correlationId: 'corr-exception',
-        sessionId: 'sess-exception',
-        contactId: 'contact-exception',
-        serviceId: 'test-service-id',
-        firstName: 'Exception',
-        lastName: 'User',
-        uniqueReference: 'ref-exception',
-        loa: '2',
-        aal: '1',
-        enrolmentCount: 0,
-        enrolmentRequestCount: 0,
-        currentRelationshipId: 'rel-exception',
-        relationships: [],
-        roles: [],
-        tokenUrl: 'http://defra-id.auth/token',
-        logoutUrl: 'http://defra-id.auth/logout'
+        idToken: 'old-id-token',
+        refreshToken: 'old-refresh-token',
+        urls: {
+          token: 'http://defra-id.auth/token',
+          logout: 'http://defra-id.auth/logout'
+        }
       }
 
       await server.app.cache.set(sessionId, sessionData)
@@ -571,10 +575,10 @@ describe('#sessionCookie - integration', () => {
     })
 
     it('should return invalid when session is deleted during validation (race condition)', async () => {
-      const expiredAt = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes in future
+      const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes in future
       const { sessionId, sessionData } = createExpiredRefreshSessionData(
         'user-race',
-        expiredAt
+        futureExpiry
       )
 
       await server.app.cache.set(sessionId, sessionData)

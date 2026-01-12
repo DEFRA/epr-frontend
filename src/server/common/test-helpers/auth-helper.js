@@ -4,21 +4,17 @@ import Iron from '@hapi/iron'
 /**
  * Create a default user session object with all required fields
  * @param {object} [overrides] - Optional field overrides
+ * @param {object} [overrides.profile] - Optional profile field overrides
  * @returns {object} Complete user session object
  */
 export const createMockUserSession = (overrides = {}) => {
   const now = Date.now()
+  const { profile: profileOverrides, ...sessionOverrides } = overrides
 
-  return {
+  const profile = {
     id: 'test-user',
     email: 'test@example.com',
     displayName: 'Test User',
-    token: 'test-access-token',
-    refreshToken: 'test-refresh-token',
-    idToken: 'test-id-token',
-    expiresAt: new Date(now + 3600000).toISOString(),
-    expiresIn: 3600000,
-    isAuthenticated: true,
     correlationId: 'test-corr',
     sessionId: 'test-sess',
     contactId: 'test-contact',
@@ -33,11 +29,21 @@ export const createMockUserSession = (overrides = {}) => {
     currentRelationshipId: 'test-rel',
     relationships: ['rel-1'],
     roles: ['role1'],
-    tokenUrl: 'http://defra-id.auth/token',
-    logoutUrl: 'http://defra-id.auth/logout',
-    idTokenExpiresAt: now + 3600000,
-    idTokenNotBefore: now - 60000,
-    ...overrides
+    ...profileOverrides
+  }
+
+  const expiresAt = new Date(now + 3600000).toISOString()
+
+  return {
+    profile,
+    expiresAt,
+    idToken: 'test-id-token',
+    refreshToken: 'test-refresh-token',
+    urls: {
+      token: 'http://defra-id.auth/token',
+      logout: 'http://defra-id.auth/logout'
+    },
+    ...sessionOverrides
   }
 }
 
@@ -113,9 +119,9 @@ export const createAuthSessionHelper = (server) => {
 
   return {
     createAuthCookie,
-    mockGetUserSession,
     getAuthCookie,
-    injectWithAuth
+    injectWithAuth,
+    mockGetUserSession
   }
 }
 

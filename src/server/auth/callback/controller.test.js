@@ -17,11 +17,8 @@ describe('#authCallbackController', () => {
         email: 'test@example.com',
         displayName: 'Test User',
         firstName: 'Test',
-        lastName: 'User',
-        idToken: 'mock-id-token'
+        lastName: 'User'
       }
-
-      const mockExpiresInSeconds = 3600
 
       const mockOrganisations = {
         current: {
@@ -49,9 +46,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: mockExpiresInSeconds
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {
@@ -85,12 +86,14 @@ describe('#authCallbackController', () => {
         2,
         'mock-uuid-1234',
         {
-          ...mockProfile,
-          isAuthenticated: true,
-          token: 'mock-access-token',
+          profile: mockProfile,
+          idToken: 'mock-id-token',
+          expiresAt: expect.any(String),
           refreshToken: 'mock-refresh-token',
-          expiresIn: mockExpiresInSeconds * 1000,
-          expiresAt: expect.any(Date),
+          urls: {
+            token: 'http://test.auth/token',
+            logout: 'http://test.auth/logout'
+          },
           linkedOrganisationId: 'defra-org-uuid'
         }
       )
@@ -109,8 +112,7 @@ describe('#authCallbackController', () => {
     it('should redirect to organisation account home when no flash referrer and has linked org', async () => {
       const mockProfile = {
         id: 'user-123',
-        email: 'test@example.com',
-        idToken: 'mock-id-token'
+        email: 'test@example.com'
       }
 
       const mockOrganisations = {
@@ -139,9 +141,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: 3600
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {
@@ -183,8 +189,7 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User',
-        idToken: 'mock-id-token'
+        displayName: 'Test User'
       }
 
       const mockOrganisations = {
@@ -224,9 +229,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: 3600
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {
@@ -271,8 +280,7 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User',
-        idToken: 'mock-id-token'
+        displayName: 'Test User'
       }
 
       const mockOrganisations = {
@@ -299,9 +307,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: 3600
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {
@@ -415,8 +427,7 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User',
-        idToken: 'mock-id-token'
+        displayName: 'Test User'
       }
 
       const boomError = Boom.badImplementation('Internal Server Error')
@@ -430,9 +441,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: 3600
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {
@@ -485,8 +500,7 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User',
-        idToken: 'mock-id-token'
+        displayName: 'Test User'
       }
 
       const mockOrganisations = {
@@ -521,9 +535,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: 3600
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {
@@ -559,8 +577,7 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User',
-        idToken: 'mock-id-token'
+        displayName: 'Test User'
       }
 
       const mockOrganisations = {
@@ -592,9 +609,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: 3600
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {
@@ -630,8 +651,7 @@ describe('#authCallbackController', () => {
       const mockProfile = {
         id: 'user-123',
         email: 'test@example.com',
-        displayName: 'Test User',
-        idToken: 'mock-id-token'
+        displayName: 'Test User'
       }
 
       const mockOrganisations = {
@@ -652,9 +672,13 @@ describe('#authCallbackController', () => {
           isAuthenticated: true,
           credentials: {
             profile: mockProfile,
-            token: 'mock-access-token',
+            idToken: 'mock-id-token',
             refreshToken: 'mock-refresh-token',
-            expiresIn: 3600
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
           }
         },
         server: {

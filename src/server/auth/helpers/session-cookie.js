@@ -33,18 +33,24 @@ const createSessionCookie = (verifyToken) => {
    */
   const handleExpiredTokenRefresh = async (request, userSession) => {
     // Check if token will expire in less than 1 minute
-    const tokenHasExpired = isPast(
+    const tokenWillExpireSoon = isPast(
       subMinutes(parseISO(userSession.expiresAt), 1)
     )
 
-    if (!tokenHasExpired) {
+    if (!tokenWillExpireSoon) {
       return ok(userSession)
     }
 
     try {
       const response = await refreshAccessToken(request)
+
       if (!response.ok) {
-        return err({ message: 'Failed to refresh session', cause: response })
+        const errorBody = await response.text()
+        return err({
+          message: 'Failed to refresh session',
+          status: response.status,
+          body: errorBody
+        })
       }
 
       const refreshAccessTokenJson = await response.json()

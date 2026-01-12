@@ -1,6 +1,9 @@
 import { config } from '#config/config.js'
 import bell from '@hapi/bell'
-import { buildUserProfile } from '../helpers/build-session.js'
+import {
+  buildUserProfile,
+  getTokenExpiresAt
+} from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 
 /**
@@ -73,12 +76,13 @@ const createDefraId = (verifyToken) => ({
           profile: async function (credentials, params) {
             const payload = await verifyToken(params.id_token)
 
-            credentials.profile = buildUserProfile({
-              idToken: params.id_token,
-              logoutUrl: oidcConf.end_session_endpoint,
-              payload,
-              tokenUrl: oidcConf.token_endpoint
-            })
+            credentials.profile = buildUserProfile(payload)
+            credentials.expiresAt = getTokenExpiresAt(payload)
+            credentials.idToken = params.id_token
+            credentials.urls = {
+              token: oidcConf.token_endpoint,
+              logout: oidcConf.end_session_endpoint
+            }
           }
         },
         providerParams: function (request) {

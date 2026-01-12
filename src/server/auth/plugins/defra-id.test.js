@@ -420,7 +420,8 @@ describe('#defraId', () => {
         enrolmentRequestCount: 1,
         currentRelationshipId: 'rel-123',
         relationships: ['rel-1', 'rel-2'],
-        roles: ['admin', 'user']
+        roles: ['admin', 'user'],
+        exp: 1735689600 // 2025-01-01T00:00:00.000Z
       }
 
       mockVerifyToken.mockResolvedValue(mockPayload)
@@ -453,14 +454,17 @@ describe('#defraId', () => {
         enrolmentRequestCount: 1,
         currentRelationshipId: 'rel-123',
         relationships: ['rel-1', 'rel-2'],
-        roles: ['admin', 'user'],
-        idToken: 'mock-id-token',
-        tokenUrl: 'http://test.auth/token',
-        logoutUrl: 'http://test.auth/logout'
+        roles: ['admin', 'user']
+      })
+      expect(mockCredentials.expiresAt).toBe('2025-01-01T00:00:00.000Z')
+      expect(mockCredentials.idToken).toBe('mock-id-token')
+      expect(mockCredentials.urls).toStrictEqual({
+        token: 'http://test.auth/token',
+        logout: 'http://test.auth/logout'
       })
     })
 
-    it('should include all required profile fields', async () => {
+    it('should set all credential fields from OIDC response', async () => {
       const mockPayload = {
         sub: 'user-456',
         correlationId: 'corr-456',
@@ -477,7 +481,8 @@ describe('#defraId', () => {
         enrolmentRequestCount: 3,
         currentRelationshipId: 'rel-456',
         relationships: ['rel-a', 'rel-b', 'rel-c'],
-        roles: ['editor', 'viewer', 'admin']
+        roles: ['editor', 'viewer', 'admin'],
+        exp: 1735693200 // 2025-01-01T01:00:00.000Z
       }
 
       mockVerifyToken.mockReturnValue(mockPayload)
@@ -487,7 +492,6 @@ describe('#defraId', () => {
 
       await profileFn(mockCredentials, mockParams)
 
-      // Verify all fields are correctly mapped
       expect(mockCredentials.profile).toStrictEqual({
         id: 'user-456',
         correlationId: 'corr-456',
@@ -505,10 +509,14 @@ describe('#defraId', () => {
         enrolmentRequestCount: 3,
         currentRelationshipId: 'rel-456',
         relationships: ['rel-a', 'rel-b', 'rel-c'],
-        roles: ['editor', 'viewer', 'admin'],
-        idToken: 'id-token-456',
-        tokenUrl: 'http://test.auth/token',
-        logoutUrl: 'http://test.auth/logout'
+        roles: ['editor', 'viewer', 'admin']
+      })
+      expect(mockCredentials.expiresAt).toBe('2025-01-01T01:00:00.000Z')
+
+      expect(mockCredentials.idToken).toBe('id-token-456')
+      expect(mockCredentials.urls).toStrictEqual({
+        token: 'http://test.auth/token',
+        logout: 'http://test.auth/logout'
       })
     })
   })
