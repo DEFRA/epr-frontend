@@ -31,7 +31,7 @@
       name: "summaryLogUpload",
       label: {
         text: params.fileUploadLabel,
-        classes: "govuk-!-font-weight-bold"
+        classes: "govuk-!-font-weight-bold govuk-!-margin-bottom-2"
       },
       formGroup: {
         classes: "govuk-!-margin-top-6"
@@ -44,7 +44,7 @@
       errorMessage: summaryLogUploadError
     }) }}
 
-    <div class="govuk-button-group govuk-!-margin-top-6">
+    <div class="govuk-button-group">
       {{ govukButton({
         text: params.buttonText
       }) }}
