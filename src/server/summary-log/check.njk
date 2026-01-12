@@ -22,18 +22,18 @@
     <h2 class="govuk-heading-l">{{ localise('summary-log:newLoadsSectionHeading') }}</h2>
 
     {% if loads.added.total == 0 %}
-    <h3>{{ localise('summary-log:noAddedLoadsHeading') }}</h3>
+    <h3 class="govuk-heading-m">{{ localise('summary-log:noAddedLoadsHeading') }}</h3>
     {% endif %}
 
     {% if loads.added.included.count > 0 %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-    <h3>{{ localise('summary-log:loadsAdded', { count: loads.added.included.count }) }}</h3>
+    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsAdded', { count: loads.added.included.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:loadsAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
     {% endif %}
 
     {% if loads.added.excluded.count > 0 %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-    <h3>{{ localise('summary-log:loadsNotAdded', { count: loads.added.excluded.count }) }}</h3>
+    <h3 class="govuk-heading-m">{{ localise('summary-log:loadsNotAdded', { count: loads.added.excluded.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
     {{ rowIdList({
       rows: loads.added.excluded,
@@ -98,7 +98,7 @@
       {% endif %}
     </div>
     {% else %}
-    <h3>{{ localise('summary-log:noAdjustedLoadsHeading') }}</h3>
+    <h3 class="govuk-heading-m">{{ localise('summary-log:noAdjustedLoadsHeading') }}</h3>
     {% endif %}
 
     <h2 class="govuk-heading-l">{{ localise('summary-log:declarationHeading') }}</h2>
