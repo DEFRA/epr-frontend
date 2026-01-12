@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { load } from 'cheerio'
 
 import { config } from '#config/config.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
@@ -143,25 +144,26 @@ describe('#summaryLogUploadProgressController', () => {
         url
       })
 
-      expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being checked')
+      const $ = load(result)
+      const $body = $('[data-testid="app-page-body"]')
+
+      /* eslint-disable vitest/max-expects */
+      expect($body.find('h1').text()).toBe('Your file is being checked')
+      expect($body.find('p').first().text()).toBe(
+        'Your summary log is being checked for:'
       )
-      expect(result).toStrictEqual(
-        expect.stringContaining('Your summary log is being checked for:')
+      expect($body.find('li').eq(0).text()).toBe('errors')
+      expect($body.find('li').eq(1).text()).toBe('new data')
+      expect($body.find('li').eq(2).text()).toBe(
+        'changes to previously uploaded data'
       )
-      expect(result).toStrictEqual(expect.stringContaining('errors'))
-      expect(result).toStrictEqual(expect.stringContaining('new data'))
-      expect(result).toStrictEqual(
-        expect.stringContaining('changes to previously uploaded data')
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining('This may take a few minutes.')
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining('Keep this page open and do not refresh it.')
+      expect($body.find('p').eq(1).text()).toBe('This may take a few minutes.')
+      expect($body.find('p').eq(2).text()).toBe(
+        'Keep this page open and do not refresh it.'
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
+      /* eslint-enable vitest/max-expects */
     })
 
     test('status: validating - should show processing message and poll', async () => {
