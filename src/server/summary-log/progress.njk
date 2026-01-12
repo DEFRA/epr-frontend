@@ -15,6 +15,12 @@
       <p>{{ message }}</p>
 
       {% if isProcessing %}
+        <ul class="govuk-list govuk-list--bullet">
+          <li>{{ localise('summary-log:processingBullet1') }}</li>
+          <li>{{ localise('summary-log:processingBullet2') }}</li>
+          <li>{{ localise('summary-log:processingBullet3') }}</li>
+        </ul>
+        <p>{{ localise('summary-log:processingTakeTime') }}</p>
         <p>{{ localise('summary-log:processingKeepOpen') }}</p>
       {% endif %}
     </div>
