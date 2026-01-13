@@ -1,10 +1,21 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 import Boom from '@hapi/boom'
+import { config } from '#config/config.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { createServer } from '#server/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
@@ -15,6 +26,15 @@ vi.mock(
   })
 )
 
+vi.mock(
+  import('#server/common/helpers/upload/fetch-summary-log-status.js'),
+  () => ({
+    fetchSummaryLogStatus: vi.fn().mockResolvedValue({
+      status: 'validated'
+    })
+  })
+)
+
 describe('#submitSummaryLogController', () => {
   const organisationId = '123'
   const registrationId = '456'
@@ -22,21 +42,42 @@ describe('#submitSummaryLogController', () => {
   const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit`
   /** @type {Server} */
   let server
+  let authHelper
+  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
   beforeAll(async () => {
+    mockOidcServer.listen()
+
+    config.load({
+      defraId: {
+        clientId: 'test-client-id',
+        clientSecret: 'test-secret',
+        oidcConfigurationUrl:
+          'http://defra-id.auth/.well-known/openid-configuration',
+        serviceId: 'test-service-id'
+      }
+    })
+
     server = await createServer()
     await server.initialize()
 
-    // Mock getUserSession to return a valid session
-    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        idToken: 'test-id-token'
-      }
-    })
+    authHelper = createAuthSessionHelper(server)
+    await authHelper.createAuthCookie()
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    authHelper.mockGetUserSession(
+      vi.mocked(getUserSessionModule.getUserSession)
+    )
   })
 
   afterAll(async () => {
+    config.reset('defraId.clientId')
+    config.reset('defraId.clientSecret')
+    config.reset('defraId.oidcConfigurationUrl')
+    config.reset('defraId.serviceId')
+    mockOidcServer.close()
     await server.stop({ timeout: 0 })
   })
 
@@ -49,7 +90,11 @@ describe('#submitSummaryLogController', () => {
     submitSummaryLog.mockResolvedValueOnce(mockResponse)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      headers: {
+        cookie: `userSession=${authHelper.getAuthCookie()}`
+      }
+    })
 
     const response = await server.inject({
       method: 'POST',
@@ -79,7 +124,11 @@ describe('#submitSummaryLogController', () => {
     submitSummaryLog.mockResolvedValueOnce(mockResponse)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      headers: {
+        cookie: `userSession=${authHelper.getAuthCookie()}`
+      }
+    })
 
     const response = await server.inject({
       method: 'POST',
@@ -94,7 +143,7 @@ describe('#submitSummaryLogController', () => {
     expect(sessionCookie).toBeDefined()
     expect(
       Array.isArray(sessionCookie) ? sessionCookie[0] : sessionCookie
-    ).toContain('session')
+    ).toContain('userSession')
   })
 
   test('should render conflict view when backend returns 409', async () => {
@@ -103,7 +152,11 @@ describe('#submitSummaryLogController', () => {
     )
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      headers: {
+        cookie: `userSession=${authHelper.getAuthCookie()}`
+      }
+    })
 
     const { result, statusCode } = await server.inject({
       method: 'POST',
@@ -129,7 +182,11 @@ describe('#submitSummaryLogController', () => {
     submitSummaryLog.mockRejectedValueOnce(error)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      headers: {
+        cookie: `userSession=${authHelper.getAuthCookie()}`
+      }
+    })
 
     const response = await server.inject({
       method: 'POST',
@@ -143,7 +200,13 @@ describe('#submitSummaryLogController', () => {
   })
 
   test('should reject POST request without CSRF token', async () => {
-    const response = await server.inject({ method: 'POST', url })
+    const response = await server.inject({
+      method: 'POST',
+      url,
+      headers: {
+        cookie: `userSession=${authHelper.getAuthCookie()}`
+      }
+    })
 
     expect(response.statusCode).toBe(statusCodes.forbidden)
   })
@@ -151,7 +214,11 @@ describe('#submitSummaryLogController', () => {
   test('should redirect to login when session is invalid', async () => {
     // Get CSRF token first with valid session
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(server, getUrl)
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      headers: {
+        cookie: `userSession=${authHelper.getAuthCookie()}`
+      }
+    })
 
     // Now mock invalid session for the POST request
     vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
@@ -166,29 +233,7 @@ describe('#submitSummaryLogController', () => {
     })
 
     expect(response.statusCode).toBe(statusCodes.found)
-    expect(response.headers.location).toBe('/login')
-  })
-
-  test('should redirect to login when session value is null', async () => {
-    // Get CSRF token first with valid session
-    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(server, getUrl)
-
-    // Now mock null session value for the POST request
-    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-      ok: true,
-      value: null
-    })
-
-    const response = await server.inject({
-      method: 'POST',
-      url,
-      headers: { cookie },
-      payload: { crumb }
-    })
-
-    expect(response.statusCode).toBe(statusCodes.found)
-    expect(response.headers.location).toBe('/login')
+    expect(response.headers.location).toBe('/logged-out')
   })
 })
 

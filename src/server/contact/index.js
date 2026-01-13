@@ -16,7 +16,10 @@ export const contact = {
         {
           ...controller,
           method: 'GET',
-          path: '/contact'
+          path: '/contact',
+          options: {
+            auth: false
+          }
         }
       ])
     }

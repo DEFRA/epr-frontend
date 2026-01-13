@@ -11,9 +11,12 @@ const loggedOut = {
     register(server) {
       server.route([
         {
+          ...controller,
           method: 'GET',
           path: '/logged-out',
-          ...controller
+          options: {
+            auth: false
+          }
         }
       ])
     }

@@ -9,9 +9,9 @@ export const summaryLogUpload = {
     register(server) {
       server.route([
         {
+          ...summaryLogUploadController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/upload',
-          ...summaryLogUploadController
+          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/upload'
         }
       ])
     }

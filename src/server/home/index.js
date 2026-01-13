@@ -16,12 +16,18 @@ export const home = {
         {
           ...controller,
           method: 'GET',
-          path: '/start'
+          path: '/start',
+          options: {
+            auth: false
+          }
         },
         {
           ...redirectToStart,
           method: 'GET',
-          path: '/'
+          path: '/',
+          options: {
+            auth: false
+          }
         }
       ])
     }

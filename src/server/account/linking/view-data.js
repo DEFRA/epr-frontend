@@ -41,8 +41,7 @@ export function buildLinkingViewData(request, organisations, options = {}) {
       bodyThree: request.t(
         'account:linking:troubleshooting:otherProblemsBodyThree'
       )
-    },
-    unlinkedOrganisations: unlinked
+    }
   }
 
   const viewData = {

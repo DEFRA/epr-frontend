@@ -12,6 +12,7 @@
   "exclude": [".cache", ".public", ".server", "coverage", "node_modules"],
   "include": [
     "**/*.cjs",
+    "**/*.d.ts",
     "**/*.js",
     ".eslintrc.*",
     ".prettierrc.*",

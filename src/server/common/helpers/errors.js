@@ -1,5 +1,5 @@
-import { statusCodes } from '#server/common/constants/status-codes.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 
 const statusCodeErrors = {
   [statusCodes.notFound]: {
@@ -49,7 +49,7 @@ export async function catchAll(request, h) {
   const statusCode = response.output.statusCode
 
   if (statusCode === statusCodes.unauthorized) {
-    removeUserSession(request)
+    await removeUserSession(request)
 
     return h.redirect(request.localiseUrl('/logged-out')).takeover()
   }

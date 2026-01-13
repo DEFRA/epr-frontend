@@ -1,5 +1,4 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
-import { buildSessionFromProfile } from '#server/auth/helpers/build-session.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
@@ -16,13 +15,7 @@ const controller = {
   },
   handler: async (request, h) => {
     if (request.auth.isAuthenticated) {
-      const { profile } = request.auth.credentials
-
-      const session = buildSessionFromProfile({
-        credentials: request.auth.credentials,
-        isAuthenticated: request.auth.isAuthenticated,
-        profile
-      })
+      const session = request.auth.credentials
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)

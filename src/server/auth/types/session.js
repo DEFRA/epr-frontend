@@ -1,57 +1,40 @@
 /**
- * User profile extracted from JWT token payload
- * @typedef {object} UserProfile
- * @property {string} id - User ID (from JWT sub claim)
- * @property {string} correlationId
- * @property {string} sessionId
- * @property {string} contactId
- * @property {string} serviceId
- * @property {string} firstName
- * @property {string} lastName
- * @property {string} displayName
- * @property {string} email
- * @property {string} uniqueReference
- * @property {string} loa - Level of assurance
- * @property {string} aal - Authentication assurance level
- * @property {number} enrolmentCount
- * @property {number} enrolmentRequestCount
- * @property {string} currentRelationshipId
- * @property {string[]} relationships
- * @property {string[]} roles
- * @property {string} idToken
- * @property {string} tokenUrl - OIDC token endpoint URL
- * @property {string} logoutUrl - OIDC logout endpoint URL
+ * @import { BellCredentials } from '../types/auth.js'
+ */
+
+/**
+ * User profile - identity data extracted from JWT token payload
+ * @typedef {{
+ *   id: string
+ *   correlationId: string
+ *   sessionId: string
+ *   contactId: string
+ *   serviceId: string
+ *   firstName: string
+ *   lastName: string
+ *   displayName: string
+ *   email: string
+ *   uniqueReference: string
+ *   loa: string
+ *   aal: string
+ *   enrolmentCount: number
+ *   enrolmentRequestCount: number
+ *   currentRelationshipId: string
+ *   relationships: string[]
+ *   roles: string[]
+ * }} UserProfile
  */
 
 /**
  * Complete user session stored in cache
- * @typedef {object} UserSession
- * @property {string} id - User ID (from JWT sub claim)
- * @property {string} correlationId
- * @property {string} sessionId
- * @property {string} contactId
- * @property {string} serviceId
- * @property {string} firstName
- * @property {string} lastName
- * @property {string} displayName
- * @property {string} email
- * @property {string} uniqueReference
- * @property {string} loa - Level of assurance
- * @property {string} aal - Authentication assurance level
- * @property {number} enrolmentCount
- * @property {number} enrolmentRequestCount
- * @property {string} currentRelationshipId
- * @property {string[]} relationships
- * @property {string[]} roles
- * @property {boolean} isAuthenticated
- * @property {string} idToken
- * @property {string} token - Access token
- * @property {string} refreshToken
- * @property {number} expiresIn - Expiry duration in milliseconds
- * @property {string} expiresAt - ISO date string
- * @property {string} tokenUrl - OIDC token endpoint URL
- * @property {string} logoutUrl - OIDC logout endpoint URL
- * @property {string} [linkedOrganisationId] - ID of the user's linked organisation (set after auth/linking)
+ * @typedef {Omit<BellCredentials, 'expiresIn' | 'token'> & {
+ *   profile: UserProfile
+ *   linkedOrganisationId?: string
+ *   expiresAt: string
+ *   idToken: string
+ *   refreshToken: string
+ *   urls: { token: string, logout: string }
+ * }} UserSession
  */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import
