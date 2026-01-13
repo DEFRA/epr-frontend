@@ -12,17 +12,14 @@ import {
 
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
-const mockGetUserSession = vi.fn()
 
 vi.mock(import('node:fs'), async () => ({
   ...(await vi.importActual('node:fs')),
   readFileSync: () => mockReadFileSync()
 }))
+
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
-}))
-vi.mock(import('#server/auth/helpers/get-user-session.js'), () => ({
-  getUserSession: (...args) => mockGetUserSession(...args)
 }))
 
 /**
@@ -30,6 +27,7 @@ vi.mock(import('#server/auth/helpers/get-user-session.js'), () => ({
  */
 function mockRequest(options) {
   return {
+    auth: { isAuthenticated: false, credentials: null },
     localiseUrl: vi.fn((path) => path),
     path: '/',
     t: vi.fn((key) => {
@@ -46,10 +44,6 @@ function mockRequest(options) {
 describe('#context', () => {
   let contextResult
 
-  beforeEach(() => {
-    mockGetUserSession.mockResolvedValue({ ok: false })
-  })
-
   describe('defra id', () => {
     let contextImport
 
@@ -59,21 +53,6 @@ describe('#context', () => {
 
     afterEach(() => {
       config.reset('defraId.oidcConfigurationUrl')
-    })
-
-    it('should indicate defra id is enabled when oidc configuration url is set', async () => {
-      config.set(
-        'defraId.oidcConfigurationUrl',
-        'http://defra-id.auth/.well-known/openid-configuration'
-      )
-
-      contextResult = await contextImport.context(mockRequest())
-
-      expect(contextResult).toStrictEqual(
-        expect.objectContaining({
-          isDefraIdEnabled: true
-        })
-      )
     })
 
     it.each([
@@ -132,6 +111,11 @@ describe('#context', () => {
     })
 
     beforeEach(async () => {
+      config.set(
+        'defraId.oidcConfigurationUrl',
+        'http://defra-id.auth/.well-known/openid-configuration'
+      )
+
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
@@ -146,7 +130,6 @@ describe('#context', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
-        isDefraIdEnabled: false,
         navigation: [],
         serviceUrl: '/start'
       })
@@ -204,6 +187,11 @@ describe('#context cache', () => {
     })
 
     beforeEach(async () => {
+      config.set(
+        'defraId.oidcConfigurationUrl',
+        'http://defra-id.auth/.well-known/openid-configuration'
+      )
+
       // Return JSON string
       mockReadFileSync.mockReturnValue(`{
         "application.js": "javascripts/application.js",
@@ -222,7 +210,6 @@ describe('#context cache', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
-        isDefraIdEnabled: false,
         navigation: [],
         serviceUrl: '/start'
       })
