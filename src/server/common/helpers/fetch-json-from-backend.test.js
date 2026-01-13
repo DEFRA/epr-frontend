@@ -1,9 +1,23 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
+import { AsyncLocalStorage } from 'node:async_hooks'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
+
+
+vi.mock('@defra/hapi-tracing', async () => {
+  const actual = await vi.importActual('@defra/hapi-tracing')
+
+  return {
+    ...actual,
+    withTraceId: (headerName, headers = {}) => {
+      headers[headerName] = 'mock-trace-id-1'
+      return headers
+    }
+  }
+})
 
 describe(fetchJsonFromBackend, () => {
   beforeEach(() => {
@@ -25,7 +39,10 @@ describe(fetchJsonFromBackend, () => {
       expect.stringContaining('/v1/test'),
       expect.objectContaining({
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'x-cdp-request-id': 'mock-trace-id-1'
+        }
       })
     )
   })
@@ -131,4 +148,5 @@ describe(fetchJsonFromBackend, () => {
       message: 'Already a Boom error'
     })
   })
+
 })

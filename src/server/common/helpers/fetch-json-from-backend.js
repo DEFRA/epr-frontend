@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
+import { withTraceId } from '@defra/hapi-tracing'
 
 /**
  * Fetch JSON from a given path in the backend service.
@@ -13,10 +14,10 @@ export const fetchJsonFromBackend = async (path, options) => {
 
   const completeOptions = {
     ...options,
-    headers: {
+    headers: withTraceId('x-cdp-request-id',  {
       ...options?.headers,
       'Content-Type': 'application/json'
-    }
+    })
   }
 
   const url = `${eprBackendUrl}${path}`
