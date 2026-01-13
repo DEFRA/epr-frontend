@@ -19,7 +19,6 @@ const mockAuth = {
 }
 
 describe('#homeController', () => {
-
   describe('redirects', () => {
     it('should redirect from / to /start', async ({ server }) => {
       const { statusCode, headers } = await server.inject({
