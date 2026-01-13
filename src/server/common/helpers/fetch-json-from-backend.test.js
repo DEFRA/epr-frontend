@@ -1,23 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
-import { AsyncLocalStorage } from 'node:async_hooks'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+const MOCK_TRACE_ID = 'mock-trace-id-1'
 
-vi.mock('@defra/hapi-tracing', async () => {
-  const actual = await vi.importActual('@defra/hapi-tracing')
-
-  return {
-    ...actual,
-    withTraceId: (headerName, headers = {}) => {
-      headers[headerName] = 'mock-trace-id-1'
-      return headers
-    }
+vi.mock(import('@defra/hapi-tracing'), () => ({
+  withTraceId: vi.fn((headerName, headers = {}) => {
+    headers[headerName] = 'mock-trace-id-1'
+    return headers
+  }),
+  tracing: {
+    plugin: {}
   }
-})
+}))
 
 describe(fetchJsonFromBackend, () => {
   beforeEach(() => {
@@ -41,7 +39,7 @@ describe(fetchJsonFromBackend, () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'x-cdp-request-id': 'mock-trace-id-1'
+          'x-cdp-request-id': MOCK_TRACE_ID
         }
       })
     )
@@ -64,7 +62,8 @@ describe(fetchJsonFromBackend, () => {
       expect.objectContaining({
         headers: {
           'Content-Type': 'application/json',
-          'X-Custom': 'value'
+          'X-Custom': 'value',
+          'x-cdp-request-id': MOCK_TRACE_ID
         }
       })
     )
@@ -148,5 +147,4 @@ describe(fetchJsonFromBackend, () => {
       message: 'Already a Boom error'
     })
   })
-
 })
