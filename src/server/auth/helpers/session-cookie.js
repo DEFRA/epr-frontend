@@ -84,10 +84,9 @@ const createSessionCookie = (verifyToken) => {
           /**
            * Validates the session cookie on each request
            * @param {Request} request - Hapi request object
-           * @param {UserSession} session - Session data from cookie
            * @returns {Promise<{isValid: boolean, credentials?: UserSession}>} Validation result
            */
-          validate: async (request, session) => {
+          validate: async (request) => {
             const { ok: hasSession, value: userSession } =
               await getUserSession(request)
             if (!hasSession) {
