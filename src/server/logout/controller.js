@@ -13,6 +13,7 @@ const logoutController = {
   },
   handler: async (request, h) => {
     const authedUser = request.pre.authedUser
+
     const loggedOutUrl = request.localiseUrl('/logged-out')
 
     if (!authedUser) {
@@ -20,7 +21,7 @@ const logoutController = {
     }
 
     const { href: postLogoutRedirectUrl } = new URL(
-      request.localiseUrl(loggedOutUrl),
+      loggedOutUrl,
       config.get('appBaseUrl')
     )
 
