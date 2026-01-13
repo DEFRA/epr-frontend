@@ -43,48 +43,9 @@ describe(buildLinkingViewData, () => {
       }
     ])
     expect(result.organisationName).toBe('Test Defra Organisation')
-    expect(result.troubleshooting).toBeDefined()
     expect(result.troubleshooting.summary).toBe(
       'translated:account:linking:troubleshooting:summary'
     )
-    expect(result.troubleshooting.unlinkedOrganisations).toHaveLength(2)
-    expect(result.troubleshooting.unlinkedOrganisations[0].name).toBe(
-      'Company One Ltd'
-    )
-    expect(result.troubleshooting.unlinkedOrganisations[1].name).toBe(
-      'Company Two Ltd'
-    )
-  })
-
-  it('should format unlinked organisations with org-id in display-name', () => {
-    const mockRequest = {
-      t: vi.fn((key) => `translated:${key}`)
-    }
-
-    const mockOrganisations = {
-      current: {
-        id: 'defra-org-123',
-        name: 'Current Org'
-      },
-      linked: null,
-      unlinked: [
-        {
-          id: 'org-1',
-          name: 'Waste Services Ltd',
-          orgId: 'WS123456'
-        }
-      ]
-    }
-
-    const result = buildLinkingViewData(mockRequest, mockOrganisations)
-
-    expect(result.unlinked).toStrictEqual([
-      {
-        id: 'org-1',
-        displayName: 'Waste Services Ltd (ID: WS123456)',
-        name: 'Waste Services Ltd'
-      }
-    ])
   })
 
   it('should handle empty unlinked organisations list', () => {
@@ -295,33 +256,24 @@ describe(buildLinkingViewData, () => {
 
     const result = buildLinkingViewData(mockRequest, mockOrganisations)
 
-    expect(result.troubleshooting).toBeDefined()
-    expect(result.troubleshooting.summary).toBe(
-      'translated:account:linking:troubleshooting:summary'
-    )
-    expect(result.troubleshooting.missing.heading).toBe(
-      'translated:account:linking:troubleshooting:missingHeading'
-    )
-    expect(result.troubleshooting.missing.bodyOne).toBe(
-      'translated:account:linking:troubleshooting:missingBodyOne'
-    )
-    expect(result.troubleshooting.missing.bodyTwo).toBe(
-      'translated:account:linking:troubleshooting:missingBodyTwo'
-    )
-    expect(result.troubleshooting.otherProblems.heading).toBe(
-      'translated:account:linking:troubleshooting:otherProblemsHeading'
-    )
-    expect(result.troubleshooting.otherProblems.bodyOne).toBe(
-      'translated:account:linking:troubleshooting:otherProblemsBodyOne'
-    )
-    expect(result.troubleshooting.otherProblems.email).toBe(
-      'translated:account:linking:troubleshooting:otherProblemsEmail'
-    )
-    expect(result.troubleshooting.unlinkedOrganisations).toHaveLength(1)
-    expect(result.troubleshooting.unlinkedOrganisations[0]).toStrictEqual({
-      id: 'org-1',
-      displayName: 'Test Company Ltd (ID: TC123456)',
-      name: 'Test Company Ltd'
+    expect(result.troubleshooting).toStrictEqual({
+      summary: 'translated:account:linking:troubleshooting:summary',
+      missing: {
+        heading: 'translated:account:linking:troubleshooting:missingHeading',
+        bodyOne: 'translated:account:linking:troubleshooting:missingBodyOne',
+        bodyTwo: 'translated:account:linking:troubleshooting:missingBodyTwo'
+      },
+      otherProblems: {
+        heading:
+          'translated:account:linking:troubleshooting:otherProblemsHeading',
+        bodyOne:
+          'translated:account:linking:troubleshooting:otherProblemsBodyOne',
+        bodyTwo:
+          'translated:account:linking:troubleshooting:otherProblemsBodyTwo',
+        bodyThree:
+          'translated:account:linking:troubleshooting:otherProblemsBodyThree',
+        email: 'translated:account:linking:troubleshooting:otherProblemsEmail'
+      }
     })
   })
 })

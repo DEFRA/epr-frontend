@@ -1,6 +1,8 @@
+import { config } from '#config/config.js'
+import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
+import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
@@ -25,28 +27,48 @@ describe('#summaryLogUploadController', () => {
   /** @type {Server} */
   let server
   const mockOidcServer = createMockOidcServer('http://defra-id.auth')
+  let authHelper
 
   beforeAll(async () => {
     mockOidcServer.listen()
+
+    // Configure OIDC
+    config.load({
+      defraId: {
+        clientId: 'test-client-id',
+        clientSecret: 'test-secret',
+        oidcConfigurationUrl:
+          'http://defra-id.auth/.well-known/openid-configuration',
+        serviceId: 'test-service-id'
+      }
+    })
+
     server = await createServer()
     await server.initialize()
 
+    // Setup auth helper
+    authHelper = createAuthSessionHelper(server)
+
     // Mock getUserSession to return a valid session
-    vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        idToken: 'test-id-token'
-      }
-    })
+    authHelper.mockGetUserSession(
+      vi.mocked(getUserSessionModule.getUserSession)
+    )
+
+    // Create default auth session cookie
+    await authHelper.createAuthCookie()
   })
 
   afterAll(async () => {
+    config.reset('defraId.clientId')
+    config.reset('defraId.clientSecret')
+    config.reset('defraId.oidcConfigurationUrl')
+    config.reset('defraId.serviceId')
     mockOidcServer.close()
     await server.stop({ timeout: 0 })
   })
 
   test('should provide expected response', async () => {
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await authHelper.inject({
       method: 'GET',
       url
     })
@@ -58,7 +80,7 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should render back link to registration dashboard', async () => {
-    const { result } = await server.inject({
+    const { result } = await authHelper.inject({
       method: 'GET',
       url
     })
@@ -72,7 +94,10 @@ describe('#summaryLogUploadController', () => {
   test('should display error page when upload initialisation fails', async () => {
     initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
 
-    const { result } = await server.inject({ method: 'GET', url })
+    const { result } = await authHelper.inject({
+      method: 'GET',
+      url
+    })
 
     expect(result).toStrictEqual(
       expect.stringContaining('Summary log upload error')
@@ -83,7 +108,10 @@ describe('#summaryLogUploadController', () => {
   })
 
   test('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async () => {
-    await server.inject({ method: 'GET', url })
+    await authHelper.inject({
+      method: 'GET',
+      url
+    })
 
     expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
       organisationId: '123',
@@ -96,19 +124,19 @@ describe('#summaryLogUploadController', () => {
 
   describe('page content', () => {
     test('should render caption "Upload summary log"', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Upload summary log')
     })
 
     test('should render heading "Choose file"', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Choose file')
     })
 
     test('should render intro text', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain(
         'You can upload the latest version of your summary log whenever you need to add or adjust waste records.'
@@ -116,39 +144,39 @@ describe('#summaryLogUploadController', () => {
     })
 
     test('should render file upload with label "Upload XLSX file"', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Upload XLSX file')
     })
 
     test('should render file upload label in bold', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('govuk-!-font-weight-bold')
     })
 
     test('should render Continue button', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).toContain('Continue')
     })
 
     test('should not render accordion sections', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).not.toContain('govuk-accordion')
       expect(result).not.toContain('Why this is needed')
     })
 
     test('should not render inset text', async () => {
-      const { result } = await server.inject({ method: 'GET', url })
+      const { result } = await authHelper.inject({ method: 'GET', url })
 
       expect(result).not.toContain('govuk-inset-text')
     })
   })
 
   describe('session validation', () => {
-    test('should redirect to login when session is invalid', async () => {
+    test('should redirect to logged-out when session is invalid', async () => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
         ok: false
       })
@@ -159,22 +187,7 @@ describe('#summaryLogUploadController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/login')
-    })
-
-    test('should redirect to login when session value is null', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: true,
-        value: null
-      })
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/login')
+      expect(headers.location).toBe('/logged-out')
     })
   })
 })

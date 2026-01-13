@@ -46,7 +46,7 @@ export async function createServer() {
       noSniff: true,
       xframe: true
     },
-    auth: defraIdEnabled ? { mode: 'try' } : false
+    auth: defraIdEnabled ? { mode: 'required' } : false
   }
 
   const server = hapi.server({

@@ -1,11 +1,14 @@
 import { config } from '#config/config.js'
 import bell from '@hapi/bell'
-import { buildUserProfile } from '../helpers/build-session.js'
+import {
+  buildUserProfile,
+  getTokenExpiresAt
+} from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- * @import { BellCredentials, OAuthTokenParams, AzureB2CTokenParams } from '../types/auth.js'
+ * @import { AzureB2CTokenParams, AzureB2CBellCredentials, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
@@ -66,19 +69,20 @@ const createDefraId = (verifyToken) => ({
           scope: ['openid', 'offline_access'],
           /**
            * Extract user profile from OIDC ID token and populate credentials
-           * @param {BellCredentials} credentials - Bell credentials object (mutated to add profile)
-           * @param {OAuthTokenParams | AzureB2CTokenParams} params - OAuth token response parameters (supports both standard OAuth and Azure B2C formats)
+           * @param {OAuthBellCredentials | AzureB2CBellCredentials} credentials
+           * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
             const payload = await verifyToken(params.id_token)
 
-            credentials.profile = buildUserProfile({
-              idToken: params.id_token,
-              logoutUrl: oidcConf.end_session_endpoint,
-              payload,
-              tokenUrl: oidcConf.token_endpoint
-            })
+            credentials.profile = buildUserProfile(payload)
+            credentials.expiresAt = getTokenExpiresAt(payload)
+            credentials.idToken = params.id_token
+            credentials.urls = {
+              token: oidcConf.token_endpoint,
+              logout: oidcConf.end_session_endpoint
+            }
           }
         },
         providerParams: function (request) {

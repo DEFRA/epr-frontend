@@ -1,3 +1,4 @@
+import assert from 'node:assert'
 import { err, ok } from '#server/common/helpers/result.js'
 import { describe, expect, test } from 'vitest'
 
@@ -12,19 +13,26 @@ describe('result type', () => {
       })
     })
 
-    test('should create success result with null value', () => {
-      const result = ok(null)
+    test('should throw AssertionError when value is null', () => {
+      expect(() => ok(null)).toThrowError(assert.AssertionError)
+    })
 
-      expect(result).toStrictEqual({
-        ok: true,
-        value: null
-      })
+    test('should throw AssertionError when value is undefined', () => {
+      expect(() => ok(undefined)).toThrowError(assert.AssertionError)
     })
   })
 
   describe('err()', () => {
     test('should create error result without error field when no error provided', () => {
       const result = err()
+
+      expect(result).toStrictEqual({
+        ok: false
+      })
+    })
+
+    test('should create error result without error field when error is null', () => {
+      const result = err(null)
 
       expect(result).toStrictEqual({
         ok: false

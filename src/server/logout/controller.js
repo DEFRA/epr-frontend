@@ -24,14 +24,14 @@ const logoutController = {
       config.get('appBaseUrl')
     )
 
-    const logoutUrl = new URL(authedUser.logoutUrl)
+    const logoutUrl = new URL(authedUser.urls.logout)
     logoutUrl.searchParams.append('id_token_hint', authedUser.idToken)
     logoutUrl.searchParams.append(
       'post_logout_redirect_uri',
       postLogoutRedirectUrl
     )
 
-    removeUserSession(request)
+    await removeUserSession(request)
 
     return h.redirect(logoutUrl)
   }

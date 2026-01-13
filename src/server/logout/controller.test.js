@@ -36,7 +36,9 @@ describe('#logoutController', () => {
     test('should drop session, clear cookie and redirect to logout URL', async () => {
       const mockAuthedUser = {
         idToken: 'id-token-123',
-        logoutUrl: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
+        urls: {
+          logout: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
+        }
       }
 
       const mockRequest = {

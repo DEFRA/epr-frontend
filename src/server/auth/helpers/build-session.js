@@ -1,18 +1,26 @@
-import { addSeconds } from 'date-fns'
 import { getDisplayName } from './display.js'
 
 /**
- * Build user profile from JWT payload
- * @param {object} options - Profile building options
- * @param {DefraIdJwtPayload} options.payload - JWT token payload with Defra ID claims
- * @param {string} options.idToken - ID token
- * @param {string} options.tokenUrl - OIDC token endpoint URL
- * @param {string} options.logoutUrl - OIDC logout endpoint URL
+ * @import { DefraIdJwtPayload } from '../types/auth.js'
+ * @import { UserProfile, UserSession } from '../types/session.js'
+ */
+
+/**
+ * Get token expiry as ISO string from JWT payload exp claim
+ * @param {{ exp: number }} payload - JWT payload with exp claim
+ * @returns {string} ISO date string
+ */
+const getTokenExpiresAt = ({ exp }) => new Date(exp * 1000).toISOString()
+
+/**
+ * Build user profile from JWT payload (pure identity data)
+ * @param {DefraIdJwtPayload} payload - JWT token payload with Defra ID claims
  * @returns {UserProfile} User profile object
  */
-function buildUserProfile({ payload, idToken, tokenUrl, logoutUrl }) {
+function buildUserProfile(payload) {
   const displayName = getDisplayName(payload)
 
+  // TODO how much of this is used now we don't display it?
   return {
     id: payload.sub,
     correlationId: payload.correlationId,
@@ -30,39 +38,8 @@ function buildUserProfile({ payload, idToken, tokenUrl, logoutUrl }) {
     enrolmentRequestCount: payload.enrolmentRequestCount,
     currentRelationshipId: payload.currentRelationshipId,
     relationships: payload.relationships,
-    roles: payload.roles,
-    idToken,
-    tokenUrl,
-    logoutUrl
+    roles: payload.roles
   }
 }
 
-/**
- * Build complete user session from profile and credentials
- * @param {object} options - Session building options
- * @param {UserProfile} options.profile - User profile from Bell
- * @param {{ token: string, refreshToken: string, expiresIn: number }} options.credentials - Bell credentials with token, refreshToken, and expiresIn
- * @param {boolean} options.isAuthenticated - Authentication status
- * @returns {UserSession} Complete user session
- */
-function buildSessionFromProfile({ credentials, isAuthenticated, profile }) {
-  const expiresInSeconds = credentials.expiresIn
-  const expiresInMilliSeconds = expiresInSeconds * 1000
-  const expiresAt = addSeconds(new Date(), expiresInSeconds)
-
-  return {
-    ...profile,
-    isAuthenticated,
-    token: credentials.token,
-    refreshToken: credentials.refreshToken,
-    expiresIn: expiresInMilliSeconds,
-    expiresAt
-  }
-}
-
-export { buildSessionFromProfile, buildUserProfile }
-
-/**
- * @import { DefraIdJwtPayload } from '../types/auth.js'
- * @import { UserProfile, UserSession } from '../types/session.js'
- */
+export { buildUserProfile, getTokenExpiresAt }

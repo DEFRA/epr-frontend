@@ -1,7 +1,6 @@
 import { capitalize } from 'lodash-es'
 
 import { getStatusClass } from './helpers/status-helpers.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
 /**
@@ -130,14 +129,11 @@ export const controller = {
     const isExporterTab = request.path.endsWith('/exporting')
     const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
 
-    const { ok, value: session } = await getUserSession(request)
-    const userSession = ok && session ? session : request.auth?.credentials
+    const userSession = request.auth.credentials
 
-    let organisationData = null
-
-    organisationData = await fetchOrganisationById(
+    const organisationData = await fetchOrganisationById(
       organisationId,
-      userSession?.idToken
+      userSession.idToken
     )
 
     const organisationName = organisationData.companyDetails.tradingName

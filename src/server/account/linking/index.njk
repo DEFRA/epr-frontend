@@ -51,7 +51,7 @@
 
             {% set unlinkedOrgsList %}
               <ul class="govuk-list">
-                {% for org in troubleshooting.unlinkedOrganisations %}
+                {% for org in unlinked %}
                   <li>{{ org.name }} - <strong>{{ org.id }}</strong></li>
                 {% endfor %}
               </ul>
