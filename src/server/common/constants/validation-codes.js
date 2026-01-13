@@ -61,6 +61,11 @@ const structureCodes = Object.freeze({
   TABLE_UNRECOGNISED: 'TABLE_UNRECOGNISED'
 })
 
+const spreadsheetCodes = Object.freeze({
+  SPREADSHEET_INVALID_ERROR: 'SPREADSHEET_INVALID_ERROR',
+  SPREADSHEET_MALFORMED_MARKERS: 'SPREADSHEET_MALFORMED_MARKERS'
+})
+
 const processingTypeCodes = Object.freeze({
   PROCESSING_TYPE_INVALID: 'PROCESSING_TYPE_INVALID',
   PROCESSING_TYPE_MISMATCH: 'PROCESSING_TYPE_MISMATCH',
@@ -89,6 +94,7 @@ export const validationFailureCodes = Object.freeze({
   ...registrationCodes,
   ...accreditationCodes,
   ...structureCodes,
+  ...spreadsheetCodes,
   ...processingTypeCodes
 })
 
@@ -112,3 +118,6 @@ export const PROCESSING_TYPE_DISPLAY_CODE = 'PROCESSING_TYPE_INVALID'
 
 export const TECHNICAL_ERROR_CODES = new Set(Object.values(technicalErrorCodes))
 export const TECHNICAL_ERROR_DISPLAY_CODE = 'TECHNICAL_ERROR'
+
+export const SPREADSHEET_CODES = new Set(Object.values(spreadsheetCodes))
+export const SPREADSHEET_DISPLAY_CODE = 'SPREADSHEET_MALFORMED'

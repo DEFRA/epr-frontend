@@ -16,7 +16,9 @@ import {
   PROCESSING_TYPE_CODES,
   PROCESSING_TYPE_DISPLAY_CODE,
   TECHNICAL_ERROR_CODES,
-  TECHNICAL_ERROR_DISPLAY_CODE
+  TECHNICAL_ERROR_DISPLAY_CODE,
+  SPREADSHEET_CODES,
+  SPREADSHEET_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
 
 /** Waste record section number to display in UI copy, mapped by processing type */
@@ -267,6 +269,9 @@ const getDisplayCode = (code) => {
   }
   if (PROCESSING_TYPE_CODES.has(code)) {
     return PROCESSING_TYPE_DISPLAY_CODE
+  }
+  if (SPREADSHEET_CODES.has(code)) {
+    return SPREADSHEET_DISPLAY_CODE
   }
   return code
 }

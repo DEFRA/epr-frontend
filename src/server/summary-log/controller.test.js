@@ -1189,6 +1189,75 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    test('status: invalid with SPREADSHEET_MALFORMED_MARKERS failure - should show malformed template message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await authHelper.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The template you&#39;re using appears to have been modified or corrupted'
+      )
+    })
+
+    test('status: invalid with SPREADSHEET_INVALID_ERROR failure - should show malformed template message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }]
+        }
+      })
+
+      const { result, statusCode } = await authHelper.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The template you&#39;re using appears to have been modified or corrupted'
+      )
+    })
+
+    test('status: invalid with multiple spreadsheet failures - should show single deduplicated message', async () => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS },
+            { code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await authHelper.inject({
+        method: 'GET',
+        url
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The template you&#39;re using appears to have been modified or corrupted'
+      )
+
+      // Should only appear once (deduplicated)
+      const matches = result.match(
+        /The template you&#39;re using appears to have been modified or corrupted/g
+      )
+
+      expect(matches).toHaveLength(1)
+    })
+
     test.each([
       'FILE_UPLOAD_FAILED',
       'FILE_DOWNLOAD_FAILED',
