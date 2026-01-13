@@ -91,7 +91,7 @@ describe('#submitSummaryLogController', () => {
     const { cookie, crumb } = await getCsrfToken(
       server,
       getUrl,
-      requestFromSignedInUser({})
+      requestFromSignedInUser()
     )
 
     const response = await server.inject({
@@ -125,7 +125,7 @@ describe('#submitSummaryLogController', () => {
     const { cookie, crumb } = await getCsrfToken(
       server,
       getUrl,
-      requestFromSignedInUser({})
+      requestFromSignedInUser()
     )
 
     const response = await server.inject({
@@ -153,7 +153,7 @@ describe('#submitSummaryLogController', () => {
     const { cookie, crumb } = await getCsrfToken(
       server,
       getUrl,
-      requestFromSignedInUser({})
+      requestFromSignedInUser()
     )
 
     const { result, statusCode } = await server.inject({
@@ -183,7 +183,7 @@ describe('#submitSummaryLogController', () => {
     const { cookie, crumb } = await getCsrfToken(
       server,
       getUrl,
-      requestFromSignedInUser({})
+      requestFromSignedInUser()
     )
 
     const response = await server.inject({
@@ -214,7 +214,7 @@ describe('#submitSummaryLogController', () => {
     const { crumb } = await getCsrfToken(
       server,
       getUrl,
-      requestFromSignedInUser({})
+      requestFromSignedInUser()
     )
 
     const response = await server.inject({

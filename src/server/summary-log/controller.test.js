@@ -892,7 +892,7 @@ describe('#summaryLogUploadProgressController', () => {
       const { cookie, crumb } = await getCsrfToken(
         server,
         url,
-        requestFromSignedInUser({})
+        requestFromSignedInUser()
       )
 
       // Make POST request to set up freshData in session
