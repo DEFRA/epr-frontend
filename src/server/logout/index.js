@@ -14,8 +14,7 @@ const logout = {
           method: 'GET',
           path: '/logout',
           options: {
-            auth: { mode: 'try' },
-            ...logoutController.options
+            auth: { mode: 'try' }
           }
         }
       ])

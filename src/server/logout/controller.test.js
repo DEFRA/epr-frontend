@@ -14,6 +14,7 @@ import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
+import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
@@ -75,30 +76,21 @@ describe('#logoutController - integration', () => {
     let response
 
     beforeEach(async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: true,
-        value: {
-          id: 'user-id',
-          email: 'user@email.com',
-          idToken: 'mock-jwt-token',
-          displayName: 'Test User',
-          logoutUrl: 'http://defra-id.auth/logout'
+      const authHelper = createAuthSessionHelper(server)
+      await authHelper.createAuthCookie()
+      authHelper.mockGetUserSession(
+        vi.mocked(getUserSessionModule.getUserSession),
+        {
+          profile: {
+            id: 'user-id',
+            email: 'user@email.com'
+          }
         }
-      })
+      )
 
-      response = await server.inject({
+      response = await authHelper.inject({
         method: 'GET',
-        url: '/logout',
-        auth: {
-          strategy: 'session',
-          credentials: { isAuthenticated: true }
-        }
-      })
-    })
-
-    afterEach(() => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
+        url: '/logout'
       })
     })
 
@@ -146,15 +138,23 @@ describe('#logoutController - integration', () => {
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers.location).toBe('/logged-out')
     })
+
+    test('does not audit a successful sign out attempt', () => {
+      expect(mockCdpAuditing).not.toHaveBeenCalled()
+    })
+
+    test('does not record sign out success metric', () => {
+      expect(mockSignOutSuccessMetric).not.toHaveBeenCalled()
+    })
   })
 })
 
 describe('#logoutController', () => {
   describe('when user is not authenticated', () => {
-    test('should redirect to home when authedUser is null', async () => {
+    test('should redirect to home when auth credentials is null', async () => {
       const mockRequest = {
-        pre: {
-          authedUser: null
+        auth: {
+          credentials: null
         },
         localiseUrl: vi.fn((key) => key)
       }
@@ -175,8 +175,11 @@ describe('#logoutController', () => {
 
   describe('when user is authenticated', () => {
     test('should drop session, clear cookie and redirect to logout URL', async () => {
-      const mockAuthedUser = {
+      const mockSession = {
         idToken: 'id-token-123',
+        profile: {
+          id: 'user-id'
+        },
         urls: {
           logout: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
         }
@@ -187,8 +190,8 @@ describe('#logoutController', () => {
           clear: vi.fn()
         },
         localiseUrl: vi.fn((key) => key),
-        pre: {
-          authedUser: mockAuthedUser
+        auth: {
+          credentials: mockSession
         }
       }
 

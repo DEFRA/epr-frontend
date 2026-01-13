@@ -10,14 +10,11 @@ import { auditSignOut } from '#server/common/helpers/auditing/index.js'
  * @satisfies {Partial<ServerRoute>}
  */
 const logoutController = {
-  options: {
-    pre: [provideAuthedUser]
-  },
   handler: async (request, h) => {
-    const authedUser = request.pre.authedUser
+    const session = request.auth.credentials
     const loggedOutUrl = request.localiseUrl('/logged-out')
 
-    if (!authedUser) {
+    if (!session) {
       return h.redirect(loggedOutUrl)
     }
 
@@ -25,9 +22,8 @@ const logoutController = {
       request.localiseUrl(loggedOutUrl),
       config.get('appBaseUrl')
     )
-
-    const logoutUrl = new URL(authedUser.urls.logout)
-    logoutUrl.searchParams.append('id_token_hint', authedUser.idToken)
+    const logoutUrl = new URL(session.urls.logout)
+    logoutUrl.searchParams.append('id_token_hint', session.idToken)
     logoutUrl.searchParams.append(
       'post_logout_redirect_uri',
       postLogoutRedirectUrl
@@ -35,7 +31,7 @@ const logoutController = {
 
     await removeUserSession(request)
 
-    auditSignOut(authedUser.id, authedUser.email)
+    auditSignOut(session.profile.id, session.profile.email)
     await metrics.signOutSuccess()
 
     return h.redirect(logoutUrl)
