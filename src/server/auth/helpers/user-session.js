@@ -1,8 +1,4 @@
-import {
-  buildSessionFromProfile,
-  buildUserProfile,
-  getTokenExpiresAt
-} from './build-session.js'
+import { buildUserProfile, getTokenExpiresAt } from './build-session.js'
 import { dropUserSession } from './drop-user-session.js'
 import { getUserSession } from './get-user-session.js'
 
@@ -26,17 +22,17 @@ async function removeUserSession(request) {
 /**
  * Create updateUserSession function with verifyToken closure
  * @param {VerifyToken} verifyToken - Token verification function
- * @returns {(request: Request, refreshedSession: RefreshedTokens) => Promise<UserSession>} updateUserSession function
+ * @returns {(request: Request, refreshedTokens: RefreshedTokens) => Promise<UserSession>} updateUserSession function
  */
 const createUpdateUserSession = (verifyToken) =>
   /**
    * Update user session with refreshed tokens
    * @param {Request} request - Hapi request object
-   * @param {RefreshedTokens} refreshedSession - Refreshed session data
+   * @param {RefreshedTokens} refreshedTokens - Refreshed tokens from OIDC provider
    * @returns {Promise<UserSession>}
    */
-  async function updateUserSession(request, refreshedSession) {
-    const payload = await verifyToken(refreshedSession.id_token)
+  async function updateUserSession(request, refreshedTokens) {
+    const payload = await verifyToken(refreshedTokens.id_token)
 
     const { value: existingSession } = await getUserSession(request)
 
@@ -50,14 +46,11 @@ const createUpdateUserSession = (verifyToken) =>
     const expiresAt = getTokenExpiresAt(payload)
 
     const session = {
-      ...buildSessionFromProfile({
-        profile,
-        expiresAt,
-        idToken: refreshedSession.id_token,
-        refreshToken: refreshedSession.refresh_token,
-        urls: existingSession.urls
-      }),
-      linkedOrganisationId: existingSession.linkedOrganisationId
+      ...existingSession,
+      profile,
+      expiresAt,
+      idToken: refreshedTokens.id_token,
+      refreshToken: refreshedTokens.refresh_token
     }
 
     await request.server.app.cache.set(
