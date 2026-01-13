@@ -112,8 +112,8 @@ describe('#cookiesController', () => {
         .map((_, el) => $(el).text())
         .get()
 
-      expect(cellTexts).toContain('crumb')
-      expect(cellTexts).toContain('session')
+      expect(cellTexts).toContain('Crumb')
+      expect(cellTexts).toContain('Session')
       expect(cellTexts).toContain('userSession')
     })
   })
