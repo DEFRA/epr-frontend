@@ -3,8 +3,8 @@ import { dropUserSession } from './drop-user-session.js'
 import { getUserSession } from './get-user-session.js'
 
 /**
- * @import { Request } from '@hapi/hapi'
  * @import { RefreshedTokens } from '../types/tokens.js'
+ * @import { Request } from '@hapi/hapi'
  * @import { UserSession } from '../types/session.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
@@ -29,7 +29,9 @@ async function removeUserSession(request) {
 async function updateUserSession(verifyToken, request, refreshedTokens) {
   const payload = await verifyToken(refreshedTokens.id_token)
 
-  const { value: existingSession } = await getUserSession(request)
+  const { value: existingSession } = /** @type {{ value?: UserSession }} */ (
+    await getUserSession(request)
+  )
 
   if (!existingSession) {
     throw new Error(
@@ -40,6 +42,7 @@ async function updateUserSession(verifyToken, request, refreshedTokens) {
   const profile = buildUserProfile(payload)
   const expiresAt = getTokenExpiresAt(payload)
 
+  /** @type {UserSession} */
   const session = {
     ...existingSession,
     profile,
@@ -56,4 +59,4 @@ async function updateUserSession(verifyToken, request, refreshedTokens) {
   return session
 }
 
-export { updateUserSession, removeUserSession }
+export { removeUserSession, updateUserSession }

@@ -42,31 +42,4 @@ function buildUserProfile(payload) {
   }
 }
 
-/**
- * Build complete user session from profile and auth credentials
- * @param {{
- *   profile: UserProfile
- *   expiresAt: string
- *   idToken: string
- *   refreshToken: string
- *   urls: { token: string, logout: string }
- * }} options - Session building options
- * @returns {Omit<UserSession, 'linkedOrganisationId'>} User session (without application state)
- */
-function buildSessionFromProfile({
-  profile,
-  expiresAt,
-  idToken,
-  refreshToken,
-  urls
-}) {
-  return {
-    profile,
-    expiresAt,
-    idToken,
-    refreshToken,
-    urls
-  }
-}
-
-export { buildSessionFromProfile, buildUserProfile, getTokenExpiresAt }
+export { buildUserProfile, getTokenExpiresAt }

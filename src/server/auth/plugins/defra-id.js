@@ -8,7 +8,7 @@ import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- * @import { BellCredentials, OAuthTokenParams, AzureB2CTokenParams } from '../types/auth.js'
+ * @import { AzureB2CTokenParams, AzureB2CBellCredentials, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
@@ -69,8 +69,8 @@ const createDefraId = (verifyToken) => ({
           scope: ['openid', 'offline_access'],
           /**
            * Extract user profile from OIDC ID token and populate credentials
-           * @param {BellCredentials} credentials - Bell credentials object (mutated to add profile)
-           * @param {OAuthTokenParams | AzureB2CTokenParams} params - OAuth token response parameters (supports both standard OAuth and Azure B2C formats)
+           * @param {OAuthBellCredentials | AzureB2CBellCredentials} credentials
+           * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {

@@ -1,4 +1,8 @@
 /**
+ * @import { BellCredentials } from '../types/auth.js'
+ */
+
+/**
  * User profile - identity data extracted from JWT token payload
  * @typedef {{
  *   id: string
@@ -23,7 +27,7 @@
 
 /**
  * Complete user session stored in cache
- * @typedef {{
+ * @typedef {Omit<BellCredentials, 'expiresIn' | 'token'> & {
  *   profile: UserProfile
  *   linkedOrganisationId?: string
  *   expiresAt: string
