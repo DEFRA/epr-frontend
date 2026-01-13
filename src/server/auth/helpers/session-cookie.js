@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import {
-  createUpdateUserSession,
+  updateUserSession,
   removeUserSession
 } from '#server/auth/helpers/user-session.js'
 import { err, ok } from '#server/common/helpers/result.js'
@@ -17,43 +17,45 @@ import { refreshIdToken } from './refresh-token.js'
  */
 
 /**
- * Creates a handler that checks if token is expired and refreshes it if needed
- * @param {(request: Request, tokenResponse: object) => Promise<UserSession>} updateUserSession
- * @returns {(request: Request, userSession: UserSession) => Promise<Result<UserSession>>}
+ * Handler that checks if token is expired and refreshes it if needed
+ * @param {VerifyToken} verifyToken
+ * @param {Request} request
+ * @param {UserSession} userSession
+ * @returns {Promise<Result<UserSession>>}
  */
-const createTokenRefreshHandler =
-  (updateUserSession) => async (request, userSession) => {
-    const tokenWillExpireSoon = isPast(
-      subMinutes(parseISO(userSession.expiresAt), 1)
+const handleExpiredTokenRefresh = async (verifyToken, request, userSession) => {
+  const tokenWillExpireSoon = isPast(
+    subMinutes(parseISO(userSession.expiresAt), 1)
+  )
+
+  if (!tokenWillExpireSoon) {
+    return ok(userSession)
+  }
+
+  try {
+    const response = await refreshIdToken(request)
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      return err({
+        message: 'Failed to refresh session',
+        status: response.status,
+        body: errorBody
+      })
+    }
+
+    const refreshIdTokenJson = await response.json()
+    const refreshedSession = await updateUserSession(
+      verifyToken,
+      request,
+      refreshIdTokenJson
     )
 
-    if (!tokenWillExpireSoon) {
-      return ok(userSession)
-    }
-
-    try {
-      const response = await refreshIdToken(request)
-
-      if (!response.ok) {
-        const errorBody = await response.text()
-        return err({
-          message: 'Failed to refresh session',
-          status: response.status,
-          body: errorBody
-        })
-      }
-
-      const refreshIdTokenJson = await response.json()
-      const refreshedSession = await updateUserSession(
-        request,
-        refreshIdTokenJson
-      )
-
-      return ok(refreshedSession)
-    } catch (error) {
-      return err({ message: 'Failed to refresh session', cause: error })
-    }
+    return ok(refreshedSession)
+  } catch (error) {
+    return err({ message: 'Failed to refresh session', cause: error })
   }
+}
 
 /**
  * Create session cookie authentication plugin
@@ -62,9 +64,6 @@ const createTokenRefreshHandler =
  * @returns {ServerRegisterPluginObject<void>}
  */
 const createSessionCookie = (verifyToken) => {
-  const updateUserSession = createUpdateUserSession(verifyToken)
-  const handleExpiredTokenRefresh = createTokenRefreshHandler(updateUserSession)
-
   return {
     plugin: {
       name: 'user-session',
@@ -95,10 +94,16 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            const { ok: refreshOk, error } = await handleExpiredTokenRefresh(
+            const {
+              ok: refreshOk,
+              value: refreshedSession,
+              error
+            } = await handleExpiredTokenRefresh(
+              verifyToken,
               request,
               userSession
             )
+
             if (!refreshOk) {
               request.logger.error(error, error.message)
               await removeUserSession(request)
@@ -106,18 +111,9 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            const refreshedSession = await server.app.cache.get(
-              session.sessionId
-            )
-
-            /* v8 ignore else - Extreme edge case: session deleted between first lookup and this second lookup (race condition) */
-            if (refreshedSession) {
-              return {
-                isValid: true,
-                credentials: refreshedSession
-              }
-            } else {
-              return { isValid: false }
+            return {
+              isValid: true,
+              credentials: refreshedSession
             }
           }
         })

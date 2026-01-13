@@ -571,50 +571,5 @@ describe('#sessionCookie - integration', () => {
 
       expect(cachedSession).toBeNull()
     })
-
-    it('should return invalid when session is deleted during validation (race condition)', async () => {
-      const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes in future
-      const { sessionId, sessionData } = createExpiredRefreshSessionData(
-        'user-race',
-        futureExpiry
-      )
-
-      await server.app.cache.set(sessionId, sessionData)
-
-      // Mock cache.get to return null on the second call (simulating race condition)
-      const originalGet = server.app.cache.get
-      let callCount = 0
-      server.app.cache.get = async (key) => {
-        callCount++
-        // First call (in getUserSession) returns the session
-        if (callCount === 1) {
-          return originalGet.call(server.app.cache, key)
-        }
-        // Second call (after refresh check) returns null (simulating deletion)
-        return null
-      }
-
-      const cookiePassword = config.get('session.cookie.password')
-      const sealedCookie = await Iron.seal(
-        { sessionId },
-        cookiePassword,
-        Iron.defaults
-      )
-
-      const response = await server.inject({
-        method: 'GET',
-        url: '/test-auth',
-        headers: {
-          cookie: `userSession=${sealedCookie}`
-        }
-      })
-
-      // Should redirect to logged-out when session is deleted during validation
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers.location).toBe(loggedOutUrl)
-
-      // Restore original cache.get
-      server.app.cache.get = originalGet
-    })
   })
 })

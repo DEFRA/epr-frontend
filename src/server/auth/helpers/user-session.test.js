@@ -1,10 +1,10 @@
 import { getUserSession } from '#server/auth/helpers/get-user-session.js'
-import { createUpdateUserSession } from '#server/auth/helpers/user-session.js'
+import { updateUserSession } from '#server/auth/helpers/user-session.js'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
-describe(createUpdateUserSession, () => {
+describe(updateUserSession, () => {
   it('should throw error when session is deleted during token refresh', async () => {
     const mockVerifyToken = vi.fn().mockResolvedValue({
       sub: 'user-123',
@@ -30,8 +30,6 @@ describe(createUpdateUserSession, () => {
       value: null
     })
 
-    const updateUserSession = createUpdateUserSession(mockVerifyToken)
-
     const mockRequest = {
       state: { userSession: { sessionId: 'sess-123' } },
       server: { app: { cache: { set: vi.fn() } } }
@@ -44,7 +42,7 @@ describe(createUpdateUserSession, () => {
     }
 
     await expect(
-      updateUserSession(mockRequest, refreshedSession)
+      updateUserSession(mockVerifyToken, mockRequest, refreshedSession)
     ).rejects.toThrowError(
       'Cannot update session: session was deleted during token refresh'
     )

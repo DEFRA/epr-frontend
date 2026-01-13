@@ -20,45 +20,40 @@ async function removeUserSession(request) {
 }
 
 /**
- * Create updateUserSession function with verifyToken closure
+ * Update user session with refreshed tokens
  * @param {VerifyToken} verifyToken - Token verification function
- * @returns {(request: Request, refreshedTokens: RefreshedTokens) => Promise<UserSession>} updateUserSession function
+ * @param {Request} request - Hapi request object
+ * @param {RefreshedTokens} refreshedTokens - Refreshed tokens from OIDC provider
+ * @returns {Promise<UserSession>}
  */
-const createUpdateUserSession = (verifyToken) =>
-  /**
-   * Update user session with refreshed tokens
-   * @param {Request} request - Hapi request object
-   * @param {RefreshedTokens} refreshedTokens - Refreshed tokens from OIDC provider
-   * @returns {Promise<UserSession>}
-   */
-  async function updateUserSession(request, refreshedTokens) {
-    const payload = await verifyToken(refreshedTokens.id_token)
+async function updateUserSession(verifyToken, request, refreshedTokens) {
+  const payload = await verifyToken(refreshedTokens.id_token)
 
-    const { value: existingSession } = await getUserSession(request)
+  const { value: existingSession } = await getUserSession(request)
 
-    if (!existingSession) {
-      throw new Error(
-        'Cannot update session: session was deleted during token refresh'
-      )
-    }
-
-    const profile = buildUserProfile(payload)
-    const expiresAt = getTokenExpiresAt(payload)
-
-    const session = {
-      ...existingSession,
-      profile,
-      expiresAt,
-      idToken: refreshedTokens.id_token,
-      refreshToken: refreshedTokens.refresh_token
-    }
-
-    await request.server.app.cache.set(
-      request.state.userSession.sessionId,
-      session
+  if (!existingSession) {
+    throw new Error(
+      'Cannot update session: session was deleted during token refresh'
     )
-
-    return session
   }
 
-export { createUpdateUserSession, removeUserSession }
+  const profile = buildUserProfile(payload)
+  const expiresAt = getTokenExpiresAt(payload)
+
+  const session = {
+    ...existingSession,
+    profile,
+    expiresAt,
+    idToken: refreshedTokens.id_token,
+    refreshToken: refreshedTokens.refresh_token
+  }
+
+  await request.server.app.cache.set(
+    request.state.userSession.sessionId,
+    session
+  )
+
+  return session
+}
+
+export { updateUserSession, removeUserSession }
