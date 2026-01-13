@@ -1,6 +1,5 @@
 import { config } from '#config/config.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
-import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 
