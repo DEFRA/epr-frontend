@@ -12,6 +12,7 @@ import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 const logoutController = {
   handler: async (request, h) => {
     const session = request.auth.credentials
+
     const loggedOutUrl = request.localiseUrl('/logged-out')
 
     if (!session) {
@@ -19,7 +20,7 @@ const logoutController = {
     }
 
     const { href: postLogoutRedirectUrl } = new URL(
-      request.localiseUrl(loggedOutUrl),
+      loggedOutUrl,
       config.get('appBaseUrl')
     )
     const logoutUrl = new URL(session.urls.logout)

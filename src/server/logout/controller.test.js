@@ -211,5 +211,37 @@ describe('#logoutController', () => {
       )
       expect(result).toBe('redirect-response')
     })
+
+    test('should localise the post_logout_redirect_uri for Welsh users', async () => {
+      const mockAuthedUser = {
+        idToken: 'id-token-123',
+        urls: {
+          logout: 'http://localhost:3200/logout'
+        }
+      }
+
+      const mockRequest = {
+        cookieAuth: {
+          clear: vi.fn()
+        },
+        localiseUrl: vi.fn((path) => `/cy${path}`),
+        pre: {
+          authedUser: mockAuthedUser
+        }
+      }
+
+      const mockH = {
+        redirect: vi.fn().mockReturnValue('redirect-response')
+      }
+
+      await logoutController.handler(mockRequest, mockH)
+
+      const expectedRedirectUri = `${appBaseUrl}/cy/${loggedOutSlug}`
+      const redirectUrl = mockH.redirect.mock.calls[0][0]
+
+      expect(redirectUrl.searchParams.get('post_logout_redirect_uri')).toBe(
+        expectedRedirectUri
+      )
+    })
   })
 })

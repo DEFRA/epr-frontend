@@ -12,18 +12,18 @@
     "purpose": "Purpose",
     "expires": "Expires",
     "crumb": {
-      "name": "crumb",
-      "purpose": "Cross Site Request Forgery (CSRF) token storage",
+      "name": "Crumb",
+      "purpose": "This is an anti-forgery token and is used to prevent cross-site request forgery (CSRF) attacks. It prevents others from forging your website links.",
       "expires": "At end of session"
     },
     "session": {
-      "name": "session",
-      "purpose": "Session identifier",
+      "name": "Session",
+      "purpose": "Saves your responses so you have a better experience.",
       "expires": "4 hours"
     },
     "userSession": {
       "name": "userSession",
-      "purpose": "Used to keep users signed in",
+      "purpose": "Used to keep you signed in to the service.",
       "expires": "4 hours"
     }
   }
