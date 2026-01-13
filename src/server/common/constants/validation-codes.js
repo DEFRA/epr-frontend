@@ -114,10 +114,10 @@ export const STRUCTURE_CODES = new Set(Object.values(structureCodes))
 export const STRUCTURE_DISPLAY_CODE = 'STRUCTURE_INVALID'
 
 export const PROCESSING_TYPE_CODES = new Set(Object.values(processingTypeCodes))
-export const PROCESSING_TYPE_DISPLAY_CODE = 'PROCESSING_TYPE_INVALID'
+export const PROCESSING_TYPE_DISPLAY_CODE = 'TEMPLATE_INVALID'
 
 export const TECHNICAL_ERROR_CODES = new Set(Object.values(technicalErrorCodes))
 export const TECHNICAL_ERROR_DISPLAY_CODE = 'TECHNICAL_ERROR'
 
 export const SPREADSHEET_CODES = new Set(Object.values(spreadsheetCodes))
-export const SPREADSHEET_DISPLAY_CODE = 'SPREADSHEET_MALFORMED'
+export const SPREADSHEET_DISPLAY_CODE = 'TEMPLATE_INVALID'

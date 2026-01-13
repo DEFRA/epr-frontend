@@ -1206,7 +1206,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The template you&#39;re using appears to have been modified or corrupted'
+        'The summary log template you&#39;re uploading is incorrect'
       )
     })
 
@@ -1225,7 +1225,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The template you&#39;re using appears to have been modified or corrupted'
+        'The summary log template you&#39;re uploading is incorrect'
       )
     })
 
@@ -1247,12 +1247,12 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The template you&#39;re using appears to have been modified or corrupted'
+        'The summary log template you&#39;re uploading is incorrect'
       )
 
       // Should only appear once (deduplicated)
       const matches = result.match(
-        /The template you&#39;re using appears to have been modified or corrupted/g
+        /The summary log template you&#39;re uploading is incorrect/g
       )
 
       expect(matches).toHaveLength(1)
