@@ -11,11 +11,10 @@ import {
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
-
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
-vi.mock(import('#server/auth/helpers/drop-user-session.js'))
+import {
+  givenUserSignedInToService,
+  createUserSessionData
+} from '#server/common/test-helpers/auth-helper.js'
 
 const mockSignOutSuccessMetric = vi.fn()
 const mockCdpAuditing = vi.fn()
@@ -70,22 +69,21 @@ describe('#logoutController - integration', () => {
     let response
 
     beforeEach(async () => {
-      const authHelper = createAuthSessionHelper(server)
-      await authHelper.createAuthCookie()
-      authHelper.mockGetUserSession(
-        vi.mocked(getUserSessionModule.getUserSession),
-        {
+      const requestFromSignedInUser = await givenUserSignedInToService(server, {
+        sessionData: createUserSessionData({
           profile: {
             id: 'user-id',
             email: 'user@email.com'
           }
-        }
-      )
-
-      response = await authHelper.inject({
-        method: 'GET',
-        url: '/logout'
+        })
       })
+
+      response = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/logout'
+        })
+      )
     })
 
     test('redirects to logged-out page via Defra ID', async () => {

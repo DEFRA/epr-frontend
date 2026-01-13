@@ -2,13 +2,15 @@ import Boom from '@hapi/boom'
 import { load } from 'cheerio'
 
 import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
+import {
+  createUserSessionData,
+  givenUserSignedInToService
+} from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
@@ -26,8 +28,6 @@ import {
   buildLoadsViewModel,
   getWasteRecordSectionNumber
 } from './controller.js'
-
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
@@ -69,8 +69,9 @@ describe('#summaryLogUploadProgressController', () => {
   const url = summaryLogBaseUrl
   /** @type {Server} */
   let server
+  /** @type {import('#server/common/test-helpers/auth-helper.js').InjectOptionsDecorator} */
+  let requestFromSignedInUser
   const mockOidcServer = createMockOidcServer('http://defra-id.auth')
-  let authHelper
 
   beforeAll(async () => {
     mockOidcServer.listen()
@@ -88,11 +89,9 @@ describe('#summaryLogUploadProgressController', () => {
     server = await createServer()
     await server.initialize()
 
-    authHelper = createAuthSessionHelper(server)
-    authHelper.mockGetUserSession(
-      vi.mocked(getUserSessionModule.getUserSession)
-    )
-    await authHelper.createAuthCookie()
+    requestFromSignedInUser = await givenUserSignedInToService(server, {
+      sessionData: createUserSessionData()
+    })
   })
 
   beforeEach(() => {
@@ -118,10 +117,12 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   test('should provide expected response', async () => {
-    const { result, statusCode } = await authHelper.inject({
-      method: 'GET',
-      url
-    })
+    const { result, statusCode } = await server.inject(
+      requestFromSignedInUser({
+        method: 'GET',
+        url
+      })
+    )
 
     expect(fetchSummaryLogStatus).toHaveBeenCalledWith(
       organisationId,
@@ -139,10 +140,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.preprocessing
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       const $ = load(result)
       const $body = $('[data-testid="app-page-body"]')
@@ -171,10 +174,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validating
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining('Your file is being checked')
@@ -188,10 +193,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.submitting
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining('Your waste records are being updated')
@@ -224,10 +231,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -247,10 +256,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(expect.stringContaining('return to home'))
       expect(result).toStrictEqual(
@@ -264,10 +275,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       // Should have GDS inset text component with warning message
       expect(result).toStrictEqual(expect.stringContaining('govuk-inset-text'))
@@ -302,10 +315,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining('section 1 of your summary log')
@@ -329,10 +344,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining('section 3 of your summary log')
@@ -356,10 +373,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining('section 1 of your summary log')
@@ -385,10 +404,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -422,10 +443,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -451,10 +474,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -487,10 +512,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -523,10 +550,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -565,10 +594,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -604,10 +635,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -638,10 +671,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -671,10 +706,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -706,10 +743,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -737,10 +776,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -777,10 +818,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expectCheckPageContent(result)
 
@@ -797,10 +840,12 @@ describe('#summaryLogUploadProgressController', () => {
         accreditationNumber: '493021'
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining('Summary log uploaded')
@@ -821,10 +866,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.submitted
       })
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining(`href="/organisations/${organisationId}"`)
@@ -842,11 +889,11 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       // Get CSRF token
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        headers: {
-          cookie: `userSession=${authHelper.getAuthCookie()}`
-        }
-      })
+      const { cookie, crumb } = await getCsrfToken(
+        server,
+        url,
+        requestFromSignedInUser({})
+      )
 
       // Make POST request to set up freshData in session
       const postResponse = await server.inject({
@@ -894,10 +941,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -912,10 +961,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
@@ -931,10 +982,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.rejected
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -951,10 +1004,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -975,10 +1030,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('Upload updated XLSX file')
       expect(result).toContain('Continue')
@@ -996,10 +1053,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('govuk-back-link')
       expect(result).toContain(
@@ -1015,10 +1074,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
@@ -1040,10 +1101,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain(
@@ -1063,10 +1126,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain(
@@ -1087,10 +1152,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1119,10 +1186,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       // Should show both the data entry message and the registration mismatch
@@ -1142,10 +1211,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Summary log material is missing or incorrect')
@@ -1159,10 +1230,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
@@ -1178,10 +1251,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
@@ -1203,10 +1278,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
@@ -1226,10 +1303,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
@@ -1252,10 +1331,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain(
@@ -1270,10 +1351,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain(
@@ -1290,10 +1373,12 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain('Upload updated XLSX file')
@@ -1305,10 +1390,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validationFailed
       })
 
-      await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
         organisationId,
@@ -1324,10 +1411,12 @@ describe('#summaryLogUploadProgressController', () => {
           status: summaryLogStatuses.superseded
         })
 
-        const { result, statusCode } = await authHelper.inject({
-          method: 'GET',
-          url
-        })
+        const { result, statusCode } = await server.inject(
+          requestFromSignedInUser({
+            method: 'GET',
+            url
+          })
+        )
 
         expect(statusCode).toBe(statusCodes.ok)
         expect(result).toContain('This summary log has been replaced')
@@ -1343,10 +1432,12 @@ describe('#summaryLogUploadProgressController', () => {
           status: summaryLogStatuses.superseded
         })
 
-        const { result } = await authHelper.inject({
-          method: 'GET',
-          url
-        })
+        const { result } = await server.inject(
+          requestFromSignedInUser({
+            method: 'GET',
+            url
+          })
+        )
 
         expect(result).not.toStrictEqual(enablesClientSidePolling())
       })
@@ -1358,10 +1449,12 @@ describe('#summaryLogUploadProgressController', () => {
           status: summaryLogStatuses.superseded
         })
 
-        await authHelper.inject({
-          method: 'GET',
-          url
-        })
+        await server.inject(
+          requestFromSignedInUser({
+            method: 'GET',
+            url
+          })
+        )
 
         expect(initiateSummaryLogUpload).toHaveBeenCalledTimes(initialCallCount)
       })
@@ -1372,10 +1465,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.superseded
       })
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
@@ -1407,10 +1502,12 @@ describe('#summaryLogUploadProgressController', () => {
         status: 'some_unknown_status'
       })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toContain('Error checking status')
       expect(result).toContain('Unable to check upload status')
@@ -1422,10 +1519,12 @@ describe('#summaryLogUploadProgressController', () => {
     test('should show 404 error page when summary log not found', async () => {
       fetchSummaryLogStatus.mockRejectedValueOnce(Boom.notFound())
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(expect.stringContaining('Page not found'))
       expect(statusCode).toBe(statusCodes.notFound)
@@ -1436,10 +1535,12 @@ describe('#summaryLogUploadProgressController', () => {
         Boom.internal('Failed to fetch')
       )
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url
+        })
+      )
 
       expect(result).toStrictEqual(
         expect.stringContaining('Something went wrong')
@@ -1450,11 +1551,7 @@ describe('#summaryLogUploadProgressController', () => {
 
   describe('session validation', () => {
     test('should redirect to logged-out when session is invalid', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: false
-      })
-
-      const { statusCode, headers } = await authHelper.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url
       })

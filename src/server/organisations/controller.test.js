@@ -11,10 +11,12 @@ import {
 } from 'vitest'
 
 import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
+import {
+  givenUserSignedInToService,
+  createUserSessionData
+} from '#server/common/test-helpers/auth-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 
@@ -26,7 +28,6 @@ import fixtureMissingFields from '../../../fixtures/organisation/missing-fields.
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureSingleReprocessing from '../../../fixtures/organisation/single-reprocessing.json' with { type: 'json' }
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
@@ -34,7 +35,10 @@ vi.mock(
 describe('#organisationController', () => {
   /** @type {Server} */
   let server
-  let authHelper
+
+  /** @type {import('#server/common/test-helpers/auth-helper.js').InjectOptionsDecorator} */
+  let requestFromSignedInUser
+
   const mockOidcServer = createMockOidcServer('http://defra-id.auth')
 
   beforeAll(async () => {
@@ -51,16 +55,13 @@ describe('#organisationController', () => {
 
     server = await createServer()
     await server.initialize()
-
-    authHelper = createAuthSessionHelper(server)
-    await authHelper.createAuthCookie()
   })
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
-    authHelper.mockGetUserSession(
-      vi.mocked(getUserSessionModule.getUserSession)
-    )
+    requestFromSignedInUser = await givenUserSignedInToService(server, {
+      sessionData: createUserSessionData()
+    })
   })
 
   afterAll(async () => {
@@ -78,10 +79,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -93,10 +96,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -130,10 +135,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943902/exporting'
+        })
+      )
 
       const $ = load(result)
 
@@ -154,10 +161,12 @@ describe('#organisationController', () => {
       ).mockResolvedValue(fixtureData)
 
       // Test reprocessing tab
-      const reprocessingResponse = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const reprocessingResponse = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $reprocessing = load(reprocessingResponse.result)
       const reprocessingTabLink = $reprocessing('.govuk-tabs__list-item')
@@ -170,10 +179,12 @@ describe('#organisationController', () => {
       )
 
       // Test exporting tab
-      const exportingResponse = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/exporting'
-      })
+      const exportingResponse = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/exporting'
+        })
+      )
 
       const $exporting = load(exportingResponse.result)
       const exportingTabLink = $exporting('.govuk-tabs__list-item')
@@ -191,10 +202,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943906'
+        })
+      )
 
       const $ = load(result)
 
@@ -209,10 +222,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -232,10 +247,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -256,10 +273,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}`
-      })
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: `/organisations/${organisationId}`
+        })
+      )
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
@@ -271,10 +290,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
@@ -291,19 +312,17 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(backendError)
 
-      const { statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
     it('should redirect to login when session is missing', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
@@ -318,10 +337,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(Boom.notFound('Organisation not found'))
 
-      const { statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/nonexistent-id'
-      })
+      const { statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/nonexistent-id'
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
@@ -334,10 +355,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(timeoutError)
 
-      const { statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
@@ -350,31 +373,29 @@ describe('#organisationController', () => {
         invalidField: 'no company details'
       })
 
-      const { statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
   })
 
   describe('edge Cases', () => {
-    beforeEach(() => {
-      authHelper.mockGetUserSession(
-        vi.mocked(getUserSessionModule.getUserSession)
-      )
-    })
-
     it('should display "No sites found" when organisation has no accreditations', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureEmpty)
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943903'
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943903'
+        })
+      )
 
       const $ = load(result)
 
@@ -388,10 +409,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureAllExcluded)
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943904'
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943904'
+        })
+      )
 
       const $ = load(result)
 
@@ -426,10 +449,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithCreatedStatus)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       // Should show no sites because both registration and accreditation have Created status (excluded)
       expect(result).toContain('No sites found.')
@@ -457,10 +482,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithRejectedStatus)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       // Should show no sites because Rejected status is excluded
       expect(result).toContain('No sites found.')
@@ -471,10 +498,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureMissingFields)
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943905'
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943905'
+        })
+      )
 
       const $ = load(result)
 
@@ -499,10 +528,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithUnmatchedAccreditation)
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -519,17 +550,21 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const reprocessingResponse = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902'
-      })
+      const reprocessingResponse = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943902'
+        })
+      )
 
       expect(reprocessingResponse.result).not.toContain(/Reprocessing/i)
 
-      const exportingResponse = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
-      })
+      const exportingResponse = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943902/exporting'
+        })
+      )
 
       const $exporting = load(exportingResponse.result)
 
@@ -541,10 +576,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906'
-      })
+      const { result, statusCode } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943906'
+        })
+      )
 
       const $ = load(result)
 
@@ -610,10 +647,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMixedStatuses)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -628,21 +667,17 @@ describe('#organisationController', () => {
   })
 
   describe('coverage - Additional Paths', () => {
-    beforeEach(() => {
-      authHelper.mockGetUserSession(
-        vi.mocked(getUserSessionModule.getUserSession)
-      )
-    })
-
     it('should group multiple materials by site correctly', async () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -709,10 +744,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMultipleMaterialsSameSite)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 
@@ -733,10 +770,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       // Just verify the request succeeded (logging happens internally)
       expect(
@@ -796,10 +835,12 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithVariousStatuses)
 
-      const { result } = await authHelper.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
-      })
+      const { result } = await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901'
+        })
+      )
 
       const $ = load(result)
 

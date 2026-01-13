@@ -1,5 +1,11 @@
 import { config } from '#config/config.js'
 import Iron from '@hapi/iron'
+import { randomUUID } from 'node:crypto'
+
+/**
+ * @import { ServerInjectOptions } from '@hapi/hapi'
+ * @import { Server } from '@hapi/hapi'
+ */
 
 /**
  * Create a default user session object with all required fields
@@ -7,7 +13,7 @@ import Iron from '@hapi/iron'
  * @param {object} [overrides.profile] - Optional profile field overrides
  * @returns {object} Complete user session object
  */
-export const createMockUserSession = (overrides = {}) => {
+export const createUserSessionData = (overrides = {}) => {
   const now = Date.now()
   const { profile: profileOverrides, ...sessionOverrides } = overrides
 
@@ -48,88 +54,47 @@ export const createMockUserSession = (overrides = {}) => {
 }
 
 /**
- * Create an auth session helper for a server instance
- * @param {import('@hapi/hapi').Server} server - Hapi server instance
- * @returns {object} Auth session helper functions
+ * Function that takes options for (hapi) server.inject and returns options
+ * @typedef {(injectOptions: ServerInjectOptions) => ServerInjectOptions} InjectOptionsDecorator
  */
-export const createAuthSessionHelper = (server) => {
-  let authCookie = null
+
+/**
+ * Creates a session in the service with the provided data. Returns a function that
+ * decorates options for server.inject by adding an auth cookie (for that session)
+ * @param {Server} server
+ * @param {{ sessionData: object, sessionId?: string }} params
+ * @returns {Promise<InjectOptionsDecorator>}
+ */
+export async function givenUserSignedInToService(
+  server,
+  { sessionData, sessionId = randomUUID() }
+) {
+  await server.app.cache.set(sessionId, sessionData)
+  const cookiePassword = config.get('session.cookie.password')
+  const authCookie = await Iron.seal(
+    { sessionId },
+    cookiePassword,
+    Iron.defaults
+  )
 
   /**
-   * Create and seal an auth session cookie
-   * @param {object} [sessionData] - Session data to store (defaults to mock session)
-   * @param {string} [sessionId] - Optional session ID (defaults to 'test-session-id')
-   * @returns {Promise<string>} Sealed cookie value
+   * Decorates options for (hapi) server.inject with cookie for auth
+   * @param {ServerInjectOptions} options
+   * @returns ServerInjectOptions
    */
-  const createAuthCookie = async (
-    sessionData,
-    sessionId = 'test-session-id'
-  ) => {
-    const data = sessionData || createMockUserSession()
-    await server.app.cache.set(sessionId, data)
-    const cookiePassword = config.get('session.cookie.password')
-    authCookie = await Iron.seal({ sessionId }, cookiePassword, Iron.defaults)
-    return authCookie
-  }
-
-  /**
-   * Setup getUserSession mock with complete session data
-   * @param {object} mockGetUserSession - Mocked getUserSession module
-   * @param {object} [sessionOverrides] - Optional session field overrides
-   */
-  const mockGetUserSession = (mockGetUserSession, sessionOverrides = {}) => {
-    const session = createMockUserSession(sessionOverrides)
-
-    mockGetUserSession.mockResolvedValue({
-      ok: true,
-      value: session
-    })
-  }
-
-  /**
-   * Get the current auth cookie value
-   * @returns {string|null} The sealed cookie value or null if not created
-   */
-  const getAuthCookie = () => authCookie
-
-  /**
-   * Inject a request with auth headers automatically added
-   * @param {object} options - Hapi inject options
-   * @returns {Promise} Response from server.inject
-   */
-  const inject = async (options) => {
-    if (!authCookie) {
-      throw new Error(
-        'Auth cookie not created. Call createAuthCookie() first in beforeAll.'
-      )
-    }
-
+  const decorateInjectOptionsWithAuth = (options = {}) => {
     const headers = {
       ...options.headers,
       cookie: options.headers?.cookie
-        ? `${options.headers.cookie}; userSession=${authCookie}`
+        ? `userSession=${authCookie}; ${options.headers.cookie}`
         : `userSession=${authCookie}`
     }
 
-    return server.inject({
+    return {
       ...options,
       headers
-    })
+    }
   }
 
-  return {
-    createAuthCookie,
-    getAuthCookie,
-    inject,
-    mockGetUserSession
-  }
+  return decorateInjectOptionsWithAuth
 }
-
-/**
- * Get common auth headers for server.inject requests
- * @param {string} authCookie - The sealed auth cookie value
- * @returns {object} Headers object with cookie
- */
-export const getAuthHeaders = (authCookie) => ({
-  cookie: `userSession=${authCookie}`
-})
