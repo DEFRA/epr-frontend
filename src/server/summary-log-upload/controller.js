@@ -45,9 +45,13 @@ export const summaryLogUploadController = {
       request.logger.error(
         {
           err,
-          event: { category: 'upload', action: 'summary-log-upload-failed' }
+          event: {
+            category: 'upload',
+            action: 'summary-log-upload-failed',
+            reference: { organisationId, registrationId }
+          }
         },
-        err.message
+        'Failed to initiate summary log upload'
       )
 
       return h.view('error/index', {
