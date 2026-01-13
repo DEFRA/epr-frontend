@@ -15,28 +15,31 @@ export const account = {
   plugin: {
     name: 'account',
     register(server) {
-      const authConfig = isDefraIdEnabled()
-        ? { auth: { mode: 'try' } }
-        : { auth: false }
+      const withAuthConfig = ({ options = {} }) => {
+        const authConfig = isDefraIdEnabled()
+          ? { auth: { mode: 'try' } }
+          : { auth: false }
+        return { ...authConfig, ...options }
+      }
 
       server.route([
         {
           ...emailNotRecognisedController,
           method: 'GET',
           path: '/email-not-recognised',
-          options: authConfig
+          options: withAuthConfig(emailNotRecognisedController)
         },
         {
           ...linkingGetController,
           method: 'GET',
           path: '/account/linking',
-          options: authConfig
+          options: withAuthConfig(linkingGetController)
         },
         {
           ...linkingPostController,
           method: 'POST',
           path: '/account/linking',
-          options: authConfig
+          options: withAuthConfig(linkingPostController)
         }
       ])
     }
