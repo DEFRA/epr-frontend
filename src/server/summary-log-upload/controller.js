@@ -42,8 +42,17 @@ export const summaryLogUploadController = {
         backUrl
       })
     } catch (err) {
-      // @todo: use structured logging
-      request.server.log(['error', 'upload'], err)
+      request.logger.error(
+        {
+          err,
+          event: {
+            category: 'upload',
+            action: 'summary-log-upload-failed',
+            reference: { organisationId, registrationId }
+          }
+        },
+        'Failed to initiate summary log upload'
+      )
 
       return h.view('error/index', {
         pageTitle: localise('summary-log-upload:errorPageTitle'),
