@@ -1,23 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
 
 describe('#footer', () => {
-  /** @type {Server} */
-  let server
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
   describe('when viewing any page', () => {
-    it('should render the footer', async () => {
+    it('should render the footer', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -31,7 +19,9 @@ describe('#footer', () => {
       expect(footer).toHaveLength(1)
     })
 
-    it('should render the Get help section with heading', async () => {
+    it('should render the Get help section with heading', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -43,7 +33,9 @@ describe('#footer', () => {
       expect(heading.text()).toBe('Get help')
     })
 
-    it('should render the customer service email as a mailto link', async () => {
+    it('should render the customer service email as a mailto link', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -58,7 +50,7 @@ describe('#footer', () => {
       expect(emailLink.text()).toBe('eprcustomerservice@defra.gov.uk')
     })
 
-    it('should render the phone number', async () => {
+    it('should render the phone number', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -70,7 +62,7 @@ describe('#footer', () => {
       expect(footerText).toContain('0300 060 0002')
     })
 
-    it('should render the opening hours', async () => {
+    it('should render the opening hours', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -82,7 +74,9 @@ describe('#footer', () => {
       expect(footerText).toContain('Monday to Friday, 8am to 4:30pm')
     })
 
-    it('should render the Contact link pointing to /contact', async () => {
+    it('should render the Contact link pointing to /contact', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -97,7 +91,9 @@ describe('#footer', () => {
       expect(contactLink.attr('href')).toBe('/contact')
     })
 
-    it('should render the Privacy link pointing to GOV.UK privacy policy', async () => {
+    it('should render the Privacy link pointing to GOV.UK privacy policy', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -114,7 +110,9 @@ describe('#footer', () => {
       )
     })
 
-    it('should render the Cookies link pointing to /cookies', async () => {
+    it('should render the Cookies link pointing to /cookies', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -129,7 +127,9 @@ describe('#footer', () => {
       expect(cookiesLink.attr('href')).toBe('/cookies')
     })
 
-    it('should render the Accessibility statement link pointing to GOV.UK', async () => {
+    it('should render the Accessibility statement link pointing to GOV.UK', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -146,7 +146,7 @@ describe('#footer', () => {
       )
     })
 
-    it('should render the OGL license link', async () => {
+    it('should render the OGL license link', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -161,7 +161,7 @@ describe('#footer', () => {
       expect(oglLink.text()).toBe('Open Government Licence v3.0')
     })
 
-    it('should render the Crown copyright link', async () => {
+    it('should render the Crown copyright link', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/start'
@@ -177,7 +177,3 @@ describe('#footer', () => {
     })
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */
