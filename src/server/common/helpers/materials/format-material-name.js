@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 const MATERIAL_DISPLAY_NAMES = Object.freeze({
   aluminium: 'Aluminium',
   fibre: 'Fibre',
@@ -16,7 +18,7 @@ const MATERIAL_DISPLAY_NAMES = Object.freeze({
 export function formatMaterialName(material) {
   const displayName = MATERIAL_DISPLAY_NAMES[material]
   if (!displayName) {
-    throw new Error(`Unknown material: ${material}`)
+    throw Boom.internal(`Unknown material: ${material}`)
   }
 
   return displayName
