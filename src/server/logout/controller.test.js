@@ -10,10 +10,10 @@ const loggedOutUrl = `${appBaseUrl}/${loggedOutSlug}`
 
 describe('#logoutController', () => {
   describe('when user is not authenticated', () => {
-    test('should redirect to home when authedUser is null', async () => {
+    test('should redirect to home when auth credentials is null', async () => {
       const mockRequest = {
-        pre: {
-          authedUser: null
+        auth: {
+          credentials: null
         },
         localiseUrl: vi.fn((key) => key)
       }
@@ -33,21 +33,24 @@ describe('#logoutController', () => {
   })
 
   describe('when user is authenticated', () => {
-    test('should drop session, clear cookie and redirect to logout URL', async () => {
-      const mockAuthedUser = {
-        idToken: 'id-token-123',
-        urls: {
-          logout: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
-        }
+    const mockSession = {
+      idToken: 'id-token-123',
+      profile: {
+        id: 'user-id'
+      },
+      urls: {
+        logout: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
       }
+    }
 
+    test('should drop session, clear cookie and redirect to logout URL', async () => {
       const mockRequest = {
         cookieAuth: {
           clear: vi.fn()
         },
         localiseUrl: vi.fn((key) => key),
-        pre: {
-          authedUser: mockAuthedUser
+        auth: {
+          credentials: mockSession
         }
       }
 
@@ -69,20 +72,13 @@ describe('#logoutController', () => {
     })
 
     test('should localise the post_logout_redirect_uri for Welsh users', async () => {
-      const mockAuthedUser = {
-        idToken: 'id-token-123',
-        urls: {
-          logout: 'http://localhost:3200/logout'
-        }
-      }
-
       const mockRequest = {
         cookieAuth: {
           clear: vi.fn()
         },
         localiseUrl: vi.fn((path) => `/cy${path}`),
-        pre: {
-          authedUser: mockAuthedUser
+        auth: {
+          credentials: mockSession
         }
       }
 

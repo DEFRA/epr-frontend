@@ -23,23 +23,17 @@ describe(provideAuthedUser, () => {
     expect(result).toStrictEqual(mockSession)
   })
 
-  it('should return undefined when session does not exist', async () => {
+  it('should return null when session does not exist', async () => {
     vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue(err())
 
     const mockRequest = {}
 
     const result = await provideAuthedUser.method(mockRequest)
 
-    expect(result).toBeUndefined()
+    expect(result).toBeNull()
   })
 
   it('should have authedUser as assign property', () => {
     expect(provideAuthedUser.assign).toBe('authedUser')
-  })
-
-  it('should have failAction that allows page to render', async () => {
-    const result = await provideAuthedUser.failAction()
-
-    expect(result).toBeUndefined()
   })
 })
