@@ -13,9 +13,12 @@ import { auditSignIn } from '#server/common/helpers/auditing/index.js'
  */
 const controller = {
   options: {
-    auth: 'defra-id'
+    auth: { strategy: 'defra-id', mode: 'try' }
   },
   handler: async (request, h) => {
+    if (request.auth?.error) {
+      await metrics.signInFailure()
+    }
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
 

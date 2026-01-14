@@ -37,6 +37,9 @@ export const metrics = {
   async signInSuccess() {
     return metricsCounter('signInSuccess')
   },
+  async signInFailure() {
+    return metricsCounter('signInFailure')
+  },
   async signOutSuccess() {
     return metricsCounter('signOutSuccess')
   }
