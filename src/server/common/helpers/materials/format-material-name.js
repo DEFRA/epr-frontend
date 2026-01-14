@@ -1,7 +1,11 @@
-import { capitalize } from 'lodash-es'
-
 const MATERIAL_DISPLAY_NAMES = Object.freeze({
-  paper: 'Paper and board'
+  aluminium: 'Aluminium',
+  fibre: 'Fibre',
+  glass: 'Glass',
+  paper: 'Paper and board',
+  plastic: 'Plastic',
+  steel: 'Steel',
+  wood: 'Wood'
 })
 
 /**
@@ -14,5 +18,10 @@ export function formatMaterialName(material) {
     return ''
   }
 
-  return MATERIAL_DISPLAY_NAMES[material] ?? capitalize(material)
+  const displayName = MATERIAL_DISPLAY_NAMES[material]
+  if (!displayName) {
+    throw new Error(`Unknown material: ${material}`)
+  }
+
+  return displayName
 }
