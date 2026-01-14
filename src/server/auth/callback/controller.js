@@ -2,6 +2,8 @@ import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 
 /**
  * Auth callback controller
@@ -19,6 +21,9 @@ const controller = {
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
+
+      auditSignIn(session.profile.id, session.profile.email)
+      await metrics.signInSuccess()
 
       request.cookieAuth.set({ sessionId })
 
