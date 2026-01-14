@@ -10,14 +10,10 @@ const MATERIAL_DISPLAY_NAMES = Object.freeze({
 
 /**
  * Formats a material code for display
- * @param {string | undefined | null} material - The material code
+ * @param {string} material - The material code
  * @returns {string} The formatted display name
  */
 export function formatMaterialName(material) {
-  if (!material) {
-    return ''
-  }
-
   const displayName = MATERIAL_DISPLAY_NAMES[material]
   if (!displayName) {
     throw new Error(`Unknown material: ${material}`)

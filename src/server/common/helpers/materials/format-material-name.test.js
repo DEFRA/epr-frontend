@@ -15,20 +15,8 @@ describe(formatMaterialName, () => {
     expect(formatMaterialName(material)).toBe(expected)
   })
 
-  it('should return empty string for undefined material', () => {
-    expect(formatMaterialName(undefined)).toBe('')
-  })
-
-  it('should return empty string for null material', () => {
-    expect(formatMaterialName(null)).toBe('')
-  })
-
-  it('should return empty string for empty string material', () => {
-    expect(formatMaterialName('')).toBe('')
-  })
-
   it('should throw for unknown material', () => {
-    expect(() => formatMaterialName('unknown')).toThrow(
+    expect(() => formatMaterialName('unknown')).toThrowError(
       'Unknown material: unknown'
     )
   })

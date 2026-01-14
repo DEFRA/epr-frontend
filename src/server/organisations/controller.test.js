@@ -689,21 +689,24 @@ describe('#organisationController', () => {
             accreditationId: 'acc-plastic',
             site: { address: { line1: 'Multi-Material Site' } },
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic'
           },
           {
             id: 'reg-glass',
             accreditationId: 'acc-glass',
             site: { address: { line1: 'Multi-Material Site' } },
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'glass'
           },
           {
             id: 'reg-wood',
             accreditationId: 'acc-wood',
             site: { address: { line1: 'Multi-Material Site' } },
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'wood'
           }
         ]
       }
@@ -784,19 +787,25 @@ describe('#organisationController', () => {
             id: 'reg-1',
             accreditationId: 'acc-approved',
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            site: { address: { line1: 'Site 1' } }
           },
           {
             id: 'reg-2',
             accreditationId: 'acc-suspended',
             status: 'suspended',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'glass',
+            site: { address: { line1: 'Site 2' } }
           },
           {
             id: 'reg-3',
             accreditationId: 'acc-cancelled',
             status: 'cancelled',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'wood',
+            site: { address: { line1: 'Site 3' } }
           }
         ]
       }

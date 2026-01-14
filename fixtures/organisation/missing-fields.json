@@ -26,7 +26,8 @@
       "id": "reg-no-site-001",
       "status": "approved",
       "submittedToRegulator": "ea",
-      "wasteProcessingType": "reprocessor"
+      "wasteProcessingType": "reprocessor",
+      "material": "plastic"
     },
     {
       "accreditationId": "acc-no-site-001",
@@ -42,7 +43,8 @@
           "country": "England"
         }
       },
-      "wasteProcessingType": "reprocessor"
+      "wasteProcessingType": "reprocessor",
+      "material": "wood"
     }
   ],
   "accreditations": [
