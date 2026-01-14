@@ -1,23 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
 
 describe('#cookiesController', () => {
-  /** @type {Server} */
-  let server
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
   describe('when navigating to /cookies', () => {
-    it('should return 200 status code', async () => {
+    it('should return 200 status code', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -26,7 +14,9 @@ describe('#cookiesController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('should render the cookies page with correct title', async () => {
+    it('should render the cookies page with correct title', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -39,7 +29,7 @@ describe('#cookiesController', () => {
       )
     })
 
-    it('should render the page heading', async () => {
+    it('should render the page heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -50,7 +40,9 @@ describe('#cookiesController', () => {
       expect($('h1').text()).toBe('Cookies')
     })
 
-    it('should render the essential cookies section heading', async () => {
+    it('should render the essential cookies section heading', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -61,7 +53,7 @@ describe('#cookiesController', () => {
       expect($('h2.govuk-heading-m').first().text()).toBe('Essential cookies')
     })
 
-    it('should render a table with cookie information', async () => {
+    it('should render a table with cookie information', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -73,7 +65,7 @@ describe('#cookiesController', () => {
       expect(table).toHaveLength(1)
     })
 
-    it('should render table headers', async () => {
+    it('should render table headers', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -89,7 +81,7 @@ describe('#cookiesController', () => {
       expect(headers).toContain('Expires')
     })
 
-    it('should render all cookie rows', async () => {
+    it('should render all cookie rows', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -101,7 +93,7 @@ describe('#cookiesController', () => {
       expect(rows).toHaveLength(3)
     })
 
-    it('should render cookie names in the table', async () => {
+    it('should render cookie names in the table', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/cookies'
@@ -119,7 +111,7 @@ describe('#cookiesController', () => {
   })
 
   describe('when navigating to /cy/cookies (Welsh)', () => {
-    it('should return 200 status code', async () => {
+    it('should return 200 status code', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/cy/cookies'
@@ -129,7 +121,3 @@ describe('#cookiesController', () => {
     })
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

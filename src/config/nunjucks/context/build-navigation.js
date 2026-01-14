@@ -19,16 +19,16 @@ import { config } from '#config/config.js'
 
 /**
  * @param {I18nRequest} request
- * @param {UserSession} userSession
+ * @param {UserSession} session
  * @returns {NavigationItem[]}
  */
-const home = ({ localiseUrl, t: localise }, userSession) => {
-  if (!userSession.linkedOrganisationId) {
+const home = ({ localiseUrl, t: localise }, session) => {
+  if (!session.linkedOrganisationId) {
     return []
   }
   return [
     {
-      href: localiseUrl(`/organisations/${userSession.linkedOrganisationId}`),
+      href: localiseUrl(`/organisations/${session.linkedOrganisationId}`),
       text: localise('common:navigation:home')
     }
   ]
@@ -62,15 +62,20 @@ const signOut = ({ localiseUrl, t: localise }) => {
 
 /**
  * @param {I18nRequest | null} request
- * @param {Partial<UserSession | null>} userSession
  */
-export function buildNavigation(request, userSession) {
-  if (!request || !userSession) {
+export function buildNavigation(request) {
+  if (!request) {
+    return []
+  }
+
+  const session = request.auth?.credentials
+
+  if (!session) {
     return []
   }
 
   return [
-    ...home(request, userSession),
+    ...home(request, session),
     ...manageAccount(request),
     ...signOut(request)
   ]

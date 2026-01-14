@@ -4,6 +4,9 @@
     "checkJs": false,
     "module": "NodeNext",
     "noEmit": true,
+    "paths": {
+      "#vite/*": ["./.vite/*"]
+    },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strictFunctionTypes": true,

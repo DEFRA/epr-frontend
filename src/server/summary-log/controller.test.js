@@ -1,33 +1,19 @@
-import Boom from '@hapi/boom'
-import { load } from 'cheerio'
-
-import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi
-} from 'vitest'
+import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
+import { load } from 'cheerio'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
   buildLoadsViewModel,
   getWasteRecordSectionNumber
 } from './controller.js'
-
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
@@ -57,6 +43,19 @@ vi.mock(
   })
 )
 
+const mockAuth = {
+  strategy: 'session',
+  credentials: {
+    idToken: 'test-id-token',
+    profile: {
+      id: 'user-123',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com'
+    }
+  }
+}
+
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
 
@@ -67,33 +66,6 @@ describe('#summaryLogUploadProgressController', () => {
   const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
   const summaryLogBaseUrl = `${baseUrl}/${summaryLogId}`
   const url = summaryLogBaseUrl
-  /** @type {Server} */
-  let server
-  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
-  let authHelper
-
-  beforeAll(async () => {
-    mockOidcServer.listen()
-
-    config.load({
-      defraId: {
-        clientId: 'test-client-id',
-        clientSecret: 'test-secret',
-        oidcConfigurationUrl:
-          'http://defra-id.auth/.well-known/openid-configuration',
-        serviceId: 'test-service-id'
-      }
-    })
-
-    server = await createServer()
-    await server.initialize()
-
-    authHelper = createAuthSessionHelper(server)
-    authHelper.mockGetUserSession(
-      vi.mocked(getUserSessionModule.getUserSession)
-    )
-    await authHelper.createAuthCookie()
-  })
 
   beforeEach(() => {
     fetchSummaryLogStatus.mockReset().mockResolvedValue({
@@ -108,19 +80,11 @@ describe('#summaryLogUploadProgressController', () => {
     submitSummaryLog.mockReset()
   })
 
-  afterAll(async () => {
-    config.reset('defraId.clientId')
-    config.reset('defraId.clientSecret')
-    config.reset('defraId.oidcConfigurationUrl')
-    config.reset('defraId.serviceId')
-    mockOidcServer.close()
-    await server.stop({ timeout: 0 })
-  })
-
-  test('should provide expected response', async () => {
-    const { result, statusCode } = await authHelper.inject({
+  it('should provide expected response', async ({ server }) => {
+    const { result, statusCode } = await server.inject({
       method: 'GET',
-      url
+      url,
+      auth: mockAuth
     })
 
     expect(fetchSummaryLogStatus).toHaveBeenCalledWith(
@@ -134,14 +98,17 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('processing states', () => {
-    test('status: preprocessing - should show processing message and poll', async () => {
+    it('status: preprocessing - should show processing message and poll', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.preprocessing
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -166,14 +133,17 @@ describe('#summaryLogUploadProgressController', () => {
       /* eslint-enable vitest/max-expects */
     })
 
-    test('status: validating - should show processing message and poll', async () => {
+    it('status: validating - should show processing message and poll', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validating
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -183,14 +153,17 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: submitting - should show submitting message and poll', async () => {
+    it('status: submitting - should show submitting message and poll', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitting
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -219,14 +192,17 @@ describe('#summaryLogUploadProgressController', () => {
       )
     }
 
-    test('status: validated - should show check page and stop polling', async () => {
+    it('status: validated - should show check page and stop polling', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
@@ -242,14 +218,17 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: validated - should show return to home link to organisation home', async () => {
+    it('status: validated - should show return to home link to organisation home', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(expect.stringContaining('return to home'))
@@ -259,17 +238,19 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated - should show warning inset text with both links', async () => {
+    it('status: validated - should show warning inset text with both links', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
-      // Should have GDS inset text component with warning message
       expect(result).toStrictEqual(expect.stringContaining('govuk-inset-text'))
       expect(result).toStrictEqual(
         expect.stringContaining(
@@ -277,7 +258,6 @@ describe('#summaryLogUploadProgressController', () => {
         )
       )
 
-      // Both links should be present in the inset text
       expect(result).toStrictEqual(
         expect.stringContaining('upload an updated summary log')
       )
@@ -286,7 +266,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async () => {
+    it('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
@@ -302,9 +284,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -313,7 +296,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with REPROCESSOR_OUTPUT - should show section 3 in explanation text', async () => {
+    it('status: validated with REPROCESSOR_OUTPUT - should show section 3 in explanation text', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_OUTPUT',
@@ -329,9 +314,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -340,7 +326,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with EXPORTER - should show section 1 in explanation text', async () => {
+    it('status: validated with EXPORTER - should show section 1 in explanation text', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
@@ -356,9 +344,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -367,7 +356,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with new loads - should show new loads heading', async () => {
+    it('status: validated with new loads - should show new loads heading', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -385,14 +376,14 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show new loads section heading
       expect(result).toStrictEqual(expect.stringContaining('New loads'))
       expect(result).toStrictEqual(
         expect.stringContaining(
@@ -407,7 +398,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with no new loads - should show no new loads heading', async () => {
+    it('status: validated with no new loads - should show no new loads heading', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -422,9 +415,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
@@ -435,7 +429,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with adjusted loads - should show adjusted loads section', async () => {
+    it('status: validated with adjusted loads - should show adjusted loads section', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
@@ -451,9 +447,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
@@ -472,7 +469,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with new included loads - should NOT display row IDs', async () => {
+    it('status: validated with new included loads - should NOT display row IDs', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -487,19 +486,17 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // New included loads should NOT show row IDs (per spec Note 3)
-      // Only adjusted included loads show "Show X loads" expandable
       expect(result).not.toStrictEqual(expect.stringContaining('<li>1092</li>'))
       expect(result).not.toStrictEqual(expect.stringContaining('<li>1093</li>'))
       expect(result).not.toStrictEqual(expect.stringContaining('<li>1094</li>'))
-      // Should still show the count message
       expect(result).toStrictEqual(
         expect.stringContaining(
           '3 new loads will be added to your waste balance'
@@ -508,7 +505,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with singular load - should use singular form', async () => {
+    it('status: validated with singular load - should use singular form', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -523,17 +522,16 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show static section headings
       expect(result).toStrictEqual(expect.stringContaining('New loads'))
       expect(result).toStrictEqual(expect.stringContaining('Adjusted loads'))
-      // Should show singular form in load counts
       expect(result).toStrictEqual(
         expect.stringContaining(
           '1 new load will be added to your waste balance'
@@ -547,7 +545,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with 100+ excluded loads - should show supplementary guidance instead of row IDs', async () => {
+    it('status: validated with 100+ excluded loads - should show supplementary guidance instead of row IDs', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -565,28 +565,29 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show supplementary guidance message instead of row IDs
       expect(result).toStrictEqual(
         expect.stringContaining('100 or more loads are missing data')
       )
       expect(result).toStrictEqual(
         expect.stringContaining('supplementary guidance')
       )
-      // Should NOT show "Show X loads" link
       expect(result).not.toStrictEqual(
         expect.stringContaining('Show 100 loads')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with 99 excluded loads - should show Show loads link with row IDs', async () => {
+    it('status: validated with 99 excluded loads - should show Show loads link with row IDs', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -604,23 +605,24 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show "Show X loads" when 99 or fewer
       expect(result).toStrictEqual(expect.stringContaining('Show 99 loads'))
-      // Should NOT show supplementary guidance
       expect(result).not.toStrictEqual(
         expect.stringContaining('100 or more loads are missing data')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with 100+ adjusted excluded loads - should show supplementary guidance', async () => {
+    it('status: validated with 100+ adjusted excluded loads - should show supplementary guidance', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -638,14 +640,14 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show supplementary guidance for adjusted excluded loads
       expect(result).toStrictEqual(
         expect.stringContaining('100 or more loads are missing data')
       )
@@ -653,7 +655,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with 99 adjusted excluded loads - should show Show loads link', async () => {
+    it('status: validated with 99 adjusted excluded loads - should show Show loads link', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -671,16 +675,15 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show "Show X loads" for adjusted excluded loads
       expect(result).toStrictEqual(expect.stringContaining('Show 99 loads'))
-      // Should NOT show supplementary guidance
       expect(result).not.toStrictEqual(
         expect.stringContaining('100 or more loads are missing data')
       )
@@ -688,7 +691,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with adjusted included loads - should show Show loads link', async () => {
+    it('status: validated with adjusted included loads - should show Show loads link', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -706,20 +711,22 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show "Show X loads" for adjusted included loads
       expect(result).toStrictEqual(expect.stringContaining('Show 5 loads'))
 
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated with 100+ adjusted included loads - should NOT show missing data message', async () => {
+    it('status: validated with 100+ adjusted included loads - should NOT show missing data message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -737,24 +744,22 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should NOT show "missing data" message for successful adjustments
       expect(result).not.toStrictEqual(
         expect.stringContaining('loads are missing data')
       )
-      // Should show the correct message for 100+ adjusted loads
       expect(result).toStrictEqual(
         expect.stringContaining(
           'As there are 100 or more adjusted loads, we are not able to list them all here'
         )
       )
-      // Should NOT show "Show X loads" link (too many to list)
       expect(result).not.toStrictEqual(
         expect.stringContaining('Show 100 loads')
       )
@@ -762,7 +767,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validated without adjusted loads - should show no adjusted loads message', async () => {
+    it('status: validated without adjusted loads - should show no adjusted loads message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
@@ -777,29 +784,32 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expectCheckPageContent(result)
 
-      // Should show "There are no adjusted loads" message when count is 0
       expect(result).toStrictEqual(
         expect.stringContaining('There are no adjusted loads')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: submitted - should show success page and stop polling', async () => {
+    it('status: submitted - should show success page and stop polling', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
         accreditationNumber: '493021'
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -816,14 +826,17 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: submitted - should link to organisation root', async () => {
+    it('status: submitted - should link to organisation root', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted
       })
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -831,41 +844,34 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: submitted with freshData from POST - should use freshData and not call backend', async () => {
-      // Integration test: POST submit sets freshData, GET uses it
+    it('status: submitted with freshData from POST - should use freshData and not call backend', async ({
+      server
+    }) => {
       const submitUrl = `${url}/submit`
 
-      // Mock the backend submit call for the POST
       submitSummaryLog.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
         accreditationNumber: '999888'
       })
 
-      // Get CSRF token
       const { cookie, crumb } = await getCsrfToken(server, url, {
-        headers: {
-          cookie: `userSession=${authHelper.getAuthCookie()}`
-        }
+        auth: mockAuth
       })
 
-      // Make POST request to set up freshData in session
       const postResponse = await server.inject({
         method: 'POST',
         url: submitUrl,
         headers: { cookie },
-        payload: { crumb }
+        payload: { crumb },
+        auth: mockAuth
       })
 
-      // Verify POST redirected
       expect(postResponse.statusCode).toBe(statusCodes.found)
 
-      // Get session cookies from POST response
       const setCookies = postResponse.headers['set-cookie']
       const cookies = Array.isArray(setCookies) ? setCookies : [setCookies]
       const cookieHeader = cookies.map((c) => c.split(';')[0]).join('; ')
 
-      // Make GET request with the session cookies
-      // The GET handler should use freshData from session (not call fetchSummaryLogStatus)
       const initialCallCount = fetchSummaryLogStatus.mock.calls.length
 
       const { result, statusCode } = await server.inject({
@@ -873,20 +879,21 @@ describe('#summaryLogUploadProgressController', () => {
         url,
         headers: {
           cookie: cookieHeader
-        }
+        },
+        auth: mockAuth
       })
 
-      // Verify fetchSummaryLogStatus was NOT called (freshData was used instead)
       expect(fetchSummaryLogStatus).toHaveBeenCalledTimes(initialCallCount)
 
-      // Verify success page rendered
       expect(result).toStrictEqual(
         expect.stringContaining('Summary log uploaded')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: rejected with validation failure code - should show validation failures page', async () => {
+    it('status: rejected with validation failure code - should show validation failures page', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
@@ -894,9 +901,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -904,7 +912,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('The selected file contains a virus')
     })
 
-    test('status: rejected - should initiate upload with pre-signed URL', async () => {
+    it('status: rejected - should initiate upload with pre-signed URL', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
@@ -912,9 +922,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
@@ -926,14 +937,17 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    test('status: rejected without validation - should show validation failures page with technical error', async () => {
+    it('status: rejected without validation - should show validation failures page with technical error', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -943,7 +957,9 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: invalid with validation failures - should show validation failures page with correct content', async () => {
+    it('status: invalid with validation failures - should show validation failures page with correct content', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -951,9 +967,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -967,7 +984,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: invalid with validation failures - should show re-upload form and cancel button', async () => {
+    it('status: invalid with validation failures - should show re-upload form and cancel button', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -975,9 +994,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('Upload updated XLSX file')
@@ -988,7 +1008,9 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: invalid - should render back link to registration dashboard', async () => {
+    it('status: invalid - should render back link to registration dashboard', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -996,9 +1018,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('govuk-back-link')
@@ -1007,7 +1030,9 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: invalid - should initiate upload with pre-signed URL', async () => {
+    it('status: invalid - should initiate upload with pre-signed URL', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1015,9 +1040,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain(`action="${mockUploadUrl}"`)
@@ -1029,7 +1055,9 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    test('status: invalid with multiple validation failures - should show all failures', async () => {
+    it('status: invalid with multiple validation failures - should show all failures', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1040,9 +1068,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1055,7 +1084,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: invalid with unknown failure code - should show technical error message', async () => {
+    it('status: invalid with unknown failure code - should show technical error message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1063,9 +1094,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1075,7 +1107,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: invalid with data entry failures - should show single deduplicated message', async () => {
+    it('status: invalid with data entry failures - should show single deduplicated message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1087,19 +1121,18 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      // All data entry codes should map to single DATA_ENTRY_INVALID message
       expect(result).toContain(
         'The selected file contains data that&#39;s been entered incorrectly'
       )
 
-      // Should only appear once (deduplicated)
       const matches = result.match(
         /The selected file contains data that&#39;s been entered incorrectly/g
       )
@@ -1107,7 +1140,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(matches).toHaveLength(1)
     })
 
-    test('status: invalid with mixed failures - should show data entry message and other failures', async () => {
+    it('status: invalid with mixed failures - should show data entry message and other failures', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1119,13 +1154,13 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      // Should show both the data entry message and the registration mismatch
       expect(result).toContain(
         'The selected file contains data that&#39;s been entered incorrectly'
       )
@@ -1134,7 +1169,9 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: invalid with material failure - should show material invalid message', async () => {
+    it('status: invalid with material failure - should show material invalid message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1142,16 +1179,19 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Summary log material is missing or incorrect')
     })
 
-    test('status: invalid with accreditation failure - should show accreditation invalid message', async () => {
+    it('status: invalid with accreditation failure - should show accreditation invalid message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1159,9 +1199,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1170,7 +1211,9 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test('status: invalid with processing type failure - should show template incorrect message', async () => {
+    it('status: invalid with processing type failure - should show template incorrect message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1178,9 +1221,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1189,32 +1233,116 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    test.each([
+    it('status: invalid with SPREADSHEET_MALFORMED_MARKERS failure - should show malformed template message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
+    })
+
+    it('status: invalid with SPREADSHEET_INVALID_ERROR failure - should show malformed template message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
+    })
+
+    it('status: invalid with multiple spreadsheet failures - should show single deduplicated message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS },
+            { code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
+
+      // Should only appear once (deduplicated)
+      const matches = result.match(
+        /The summary log template you&#39;re uploading is incorrect/g
+      )
+
+      expect(matches).toHaveLength(1)
+    })
+
+    it.for([
       'FILE_UPLOAD_FAILED',
       'FILE_DOWNLOAD_FAILED',
       'FILE_REJECTED',
       'VALIDATION_SYSTEM_ERROR',
       'UNKNOWN'
-    ])('%s - should show technical error message', async (errorCode) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ code: validationFailureCodes[errorCode] }]
-        }
-      })
+    ])(
+      '%s - should show technical error message',
+      async (errorCode, { server }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [{ code: validationFailureCodes[errorCode] }]
+          }
+        })
 
-      const { result, statusCode } = await authHelper.inject({
-        method: 'GET',
-        url
-      })
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-    })
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain(
+          'Sorry, there is a problem with the service - try again later'
+        )
+      }
+    )
 
-    test('status: invalid with multiple technical errors - should show single deduplicated message', async () => {
+    it('status: invalid with multiple technical errors - should show single deduplicated message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1226,9 +1354,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1236,7 +1365,6 @@ describe('#summaryLogUploadProgressController', () => {
         'Sorry, there is a problem with the service - try again later'
       )
 
-      // Should only appear once (deduplicated)
       const matches = result.match(
         /Sorry, there is a problem with the service - try again later/g
       )
@@ -1244,7 +1372,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(matches).toHaveLength(1)
     })
 
-    test('status: invalid with empty validation failures - should show technical error message', async () => {
+    it('status: invalid with empty validation failures - should show technical error message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
@@ -1252,9 +1382,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1265,14 +1396,17 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: invalid without validation object - should show technical error message', async () => {
+    it('status: invalid without validation object - should show technical error message', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1282,7 +1416,9 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validation_failed - should show validation failures page with re-upload option', async () => {
+    it('status: validation_failed - should show validation failures page with re-upload option', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed,
         validation: {
@@ -1290,9 +1426,10 @@ describe('#summaryLogUploadProgressController', () => {
         }
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('Your summary log cannot be uploaded')
@@ -1300,14 +1437,17 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('status: validation_failed - should initiate upload for re-upload', async () => {
+    it('status: validation_failed - should initiate upload for re-upload', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed
       })
 
-      await authHelper.inject({
+      await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
@@ -1319,14 +1459,17 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('status: superseded', () => {
-      test('shows superseded page with link to organisation', async () => {
+      it('should show superseded page with link to organisation', async ({
+        server
+      }) => {
         fetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.superseded
         })
 
-        const { result, statusCode } = await authHelper.inject({
+        const { result, statusCode } = await server.inject({
           method: 'GET',
-          url
+          url,
+          auth: mockAuth
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -1338,63 +1481,69 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain('Return to home')
       })
 
-      test('does not enable client-side polling', async () => {
+      it('should not enable client-side polling', async ({ server }) => {
         fetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.superseded
         })
 
-        const { result } = await authHelper.inject({
+        const { result } = await server.inject({
           method: 'GET',
-          url
+          url,
+          auth: mockAuth
         })
 
         expect(result).not.toStrictEqual(enablesClientSidePolling())
       })
 
-      test('does not initiate upload', async () => {
+      it('should not initiate upload', async ({ server }) => {
         const initialCallCount = initiateSummaryLogUpload.mock.calls.length
 
         fetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.superseded
         })
 
-        await authHelper.inject({
+        await server.inject({
           method: 'GET',
-          url
+          url,
+          auth: mockAuth
         })
 
         expect(initiateSummaryLogUpload).toHaveBeenCalledTimes(initialCallCount)
       })
     })
 
-    test('status: superseded - should not enable client-side polling', async () => {
+    it('status: superseded - should not enable client-side polling', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.superseded
       })
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
 
-    test('status: validation_failed - should update session with new uploadId for re-upload', async () => {
+    it('status: validation_failed - should update session with new uploadId for re-upload', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed
       })
 
-      // Make request with existing session containing old uploadId
       const response = await server.inject({
         method: 'GET',
         url,
         headers: {
           cookie: 'session=existing-session'
-        }
+        },
+        auth: mockAuth
       })
 
-      // Verify the response sets a session cookie (session was updated)
       const setCookieHeader = response.headers['set-cookie']
 
       expect(setCookieHeader).toBeDefined()
@@ -1402,14 +1551,15 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('unexpected status handling', () => {
-    test('unexpected status - should show error page', async () => {
+    it('unexpected status - should show error page', async ({ server }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: 'some_unknown_status'
       })
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toContain('Error checking status')
@@ -1419,26 +1569,32 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('error handling', () => {
-    test('should show 404 error page when summary log not found', async () => {
+    it('should show 404 error page when summary log not found', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockRejectedValueOnce(Boom.notFound())
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(expect.stringContaining('Page not found'))
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    test('should show 500 error page when backend fetch fails', async () => {
+    it('should show 500 error page when backend fetch fails', async ({
+      server
+    }) => {
       fetchSummaryLogStatus.mockRejectedValueOnce(
         Boom.internal('Failed to fetch')
       )
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url
+        url,
+        auth: mockAuth
       })
 
       expect(result).toStrictEqual(
@@ -1449,12 +1605,10 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('session validation', () => {
-    test('should redirect to logged-out when session is invalid', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValueOnce({
-        ok: false
-      })
-
-      const { statusCode, headers } = await authHelper.inject({
+    it('should redirect to logged-out when not authenticated', async ({
+      server
+    }) => {
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url
       })
@@ -1627,7 +1781,3 @@ describe('#getWasteRecordSectionNumber', () => {
     expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

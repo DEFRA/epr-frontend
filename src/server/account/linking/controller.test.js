@@ -1,26 +1,30 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { createServer } from '#server/index.js'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
+
+const mockCredentials = {
+  profile: {
+    id: 'user-123',
+    firstName: 'Test',
+    lastName: 'User',
+    email: 'test@example.com'
+  },
+  idToken: 'mock-id-token'
+}
+
+const mockAuth = {
+  strategy: 'session',
+  credentials: mockCredentials
+}
 
 describe('#accountLinkingController', () => {
   describe('csrf protection', () => {
-    /** @type {Server} */
-    let server
-
-    beforeAll(async () => {
-      server = await createServer()
-      await server.initialize()
-    })
-
-    afterAll(async () => {
-      await server.stop({ timeout: 0 })
-    })
-
-    it('should reject POST request without CSRF token', async () => {
+    it('should reject POST request without CSRF token', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/account/linking',
+        auth: mockAuth,
         payload: {
           organisationId: 'org-1'
         }
@@ -29,12 +33,17 @@ describe('#accountLinkingController', () => {
       expect(statusCode).toBe(statusCodes.forbidden)
     })
 
-    it('should reject POST request with invalid CSRF token', async () => {
-      const { cookie } = await getCsrfToken(server, '/account/linking')
+    it('should reject POST request with invalid CSRF token', async ({
+      server
+    }) => {
+      const { cookie } = await getCsrfToken(server, '/account/linking', {
+        auth: mockAuth
+      })
 
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/account/linking',
+        auth: mockAuth,
         headers: { cookie },
         payload: {
           crumb: 'invalid-token',
@@ -46,7 +55,3 @@ describe('#accountLinkingController', () => {
     })
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

@@ -1,14 +1,13 @@
 /**
  * Vitest setup file - runs before all tests and module imports
  *
- * Purpose: Ensure tests are isolated from environment variables set on
- * developer machines or CI systems.
- *
- * This prevents test failures caused by local environment configuration
- * leaking into the test environment.
+ * Purpose: Configure global test environment with auth enabled.
+ * MSW setup is handled by fixtures in .vite/fixtures/server.js
  */
 
-// Unset DEFRA_ID_OIDC_CONFIGURATION_URL to ensure tests rely on the
-// default empty string from config.js (line 237)
-// This prevents auth from being enabled during tests unless explicitly set
-delete process.env.DEFRA_ID_OIDC_CONFIGURATION_URL
+// Set env vars before any imports to ensure config picks them up
+process.env.DEFRA_ID_OIDC_CONFIGURATION_URL =
+  'http://defra-id.auth/.well-known/openid-configuration'
+process.env.DEFRA_ID_CLIENT_ID = 'test-client-id'
+process.env.DEFRA_ID_CLIENT_SECRET = 'test-secret'
+process.env.DEFRA_ID_SERVICE_ID = 'test-service-id'

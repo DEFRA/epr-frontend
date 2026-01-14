@@ -1,20 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { startServer } from '#server/common/helpers/start-server.js'
+import { describe, expect } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
 
 describe('#serveStaticFiles', () => {
-  let server
-
   describe('when secure context is disabled', () => {
-    beforeEach(async () => {
-      server = await startServer()
-    })
-
-    afterEach(async () => {
-      await server.stop({ timeout: 0 })
-    })
-
-    test('should serve favicon as expected', async () => {
+    it('should serve favicon as expected', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/favicon.ico'
@@ -23,9 +13,7 @@ describe('#serveStaticFiles', () => {
       expect(statusCode).toBe(statusCodes.noContent)
     })
 
-    test('should serve assets as expected', async () => {
-      // Note npm run build is ran in the postinstall hook in package.json to make sure there is always a file
-      // available for this test. Remove as you see fit
+    it('should serve assets as expected', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/public/assets/images/govuk-crest.svg'

@@ -127,6 +127,11 @@ export default [
     plugins: {
       vitest
     },
+    settings: {
+      vitest: {
+        vitestImports: ['#vite/fixtures/server.js']
+      }
+    },
     rules: {
       ...vitest.configs.all.rules,
 
@@ -142,6 +147,7 @@ export default [
       'vitest/consistent-test-it': 'off',
       'vitest/no-hooks': 'off',
       'vitest/prefer-expect-assertions': 'off',
+      'vitest/prefer-importing-vitest-globals': 'off', // Incompatible with test.extend() fixtures
       'vitest/require-mock-type-parameters': 'off',
       'vitest/valid-title': [
         'warn',
