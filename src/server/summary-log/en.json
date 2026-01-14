@@ -42,7 +42,7 @@
     "FILE_WRONG_TYPE": "The selected file must be a .XLSX",
     "MATERIAL_INVALID": "Summary log material is missing or incorrect",
     "PROCESSING_TYPE_DATA_INVALID": "There is a problem with your registration - please contact support",
-    "PROCESSING_TYPE_INVALID": "The summary log template you're uploading is incorrect - make sure you download the correct template for your registration or accreditation",
+    "TEMPLATE_INVALID": "The summary log template you're uploading is incorrect - make sure you download the correct template for your registration or accreditation",
     "REGISTRATION_INVALID": "Summary log registration is missing or incorrect",
     "ROW_ID_MISMATCH": "The selected file contains different row IDs to the last summary log you submitted - check that you have been working in the same spreadsheet",
     "SEQUENTIAL_ROW_REMOVED": "Rows have been removed since your summary log was last submitted - these must be re-added before you can submit your file",
