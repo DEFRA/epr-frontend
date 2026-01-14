@@ -5,6 +5,18 @@ import { fetchJsonFromBackend } from './fetch-json-from-backend.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+const MOCK_TRACE_ID = 'mock-trace-id-1'
+
+vi.mock(import('@defra/hapi-tracing'), () => ({
+  withTraceId: vi.fn((headerName, headers = {}) => {
+    headers[headerName] = 'mock-trace-id-1'
+    return headers
+  }),
+  tracing: {
+    plugin: {}
+  }
+}))
+
 describe(fetchJsonFromBackend, () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -25,7 +37,10 @@ describe(fetchJsonFromBackend, () => {
       expect.stringContaining('/v1/test'),
       expect.objectContaining({
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'x-cdp-request-id': MOCK_TRACE_ID
+        }
       })
     )
   })
@@ -47,7 +62,8 @@ describe(fetchJsonFromBackend, () => {
       expect.objectContaining({
         headers: {
           'Content-Type': 'application/json',
-          'X-Custom': 'value'
+          'X-Custom': 'value',
+          'x-cdp-request-id': MOCK_TRACE_ID
         }
       })
     )
