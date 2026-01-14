@@ -16,7 +16,7 @@ import {
   givenUserSignedInToService,
   createUserSessionData
 } from '#server/common/test-helpers/auth-helper.js'
-import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { extractCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 
 vi.mock(
@@ -88,10 +88,13 @@ describe('#submitSummaryLogController', () => {
     submitSummaryLog.mockResolvedValueOnce(mockResponse)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(
-      server,
-      getUrl,
-      requestFromSignedInUser()
+    const { cookie, crumb } = extractCsrfToken(
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: getUrl
+        })
+      )
     )
 
     const response = await server.inject({
@@ -122,10 +125,13 @@ describe('#submitSummaryLogController', () => {
     submitSummaryLog.mockResolvedValueOnce(mockResponse)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(
-      server,
-      getUrl,
-      requestFromSignedInUser()
+    const { cookie, crumb } = extractCsrfToken(
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: getUrl
+        })
+      )
     )
 
     const response = await server.inject({
@@ -150,10 +156,13 @@ describe('#submitSummaryLogController', () => {
     )
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(
-      server,
-      getUrl,
-      requestFromSignedInUser()
+    const { cookie, crumb } = extractCsrfToken(
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: getUrl
+        })
+      )
     )
 
     const { result, statusCode } = await server.inject({
@@ -180,10 +189,13 @@ describe('#submitSummaryLogController', () => {
     submitSummaryLog.mockRejectedValueOnce(error)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { cookie, crumb } = await getCsrfToken(
-      server,
-      getUrl,
-      requestFromSignedInUser()
+    const { cookie, crumb } = extractCsrfToken(
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: getUrl
+        })
+      )
     )
 
     const response = await server.inject({
@@ -211,10 +223,13 @@ describe('#submitSummaryLogController', () => {
   test('should redirect to login when session is invalid', async () => {
     // Get CSRF token first with valid session
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-    const { crumb } = await getCsrfToken(
-      server,
-      getUrl,
-      requestFromSignedInUser()
+    const { crumb } = extractCsrfToken(
+      await server.inject(
+        requestFromSignedInUser({
+          method: 'GET',
+          url: getUrl
+        })
+      )
     )
 
     const response = await server.inject({

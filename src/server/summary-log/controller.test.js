@@ -11,7 +11,7 @@ import {
   createUserSessionData,
   givenUserSignedInToService
 } from '#server/common/test-helpers/auth-helper.js'
-import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { extractCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
 import { createServer } from '#server/index.js'
 import {
@@ -889,10 +889,13 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       // Get CSRF token
-      const { cookie, crumb } = await getCsrfToken(
-        server,
-        url,
-        requestFromSignedInUser()
+      const { cookie, crumb } = extractCsrfToken(
+        await server.inject(
+          requestFromSignedInUser({
+            method: 'GET',
+            url
+          })
+        )
       )
 
       // Make POST request to set up freshData in session

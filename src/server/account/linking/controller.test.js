@@ -1,5 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { extractCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { createServer } from '#server/index.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
@@ -30,7 +30,12 @@ describe('#accountLinkingController', () => {
     })
 
     it('should reject POST request with invalid CSRF token', async () => {
-      const { cookie } = await getCsrfToken(server, '/account/linking')
+      const { cookie } = extractCsrfToken(
+        await server.inject({
+          method: 'GET',
+          url: '/account/linking'
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'POST',

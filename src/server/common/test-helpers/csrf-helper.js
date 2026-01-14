@@ -1,17 +1,9 @@
 /**
- * Get CSRF token for testing
- * @param {Server} server - Hapi server instance
- * @param {string} getUrl - URL to GET to obtain CSRF token
- * @param {object} [options] - Optional request options
- * @param {object} [options.headers] - Optional headers to include in the request
+ * Extract CSRF token from response for testing
+ * @param {import('@hapi/hapi').ServerInjectResponse} response from Hapi Server.inject call
  * @returns {Promise<{cookie: string, crumb: string}>}
  */
-export async function getCsrfToken(server, getUrl, options = {}) {
-  const response = await server.inject({
-    method: 'GET',
-    url: getUrl,
-    ...options
-  })
+export function extractCsrfToken(response) {
   const setCookie = response.headers['set-cookie']
   const cookies = Array.isArray(setCookie) ? setCookie : [setCookie]
   const crumbCookie = cookies.find((cookie) => cookie.startsWith('crumb='))
