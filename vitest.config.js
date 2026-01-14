@@ -7,7 +7,7 @@ export default defineConfig({
     clearMocks: true,
     hookTimeout: 60000,
     fileParallelism: !process.env.CI,
-    setupFiles: ['.vite/setup-files.js'],
+    setupFiles: ['.vite/setup-auditing.js', '.vite/setup-files.js'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',
@@ -19,13 +19,11 @@ export default defineConfig({
         '.server',
         '**/.gitkeep',
         '**/*.md',
-        '**/index.js',
         'coverage',
         'src/**/*.json',
         'src/**/*.njk',
         'src/**/*.scss',
         'src/client/javascripts/application.js',
-        'src/index.js',
         'src/server/auth/types',
         'src/server/common/test-helpers'
       ],
