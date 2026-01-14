@@ -3,6 +3,16 @@ import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { test } from 'vitest'
 
+/**
+ * Stub handler for AWS EC2 Instance Metadata Service (IMDS).
+ * The AWS SDK attempts to fetch credentials from this endpoint when running on EC2.
+ * In tests, we stub it to prevent MSW warnings about unhandled requests.
+ */
+const awsEc2MetadataHandler = http.put(
+  'http://169.254.169.254/latest/api/token',
+  () => new HttpResponse(null, { status: 404 })
+)
+
 const createOidcHandlers = (baseUrl) => {
   const origin = new URL(baseUrl).origin
 
@@ -61,7 +71,10 @@ const it = test.extend({
   msw: [
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
-      const server = setupServer(...createOidcHandlers('http://defra-id.auth'))
+      const server = setupServer(
+        awsEc2MetadataHandler,
+        ...createOidcHandlers('http://defra-id.auth')
+      )
       server.listen({ onUnhandledRequest: 'warn' })
 
       await use(server)
