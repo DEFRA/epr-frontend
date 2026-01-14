@@ -1,6 +1,5 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 
 const SUMMARY_LOG_GUIDANCE_URL =
   'https://www.gov.uk/government/publications/summary-log-templates-for-uk-packaging-waste/recording-uk-packaging-waste-in-summary-logs-supplementary-guidance'
@@ -15,13 +14,12 @@ const SUMMARY_LOGS_OVERVIEW_URL =
  * @returns {Promise<string>} The href for the start button
  */
 async function getStartNowHref(request) {
-  const { ok, value: session } = await getUserSession(request)
-
-  if (!ok || !session) {
+  if (!request.auth.isAuthenticated) {
     return request.localiseUrl('/login')
   }
 
-  const organisations = await fetchUserOrganisations(session.idToken)
+  const { idToken } = request.auth.credentials
+  const organisations = await fetchUserOrganisations(idToken)
 
   if (organisations.linked) {
     return request.localiseUrl(`/organisations/${organisations.linked.id}`)

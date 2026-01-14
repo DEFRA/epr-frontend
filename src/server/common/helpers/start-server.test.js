@@ -1,5 +1,9 @@
+import { config } from '#config/config.js'
+import { startServer } from '#server/common/helpers/start-server.js'
+import * as serverIndex from '#server/index.js'
+import { it } from '#vite/fixtures/server.js'
 import hapi from '@hapi/hapi'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()
@@ -18,6 +22,7 @@ vi.mock(import('hapi-pino'), () => ({
     name: 'mock-hapi-pino'
   }
 }))
+
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({
     info: (...args) => mockLoggerInfo(...args),
@@ -26,36 +31,29 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
 }))
 
 describe('#startServer', () => {
-  const PROCESS_ENV = process.env
   let createServerSpy
   let hapiServerSpy
-  let startServerImport
-  let createServerImport
 
-  beforeAll(async () => {
-    process.env = { ...PROCESS_ENV }
-    process.env.PORT = '3097' // Set to obscure port to avoid conflicts
-
-    createServerImport = await import('#server/index.js')
-    startServerImport = await import('#server/common/helpers/start-server.js')
-
-    createServerSpy = vi.spyOn(createServerImport, 'createServer')
+  beforeAll(() => {
+    config.set('port', 3097)
+    createServerSpy = vi.spyOn(serverIndex, 'createServer')
     hapiServerSpy = vi.spyOn(hapi, 'server')
   })
 
   afterAll(() => {
-    process.env = PROCESS_ENV
+    config.reset('port')
   })
 
   describe('when server starts', () => {
+    /** @type {import('@hapi/hapi').Server | undefined} */
     let server
 
     afterAll(async () => {
-      await server.stop({ timeout: 0 })
+      await server?.stop({ timeout: 0 })
     })
 
-    test('should start up server as expected', async () => {
-      server = await startServerImport.startServer()
+    it('should start up server as expected', async () => {
+      server = await startServer()
 
       expect(createServerSpy).toHaveBeenCalledExactlyOnceWith()
       expect(hapiServerSpy).toHaveBeenCalledExactlyOnceWith(expect.any(Object))
@@ -83,8 +81,8 @@ describe('#startServer', () => {
       createServerSpy.mockRejectedValue(new Error('Server failed to start'))
     })
 
-    test('should log failed startup message', async () => {
-      await startServerImport.startServer()
+    it('should log failed startup message', async () => {
+      await startServer()
 
       expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
         'Server failed to start :('

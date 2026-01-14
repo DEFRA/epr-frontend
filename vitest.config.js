@@ -25,7 +25,8 @@ export default defineConfig({
         'src/**/*.scss',
         'src/client/javascripts/application.js',
         'src/server/auth/types',
-        'src/server/common/test-helpers'
+        'src/server/common/test-helpers',
+        'src/server/types'
       ],
       thresholds: {
         lines: 100,

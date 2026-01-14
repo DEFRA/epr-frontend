@@ -1,4 +1,4 @@
-import { config, isDefraIdEnabled } from '#config/config.js'
+import { config } from '#config/config.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
@@ -25,8 +25,6 @@ import { router } from './router.js'
 export async function createServer() {
   setupProxy()
 
-  const defraIdEnabled = isDefraIdEnabled()
-
   const routes = {
     validate: {
       options: {
@@ -46,7 +44,7 @@ export async function createServer() {
       noSniff: true,
       xframe: true
     },
-    auth: defraIdEnabled ? { mode: 'required' } : false
+    auth: { mode: 'required' }
   }
 
   const server = hapi.server({
@@ -94,15 +92,11 @@ export async function createServer() {
     }
   ]
 
-  if (defraIdEnabled) {
-    const oidcConf = await getOidcConfiguration(
-      config.get('defraId.oidcConfigurationUrl')
-    )
+  const verifyToken = await getVerifyToken(
+    await getOidcConfiguration(config.get('defraId.oidcConfigurationUrl'))
+  )
 
-    const verifyToken = await getVerifyToken(oidcConf)
-
-    plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
-  }
+  plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
 
   plugins.push(nunjucksConfig)
 

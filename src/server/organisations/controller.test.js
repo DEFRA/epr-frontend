@@ -1,24 +1,10 @@
-import Boom from '@hapi/boom'
-import { load } from 'cheerio'
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest'
-
-import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
+import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
+import { load } from 'cheerio'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
-// Import fixtures
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
@@ -26,61 +12,38 @@ import fixtureMissingFields from '../../../fixtures/organisation/missing-fields.
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureSingleReprocessing from '../../../fixtures/organisation/single-reprocessing.json' with { type: 'json' }
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
 
+const mockAuth = {
+  strategy: 'session',
+  credentials: {
+    idToken: 'test-id-token',
+    profile: {
+      id: 'user-123',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com'
+    }
+  }
+}
+
 describe('#organisationController', () => {
-  /** @type {Server} */
-  let server
-  let authHelper
-  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
-
-  beforeAll(async () => {
-    mockOidcServer.listen()
-    config.load({
-      defraId: {
-        clientId: 'test-client-id',
-        clientSecret: 'test-secret',
-        oidcConfigurationUrl:
-          'http://defra-id.auth/.well-known/openid-configuration',
-        serviceId: 'test-service-id'
-      }
-    })
-
-    server = await createServer()
-    await server.initialize()
-
-    authHelper = createAuthSessionHelper(server)
-    await authHelper.createAuthCookie()
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
-    authHelper.mockGetUserSession(
-      vi.mocked(getUserSessionModule.getUserSession)
-    )
-  })
-
-  afterAll(async () => {
-    config.reset('defraId.clientId')
-    config.reset('defraId.clientSecret')
-    config.reset('defraId.oidcConfigurationUrl')
-    config.reset('defraId.serviceId')
-    mockOidcServer.close()
-    await server.stop({ timeout: 0 })
   })
 
   describe('happy Path', () => {
-    it('should use Organisation name in the page title', async () => {
+    it('should use Organisation name in the page title', async ({ server }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -88,14 +51,17 @@ describe('#organisationController', () => {
       expect($('title').text()).toMatch(/^Home: ACME ltd/)
     })
 
-    it('should display organisation page with reprocessing sites on default route', async () => {
+    it('should display organisation page with reprocessing sites on default route', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -125,14 +91,17 @@ describe('#organisationController', () => {
       expect(tableHeaders).toContain('Accreditation')
     })
 
-    it('should display organisation page with exporting sites on exporting route', async () => {
+    it('should display organisation page with exporting sites on exporting route', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943902/exporting',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -148,15 +117,18 @@ describe('#organisationController', () => {
       expect(siteHeadings.length).toBeGreaterThan(0)
     })
 
-    it('should switch between tabs correctly using URL navigation', async () => {
+    it('should switch between tabs correctly using URL navigation', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
       // Test reprocessing tab
-      const reprocessingResponse = await authHelper.inject({
+      const reprocessingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $reprocessing = load(reprocessingResponse.result)
@@ -170,9 +142,10 @@ describe('#organisationController', () => {
       )
 
       // Test exporting tab
-      const exportingResponse = await authHelper.inject({
+      const exportingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943901/exporting',
+        auth: mockAuth
       })
 
       const $exporting = load(exportingResponse.result)
@@ -186,14 +159,17 @@ describe('#organisationController', () => {
       )
     })
 
-    it('should display materials with correct capitalization', async () => {
+    it('should display materials with correct capitalization', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906'
+        url: '/organisations/6507f1f77bcf86cd79943906',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -204,14 +180,17 @@ describe('#organisationController', () => {
       expect(materialCells).toMatch(/^[A-Z]/) // First letter should be uppercase
     })
 
-    it('should display status tags with correct GOV.UK styling', async () => {
+    it('should display status tags with correct GOV.UK styling', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -227,14 +206,15 @@ describe('#organisationController', () => {
       expect(approvedTags.length).toBeGreaterThan(0)
     })
 
-    it('should display Select links for each row', async () => {
+    it('should display Select links for each row', async ({ server }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -250,15 +230,18 @@ describe('#organisationController', () => {
       expect(firstLink).toMatch(/\/organisations\/.*\/registrations\/.*/)
     })
 
-    it('should use organisation ID from URL parameter in backend call', async () => {
+    it('should use organisation ID from URL parameter in backend call', async ({
+      server
+    }) => {
       const organisationId = '6507f1f77bcf86cd79943901'
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.inject({
+      await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}`
+        url: `/organisations/${organisationId}`,
+        auth: mockAuth
       })
 
       expect(
@@ -266,14 +249,15 @@ describe('#organisationController', () => {
       ).toHaveBeenCalledWith(organisationId, 'test-id-token')
     })
 
-    it('should pass JWT token to backend call', async () => {
+    it('should pass JWT token to backend call', async ({ server }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.inject({
+      await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       expect(
@@ -283,7 +267,7 @@ describe('#organisationController', () => {
   })
 
   describe('unhappy Paths', () => {
-    it('should handle backend fetch failure gracefully', async () => {
+    it('should handle backend fetch failure gracefully', async ({ server }) => {
       const backendError = new Error('Backend service unavailable')
       backendError.statusCode = 503
 
@@ -291,19 +275,18 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(backendError)
 
-      const { statusCode } = await authHelper.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('should redirect to login when session is missing', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
+    it('should redirect to logged-out when not authenticated', async ({
+      server
+    }) => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/organisations/6507f1f77bcf86cd79943901'
@@ -313,20 +296,21 @@ describe('#organisationController', () => {
       expect(headers.location).toBe('/logged-out')
     })
 
-    it('should handle backend 404 error', async () => {
+    it('should handle backend 404 error', async ({ server }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(Boom.notFound('Organisation not found'))
 
-      const { statusCode } = await authHelper.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/nonexistent-id'
+        url: '/organisations/nonexistent-id',
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it('should handle backend timeout error', async () => {
+    it('should handle backend timeout error', async ({ server }) => {
       const timeoutError = new Error('Request timeout')
       timeoutError.code = 'ETIMEDOUT'
 
@@ -334,15 +318,16 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockRejectedValue(timeoutError)
 
-      const { statusCode } = await authHelper.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('should handle malformed backend response', async () => {
+    it('should handle malformed backend response', async ({ server }) => {
       // Return invalid data structure
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
@@ -350,9 +335,10 @@ describe('#organisationController', () => {
         invalidField: 'no company details'
       })
 
-      const { statusCode } = await authHelper.inject({
+      const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -360,20 +346,17 @@ describe('#organisationController', () => {
   })
 
   describe('edge Cases', () => {
-    beforeEach(() => {
-      authHelper.mockGetUserSession(
-        vi.mocked(getUserSessionModule.getUserSession)
-      )
-    })
-
-    it('should display "No sites found" when organisation has no accreditations', async () => {
+    it('should display "No sites found" when organisation has no accreditations', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureEmpty)
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943903'
+        url: '/organisations/6507f1f77bcf86cd79943903',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -383,14 +366,17 @@ describe('#organisationController', () => {
       expect(result).toContain('No sites found.')
     })
 
-    it('should display "No sites found" when all items have excluded statuses', async () => {
+    it('should display "No sites found" when all items have excluded statuses', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureAllExcluded)
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943904'
+        url: '/organisations/6507f1f77bcf86cd79943904',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -404,7 +390,7 @@ describe('#organisationController', () => {
       expect(tableRows).toHaveLength(0)
     })
 
-    it('should filter out items with "Created" status', async () => {
+    it('should filter out items with "Created" status', async ({ server }) => {
       const dataWithCreatedStatus = {
         ...fixtureData,
         accreditations: [
@@ -426,16 +412,17 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithCreatedStatus)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       // Should show no sites because both registration and accreditation have Created status (excluded)
       expect(result).toContain('No sites found.')
     })
 
-    it('should filter out items with "Rejected" status', async () => {
+    it('should filter out items with "Rejected" status', async ({ server }) => {
       const dataWithRejectedStatus = {
         ...fixtureData,
         accreditations: [
@@ -457,23 +444,27 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithRejectedStatus)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       // Should show no sites because Rejected status is excluded
       expect(result).toContain('No sites found.')
     })
 
-    it('should handle missing site address fields gracefully', async () => {
+    it('should handle missing site address fields gracefully', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureMissingFields)
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943905'
+        url: '/organisations/6507f1f77bcf86cd79943905',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -489,7 +480,9 @@ describe('#organisationController', () => {
       expect(siteHeadings).toContain('Site With Address')
     })
 
-    it('should handle accreditation without matching registration', async () => {
+    it('should handle accreditation without matching registration', async ({
+      server
+    }) => {
       const dataWithUnmatchedAccreditation = {
         ...fixtureData,
         registrations: [] // No registrations
@@ -499,9 +492,10 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithUnmatchedAccreditation)
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -514,21 +508,25 @@ describe('#organisationController', () => {
       expect(statusTags.length).toBeGreaterThan(0)
     })
 
-    it('should display only exporting sites when no reprocessing sites exist', async () => {
+    it('should display only exporting sites when no reprocessing sites exist', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureExportingOnly)
 
-      const reprocessingResponse = await authHelper.inject({
+      const reprocessingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902'
+        url: '/organisations/6507f1f77bcf86cd79943902',
+        auth: mockAuth
       })
 
       expect(reprocessingResponse.result).not.toContain(/Reprocessing/i)
 
-      const exportingResponse = await authHelper.inject({
+      const exportingResponse = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943902/exporting'
+        url: '/organisations/6507f1f77bcf86cd79943902/exporting',
+        auth: mockAuth
       })
 
       const $exporting = load(exportingResponse.result)
@@ -536,14 +534,17 @@ describe('#organisationController', () => {
       expect($exporting('h3.govuk-heading-m').length).toBeGreaterThan(0)
     })
 
-    it('should handle organisation with single site and material', async () => {
+    it('should handle organisation with single site and material', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const { result, statusCode } = await authHelper.inject({
+      const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906'
+        url: '/organisations/6507f1f77bcf86cd79943906',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -563,7 +564,9 @@ describe('#organisationController', () => {
       expect(tableRows).toHaveLength(1)
     })
 
-    it('should hide items when EITHER registration or accreditation has excluded status', async () => {
+    it('should hide items when EITHER registration or accreditation has excluded status', async ({
+      server
+    }) => {
       const dataWithMixedStatuses = {
         ...fixtureData,
         accreditations: [
@@ -610,9 +613,10 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMixedStatuses)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -628,20 +632,17 @@ describe('#organisationController', () => {
   })
 
   describe('coverage - Additional Paths', () => {
-    beforeEach(() => {
-      authHelper.mockGetUserSession(
-        vi.mocked(getUserSessionModule.getUserSession)
-      )
-    })
-
-    it('should group multiple materials by site correctly', async () => {
+    it('should group multiple materials by site correctly', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -657,7 +658,9 @@ describe('#organisationController', () => {
       expect(siteHeadings).toHaveLength(uniqueSites.length)
     })
 
-    it('should handle multiple accreditations for the same site', async () => {
+    it('should handle multiple accreditations for the same site', async ({
+      server
+    }) => {
       const dataWithMultipleMaterialsSameSite = {
         ...fixtureData,
         accreditations: [
@@ -709,9 +712,10 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithMultipleMaterialsSameSite)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -728,14 +732,17 @@ describe('#organisationController', () => {
       expect(tableRows).toHaveLength(3)
     })
 
-    it('should log organisation access with correct metadata', async () => {
+    it('should log organisation access with correct metadata', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
 
-      await authHelper.inject({
+      await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       // Just verify the request succeeded (logging happens internally)
@@ -744,7 +751,9 @@ describe('#organisationController', () => {
       ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', 'test-id-token')
     })
 
-    it('should handle different status color mappings correctly', async () => {
+    it('should handle different status color mappings correctly', async ({
+      server
+    }) => {
       const dataWithVariousStatuses = {
         ...fixtureData,
         accreditations: [
@@ -796,9 +805,10 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(dataWithVariousStatuses)
 
-      const { result } = await authHelper.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901'
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
       })
 
       const $ = load(result)
@@ -810,7 +820,3 @@ describe('#organisationController', () => {
     })
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

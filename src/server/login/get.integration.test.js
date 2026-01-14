@@ -1,16 +1,6 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest'
+import { it } from '#vite/fixtures/server.js'
+import { describe, expect, vi } from 'vitest'
 
 const mockSignInAttemptedMetric = vi.fn()
 
@@ -25,100 +15,39 @@ vi.mock(
 )
 
 describe('#loginController - integration', () => {
-  /** @type {Server} */
-  let server
-
-  beforeEach(async () => {
-    server = null
-  })
-
-  afterEach(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
   describe('login flow', () => {
-    describe('when auth is disabled', () => {
-      it('should not be accessible when oidc configuration url is not set', async () => {
-        server = await createServer()
-        await server.initialize()
+    const languages = [
+      { lang: 'cy', url: '/cy/login' },
+      { lang: 'en', url: '/login' }
+    ]
 
+    it.for(languages)(
+      'should redirect to oidc provider (lang: $lang)',
+      async ({ url }, { server }) => {
         const response = await server.inject({
           method: 'GET',
-          url: '/login'
+          url
         })
 
-        expect(response.statusCode).toBe(statusCodes.notFound)
-      })
-    })
+        expect(response.statusCode).toBe(statusCodes.found)
 
-    describe('when auth is enabled', () => {
-      const mockOidcServer = createMockOidcServer('http://defra-id.auth')
-      const languages = [
-        { lang: 'cy', url: '/cy/login' },
-        { lang: 'en', url: '/login' }
-      ]
+        const redirectUrl = new URL(response.headers.location)
 
-      beforeEach(async () => {
-        mockOidcServer.listen()
+        expect(redirectUrl.host).toBe('defra-id.auth')
+        expect(redirectUrl.pathname).toBe('/authorize')
+      }
+    )
 
-        config.load({
-          defraId: {
-            clientId: 'test-client-id',
-            clientSecret: 'test-secret',
-            oidcConfigurationUrl:
-              'http://defra-id.auth/.well-known/openid-configuration',
-            serviceId: 'test-service-id'
-          }
+    it.for(languages)(
+      'records sign in attempt metric (lang: $lang)',
+      async ({ url }, { server }) => {
+        await server.inject({
+          method: 'GET',
+          url
         })
 
-        server = await createServer()
-        await server.initialize()
-      })
-
-      afterEach(async () => {
-        config.reset('defraId.clientId')
-        config.reset('defraId.clientSecret')
-        config.reset('defraId.oidcConfigurationUrl')
-        config.reset('defraId.serviceId')
-        mockOidcServer.resetHandlers()
-      })
-
-      afterAll(() => {
-        mockOidcServer.close()
-      })
-
-      it.each(languages)(
-        'should redirect to oidc provider when oidc configuration url is set (lang: $lang)',
-        async ({ url }) => {
-          const response = await server.inject({
-            method: 'GET',
-            url
-          })
-
-          expect(response.statusCode).toBe(statusCodes.found)
-
-          const redirectUrl = new URL(response.headers.location)
-
-          expect(redirectUrl.host).toBe('defra-id.auth')
-          expect(redirectUrl.pathname).toBe('/authorize')
-        }
-      )
-
-      it.each(languages)(
-        'records sign in attempt metric (lang: $lang)',
-        async ({ url }) => {
-          await server.inject({
-            method: 'GET',
-            url
-          })
-
-          expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
-        }
-      )
-    })
+        expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
+      }
+    )
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

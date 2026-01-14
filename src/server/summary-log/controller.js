@@ -1,25 +1,25 @@
-import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
-import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
+import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import {
+  ACCREDITATION_CODES,
+  ACCREDITATION_DISPLAY_CODE,
   DATA_ENTRY_CODES,
   DATA_ENTRY_DISPLAY_CODE,
   MATERIAL_CODES,
   MATERIAL_DISPLAY_CODE,
-  REGISTRATION_CODES,
-  REGISTRATION_DISPLAY_CODE,
-  ACCREDITATION_CODES,
-  ACCREDITATION_DISPLAY_CODE,
-  STRUCTURE_CODES,
-  STRUCTURE_DISPLAY_CODE,
   PROCESSING_TYPE_CODES,
   PROCESSING_TYPE_DISPLAY_CODE,
-  TECHNICAL_ERROR_CODES,
-  TECHNICAL_ERROR_DISPLAY_CODE,
+  REGISTRATION_CODES,
+  REGISTRATION_DISPLAY_CODE,
   SPREADSHEET_CODES,
-  SPREADSHEET_DISPLAY_CODE
+  SPREADSHEET_DISPLAY_CODE,
+  STRUCTURE_CODES,
+  STRUCTURE_DISPLAY_CODE,
+  TECHNICAL_ERROR_CODES,
+  TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
+import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {

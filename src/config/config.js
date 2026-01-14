@@ -266,11 +266,6 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
-export const isDefraIdEnabled = () => {
-  const oidcUrl = config.get('defraId.oidcConfigurationUrl')
-  return Boolean(oidcUrl && oidcUrl.trim() !== '')
-}
-
 /**
  * @import { Schema, SchemaObj } from 'convict'
  * @import { RedisConfig } from '#server/common/helpers/redis-client.js'

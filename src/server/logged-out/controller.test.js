@@ -1,49 +1,24 @@
-import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
+import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { describe, expect } from 'vitest'
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
+const mockAuth = {
+  strategy: 'session',
+  credentials: {
+    idToken: 'test-id-token',
+    profile: {
+      id: 'user-123',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com'
+    }
+  }
+}
 
-describe('#signOutController', () => {
-  /** @type {Server} */
-  let server
-  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
-
-  beforeAll(async () => {
-    mockOidcServer.listen()
-    config.load({
-      defraId: {
-        clientId: 'test-client-id',
-        clientSecret: 'test-secret',
-        oidcConfigurationUrl:
-          'http://defra-id.auth/.well-known/openid-configuration',
-        serviceId: 'test-service-id'
-      }
-    })
-
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    config.reset('defraId.clientId')
-    config.reset('defraId.clientSecret')
-    config.reset('defraId.oidcConfigurationUrl')
-    config.reset('defraId.serviceId')
-    mockOidcServer.close()
-    await server.stop({ timeout: 0 })
-  })
-
+describe('logged out controller', () => {
   describe('when navigating to /logged-out', () => {
-    it('should return 200 status', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
+    it('should return 200 status', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/logged-out'
@@ -52,11 +27,7 @@ describe('#signOutController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('should render page with correct title', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
+    it('should render page with correct title', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/logged-out'
@@ -67,11 +38,7 @@ describe('#signOutController', () => {
       expect($('title').text()).toContain('Signed out')
     })
 
-    it('should render page with correct heading', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
+    it('should render page with correct heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/logged-out'
@@ -82,11 +49,9 @@ describe('#signOutController', () => {
       expect($('h1').text()).toBe('You have signed out')
     })
 
-    it('should render sign in again button linking to login', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        ok: false
-      })
-
+    it('should render sign in again button linking to login', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/logged-out'
@@ -99,14 +64,13 @@ describe('#signOutController', () => {
       expect(button.attr('href')).toBe('/login')
     })
 
-    it('should redirect to home page if user not logged out', async () => {
-      vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
-        value: {}
-      })
-
+    it('should redirect to home page if user not logged out', async ({
+      server
+    }) => {
       const { headers, statusCode } = await server.inject({
         method: 'GET',
-        url: '/logged-out'
+        url: '/logged-out',
+        auth: mockAuth
       })
 
       expect(statusCode).toBe(statusCodes.found)
@@ -114,7 +78,3 @@ describe('#signOutController', () => {
     })
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

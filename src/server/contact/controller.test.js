@@ -1,23 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
 
 describe('#contactController', () => {
-  /** @type {Server} */
-  let server
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
   describe('when navigating to /contact', () => {
-    it('should return 200 status code', async () => {
+    it('should return 200 status code', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/contact'
@@ -26,7 +14,9 @@ describe('#contactController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('should render the contact page with correct title', async () => {
+    it('should render the contact page with correct title', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/contact'
@@ -39,7 +29,7 @@ describe('#contactController', () => {
       )
     })
 
-    it('should render the page heading', async () => {
+    it('should render the page heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/contact'
@@ -50,7 +40,7 @@ describe('#contactController', () => {
       expect($('h1').text()).toBe('Contact')
     })
 
-    it('should render the subheading', async () => {
+    it('should render the subheading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/contact'
@@ -63,7 +53,7 @@ describe('#contactController', () => {
       )
     })
 
-    it('should render all regulator sections', async () => {
+    it('should render all regulator sections', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/contact'
@@ -81,7 +71,9 @@ describe('#contactController', () => {
       expect(headings).toContain('For help with this digital service')
     })
 
-    it('should render mailto links for all email addresses', async () => {
+    it('should render mailto links for all email addresses', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/contact'
@@ -105,7 +97,7 @@ describe('#contactController', () => {
       expect(mailtoLinks).toContain('mailto:eprcustomerservice@defra.gov.uk')
     })
 
-    it('should render call charges links', async () => {
+    it('should render call charges links', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: '/contact'
@@ -122,7 +114,7 @@ describe('#contactController', () => {
   })
 
   describe('when navigating to /cy/contact (Welsh)', () => {
-    it('should return 200 status code', async () => {
+    it('should return 200 status code', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/cy/contact'
@@ -132,7 +124,3 @@ describe('#contactController', () => {
     })
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */
