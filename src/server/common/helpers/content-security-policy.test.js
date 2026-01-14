@@ -1,10 +1,9 @@
 import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
+import { describe, expect, test } from 'vitest'
 
 describe(cspFormAction, () => {
-  it.each([
+  test.each([
     ['non-production', { isProduction: false }, ['self', 'localhost:*']],
     ['production', { isProduction: true }, ['self']]
   ])('should use %s values', (_, config, values) => {
@@ -13,21 +12,7 @@ describe(cspFormAction, () => {
 })
 
 describe('#contentSecurityPolicy', () => {
-  let server
-  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
-
-  beforeAll(async () => {
-    mockOidcServer.listen()
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    mockOidcServer.close()
-    await server.stop({ timeout: 0 })
-  })
-
-  it('should set the CSP policy header', async () => {
+  it('should set the CSP policy header', async ({ server }) => {
     const resp = await server.inject({
       method: 'GET',
       url: '/'
