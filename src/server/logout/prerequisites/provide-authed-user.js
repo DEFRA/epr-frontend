@@ -6,13 +6,10 @@ import { getUserSession } from '#server/auth/helpers/get-user-session.js'
  */
 const provideAuthedUser = {
   method: async (request) => {
-    const { value } = await getUserSession(request)
-    return value
+    const { ok, value } = await getUserSession(request)
+    return ok ? value : null
   },
-  assign: 'authedUser',
-  failAction: async () => {
-    // Allow page to be rendered
-  }
+  assign: 'authedUser'
 }
 
 export { provideAuthedUser }

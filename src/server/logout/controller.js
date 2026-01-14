@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
-import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
+import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 
 /**
  * Logout controller
@@ -8,30 +9,30 @@ import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-u
  * @satisfies {Partial<ServerRoute>}
  */
 const logoutController = {
-  options: {
-    pre: [provideAuthedUser]
-  },
   handler: async (request, h) => {
-    const authedUser = request.pre.authedUser
+    const session = request.auth.credentials
+
     const loggedOutUrl = request.localiseUrl('/logged-out')
 
-    if (!authedUser) {
+    if (!session) {
       return h.redirect(loggedOutUrl)
     }
 
     const { href: postLogoutRedirectUrl } = new URL(
-      request.localiseUrl(loggedOutUrl),
+      loggedOutUrl,
       config.get('appBaseUrl')
     )
-
-    const logoutUrl = new URL(authedUser.urls.logout)
-    logoutUrl.searchParams.append('id_token_hint', authedUser.idToken)
+    const logoutUrl = new URL(session.urls.logout)
+    logoutUrl.searchParams.append('id_token_hint', session.idToken)
     logoutUrl.searchParams.append(
       'post_logout_redirect_uri',
       postLogoutRedirectUrl
     )
 
     await removeUserSession(request)
+
+    auditSignOut(session.profile.id, session.profile.email)
+    await metrics.signOutSuccess()
 
     return h.redirect(logoutUrl)
   }
