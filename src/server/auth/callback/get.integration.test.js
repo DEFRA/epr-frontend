@@ -91,7 +91,16 @@ describe('/auth/callback - GET integration', () => {
     beforeEach(({ msw }) => {
       msw.use(
         http.get('http://localhost:3001/v1/me/organisations', () => {
-          return HttpResponse.json({ organisations: {} })
+          return HttpResponse.json({
+            organisations: {
+              current: {
+                id: 'organisation-id',
+                name: 'company-name'
+              },
+              linked: null,
+              unlinked: []
+            }
+          })
         })
       )
     })
