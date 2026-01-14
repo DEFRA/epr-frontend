@@ -1233,6 +1233,84 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    it('status: invalid with SPREADSHEET_MALFORMED_MARKERS failure - should show malformed template message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
+    })
+
+    it('status: invalid with SPREADSHEET_INVALID_ERROR failure - should show malformed template message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
+    })
+
+    it('status: invalid with multiple spreadsheet failures - should show single deduplicated message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS },
+            { code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The summary log template you&#39;re uploading is incorrect'
+      )
+
+      // Should only appear once (deduplicated)
+      const matches = result.match(
+        /The summary log template you&#39;re uploading is incorrect/g
+      )
+
+      expect(matches).toHaveLength(1)
+    })
+
     it.for([
       'FILE_UPLOAD_FAILED',
       'FILE_DOWNLOAD_FAILED',
