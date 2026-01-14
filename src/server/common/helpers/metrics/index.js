@@ -31,6 +31,9 @@ async function metricsCounter(metricName, value = 1) {
 }
 
 export const metrics = {
+  async signInAttempted() {
+    return metricsCounter('signInAttempted')
+  },
   async signOutSuccess() {
     return metricsCounter('signOutSuccess')
   }
