@@ -574,6 +574,7 @@ describe('#organisationController', () => {
             id: 'acc-1',
             wasteProcessingType: 'reprocessor',
             material: 'plastic',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -583,6 +584,7 @@ describe('#organisationController', () => {
             id: 'acc-2',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
+            status: 'created',
             statusHistory: [
               { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -593,6 +595,9 @@ describe('#organisationController', () => {
           {
             id: 'reg-1',
             accreditationId: 'acc-1',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'created',
             statusHistory: [
               { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -601,6 +606,9 @@ describe('#organisationController', () => {
           {
             id: 'reg-2',
             accreditationId: 'acc-2',
+            wasteProcessingType: 'reprocessor',
+            material: 'glass',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
