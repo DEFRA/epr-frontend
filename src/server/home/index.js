@@ -26,7 +26,7 @@ export const home = {
           method: 'GET',
           path: '/',
           options: {
-            auth: { mode: 'try' }
+            auth: false
           }
         }
       ])
