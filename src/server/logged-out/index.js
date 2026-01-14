@@ -15,7 +15,7 @@ const loggedOut = {
           method: 'GET',
           path: '/logged-out',
           options: {
-            auth: false
+            auth: { mode: 'try' }
           }
         }
       ])
