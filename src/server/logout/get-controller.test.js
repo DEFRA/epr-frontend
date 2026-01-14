@@ -1,20 +1,7 @@
-import { config } from '#config/config.js'
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi
-} from 'vitest'
-import { createMockOidcServer } from '#server/common/test-helpers/mock-oidc.js'
-import { createServer } from '#server/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import { createAuthSessionHelper } from '#server/common/test-helpers/auth-helper.js'
+import { it } from '#vite/fixtures/server.js'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
 const mockSignOutSuccessMetric = vi.fn()
@@ -34,61 +21,35 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mockCdpAuditing(...args)
 }))
 
+const mockAuth = {
+  strategy: 'session',
+  credentials: {
+    idToken: 'test-id-token',
+    profile: {
+      id: 'user-id',
+      email: 'user@email.com'
+    },
+    urls: {
+      logout: 'http://defra-id.auth/logout'
+    }
+  }
+}
+
 describe('#logoutController - integration', () => {
-  /** @type {import('@hapi/hapi').Server} */
-  let server
-  const mockOidcServer = createMockOidcServer('http://defra-id.auth')
-
-  beforeEach(async () => {
-    mockOidcServer.listen()
-    config.load({
-      defraId: {
-        clientId: 'test-client-id',
-        clientSecret: 'test-secret',
-        oidcConfigurationUrl:
-          'http://defra-id.auth/.well-known/openid-configuration',
-        serviceId: 'test-service-id'
-      }
-    })
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterEach(async () => {
-    mockOidcServer.resetHandlers()
-    config.reset('defraId.clientId')
-    config.reset('defraId.clientSecret')
-    config.reset('defraId.oidcConfigurationUrl')
-    config.reset('defraId.serviceId')
-  })
-
-  afterAll(() => {
-    mockOidcServer.close()
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
   describe('when user is logged in', () => {
-    let response
-
-    beforeEach(async () => {
-      const authHelper = createAuthSessionHelper(server)
-      await authHelper.createAuthCookie()
-      authHelper.mockGetUserSession(
-        vi.mocked(getUserSessionModule.getUserSession),
-        {
-          profile: {
-            id: 'user-id',
-            email: 'user@email.com'
-          }
-        }
-      )
-
-      response = await authHelper.inject({
+    it('should redirect to logged-out page via Defra ID', async ({
+      server
+    }) => {
+      const response = await server.inject({
         method: 'GET',
-        url: '/logout'
+        url: '/logout',
+        auth: mockAuth
       })
-    })
 
-    test('redirects to logged-out page via Defra ID', async () => {
       expect(response.statusCode).toBe(statusCodes.found)
 
       const redirectUrl = response.headers.location
@@ -101,7 +62,13 @@ describe('#logoutController - integration', () => {
       )
     })
 
-    test('audits a successful sign out attempt', () => {
+    it('should audit a successful sign out attempt', async ({ server }) => {
+      await server.inject({
+        method: 'GET',
+        url: '/logout',
+        auth: mockAuth
+      })
+
       expect(mockCdpAuditing).toHaveBeenCalledTimes(1)
       expect(mockCdpAuditing).toHaveBeenCalledWith({
         event: {
@@ -117,13 +84,19 @@ describe('#logoutController - integration', () => {
       })
     })
 
-    test('records sign out success metric', () => {
+    it('should record sign out success metric', async ({ server }) => {
+      await server.inject({
+        method: 'GET',
+        url: '/logout',
+        auth: mockAuth
+      })
+
       expect(mockSignOutSuccessMetric).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('when user is not logged in', () => {
-    test('redirects to logged-out page', async () => {
+    it('should redirect to logged-out page', async ({ server }) => {
       const response = await server.inject({
         method: 'GET',
         url: '/logout'
@@ -133,11 +106,21 @@ describe('#logoutController - integration', () => {
       expect(response.headers.location).toBe('/logged-out')
     })
 
-    test('does not audit a successful sign out attempt', () => {
+    it('should not audit a successful sign out attempt', async ({ server }) => {
+      await server.inject({
+        method: 'GET',
+        url: '/logout'
+      })
+
       expect(mockCdpAuditing).not.toHaveBeenCalled()
     })
 
-    test('does not record sign out success metric', () => {
+    it('should not record sign out success metric', async ({ server }) => {
+      await server.inject({
+        method: 'GET',
+        url: '/logout'
+      })
+
       expect(mockSignOutSuccessMetric).not.toHaveBeenCalled()
     })
   })
