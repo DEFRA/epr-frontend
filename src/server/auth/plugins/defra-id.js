@@ -31,11 +31,15 @@ const getAuthCallbackUrl = (request) => {
     ? forwardedProto
     : request.server.info.protocol
 
-  const requestOrigin = `${protocol}://${request.info.host}`
+  const requestUrl = new URL(appBaseUrl)
+  requestUrl.protocol = protocol
+  requestUrl.host = request.info.host
 
-  const origin = allowedOrigins.has(requestOrigin) ? requestOrigin : appBaseUrl
+  const origin = allowedOrigins.has(requestUrl.origin)
+    ? requestUrl.origin
+    : appBaseUrl
 
-  return `${origin}/auth/callback`
+  return new URL('/auth/callback', origin).href
 }
 /**
  * Create Defra ID OIDC authentication plugin
