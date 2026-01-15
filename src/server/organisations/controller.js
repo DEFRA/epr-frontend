@@ -1,5 +1,6 @@
 import { capitalize } from 'lodash-es'
 
+import { formatMaterialName } from '#server/common/helpers/materials/format-material-name.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
@@ -54,7 +55,7 @@ function createRow(request, id, registration, accreditation) {
   )
 
   return [
-    { text: capitalize(registration.material) },
+    { text: formatMaterialName(registration.material) },
     {
       html: createTag(registration.status)
     },

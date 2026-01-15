@@ -1,6 +1,7 @@
 import { capitalize } from 'lodash-es'
 import Boom from '@hapi/boom'
 
+import { formatMaterialName } from '#server/common/helpers/materials/format-material-name.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
@@ -64,7 +65,7 @@ function buildViewModel({
     ? null
     : (registration.site?.address?.line1 ??
       localise('registrations:unknownSite'))
-  const material = capitalize(registration.material)
+  const material = formatMaterialName(registration.material)
 
   const registrationStatus = capitalize(registration.status)
   const accreditationStatus = capitalize(accreditation?.status)

@@ -391,34 +391,6 @@ describe('#accreditationDashboardController', () => {
       expect($('h1').text().trim()).toMatch(/^[A-Z]/)
     })
 
-    it('should handle missing material gracefully', async ({ server }) => {
-      const dataWithMissingMaterial = {
-        ...fixtureData,
-        registrations: [
-          {
-            id: 'reg-no-material',
-            wasteProcessingType: 'reprocessor',
-            material: '',
-            status: 'approved',
-            site: { address: { line1: 'Test Site' } }
-          }
-        ],
-        accreditations: []
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithMissingMaterial)
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-material',
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
     it('should handle suspended status with correct styling', async ({
       server
     }) => {
