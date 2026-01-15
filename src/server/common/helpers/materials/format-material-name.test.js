@@ -16,14 +16,8 @@ describe(formatMaterialName, () => {
   })
 
   it('should throw Boom.internal for unknown material', () => {
-    try {
-      formatMaterialName('unknown')
-      expect.fail('Expected error to be thrown')
-    } catch (error) {
-      expect(error).toMatchObject({
-        isBoom: true,
-        output: { statusCode: 500 }
-      })
-    }
+    expect(() => formatMaterialName('unknown')).toThrowError(
+      'Unknown material: unknown'
+    )
   })
 })
