@@ -58,7 +58,7 @@ describe('#logoutController - integration', () => {
       expect(redirectUrl.host).toBe('defra-id.auth')
       expect(redirectUrl.pathname).toBe('/logout')
       expect(redirectUrl.searchParams.get('post_logout_redirect_uri')).toBe(
-        'http://localhost:3000/logged-out'
+        'http://localhost:3000/auth/logout'
       )
     })
 

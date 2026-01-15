@@ -1,10 +1,8 @@
 import { getRedirectUrl } from '#server/auth/helpers/get-redirect-url.js'
+import { paths } from '#server/paths.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-
-const AUTH_LOGOUT_PATH = '/auth/logout'
-const LOGGED_OUT_PATH = '/logged-out'
 
 /** @import { ServerRoute } from '@hapi/hapi' */
 
@@ -17,7 +15,7 @@ const logoutController = {
   handler: async (request, h) => {
     const session = request.auth.credentials
 
-    const loggedOutUrl = request.localiseUrl(LOGGED_OUT_PATH)
+    const loggedOutUrl = request.localiseUrl(paths.loggedOut)
 
     if (!session) {
       return h.redirect(loggedOutUrl)
@@ -32,7 +30,7 @@ const logoutController = {
     logoutUrl.searchParams.append('id_token_hint', session.idToken)
     logoutUrl.searchParams.append(
       'post_logout_redirect_uri',
-      getRedirectUrl(request, AUTH_LOGOUT_PATH)
+      getRedirectUrl(request, paths.auth.logout)
     )
 
     return h.redirect(logoutUrl)

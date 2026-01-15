@@ -1,9 +1,19 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import { paths } from '#server/paths.js'
+import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID } from 'node:crypto'
-import { metrics } from '#server/common/helpers/metrics/index.js'
-import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+
+/** @import { ServerRoute } from '@hapi/hapi' */
+
+/**
+ * Returns the path and its Welsh localised variant
+ * @param {string} path
+ * @returns {[string, string]}
+ */
+const withWelsh = (path) => [path, `/cy${path}`]
 
 /**
  * Auth callback controller
@@ -19,6 +29,7 @@ const controller = {
     if (request.auth?.error) {
       await metrics.signInFailure()
     }
+
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
 
@@ -44,10 +55,8 @@ const controller = {
 
       const referrer = request.yar.flash('referrer')?.at(0)
       const skipReferrers = [
-        '/start',
-        '/cy/start',
-        '/logged-out',
-        '/cy/logged-out'
+        ...withWelsh(paths.start),
+        ...withWelsh(paths.loggedOut)
       ]
       const shouldSkipReferrer = skipReferrers.includes(referrer)
 
@@ -69,7 +78,3 @@ const controller = {
 }
 
 export { controller }
-
-/**
- * @import { ServerRoute } from '@hapi/hapi'
- */

@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { paths } from '#server/paths.js'
 import bell from '@hapi/bell'
 import {
   buildUserProfile,
@@ -12,9 +13,6 @@ import { getRedirectUrl } from '../helpers/get-redirect-url.js'
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
-
-const AUTH_CALLBACK_PATH = '/auth/callback'
-const AUTH_ORGANISATION_PATH = '/auth/organisation'
 
 /**
  * Create Defra ID OIDC authentication plugin
@@ -53,13 +51,13 @@ const createDefraId = (verifyToken) => ({
           if (request.info.referrer) {
             const { hash, pathname, search } = new URL(request.info.referrer)
 
-            if (!pathname.startsWith(AUTH_CALLBACK_PATH)) {
+            if (!pathname.startsWith(paths.auth.callback)) {
               const referrer = `${pathname}${search}${hash}`
               request.yar.flash('referrer', referrer)
             }
           }
 
-          return getRedirectUrl(request, AUTH_CALLBACK_PATH)
+          return getRedirectUrl(request, paths.auth.callback)
         },
         password: config.get('session.cookie.password'),
         provider: {
@@ -90,7 +88,7 @@ const createDefraId = (verifyToken) => ({
         providerParams: function (request) {
           return {
             ...authParams,
-            forceReselection: request.path === AUTH_ORGANISATION_PATH,
+            forceReselection: request.path === paths.auth.organisation,
             serviceId
           }
         }

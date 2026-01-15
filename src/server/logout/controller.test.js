@@ -6,8 +6,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
 const appBaseUrl = 'http://localhost:3000'
-const loggedOutSlug = 'logged-out'
-const loggedOutUrl = `${appBaseUrl}/${loggedOutSlug}`
+const authLogoutUrl = `${appBaseUrl}/auth/logout`
 
 describe('#logoutController', () => {
   afterEach(() => {
@@ -30,9 +29,7 @@ describe('#logoutController', () => {
       const result = await logoutController.handler(mockRequest, mockH)
 
       expect(dropUserSession).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        `/${loggedOutSlug}`
-      )
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/logged-out')
       expect(result).toBe('redirect-response')
     })
   })
@@ -76,41 +73,10 @@ describe('#logoutController', () => {
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
         new URL(
-          `http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(loggedOutUrl)}`
+          `http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(authLogoutUrl)}`
         )
       )
       expect(result).toBe('redirect-response')
-    })
-
-    test('should localise the post_logout_redirect_uri for Welsh users', async () => {
-      config.set('appBaseUrl', appBaseUrl)
-
-      const expectedRedirectUri = `${appBaseUrl}/cy/${loggedOutSlug}`
-
-      const mockRequest = {
-        cookieAuth: {
-          clear: vi.fn()
-        },
-        localiseUrl: vi.fn((path) => `/cy${path}`),
-        auth: {
-          credentials: mockSession
-        },
-        info: { host: 'localhost:3000' },
-        headers: {},
-        server: { info: { protocol: 'http' } }
-      }
-
-      const mockH = {
-        redirect: vi.fn().mockReturnValue('redirect-response')
-      }
-
-      await logoutController.handler(mockRequest, mockH)
-
-      const redirectUrl = mockH.redirect.mock.calls[0][0]
-
-      expect(redirectUrl.searchParams.get('post_logout_redirect_uri')).toBe(
-        expectedRedirectUri
-      )
     })
   })
 })
