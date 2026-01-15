@@ -1,6 +1,7 @@
+import { config } from '#config/config.js'
 import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createDefraId } from './defra-id.js'
+import { createDefraId, getAuthCallbackUrl } from './defra-id.js'
 
 vi.mock(import('@hapi/bell'), () => ({
   default: {
@@ -13,12 +14,6 @@ vi.mock(import('node-fetch'), () => ({
   default: vi.fn()
 }))
 
-vi.mock(import('#config/config.js'), () => ({
-  config: {
-    get: vi.fn()
-  }
-}))
-
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({
     error: vi.fn()
@@ -28,13 +23,26 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
 describe('#defraId', () => {
   let mockServer
   let mockFetch
-  let mockConfig
   let mockBell
   let mockVerifyToken
   let defraId
 
   beforeEach(async () => {
     vi.clearAllMocks()
+
+    // Set config values for tests
+    config.set('defraId.clientId', 'test-client-id')
+    config.set('defraId.clientSecret', 'test-client-secret')
+    config.set(
+      'defraId.oidcConfigurationUrl',
+      'http://test.auth/.well-known/openid-configuration'
+    )
+    config.set('defraId.serviceId', 'test-service-id')
+    config.set(
+      'session.cookie.password',
+      'test-password-at-least-32-characters-long'
+    )
+    config.set('session.cookie.secure', true)
 
     // Import mocked modules
     const fetch = await import('node-fetch')
@@ -43,26 +51,8 @@ describe('#defraId', () => {
     const bell = await import('@hapi/bell')
     mockBell = bell.default
 
-    const { config } = await import('#config/config.js')
-    mockConfig = config
-
     // Create mock verifyToken function that returns just the payload
     mockVerifyToken = vi.fn((token) => jose.decodeJwt(token))
-
-    // Setup default mock implementations
-    mockConfig.get.mockImplementation((key) => {
-      const configMap = {
-        'defraId.oidcConfigurationUrl':
-          'http://test.auth/.well-known/openid-configuration',
-        'defraId.serviceId': 'test-service-id',
-        'defraId.clientId': 'test-client-id',
-        'defraId.clientSecret': 'test-client-secret',
-        appBaseUrl: 'http://localhost:3000',
-        'session.cookie.password': 'test-password-at-least-32-characters-long',
-        'session.cookie.secure': true
-      }
-      return configMap[key]
-    })
 
     mockFetch.mockImplementation((url) => {
       // Mock OIDC discovery endpoint
@@ -113,6 +103,12 @@ describe('#defraId', () => {
 
   afterEach(() => {
     vi.resetAllMocks()
+    config.reset('defraId.clientId')
+    config.reset('defraId.clientSecret')
+    config.reset('defraId.oidcConfigurationUrl')
+    config.reset('defraId.serviceId')
+    config.reset('session.cookie.password')
+    config.reset('session.cookie.secure')
   })
 
   describe('plugin metadata', () => {
@@ -330,7 +326,7 @@ describe('#defraId', () => {
   })
 
   describe('location function', () => {
-    it('should return auth callback URL', async () => {
+    it('should return auth callback URL derived from request', async () => {
       await defraId.plugin.register(mockServer)
 
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
@@ -338,7 +334,9 @@ describe('#defraId', () => {
       const locationFn = config.location
 
       const mockRequest = {
-        info: {}
+        info: { host: 'localhost:3000' },
+        headers: {},
+        server: { info: { protocol: 'http' } }
       }
 
       const result = locationFn(mockRequest)
@@ -355,8 +353,11 @@ describe('#defraId', () => {
 
       const mockRequest = {
         info: {
-          referrer: 'http://localhost:3000/dashboard'
+          referrer: 'http://localhost:3000/dashboard',
+          host: 'localhost:3000'
         },
+        headers: {},
+        server: { info: { protocol: 'http' } },
         yar: {
           flash: vi.fn()
         }
@@ -379,8 +380,11 @@ describe('#defraId', () => {
 
       const mockRequest = {
         info: {
-          referrer: 'http://localhost:3000/auth/callback'
+          referrer: 'http://localhost:3000/auth/callback',
+          host: 'localhost:3000'
         },
+        headers: {},
+        server: { info: { protocol: 'http' } },
         yar: {
           flash: vi.fn()
         }
@@ -389,6 +393,100 @@ describe('#defraId', () => {
       locationFn(mockRequest)
 
       expect(mockRequest.yar.flash).not.toHaveBeenCalled()
+    })
+  })
+
+  describe(getAuthCallbackUrl, () => {
+    afterEach(() => {
+      config.reset('appBaseUrl')
+    })
+
+    it('should return callback URL when request origin matches appBaseUrl', () => {
+      config.set('appBaseUrl', 'https://test.example.com')
+
+      const mockRequest = {
+        info: { host: 'test.example.com' },
+        headers: { 'x-forwarded-proto': 'https' },
+        server: { info: { protocol: 'http' } }
+      }
+
+      const result = getAuthCallbackUrl(mockRequest)
+
+      expect(result).toBe('https://test.example.com/auth/callback')
+    })
+
+    it('should return callback URL when request origin matches production URL', () => {
+      config.set('appBaseUrl', 'https://test.example.com')
+
+      const mockRequest = {
+        info: {
+          host: 'record-reprocessed-exported-packaging-waste.defra.gov.uk'
+        },
+        headers: { 'x-forwarded-proto': 'https' },
+        server: { info: { protocol: 'http' } }
+      }
+
+      const result = getAuthCallbackUrl(mockRequest)
+
+      expect(result).toBe(
+        'https://record-reprocessed-exported-packaging-waste.defra.gov.uk/auth/callback'
+      )
+    })
+
+    it('should fall back to appBaseUrl when request origin is not in allowed list', () => {
+      config.set('appBaseUrl', 'https://test.example.com')
+
+      const mockRequest = {
+        info: { host: 'malicious-site.com' },
+        headers: { 'x-forwarded-proto': 'https' },
+        server: { info: { protocol: 'http' } }
+      }
+
+      const result = getAuthCallbackUrl(mockRequest)
+
+      expect(result).toBe('https://test.example.com/auth/callback')
+    })
+
+    it('should use x-forwarded-proto header for protocol detection', () => {
+      config.set('appBaseUrl', 'http://localhost:3000')
+
+      const mockRequest = {
+        info: { host: 'localhost:3000' },
+        headers: { 'x-forwarded-proto': 'http' },
+        server: { info: { protocol: 'https' } }
+      }
+
+      const result = getAuthCallbackUrl(mockRequest)
+
+      expect(result).toBe('http://localhost:3000/auth/callback')
+    })
+
+    it('should fall back to server protocol when x-forwarded-proto is not present', () => {
+      config.set('appBaseUrl', 'http://localhost:3000')
+
+      const mockRequest = {
+        info: { host: 'localhost:3000' },
+        headers: {},
+        server: { info: { protocol: 'http' } }
+      }
+
+      const result = getAuthCallbackUrl(mockRequest)
+
+      expect(result).toBe('http://localhost:3000/auth/callback')
+    })
+
+    it('should ignore invalid x-forwarded-proto values', () => {
+      config.set('appBaseUrl', 'http://localhost:3000')
+
+      const mockRequest = {
+        info: { host: 'localhost:3000' },
+        headers: { 'x-forwarded-proto': 'javascript' },
+        server: { info: { protocol: 'http' } }
+      }
+
+      const result = getAuthCallbackUrl(mockRequest)
+
+      expect(result).toBe('http://localhost:3000/auth/callback')
     })
   })
 

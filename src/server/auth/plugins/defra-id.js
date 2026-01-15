@@ -7,11 +7,40 @@ import {
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 
 /**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { AzureB2CTokenParams, AzureB2CBellCredentials, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
+const PRODUCTION_SERVICE_URL =
+  'https://record-reprocessed-exported-packaging-waste.defra.gov.uk'
+
+const VALID_PROTOCOLS = new Set(['http', 'https'])
+
+/**
+ * Gets the auth callback URL from the request, restricted to allowed origins
+ * @param {Request} request
+ * @returns {string}
+ */
+const getAuthCallbackUrl = (request) => {
+  const appBaseUrl = config.get('appBaseUrl')
+  const allowedOrigins = new Set([appBaseUrl, PRODUCTION_SERVICE_URL])
+
+  const forwardedProto = request.headers['x-forwarded-proto']
+  const protocol = VALID_PROTOCOLS.has(forwardedProto)
+    ? forwardedProto
+    : request.server.info.protocol
+
+  const requestUrl = new URL(appBaseUrl)
+  requestUrl.protocol = protocol
+  requestUrl.host = request.info.host
+
+  const origin = allowedOrigins.has(requestUrl.origin)
+    ? requestUrl.origin
+    : appBaseUrl
+
+  return new URL('/auth/callback', origin).href
+}
 /**
  * Create Defra ID OIDC authentication plugin
  * Factory function that creates a plugin with verifyToken closure
@@ -22,10 +51,9 @@ const createDefraId = (verifyToken) => ({
   plugin: {
     name: 'defra-id',
     register: async (server) => {
-      const serviceId = config.get('defraId.serviceId')
       const clientId = config.get('defraId.clientId')
       const clientSecret = config.get('defraId.clientSecret')
-      const authCallbackUrl = config.get('appBaseUrl') + '/auth/callback'
+      const serviceId = config.get('defraId.serviceId')
 
       await server.register(bell)
 
@@ -57,7 +85,7 @@ const createDefraId = (verifyToken) => ({
             }
           }
 
-          return authCallbackUrl
+          return getAuthCallbackUrl(request)
         },
         password: config.get('session.cookie.password'),
         provider: {
@@ -98,4 +126,4 @@ const createDefraId = (verifyToken) => ({
   }
 })
 
-export { createDefraId }
+export { createDefraId, getAuthCallbackUrl }
