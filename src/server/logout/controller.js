@@ -3,6 +3,7 @@ import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
+const AUTH_LOGOUT_PATH = '/auth/logout'
 const LOGGED_OUT_PATH = '/logged-out'
 
 /** @import { ServerRoute } from '@hapi/hapi' */
@@ -22,17 +23,17 @@ const logoutController = {
       return h.redirect(loggedOutUrl)
     }
 
-    const logoutUrl = new URL(session.urls.logout)
-    logoutUrl.searchParams.append('id_token_hint', session.idToken)
-    logoutUrl.searchParams.append(
-      'post_logout_redirect_uri',
-      getRedirectUrl(request, loggedOutUrl)
-    )
-
     await removeUserSession(request)
 
     auditSignOut(session.profile.id, session.profile.email)
     await metrics.signOutSuccess()
+
+    const logoutUrl = new URL(session.urls.logout)
+    logoutUrl.searchParams.append('id_token_hint', session.idToken)
+    logoutUrl.searchParams.append(
+      'post_logout_redirect_uri',
+      getRedirectUrl(request, AUTH_LOGOUT_PATH)
+    )
 
     return h.redirect(logoutUrl)
   }

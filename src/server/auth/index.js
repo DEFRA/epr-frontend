@@ -3,7 +3,7 @@ import { controller as organisationController } from '#server/auth/organisation/
 
 /**
  * Auth plugin
- * Registers the /auth/callback route that handles OAuth2/OIDC callback
+ * Registers auth routes for OAuth2/OIDC callback, organisation selection, and logout callback
  */
 const auth = {
   plugin: {
@@ -14,6 +14,13 @@ const auth = {
           ...callbackController,
           method: 'GET',
           path: '/auth/callback'
+        },
+        {
+          handler: (request, h) =>
+            h.redirect(request.localiseUrl('/logged-out')),
+          method: 'GET',
+          options: { auth: false },
+          path: '/auth/logout'
         },
         {
           ...organisationController,
