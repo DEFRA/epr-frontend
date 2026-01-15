@@ -15,6 +15,8 @@ import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 const PRODUCTION_SERVICE_URL =
   'https://record-reprocessed-exported-packaging-waste.defra.gov.uk'
 
+const VALID_PROTOCOLS = new Set(['http', 'https'])
+
 /**
  * Gets the auth callback URL from the request, restricted to allowed origins
  * @param {Request} request
@@ -22,18 +24,16 @@ const PRODUCTION_SERVICE_URL =
  */
 const getAuthCallbackUrl = (request) => {
   const appBaseUrl = config.get('appBaseUrl')
-  const allowedOrigins = [appBaseUrl, PRODUCTION_SERVICE_URL]
+  const allowedOrigins = new Set([appBaseUrl, PRODUCTION_SERVICE_URL])
 
   const forwardedProto = request.headers['x-forwarded-proto']
-  const protocol = ['http', 'https'].includes(forwardedProto)
+  const protocol = VALID_PROTOCOLS.has(forwardedProto)
     ? forwardedProto
     : request.server.info.protocol
 
   const requestOrigin = `${protocol}://${request.info.host}`
 
-  const origin = allowedOrigins.includes(requestOrigin)
-    ? requestOrigin
-    : appBaseUrl
+  const origin = allowedOrigins.has(requestOrigin) ? requestOrigin : appBaseUrl
 
   return `${origin}/auth/callback`
 }
