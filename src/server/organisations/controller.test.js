@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
-import fixtureMissingFields from '../../../fixtures/organisation/missing-fields.json' with { type: 'json' }
+import fixtureMissingSiteAddress from '../../../fixtures/organisation/missing-site-address.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureSingleReprocessing from '../../../fixtures/organisation/single-reprocessing.json' with { type: 'json' }
 
@@ -459,7 +459,7 @@ describe('#organisationController', () => {
     }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureMissingFields)
+      ).mockResolvedValue(fixtureMissingSiteAddress)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
