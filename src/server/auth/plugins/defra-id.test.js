@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import * as jose from 'jose'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createDefraId, createGetAuthCallbackUrl } from './defra-id.js'
+import { createDefraId, getAuthCallbackUrl } from './defra-id.js'
 
 vi.mock(import('@hapi/bell'), () => ({
   default: {
@@ -396,7 +396,7 @@ describe('#defraId', () => {
     })
   })
 
-  describe('getAuthCallbackUrl', () => {
+  describe(getAuthCallbackUrl, () => {
     afterEach(() => {
       config.reset('appBaseUrl')
     })
@@ -410,7 +410,7 @@ describe('#defraId', () => {
         server: { info: { protocol: 'http' } }
       }
 
-      const result = createGetAuthCallbackUrl()(mockRequest)
+      const result = getAuthCallbackUrl(mockRequest)
 
       expect(result).toBe('https://test.example.com/auth/callback')
     })
@@ -426,7 +426,7 @@ describe('#defraId', () => {
         server: { info: { protocol: 'http' } }
       }
 
-      const result = createGetAuthCallbackUrl()(mockRequest)
+      const result = getAuthCallbackUrl(mockRequest)
 
       expect(result).toBe(
         'https://record-reprocessed-exported-packaging-waste.defra.gov.uk/auth/callback'
@@ -442,7 +442,7 @@ describe('#defraId', () => {
         server: { info: { protocol: 'http' } }
       }
 
-      const result = createGetAuthCallbackUrl()(mockRequest)
+      const result = getAuthCallbackUrl(mockRequest)
 
       expect(result).toBe('https://test.example.com/auth/callback')
     })
@@ -456,7 +456,7 @@ describe('#defraId', () => {
         server: { info: { protocol: 'https' } }
       }
 
-      const result = createGetAuthCallbackUrl()(mockRequest)
+      const result = getAuthCallbackUrl(mockRequest)
 
       expect(result).toBe('http://localhost:3000/auth/callback')
     })
@@ -470,7 +470,7 @@ describe('#defraId', () => {
         server: { info: { protocol: 'http' } }
       }
 
-      const result = createGetAuthCallbackUrl()(mockRequest)
+      const result = getAuthCallbackUrl(mockRequest)
 
       expect(result).toBe('http://localhost:3000/auth/callback')
     })
@@ -484,7 +484,7 @@ describe('#defraId', () => {
         server: { info: { protocol: 'http' } }
       }
 
-      const result = createGetAuthCallbackUrl()(mockRequest)
+      const result = getAuthCallbackUrl(mockRequest)
 
       expect(result).toBe('http://localhost:3000/auth/callback')
     })

@@ -16,28 +16,26 @@ const PRODUCTION_SERVICE_URL =
   'https://record-reprocessed-exported-packaging-waste.defra.gov.uk'
 
 /**
- * Creates a function that gets the auth callback URL from the request,
- * restricted to allowed origins
- * @returns {(request: Request) => string}
+ * Gets the auth callback URL from the request, restricted to allowed origins
+ * @param {Request} request
+ * @returns {string}
  */
-const createGetAuthCallbackUrl = () => {
+const getAuthCallbackUrl = (request) => {
   const appBaseUrl = config.get('appBaseUrl')
   const allowedOrigins = [appBaseUrl, PRODUCTION_SERVICE_URL]
 
-  return (request) => {
-    const forwardedProto = request.headers['x-forwarded-proto']
-    const protocol = ['http', 'https'].includes(forwardedProto)
-      ? forwardedProto
-      : request.server.info.protocol
+  const forwardedProto = request.headers['x-forwarded-proto']
+  const protocol = ['http', 'https'].includes(forwardedProto)
+    ? forwardedProto
+    : request.server.info.protocol
 
-    const requestOrigin = `${protocol}://${request.info.host}`
+  const requestOrigin = `${protocol}://${request.info.host}`
 
-    const origin = allowedOrigins.includes(requestOrigin)
-      ? requestOrigin
-      : appBaseUrl
+  const origin = allowedOrigins.includes(requestOrigin)
+    ? requestOrigin
+    : appBaseUrl
 
-    return `${origin}/auth/callback`
-  }
+  return `${origin}/auth/callback`
 }
 /**
  * Create Defra ID OIDC authentication plugin
@@ -52,7 +50,6 @@ const createDefraId = (verifyToken) => ({
       const clientId = config.get('defraId.clientId')
       const clientSecret = config.get('defraId.clientSecret')
       const serviceId = config.get('defraId.serviceId')
-      const getCallbackUrl = createGetAuthCallbackUrl()
 
       await server.register(bell)
 
@@ -84,7 +81,7 @@ const createDefraId = (verifyToken) => ({
             }
           }
 
-          return getCallbackUrl(request)
+          return getAuthCallbackUrl(request)
         },
         password: config.get('session.cookie.password'),
         provider: {
@@ -125,4 +122,4 @@ const createDefraId = (verifyToken) => ({
   }
 })
 
-export { createDefraId, createGetAuthCallbackUrl }
+export { createDefraId, getAuthCallbackUrl }
