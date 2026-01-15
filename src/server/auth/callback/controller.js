@@ -43,10 +43,16 @@ const controller = {
       await request.server.app.cache.set(sessionId, session)
 
       const referrer = request.yar.flash('referrer')?.at(0)
-      const isStartPage = ['/start', '/cy/start'].includes(referrer)
+      const skipReferrers = [
+        '/start',
+        '/cy/start',
+        '/logged-out',
+        '/cy/logged-out'
+      ]
+      const shouldSkipReferrer = skipReferrers.includes(referrer)
 
-      // Don't redirect linked users back to start page - take them to dashboard
-      if (referrer && !isStartPage) {
+      // Don't redirect linked users back to start or logged-out pages - take them to dashboard
+      if (referrer && !shouldSkipReferrer) {
         return h.redirect(getSafeRedirect(referrer))
       }
 
