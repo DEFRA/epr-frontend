@@ -18,6 +18,7 @@ describe(formatMaterialName, () => {
     expect(() => formatMaterialName('unknown')).toThrowError(
       expect.objectContaining({
         isBoom: true,
+        message: 'Unknown material: unknown',
         output: expect.objectContaining({
           statusCode: 500
         })

@@ -1,3 +1,4 @@
+import { enableAuditing } from '@defra/cdp-auditing'
 import { config } from '#config/config.js'
 
 import { createServer } from '#server/index.js'
@@ -7,6 +8,7 @@ async function startServer() {
   let server
 
   try {
+    enableAuditing(config.get('audit.isEnabled'))
     server = await createServer()
     await server.start()
 

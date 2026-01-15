@@ -150,7 +150,7 @@ export default [
       'vitest/prefer-importing-vitest-globals': 'off', // Incompatible with test.extend() fixtures
       'vitest/require-mock-type-parameters': 'off',
       'vitest/valid-title': [
-        'warn',
+        'error',
         {
           allowArguments: true
         }
