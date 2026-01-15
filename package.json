@@ -32,7 +32,7 @@
     "postinstall": "npm run setup:husky && npm run build",
     "lint": "run-s lint:js lint:scss lint:types",
     "lint:fix": "eslint . --fix",
-    "lint:js": "eslint .",
+    "lint:js": "eslint . --max-warnings 0",
     "lint:types": "tsc --build tsconfig.json",
     "lint:scss": "stylelint \"src/**/*.scss\" --cache --cache-location .cache/stylelint --cache-strategy content --color --ignore-path .gitignore",
     "postversion": "git add package.json package-lock.json && git commit -m $npm_package_version",
