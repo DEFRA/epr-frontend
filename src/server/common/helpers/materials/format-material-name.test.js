@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-
 import { formatMaterialName } from './format-material-name.js'
 
 describe(formatMaterialName, () => {
@@ -16,14 +15,13 @@ describe(formatMaterialName, () => {
   })
 
   it('should throw Boom.internal for unknown material', () => {
-    try {
-      formatMaterialName('unknown')
-      expect.fail('Expected error to be thrown')
-    } catch (error) {
-      expect(error).toMatchObject({
+    expect(() => formatMaterialName('unknown')).toThrowError(
+      expect.objectContaining({
         isBoom: true,
-        output: { statusCode: 500 }
+        output: expect.objectContaining({
+          statusCode: 500
+        })
       })
-    }
+    )
   })
 })
