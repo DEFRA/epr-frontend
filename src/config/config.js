@@ -261,6 +261,14 @@ export const config = convict({
       env: 'DEFRA_ID_MANAGE_ACCOUNT_URL',
       default: ''
     }
+  },
+  audit: {
+    isEnabled: {
+      doc: 'Is auditing enabled',
+      format: Boolean,
+      default: isProduction,
+      env: 'AUDIT_ENABLED'
+    }
   }
 })
 
