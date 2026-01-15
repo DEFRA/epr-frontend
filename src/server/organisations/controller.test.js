@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
-import fixtureMissingFields from '../../../fixtures/organisation/missing-fields.json' with { type: 'json' }
+import fixtureMissingSiteAddress from '../../../fixtures/organisation/missing-site-address.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 import fixtureSingleReprocessing from '../../../fixtures/organisation/single-reprocessing.json' with { type: 'json' }
 
@@ -459,7 +459,7 @@ describe('#organisationController', () => {
     }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureMissingFields)
+      ).mockResolvedValue(fixtureMissingSiteAddress)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -574,6 +574,7 @@ describe('#organisationController', () => {
             id: 'acc-1',
             wasteProcessingType: 'reprocessor',
             material: 'plastic',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -583,6 +584,7 @@ describe('#organisationController', () => {
             id: 'acc-2',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
+            status: 'created',
             statusHistory: [
               { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -593,6 +595,9 @@ describe('#organisationController', () => {
           {
             id: 'reg-1',
             accreditationId: 'acc-1',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'created',
             statusHistory: [
               { status: 'created', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -601,6 +606,9 @@ describe('#organisationController', () => {
           {
             id: 'reg-2',
             accreditationId: 'acc-2',
+            wasteProcessingType: 'reprocessor',
+            material: 'glass',
+            status: 'approved',
             statusHistory: [
               { status: 'approved', updatedAt: '2025-08-20T19:34:44.944Z' }
             ],
@@ -689,21 +697,24 @@ describe('#organisationController', () => {
             accreditationId: 'acc-plastic',
             site: { address: { line1: 'Multi-Material Site' } },
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic'
           },
           {
             id: 'reg-glass',
             accreditationId: 'acc-glass',
             site: { address: { line1: 'Multi-Material Site' } },
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'glass'
           },
           {
             id: 'reg-wood',
             accreditationId: 'acc-wood',
             site: { address: { line1: 'Multi-Material Site' } },
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'wood'
           }
         ]
       }
@@ -784,19 +795,25 @@ describe('#organisationController', () => {
             id: 'reg-1',
             accreditationId: 'acc-approved',
             status: 'approved',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            site: { address: { line1: 'Site 1' } }
           },
           {
             id: 'reg-2',
             accreditationId: 'acc-suspended',
             status: 'suspended',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'glass',
+            site: { address: { line1: 'Site 2' } }
           },
           {
             id: 'reg-3',
             accreditationId: 'acc-cancelled',
             status: 'cancelled',
-            wasteProcessingType: 'reprocessor'
+            wasteProcessingType: 'reprocessor',
+            material: 'wood',
+            site: { address: { line1: 'Site 3' } }
           }
         ]
       }

@@ -1,7 +1,35 @@
 import { capitalize } from 'lodash-es'
 
+import { formatMaterialName } from '#server/common/helpers/materials/format-material-name.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+
+const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
+
+/**
+ * Determines whether a site should be rendered based on its registration
+ * and accreditation statuses
+ * @param {object} registration - Registration data
+ * @param {object | undefined} accreditation - Accreditation data
+ * @param {string} wasteProcessingType - The waste processing type to filter by
+ * @returns {boolean} Whether the site should be rendered
+ */
+function shouldRenderSite(registration, accreditation, wasteProcessingType) {
+  const isExcludedStatus = (status) => !status || EXCLUDED_STATUSES.has(status)
+
+  const isCorrectWasteProcessingType =
+    registration.wasteProcessingType === wasteProcessingType
+
+  const isRegistrationExcluded = isExcludedStatus(registration.status)
+  const isAccreditationExcluded =
+    accreditation && isExcludedStatus(accreditation.status)
+
+  return (
+    isCorrectWasteProcessingType &&
+    !isRegistrationExcluded &&
+    !isAccreditationExcluded
+  )
+}
 
 /**
  *
@@ -17,7 +45,7 @@ function createTag(status) {
  * @param {Request} request
  * @param {string} id - Organisation ID
  * @param {object} registration - Registration data
- * @param {accreditation | undefined} accreditation - Accreditation data
+ * @param {object | undefined} accreditation - Accreditation data
  * @returns {[{text: string},{html: string},{html: (string|string)},{html: string, classes: string}]} - Array of table cells
  */
 function createRow(request, id, registration, accreditation) {
@@ -27,7 +55,7 @@ function createRow(request, id, registration, accreditation) {
   )
 
   return [
-    { text: capitalize(registration.material) },
+    { text: formatMaterialName(registration.material) },
     {
       html: createTag(registration.status)
     },
@@ -52,35 +80,30 @@ function createRow(request, id, registration, accreditation) {
  */
 function getRegistrationSites(request, data, wasteProcessingType) {
   const { t: localise } = request
-  const excludedStatuses = new Set(['created', 'rejected'])
 
   return data.registrations.reduce((prev, registration) => {
-    const shouldRender =
-      registration.wasteProcessingType === wasteProcessingType &&
-      !excludedStatuses.has(registration.status)
-    const isExporter = registration.wasteProcessingType === 'exporter'
-
-    if (!shouldRender) {
-      return prev
-    }
-
     const accreditation = data.accreditations.find(
       ({ id }) => registration.accreditationId === id
     )
 
+    if (!shouldRenderSite(registration, accreditation, wasteProcessingType)) {
+      return prev
+    }
+
+    const isExporter = registration.wasteProcessingType === 'exporter'
+
     const existingSite = isExporter
       ? undefined
       : prev.find(({ name }) => name === registration.site?.address?.line1)
+
+    const row = createRow(request, data.id, registration, accreditation)
 
     return existingSite
       ? prev.map((site) =>
           site.name === existingSite.name
             ? {
                 ...site,
-                rows: [
-                  ...site.rows,
-                  createRow(request, data.id, registration, accreditation)
-                ]
+                rows: [...site.rows, row]
               }
             : site
         )
@@ -107,7 +130,7 @@ function getRegistrationSites(request, data, wasteProcessingType) {
               },
               { text: '' }
             ],
-            rows: [createRow(request, data.id, registration, accreditation)]
+            rows: [row]
           }
         ]
   }, [])
