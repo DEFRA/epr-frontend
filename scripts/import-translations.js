@@ -8,6 +8,54 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 /**
+ * Set a value at a nested path in an object
+ * @param {object} obj - The object to modify
+ * @param {string} path - Dot-notation path (e.g., 'footer.getHelp.email')
+ * @param {string} value - The value to set
+ */
+function setNestedValue(obj, path, value) {
+  const keys = path.split('.')
+  let current = obj
+
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i]
+    if (!(key in current) || typeof current[key] !== 'object') {
+      current[key] = {}
+    }
+    current = current[key]
+  }
+
+  current[keys[keys.length - 1]] = value
+}
+
+/**
+ * Deep merge two objects
+ * @param {object} target - Target object
+ * @param {object} source - Source object to merge in
+ * @returns {object} Merged object
+ */
+function deepMerge(target, source) {
+  const result = { ...target }
+
+  for (const key of Object.keys(source)) {
+    if (
+      source[key] &&
+      typeof source[key] === 'object' &&
+      !Array.isArray(source[key]) &&
+      target[key] &&
+      typeof target[key] === 'object' &&
+      !Array.isArray(target[key])
+    ) {
+      result[key] = deepMerge(target[key], source[key])
+    } else {
+      result[key] = source[key]
+    }
+  }
+
+  return result
+}
+
+/**
  * Parse args to get input file
  * @param {string[]} args
  * @returns {string}
@@ -77,7 +125,7 @@ async function importTranslations(inputFile) {
       translationsByNamespace.set(namespace, {})
     }
 
-    translationsByNamespace.get(namespace)[key] = cyValue
+    setNestedValue(translationsByNamespace.get(namespace), key, cyValue)
   })
 
   console.log(`Found ${translationsByNamespace.size} namespaces`)
@@ -102,7 +150,7 @@ async function importTranslations(inputFile) {
         // File doesn't exist or is invalid, start fresh
       }
 
-      const mergedTranslations = { ...existingTranslations, ...translations }
+      const mergedTranslations = deepMerge(existingTranslations, translations)
 
       await writeFile(
         cyFilePath,
@@ -133,4 +181,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
 }
 
-export { importTranslations, parseArgs }
+export { importTranslations, parseArgs, setNestedValue, deepMerge }

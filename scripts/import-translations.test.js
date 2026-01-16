@@ -4,7 +4,12 @@ import { fileURLToPath } from 'node:url'
 import { existsSync, unlinkSync } from 'node:fs'
 import { writeFile, readFile, mkdir, rm } from 'node:fs/promises'
 import ExcelJS from 'exceljs'
-import { importTranslations, parseArgs } from './import-translations.js'
+import {
+  importTranslations,
+  parseArgs,
+  setNestedValue,
+  deepMerge
+} from './import-translations.js'
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
 const testSrcDir = join(currentDir, '..', 'src', 'server')
@@ -45,6 +50,101 @@ describe('import-translations', () => {
       const result = parseArgs(['--importFileURL'])
 
       expect(result).toBe('import-translations.xlsx')
+    })
+  })
+
+  describe(setNestedValue, () => {
+    it('should set a simple key', () => {
+      const obj = {}
+      setNestedValue(obj, 'key', 'value')
+
+      expect(obj).toStrictEqual({ key: 'value' })
+    })
+
+    it('should set a nested key with dot notation', () => {
+      const obj = {}
+      setNestedValue(obj, 'footer.crownCopyright', 'Crown copyright')
+
+      expect(obj).toStrictEqual({
+        footer: { crownCopyright: 'Crown copyright' }
+      })
+    })
+
+    it('should set a deeply nested key', () => {
+      const obj = {}
+      setNestedValue(obj, 'footer.getHelp.email', 'test@example.com')
+
+      expect(obj).toStrictEqual({
+        footer: { getHelp: { email: 'test@example.com' } }
+      })
+    })
+
+    it('should preserve existing sibling keys', () => {
+      const obj = { footer: { existing: 'value' } }
+      setNestedValue(obj, 'footer.newKey', 'new value')
+
+      expect(obj).toStrictEqual({
+        footer: { existing: 'value', newKey: 'new value' }
+      })
+    })
+
+    it('should overwrite non-object intermediate values', () => {
+      const obj = { footer: 'string value' }
+      setNestedValue(obj, 'footer.nested', 'value')
+
+      expect(obj).toStrictEqual({ footer: { nested: 'value' } })
+    })
+  })
+
+  describe(deepMerge, () => {
+    it('should merge flat objects', () => {
+      const target = { a: 1 }
+      const source = { b: 2 }
+
+      expect(deepMerge(target, source)).toStrictEqual({ a: 1, b: 2 })
+    })
+
+    it('should deep merge nested objects', () => {
+      const target = { footer: { existing: 'value' } }
+      const source = { footer: { newKey: 'new value' } }
+
+      expect(deepMerge(target, source)).toStrictEqual({
+        footer: { existing: 'value', newKey: 'new value' }
+      })
+    })
+
+    it('should overwrite values in nested objects', () => {
+      const target = { footer: { key: 'old' } }
+      const source = { footer: { key: 'new' } }
+
+      expect(deepMerge(target, source)).toStrictEqual({
+        footer: { key: 'new' }
+      })
+    })
+
+    it('should handle deeply nested merges', () => {
+      const target = { footer: { getHelp: { phone: '123' } } }
+      const source = { footer: { getHelp: { email: 'test@example.com' } } }
+
+      expect(deepMerge(target, source)).toStrictEqual({
+        footer: { getHelp: { phone: '123', email: 'test@example.com' } }
+      })
+    })
+
+    it('should not modify original objects', () => {
+      const target = { a: { b: 1 } }
+      const source = { a: { c: 2 } }
+      const result = deepMerge(target, source)
+
+      expect(target).toStrictEqual({ a: { b: 1 } })
+      expect(result).toStrictEqual({ a: { b: 1, c: 2 } })
+    })
+
+    it('should replace arrays instead of merging them', () => {
+      const target = { items: [1, 2] }
+      const source = { items: [3, 4] }
+
+      expect(deepMerge(target, source)).toStrictEqual({ items: [3, 4] })
     })
   })
 
@@ -150,6 +250,87 @@ describe('import-translations', () => {
       expect(translations).toStrictEqual({
         existingKey: 'Hen',
         newKey: 'Newydd'
+      })
+    })
+
+    it('should import nested keys using dot notation', async () => {
+      registerNamespace('test-nested-common')
+
+      testExcelPath = await createTestExcel('test-nested.xlsx', [
+        {
+          fieldName: 'test-nested-common:footer.crownCopyright',
+          en: 'Crown copyright',
+          cy: 'Hawlfraint y Goron'
+        },
+        {
+          fieldName: 'test-nested-common:footer.getHelp.email',
+          en: 'test@example.com',
+          cy: 'prawf@enghraifft.com'
+        }
+      ])
+
+      const commonDir = join(testSrcDir, 'test-nested-common')
+      await mkdir(commonDir, { recursive: true })
+
+      await importTranslations('test-nested.xlsx')
+
+      const content = await readFile(join(commonDir, 'cy.json'), 'utf-8')
+      const translations = JSON.parse(content)
+
+      expect(translations).toStrictEqual({
+        footer: {
+          crownCopyright: 'Hawlfraint y Goron',
+          getHelp: {
+            email: 'prawf@enghraifft.com'
+          }
+        }
+      })
+    })
+
+    it('should deep merge nested translations with existing nested structure', async () => {
+      registerNamespace('test-deep-merge-common')
+
+      testExcelPath = await createTestExcel('test-deep-merge.xlsx', [
+        {
+          fieldName: 'test-deep-merge-common:footer.getHelp.email',
+          en: 'test@example.com',
+          cy: 'prawf@enghraifft.com'
+        }
+      ])
+
+      const commonDir = join(testSrcDir, 'test-deep-merge-common')
+      await mkdir(commonDir, { recursive: true })
+      const cyFilePath = join(commonDir, 'cy.json')
+      await writeFile(
+        cyFilePath,
+        JSON.stringify(
+          {
+            footer: {
+              crownCopyright: 'Existing',
+              getHelp: {
+                phone: '123'
+              }
+            }
+          },
+          null,
+          2
+        ),
+        'utf-8'
+      )
+
+      await importTranslations('test-deep-merge.xlsx')
+
+      const content = await readFile(cyFilePath, 'utf-8')
+      const translations = JSON.parse(content)
+
+      expect(translations).toStrictEqual({
+        footer: {
+          crownCopyright: 'Existing',
+          getHelp: {
+            phone: '123',
+            email: 'prawf@enghraifft.com'
+          }
+        }
       })
     })
 
