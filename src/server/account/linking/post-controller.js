@@ -1,5 +1,4 @@
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
-import { provideAuthedUser } from '#server/logout/prerequisites/provide-authed-user.js'
 import Joi from 'joi'
 import { linkOrganisation } from './helpers/link-organisation.js'
 import { provideUserOrganisations } from './prerequisites/provide-user-organisations.js'
@@ -10,17 +9,13 @@ import { buildLinkingViewData } from './view-data.js'
  */
 export const controller = {
   options: {
-    pre: [provideAuthedUser, provideUserOrganisations],
+    pre: [provideUserOrganisations],
     validate: {
       payload: Joi.object({
         organisationId: Joi.string().required()
       }),
       failAction: async (request, h) => {
-        const session = request.pre.authedUser
-
-        if (!session) {
-          return h.redirect('/login').takeover()
-        }
+        const session = request.auth.credentials
 
         const organisations = await fetchUserOrganisations(session.idToken)
 
@@ -39,11 +34,7 @@ export const controller = {
   async handler(request, h) {
     const { organisationId } = request.payload
 
-    const session = request.pre.authedUser
-
-    if (!session) {
-      return h.redirect('/login')
-    }
+    const session = request.auth.credentials
 
     await linkOrganisation(session.idToken, organisationId)
 

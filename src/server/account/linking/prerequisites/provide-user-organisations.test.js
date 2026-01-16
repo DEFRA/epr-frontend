@@ -1,27 +1,11 @@
 import { config } from '#config/config.js'
-import * as getUserSessionModule from '#server/auth/helpers/get-user-session.js'
-import { err, ok } from '#server/common/helpers/result.js'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { provideUserOrganisations } from './provide-user-organisations.js'
-
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
 
 const backendUrl = config.get('eprBackendUrl')
 const mockBackendServer = setupServer()
-
-function mockUserSession(result) {
-  vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue(result)
-}
 
 describe(provideUserOrganisations, () => {
   beforeAll(() => {
@@ -30,7 +14,6 @@ describe(provideUserOrganisations, () => {
 
   afterEach(() => {
     mockBackendServer.resetHandlers()
-    vi.clearAllMocks()
   })
 
   afterAll(() => {
@@ -47,8 +30,6 @@ describe(provideUserOrganisations, () => {
       unlinked: []
     }
 
-    mockUserSession(ok({ idToken: 'mock-id-token' }))
-
     mockBackendServer.use(
       http.get(`${backendUrl}/v1/me/organisations`, ({ request }) => {
         const authHeader = request.headers.get('Authorization')
@@ -61,17 +42,23 @@ describe(provideUserOrganisations, () => {
       })
     )
 
-    const mockRequest = {}
+    const mockRequest = {
+      auth: {
+        credentials: { idToken: 'mock-id-token' }
+      }
+    }
 
     const result = await provideUserOrganisations.method(mockRequest)
 
     expect(result).toStrictEqual(mockOrganisations)
   })
 
-  it('should return null when getUserSession returns error', async () => {
-    mockUserSession(err())
-
-    const mockRequest = {}
+  it('should return null when credentials is null', async () => {
+    const mockRequest = {
+      auth: {
+        credentials: null
+      }
+    }
 
     const result = await provideUserOrganisations.method(mockRequest)
 
@@ -79,15 +66,17 @@ describe(provideUserOrganisations, () => {
   })
 
   it('should throw error when backend returns 401 unauthorized', async () => {
-    mockUserSession(ok({ idToken: 'invalid-token' }))
-
     mockBackendServer.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
       })
     )
 
-    const mockRequest = {}
+    const mockRequest = {
+      auth: {
+        credentials: { idToken: 'invalid-token' }
+      }
+    }
 
     await expect(
       provideUserOrganisations.method(mockRequest)
@@ -95,8 +84,6 @@ describe(provideUserOrganisations, () => {
   })
 
   it('should throw error when backend returns 500 server error', async () => {
-    mockUserSession(ok({ idToken: 'mock-id-token' }))
-
     mockBackendServer.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json(
@@ -106,7 +93,11 @@ describe(provideUserOrganisations, () => {
       })
     )
 
-    const mockRequest = {}
+    const mockRequest = {
+      auth: {
+        credentials: { idToken: 'mock-id-token' }
+      }
+    }
 
     await expect(
       provideUserOrganisations.method(mockRequest)

@@ -1,8 +1,8 @@
 import { capitalize } from 'lodash-es'
 
 import { formatMaterialName } from '#server/common/helpers/materials/format-material-name.js'
-import { getStatusClass } from './helpers/status-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { getStatusClass } from './helpers/status-helpers.js'
 
 const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
 
@@ -152,11 +152,11 @@ export const controller = {
     const isExporterTab = request.path.endsWith('/exporting')
     const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
 
-    const userSession = request.auth.credentials
+    const session = request.auth.credentials
 
     const organisationData = await fetchOrganisationById(
       organisationId,
-      userSession.idToken
+      session.idToken
     )
 
     const organisationName = organisationData.companyDetails.tradingName
