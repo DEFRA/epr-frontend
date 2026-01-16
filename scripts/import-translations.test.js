@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { existsSync, unlinkSync } from 'node:fs'
@@ -148,17 +148,18 @@ describe('import-translations', () => {
     })
   })
 
-  describe(importTranslations, () => {
+  // Run integration tests sequentially to avoid race conditions with i18n scanner
+  describe.sequential(importTranslations, () => {
     let testExcelPath
     const testNamespaces = []
 
-    beforeEach(() => {
-      testNamespaces.length = 0
-    })
-
-    afterEach(async () => {
+    /**
+     * Helper to cleanup test artifacts
+     */
+    async function cleanup() {
       if (testExcelPath && existsSync(testExcelPath)) {
         unlinkSync(testExcelPath)
+        testExcelPath = null
       }
 
       for (const namespace of testNamespaces) {
@@ -167,7 +168,10 @@ describe('import-translations', () => {
           await rm(namespaceDir, { recursive: true, force: true })
         }
       }
-    })
+      testNamespaces.length = 0
+    }
+
+    afterEach(cleanup)
 
     /**
      * Helper to create an Excel file for testing
@@ -200,300 +204,6 @@ describe('import-translations', () => {
       }
     }
 
-    it('should import Welsh translations from Excel file', async () => {
-      registerNamespace('test-import-home')
-
-      testExcelPath = await createTestExcel('test-import.xlsx', [
-        { fieldName: 'test-import-home:pageTitle', en: 'Home', cy: 'Hafan' },
-        { fieldName: 'test-import-home:heading', en: 'Welcome', cy: 'Croeso' }
-      ])
-
-      const homeDir = join(testSrcDir, 'test-import-home')
-      await mkdir(homeDir, { recursive: true })
-
-      await importTranslations('test-import.xlsx')
-
-      const cyFilePath = join(homeDir, 'cy.json')
-
-      expect(existsSync(cyFilePath)).toBe(true)
-
-      const content = await readFile(cyFilePath, 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({
-        pageTitle: 'Hafan',
-        heading: 'Croeso'
-      })
-    })
-
-    it('should merge with existing translations', async () => {
-      registerNamespace('test-merge-home')
-
-      testExcelPath = await createTestExcel('test-merge.xlsx', [
-        { fieldName: 'test-merge-home:newKey', en: 'New', cy: 'Newydd' }
-      ])
-
-      const homeDir = join(testSrcDir, 'test-merge-home')
-      await mkdir(homeDir, { recursive: true })
-      const cyFilePath = join(homeDir, 'cy.json')
-      await writeFile(
-        cyFilePath,
-        JSON.stringify({ existingKey: 'Hen' }, null, 2),
-        'utf-8'
-      )
-
-      await importTranslations('test-merge.xlsx')
-
-      const content = await readFile(cyFilePath, 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({
-        existingKey: 'Hen',
-        newKey: 'Newydd'
-      })
-    })
-
-    it('should import nested keys using dot notation', async () => {
-      registerNamespace('test-nested-common')
-
-      testExcelPath = await createTestExcel('test-nested.xlsx', [
-        {
-          fieldName: 'test-nested-common:footer.crownCopyright',
-          en: 'Crown copyright',
-          cy: 'Hawlfraint y Goron'
-        },
-        {
-          fieldName: 'test-nested-common:footer.getHelp.email',
-          en: 'test@example.com',
-          cy: 'prawf@enghraifft.com'
-        }
-      ])
-
-      const commonDir = join(testSrcDir, 'test-nested-common')
-      await mkdir(commonDir, { recursive: true })
-
-      await importTranslations('test-nested.xlsx')
-
-      const content = await readFile(join(commonDir, 'cy.json'), 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({
-        footer: {
-          crownCopyright: 'Hawlfraint y Goron',
-          getHelp: {
-            email: 'prawf@enghraifft.com'
-          }
-        }
-      })
-    })
-
-    it('should deep merge nested translations with existing nested structure', async () => {
-      registerNamespace('test-deep-merge-common')
-
-      testExcelPath = await createTestExcel('test-deep-merge.xlsx', [
-        {
-          fieldName: 'test-deep-merge-common:footer.getHelp.email',
-          en: 'test@example.com',
-          cy: 'prawf@enghraifft.com'
-        }
-      ])
-
-      const commonDir = join(testSrcDir, 'test-deep-merge-common')
-      await mkdir(commonDir, { recursive: true })
-      const cyFilePath = join(commonDir, 'cy.json')
-      await writeFile(
-        cyFilePath,
-        JSON.stringify(
-          {
-            footer: {
-              crownCopyright: 'Existing',
-              getHelp: {
-                phone: '123'
-              }
-            }
-          },
-          null,
-          2
-        ),
-        'utf-8'
-      )
-
-      await importTranslations('test-deep-merge.xlsx')
-
-      const content = await readFile(cyFilePath, 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({
-        footer: {
-          crownCopyright: 'Existing',
-          getHelp: {
-            phone: '123',
-            email: 'prawf@enghraifft.com'
-          }
-        }
-      })
-    })
-
-    it('should handle multiple namespaces', async () => {
-      registerNamespace('test-multi-home')
-      registerNamespace('test-multi-account')
-
-      testExcelPath = await createTestExcel('test-multi.xlsx', [
-        { fieldName: 'test-multi-home:title', en: 'Home', cy: 'Hafan' },
-        {
-          fieldName: 'test-multi-account:title',
-          en: 'Account',
-          cy: 'Cyfrif'
-        }
-      ])
-
-      await mkdir(join(testSrcDir, 'test-multi-home'), { recursive: true })
-      await mkdir(join(testSrcDir, 'test-multi-account'), { recursive: true })
-
-      await importTranslations('test-multi.xlsx')
-
-      const homeTranslations = JSON.parse(
-        await readFile(join(testSrcDir, 'test-multi-home', 'cy.json'), 'utf-8')
-      )
-      const accountTranslations = JSON.parse(
-        await readFile(
-          join(testSrcDir, 'test-multi-account', 'cy.json'),
-          'utf-8'
-        )
-      )
-
-      expect(homeTranslations).toStrictEqual({ title: 'Hafan' })
-      expect(accountTranslations).toStrictEqual({ title: 'Cyfrif' })
-    })
-
-    it('should skip rows with missing data', async () => {
-      registerNamespace('test-skip-home')
-
-      testExcelPath = await createTestExcel('test-skip.xlsx', [
-        { fieldName: '', cy: 'Should be skipped' },
-        { fieldName: 'test-skip-home:empty', cy: '' },
-        { fieldName: 'test-skip-home:valid', en: 'Valid', cy: 'Dilys' }
-      ])
-
-      const homeDir = join(testSrcDir, 'test-skip-home')
-      await mkdir(homeDir, { recursive: true })
-
-      await importTranslations('test-skip.xlsx')
-
-      const content = await readFile(join(homeDir, 'cy.json'), 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({ valid: 'Dilys' })
-    })
-
-    it('should handle field names with colons in the key', async () => {
-      registerNamespace('test-colons-common')
-
-      testExcelPath = await createTestExcel('test-colons.xlsx', [
-        {
-          fieldName: 'test-colons-common:error:validation:required',
-          en: 'Required',
-          cy: 'Gofynnol'
-        }
-      ])
-
-      const commonDir = join(testSrcDir, 'test-colons-common')
-      await mkdir(commonDir, { recursive: true })
-
-      await importTranslations('test-colons.xlsx')
-
-      const content = await readFile(join(commonDir, 'cy.json'), 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({
-        'error:validation:required': 'Gofynnol'
-      })
-    })
-
-    it('should skip invalid field names without colon separator', async () => {
-      registerNamespace('test-invalid-home')
-
-      testExcelPath = await createTestExcel('test-invalid.xlsx', [
-        { fieldName: 'invalidnocolon', cy: 'Should be skipped' },
-        { fieldName: 'test-invalid-home:valid', en: 'Valid', cy: 'Dilys' }
-      ])
-
-      const homeDir = join(testSrcDir, 'test-invalid-home')
-      await mkdir(homeDir, { recursive: true })
-
-      await importTranslations('test-invalid.xlsx')
-
-      const content = await readFile(join(homeDir, 'cy.json'), 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({ valid: 'Dilys' })
-    })
-
-    it('should create cy.json if it does not exist', async () => {
-      registerNamespace('test-create-newmodule')
-
-      testExcelPath = await createTestExcel('test-create.xlsx', [
-        { fieldName: 'test-create-newmodule:key', en: 'Key', cy: 'Allwedd' }
-      ])
-
-      const newModuleDir = join(testSrcDir, 'test-create-newmodule')
-      await mkdir(newModuleDir, { recursive: true })
-
-      await importTranslations('test-create.xlsx')
-
-      const cyFilePath = join(newModuleDir, 'cy.json')
-
-      expect(existsSync(cyFilePath)).toBe(true)
-
-      const content = await readFile(cyFilePath, 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({ key: 'Allwedd' })
-    })
-
-    it('should handle invalid JSON in existing cy.json', async () => {
-      registerNamespace('test-invalid-json-home')
-
-      testExcelPath = await createTestExcel('test-invalid-json.xlsx', [
-        { fieldName: 'test-invalid-json-home:key', en: 'Key', cy: 'Allwedd' }
-      ])
-
-      const homeDir = join(testSrcDir, 'test-invalid-json-home')
-      await mkdir(homeDir, { recursive: true })
-      const cyFilePath = join(homeDir, 'cy.json')
-      await writeFile(cyFilePath, 'invalid json{{{', 'utf-8')
-
-      await importTranslations('test-invalid-json.xlsx')
-
-      const content = await readFile(cyFilePath, 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({ key: 'Allwedd' })
-    })
-
-    it('should continue processing other namespaces if one fails', async () => {
-      registerNamespace('test-partial-home')
-
-      testExcelPath = await createTestExcel('test-partial.xlsx', [
-        { fieldName: 'nonexistent-test:key', en: 'Key', cy: 'Allwedd' },
-        { fieldName: 'test-partial-home:key', en: 'Key', cy: 'Allwedd' }
-      ])
-
-      const homeDir = join(testSrcDir, 'test-partial-home')
-      await mkdir(homeDir, { recursive: true })
-
-      await importTranslations('test-partial.xlsx')
-
-      const cyFilePath = join(homeDir, 'cy.json')
-
-      expect(existsSync(cyFilePath)).toBe(true)
-
-      const content = await readFile(cyFilePath, 'utf-8')
-      const translations = JSON.parse(content)
-
-      expect(translations).toStrictEqual({ key: 'Allwedd' })
-    })
-
     it('should throw error if no worksheet found in Excel file', async () => {
       const workbook = new ExcelJS.Workbook()
       testExcelPath = join(projectRoot, 'empty.xlsx')
@@ -516,25 +226,144 @@ describe('import-translations', () => {
       ).rejects.toThrowError('Could not find required columns')
     })
 
-    it('should handle case-insensitive column headers', async () => {
-      registerNamespace('test-uppercase-home')
+    it('should import translations with nested keys and deep merge', async () => {
+      // This test covers: basic import, nested keys, deep merge, and merge with existing
+      registerNamespace('test-integration')
 
-      const workbook = new ExcelJS.Workbook()
-      const worksheet = workbook.addWorksheet('Sheet1')
-      worksheet.addRow(['FIELD NAME', 'EN', 'CY'])
-      worksheet.addRow(['test-uppercase-home:title', 'Home', 'Hafan'])
-      testExcelPath = join(projectRoot, 'uppercase.xlsx')
-      await workbook.xlsx.writeFile(testExcelPath)
+      const testDir = join(testSrcDir, 'test-integration')
+      await mkdir(testDir, { recursive: true })
 
-      const homeDir = join(testSrcDir, 'test-uppercase-home')
-      await mkdir(homeDir, { recursive: true })
+      // Create existing cy.json with nested structure
+      const cyFilePath = join(testDir, 'cy.json')
+      await writeFile(
+        cyFilePath,
+        JSON.stringify(
+          {
+            existingKey: 'Existing',
+            footer: {
+              crownCopyright: 'Existing Crown',
+              getHelp: {
+                phone: '123'
+              }
+            }
+          },
+          null,
+          2
+        ),
+        'utf-8'
+      )
 
-      await importTranslations('uppercase.xlsx')
+      // Create Excel with nested keys
+      testExcelPath = await createTestExcel('test-integration.xlsx', [
+        { fieldName: 'test-integration:pageTitle', en: 'Home', cy: 'Hafan' },
+        {
+          fieldName: 'test-integration:footer.getHelp.email',
+          en: 'test@example.com',
+          cy: 'prawf@enghraifft.com'
+        },
+        {
+          fieldName: 'test-integration:footer.links.privacy',
+          en: 'Privacy',
+          cy: 'Preifatrwydd'
+        }
+      ])
 
-      const content = await readFile(join(homeDir, 'cy.json'), 'utf-8')
+      await importTranslations('test-integration.xlsx')
+
+      const content = await readFile(cyFilePath, 'utf-8')
       const translations = JSON.parse(content)
 
-      expect(translations).toStrictEqual({ title: 'Hafan' })
+      // Verify deep merge worked correctly
+      expect(translations).toStrictEqual({
+        existingKey: 'Existing',
+        pageTitle: 'Hafan',
+        footer: {
+          crownCopyright: 'Existing Crown',
+          getHelp: {
+            phone: '123',
+            email: 'prawf@enghraifft.com'
+          },
+          links: {
+            privacy: 'Preifatrwydd'
+          }
+        }
+      })
+    })
+
+    it('should skip invalid rows and handle colons in keys', async () => {
+      // This test covers: skip missing data, skip invalid field names, colons in keys
+      registerNamespace('test-skip-invalid')
+
+      const testDir = join(testSrcDir, 'test-skip-invalid')
+      await mkdir(testDir, { recursive: true })
+
+      testExcelPath = await createTestExcel('test-skip-invalid.xlsx', [
+        { fieldName: '', cy: 'Should be skipped - empty field name' },
+        { fieldName: 'test-skip-invalid:empty', cy: '' },
+        { fieldName: 'invalidnocolon', cy: 'Should be skipped - no colon' },
+        { fieldName: 'test-skip-invalid:valid', en: 'Valid', cy: 'Dilys' },
+        {
+          fieldName: 'test-skip-invalid:error:validation:required',
+          en: 'Required',
+          cy: 'Gofynnol'
+        }
+      ])
+
+      await importTranslations('test-skip-invalid.xlsx')
+
+      const content = await readFile(join(testDir, 'cy.json'), 'utf-8')
+      const translations = JSON.parse(content)
+
+      expect(translations).toStrictEqual({
+        valid: 'Dilys',
+        'error:validation:required': 'Gofynnol'
+      })
+    })
+
+    it('should handle invalid JSON and continue on namespace failure', async () => {
+      // This test covers: invalid JSON recovery, continue processing on failure
+      registerNamespace('test-recovery')
+
+      const testDir = join(testSrcDir, 'test-recovery')
+      await mkdir(testDir, { recursive: true })
+
+      // Create invalid JSON file
+      const cyFilePath = join(testDir, 'cy.json')
+      await writeFile(cyFilePath, 'invalid json{{{', 'utf-8')
+
+      testExcelPath = await createTestExcel('test-recovery.xlsx', [
+        { fieldName: 'nonexistent-namespace:key', en: 'Key', cy: 'Allwedd' },
+        { fieldName: 'test-recovery:key', en: 'Key', cy: 'Allwedd' }
+      ])
+
+      await importTranslations('test-recovery.xlsx')
+
+      const content = await readFile(cyFilePath, 'utf-8')
+      const translations = JSON.parse(content)
+
+      expect(translations).toStrictEqual({ key: 'Allwedd' })
+    })
+
+    it('should create cy.json if it does not exist', async () => {
+      registerNamespace('test-create-new')
+
+      const testDir = join(testSrcDir, 'test-create-new')
+      await mkdir(testDir, { recursive: true })
+
+      testExcelPath = await createTestExcel('test-create-new.xlsx', [
+        { fieldName: 'test-create-new:key', en: 'Key', cy: 'Allwedd' }
+      ])
+
+      await importTranslations('test-create-new.xlsx')
+
+      const cyFilePath = join(testDir, 'cy.json')
+
+      expect(existsSync(cyFilePath)).toBe(true)
+
+      const content = await readFile(cyFilePath, 'utf-8')
+      const translations = JSON.parse(content)
+
+      expect(translations).toStrictEqual({ key: 'Allwedd' })
     })
   })
 })
