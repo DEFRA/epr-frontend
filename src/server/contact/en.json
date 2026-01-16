@@ -1,0 +1,38 @@
+{
+  "digitalService": {
+    "heading": "For help with this digital service",
+    "intro": "If you are having problems using this service, contact customer services.",
+    "email": "eprcustomerservice@defra.gov.uk",
+    "phone": "0300 060 0002",
+    "hours": "Monday to Friday, 8am to 4:30pm."
+  },
+  "email": "Email",
+  "findCallCharges": "Find information on call charges",
+  "heading": "Contact",
+  "pageTitle": "Contact",
+  "phone": "Phone",
+  "regulatorIntro": "If you have questions or feedback, contact your regulator.",
+  "regulators": {
+    "environmentAgency": {
+      "name": "Environment Agency",
+      "email": "packaging@environment-agency.gov.uk",
+      "phone": "03708 506 506"
+    },
+    "naturalResourcesWales": {
+      "name": "Natural Resources Wales",
+      "email": "packaging@naturalresourceswales.gov.uk",
+      "phone": "0300 065 3000"
+    },
+    "sepa": {
+      "name": "Scottish Environment Protection Agency",
+      "email": "producer.responsibility@sepa.org.uk",
+      "phone": "0300 099 6699"
+    },
+    "niea": {
+      "name": "Northern Ireland Environment Agency",
+      "email": "repandexp@daera-ni.gov.uk",
+      "phone": "028 9056 9338"
+    }
+  },
+  "subheading": "For questions about your summary log, registration or accreditation"
+}

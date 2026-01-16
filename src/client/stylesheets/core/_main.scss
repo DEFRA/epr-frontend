@@ -4,10 +4,22 @@
 
 .app-main-wrapper {
   display: block;
-  padding-top: govuk-spacing(4);
-  padding-bottom: govuk-spacing(3);
+  padding-top: govuk-spacing(9);
+  padding-bottom: govuk-spacing(7);
 }
 
 .text-wrap-pretty {
   text-wrap: pretty;
+}
+
+.app-colour-link {
+  color: $govuk-link-colour;
+}
+
+.app-colour-secondary {
+  color: $govuk-secondary-text-colour;
+}
+
+.app-content-width {
+  max-width: 602px;
 }

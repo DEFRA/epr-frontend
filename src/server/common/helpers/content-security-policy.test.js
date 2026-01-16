@@ -1,9 +1,9 @@
-import { describe, beforeAll, afterAll, it, expect } from 'vitest'
-import { createServer } from '#server/index.js'
 import { cspFormAction } from '#server/common/helpers/content-security-policy.js'
+import { it } from '#vite/fixtures/server.js'
+import { describe, expect, test } from 'vitest'
 
 describe(cspFormAction, () => {
-  it.each([
+  test.each([
     ['non-production', { isProduction: false }, ['self', 'localhost:*']],
     ['production', { isProduction: true }, ['self']]
   ])('should use %s values', (_, config, values) => {
@@ -12,18 +12,7 @@ describe(cspFormAction, () => {
 })
 
 describe('#contentSecurityPolicy', () => {
-  let server
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  it('should set the CSP policy header', async () => {
+  it('should set the CSP policy header', async ({ server }) => {
     const resp = await server.inject({
       method: 'GET',
       url: '/'

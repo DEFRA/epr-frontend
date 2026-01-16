@@ -1,0 +1,6 @@
+{
+  "body": "You have signed out of the '{{ serviceName }}' service.",
+  "heading": "You have signed out",
+  "pageTitle": "Signed out",
+  "signInAgain": "Sign in again"
+}

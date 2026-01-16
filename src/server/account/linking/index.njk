@@ -1,0 +1,82 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if errorSummary %}
+          {{ govukErrorSummary({
+            titleText: localise('common:errorSummaryTitle'),
+            errorList: errorSummary
+          }) }}
+        {% endif %}
+
+        {# FIXME use a proper service name - what is this? #}
+        <h1 class="govuk-heading-l">{{ localise('account:linking:heading', { serviceName: organisationName }) }}</h1>
+        <p class="govuk-body">{{ localise('account:linking:bodyOne') }}</p>
+        <p class="govuk-body">{{ localise('account:linking:bodyTwo') }}</p>
+
+        <form method="POST" action="{{ localiseUrl('/account/linking') }}">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          {% set radioItems = [] %}
+          {% for org in unlinked %}
+            {% set radioItems = (radioItems.push({
+              value: org.id,
+              text: org.displayName
+            }), radioItems) %}
+          {% endfor %}
+
+          {{ govukRadios({
+            name: "organisationId",
+            idPrefix: "organisation-id",
+            fieldset: {
+              legend: {
+                text: localise('account:linking:subheading', { serviceName: organisationName }),
+                isPageHeading: false,
+                classes: "govuk-fieldset__legend--m"
+              }
+            },
+            items: radioItems,
+            errorMessage: errors.organisationId if errors and errors.organisationId
+          }) }}
+
+          {{ govukButton({
+            text: localise('account:linking:confirmButton')
+          }) }}
+
+          {% set unlinkedOrgsList %}
+            <ul class="govuk-list">
+              {% for org in unlinked %}
+                <li>{{ org.name }} - <strong>{{ org.id }}</strong></li>
+              {% endfor %}
+            </ul>
+          {% endset %}
+
+          {{ govukDetails({
+            summaryText: troubleshooting.summary,
+            html: '
+              <h2 class="govuk-heading-m">' ~ troubleshooting.missing.heading ~ '</h2>
+              <p class="govuk-body">' ~ troubleshooting.missing.bodyOne ~ '</p>
+              <p class="govuk-body">' ~ troubleshooting.missing.bodyTwo ~ '</p>
+
+              <h2 class="govuk-heading-m">' ~ troubleshooting.otherProblems.heading ~ '</h2>
+              <p class="govuk-body">' ~ troubleshooting.otherProblems.bodyOne ~ '</p>
+              <p class="govuk-body">
+                ' ~ troubleshooting.otherProblems.bodyTwo ~ '<br>
+                Email: <a class="govuk-link" href="mailto:' ~ troubleshooting.otherProblems.email ~ '">
+                  ' ~ troubleshooting.otherProblems.email ~ '
+                </a>
+              </p>
+              <p class="govuk-body">' ~ troubleshooting.otherProblems.bodyThree ~ '</p>
+            ' ~ unlinkedOrgsList
+          }) }}
+        </form>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

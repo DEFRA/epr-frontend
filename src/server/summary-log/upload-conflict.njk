@@ -1,0 +1,24 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">{{ localise('summary-log:uploadConflictHeading') }}</h1>
+    <p class="govuk-body">{{ localise('summary-log:uploadConflictIntro') }}</p>
+
+    <p class="govuk-body">{{ localise('summary-log:uploadConflictReasonsIntro') }}</p>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>{{ localise('summary-log:uploadConflictReason1') }}</li>
+      <li>{{ localise('summary-log:uploadConflictReason2') }}</li>
+    </ul>
+
+    <h2 class="govuk-heading-m">{{ localise('summary-log:uploadConflictNextStepsHeading') }}</h2>
+    <p class="govuk-body">{{ localise('summary-log:uploadConflictNextStep1') }}</p>
+    <p class="govuk-body">
+      {{ localise('summary-log:uploadConflictNextStep2Start') }}
+      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:homePage') }}</a>
+      {{ localise('summary-log:uploadConflictNextStep2End') }}
+    </p>
+  </div>
+</div>
+{% endblock %}

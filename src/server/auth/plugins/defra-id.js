@@ -1,14 +1,46 @@
 import { config } from '#config/config.js'
 import bell from '@hapi/bell'
-import { buildUserProfile } from '../helpers/build-session.js'
+import {
+  buildUserProfile,
+  getTokenExpiresAt
+} from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 
 /**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- * @import { BellCredentials, OAuthTokenParams, AzureB2CTokenParams } from '../types/auth.js'
+ * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { AzureB2CTokenParams, AzureB2CBellCredentials, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
+const PRODUCTION_SERVICE_URL =
+  'https://record-reprocessed-exported-packaging-waste.defra.gov.uk'
+
+const VALID_PROTOCOLS = new Set(['http', 'https'])
+
+/**
+ * Gets the auth callback URL from the request, restricted to allowed origins
+ * @param {Request} request
+ * @returns {string}
+ */
+const getAuthCallbackUrl = (request) => {
+  const appBaseUrl = config.get('appBaseUrl')
+  const allowedOrigins = new Set([appBaseUrl, PRODUCTION_SERVICE_URL])
+
+  const forwardedProto = request.headers['x-forwarded-proto']
+  const protocol = VALID_PROTOCOLS.has(forwardedProto)
+    ? forwardedProto
+    : request.server.info.protocol
+
+  const requestUrl = new URL(appBaseUrl)
+  requestUrl.protocol = protocol
+  requestUrl.host = request.info.host
+
+  const origin = allowedOrigins.has(requestUrl.origin)
+    ? requestUrl.origin
+    : appBaseUrl
+
+  return new URL('/auth/callback', origin).href
+}
 /**
  * Create Defra ID OIDC authentication plugin
  * Factory function that creates a plugin with verifyToken closure
@@ -19,10 +51,9 @@ const createDefraId = (verifyToken) => ({
   plugin: {
     name: 'defra-id',
     register: async (server) => {
-      const serviceId = config.get('defraId.serviceId')
       const clientId = config.get('defraId.clientId')
       const clientSecret = config.get('defraId.clientSecret')
-      const authCallbackUrl = config.get('appBaseUrl') + '/auth/callback'
+      const serviceId = config.get('defraId.serviceId')
 
       await server.register(bell)
 
@@ -54,7 +85,7 @@ const createDefraId = (verifyToken) => ({
             }
           }
 
-          return authCallbackUrl
+          return getAuthCallbackUrl(request)
         },
         password: config.get('session.cookie.password'),
         provider: {
@@ -66,19 +97,20 @@ const createDefraId = (verifyToken) => ({
           scope: ['openid', 'offline_access'],
           /**
            * Extract user profile from OIDC ID token and populate credentials
-           * @param {BellCredentials} credentials - Bell credentials object (mutated to add profile)
-           * @param {OAuthTokenParams | AzureB2CTokenParams} params - OAuth token response parameters (supports both standard OAuth and Azure B2C formats)
+           * @param {OAuthBellCredentials | AzureB2CBellCredentials} credentials
+           * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
             const payload = await verifyToken(params.id_token)
 
-            credentials.profile = buildUserProfile({
-              idToken: params.id_token,
-              logoutUrl: oidcConf.end_session_endpoint,
-              payload,
-              tokenUrl: oidcConf.token_endpoint
-            })
+            credentials.profile = buildUserProfile(payload)
+            credentials.expiresAt = getTokenExpiresAt(payload)
+            credentials.idToken = params.id_token
+            credentials.urls = {
+              token: oidcConf.token_endpoint,
+              logout: oidcConf.end_session_endpoint
+            }
           }
         },
         providerParams: function (request) {
@@ -94,4 +126,4 @@ const createDefraId = (verifyToken) => ({
   }
 })
 
-export { createDefraId }
+export { createDefraId, getAuthCallbackUrl }

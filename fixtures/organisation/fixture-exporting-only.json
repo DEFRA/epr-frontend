@@ -1,0 +1,398 @@
+{
+  "id": "6507f1f77bcf86cd79943902",
+  "orgId": 50003,
+  "schemaVersion": 1,
+  "version": 1,
+  "statusHistory": [
+    {
+      "status": "created",
+      "updatedAt": "2025-08-22T19:34:44.944Z"
+    }
+  ],
+  "wasteProcessingTypes": ["exporter"],
+  "businessType": "limited-company",
+  "submittedToRegulator": "ea",
+  "formSubmissionTime": "2025-08-22T19:34:44.944Z",
+  "submitterContactDetails": {
+    "fullName": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "jobTitle": "Export Manager",
+    "phone": "07700900123"
+  },
+  "registrations": [
+    {
+      "id": "reg-export-001-plastic-approved",
+      "status": "approved",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-07-01T10:00:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-07-10T14:30:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "formSubmissionTime": "2025-07-01T10:00:00.000Z",
+      "material": "plastic",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU100001",
+      "exportPorts": ["Felixstowe", "Southampton"],
+      "submitterContactDetails": {
+        "fullName": "Jane Smith",
+        "email": "jane.smith@example.com",
+        "jobTitle": "Export Manager",
+        "phone": "07700900123"
+      },
+      "noticeAddress": {
+        "line1": "London Export Hub",
+        "town": "London",
+        "postcode": "E14 9SS"
+      }
+    },
+    {
+      "id": "reg-export-002-wood-approved",
+      "status": "approved",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-06-15T09:20:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-06-25T11:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "formSubmissionTime": "2025-06-15T09:20:00.000Z",
+      "material": "wood",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU100002",
+      "exportPorts": ["Liverpool", "Bristol"],
+      "submitterContactDetails": {
+        "fullName": "John Brown",
+        "email": "john.brown@example.com",
+        "jobTitle": "Logistics Manager",
+        "phone": "07700900456"
+      },
+      "noticeAddress": {
+        "line1": "Liverpool Docks",
+        "town": "Liverpool",
+        "postcode": "L3 1BP"
+      }
+    },
+    {
+      "id": "reg-export-003-glass-suspended",
+      "status": "suspended",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-05-10T08:15:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-05-20T10:30:00.000Z"
+        },
+        {
+          "status": "suspended",
+          "updatedAt": "2025-11-15T14:20:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "formSubmissionTime": "2025-05-10T08:15:00.000Z",
+      "material": "glass",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU100003",
+      "exportPorts": ["Dover"],
+      "submitterContactDetails": {
+        "fullName": "Sarah Green",
+        "email": "sarah.green@example.com",
+        "jobTitle": "Operations Lead",
+        "phone": "07700900789"
+      },
+      "noticeAddress": {
+        "line1": "Dover Export Terminal",
+        "town": "Dover",
+        "postcode": "CT16 1JA"
+      }
+    },
+    {
+      "id": "reg-export-004-paper-approved",
+      "status": "approved",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-05T13:30:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-12T15:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "formSubmissionTime": "2025-08-05T13:30:00.000Z",
+      "material": "paper",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU100004",
+      "exportPorts": ["Felixstowe"],
+      "submitterContactDetails": {
+        "fullName": "Michael White",
+        "email": "michael.white@example.com",
+        "jobTitle": "Export Coordinator",
+        "phone": "07700901234"
+      },
+      "noticeAddress": {
+        "line1": "London Export Hub",
+        "town": "London",
+        "postcode": "E14 9SS"
+      }
+    },
+    {
+      "id": "reg-export-005-aluminium-cancelled",
+      "status": "cancelled",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-04-10T11:20:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-04-20T09:40:00.000Z"
+        },
+        {
+          "status": "cancelled",
+          "updatedAt": "2025-10-05T16:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "formSubmissionTime": "2025-04-10T11:20:00.000Z",
+      "material": "aluminium",
+      "wasteProcessingType": "exporter",
+      "cbduNumber": "CBDU100005",
+      "exportPorts": ["Southampton"],
+      "submitterContactDetails": {
+        "fullName": "Emma Black",
+        "email": "emma.black@example.com",
+        "jobTitle": "Metal Export Specialist",
+        "phone": "07700905678"
+      },
+      "noticeAddress": {
+        "line1": "Southampton Docks",
+        "town": "Southampton",
+        "postcode": "SO14 3QN"
+      }
+    }
+  ],
+  "accreditations": [
+    {
+      "id": "acc-export-001-plastic-approved",
+      "accreditationNumber": "ACCEXP001",
+      "status": "approved",
+      "formSubmissionTime": "2025-07-10T14:30:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-07-01T10:00:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-07-10T14:30:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "material": "plastic",
+      "wasteProcessingType": "exporter",
+      "prnIssuance": {
+        "tonnageBand": "over_10000",
+        "signatories": [
+          {
+            "fullName": "Jane Smith",
+            "email": "jane.smith@example.com",
+            "jobTitle": "Export Manager",
+            "phone": "07700900123"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Jane Smith",
+        "email": "jane.smith@example.com",
+        "jobTitle": "Export Manager",
+        "phone": "07700900123"
+      }
+    },
+    {
+      "id": "acc-export-002-wood-approved",
+      "accreditationNumber": "ACCEXP002",
+      "status": "approved",
+      "formSubmissionTime": "2025-06-25T11:45:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-06-15T09:20:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-06-25T11:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "material": "wood",
+      "wasteProcessingType": "exporter",
+      "prnIssuance": {
+        "tonnageBand": "5001_to_10000",
+        "signatories": [
+          {
+            "fullName": "John Brown",
+            "email": "john.brown@example.com",
+            "jobTitle": "Logistics Manager",
+            "phone": "07700900456"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "John Brown",
+        "email": "john.brown@example.com",
+        "jobTitle": "Logistics Manager",
+        "phone": "07700900456"
+      }
+    },
+    {
+      "id": "acc-export-003-glass-suspended",
+      "accreditationNumber": "ACCEXP003",
+      "status": "suspended",
+      "formSubmissionTime": "2025-05-20T10:30:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-05-10T08:15:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-05-20T10:30:00.000Z"
+        },
+        {
+          "status": "suspended",
+          "updatedAt": "2025-11-15T14:20:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "material": "glass",
+      "wasteProcessingType": "exporter",
+      "prnIssuance": {
+        "tonnageBand": "1001_to_5000",
+        "signatories": [
+          {
+            "fullName": "Sarah Green",
+            "email": "sarah.green@example.com",
+            "jobTitle": "Operations Lead",
+            "phone": "07700900789"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Sarah Green",
+        "email": "sarah.green@example.com",
+        "jobTitle": "Operations Lead",
+        "phone": "07700900789"
+      }
+    },
+    {
+      "id": "acc-export-004-paper-approved",
+      "accreditationNumber": "ACCEXP004",
+      "status": "approved",
+      "formSubmissionTime": "2025-08-12T15:45:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-05T13:30:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-12T15:45:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "material": "paper",
+      "wasteProcessingType": "exporter",
+      "prnIssuance": {
+        "tonnageBand": "501_to_1000",
+        "signatories": [
+          {
+            "fullName": "Michael White",
+            "email": "michael.white@example.com",
+            "jobTitle": "Export Coordinator",
+            "phone": "07700901234"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Michael White",
+        "email": "michael.white@example.com",
+        "jobTitle": "Export Coordinator",
+        "phone": "07700901234"
+      }
+    },
+    {
+      "id": "acc-export-005-aluminium-cancelled",
+      "accreditationNumber": "ACCEXP005",
+      "status": "cancelled",
+      "formSubmissionTime": "2025-04-20T09:40:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-04-10T11:20:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-04-20T09:40:00.000Z"
+        },
+        {
+          "status": "cancelled",
+          "updatedAt": "2025-10-05T16:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Global Exports Ltd",
+      "material": "aluminium",
+      "wasteProcessingType": "exporter",
+      "prnIssuance": {
+        "tonnageBand": "up_to_500",
+        "signatories": [
+          {
+            "fullName": "Emma Black",
+            "email": "emma.black@example.com",
+            "jobTitle": "Metal Export Specialist",
+            "phone": "07700905678"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Emma Black",
+        "email": "emma.black@example.com",
+        "jobTitle": "Metal Export Specialist",
+        "phone": "07700905678"
+      }
+    }
+  ],
+  "companyDetails": {
+    "name": "Global Exports Ltd",
+    "tradingName": "Global Exports Ltd",
+    "companiesHouseNumber": "GE123456",
+    "registeredAddress": {
+      "line1": "Export House",
+      "line2": "Trade Street",
+      "town": "London",
+      "postcode": "E14 9SS"
+    }
+  }
+}

@@ -10,14 +10,14 @@ export const summaryLog = {
     register(server) {
       server.route([
         {
+          ...summaryLogUploadProgressController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}',
-          ...summaryLogUploadProgressController
+          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}'
         },
         {
+          ...submitSummaryLogController,
           method: 'POST',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}/submit',
-          ...submitSummaryLogController
+          path: '/organisations/{organisationId}/registrations/{registrationId}/summary-logs/{summaryLogId}/submit'
         }
       ])
     }

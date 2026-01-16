@@ -1,4 +1,4 @@
-import { config, isDefraIdEnabled } from '#config/config.js'
+import { config } from '#config/config.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
 import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
@@ -14,6 +14,7 @@ import { secureContext } from '#server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '#server/common/helpers/session-cache/session-cache.js'
 import { userAgentProtection } from '#server/common/helpers/useragent-protection.js'
+import Crumb from '@hapi/crumb'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import path from 'path'
@@ -23,8 +24,6 @@ import { router } from './router.js'
 
 export async function createServer() {
   setupProxy()
-
-  const defraIdEnabled = isDefraIdEnabled()
 
   const routes = {
     validate: {
@@ -45,7 +44,7 @@ export async function createServer() {
       noSniff: true,
       xframe: true
     },
-    auth: defraIdEnabled ? { mode: 'try' } : false
+    auth: { mode: 'required' }
   }
 
   const server = hapi.server({
@@ -93,17 +92,36 @@ export async function createServer() {
     }
   ]
 
-  if (defraIdEnabled) {
-    const oidcConf = await getOidcConfiguration(
-      config.get('defraId.oidcConfigurationUrl')
-    )
+  const verifyToken = await getVerifyToken(
+    await getOidcConfiguration(config.get('defraId.oidcConfigurationUrl'))
+  )
 
-    const verifyToken = await getVerifyToken(oidcConf)
+  plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
 
-    plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
-  }
+  plugins.push(nunjucksConfig)
 
-  plugins.push(nunjucksConfig, router)
+  // CSRF protection
+  plugins.push({
+    plugin: Crumb,
+    options: {
+      cookieOptions: {
+        isSecure: config.get('isProduction'),
+        isHttpOnly: true,
+        isSameSite: 'Strict'
+      },
+      skip: (request) => {
+        const path = request.path
+        return (
+          path.startsWith('/health') ||
+          path.startsWith('/public') ||
+          path.startsWith('/.well-known') ||
+          path === '/favicon.ico'
+        )
+      }
+    }
+  })
+
+  plugins.push(router)
 
   await server.register(plugins)
 

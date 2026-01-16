@@ -1,3 +1,5 @@
+import { config } from '#config/config.js'
+
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
  */
@@ -17,40 +19,39 @@
 
 /**
  * @param {I18nRequest} request
+ * @param {UserSession} session
  * @returns {NavigationItem[]}
  */
-const yourSites = ({ localiseUrl, path, t: localise }) => {
+const home = ({ localiseUrl, t: localise }, session) => {
+  if (!session.linkedOrganisationId) {
+    return []
+  }
   return [
     {
-      active: path === '/account',
-      href: localiseUrl('/account'),
-      text: localise('common:navigation:yourSites')
+      href: localiseUrl(`/organisations/${session.linkedOrganisationId}`),
+      text: localise('common:navigation:home')
     }
   ]
 }
 
 /**
  * @param {I18nRequest} request
- * @param {UserSession} userSession
  * @returns {NavigationItem[]}
  */
-const switchOrganisation = ({ localiseUrl, t: localise }, userSession) => {
-  if (userSession.relationships?.length > 1) {
-    return [
-      {
-        href: localiseUrl('/auth/organisation'),
-        text: localise('common:navigation:switchOrganisation')
-      }
-    ]
-  }
-  return []
+const manageAccount = ({ t: localise }) => {
+  return [
+    {
+      href: config.get('defraId.manageAccountUrl'),
+      text: localise('common:navigation:manageAccount')
+    }
+  ]
 }
 
 /**
  * @param {I18nRequest} request
  * @returns {NavigationItem[]}
  */
-const logout = ({ localiseUrl, t: localise }) => {
+const signOut = ({ localiseUrl, t: localise }) => {
   return [
     {
       href: localiseUrl('/logout'),
@@ -61,17 +62,22 @@ const logout = ({ localiseUrl, t: localise }) => {
 
 /**
  * @param {I18nRequest | null} request
- * @param {Partial<UserSession | null>} userSession
  */
-export function buildNavigation(request, userSession) {
-  if (!request || !userSession) {
+export function buildNavigation(request) {
+  if (!request) {
+    return []
+  }
+
+  const session = request.auth?.credentials
+
+  if (!session) {
     return []
   }
 
   return [
-    ...yourSites(request),
-    ...switchOrganisation(request, userSession),
-    ...logout(request)
+    ...home(request, session),
+    ...manageAccount(request),
+    ...signOut(request)
   ]
 }
 

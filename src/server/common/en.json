@@ -2,14 +2,32 @@
   "back": "Back",
   "cancel": "Cancel",
   "continue": "Continue",
-  "navigation": {
-    "signOut": "Sign out",
-    "switchOrganisation": "Switch organisation",
-    "yourSites": "Your sites"
+  "errorSummaryTitle": "There is a problem",
+  "footer": {
+    "getHelp": {
+      "heading": "Get help",
+      "emailLabel": "Email:",
+      "email": "eprcustomerservice@defra.gov.uk",
+      "phoneLabel": "Phone:",
+      "phone": "0300 060 0002",
+      "hours": "Monday to Friday, 8am to 4:30pm"
+    },
+    "links": {
+      "contact": "Contact",
+      "privacy": "Privacy",
+      "cookies": "Cookies",
+      "accessibilityStatement": "Accessibility statement"
+    },
+    "license": "All content is available under the",
+    "ogl": "Open Government Licence v3.0",
+    "licenseExcept": ", except where otherwise stated",
+    "crownCopyright": "Crown copyright"
   },
-  "navigation:signOut": "navigation:signOut",
-  "navigation:switchOrganisation": "navigation:switchOrganisation",
-  "navigation:yourSites": "navigation:yourSites",
-  "serviceName": "Manage your packaging waste responsibilities",
+  "navigation": {
+    "home": "Home",
+    "manageAccount": "Manage account",
+    "signOut": "Sign out"
+  },
+  "serviceName": "Record reprocessed or exported packaging waste",
   "submit": "Submit"
 }

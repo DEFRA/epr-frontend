@@ -1,4 +1,33 @@
 {
-  "greeting": "Welcome",
-  "pageTitle": "Account"
+  "emailNotRecognised": {
+    "pageTitle": "We do not recognise your email address",
+    "heading": "We do not recognise your email address",
+    "bodyOne": "The email address you've signed in with was not included in a registration or accreditation form.",
+    "bodyTwo": "The business must be set up to use this service by someone who was named on one of these forms.",
+    "youCan": "You can:",
+    "listItemOne": "check that you've signed in to the correct Defra account",
+    "listItemTwo": "ask someone who was named on the forms to complete this step before you try to access the service again",
+    "contactLinkText": "contact your regulator",
+    "listItemThreeAfterLink": "if you need to check that the business's registration or accreditation has been approved"
+  },
+  "linking": {
+    "pageTitle": "Registration Linking",
+    "heading": "Link {{ serviceName }} to its registration",
+    "bodyOne": "As you're the first person from your organisation to access this service, you need to link the organisation to a registration we've previously received.",
+    "bodyTwo": "You'll only need to confirm this once, on behalf of the organisation you represent.",
+    "subheading": "Select the registration to link to {{ serviceName }}",
+    "confirmButton": "Confirm",
+    "errorNoSelection": "Select an organisation to link",
+    "troubleshooting": {
+      "summary": "Problems linking a registration?",
+      "missingHeading": "If the relevant registration is missing",
+      "missingBodyOne": "If you're signed into the correct account and the relevant registration is not showing, contact your regulator to check that the registration has been completed.",
+      "missingBodyTwo": "If you're a consultant and need to change the business you selected when signing in, sign out and sign in again as another business.",
+      "otherProblemsHeading": "If you have any other problems",
+      "otherProblemsBodyOne": "If you're having any other issues, contact the EPR packaging helpdesk.",
+      "otherProblemsBodyTwo": "Phone: 0300 060 0002 (Monday to Friday, 8:00am to 4:30pm)",
+      "otherProblemsBodyThree": "You'll need to quote the relevant system reference:",
+      "otherProblemsEmail": "eprcustomerservice@defra.gov.uk"
+    }
+  }
 }

@@ -37,6 +37,8 @@ export default [
       }
     },
     rules: {
+      '@typescript-eslint/no-floating-promises': ['error'],
+      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
       'no-console': 'error',
       'object-shorthand': ['error', 'properties'],
       'promise/prefer-await-to-then': ['error', { strict: true }],
@@ -47,7 +49,6 @@ export default [
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
 
       // JSDoc blocks are optional by default
       'jsdoc/require-jsdoc': 'off',
@@ -126,6 +127,11 @@ export default [
     plugins: {
       vitest
     },
+    settings: {
+      vitest: {
+        vitestImports: ['#vite/fixtures/server.js']
+      }
+    },
     rules: {
       ...vitest.configs.all.rules,
 
@@ -141,9 +147,10 @@ export default [
       'vitest/consistent-test-it': 'off',
       'vitest/no-hooks': 'off',
       'vitest/prefer-expect-assertions': 'off',
+      'vitest/prefer-importing-vitest-globals': 'off', // Incompatible with test.extend() fixtures
       'vitest/require-mock-type-parameters': 'off',
       'vitest/valid-title': [
-        'warn',
+        'error',
         {
           allowArguments: true
         }

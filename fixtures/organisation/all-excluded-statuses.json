@@ -1,0 +1,129 @@
+{
+  "id": "6507f1f77bcf86cd79943904",
+  "orgId": 50004,
+  "schemaVersion": 1,
+  "version": 1,
+  "statusHistory": [
+    {
+      "status": "created",
+      "updatedAt": "2025-08-22T19:34:44.944Z"
+    }
+  ],
+  "wasteProcessingTypes": ["reprocessor", "exporter"],
+  "reprocessingNations": ["england"],
+  "businessType": "company",
+  "submittedToRegulator": "ea",
+  "formSubmissionTime": "2025-08-22T19:34:44.944Z",
+  "submitterContactDetails": {
+    "fullName": "Test User",
+    "email": "test@example.com",
+    "jobTitle": "Manager",
+    "phone": "1234567890"
+  },
+  "registrations": [
+    {
+      "id": "reg-created-001",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Test Company",
+      "accreditationId": "acc-created-001",
+      "site": {
+        "address": {
+          "line1": "Test Site 1",
+          "line2": "",
+          "townOrCity": "London",
+          "postcode": "E1 6AN",
+          "country": "England"
+        }
+      }
+    },
+    {
+      "id": "reg-rejected-001",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        },
+        {
+          "status": "rejected",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "Test Company",
+      "accreditationId": "acc-rejected-001",
+      "site": {
+        "address": {
+          "line1": "Test Site 2",
+          "line2": "",
+          "townOrCity": "Manchester",
+          "postcode": "M1 1AA",
+          "country": "England"
+        }
+      }
+    }
+  ],
+  "accreditations": [
+    {
+      "id": "acc-created-001",
+      "wasteProcessingType": "reprocessor",
+      "material": "plastic",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        }
+      ],
+      "site": {
+        "address": {
+          "line1": "Test Site 1",
+          "line2": "",
+          "townOrCity": "London",
+          "postcode": "E1 6AN",
+          "country": "England"
+        }
+      }
+    },
+    {
+      "id": "acc-rejected-001",
+      "wasteProcessingType": "exporter",
+      "material": "glass",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        },
+        {
+          "status": "rejected",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "site": {
+        "address": {
+          "line1": "Test Site 2",
+          "line2": "",
+          "townOrCity": "Manchester",
+          "postcode": "M1 1AA",
+          "country": "England"
+        }
+      }
+    }
+  ],
+  "companyDetails": {
+    "registeredCompanyNumber": "87654321",
+    "tradingName": "Excluded Status Company",
+    "registeredAddress": {
+      "line1": "2 Test Avenue",
+      "line2": "",
+      "townOrCity": "Birmingham",
+      "county": "West Midlands",
+      "postcode": "B1 1AA",
+      "country": "England"
+    }
+  }
+}

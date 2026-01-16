@@ -43,7 +43,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'Manage your packaging waste responsibilities'
+    default: 'Record reprocessed or exported packaging waste'
   },
   root: {
     doc: 'Project root',
@@ -254,16 +254,25 @@ export const config = convict({
       sensitive: true,
       env: 'DEFRA_ID_CLIENT_SECRET',
       default: ''
+    },
+    manageAccountUrl: {
+      doc: 'DEFRA ID Manage Account URL',
+      format: String,
+      env: 'DEFRA_ID_MANAGE_ACCOUNT_URL',
+      default: ''
+    }
+  },
+  audit: {
+    isEnabled: {
+      doc: 'Is auditing enabled',
+      format: Boolean,
+      default: isProduction,
+      env: 'AUDIT_ENABLED'
     }
   }
 })
 
 config.validate({ allowed: 'strict' })
-
-export const isDefraIdEnabled = () => {
-  const oidcUrl = config.get('defraId.oidcConfigurationUrl')
-  return Boolean(oidcUrl && oidcUrl.trim() !== '')
-}
 
 /**
  * @import { Schema, SchemaObj } from 'convict'

@@ -1,6 +1,5 @@
-import { config, isDefraIdEnabled } from '#config/config.js'
+import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -36,7 +35,7 @@ const getI18nContext = (request) => {
 /**
  * @param {Request | null} request
  */
-export async function context(request) {
+export function context(request) {
   if (!webpackManifest) {
     try {
       webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
@@ -45,16 +44,11 @@ export async function context(request) {
     }
   }
 
-  const { value: authedUser } = await getUserSession(request)
-
   return {
     assetPath: `${assetPath}/assets`,
-    authedUser: authedUser ?? null,
     breadcrumbs: [],
-    isDefraIdEnabled: isDefraIdEnabled(),
-    navigation: buildNavigation(request, authedUser ?? null),
-    serviceName: config.get('serviceName'),
-    serviceUrl: '/',
+    navigation: buildNavigation(request),
+    serviceUrl: '/start',
     ...getI18nContext(request),
 
     /**

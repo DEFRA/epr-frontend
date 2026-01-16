@@ -1,46 +1,78 @@
+import { sessionNames } from '#server/common/constants/session-names.js'
+import { summaryLogStatuses } from '#server/common/constants/statuses.js'
+import {
+  ACCREDITATION_CODES,
+  ACCREDITATION_DISPLAY_CODE,
+  DATA_ENTRY_CODES,
+  DATA_ENTRY_DISPLAY_CODE,
+  MATERIAL_CODES,
+  MATERIAL_DISPLAY_CODE,
+  PROCESSING_TYPE_CODES,
+  PROCESSING_TYPE_DISPLAY_CODE,
+  REGISTRATION_CODES,
+  REGISTRATION_DISPLAY_CODE,
+  SPREADSHEET_CODES,
+  SPREADSHEET_DISPLAY_CODE,
+  STRUCTURE_CODES,
+  STRUCTURE_DISPLAY_CODE,
+  TECHNICAL_ERROR_CODES,
+  TECHNICAL_ERROR_DISPLAY_CODE
+} from '#server/common/constants/validation-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { backendSummaryLogStatuses } from '#server/common/constants/statuses.js'
-import { sessionNames } from '#server/common/constants/session-names.js'
-import {
-  validationFailureCodes,
-  DATA_ENTRY_CODES,
-  DATA_ENTRY_DISPLAY_CODE
-} from '#server/common/constants/validation-codes.js'
+
+/** Waste record section number to display in UI copy, mapped by processing type */
+const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
+  EXPORTER: 1,
+  REPROCESSOR_INPUT: 1,
+  REPROCESSOR_OUTPUT: 3
+}
 
 const PROCESSING_STATES = new Set([
-  backendSummaryLogStatuses.preprocessing,
-  backendSummaryLogStatuses.validating,
-  backendSummaryLogStatuses.submitting
+  summaryLogStatuses.preprocessing,
+  summaryLogStatuses.validating,
+  summaryLogStatuses.submitting
 ])
 
 const REUPLOAD_STATES = new Set([
-  backendSummaryLogStatuses.invalid,
-  backendSummaryLogStatuses.rejected
+  summaryLogStatuses.invalid,
+  summaryLogStatuses.rejected,
+  summaryLogStatuses.validationFailed
 ])
+
+/**
+ * Gets the waste record section number to display in UI copy based on processing type
+ * @param {string} processingType - Processing type from summary log meta
+ * @returns {number} Waste record section number (1 or 3)
+ */
+export const getWasteRecordSectionNumber = (processingType) => {
+  return WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
+}
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
 const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
 const SUCCESS_VIEW_NAME = 'summary-log/success'
+const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
+const MAX_FILE_SIZE_MB = 100
+
+const NO_ROWS = { count: 0, rowIds: [] }
 
 /**
  * Builds view model for a single load category (added or adjusted)
  * @param {object} [category] - Category data from backend (e.g. loads.added)
- * @returns {object} View model with rowIds, counts, and total
+ * @returns {object} View model with included/excluded objects and total
  */
 const buildCategoryViewModel = (category) => {
-  const validCount = category?.valid?.count ?? 0
-  const invalidCount = category?.invalid?.count ?? 0
+  const included = category?.included ?? NO_ROWS
+  const excluded = category?.excluded ?? NO_ROWS
 
   return {
-    valid: category?.valid?.rowIds ?? [],
-    invalid: category?.invalid?.rowIds ?? [],
-    validCount,
-    invalidCount,
-    total: validCount + invalidCount
+    included,
+    excluded,
+    total: included.count + excluded.count
   }
 }
 
@@ -86,21 +118,26 @@ const getProgressViewData = (localise, status) => {
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} summaryLogId - Summary log ID
+ * @param {string} idToken - JWT ID token for authorization
  * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
  */
 const getStatusData = async (
   request,
   organisationId,
   registrationId,
-  summaryLogId
+  summaryLogId,
+  idToken
 ) => {
   // Check session for fresh data first (prevents race condition after POST submit)
   const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
-  const freshData = summaryLogsSession.freshData
+  const { freshData, uploadId } = summaryLogsSession
 
   const data =
     freshData ??
-    (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId))
+    (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
+      uploadId,
+      idToken
+    }))
 
   if (freshData) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -108,13 +145,15 @@ const getStatusData = async (
     request.yar.set(sessionNames.summaryLogs, remainingSession)
   }
 
-  const { status, validation, accreditationNumber, loads } = data
+  const { status, validation, accreditationNumber, loads, processingType } =
+    data
 
   return {
     status,
     validation,
     accreditationNumber,
-    loads
+    loads,
+    processingType
   }
 }
 
@@ -127,21 +166,24 @@ const getStatusData = async (
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
+ * @param {string} [context.processingType] - Processing type from summary log meta
  * @returns {object} Hapi view response
  */
 const renderCheckView = (
   h,
   localise,
-  { loads, organisationId, registrationId, summaryLogId }
+  { loads, organisationId, registrationId, summaryLogId, processingType }
 ) => {
   const loadsViewModel = buildLoadsViewModel(loads)
+  const sectionNumber = getWasteRecordSectionNumber(processingType)
 
   return h.view(CHECK_VIEW_NAME, {
     pageTitle: localise('summary-log:checkPageTitle'),
     organisationId,
     registrationId,
     summaryLogId,
-    loads: loadsViewModel
+    loads: loadsViewModel,
+    sectionNumber
   })
 }
 
@@ -170,21 +212,68 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
  * @param {string} context.organisationId - Organisation ID
- * @param {string} context.registrationId - Registration ID
- * @param {string} context.accreditationNumber - Accreditation number for display
  * @returns {object} Hapi view response
  */
-const renderSuccessView = (
-  h,
-  localise,
-  { organisationId, registrationId, accreditationNumber }
-) => {
+const renderSuccessView = (h, localise, { organisationId }) => {
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: localise('summary-log:successPageTitle'),
-    organisationId,
-    registrationId,
-    accreditationNumber
+    organisationId
   })
+}
+
+/**
+ * Renders the superseded page for summary logs replaced by a newer upload
+ * @param {object} h - Hapi response toolkit
+ * @param {(key: string) => string} localise - i18n localisation function
+ * @param {object} context - View context
+ * @param {string} context.organisationId - Organisation ID
+ * @param {string} context.registrationId - Registration ID
+ * @returns {object} Hapi view response
+ */
+const renderSupersededView = (
+  h,
+  localise,
+  { organisationId, registrationId }
+) => {
+  return h.view(SUPERSEDED_VIEW_NAME, {
+    pageTitle: localise(PAGE_TITLE_KEY),
+    organisationId,
+    registrationId
+  })
+}
+
+/**
+ * Maps a validation failure code to its display code for user-friendly messaging.
+ * Related codes are grouped to show a single combined message.
+ * @param {string} code - The validation failure code from the backend
+ * @returns {string} The display code to use for translation lookup
+ */
+const getDisplayCode = (code) => {
+  if (TECHNICAL_ERROR_CODES.has(code)) {
+    return TECHNICAL_ERROR_DISPLAY_CODE
+  }
+  if (DATA_ENTRY_CODES.has(code)) {
+    return DATA_ENTRY_DISPLAY_CODE
+  }
+  if (MATERIAL_CODES.has(code)) {
+    return MATERIAL_DISPLAY_CODE
+  }
+  if (REGISTRATION_CODES.has(code)) {
+    return REGISTRATION_DISPLAY_CODE
+  }
+  if (ACCREDITATION_CODES.has(code)) {
+    return ACCREDITATION_DISPLAY_CODE
+  }
+  if (STRUCTURE_CODES.has(code)) {
+    return STRUCTURE_DISPLAY_CODE
+  }
+  if (PROCESSING_TYPE_CODES.has(code)) {
+    return PROCESSING_TYPE_DISPLAY_CODE
+  }
+  if (SPREADSHEET_CODES.has(code)) {
+    return SPREADSHEET_DISPLAY_CODE
+  }
+  return code
 }
 
 /**
@@ -194,7 +283,7 @@ const renderSuccessView = (
  * @param {object} context - View context
  * @param {object} context.validation - Validation result containing failures
  * @param {string} context.uploadUrl - URL for re-uploading the file
- * @param {string} context.cancelUrl - URL for cancelling and returning to dashboard
+ * @param {string} context.cancelUrl - URL for cancelling and returning to home
  * @returns {object} Hapi view response
  */
 const renderValidationFailuresView = (
@@ -205,20 +294,19 @@ const renderValidationFailuresView = (
   const failures = validation?.failures ?? []
 
   const fallbackMessage = localise(
-    `summary-log:failure.${validationFailureCodes.UNKNOWN}`
+    `summary-log:failure.${TECHNICAL_ERROR_DISPLAY_CODE}`
   )
 
-  // Data entry codes are grouped into a single user-friendly message
+  // Related codes are grouped into single user-friendly messages
   const issues =
     failures.length > 0
       ? [
           ...new Set(
             failures.map(({ code }) => {
-              const displayCode = DATA_ENTRY_CODES.has(code)
-                ? DATA_ENTRY_DISPLAY_CODE
-                : code
+              const displayCode = getDisplayCode(code)
               return localise(`summary-log:failure.${displayCode}`, {
-                defaultValue: fallbackMessage
+                defaultValue: fallbackMessage,
+                maxSize: MAX_FILE_SIZE_MB
               })
             })
           )
@@ -269,11 +357,13 @@ const renderProgressView = (h, localise, { status, pollUrl }) => {
  * View resolver mapping - maps backend statuses to their render functions
  */
 const viewResolvers = {
-  [backendSummaryLogStatuses.validated]: renderCheckView,
-  [backendSummaryLogStatuses.submitting]: renderSubmittingView,
-  [backendSummaryLogStatuses.submitted]: renderSuccessView,
-  [backendSummaryLogStatuses.invalid]: renderValidationFailuresView,
-  [backendSummaryLogStatuses.rejected]: renderValidationFailuresView
+  [summaryLogStatuses.validated]: renderCheckView,
+  [summaryLogStatuses.submitting]: renderSubmittingView,
+  [summaryLogStatuses.submitted]: renderSuccessView,
+  [summaryLogStatuses.superseded]: renderSupersededView,
+  [summaryLogStatuses.invalid]: renderValidationFailuresView,
+  [summaryLogStatuses.rejected]: renderValidationFailuresView,
+  [summaryLogStatuses.validationFailed]: renderValidationFailuresView
 }
 
 /**
@@ -301,30 +391,33 @@ const renderViewForStatus = (options) => {
 }
 
 /**
- * Gets a pre-signed upload URL for re-uploading a summary log
+ * Gets a pre-signed upload URL and upload ID for re-uploading a summary log
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
- * @returns {Promise<string | undefined>} Pre-signed upload URL, or undefined if not needed
+ * @param {string} idToken - JWT ID token for authorization
+ * @returns {Promise<{uploadUrl?: string, uploadId?: string}>} Upload URL and ID, or empty object if not needed
  */
-const getUploadUrl = async (
+const getUploadData = async (
   status,
   organisationId,
   registrationId,
-  redirectUrl
+  redirectUrl,
+  idToken
 ) => {
   if (!REUPLOAD_STATES.has(status)) {
-    return undefined
+    return {}
   }
 
-  const { uploadUrl } = await initiateSummaryLogUpload({
+  const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
     organisationId,
     registrationId,
-    redirectUrl
+    redirectUrl,
+    idToken
   })
 
-  return uploadUrl
+  return { uploadUrl, uploadId }
 }
 
 /**
@@ -335,20 +428,37 @@ export const summaryLogUploadProgressController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
-    const { status, validation, accreditationNumber, loads } =
-      await getStatusData(request, organisationId, registrationId, summaryLogId)
+    const session = request.auth.credentials
+
+    const { status, validation, accreditationNumber, loads, processingType } =
+      await getStatusData(
+        request,
+        organisationId,
+        registrationId,
+        summaryLogId,
+        session.idToken
+      )
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
     const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
     const cancelUrl = baseUrl
 
-    const uploadUrl = await getUploadUrl(
+    const { uploadId, uploadUrl } = await getUploadData(
       status,
       organisationId,
       registrationId,
-      redirectUrl
+      redirectUrl,
+      session.idToken
     )
+
+    if (uploadId) {
+      const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
+      request.yar.set(sessionNames.summaryLogs, {
+        ...summaryLogsSession,
+        uploadId
+      })
+    }
 
     return renderViewForStatus({
       h,
@@ -357,6 +467,7 @@ export const summaryLogUploadProgressController = {
       validation,
       accreditationNumber,
       loads,
+      processingType,
       organisationId,
       registrationId,
       summaryLogId,

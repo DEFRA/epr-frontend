@@ -4,11 +4,21 @@
     "checkJs": false,
     "module": "NodeNext",
     "noEmit": true,
+    "paths": {
+      "#vite/*": ["./.vite/*"]
+    },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strictFunctionTypes": true,
     "strictNullChecks": true
   },
   "exclude": [".cache", ".public", ".server", "coverage", "node_modules"],
-  "include": ["**/*.cjs", "**/*.js", ".eslintrc.*", ".prettierrc.*"]
+  "include": [
+    "**/*.cjs",
+    "**/*.d.ts",
+    "**/*.js",
+    ".eslintrc.*",
+    ".prettierrc.*",
+    ".vite/**/*.js"
+  ]
 }

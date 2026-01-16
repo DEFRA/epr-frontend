@@ -1,40 +1,28 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getLocaliseUrl } from '#server/common/helpers/i18next.js'
-import { createServer } from '#server/index.js'
 import { load } from 'cheerio'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it as vitestIt } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
 
 describe('#i18nPlugin - integration', () => {
-  /** @type {Server} */
-  let server
-
-  beforeEach(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterEach(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
   describe('language detection and html lang attribute', () => {
-    it.each([
+    it.for([
       {
-        url: '/',
+        url: '/start',
         expectedLang: 'en',
         description: 'english',
-        heading: 'Manage your packaging waste responsibilities'
+        heading: 'Record reprocessed or exported packaging waste'
       },
       {
-        url: '/cy',
+        url: '/cy/start',
         expectedLang: 'cy',
         description: 'welsh',
-        // TODO placeholder welsh translation
-        heading: 'Rheoli eich cyfrifoldebau gwastraff pecynnu'
+        // TODO placeholder welsh translation as only en.json files exist
+        heading: 'Record reprocessed or exported packaging waste'
       }
     ])(
       'should set lang="$expectedLang" for $description pages ($url)',
-      async ({ url, expectedLang, heading }) => {
+      async ({ url, expectedLang, heading }, { server }) => {
         const response = await server.inject({
           method: 'GET',
           url
@@ -51,13 +39,13 @@ describe('#i18nPlugin - integration', () => {
   })
 
   describe('url rewriting', () => {
-    it.each([
+    it.for([
       { originalUrl: '/cy', expectedPath: '/' },
       { originalUrl: '/cy/', expectedPath: '/' },
       { originalUrl: '/cy/some/deep/path', expectedPath: '/some/deep/path' }
     ])(
       'should rewrite $originalUrl to $expectedPath',
-      async ({ originalUrl, expectedPath }) => {
+      async ({ originalUrl, expectedPath }, { server }) => {
         const response = await server.inject({
           method: 'GET',
           url: originalUrl
@@ -69,7 +57,7 @@ describe('#i18nPlugin - integration', () => {
   })
 
   describe('response variety handling', () => {
-    it.each([
+    it.for([
       {
         type: 'view',
         variety: 'view',
@@ -92,10 +80,14 @@ describe('#i18nPlugin - integration', () => {
       }
     ])(
       'should handle $type responses correctly',
-      async ({ variety, path, content, contentType, expectedContext }) => {
+      async (
+        { variety, path, content, contentType, expectedContext },
+        { server }
+      ) => {
         server.route({
           method: 'GET',
           path,
+          options: { auth: false },
           handler: async (request, h) => {
             request.i18n = { language: 'en' }
             request.t = () => 'translated'
@@ -131,10 +123,12 @@ describe('#i18nPlugin - integration', () => {
   })
 
   describe('localiseUrl edge cases', () => {
-    it('should handle language with region code via Accept-Language header', async () => {
+    it('should handle language with region code via Accept-Language header', async ({
+      server
+    }) => {
       const response = await server.inject({
         method: 'GET',
-        url: '/',
+        url: '/start',
         headers: {
           'Accept-Language': 'en-GB,en;q=0.9'
         }
@@ -146,10 +140,10 @@ describe('#i18nPlugin - integration', () => {
       expect(response.request.localiseUrl('/test')).toBe('/test')
     })
 
-    it('should handle Welsh with region code', async () => {
+    it('should handle Welsh with region code', async ({ server }) => {
       const response = await server.inject({
         method: 'GET',
-        url: '/cy',
+        url: '/cy/start',
         headers: {
           'Accept-Language': 'cy-GB,cy;q=0.9'
         }
@@ -164,30 +158,26 @@ describe('#i18nPlugin - integration', () => {
 })
 
 describe('#getLocaliseUrl', () => {
-  it('should handle language with region code (en-GB)', () => {
+  vitestIt('should handle language with region code (en-GB)', () => {
     const localiseUrl = getLocaliseUrl('en-GB')
 
     expect(localiseUrl('/test')).toBe('/test')
   })
 
-  it('should handle language with region code (cy-GB)', () => {
+  vitestIt('should handle language with region code (cy-GB)', () => {
     const localiseUrl = getLocaliseUrl('cy-GB')
 
     expect(localiseUrl('/test')).toBe('/cy/test')
   })
 
-  it('should handle unsupported language and default to en', () => {
+  vitestIt('should handle unsupported language and default to en', () => {
     const localiseUrl = getLocaliseUrl('fr')
 
     expect(localiseUrl('/test')).toBe('/test')
   })
 
-  it('should handle simple language codes', () => {
+  vitestIt('should handle simple language codes', () => {
     expect(getLocaliseUrl('en')('/test')).toBe('/test')
     expect(getLocaliseUrl('cy')('/test')).toBe('/cy/test')
   })
 })
-
-/**
- * @import { Server } from '@hapi/hapi'
- */

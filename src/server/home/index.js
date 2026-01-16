@@ -1,4 +1,4 @@
-import { controller } from './controller.js'
+import { controller, redirectToStart } from './controller.js'
 
 /**
  * Sets up the routes used in the home page.
@@ -16,7 +16,18 @@ export const home = {
         {
           ...controller,
           method: 'GET',
-          path: '/'
+          path: '/start',
+          options: {
+            auth: { mode: 'try' }
+          }
+        },
+        {
+          ...redirectToStart,
+          method: 'GET',
+          path: '/',
+          options: {
+            auth: false
+          }
         }
       ])
     }

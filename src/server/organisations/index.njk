@@ -1,0 +1,55 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% macro sitesTable(sites) %}
+  {% if sites and sites.length > 0 %}
+    <h2 class="govuk-heading-l">
+      {{ tableTitle }}
+    </h2>
+    {% for site in sites %}
+      <h3 class="govuk-heading-m">{{ site.name }}</h3>
+      {{ govukTable(site) }}
+    {% endfor %}
+  {% else %}
+    <p class="govuk-body">{{ localise('organisations:table:noSitesFound') }}.</p>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+        <h1 class="govuk-heading-xl">
+          <span class="govuk-caption-xl">{{ localise('organisations:titleCaption') }}</span>
+          {{ organisationName }}
+        </h1>
+
+        <hr class="govuk-section-break govuk-section-break--xl govuk-section-break--visible">
+
+        {% if shouldRenderTabs %}
+          <div class="govuk-tabs" data-module="govuk-tabs">
+            <ul class="govuk-tabs__list">
+                <li class="govuk-tabs__list-item{% if activeTab == tabTypes.REPROCESSOR %} govuk-tabs__list-item--selected{% endif %}">
+                  <a class="govuk-tabs__tab" href="{{ reprocessorUrl }}">
+                    {{ localise('organisations:tabs:reprocessor') }}
+                  </a>
+                </li>
+
+                <li class="govuk-tabs__list-item{% if activeTab == tabTypes.EXPORTER %} govuk-tabs__list-item--selected{% endif %}">
+                  <a class="govuk-tabs__tab" href="{{ exporterUrl }}">
+                    {{ localise('organisations:tabs:exporter') }}
+                  </a>
+                </li>
+            </ul>
+            <div class="govuk-tabs__panel">
+              {{ sitesTable(sites) }}
+            </div>
+          </div>
+        {% else %}
+            {{ sitesTable(sites) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

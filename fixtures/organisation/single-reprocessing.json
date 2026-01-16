@@ -1,0 +1,66 @@
+{
+  "id": "6507f1f77bcf86cd79943906",
+  "orgId": 50006,
+  "schemaVersion": 1,
+  "version": 1,
+  "status": "approved",
+  "wasteProcessingTypes": ["reprocessor"],
+  "reprocessingNations": ["england"],
+  "businessType": "company",
+  "submittedToRegulator": "ea",
+  "formSubmissionTime": "2025-08-22T19:34:44.944Z",
+  "submitterContactDetails": {
+    "fullName": "Single User",
+    "email": "single@example.com",
+    "jobTitle": "Manager",
+    "phone": "9876543210"
+  },
+  "registrations": [
+    {
+      "id": "reg-single-001",
+      "wasteProcessingType": "reprocessor",
+      "status": "approved",
+      "submittedToRegulator": "ea",
+      "material": "aluminium",
+      "orgName": "Single Reprocessor Ltd",
+      "accreditationId": "acc-single-001",
+      "site": {
+        "address": {
+          "line1": "Single Processing Site",
+          "line2": "",
+          "townOrCity": "Bristol",
+          "postcode": "BS1 1AA",
+          "country": "England"
+        }
+      }
+    }
+  ],
+  "accreditations": [
+    {
+      "id": "acc-single-001",
+      "wasteProcessingType": "reprocessor",
+      "status": "approved",
+      "site": {
+        "address": {
+          "line1": "Single Processing Site",
+          "line2": "",
+          "townOrCity": "Bristol",
+          "postcode": "BS1 1AA",
+          "country": "England"
+        }
+      }
+    }
+  ],
+  "companyDetails": {
+    "registeredCompanyNumber": "55667788",
+    "tradingName": "Single Reprocessor Ltd",
+    "registeredAddress": {
+      "line1": "4 Single Lane",
+      "line2": "",
+      "townOrCity": "Bristol",
+      "county": "Bristol",
+      "postcode": "BS1 1AA",
+      "country": "England"
+    }
+  }
+}

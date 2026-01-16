@@ -1,0 +1,76 @@
+{
+  "id": "6507f1f77bcf86cd79943905",
+  "orgId": 50005,
+  "schemaVersion": 1,
+  "version": 1,
+  "statusHistory": [
+    {
+      "status": "created",
+      "updatedAt": "2025-08-22T19:34:44.944Z"
+    }
+  ],
+  "wasteProcessingTypes": ["reprocessor"],
+  "reprocessingNations": ["england"],
+  "businessType": "company",
+  "submittedToRegulator": "ea",
+  "formSubmissionTime": "2025-08-22T19:34:44.944Z",
+  "submitterContactDetails": {
+    "fullName": "Test User",
+    "email": "test@example.com",
+    "jobTitle": "Manager",
+    "phone": "1234567890"
+  },
+  "registrations": [
+    {
+      "accreditationId": "acc-no-site-001",
+      "id": "reg-no-site-001",
+      "status": "approved",
+      "submittedToRegulator": "ea",
+      "wasteProcessingType": "reprocessor",
+      "material": "plastic"
+    },
+    {
+      "accreditationId": "acc-no-site-001",
+      "id": "reg-with-site-001",
+      "status": "approved",
+      "submittedToRegulator": "ea",
+      "site": {
+        "address": {
+          "line1": "Site With Address",
+          "line2": "",
+          "townOrCity": "Leeds",
+          "postcode": "LS1 1AA",
+          "country": "England"
+        }
+      },
+      "wasteProcessingType": "reprocessor",
+      "material": "wood"
+    }
+  ],
+  "accreditations": [
+    {
+      "id": "acc-no-site-001",
+      "wasteProcessingType": "reprocessor",
+      "material": "plastic",
+      "status": "approved"
+    },
+    {
+      "id": "acc-with-site-001",
+      "wasteProcessingType": "reprocessor",
+      "material": "wood",
+      "status": "approved"
+    }
+  ],
+  "companyDetails": {
+    "registeredCompanyNumber": "11223344",
+    "tradingName": "Missing Fields Company",
+    "registeredAddress": {
+      "line1": "3 Missing Fields Road",
+      "line2": "",
+      "townOrCity": "Leeds",
+      "county": "West Yorkshire",
+      "postcode": "LS1 1AA",
+      "country": "England"
+    }
+  }
+}

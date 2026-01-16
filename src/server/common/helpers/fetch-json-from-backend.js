@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 
+import { withTraceId } from '@defra/hapi-tracing'
 import { config } from '#config/config.js'
+import { getTracingHeaderName } from './request-tracing.js'
 
 /**
  * Fetch JSON from a given path in the backend service.
@@ -13,10 +15,10 @@ export const fetchJsonFromBackend = async (path, options) => {
 
   const completeOptions = {
     ...options,
-    headers: {
+    headers: withTraceId(getTracingHeaderName(), {
       ...options?.headers,
       'Content-Type': 'application/json'
-    }
+    })
   }
 
   const url = `${eprBackendUrl}${path}`
@@ -25,6 +27,11 @@ export const fetchJsonFromBackend = async (path, options) => {
     const response = await fetch(url, completeOptions)
 
     if (!response.ok) {
+      let errorBody = null
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        errorBody = await response.json()
+      }
+
       const error = Boom.boomify(
         new Error(
           `Failed to fetch from backend at url: ${url}: ${response.status} ${response.statusText}`
@@ -32,8 +39,8 @@ export const fetchJsonFromBackend = async (path, options) => {
         { statusCode: response.status }
       )
 
-      if (response.headers.get('content-type')?.includes('application/json')) {
-        error.output.payload = await response.json()
+      if (errorBody) {
+        error.output.payload = errorBody
       }
 
       throw error

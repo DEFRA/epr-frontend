@@ -1,21 +1,9 @@
-import { createServer } from '#server/index.js'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { it } from '#vite/fixtures/server.js'
+import { describe, expect, vi } from 'vitest'
 import { dropUserSession } from './drop-user-session.js'
 
 describe('#dropUserSession', () => {
-  /** @type {Server} */
-  let server
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  it('should drop user session from cache', async () => {
+  it('should drop user session from cache', async ({ server }) => {
     await server.app.cache.set('session-123', 'session-value')
 
     const mockRequest = {
@@ -31,8 +19,15 @@ describe('#dropUserSession', () => {
 
     await expect(server.app.cache.get('session-123')).resolves.toBeNull()
   })
-})
 
-/**
- * @import { Server } from '@hapi/hapi'
- */
+  it('should not drop if userSession is nullish', async ({ server }) => {
+    const mockRequest = {
+      state: { userSession: undefined },
+      server
+    }
+
+    await dropUserSession(mockRequest)
+
+    expect(vi.spyOn(server.app.cache, 'drop')).not.toHaveBeenCalled()
+  })
+})
