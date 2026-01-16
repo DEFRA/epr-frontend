@@ -10,13 +10,14 @@ import { getUserSession } from './get-user-session.js'
  */
 
 /**
- * Remove user session from cache and clear cookie
+ * Remove user session from cache and clear cookies
  * @param {Request} request - Hapi request object
  * @returns {Promise<void>}
  */
 async function removeUserSession(request) {
   await dropUserSession(request)
   request.cookieAuth?.clear()
+  request.yar?.reset()
 }
 
 /**

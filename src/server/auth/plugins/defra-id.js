@@ -1,46 +1,19 @@
 import { config } from '#config/config.js'
+import { paths } from '#server/paths.js'
 import bell from '@hapi/bell'
 import {
   buildUserProfile,
   getTokenExpiresAt
 } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
+import { getRedirectUrl } from '../helpers/get-redirect-url.js'
 
 /**
- * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { AzureB2CTokenParams, AzureB2CBellCredentials, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
+ * @import { ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
-const PRODUCTION_SERVICE_URL =
-  'https://record-reprocessed-exported-packaging-waste.defra.gov.uk'
-
-const VALID_PROTOCOLS = new Set(['http', 'https'])
-
-/**
- * Gets the auth callback URL from the request, restricted to allowed origins
- * @param {Request} request
- * @returns {string}
- */
-const getAuthCallbackUrl = (request) => {
-  const appBaseUrl = config.get('appBaseUrl')
-  const allowedOrigins = new Set([appBaseUrl, PRODUCTION_SERVICE_URL])
-
-  const forwardedProto = request.headers['x-forwarded-proto']
-  const protocol = VALID_PROTOCOLS.has(forwardedProto)
-    ? forwardedProto
-    : request.server.info.protocol
-
-  const requestUrl = new URL(appBaseUrl)
-  requestUrl.protocol = protocol
-  requestUrl.host = request.info.host
-
-  const origin = allowedOrigins.has(requestUrl.origin)
-    ? requestUrl.origin
-    : appBaseUrl
-
-  return new URL('/auth/callback', origin).href
-}
 /**
  * Create Defra ID OIDC authentication plugin
  * Factory function that creates a plugin with verifyToken closure
@@ -78,14 +51,13 @@ const createDefraId = (verifyToken) => ({
           if (request.info.referrer) {
             const { hash, pathname, search } = new URL(request.info.referrer)
 
-            // TODO store paths/routes as constants
-            if (!pathname.startsWith('/auth/callback')) {
+            if (!pathname.startsWith(paths.auth.callback)) {
               const referrer = `${pathname}${search}${hash}`
               request.yar.flash('referrer', referrer)
             }
           }
 
-          return getAuthCallbackUrl(request)
+          return getRedirectUrl(request, paths.auth.callback)
         },
         password: config.get('session.cookie.password'),
         provider: {
@@ -116,8 +88,7 @@ const createDefraId = (verifyToken) => ({
         providerParams: function (request) {
           return {
             ...authParams,
-            // TODO store paths/routes as constants
-            forceReselection: request.path === '/auth/organisation',
+            forceReselection: request.path === paths.auth.organisation,
             serviceId
           }
         }
@@ -126,4 +97,4 @@ const createDefraId = (verifyToken) => ({
   }
 })
 
-export { createDefraId, getAuthCallbackUrl }
+export { createDefraId }
