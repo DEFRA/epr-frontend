@@ -56,6 +56,28 @@ function deepMerge(target, source) {
 }
 
 /**
+ * Flatten nested object keys to dot-notation strings
+ * @param {object} obj - The object to flatten
+ * @param {string} prefix - Current key prefix
+ * @returns {string[]} Array of dot-notation keys
+ */
+function flattenKeys(obj, prefix = '') {
+  const keys = []
+
+  for (const key of Object.keys(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key
+
+    if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+      keys.push(...flattenKeys(obj[key], fullKey))
+    } else {
+      keys.push(fullKey)
+    }
+  }
+
+  return keys
+}
+
+/**
  * Parse args to get input file
  * @param {string[]} args
  * @returns {string}
@@ -140,6 +162,14 @@ async function importTranslations(inputFile) {
       namespace,
       'cy.json'
     )
+    const enFilePath = join(
+      __dirname,
+      '..',
+      'src',
+      'server',
+      namespace,
+      'en.json'
+    )
 
     try {
       let existingTranslations = {}
@@ -148,6 +178,26 @@ async function importTranslations(inputFile) {
         existingTranslations = JSON.parse(content)
       } catch {
         // File doesn't exist or is invalid, start fresh
+      }
+
+      // Check for unknown keys by comparing against en.json
+      try {
+        const enContent = await readFile(enFilePath, 'utf-8')
+        const enTranslations = JSON.parse(enContent)
+        const enKeys = flattenKeys(enTranslations)
+        const importKeys = flattenKeys(translations)
+
+        for (const key of importKeys) {
+          if (!enKeys.includes(key)) {
+            console.warn(
+              `Warning: Unknown key '${key}' in namespace '${namespace}' - not found in en.json`
+            )
+          }
+        }
+      } catch {
+        console.warn(
+          `Warning: Could not read ${namespace}/en.json to validate keys`
+        )
       }
 
       const mergedTranslations = deepMerge(existingTranslations, translations)
@@ -181,4 +231,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
 }
 
-export { importTranslations, parseArgs, setNestedValue, deepMerge }
+export { importTranslations, parseArgs, setNestedValue, deepMerge, flattenKeys }

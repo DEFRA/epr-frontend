@@ -8,7 +8,8 @@ import {
   importTranslations,
   parseArgs,
   setNestedValue,
-  deepMerge
+  deepMerge,
+  flattenKeys
 } from './import-translations.js'
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
@@ -145,6 +146,56 @@ describe('import-translations', () => {
       const source = { items: [3, 4] }
 
       expect(deepMerge(target, source)).toStrictEqual({ items: [3, 4] })
+    })
+  })
+
+  describe(flattenKeys, () => {
+    it('should flatten a simple object', () => {
+      const obj = { a: 'value', b: 'value2' }
+
+      expect(flattenKeys(obj)).toStrictEqual(['a', 'b'])
+    })
+
+    it('should flatten nested objects with dot notation', () => {
+      const obj = { footer: { crownCopyright: 'value' } }
+
+      expect(flattenKeys(obj)).toStrictEqual(['footer.crownCopyright'])
+    })
+
+    it('should flatten deeply nested objects', () => {
+      const obj = {
+        footer: {
+          getHelp: {
+            email: 'test@example.com',
+            phone: '123'
+          }
+        }
+      }
+
+      expect(flattenKeys(obj)).toStrictEqual([
+        'footer.getHelp.email',
+        'footer.getHelp.phone'
+      ])
+    })
+
+    it('should handle mixed nesting levels', () => {
+      const obj = {
+        simple: 'value',
+        nested: { key: 'value' },
+        deep: { level: { key: 'value' } }
+      }
+
+      expect(flattenKeys(obj)).toStrictEqual([
+        'simple',
+        'nested.key',
+        'deep.level.key'
+      ])
+    })
+
+    it('should treat arrays as leaf values', () => {
+      const obj = { items: [1, 2, 3] }
+
+      expect(flattenKeys(obj)).toStrictEqual(['items'])
     })
   })
 
@@ -364,6 +415,53 @@ describe('import-translations', () => {
       const translations = JSON.parse(content)
 
       expect(translations).toStrictEqual({ key: 'Allwedd' })
+    })
+
+    it('should warn about unknown keys not found in en.json', async () => {
+      registerNamespace('test-unknown-keys')
+
+      const testDir = join(testSrcDir, 'test-unknown-keys')
+      await mkdir(testDir, { recursive: true })
+
+      // Create en.json with known keys
+      const enFilePath = join(testDir, 'en.json')
+      await writeFile(
+        enFilePath,
+        JSON.stringify(
+          { knownKey: 'Known', nested: { key: 'Nested' } },
+          null,
+          2
+        ),
+        'utf-8'
+      )
+
+      // Import translations with both known and unknown keys
+      testExcelPath = await createTestExcel('test-unknown-keys.xlsx', [
+        { fieldName: 'test-unknown-keys:knownKey', en: 'Known', cy: 'Hysbys' },
+        {
+          fieldName: 'test-unknown-keys:unknownKey',
+          en: 'Unknown',
+          cy: 'Anhysbys'
+        },
+        {
+          fieldName: 'test-unknown-keys:nested.key',
+          en: 'Nested',
+          cy: 'Nythu'
+        }
+      ])
+
+      await importTranslations('test-unknown-keys.xlsx')
+
+      const cyFilePath = join(testDir, 'cy.json')
+      const content = await readFile(cyFilePath, 'utf-8')
+      const translations = JSON.parse(content)
+
+      // All translations should be imported (including unknown keys)
+      expect(translations).toStrictEqual({
+        knownKey: 'Hysbys',
+        unknownKey: 'Anhysbys',
+        nested: { key: 'Nythu' }
+      })
     })
   })
 })
