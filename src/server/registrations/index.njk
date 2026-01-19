@@ -112,7 +112,7 @@
               <div class="govuk-summary-card__content">
                 <p class="govuk-body">
                   {% if prns.isEnabled %}
-                    <a href="{{ prns.link }}" class="govuk-link">{{ prns.linkText }}</a>
+                    <a href="{{ prns.link.href }}" class="govuk-link">{{ prns.link.text }}</a>
                   {% else %}
                     {{ prns.notAvailable }}
                   {% endif %}

@@ -112,8 +112,10 @@ function getPrnViewData(request, isExporter) {
   return {
     isEnabled: config.get('featureFlags.prns'),
     description: localise(`registrations:${key}.description`),
-    link: request.localiseUrl('/prns/create'),
-    linkText: localise(`registrations:${key}.createNew`),
+    link: {
+      href: request.localiseUrl('/prns/create'),
+      text: localise(`registrations:${key}.createNew`)
+    },
     notAvailable: localise(`registrations:${key}.notAvailable`),
     title: localise(`registrations:${key}.title`)
   }
