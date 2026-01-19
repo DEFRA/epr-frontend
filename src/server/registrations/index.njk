@@ -111,7 +111,13 @@
               </div>
               <div class="govuk-summary-card__content">
                 <p class="govuk-body">
-                  {{ prnNotAvailable }}
+                  {% if isPrnsEnabled %}
+                    <a href="{{ createPrnUrl }}" class="govuk-link">
+                      {{ localise("registrations:createNewPrn") }}
+                    </a>
+                  {% else %}
+                    {{ prnNotAvailable }}
+                  {% endif %}
                 </p>
               </div>
             </div>

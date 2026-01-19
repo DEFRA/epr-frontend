@@ -3,6 +3,7 @@
   "accreditationNumber": "Accreditation number",
   "chooseTask": "Choose a task",
   "contactRegulator": "contact your regulator",
+  "createNewPrn": "Create new PRN",
   "pageTitle": "{{ siteName }}: {{ material }}",
   "pernNotAvailable": "PERN management is not yet available.",
   "perns": "PERNs",

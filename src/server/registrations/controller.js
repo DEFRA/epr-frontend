@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import Boom from '@hapi/boom'
 import { capitalize } from 'lodash-es'
 
@@ -95,6 +96,8 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
+    isPrnsEnabled: config.get('featureFlags.prns'),
+    createPrnUrl: request.localiseUrl('/prns/create'),
     ...getPrnLabels(localise, isExporter)
   }
 }

@@ -1,9 +1,12 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { JSDOM } from 'jsdom'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -408,6 +411,69 @@ describe('#accreditationDashboardController', () => {
 
       expect($('.govuk-tag--yellow').length).toBeGreaterThan(0)
       expect(result).toContain('Suspended')
+    })
+  })
+
+  describe('packaging-recycling-notes aka prns', () => {
+    beforeEach(() => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+    })
+
+    describe('when feature flag is disabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.prns', false)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.prns')
+      })
+
+      it('should display prn not available text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const main = getByRole(body, 'main')
+        const prnCard = getByText(main, 'PRNs').closest('.govuk-summary-card')
+
+        expect(
+          getByText(prnCard, 'PRN management is not yet available.')
+        ).toBeDefined()
+      })
+    })
+
+    describe('when feature flag is enabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.prns', true)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.prns')
+      })
+
+      it('should display create new prn link', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const main = getByRole(body, 'main')
+        const prnCard = getByText(main, 'PRNs').closest('.govuk-summary-card')
+        const link = getByRole(prnCard, 'link', { name: 'Create new PRN' })
+
+        expect(link.getAttribute('href')).toBe('/prns/create')
+      })
     })
   })
 })
