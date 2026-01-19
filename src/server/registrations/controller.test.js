@@ -439,7 +439,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result, { url: 'http://test.example' })
+        const dom = new JSDOM(result)
         const { body } = dom.window.document
 
         const main = getByRole(body, 'main')
@@ -494,7 +494,7 @@ describe('#accreditationDashboardController', () => {
             auth: mockAuth
           })
 
-          const dom = new JSDOM(result, { url: 'http://test.example' })
+          const dom = new JSDOM(result)
           const { body } = dom.window.document
 
           const main = getByRole(body, 'main')
