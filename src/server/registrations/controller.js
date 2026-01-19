@@ -114,7 +114,7 @@ function getPrnViewData(request, isExporter) {
     description: localise(`registrations:${key}.description`),
     link: request.localiseUrl('/prns/create'),
     linkText: localise(`registrations:${key}.createNew`),
-    text: localise(`registrations:${key}.notAvailable`),
+    notAvailable: localise(`registrations:${key}.notAvailable`),
     title: localise(`registrations:${key}.title`)
   }
 }
