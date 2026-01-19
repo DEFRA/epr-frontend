@@ -1,5 +1,5 @@
-import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
+import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -52,7 +52,7 @@ export const summaryLogUploadController = {
       return h.view('error/index', {
         pageTitle: localise('summary-log-upload:errorPageTitle'),
         heading: localise('summary-log-upload:errorHeading'),
-        message: `${localise('summary-log-upload:errorGeneric')}: ${err.message}`
+        message: localise('summary-log-upload:errorGeneric')
       })
     }
   }
