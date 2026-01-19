@@ -56,8 +56,8 @@ describe('account linking POST controller', () => {
         payload: {
           organisationId
         },
-        pre: {
-          authedUser: mockSession
+        auth: {
+          credentials: mockSession
         },
         state: {
           userSession: {
@@ -89,44 +89,39 @@ describe('account linking POST controller', () => {
       expect(result).toBe('redirect-response')
     })
 
-    it('should redirect to /login when user is not authenticated', async () => {
+    it('should redirect without updating cache when sessionId is not present', async () => {
+      const organisationId = 'org-456'
+      const mockIdToken = 'mock-id-token'
+      const mockSession = {
+        idToken: mockIdToken
+      }
+
+      mockBackendServer.use(
+        http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
+          HttpResponse.json({})
+        )
+      )
+
       const mockRequest = {
         payload: {
-          organisationId: 'org-123'
+          organisationId
         },
-        pre: {
-          authedUser: null
-        }
+        auth: {
+          credentials: mockSession
+        },
+        state: {}
       }
 
       const mockH = {
-        redirect: vi.fn().mockReturnValue('redirect-to-login')
+        redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
       const result = await controller.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/login')
-      expect(result).toBe('redirect-to-login')
-    })
-
-    it('should redirect to /login when session has no value', async () => {
-      const mockRequest = {
-        payload: {
-          organisationId: 'org-123'
-        },
-        pre: {
-          authedUser: null
-        }
-      }
-
-      const mockH = {
-        redirect: vi.fn().mockReturnValue('redirect-to-login')
-      }
-
-      const result = await controller.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/login')
-      expect(result).toBe('redirect-to-login')
+      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
+        `/organisations/${organisationId}`
+      )
+      expect(result).toBe('redirect-response')
     })
   })
 
@@ -159,8 +154,8 @@ describe('account linking POST controller', () => {
 
       const mockRequest = {
         payload: {},
-        pre: {
-          authedUser: mockSession
+        auth: {
+          credentials: mockSession
         },
         t: vi.fn((key) => {
           const translations = {
@@ -212,58 +207,6 @@ describe('account linking POST controller', () => {
 
       expect(mockView.takeover).toHaveBeenCalledTimes(1)
       expect(result).toBe('view-with-errors')
-    })
-
-    it('should redirect to login when user is not authenticated', async () => {
-      const mockRequest = {
-        payload: {},
-        pre: {
-          authedUser: null
-        }
-      }
-
-      const mockRedirect = {
-        takeover: vi.fn().mockReturnValue('redirect-to-login')
-      }
-
-      const mockH = {
-        redirect: vi.fn().mockReturnValue(mockRedirect)
-      }
-
-      const result = await controller.options.validate.failAction(
-        mockRequest,
-        mockH
-      )
-
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/login')
-      expect(mockRedirect.takeover).toHaveBeenCalledTimes(1)
-      expect(result).toBe('redirect-to-login')
-    })
-
-    it('should redirect to login when session has no authedUser', async () => {
-      const mockRequest = {
-        payload: {},
-        pre: {
-          authedUser: null
-        }
-      }
-
-      const mockRedirect = {
-        takeover: vi.fn().mockReturnValue('redirect-to-login')
-      }
-
-      const mockH = {
-        redirect: vi.fn().mockReturnValue(mockRedirect)
-      }
-
-      const result = await controller.options.validate.failAction(
-        mockRequest,
-        mockH
-      )
-
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/login')
-      expect(mockRedirect.takeover).toHaveBeenCalledTimes(1)
-      expect(result).toBe('redirect-to-login')
     })
   })
 })

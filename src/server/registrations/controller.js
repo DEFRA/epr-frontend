@@ -1,9 +1,9 @@
-import { capitalize } from 'lodash-es'
 import Boom from '@hapi/boom'
+import { capitalize } from 'lodash-es'
 
 import { formatMaterialName } from '#server/common/helpers/materials/format-material-name.js'
-import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -12,11 +12,11 @@ export const controller = {
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
-    const userSession = request.auth.credentials
+    const session = request.auth.credentials
 
     const organisationData = await fetchOrganisationById(
       organisationId,
-      userSession.idToken
+      session.idToken
     )
 
     const registration = organisationData.registrations?.find(
