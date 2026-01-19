@@ -3,14 +3,18 @@
   "accreditationNumber": "Accreditation number",
   "chooseTask": "Choose a task",
   "contactRegulator": "contact your regulator",
-  "createNewPrn": "Create new PRN",
   "pageTitle": "{{ siteName }}: {{ material }}",
-  "pernNotAvailable": "PERN management is not yet available.",
-  "perns": "PERNs",
-  "pernsDescription": "Raise, issue and manage PERNs.",
-  "prnNotAvailable": "PRN management is not yet available.",
-  "prns": "PRNs",
-  "prnsDescription": "Raise, issue and manage PRNs.",
+  "perns": {
+    "title": "PERNs",
+    "description": "Raise, issue and manage PERNs.",
+    "notAvailable": "PERN management is not yet available."
+  },
+  "prns": {
+    "title": "PRNs",
+    "description": "Raise, issue and manage PRNs.",
+    "notAvailable": "PRN management is not yet available.",
+    "createNew": "Create new PRN"
+  },
   "registration": "Registration",
   "registrationAndAccreditation": "Registration and accreditation",
   "registrationAndAccreditationDescription": "View and manage your applications.",

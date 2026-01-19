@@ -111,15 +111,15 @@ function buildViewModel({
 function getPrnLabels(localise, isExporter) {
   if (isExporter) {
     return {
-      prnLabel: localise('registrations:perns'),
-      prnDescription: localise('registrations:pernsDescription'),
-      prnNotAvailable: localise('registrations:pernNotAvailable')
+      prnLabel: localise('registrations:perns.title'),
+      prnDescription: localise('registrations:perns.description'),
+      prnNotAvailable: localise('registrations:perns.notAvailable')
     }
   }
   return {
-    prnLabel: localise('registrations:prns'),
-    prnDescription: localise('registrations:prnsDescription'),
-    prnNotAvailable: localise('registrations:prnNotAvailable')
+    prnLabel: localise('registrations:prns.title'),
+    prnDescription: localise('registrations:prns.description'),
+    prnNotAvailable: localise('registrations:prns.notAvailable')
   }
 }
 
