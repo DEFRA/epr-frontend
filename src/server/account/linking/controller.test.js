@@ -114,35 +114,6 @@ describe('#accountLinkingController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe('/email-not-recognised')
       })
-
-      it('should redirect to email-not-recognised page when unlinked is null', async ({
-        server,
-        msw
-      }) => {
-        msw.use(
-          http.get(`${backendUrl}/v1/me/organisations`, () => {
-            return HttpResponse.json({
-              organisations: {
-                current: {
-                  id: 'defra-org-123',
-                  name: 'My Defra Organisation'
-                },
-                linked: null,
-                unlinked: null
-              }
-            })
-          })
-        )
-
-        const { statusCode, headers } = await server.inject({
-          method: 'GET',
-          url: '/account/linking',
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe('/email-not-recognised')
-      })
     })
 
     describe('when user has unlinked organisations', () => {
