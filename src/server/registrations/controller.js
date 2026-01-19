@@ -1,10 +1,10 @@
 import { config } from '#config/config.js'
-import Boom from '@hapi/boom'
-import { capitalize } from 'lodash-es'
-
 import { formatMaterialName } from '#server/common/helpers/materials/format-material-name.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import { paths } from '#server/paths.js'
+import Boom from '@hapi/boom'
+import { capitalize } from 'lodash-es'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -113,7 +113,7 @@ function getPrnViewData(request, isExporter) {
     isEnabled: config.get('featureFlags.prns'),
     description: localise(`registrations:${key}.description`),
     link: {
-      href: request.localiseUrl('/prns/create'),
+      href: request.localiseUrl(paths.prns.create),
       text: localise(`registrations:${key}.createNew`)
     },
     notAvailable: localise(`registrations:${key}.notAvailable`),
