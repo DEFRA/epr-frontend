@@ -43,9 +43,6 @@ describe(buildLinkingViewData, () => {
       }
     ])
     expect(result.organisationName).toBe('Test Defra Organisation')
-    expect(result.troubleshooting.summary).toBe(
-      'translated:account:linking:troubleshooting:summary'
-    )
   })
 
   it('should handle empty unlinked organisations list', () => {
@@ -232,48 +229,5 @@ describe(buildLinkingViewData, () => {
     expect(result.unlinked[2].displayName).toBe(
       'Zebra Waste Ltd (ID: ZW111111)'
     )
-  })
-
-  it('should build troubleshooting content with localised strings', () => {
-    const mockRequest = {
-      t: vi.fn((key) => `translated:${key}`)
-    }
-
-    const mockOrganisations = {
-      current: {
-        id: 'defra-org-123',
-        name: 'Test Organisation'
-      },
-      linked: null,
-      unlinked: [
-        {
-          id: 'org-1',
-          name: 'Test Company Ltd',
-          orgId: 'TC123456'
-        }
-      ]
-    }
-
-    const result = buildLinkingViewData(mockRequest, mockOrganisations)
-
-    expect(result.troubleshooting).toStrictEqual({
-      summary: 'translated:account:linking:troubleshooting:summary',
-      missing: {
-        heading: 'translated:account:linking:troubleshooting:missingHeading',
-        bodyOne: 'translated:account:linking:troubleshooting:missingBodyOne',
-        bodyTwo: 'translated:account:linking:troubleshooting:missingBodyTwo'
-      },
-      otherProblems: {
-        heading:
-          'translated:account:linking:troubleshooting:otherProblemsHeading',
-        bodyOne:
-          'translated:account:linking:troubleshooting:otherProblemsBodyOne',
-        bodyTwo:
-          'translated:account:linking:troubleshooting:otherProblemsBodyTwo',
-        bodyThree:
-          'translated:account:linking:troubleshooting:otherProblemsBodyThree',
-        email: 'translated:account:linking:troubleshooting:otherProblemsEmail'
-      }
-    })
   })
 })
