@@ -7,7 +7,8 @@
   "perns": {
     "title": "PERNs",
     "description": "Raise, issue and manage PERNs.",
-    "notAvailable": "PERN management is not yet available."
+    "notAvailable": "PERN management is not yet available.",
+    "createNew": "Create new PERN"
   },
   "prns": {
     "title": "PRNs",

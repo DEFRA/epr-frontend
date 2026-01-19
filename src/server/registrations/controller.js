@@ -96,33 +96,29 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    isPrnsEnabled: config.get('featureFlags.prns'),
-    createPrnUrl: request.localiseUrl('/prns/create'),
-    ...getPrnLabels(localise, isExporter)
+    prns: getPrnViewData(request, isExporter)
   }
 }
 
 /**
- * Get PRN/PERN labels based on accreditation type
- * @param {(key: string) => string} localise - Localisation function
- * @param {boolean} isExporter - Whether accreditation is for exporter
- * @returns {object} PRN label properties
+ * Get PRN/PERN view data based on registration type and feature flag
+ * @param {Request} request
+ * @param {boolean} isExporter
  */
-function getPrnLabels(localise, isExporter) {
-  if (isExporter) {
-    return {
-      prnLabel: localise('registrations:perns.title'),
-      prnDescription: localise('registrations:perns.description'),
-      prnNotAvailable: localise('registrations:perns.notAvailable')
-    }
-  }
+function getPrnViewData(request, isExporter) {
+  const { t: localise } = request
+  const key = isExporter ? 'perns' : 'prns'
+
   return {
-    prnLabel: localise('registrations:prns.title'),
-    prnDescription: localise('registrations:prns.description'),
-    prnNotAvailable: localise('registrations:prns.notAvailable')
+    isEnabled: config.get('featureFlags.prns'),
+    description: localise(`registrations:${key}.description`),
+    link: request.localiseUrl('/prns/create'),
+    linkText: localise(`registrations:${key}.createNew`),
+    text: localise(`registrations:${key}.notAvailable`),
+    title: localise(`registrations:${key}.title`)
   }
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { Request, ServerRoute } from '@hapi/hapi'
  */

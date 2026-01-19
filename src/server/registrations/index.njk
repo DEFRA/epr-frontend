@@ -102,21 +102,19 @@
               <div class="govuk-summary-card__title-wrapper">
                 <div>
                   <h3 class="govuk-summary-card__title">
-                    {{ prnLabel }}
+                    {{ prns.title }}
                   </h3>
                   <p class="govuk-body-s govuk-!-margin-bottom-0">
-                    {{ prnDescription }}
+                    {{ prns.description }}
                   </p>
                 </div>
               </div>
               <div class="govuk-summary-card__content">
                 <p class="govuk-body">
-                  {% if isPrnsEnabled %}
-                    <a href="{{ createPrnUrl }}" class="govuk-link">
-                      {{ localise("registrations:prns.createNew") }}
-                    </a>
+                  {% if prns.isEnabled %}
+                    <a href="{{ prns.link }}" class="govuk-link">{{ prns.linkText }}</a>
                   {% else %}
-                    {{ prnNotAvailable }}
+                    {{ prns.text }}
                   {% endif %}
                 </p>
               </div>

@@ -430,7 +430,9 @@ describe('#accreditationDashboardController', () => {
         config.reset('featureFlags.prns')
       })
 
-      it('should display prn not available text', async ({ server }) => {
+      it('should display prn card with not available text', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
@@ -443,6 +445,10 @@ describe('#accreditationDashboardController', () => {
         const main = getByRole(body, 'main')
         const prnCard = getByText(main, 'PRNs').closest('.govuk-summary-card')
 
+        expect(getByText(prnCard, 'PRNs')).toBeDefined()
+        expect(
+          getByText(prnCard, 'Raise, issue and manage PRNs.')
+        ).toBeDefined()
         expect(
           getByText(prnCard, 'PRN management is not yet available.')
         ).toBeDefined()
@@ -458,7 +464,7 @@ describe('#accreditationDashboardController', () => {
         config.reset('featureFlags.prns')
       })
 
-      it('should display create new prn link', async ({ server }) => {
+      it('should display prn card with create new link', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
@@ -470,6 +476,12 @@ describe('#accreditationDashboardController', () => {
 
         const main = getByRole(body, 'main')
         const prnCard = getByText(main, 'PRNs').closest('.govuk-summary-card')
+
+        expect(getByText(prnCard, 'PRNs')).toBeDefined()
+        expect(
+          getByText(prnCard, 'Raise, issue and manage PRNs.')
+        ).toBeDefined()
+
         const link = getByRole(prnCard, 'link', { name: 'Create new PRN' })
 
         expect(link.getAttribute('href')).toBe('/prns/create')
