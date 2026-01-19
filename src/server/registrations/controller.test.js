@@ -3,7 +3,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, getByText } from '@testing-library/dom'
+import { getByRole, getByText, within } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -378,7 +378,7 @@ describe('#accreditationDashboardController', () => {
       expect(result).toContain('Unknown site')
     })
 
-    it('should capitalize material name', async ({ server }) => {
+    it('should capitalise material name', async ({ server }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
@@ -439,19 +439,19 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result)
+        const dom = new JSDOM(result, { url: 'http://test.example' })
         const { body } = dom.window.document
 
         const main = getByRole(body, 'main')
         const prnCard = getByText(main, 'PRNs').closest('.govuk-summary-card')
+        const card = within(prnCard)
 
-        expect(getByText(prnCard, 'PRNs')).toBeDefined()
+        card.getByText('PRNs')
+        card.getByText('Raise, issue and manage PRNs.')
+
         expect(
-          getByText(prnCard, 'Raise, issue and manage PRNs.')
-        ).toBeDefined()
-        expect(
-          getByText(prnCard, 'PRN management is not yet available.')
-        ).toBeDefined()
+          card.queryByText('PRN management is not yet available.')
+        ).not.toBeNull()
       })
     })
 
@@ -464,28 +464,51 @@ describe('#accreditationDashboardController', () => {
         config.reset('featureFlags.prns')
       })
 
-      it('should display prn card with create new link', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
+      it.for([
+        {
+          name: 'PRN (reprocessor)',
+          fixture: fixtureData,
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
+          title: 'PRNs',
+          description: 'Raise, issue and manage PRNs.',
+          linkText: 'Create new PRN'
+        },
+        {
+          name: 'PERN (exporter)',
+          fixture: fixtureExportingOnly,
+          url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+          title: 'PERNs',
+          description: 'Raise, issue and manage PERNs.',
+          linkText: 'Create new PERN'
+        }
+      ])(
+        'should display $name card with create new link',
+        async ({ fixture, url, title, description, linkText }, { server }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue(fixture)
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
 
-        const main = getByRole(body, 'main')
-        const prnCard = getByText(main, 'PRNs').closest('.govuk-summary-card')
+          const dom = new JSDOM(result, { url: 'http://test.example' })
+          const { body } = dom.window.document
 
-        expect(getByText(prnCard, 'PRNs')).toBeDefined()
-        expect(
-          getByText(prnCard, 'Raise, issue and manage PRNs.')
-        ).toBeDefined()
+          const main = getByRole(body, 'main')
+          const prnCard = getByText(main, title).closest('.govuk-summary-card')
+          const card = within(prnCard)
 
-        const link = getByRole(prnCard, 'link', { name: 'Create new PRN' })
+          card.getByText(title)
+          card.getByText(description)
 
-        expect(link.getAttribute('href')).toBe('/prns/create')
-      })
+          const link = card.getByRole('link', { name: linkText })
+
+          expect(link.getAttribute('href')).toBe('/prns/create')
+        }
+      )
     })
   })
 })
