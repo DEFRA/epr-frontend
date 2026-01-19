@@ -1,6 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
+import * as cheerio from 'cheerio'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -64,10 +66,14 @@ describe('#summaryLogUploadController', () => {
     )
   })
 
-  it('should display error page when upload initialisation fails', async ({
+  it('should display error page without leaking backend error details', async ({
     server
   }) => {
-    initiateSummaryLogUpload.mockRejectedValueOnce(new Error('Mock error'))
+    initiateSummaryLogUpload.mockRejectedValueOnce(
+      Boom.notFound(
+        'Failed to fetch from backend at url: http://backend.url/v1/organisations/123/registrations/456/summary-logs: 404 Not Found'
+      )
+    )
 
     const { result } = await server.inject({
       method: 'GET',
@@ -75,12 +81,10 @@ describe('#summaryLogUploadController', () => {
       auth: mockAuth
     })
 
-    expect(result).toStrictEqual(
-      expect.stringContaining('Summary log upload error')
-    )
-    expect(result).toStrictEqual(
-      expect.stringContaining('Failed to initialize upload: Mock error')
-    )
+    const $ = cheerio.load(result)
+
+    expect($('main h1').text()).toBe('Summary log upload error')
+    expect($('main p').text()).toBe('Failed to initialise upload')
   })
 
   it('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async ({
