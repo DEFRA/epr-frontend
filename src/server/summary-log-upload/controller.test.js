@@ -84,7 +84,7 @@ describe('#summaryLogUploadController', () => {
     const $ = cheerio.load(result)
 
     expect($('main h1').text()).toBe('Summary log upload error')
-    expect($('main p').text()).toBe('Failed to initialize upload')
+    expect($('main p').text()).toBe('Failed to initialise upload')
   })
 
   it('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async ({

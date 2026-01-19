@@ -1,7 +1,7 @@
 {
   "caption": "Upload summary log",
   "continueButton": "Continue",
-  "errorGeneric": "Failed to initialize upload",
+  "errorGeneric": "Failed to initialise upload",
   "errorHeading": "Summary log upload error",
   "errorPageTitle": "Summary log: upload error",
   "fileUploadLabel": "Upload XLSX file",
