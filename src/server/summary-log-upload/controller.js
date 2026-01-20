@@ -1,4 +1,3 @@
-import { sessionNames } from '#server/common/constants/session-names.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 
 /**
@@ -12,18 +11,11 @@ export const summaryLogUploadController = {
     const session = request.auth.credentials
 
     try {
-      const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
+      const { uploadUrl } = await initiateSummaryLogUpload({
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
         idToken: session.idToken
-      })
-
-      // Store uploadId in session for status polling reconciliation
-      const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
-      request.yar.set(sessionNames.summaryLogs, {
-        ...summaryLogsSession,
-        uploadId
       })
 
       const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`

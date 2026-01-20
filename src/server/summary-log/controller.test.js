@@ -91,7 +91,7 @@ describe('#summaryLogUploadProgressController', () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { uploadId: undefined, idToken: 'test-id-token' }
+      { idToken: 'test-id-token' }
     )
     expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -1526,27 +1526,6 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(result).not.toStrictEqual(enablesClientSidePolling())
-    })
-
-    it('status: validation_failed - should update session with new uploadId for re-upload', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validationFailed
-      })
-
-      const response = await server.inject({
-        method: 'GET',
-        url,
-        headers: {
-          cookie: 'session=existing-session'
-        },
-        auth: mockAuth
-      })
-
-      const setCookieHeader = response.headers['set-cookie']
-
-      expect(setCookieHeader).toBeDefined()
     })
   })
 
