@@ -130,12 +130,11 @@ const getStatusData = async (
 ) => {
   // Check session for fresh data first (prevents race condition after POST submit)
   const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
-  const { freshData, uploadId } = summaryLogsSession
+  const { freshData } = summaryLogsSession
 
   const data =
     freshData ??
     (await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      uploadId,
       idToken
     }))
 
@@ -391,15 +390,15 @@ const renderViewForStatus = (options) => {
 }
 
 /**
- * Gets a pre-signed upload URL and upload ID for re-uploading a summary log
+ * Gets a pre-signed upload URL for re-uploading a summary log
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} redirectUrl - URL to redirect to after upload (with {summaryLogId} placeholder)
  * @param {string} idToken - JWT ID token for authorization
- * @returns {Promise<{uploadUrl?: string, uploadId?: string}>} Upload URL and ID, or empty object if not needed
+ * @returns {Promise<{uploadUrl?: string}>} Upload URL, or empty object if not needed
  */
-const getUploadData = async (
+const getUploadUrl = async (
   status,
   organisationId,
   registrationId,
@@ -410,14 +409,14 @@ const getUploadData = async (
     return {}
   }
 
-  const { uploadUrl, uploadId } = await initiateSummaryLogUpload({
+  const { uploadUrl } = await initiateSummaryLogUpload({
     organisationId,
     registrationId,
     redirectUrl,
     idToken
   })
 
-  return { uploadUrl, uploadId }
+  return { uploadUrl }
 }
 
 /**
@@ -444,21 +443,13 @@ export const summaryLogUploadProgressController = {
     const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
     const cancelUrl = baseUrl
 
-    const { uploadId, uploadUrl } = await getUploadData(
+    const { uploadUrl } = await getUploadUrl(
       status,
       organisationId,
       registrationId,
       redirectUrl,
       session.idToken
     )
-
-    if (uploadId) {
-      const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
-      request.yar.set(sessionNames.summaryLogs, {
-        ...summaryLogsSession,
-        uploadId
-      })
-    }
 
     return renderViewForStatus({
       h,
