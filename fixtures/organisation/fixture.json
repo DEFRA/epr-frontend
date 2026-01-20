@@ -65,6 +65,7 @@
         ]
       },
       "material": "glass",
+      "glassRecyclingProcess": ["glass_re_melt"],
       "wasteProcessingType": "reprocessor",
       "accreditationId": "acc-001-glass-approved",
       "cbduNumber": "CBDU001234",
@@ -386,6 +387,7 @@
         }
       },
       "material": "glass",
+      "glassRecyclingProcess": ["glass_re_melt"],
       "wasteProcessingType": "reprocessor",
       "prnIssuance": {
         "tonnageBand": "over_10000",
@@ -600,6 +602,7 @@
         }
       },
       "material": "glass",
+      "glassRecyclingProcess": ["glass_other"],
       "wasteProcessingType": "reprocessor",
       "prnIssuance": {
         "tonnageBand": "up_to_500",

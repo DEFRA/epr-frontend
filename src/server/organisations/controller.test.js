@@ -639,6 +639,72 @@ describe('#organisationController', () => {
     })
   })
 
+  describe('glass recycling process display', () => {
+    it('should display "Glass remelt" for registrations with glass_re_melt process', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+      const materialCells = $('tbody td:first-child')
+        .map((_, el) => $(el).text().trim())
+        .get()
+
+      expect(materialCells).toContain('Glass remelt')
+    })
+
+    it('should display "Glass other" for registrations with glass_other process', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+      const materialCells = $('tbody td:first-child')
+        .map((_, el) => $(el).text().trim())
+        .get()
+
+      expect(materialCells).toContain('Glass other')
+    })
+
+    it('should display separate rows for remelt and other when organisation has both registration types', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+      const materialCells = $('tbody td:first-child')
+        .map((_, el) => $(el).text().trim())
+        .get()
+
+      expect(materialCells).toContain('Glass remelt')
+      expect(materialCells).toContain('Glass other')
+    })
+  })
+
   describe('coverage - Additional Paths', () => {
     it('should group multiple materials by site correctly', async ({
       server
@@ -706,7 +772,8 @@ describe('#organisationController', () => {
             site: { address: { line1: 'Multi-Material Site' } },
             status: 'approved',
             wasteProcessingType: 'reprocessor',
-            material: 'glass'
+            material: 'glass',
+            glassRecyclingProcess: ['glass_re_melt']
           },
           {
             id: 'reg-wood',
@@ -779,6 +846,7 @@ describe('#organisationController', () => {
             id: 'acc-suspended',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
+            glassRecyclingProcess: ['glass_other'],
             status: 'suspended',
             site: { address: { line1: 'Site 2' } }
           },
@@ -805,6 +873,7 @@ describe('#organisationController', () => {
             status: 'suspended',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
+            glassRecyclingProcess: ['glass_other'],
             site: { address: { line1: 'Site 2' } }
           },
           {
