@@ -1,9 +1,12 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
+import { getByRole, within } from '@testing-library/dom'
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { JSDOM } from 'jsdom'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -449,7 +452,7 @@ describe('#accreditationDashboardController', () => {
       expect(result).toContain('Unknown site')
     })
 
-    it('should capitalize material name', async ({ server }) => {
+    it('should capitalise material name', async ({ server }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
@@ -482,6 +485,109 @@ describe('#accreditationDashboardController', () => {
 
       expect($('.govuk-tag--yellow').length).toBeGreaterThan(0)
       expect(result).toContain('Suspended')
+    })
+  })
+
+  describe('packaging-recycling-notes aka prns', () => {
+    beforeEach(() => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+    })
+
+    describe('when feature flag is disabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.prns', false)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.prns')
+      })
+
+      it('should display prn card with not available text', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const prnCard = getByRole(body, 'heading', {
+          name: 'PRNs',
+          level: 3
+        }).closest('.govuk-summary-card')
+
+        const card = within(prnCard)
+        card.getByText('Raise, issue and manage PRNs.')
+
+        expect(
+          card.queryByText('PRN management is not yet available.')
+        ).not.toBeNull()
+      })
+    })
+
+    describe('when feature flag is enabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.prns', true)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.prns')
+      })
+
+      it.for([
+        {
+          name: 'PRN (reprocessor)',
+          fixture: fixtureData,
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          title: 'PRNs',
+          description: 'Raise, issue and manage PRNs.',
+          linkText: 'Create new PRN'
+        },
+        {
+          name: 'PERN (exporter)',
+          fixture: fixtureExportingOnly,
+          url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+          title: 'PERNs',
+          description: 'Raise, issue and manage PERNs.',
+          linkText: 'Create new PERN'
+        }
+      ])(
+        'should display $name card with create new link',
+        async ({ fixture, url, title, description, linkText }, { server }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue(fixture)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const prnCard = getByRole(body, 'heading', {
+            name: title,
+            level: 3
+          }).closest('.govuk-summary-card')
+
+          const card = within(prnCard)
+
+          card.getByText(`Raise, issue and manage ${title}.`)
+          card.getByText(title)
+          card.getByText(description)
+
+          expect(
+            card.getByRole('link', { name: linkText }).getAttribute('href')
+          ).toBe('/prns/create')
+        }
+      )
     })
   })
 })

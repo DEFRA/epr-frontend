@@ -269,6 +269,14 @@ export const config = convict({
       default: isProduction,
       env: 'AUDIT_ENABLED'
     }
+  },
+  featureFlags: {
+    prns: {
+      doc: 'Feature Flag: PRNs',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_PRNS'
+    }
   }
 })
 

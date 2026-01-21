@@ -1,9 +1,10 @@
-import Boom from '@hapi/boom'
-import { capitalize } from 'lodash-es'
-
+import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import { paths } from '#server/paths.js'
+import Boom from '@hapi/boom'
+import { capitalize } from 'lodash-es'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -95,31 +96,31 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    ...getPrnLabels(localise, isExporter)
+    prns: getPrnViewData(request, isExporter)
   }
 }
 
 /**
- * Get PRN/PERN labels based on accreditation type
- * @param {(key: string) => string} localise - Localisation function
- * @param {boolean} isExporter - Whether accreditation is for exporter
- * @returns {object} PRN label properties
+ * Get PRN/PERN view data based on registration type and feature flag
+ * @param {Request} request
+ * @param {boolean} isExporter
  */
-function getPrnLabels(localise, isExporter) {
-  if (isExporter) {
-    return {
-      prnLabel: localise('registrations:perns'),
-      prnDescription: localise('registrations:pernsDescription'),
-      prnNotAvailable: localise('registrations:pernNotAvailable')
-    }
-  }
+function getPrnViewData(request, isExporter) {
+  const { t: localise } = request
+  const key = isExporter ? 'perns' : 'prns'
+
   return {
-    prnLabel: localise('registrations:prns'),
-    prnDescription: localise('registrations:prnsDescription'),
-    prnNotAvailable: localise('registrations:prnNotAvailable')
+    isEnabled: config.get('featureFlags.prns'),
+    description: localise(`registrations:${key}.description`),
+    link: {
+      href: request.localiseUrl(paths.prns.create),
+      text: localise(`registrations:${key}.createNew`)
+    },
+    notAvailable: localise(`registrations:${key}.notAvailable`),
+    title: localise(`registrations:${key}.title`)
   }
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { Request, ServerRoute } from '@hapi/hapi'
  */
