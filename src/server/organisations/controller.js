@@ -1,7 +1,9 @@
 import { capitalize } from 'lodash-es'
 
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 
 const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
@@ -46,13 +48,18 @@ function createTag(status) {
  * @param {string} id - Organisation ID
  * @param {object} registration - Registration data
  * @param {object | undefined} accreditation - Accreditation data
- * @returns {[{text: string},{html: string},{html: (string|string)},{html: string, classes: string}]} - Array of table cells
+ * @param {Record<string, { amount: number, availableAmount: number }>} wasteBalanceMap - Map of accreditationId to balance data
+ * @returns {Array<{text?: string, html?: string, classes?: string}>} - Array of table cells
  */
-function createRow(request, id, registration, accreditation) {
+function createRow(request, id, registration, accreditation, wasteBalanceMap) {
   const { t: localise } = request
   const registrationUrl = request.localiseUrl(
     `/organisations/${id}/registrations/${registration.id}`
   )
+
+  const accreditationId = registration.accreditationId
+  const wasteBalance = wasteBalanceMap?.[accreditationId]
+  const availableAmount = wasteBalance?.availableAmount
 
   return [
     { text: getDisplayMaterial(registration) },
@@ -63,6 +70,12 @@ function createRow(request, id, registration, accreditation) {
       html: createTag(
         accreditation?.status ?? localise('organisations:table:notAccredited')
       )
+    },
+    {
+      text:
+        availableAmount !== undefined && availableAmount !== null
+          ? formatTonnage(availableAmount)
+          : '-'
     },
     {
       html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
@@ -76,9 +89,15 @@ function createRow(request, id, registration, accreditation) {
  * @param {Request} request
  * @param {object} data - The organisation data
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
+ * @param {Record<string, { amount: number, availableAmount: number }>} wasteBalanceMap - Map of accreditationId to balance data
  * @returns {Array} Array of sites with their materials
  */
-function getRegistrationSites(request, data, wasteProcessingType) {
+function getRegistrationSites(
+  request,
+  data,
+  wasteProcessingType,
+  wasteBalanceMap
+) {
   const { t: localise } = request
 
   return data.registrations.reduce((prev, registration) => {
@@ -96,7 +115,13 @@ function getRegistrationSites(request, data, wasteProcessingType) {
       ? undefined
       : prev.find(({ name }) => name === registration.site?.address?.line1)
 
-    const row = createRow(request, data.id, registration, accreditation)
+    const row = createRow(
+      request,
+      data.id,
+      registration,
+      accreditation,
+      wasteBalanceMap
+    )
 
     return existingSite
       ? prev.map((site) =>
@@ -126,6 +151,11 @@ function getRegistrationSites(request, data, wasteProcessingType) {
               {
                 text: localise(
                   'organisations:table:site:headings:accreditationStatuses'
+                )
+              },
+              {
+                text: localise(
+                  'organisations:table:site:headings:availableBalance'
                 )
               },
               { text: '' }
@@ -161,16 +191,45 @@ export const controller = {
 
     const organisationName = organisationData.companyDetails.tradingName
 
+    const accreditationIds = organisationData.registrations
+      .filter((registration) => {
+        const accreditation = organisationData.accreditations.find(
+          ({ id }) => registration.accreditationId === id
+        )
+        return (
+          shouldRenderSite(registration, accreditation, 'reprocessor') ||
+          shouldRenderSite(registration, accreditation, 'exporter')
+        )
+      })
+      .map((registration) => registration.accreditationId)
+      .filter(Boolean)
+
+    const uniqueAccreditationIds = [...new Set(accreditationIds)]
+
+    let wasteBalanceMap = {}
+    if (uniqueAccreditationIds.length > 0) {
+      try {
+        wasteBalanceMap = await fetchWasteBalances(
+          uniqueAccreditationIds,
+          session.idToken
+        )
+      } catch (error) {
+        request.logger.error({ error }, 'Failed to fetch waste balances')
+      }
+    }
+
     const reprocessorSites = getRegistrationSites(
       request,
       organisationData,
-      'reprocessor'
+      'reprocessor',
+      wasteBalanceMap
     )
 
     const exporterSites = getRegistrationSites(
       request,
       organisationData,
-      'exporter'
+      'exporter',
+      wasteBalanceMap
     )
 
     const hasReprocessorSites = reprocessorSites.length > 0
