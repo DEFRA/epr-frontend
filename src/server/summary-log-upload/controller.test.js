@@ -1,9 +1,14 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import * as cheerio from 'cheerio'
 import { beforeEach, describe, expect, vi } from 'vitest'
+
+vi.mock(
+  import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
+)
 
 vi.mock(
   import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
@@ -15,6 +20,11 @@ vi.mock(
     })
   })
 )
+
+const mockOrganisationData = {
+  id: '123',
+  registrations: [{ id: '456', status: 'approved' }]
+}
 
 const mockAuth = {
   strategy: 'session',
@@ -36,6 +46,9 @@ describe('#summaryLogUploadController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchOrganisationModule.fetchOrganisationById).mockResolvedValue(
+      mockOrganisationData
+    )
   })
 
   it('should provide expected response', async ({ server }) => {
@@ -203,6 +216,32 @@ describe('#summaryLogUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe('/logged-out')
+    })
+  })
+
+  describe('registration validation', () => {
+    it('should return 404 when registration not found for organisation', async ({
+      server
+    }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/nonexistent-registration/summary-logs/upload`,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('should not call initiateSummaryLogUpload when registration not found', async ({
+      server
+    }) => {
+      await server.inject({
+        method: 'GET',
+        url: `/organisations/${organisationId}/registrations/nonexistent-registration/summary-logs/upload`,
+        auth: mockAuth
+      })
+
+      expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
     })
   })
 })

@@ -1,3 +1,6 @@
+import Boom from '@hapi/boom'
+
+import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 
 /**
@@ -9,6 +12,20 @@ export const summaryLogUploadController = {
     const { organisationId, registrationId } = request.params
 
     const session = request.auth.credentials
+
+    const organisationData = await fetchOrganisationById(
+      organisationId,
+      session.idToken
+    )
+
+    const registration = organisationData.registrations?.find(
+      ({ id }) => id === registrationId
+    )
+
+    if (!registration) {
+      request.logger.warn({ registrationId }, 'Registration not found')
+      throw Boom.notFound('Registration not found')
+    }
 
     try {
       const { uploadUrl } = await initiateSummaryLogUpload({
