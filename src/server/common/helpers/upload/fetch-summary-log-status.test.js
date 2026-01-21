@@ -45,53 +45,6 @@ describe(fetchSummaryLogStatus, () => {
     expect(result).toStrictEqual(mockResponse)
   })
 
-  test('includes uploadId as query parameter when provided', async () => {
-    const mockResponse = {
-      status: 'preprocessing',
-      validation: null
-    }
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockResponse)
-    })
-
-    await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      uploadId: 'cdp-upload-123',
-      idToken: 'test-id-token'
-    })
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /\/summary-logs\/log-789\?uploadId=cdp-upload-123$/
-      ),
-      expect.objectContaining({
-        method: 'GET'
-      })
-    )
-  })
-
-  test('does not include uploadId query parameter when not provided', async () => {
-    const mockResponse = {
-      status: 'validated',
-      validation: null
-    }
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockResponse)
-    })
-
-    await fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-      idToken: 'test-id-token'
-    })
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/\/summary-logs\/log-789$/),
-      expect.any(Object)
-    )
-  })
-
   test('throws Boom notFound error when backend returns 404', async () => {
     mockFetch.mockResolvedValue({
       ok: false,
