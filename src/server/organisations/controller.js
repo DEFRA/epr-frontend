@@ -81,30 +81,29 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
 }
 
 /**
- * Organises accreditations by site for a given waste processing type
+ * Organises registrations by site for a given waste processing type
  * @param {Request} request
- * @param {object} data - The organisation data
+ * @param {string} organisationId - The organisation ID
+ * @param {Array<{registration: object, accreditation: object | undefined}>} registrationsWithAccreditations - Pre-joined registration and accreditation data
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @param {Record<string, { amount: number, availableAmount: number }>} wasteBalanceMap - Map of accreditationId to balance data
  * @returns {Array} Array of sites with their materials
  */
 function getRegistrationSites(
   request,
-  data,
+  organisationId,
+  registrationsWithAccreditations,
   wasteProcessingType,
   wasteBalanceMap
 ) {
   const { t: localise } = request
 
-  return data.registrations.reduce((prev, registration) => {
-    const accreditation = data.accreditations.find(
-      ({ id }) => registration.accreditationId === id
-    )
+  const filtered = registrationsWithAccreditations.filter(
+    ({ registration }) =>
+      registration.wasteProcessingType === wasteProcessingType
+  )
 
-    if (!shouldRenderSite(registration, accreditation, wasteProcessingType)) {
-      return prev
-    }
-
+  return filtered.reduce((prev, { registration, accreditation }) => {
     const isExporter = registration.wasteProcessingType === 'exporter'
 
     const existingSite = isExporter
@@ -113,7 +112,7 @@ function getRegistrationSites(
 
     const row = createRow(
       request,
-      data.id,
+      organisationId,
       registration,
       accreditation,
       wasteBalanceMap
@@ -187,20 +186,28 @@ export const controller = {
 
     const organisationName = organisationData.companyDetails.tradingName
 
-    const accreditationIds = organisationData.registrations
-      .filter((registration) => {
-        const accreditation = organisationData.accreditations.find(
-          ({ id }) => registration.accreditationId === id
-        )
-        return (
+    const accreditationById = new Map(
+      organisationData.accreditations.map((acc) => [acc.id, acc])
+    )
+
+    const displayableRegistrations = organisationData.registrations
+      .map((registration) => ({
+        registration,
+        accreditation: accreditationById.get(registration.accreditationId)
+      }))
+      .filter(
+        ({ registration, accreditation }) =>
           shouldRenderSite(registration, accreditation, 'reprocessor') ||
           shouldRenderSite(registration, accreditation, 'exporter')
-        )
-      })
-      .map((registration) => registration.accreditationId)
-      .filter(Boolean)
+      )
 
-    const uniqueAccreditationIds = [...new Set(accreditationIds)]
+    const uniqueAccreditationIds = [
+      ...new Set(
+        displayableRegistrations
+          .map(({ registration }) => registration.accreditationId)
+          .filter(Boolean)
+      )
+    ]
 
     let wasteBalanceMap = {}
     if (uniqueAccreditationIds.length > 0) {
@@ -216,14 +223,16 @@ export const controller = {
 
     const reprocessorSites = getRegistrationSites(
       request,
-      organisationData,
+      organisationData.id,
+      displayableRegistrations,
       'reprocessor',
       wasteBalanceMap
     )
 
     const exporterSites = getRegistrationSites(
       request,
-      organisationData,
+      organisationData.id,
+      displayableRegistrations,
       'exporter',
       wasteBalanceMap
     )
