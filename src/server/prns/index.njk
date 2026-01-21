@@ -1,0 +1,121 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <div class="govuk-body" data-testid="app-page-body">
+
+        <h1 class="govuk-heading-xl">
+          {% if siteName %}
+            <span class="govuk-caption-xl">{{ siteName }}</span>
+          {% endif %}
+          {{ material }}
+        </h1>
+
+        <h2 class="govuk-heading-l">
+          <span class="govuk-caption-xl">{{ pageTitle }}</span>
+        </h2>
+
+        {% set errorList = [] %}
+        {% for key, value in errors %}
+          {% set _ = errorList.push({ text: value, href: "#" + key }) %}
+        {% endfor %}
+
+        {% if (errorList | selectattr('text') | length) > 0 %}
+          {{ govukErrorSummary({
+            titleText: "There is a problem",
+            errorList: errorList
+          }) }}
+        {% endif %}
+
+        <form method="POST">
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          
+          {{ govukInput({
+            label: {
+              text: "What is the tonnage for this PRN?",
+              classes: "govuk-label--m"
+            },
+            hint: {
+              text: "Enter a whole number without decimal places"
+            },
+            value: answers.tonnage,
+            errorMessage: { text: errors.tonnage } if errors.tonnage,
+            classes: "govuk-input--width-5",
+            id: "tonnage",
+            name: "tonnage",
+            suffix: {
+              text: "tonnes"
+            },
+            spellcheck: false
+          }) }}
+
+          {{ govukInsetText({
+            text: "Your available waste balance is " + wasteBalance + " tonnes."
+          }) }}
+
+          {{ govukSelect({
+            id: "issuee",
+            name: "issuee",
+            value: answers.issuee,
+            errorMessage: { text: errors.issuee } if errors.issuee,
+            label: {
+              text: "Who will this PRN be issued to?",
+              classes: "govuk-label--m"
+            },
+            hint: {
+              text: "Select the producer or compliance scheme from the list"
+            },
+            items: [{ value: "", text: "" }].concat(producers)
+          }) }}
+
+          {# TODO extract text and localise #}
+          {% set detailsHtml = "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with your regulator." %}
+          {% set detailsHtml = detailsHtml + "<br/><br/>If the buyer you're looking for is not appearing, check that:" %}
+          {% set detailsHtml = detailsHtml + '<ul class="govuk-list govuk-list--bullet govuk-!-margin-top-1">' %}
+          {% set detailsHtml = detailsHtml + "<li>you have spelled the name correctly</li>" %}
+          {% set detailsHtml = detailsHtml + "<li>they are registered with your regulator</li>" %}
+          {% set detailsHtml = detailsHtml + "</ul>" %}              
+
+          {{ govukDetails({
+            summaryText: "Can’t find the producer or compliance scheme?",
+            html: detailsHtml
+          }) }}
+
+          {{ govukCharacterCount({
+            name: "issuerNotes",
+            id: "issuerNotes",
+            maxlength: 200,
+            value: answers.issuerNotes,
+            errorMessage: { text: errors.issuerNotes } if errors.issuerNotes,
+            label: {
+              text: "Add issuer notes (optional)",
+              classes: "govuk-label--m"
+            }
+          }) }}
+
+          {{ govukButton({
+            text: "Continue"
+          }) }}
+        </form>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
