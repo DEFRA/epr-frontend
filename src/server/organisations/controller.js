@@ -71,7 +71,8 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
       )
     },
     {
-      text: formatTonnage(wasteBalance?.availableAmount)
+      text: formatTonnage(wasteBalance?.availableAmount),
+      format: 'numeric'
     },
     {
       html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
@@ -151,7 +152,8 @@ function getRegistrationSites(
               {
                 text: localise(
                   'organisations:table:site:headings:availableBalance'
-                )
+                ),
+                format: 'numeric'
               },
               { text: '' }
             ],
