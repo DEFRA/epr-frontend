@@ -59,7 +59,6 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
 
   const accreditationId = registration.accreditationId
   const wasteBalance = wasteBalanceMap?.[accreditationId]
-  const availableAmount = wasteBalance?.availableAmount
 
   return [
     { text: getDisplayMaterial(registration) },
@@ -72,10 +71,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
       )
     },
     {
-      text:
-        availableAmount !== undefined && availableAmount !== null
-          ? formatTonnage(availableAmount)
-          : '-'
+      text: formatTonnage(wasteBalance?.availableAmount)
     },
     {
       html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
