@@ -4,7 +4,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * Fetches waste balance data for given accreditation IDs from EPR Backend
  * @param {string[]} accreditationIds - Array of accreditation IDs
  * @param {string} idToken - JWT ID token for authorization
- * @returns {Promise<Record<string, { amount: number, availableAmount: number }>>} Map of accreditationId to balance data
+ * @returns {Promise<WasteBalanceMap>} Map of accreditationId to balance data
  */
 async function fetchWasteBalances(accreditationIds, idToken) {
   if (!accreditationIds || accreditationIds.length === 0) {
@@ -22,3 +22,7 @@ async function fetchWasteBalances(accreditationIds, idToken) {
 }
 
 export { fetchWasteBalances }
+
+/**
+ * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
+ */

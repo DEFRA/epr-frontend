@@ -48,7 +48,7 @@ function createTag(status) {
  * @param {string} id - Organisation ID
  * @param {object} registration - Registration data
  * @param {object | undefined} accreditation - Accreditation data
- * @param {Record<string, { amount: number, availableAmount: number }>} wasteBalanceMap - Map of accreditationId to balance data
+ * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditationId to balance data
  * @returns {Array<{text?: string, html?: string, classes?: string}>} - Array of table cells
  */
 function createRow(request, id, registration, accreditation, wasteBalanceMap) {
@@ -86,7 +86,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
  * @param {string} organisationId - The organisation ID
  * @param {Array<{registration: object, accreditation: object | undefined}>} registrationsWithAccreditations - Pre-joined registration and accreditation data
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
- * @param {Record<string, { amount: number, availableAmount: number }>} wasteBalanceMap - Map of accreditationId to balance data
+ * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditationId to balance data
  * @returns {Array} Array of sites with their materials
  */
 function getRegistrationSites(
@@ -280,4 +280,5 @@ export const controller = {
 
 /**
  * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
  */
