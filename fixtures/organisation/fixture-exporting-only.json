@@ -105,6 +105,7 @@
       "orgName": "Global Exports Ltd",
       "formSubmissionTime": "2025-05-10T08:15:00.000Z",
       "material": "glass",
+      "glassRecyclingProcess": ["glass_re_melt"],
       "wasteProcessingType": "exporter",
       "cbduNumber": "CBDU100003",
       "exportPorts": ["Dover"],
@@ -286,6 +287,7 @@
       "submittedToRegulator": "ea",
       "orgName": "Global Exports Ltd",
       "material": "glass",
+      "glassRecyclingProcess": ["glass_re_melt"],
       "wasteProcessingType": "exporter",
       "prnIssuance": {
         "tonnageBand": "1001_to_5000",

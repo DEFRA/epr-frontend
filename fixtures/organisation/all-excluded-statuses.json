@@ -93,6 +93,7 @@
       "id": "acc-rejected-001",
       "wasteProcessingType": "exporter",
       "material": "glass",
+      "glassRecyclingProcess": ["glass_other"],
       "statusHistory": [
         {
           "status": "created",
