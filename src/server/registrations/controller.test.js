@@ -3,7 +3,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, getByText, within } from '@testing-library/dom'
+import { getByRole, within } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -442,11 +442,12 @@ describe('#accreditationDashboardController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const main = getByRole(body, 'main')
-        const prnCard = getByText(main, 'PRNs').closest('.govuk-summary-card')
-        const card = within(prnCard)
+        const prnCard = getByRole(body, 'heading', {
+          name: 'PRNs',
+          level: 3
+        }).closest('.govuk-summary-card')
 
-        card.getByText('PRNs')
+        const card = within(prnCard)
         card.getByText('Raise, issue and manage PRNs.')
 
         expect(
@@ -497,16 +498,20 @@ describe('#accreditationDashboardController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const main = getByRole(body, 'main')
-          const prnCard = getByText(main, title).closest('.govuk-summary-card')
+          const prnCard = getByRole(body, 'heading', {
+            name: title,
+            level: 3
+          }).closest('.govuk-summary-card')
+
           const card = within(prnCard)
 
+          card.getByText(`Raise, issue and manage ${title}.`)
           card.getByText(title)
           card.getByText(description)
 
-          const link = card.getByRole('link', { name: linkText })
-
-          expect(link.getAttribute('href')).toBe('/prns/create')
+          expect(
+            card.getByRole('link', { name: linkText }).getAttribute('href')
+          ).toBe('/prns/create')
         }
       )
     })
