@@ -347,6 +347,80 @@ describe('#accreditationDashboardController', () => {
     })
   })
 
+  describe('glass recycling process display', () => {
+    it('should display "Glass remelt" in page title for glass_re_melt registration', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('title').text()).toMatch(/Glass remelt/)
+    })
+
+    it('should display "Glass remelt" in heading for glass_re_melt registration', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('h1').text()).toContain('Glass remelt')
+    })
+
+    it('should display "Glass other" in page title for glass_other registration', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001b-glass-other-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('title').text()).toMatch(/Glass other/)
+    })
+
+    it('should display "Glass other" in heading for glass_other registration', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001b-glass-other-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('h1').text()).toContain('Glass other')
+    })
+  })
+
   describe('edge cases', () => {
     it('should display Unknown site when site address is missing', async ({
       server

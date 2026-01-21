@@ -67,9 +67,59 @@
         ]
       },
       "material": "glass",
+      "glassRecyclingProcess": ["glass_re_melt"],
       "wasteProcessingType": "reprocessor",
       "accreditationId": "acc-001-glass-approved",
       "cbduNumber": "CBDU001234",
+      "submitterContactDetails": {
+        "fullName": "Luke Skywalker",
+        "email": "luke.skywalker@starwars.com",
+        "jobTitle": "Operations Manager",
+        "phone": "1234567890"
+      },
+      "noticeAddress": {
+        "line1": "Manchester Glass Recycling Facility",
+        "town": "Manchester",
+        "postcode": "M1 1AA"
+      }
+    },
+    {
+      "id": "reg-001b-glass-other-approved",
+      "status": "approved",
+      "registrationNumber": "REG001235",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "formSubmissionTime": "2025-08-20T19:34:44.944Z",
+      "site": {
+        "address": {
+          "line1": "Manchester Glass Recycling Facility",
+          "town": "Manchester",
+          "postcode": "M1 1AA"
+        },
+        "gridReference": "SJ8398",
+        "siteCapacity": [
+          {
+            "material": "glass",
+            "siteCapacityInTonnes": 15000,
+            "siteCapacityTimescale": "yearly"
+          }
+        ]
+      },
+      "material": "glass",
+      "glassRecyclingProcess": ["glass_other"],
+      "wasteProcessingType": "reprocessor",
+      "accreditationId": "acc-001b-glass-other-approved",
+      "cbduNumber": "CBDU001235",
       "submitterContactDetails": {
         "fullName": "Luke Skywalker",
         "email": "luke.skywalker@starwars.com",
@@ -403,9 +453,54 @@
         }
       },
       "material": "glass",
+      "glassRecyclingProcess": ["glass_re_melt"],
       "wasteProcessingType": "reprocessor",
       "prnIssuance": {
         "tonnageBand": "over_10000",
+        "signatories": [
+          {
+            "fullName": "Yoda",
+            "email": "yoda@starwars.com",
+            "jobTitle": "PRN Signatory",
+            "phone": "1234567890"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Yoda",
+        "email": "yoda@starwars.com",
+        "jobTitle": "PRN Signatory",
+        "phone": "1234567890"
+      }
+    },
+    {
+      "id": "acc-001b-glass-other-approved",
+      "accreditationNumber": "ACC001235",
+      "status": "approved",
+      "formSubmissionTime": "2025-08-25T10:15:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-08-20T19:34:44.944Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-08-25T10:15:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "site": {
+        "address": {
+          "line1": "Manchester Glass Recycling Facility",
+          "postcode": "M1 1AA"
+        }
+      },
+      "material": "glass",
+      "glassRecyclingProcess": ["glass_other"],
+      "wasteProcessingType": "reprocessor",
+      "prnIssuance": {
+        "tonnageBand": "up_to_500",
         "signatories": [
           {
             "fullName": "Yoda",
@@ -622,6 +717,7 @@
         }
       },
       "material": "glass",
+      "glassRecyclingProcess": ["glass_other"],
       "wasteProcessingType": "reprocessor",
       "prnIssuance": {
         "tonnageBand": "up_to_500",
