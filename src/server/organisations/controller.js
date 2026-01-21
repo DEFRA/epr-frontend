@@ -1,6 +1,6 @@
 import { capitalize } from 'lodash-es'
 
-import { getDisplayMaterial } from '#server/common/helpers/materials/format-material-name.js'
+import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 
