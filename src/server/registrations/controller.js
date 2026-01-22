@@ -1,6 +1,8 @@
 import { config } from '#config/config.js'
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { paths } from '#server/paths.js'
 import Boom from '@hapi/boom'
@@ -34,11 +36,19 @@ export const controller = {
       ({ id }) => id === registration.accreditationId
     )
 
+    const wasteBalance = await getWasteBalance(
+      organisationId,
+      registration.accreditationId,
+      session.idToken,
+      request.logger
+    )
+
     const viewModel = buildViewModel({
       request,
       organisationId,
       accreditation,
-      registration
+      registration,
+      wasteBalance
     })
 
     return h.view('registrations/index', viewModel)
@@ -52,13 +62,15 @@ export const controller = {
  * @param {string} params.organisationId - Organisation ID
  * @param {object | undefined} params.accreditation - Accreditation data
  * @param {object} params.registration - Registration data
+ * @param {WasteBalance | null} params.wasteBalance - Waste balance data
  * @returns {object} View model
  */
 function buildViewModel({
   request,
   organisationId,
   accreditation,
-  registration
+  registration,
+  wasteBalance
 }) {
   const { t: localise } = request
   const isExporter = registration.wasteProcessingType === 'exporter'
@@ -96,7 +108,8 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    prns: getPrnViewData(request, isExporter)
+    prns: getPrnViewData(request, isExporter),
+    wasteBalance: getWasteBalanceViewData(wasteBalance, localise, isExporter)
   }
 }
 
@@ -121,6 +134,48 @@ function getPrnViewData(request, isExporter) {
   }
 }
 
+async function getWasteBalance(
+  organisationId,
+  accreditationId,
+  idToken,
+  logger
+) {
+  if (!accreditationId) {
+    return null
+  }
+
+  try {
+    const wasteBalanceMap = await fetchWasteBalances(
+      organisationId,
+      [accreditationId],
+      idToken
+    )
+    return wasteBalanceMap[accreditationId] ?? null
+  } catch (error) {
+    logger.error({ error }, 'Failed to fetch waste balance')
+    return null
+  }
+}
+
+function getWasteBalanceViewData(wasteBalance, localise, isExporter) {
+  const hasWasteBalance = wasteBalance !== null
+  const noteType = isExporter ? 'perns' : 'prns'
+
+  return {
+    hasWasteBalance,
+    availableAmount: hasWasteBalance
+      ? formatTonnage(wasteBalance.availableAmount)
+      : null,
+    title: hasWasteBalance
+      ? localise('registrations:wasteBalance.available.title')
+      : localise('registrations:wasteBalance.notAvailable.title'),
+    description: hasWasteBalance
+      ? localise(`registrations:wasteBalance.available.description.${noteType}`)
+      : localise('registrations:wasteBalance.notAvailable.description')
+  }
+}
+
 /**
  * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */
