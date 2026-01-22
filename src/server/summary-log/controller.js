@@ -20,6 +20,8 @@ import {
 } from '#server/common/constants/validation-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
@@ -211,12 +213,14 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
  * @param {string} context.organisationId - Organisation ID
+ * @param {number} [context.wasteBalance] - Available waste balance in tonnes
  * @returns {object} Hapi view response
  */
-const renderSuccessView = (h, localise, { organisationId }) => {
+const renderSuccessView = (h, localise, { organisationId, wasteBalance }) => {
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: localise('summary-log:successPageTitle'),
-    organisationId
+    organisationId,
+    wasteBalance
   })
 }
 
@@ -420,6 +424,49 @@ const getUploadUrl = async (
 }
 
 /**
+ * Gets waste balance data for a submitted summary log
+ * @param {string} status - Current summary log status
+ * @param {string} organisationId - Organisation ID
+ * @param {string} registrationId - Registration ID
+ * @param {string} idToken - JWT ID token for authorization
+ * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
+ */
+const getWasteBalanceData = async (
+  status,
+  organisationId,
+  registrationId,
+  idToken
+) => {
+  if (status !== summaryLogStatuses.submitted) {
+    return {}
+  }
+
+  const { registration } = await getRegistrationWithAccreditation(
+    organisationId,
+    registrationId,
+    idToken
+  )
+
+  if (!registration?.accreditationId) {
+    return {}
+  }
+
+  const wasteBalances = await fetchWasteBalances(
+    organisationId,
+    [registration.accreditationId],
+    idToken
+  )
+
+  const balance = wasteBalances[registration.accreditationId]
+
+  if (!balance) {
+    return {}
+  }
+
+  return { wasteBalance: balance.availableAmount }
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const summaryLogUploadProgressController = {
@@ -451,6 +498,13 @@ export const summaryLogUploadProgressController = {
       session.idToken
     )
 
+    const { wasteBalance } = await getWasteBalanceData(
+      status,
+      organisationId,
+      registrationId,
+      session.idToken
+    )
+
     return renderViewForStatus({
       h,
       localise,
@@ -464,7 +518,8 @@ export const summaryLogUploadProgressController = {
       summaryLogId,
       pollUrl,
       uploadUrl,
-      cancelUrl
+      cancelUrl,
+      wasteBalance
     })
   }
 }
