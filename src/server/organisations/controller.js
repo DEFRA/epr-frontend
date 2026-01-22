@@ -205,9 +205,14 @@ export const controller = {
 
     let wasteBalanceMap = {}
     if (displayableRegistrations.length > 0) {
+      const accreditationIds = displayableRegistrations
+        .map(({ registration }) => registration.accreditationId)
+        .filter(Boolean)
+
       try {
         wasteBalanceMap = await fetchWasteBalances(
           organisationId,
+          accreditationIds,
           session.idToken
         )
       } catch (error) {
