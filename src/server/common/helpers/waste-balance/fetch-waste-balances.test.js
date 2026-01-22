@@ -5,6 +5,18 @@ import { fetchWasteBalances } from './fetch-waste-balances.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+const MOCK_TRACE_ID = 'mock-trace-id-1'
+
+vi.mock(import('@defra/hapi-tracing'), () => ({
+  withTraceId: vi.fn((headerName, headers = {}) => {
+    headers[headerName] = MOCK_TRACE_ID
+    return headers
+  }),
+  tracing: {
+    plugin: {}
+  }
+}))
+
 describe(fetchWasteBalances, () => {
   const organisationId = 'org-123'
   const accreditationIds = ['acc-001', 'acc-002']
@@ -50,7 +62,7 @@ describe(fetchWasteBalances, () => {
     )
   })
 
-  test('includes Authorization header with Bearer token', async () => {
+  test('includes Authorization and tracing headers', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({})
@@ -64,7 +76,8 @@ describe(fetchWasteBalances, () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer test-id-token'
+          Authorization: 'Bearer test-id-token',
+          'x-cdp-request-id': MOCK_TRACE_ID
         }
       })
     )
