@@ -44,7 +44,7 @@ describe(fetchWasteBalances, () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(
-        /\/v1\/organisations\/org-123\/waste-balances\?accreditationIds=acc-001&accreditationIds=acc-002$/
+        /\/v1\/organisations\/org-123\/waste-balances\?accreditationIds=acc-001,acc-002$/
       ),
       expect.any(Object)
     )
@@ -86,11 +86,7 @@ describe(fetchWasteBalances, () => {
     await fetchWasteBalances(organisationId, ['acc/001', 'acc&002'], idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('accreditationIds=acc%2F001'),
-      expect.any(Object)
-    )
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('accreditationIds=acc%26002'),
+      expect.stringContaining('accreditationIds=acc%2F001,acc%26002'),
       expect.any(Object)
     )
   })

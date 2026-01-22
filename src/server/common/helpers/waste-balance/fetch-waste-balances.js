@@ -12,11 +12,8 @@ async function fetchWasteBalances(organisationId, accreditationIds, idToken) {
     return {}
   }
 
-  const queryString = accreditationIds
-    .map((id) => `accreditationIds=${encodeURIComponent(id)}`)
-    .join('&')
-
-  const path = `/v1/organisations/${organisationId}/waste-balances?${queryString}`
+  const encodedIds = accreditationIds.map(encodeURIComponent).join(',')
+  const path = `/v1/organisations/${organisationId}/waste-balances?accreditationIds=${encodedIds}`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',
