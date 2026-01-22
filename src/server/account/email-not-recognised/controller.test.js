@@ -8,8 +8,6 @@ const mockAuth = {
   credentials: {
     profile: {
       id: 'user-123',
-      firstName: 'Test',
-      lastName: 'User',
       email: 'test@example.com'
     },
     idToken: 'mock-id-token'
