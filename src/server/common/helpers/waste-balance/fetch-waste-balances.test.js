@@ -5,43 +5,45 @@ import { fetchWasteBalances } from './fetch-waste-balances.js'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
+const MOCK_TRACE_ID = 'mock-trace-id-1'
+
+vi.mock(import('@defra/hapi-tracing'), () => ({
+  withTraceId: vi.fn((headerName, headers = {}) => {
+    headers[headerName] = MOCK_TRACE_ID
+    return headers
+  }),
+  tracing: {
+    plugin: {}
+  }
+}))
+
 describe(fetchWasteBalances, () => {
   const organisationId = 'org-123'
-  const accreditationId1 = 'acc-456'
-  const accreditationId2 = 'acc-789'
+  const accreditationIds = ['acc-001', 'acc-002']
   const idToken = 'test-id-token'
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  test('returns empty object when no accreditation IDs provided', async () => {
-    const result = await fetchWasteBalances(organisationId, [], idToken)
-
-    expect(result).toStrictEqual({})
-    expect(mockFetch).not.toHaveBeenCalled()
-  })
-
   test('returns waste balance data when backend responds successfully', async () => {
-    const mockBalanceData = {
-      [accreditationId1]: {
-        amount: 1000,
-        availableAmount: 750
-      }
+    const mockWasteBalanceData = {
+      'acc-001': { amount: 1000, availableAmount: 750 },
+      'acc-002': { amount: 500, availableAmount: 500 }
     }
 
     mockFetch.mockResolvedValue({
       ok: true,
-      json: vi.fn().mockResolvedValue(mockBalanceData)
+      json: vi.fn().mockResolvedValue(mockWasteBalanceData)
     })
 
     const result = await fetchWasteBalances(
       organisationId,
-      [accreditationId1],
+      accreditationIds,
       idToken
     )
 
-    expect(result).toStrictEqual(mockBalanceData)
+    expect(result).toStrictEqual(mockWasteBalanceData)
   })
 
   test('calls backend with correct path including organisation ID and accreditation IDs', async () => {
@@ -50,27 +52,23 @@ describe(fetchWasteBalances, () => {
       json: vi.fn().mockResolvedValue({})
     })
 
-    await fetchWasteBalances(
-      organisationId,
-      [accreditationId1, accreditationId2],
-      idToken
-    )
+    await fetchWasteBalances(organisationId, accreditationIds, idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(
-        /\/v1\/organisations\/org-123\/waste-balances\?accreditationIds=acc-456,acc-789$/
+        /\/v1\/organisations\/org-123\/waste-balances\?accreditationIds=acc-001,acc-002$/
       ),
       expect.any(Object)
     )
   })
 
-  test('includes Authorization header with Bearer token', async () => {
+  test('includes Authorization and tracing headers', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({})
     })
 
-    await fetchWasteBalances(organisationId, [accreditationId1], idToken)
+    await fetchWasteBalances(organisationId, accreditationIds, idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
@@ -78,28 +76,30 @@ describe(fetchWasteBalances, () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer test-id-token'
+          Authorization: 'Bearer test-id-token',
+          'x-cdp-request-id': MOCK_TRACE_ID
         }
       })
     )
   })
 
-  test('encodes accreditation IDs in URL', async () => {
+  test('returns empty object when accreditationIds array is empty', async () => {
+    const result = await fetchWasteBalances(organisationId, [], idToken)
+
+    expect(result).toStrictEqual({})
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  test('encodes URL accreditation IDs with special characters', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({})
     })
 
-    const accreditationWithSpecialChars = 'acc/with+special'
-
-    await fetchWasteBalances(
-      organisationId,
-      [accreditationWithSpecialChars],
-      idToken
-    )
+    await fetchWasteBalances(organisationId, ['acc/001', 'acc&002'], idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('acc%2Fwith%2Bspecial'),
+      expect.stringContaining('accreditationIds=acc%2F001,acc%26002'),
       expect.any(Object)
     )
   })
@@ -113,7 +113,7 @@ describe(fetchWasteBalances, () => {
     })
 
     await expect(
-      fetchWasteBalances(organisationId, [accreditationId1], idToken)
+      fetchWasteBalances(organisationId, accreditationIds, idToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }

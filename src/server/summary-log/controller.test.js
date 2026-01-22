@@ -1010,6 +1010,40 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).not.toContain('Your updated waste balance')
     })
 
+    it('status: submitted - should handle waste balance fetch failure gracefully', async ({
+      server
+    }) => {
+      const accreditationId = 'accreditation-id-456'
+
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submitted,
+        accreditationNumber: 'ACC-2025-001'
+      })
+
+      getRegistrationWithAccreditation.mockResolvedValueOnce({
+        organisationData: { id: organisationId },
+        registration: { id: registrationId, accreditationId },
+        accreditation: {
+          id: accreditationId,
+          accreditationNumber: 'ACC-2025-001'
+        }
+      })
+
+      fetchWasteBalances.mockRejectedValueOnce(
+        new Error('Waste balance service unavailable')
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Summary log uploaded')
+      expect(result).not.toContain('Your updated waste balance')
+    })
+
     it('status: submitted - should display zero waste balance correctly', async ({
       server
     }) => {

@@ -429,41 +429,48 @@ const getUploadUrl = async (
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} idToken - JWT ID token for authorization
+ * @param {object} logger - Request logger
  * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
  */
 const getWasteBalanceData = async (
   status,
   organisationId,
   registrationId,
-  idToken
+  idToken,
+  logger
 ) => {
   if (status !== summaryLogStatuses.submitted) {
     return {}
   }
 
-  const { registration } = await getRegistrationWithAccreditation(
-    organisationId,
-    registrationId,
-    idToken
-  )
+  try {
+    const { registration } = await getRegistrationWithAccreditation(
+      organisationId,
+      registrationId,
+      idToken
+    )
 
-  if (!registration?.accreditationId) {
+    if (!registration?.accreditationId) {
+      return {}
+    }
+
+    const wasteBalances = await fetchWasteBalances(
+      organisationId,
+      [registration.accreditationId],
+      idToken
+    )
+
+    const balance = wasteBalances[registration.accreditationId]
+
+    if (!balance) {
+      return {}
+    }
+
+    return { wasteBalance: balance.availableAmount }
+  } catch (error) {
+    logger.error({ error }, 'Failed to fetch waste balance data')
     return {}
   }
-
-  const wasteBalances = await fetchWasteBalances(
-    organisationId,
-    [registration.accreditationId],
-    idToken
-  )
-
-  const balance = wasteBalances[registration.accreditationId]
-
-  if (!balance) {
-    return {}
-  }
-
-  return { wasteBalance: balance.availableAmount }
 }
 
 /**
@@ -502,7 +509,8 @@ export const summaryLogUploadProgressController = {
       status,
       organisationId,
       registrationId,
-      session.idToken
+      session.idToken,
+      request.logger
     )
 
     return renderViewForStatus({
