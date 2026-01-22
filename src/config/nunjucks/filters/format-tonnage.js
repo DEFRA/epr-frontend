@@ -9,7 +9,7 @@ export function formatTonnage(value, locale = 'en-GB') {
   }
 
   const formatter = new Intl.NumberFormat(locale, {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
 

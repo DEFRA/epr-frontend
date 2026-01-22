@@ -3,8 +3,8 @@ import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 
 describe('#formatTonnage', () => {
   describe('with defaults', () => {
-    test('formats whole numbers with thousand separators', () => {
-      expect(formatTonnage(1000)).toBe('1,000')
+    test('formats whole numbers with thousand separators and 2 decimal places', () => {
+      expect(formatTonnage(1000)).toBe('1,000.00')
     })
 
     test('formats decimal numbers with up to 2 decimal places', () => {
@@ -16,7 +16,7 @@ describe('#formatTonnage', () => {
     })
 
     test('formats zero correctly', () => {
-      expect(formatTonnage(0)).toBe('0')
+      expect(formatTonnage(0)).toBe('0.00')
     })
 
     test('returns dash for null value', () => {
