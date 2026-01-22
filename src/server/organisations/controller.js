@@ -82,6 +82,75 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
 }
 
 /**
+ * Creates table headers for registration sites
+ * @param {(key: string) => string} localise - Translation function
+ * @returns {Array} Array of header objects
+ */
+function createTableHeaders(localise) {
+  return [
+    { text: localise('organisations:table:site:headings:materials') },
+    {
+      text: localise('organisations:table:site:headings:registrationStatuses')
+    },
+    {
+      text: localise('organisations:table:site:headings:accreditationStatuses')
+    },
+    {
+      text: localise('organisations:table:site:headings:availableBalance'),
+      format: 'numeric'
+    },
+    { text: '' }
+  ]
+}
+
+/**
+ * Gets the site name for a registration
+ * @param {object} registration - Registration data
+ * @param {(key: string) => string} localise - Translation function
+ * @returns {string | null} Site name or null for exporters
+ */
+function getSiteName(registration, localise) {
+  if (registration.wasteProcessingType === 'exporter') {
+    return null
+  }
+  return (
+    registration.site?.address?.line1 ??
+    localise('organisations:table:site:unknown')
+  )
+}
+
+/**
+ * Adds a row to an existing site or creates a new site entry
+ * @param {Array} sites - Current sites array
+ * @param {object} registration - Registration data
+ * @param {Array} row - Row data to add
+ * @param {(key: string) => string} localise - Translation function
+ * @returns {Array} Updated sites array
+ */
+function addRowToSites(sites, registration, row, localise) {
+  const siteName = getSiteName(registration, localise)
+  const existingSite =
+    siteName !== null ? sites.find(({ name }) => name === siteName) : undefined
+
+  if (existingSite) {
+    return sites.map((site) =>
+      site.name === existingSite.name
+        ? { ...site, rows: [...site.rows, row] }
+        : site
+    )
+  }
+
+  return [
+    ...sites,
+    {
+      name: siteName,
+      head: createTableHeaders(localise),
+      rows: [row]
+    }
+  ]
+}
+
+/**
  * Organises registrations by site for a given waste processing type
  * @param {Request} request
  * @param {string} organisationId - The organisation ID
@@ -104,13 +173,7 @@ function getRegistrationSites(
       registration.wasteProcessingType === wasteProcessingType
   )
 
-  return filtered.reduce((prev, { registration, accreditation }) => {
-    const isExporter = registration.wasteProcessingType === 'exporter'
-
-    const existingSite = isExporter
-      ? undefined
-      : prev.find(({ name }) => name === registration.site?.address?.line1)
-
+  return filtered.reduce((sites, { registration, accreditation }) => {
     const row = createRow(
       request,
       organisationId,
@@ -118,48 +181,7 @@ function getRegistrationSites(
       accreditation,
       wasteBalanceMap
     )
-
-    return existingSite
-      ? prev.map((site) =>
-          site.name === existingSite.name
-            ? {
-                ...site,
-                rows: [...site.rows, row]
-              }
-            : site
-        )
-      : [
-          ...prev,
-          {
-            name: isExporter
-              ? null
-              : (registration.site?.address?.line1 ??
-                localise('organisations:table:site:unknown')),
-            head: [
-              {
-                text: localise('organisations:table:site:headings:materials')
-              },
-              {
-                text: localise(
-                  'organisations:table:site:headings:registrationStatuses'
-                )
-              },
-              {
-                text: localise(
-                  'organisations:table:site:headings:accreditationStatuses'
-                )
-              },
-              {
-                text: localise(
-                  'organisations:table:site:headings:availableBalance'
-                ),
-                format: 'numeric'
-              },
-              { text: '' }
-            ],
-            rows: [row]
-          }
-        ]
+    return addRowToSites(sites, registration, row, localise)
   }, [])
 }
 
@@ -167,6 +189,48 @@ const tabTypes = Object.freeze({
   EXPORTER: 'EXPORTER',
   REPROCESSOR: 'REPROCESSOR'
 })
+
+/**
+ * Determines which sites to display and the table title based on available data and active tab
+ * @param {object} params
+ * @param {Array} params.reprocessorSites - Reprocessor sites
+ * @param {Array} params.exporterSites - Exporter sites
+ * @param {string} params.activeTab - Currently active tab
+ * @param {(key: string) => string} params.localise - Translation function
+ * @returns {{sites: Array, tableTitle: string, shouldRenderTabs: boolean}}
+ */
+function getActiveSitesAndTitle({
+  reprocessorSites,
+  exporterSites,
+  activeTab,
+  localise
+}) {
+  const hasReprocessorSites = reprocessorSites.length > 0
+  const hasExporterSites = exporterSites.length > 0
+  const shouldRenderTabs = hasReprocessorSites && hasExporterSites
+
+  const showReprocessor =
+    (!shouldRenderTabs && hasReprocessorSites) ||
+    (shouldRenderTabs && activeTab === tabTypes.REPROCESSOR)
+
+  if (showReprocessor) {
+    return {
+      sites: reprocessorSites,
+      tableTitle: localise('organisations:table:titleReprocessor'),
+      shouldRenderTabs
+    }
+  }
+
+  if (hasExporterSites) {
+    return {
+      sites: exporterSites,
+      tableTitle: localise('organisations:table:titleExporter'),
+      shouldRenderTabs
+    }
+  }
+
+  return { sites: [], tableTitle: '', shouldRenderTabs }
+}
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -236,27 +300,12 @@ export const controller = {
       wasteBalanceMap
     )
 
-    const hasReprocessorSites = reprocessorSites.length > 0
-    const hasExporterSites = exporterSites.length > 0
-    const shouldRenderTabs = hasReprocessorSites && hasExporterSites
-    let sites = []
-    let tableTitle = ''
-
-    if (
-      (!shouldRenderTabs && hasReprocessorSites) ||
-      (shouldRenderTabs && activeTab === tabTypes.REPROCESSOR)
-    ) {
-      sites = reprocessorSites
-      tableTitle = localise('organisations:table:titleReprocessor')
-    }
-
-    if (
-      (!shouldRenderTabs && hasExporterSites) ||
-      (shouldRenderTabs && activeTab === tabTypes.EXPORTER)
-    ) {
-      sites = exporterSites
-      tableTitle = localise('organisations:table:titleExporter')
-    }
+    const { sites, tableTitle, shouldRenderTabs } = getActiveSitesAndTitle({
+      reprocessorSites,
+      exporterSites,
+      activeTab,
+      localise
+    })
 
     return h.view('organisations/index', {
       pageTitle: localise('organisations:pageTitle', {
