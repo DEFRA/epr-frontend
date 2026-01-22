@@ -191,6 +191,58 @@ const tabTypes = Object.freeze({
 })
 
 /**
+ * Filters registrations that should be displayed and joins with accreditations
+ * @param {object} organisationData - Organisation data from backend
+ * @returns {Array<{registration: object, accreditation: object | undefined}>}
+ */
+function getDisplayableRegistrations(organisationData) {
+  const accreditationById = new Map(
+    organisationData.accreditations.map((acc) => [acc.id, acc])
+  )
+
+  return organisationData.registrations
+    .map((registration) => ({
+      registration,
+      accreditation: accreditationById.get(registration.accreditationId)
+    }))
+    .filter(
+      ({ registration, accreditation }) =>
+        shouldRenderSite(registration, accreditation, 'reprocessor') ||
+        shouldRenderSite(registration, accreditation, 'exporter')
+    )
+}
+
+/**
+ * Fetches waste balances for displayable registrations
+ * @param {string} organisationId - Organisation ID
+ * @param {Array<{registration: object}>} displayableRegistrations - Filtered registrations
+ * @param {string} idToken - JWT token
+ * @param {object} logger - Request logger
+ * @returns {Promise<WasteBalanceMap>}
+ */
+async function getWasteBalanceMap(
+  organisationId,
+  displayableRegistrations,
+  idToken,
+  logger
+) {
+  if (displayableRegistrations.length === 0) {
+    return {}
+  }
+
+  const accreditationIds = displayableRegistrations
+    .map(({ registration }) => registration.accreditationId)
+    .filter(Boolean)
+
+  try {
+    return await fetchWasteBalances(organisationId, accreditationIds, idToken)
+  } catch (error) {
+    logger.error({ error }, 'Failed to fetch waste balances')
+    return {}
+  }
+}
+
+/**
  * Determines which sites to display and the table title based on available data and active tab
  * @param {object} params
  * @param {Array} params.reprocessorSites - Reprocessor sites
@@ -239,50 +291,25 @@ export const controller = {
   async handler(request, h) {
     const { t: localise } = request
     const { organisationId } = request.params
+    const session = request.auth.credentials
 
     const isExporterTab = request.path.endsWith('/exporting')
     const activeTab = isExporterTab ? tabTypes.EXPORTER : tabTypes.REPROCESSOR
-
-    const session = request.auth.credentials
 
     const organisationData = await fetchOrganisationById(
       organisationId,
       session.idToken
     )
 
-    const organisationName = organisationData.companyDetails.tradingName
+    const displayableRegistrations =
+      getDisplayableRegistrations(organisationData)
 
-    const accreditationById = new Map(
-      organisationData.accreditations.map((acc) => [acc.id, acc])
+    const wasteBalanceMap = await getWasteBalanceMap(
+      organisationId,
+      displayableRegistrations,
+      session.idToken,
+      request.logger
     )
-
-    const displayableRegistrations = organisationData.registrations
-      .map((registration) => ({
-        registration,
-        accreditation: accreditationById.get(registration.accreditationId)
-      }))
-      .filter(
-        ({ registration, accreditation }) =>
-          shouldRenderSite(registration, accreditation, 'reprocessor') ||
-          shouldRenderSite(registration, accreditation, 'exporter')
-      )
-
-    let wasteBalanceMap = {}
-    if (displayableRegistrations.length > 0) {
-      const accreditationIds = displayableRegistrations
-        .map(({ registration }) => registration.accreditationId)
-        .filter(Boolean)
-
-      try {
-        wasteBalanceMap = await fetchWasteBalances(
-          organisationId,
-          accreditationIds,
-          session.idToken
-        )
-      } catch (error) {
-        request.logger.error({ error }, 'Failed to fetch waste balances')
-      }
-    }
 
     const reprocessorSites = getRegistrationSites(
       request,
@@ -309,9 +336,9 @@ export const controller = {
 
     return h.view('organisations/index', {
       pageTitle: localise('organisations:pageTitle', {
-        name: organisationName
+        name: organisationData.companyDetails.tradingName
       }),
-      organisationName,
+      organisationName: organisationData.companyDetails.tradingName,
       organisationId,
       activeTab,
       reprocessorUrl: request.localiseUrl(`/organisations/${organisationId}`),
