@@ -285,6 +285,13 @@ describe('#organisationController', () => {
       })
 
       const $ = load(result)
+
+      const tableHeaders = $('thead th')
+        .map((_, el) => $(el).text())
+        .get()
+
+      expect(tableHeaders).toContain('Available waste balance (tonnes)')
+
       const tableCells = $('tbody td')
         .map((_, el) => $(el).text().trim())
         .get()
