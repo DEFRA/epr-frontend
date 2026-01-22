@@ -19,12 +19,12 @@ describe('#formatTonnage', () => {
       expect(formatTonnage(0)).toBe('0.00')
     })
 
-    test('returns dash for null value', () => {
-      expect(formatTonnage(null)).toBe('-')
+    test('returns 0.00 for null value', () => {
+      expect(formatTonnage(null)).toBe('0.00')
     })
 
-    test('returns dash for undefined value', () => {
-      expect(formatTonnage(undefined)).toBe('-')
+    test('returns 0.00 for undefined value', () => {
+      expect(formatTonnage(undefined)).toBe('0.00')
     })
   })
 

@@ -311,7 +311,7 @@ describe('#organisationController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('should handle waste balance fetch failure gracefully and show dash', async ({
+    it('should handle waste balance fetch failure gracefully and show 0.00', async ({
       server
     }) => {
       vi.mocked(
@@ -336,7 +336,7 @@ describe('#organisationController', () => {
         .map((_, el) => $(el).text().trim())
         .get()
 
-      expect(tableCells).toContain('-')
+      expect(tableCells).toContain('0.00')
     })
 
     it('should redirect to logged-out when not authenticated', async ({
