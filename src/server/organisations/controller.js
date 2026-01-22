@@ -203,19 +203,11 @@ export const controller = {
           shouldRenderSite(registration, accreditation, 'exporter')
       )
 
-    const uniqueAccreditationIds = [
-      ...new Set(
-        displayableRegistrations
-          .map(({ registration }) => registration.accreditationId)
-          .filter(Boolean)
-      )
-    ]
-
     let wasteBalanceMap = {}
-    if (uniqueAccreditationIds.length > 0) {
+    if (displayableRegistrations.length > 0) {
       try {
         wasteBalanceMap = await fetchWasteBalances(
-          uniqueAccreditationIds,
+          organisationId,
           session.idToken
         )
       } catch (error) {

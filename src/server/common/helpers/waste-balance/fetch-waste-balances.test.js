@@ -6,7 +6,7 @@ const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 describe(fetchWasteBalances, () => {
-  const accreditationIds = ['acc-001', 'acc-002']
+  const organisationId = 'org-123'
   const idToken = 'test-id-token'
 
   beforeEach(() => {
@@ -24,23 +24,21 @@ describe(fetchWasteBalances, () => {
       json: vi.fn().mockResolvedValue(mockWasteBalanceData)
     })
 
-    const result = await fetchWasteBalances(accreditationIds, idToken)
+    const result = await fetchWasteBalances(organisationId, idToken)
 
     expect(result).toStrictEqual(mockWasteBalanceData)
   })
 
-  test('calls backend with correct path including comma-separated accreditation IDs', async () => {
+  test('calls backend with correct path including organisation ID', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({})
     })
 
-    await fetchWasteBalances(accreditationIds, idToken)
+    await fetchWasteBalances(organisationId, idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /\/v1\/waste-balance\?accreditationIds=acc-001,acc-002$/
-      ),
+      expect.stringMatching(/\/v1\/organisations\/org-123\/waste-balances$/),
       expect.any(Object)
     )
   })
@@ -51,7 +49,7 @@ describe(fetchWasteBalances, () => {
       json: vi.fn().mockResolvedValue({})
     })
 
-    await fetchWasteBalances(accreditationIds, idToken)
+    await fetchWasteBalances(organisationId, idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
@@ -65,27 +63,6 @@ describe(fetchWasteBalances, () => {
     )
   })
 
-  test('returns empty object when accreditationIds is empty array', async () => {
-    const result = await fetchWasteBalances([], idToken)
-
-    expect(result).toStrictEqual({})
-    expect(mockFetch).not.toHaveBeenCalled()
-  })
-
-  test('returns empty object when accreditationIds is null', async () => {
-    const result = await fetchWasteBalances(null, idToken)
-
-    expect(result).toStrictEqual({})
-    expect(mockFetch).not.toHaveBeenCalled()
-  })
-
-  test('returns empty object when accreditationIds is undefined', async () => {
-    const result = await fetchWasteBalances(undefined, idToken)
-
-    expect(result).toStrictEqual({})
-    expect(mockFetch).not.toHaveBeenCalled()
-  })
-
   test('throws Boom error when backend returns 500', async () => {
     mockFetch.mockResolvedValue({
       ok: false,
@@ -95,7 +72,7 @@ describe(fetchWasteBalances, () => {
     })
 
     await expect(
-      fetchWasteBalances(accreditationIds, idToken)
+      fetchWasteBalances(organisationId, idToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }
