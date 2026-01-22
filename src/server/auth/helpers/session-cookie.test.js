@@ -62,22 +62,7 @@ describe('#sessionCookie - integration', () => {
       sessionData: {
         profile: {
           id: userId,
-          email: `${userId}@example.com`,
-          displayName: 'Test User',
-          correlationId: `corr-${userId}`,
-          sessionId: `sess-${userId}`,
-          contactId: `contact-${userId}`,
-          serviceId: 'test-service-id',
-          firstName: 'Test',
-          lastName: 'User',
-          uniqueReference: `ref-${userId}`,
-          loa: '2',
-          aal: '1',
-          enrolmentCount: 0,
-          enrolmentRequestCount: 0,
-          currentRelationshipId: `rel-${userId}`,
-          relationships: [],
-          roles: []
+          email: `${userId}@example.com`
         },
         expiresAt,
         idToken: `old-id-token-${userId}`,
@@ -223,22 +208,7 @@ describe('#sessionCookie - integration', () => {
       const sessionData = {
         profile: {
           id: 'user-789',
-          email: 'test3@example.com',
-          displayName: 'Test User 3',
-          correlationId: 'corr-789',
-          sessionId: 'sess-789',
-          contactId: 'contact-789',
-          serviceId: 'test-service-id',
-          firstName: 'Test',
-          lastName: 'User',
-          uniqueReference: 'ref-789',
-          loa: '2',
-          aal: '1',
-          enrolmentCount: 1,
-          enrolmentRequestCount: 0,
-          currentRelationshipId: 'rel-789',
-          relationships: ['rel-789'],
-          roles: ['role1']
+          email: 'test3@example.com'
         },
         expiresAt: futureExpiry,
         idToken: 'valid-id-token',
@@ -277,111 +247,6 @@ describe('#sessionCookie - integration', () => {
       expect(unchangedSession.idToken).toBe('valid-id-token')
       expect(unchangedSession.refreshToken).toBe('valid-refresh-token')
     })
-
-    it.for([
-      {
-        testCase: 'only first name',
-        firstName: 'Jane',
-        lastName: null,
-        expectedDisplayName: 'Jane'
-      },
-      {
-        testCase: 'only last name',
-        firstName: null,
-        lastName: 'Smith',
-        expectedDisplayName: 'Smith'
-      }
-    ])(
-      'should handle token refresh with user having $testCase',
-      async ({ firstName, lastName, expectedDisplayName }, { server, msw }) => {
-        const sessionId = `test-session-${expectedDisplayName.toLowerCase()}`
-        const expiredAt = subMinutes(new Date(), 30).toISOString()
-
-        const sessionData = {
-          profile: {
-            id: 'user-name-test',
-            email: 'test@example.com',
-            displayName: expectedDisplayName,
-            correlationId: 'corr-test',
-            sessionId: 'sess-test',
-            contactId: 'contact-test',
-            serviceId: 'test-service-id',
-            firstName,
-            lastName,
-            uniqueReference: 'ref-test',
-            loa: '1',
-            aal: '1',
-            enrolmentCount: 0,
-            enrolmentRequestCount: 0,
-            currentRelationshipId: 'rel-test',
-            relationships: [],
-            roles: []
-          },
-          expiresAt: expiredAt,
-          idToken: 'old-id',
-          refreshToken: 'old-refresh',
-          urls: {
-            token: 'http://defra-id.auth/token',
-            logout: 'http://defra-id.auth/logout'
-          }
-        }
-
-        await server.app.cache.set(sessionId, sessionData)
-
-        msw.use(
-          ((jwtPayload) =>
-            http.post('http://defra-id.auth/token', async () =>
-              HttpResponse.json({
-                expires_in: 3600,
-                id_token: createFakeJwt(jwtPayload),
-                refresh_token: 'new-refresh-token',
-                token_type: 'Bearer'
-              })
-            ))({
-            sub: 'user-name-test',
-            email: 'test@example.com',
-            correlationId: 'corr-test',
-            sessionId: 'sess-test',
-            contactId: 'contact-test',
-            serviceId: 'test-service-id',
-            firstName,
-            lastName,
-            uniqueReference: 'ref-test',
-            loa: '1',
-            aal: '1',
-            enrolmentCount: 0,
-            enrolmentRequestCount: 0,
-            currentRelationshipId: 'rel-test',
-            relationships: [],
-            roles: [],
-            exp: Math.floor(Date.now() / 1000) + 3600
-          })
-        )
-
-        const cookiePassword = config.get('session.cookie.password')
-        const sealedCookie = await Iron.seal(
-          { sessionId },
-          cookiePassword,
-          Iron.defaults
-        )
-
-        const response = await server.inject({
-          method: 'GET',
-          url: '/test-auth',
-          headers: {
-            cookie: `userSession=${sealedCookie}`
-          }
-        })
-
-        expect(response.statusCode).toBe(200)
-
-        const updatedSession = await server.app.cache.get(sessionId)
-
-        expect(updatedSession.profile.displayName).toBe(expectedDisplayName)
-        expect(updatedSession.profile.firstName).toBe(firstName)
-        expect(updatedSession.profile.lastName).toBe(lastName)
-      }
-    )
 
     it('should return invalid when session not found in cache', async ({
       server
@@ -423,22 +288,7 @@ describe('#sessionCookie - integration', () => {
       const sessionData = {
         profile: {
           id: 'user-exception',
-          email: 'exception@example.com',
-          displayName: 'Exception User',
-          correlationId: 'corr-exception',
-          sessionId: 'sess-exception',
-          contactId: 'contact-exception',
-          serviceId: 'test-service-id',
-          firstName: 'Exception',
-          lastName: 'User',
-          uniqueReference: 'ref-exception',
-          loa: '2',
-          aal: '1',
-          enrolmentCount: 0,
-          enrolmentRequestCount: 0,
-          currentRelationshipId: 'rel-exception',
-          relationships: [],
-          roles: []
+          email: 'exception@example.com'
         },
         expiresAt: expiredAt,
         idToken: 'old-id-token',

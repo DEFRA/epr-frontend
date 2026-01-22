@@ -4,24 +4,12 @@
 
 /**
  * User profile - identity data extracted from JWT token payload
+ *
+ * Only includes fields actually used in production (for audit logging).
+ * Other JWT claims are available but not stored as they're unused.
  * @typedef {{
  *   id: string
- *   correlationId: string
- *   sessionId: string
- *   contactId: string
- *   serviceId: string
- *   firstName: string
- *   lastName: string
- *   displayName: string
  *   email: string
- *   uniqueReference: string
- *   loa: string
- *   aal: string
- *   enrolmentCount: number
- *   enrolmentRequestCount: number
- *   currentRelationshipId: string
- *   relationships: string[]
- *   roles: string[]
  * }} UserProfile
  */
 
