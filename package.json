@@ -137,7 +137,7 @@
     "terser-webpack-plugin": "5.3.16",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.53.0",
+    "typescript-eslint": "8.53.1",
     "vitest": "4.0.17",
     "webpack": "5.104.1",
     "webpack-assets-manifest": "6.5.0",
