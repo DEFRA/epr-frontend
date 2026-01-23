@@ -7,6 +7,12 @@
       <h1 class="govuk-panel__title">
         {{ localise('summary-log:successPageTitle') }}
       </h1>
+      {% if wasteBalance is defined %}
+      <div class="govuk-panel__body">
+        {{ localise('summary-log:wasteBalanceLabel') }}<br>
+        <strong>{{ wasteBalance | formatTonnage }} {{ localise('summary-log:tonnes') }}</strong>
+      </div>
+      {% endif %}
     </div>
 
     <p class="govuk-body">
