@@ -168,18 +168,10 @@ async function getWasteBalance(
 }
 
 function getWasteBalanceViewData(wasteBalance, localise, isExporter) {
-  const hasWasteBalance = wasteBalance !== null
-  const noteType = isExporter ? 'perns' : 'prns'
-
   return {
-    hasWasteBalance,
-    availableAmount: hasWasteBalance ? wasteBalance.availableAmount : null,
-    title: hasWasteBalance
-      ? localise('registrations:wasteBalance.available.title')
-      : localise('registrations:wasteBalance.notAvailable.title'),
-    description: hasWasteBalance
-      ? localise(`registrations:wasteBalance.available.description.${noteType}`)
-      : localise('registrations:wasteBalance.notAvailable.description')
+    availableAmount:
+      wasteBalance === null ? null : wasteBalance.availableAmount,
+    noteType: isExporter ? 'perns' : 'prns'
   }
 }
 
