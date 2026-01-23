@@ -61,14 +61,30 @@
         <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
           <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
             <div>
-              <h2 class="govuk-summary-card__title">
-                {{ localise("registrations:wasteBalanceTitle") }}
-              </h2>
-              <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold">
-                {{ localise("registrations:wasteBalanceDescription") }}
-              </p>
+              {% if wasteBalance.hasWasteBalance %}
+                <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
+                  {{ wasteBalance.availableAmount | formatTonnage }} {{ localise("registrations:wasteBalance.units") }}
+                </h2>
+                <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-subtitle">
+                  {{ wasteBalance.title }}
+                </p>
+              {% else %}
+                <h2 class="govuk-summary-card__title" data-testid="waste-balance-not-available-title">
+                  {{ wasteBalance.title }}
+                </h2>
+                <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-not-available-description">
+                  {{ wasteBalance.description }}
+                </p>
+              {% endif %}
             </div>
           </div>
+          {% if wasteBalance.hasWasteBalance %}
+            <div class="govuk-summary-card__content govuk-!-padding-4">
+              <p class="govuk-body govuk-!-margin-bottom-0" data-testid="waste-balance-explanation">
+                {{ wasteBalance.description }}
+              </p>
+            </div>
+          {% endif %}
         </div>
 
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">

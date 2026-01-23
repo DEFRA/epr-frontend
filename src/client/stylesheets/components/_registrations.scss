@@ -25,15 +25,19 @@
   border: none;
 
   .govuk-summary-card__title-wrapper {
+    background: #e5e6e7;
+
+    .govuk-summary-card__title {
+      color: govuk-colour("blue");
+      @include govuk-font($size: 48, $weight: bold);
+    }
+
+    p {
+      color: govuk-colour("blue");
+    }
+  }
+
+  .govuk-summary-card__content {
     background: govuk-colour("light-grey");
-  }
-
-  .govuk-summary-card__title {
-    color: govuk-colour("blue");
-    @include govuk-font($size: 48, $weight: bold);
-  }
-
-  p {
-    color: govuk-colour("blue");
   }
 }

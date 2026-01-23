@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole, within } from '@testing-library/dom'
@@ -14,6 +15,8 @@ import fixtureData from '../../../fixtures/organisation/organisationData.json' w
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
+
+vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
 const mockAuth = {
   strategy: 'session',
@@ -29,6 +32,7 @@ const mockAuth = {
 describe('#accreditationDashboardController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({})
   })
 
   describe('happy path - reprocessor', () => {
@@ -483,6 +487,234 @@ describe('#accreditationDashboardController', () => {
 
       expect($('.govuk-tag--yellow').length).toBeGreaterThan(0)
       expect(result).toContain('Suspended')
+    })
+  })
+
+  describe('waste balance display', () => {
+    it('should display formatted waste balance for reprocessor with PRNs text', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': { amount: 1500, availableAmount: 1030.45 }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '1,030.45'
+      )
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        'tonnes'
+      )
+      expect($('[data-testid="waste-balance-subtitle"]').text()).toContain(
+        'Available waste balance'
+      )
+      expect($('[data-testid="waste-balance-explanation"]').text()).toContain(
+        'PRNs'
+      )
+      expect(
+        $('[data-testid="waste-balance-explanation"]').text()
+      ).not.toContain('PERNs')
+    })
+
+    it('should display PERNs text for exporter with waste balance', async ({
+      server
+    }) => {
+      const exporterWithAccreditationId = {
+        ...fixtureExportingOnly,
+        registrations: fixtureExportingOnly.registrations.map((reg) =>
+          reg.id === 'reg-export-001-plastic-approved'
+            ? { ...reg, accreditationId: 'acc-export-001-plastic-approved' }
+            : reg
+        )
+      }
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(exporterWithAccreditationId)
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-export-001-plastic-approved': {
+          amount: 500,
+          availableAmount: 250.75
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('[data-testid="waste-balance-explanation"]').text()).toContain(
+        'PERNs'
+      )
+      expect(
+        $('[data-testid="waste-balance-explanation"]').text()
+      ).not.toContain('PRNs')
+    })
+
+    it('should display placeholder when waste balance fetch fails', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockRejectedValue(
+        new Error('Service unavailable')
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = load(result)
+
+      expect(
+        $('[data-testid="waste-balance-not-available-title"]').text()
+      ).toContain('Your waste balance is not yet available')
+    })
+
+    it('should call fetchWasteBalances with correct parameters', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue(
+        {}
+      )
+
+      await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      expect(fetchWasteBalancesModule.fetchWasteBalances).toHaveBeenCalledWith(
+        '6507f1f77bcf86cd79943901',
+        ['acc-001-glass-approved'],
+        'test-id-token'
+      )
+    })
+
+    it('should not call fetchWasteBalances when registration has no accreditationId', async ({
+      server
+    }) => {
+      const dataWithNoAccreditationId = {
+        ...fixtureData,
+        registrations: [
+          {
+            id: 'reg-no-accreditation',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'approved',
+            site: { address: { line1: 'Test Site' } }
+          }
+        ]
+      }
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(dataWithNoAccreditationId)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-no-accreditation',
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(fetchWasteBalancesModule.fetchWasteBalances).not.toHaveBeenCalled()
+
+      const $ = load(result)
+
+      expect(
+        $('[data-testid="waste-balance-not-available-title"]')
+      ).toHaveLength(1)
+    })
+
+    it('should display zero balance correctly', async ({ server }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': { amount: 0, availableAmount: 0 }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain('0.00')
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        'tonnes'
+      )
+    })
+
+    it('should format large balance with thousands separator', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-001-glass-approved': { amount: 15000, availableAmount: 12345.67 }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        '12,345.67'
+      )
+    })
+
+    it('should display placeholder when API returns empty object', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue(
+        {}
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect(
+        $('[data-testid="waste-balance-not-available-title"]').text()
+      ).toContain('Your waste balance is not yet available')
+      expect(
+        $('[data-testid="waste-balance-not-available-description"]').text()
+      ).toContain('It will be shown here when it becomes available')
     })
   })
 
