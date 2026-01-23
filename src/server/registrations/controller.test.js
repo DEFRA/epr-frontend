@@ -191,62 +191,6 @@ describe('#accreditationDashboardController', () => {
       )
     })
 
-    it('should display waste balance placeholder', async ({ server }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-        auth: mockAuth
-      })
-
-      expect(result).toContain('Your waste balance is not yet available')
-      expect(result).toContain(
-        'It will be shown here when it becomes available'
-      )
-    })
-
-    it('should apply epr-waste-balance-banner class to waste balance banner', async ({
-      server
-    }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-        auth: mockAuth
-      })
-
-      const $ = load(result)
-
-      const banner = $('.govuk-summary-card.epr-waste-balance-banner')
-
-      expect(banner.length).toBeGreaterThan(0)
-    })
-
-    it('should use govuk-summary-card for task cards', async ({ server }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-        auth: mockAuth
-      })
-
-      const $ = load(result)
-
-      // 4 task cards + 1 waste balance banner = 5 summary cards total
-      const summaryCards = $('.govuk-summary-card')
-
-      expect(summaryCards).toHaveLength(5)
-    })
-
     it('should display all four task tiles', async ({ server }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
@@ -490,8 +434,73 @@ describe('#accreditationDashboardController', () => {
     })
   })
 
-  describe('waste balance display', () => {
-    it('should display formatted waste balance for reprocessor with PRNs text', async ({
+  describe('when waste balance feature flag is enabled', () => {
+    beforeAll(() => {
+      config.set('featureFlags.wasteBalance', true)
+    })
+
+    afterAll(() => {
+      config.reset('featureFlags.wasteBalance')
+    })
+
+    it('should display waste balance placeholder', async ({ server }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      expect(result).toContain('Your waste balance is not yet available')
+      expect(result).toContain(
+        'It will be shown here when it becomes available'
+      )
+    })
+
+    it('should apply epr-waste-balance-banner class to waste balance banner', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      const banner = $('.govuk-summary-card.epr-waste-balance-banner')
+
+      expect(banner.length).toBeGreaterThan(0)
+    })
+
+    it('should use govuk-summary-card for task cards', async ({ server }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      // 4 task cards + 1 waste balance banner = 5 summary cards total
+      const summaryCards = $('.govuk-summary-card')
+
+      expect(summaryCards).toHaveLength(5)
+    })
+
+    describe('waste balance display', () => {
+      it('should display formatted waste balance for reprocessor with PRNs text', async ({
       server
     }) => {
       vi.mocked(
@@ -715,6 +724,36 @@ describe('#accreditationDashboardController', () => {
       expect(
         $('[data-testid="waste-balance-not-available-description"]').text()
       ).toContain('It will be shown here when it becomes available')
+    })
+    })
+  })
+
+  describe('when waste balance feature flag is disabled', () => {
+    beforeAll(() => {
+      config.set('featureFlags.wasteBalance', false)
+    })
+
+    afterAll(() => {
+      config.reset('featureFlags.wasteBalance')
+    })
+
+    it('should not display waste balance and should not call fetchWasteBalances', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('Available waste balance')
+      expect(result).not.toContain('Your waste balance is not yet available')
+      expect(fetchWasteBalancesModule.fetchWasteBalances).not.toHaveBeenCalled()
     })
   })
 

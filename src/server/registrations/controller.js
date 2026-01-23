@@ -35,12 +35,14 @@ export const controller = {
       ({ id }) => id === registration.accreditationId
     )
 
-    const wasteBalance = await getWasteBalance(
-      organisationId,
-      registration.accreditationId,
-      session.idToken,
-      request.logger
-    )
+    const wasteBalance = config.get('featureFlags.wasteBalance')
+      ? await getWasteBalance(
+          organisationId,
+          registration.accreditationId,
+          session.idToken,
+          request.logger
+        )
+      : null
 
     const viewModel = buildViewModel({
       request,
@@ -86,7 +88,7 @@ function buildViewModel({
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
-  return {
+  const viewModel = {
     pageTitle: localise('registrations:pageTitle', { siteName, material }),
     siteName,
     material,
@@ -107,9 +109,18 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    prns: getPrnViewData(request, isExporter),
-    wasteBalance: getWasteBalanceViewData(wasteBalance, localise, isExporter)
+    prns: getPrnViewData(request, isExporter)
   }
+
+  if (config.get('featureFlags.wasteBalance')) {
+    viewModel.wasteBalance = getWasteBalanceViewData(
+      wasteBalance,
+      localise,
+      isExporter
+    )
+  }
+
+  return viewModel
 }
 
 /**
