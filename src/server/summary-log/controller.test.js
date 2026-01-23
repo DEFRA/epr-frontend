@@ -880,6 +880,34 @@ describe('#summaryLogUploadProgressController', () => {
         config.reset('featureFlags.wasteBalance')
       })
 
+      it('status: validated - should not fetch waste balance data', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.validated,
+          loads: {
+            added: {
+              included: { count: 0, rowIds: [] },
+              excluded: { count: 0, rowIds: [] }
+            },
+            adjusted: {
+              included: { count: 0, rowIds: [] },
+              excluded: { count: 0, rowIds: [] }
+            }
+          }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(getRegistrationWithAccreditation).not.toHaveBeenCalled()
+        expect(fetchWasteBalances).not.toHaveBeenCalled()
+      })
+
       it('status: submitted - should fetch waste balance data', async ({
         server
       }) => {

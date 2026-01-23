@@ -275,6 +275,25 @@ describe('#organisationController', () => {
         config.reset('featureFlags.wasteBalance')
       })
 
+      it('should not fetch waste balances when no displayable registrations', async ({
+        server
+      }) => {
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue(fixtureEmpty)
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943903',
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(
+          fetchWasteBalancesModule.fetchWasteBalances
+        ).not.toHaveBeenCalled()
+      })
+
       it('should display formatted waste balance when available', async ({
         server
       }) => {
