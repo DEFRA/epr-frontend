@@ -10,7 +10,15 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
