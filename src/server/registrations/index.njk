@@ -63,7 +63,7 @@
             <div>
               {% if wasteBalance.hasWasteBalance %}
                 <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
-                  {{ wasteBalance.availableAmount }} {{ localise("registrations:wasteBalance.units") }}
+                  {{ wasteBalance.availableAmount | formatTonnage }} {{ localise("registrations:wasteBalance.units") }}
                 </h2>
                 <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-subtitle">
                   {{ wasteBalance.title }}

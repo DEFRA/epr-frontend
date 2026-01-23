@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -163,9 +162,7 @@ function getWasteBalanceViewData(wasteBalance, localise, isExporter) {
 
   return {
     hasWasteBalance,
-    availableAmount: hasWasteBalance
-      ? formatTonnage(wasteBalance.availableAmount)
-      : null,
+    availableAmount: hasWasteBalance ? wasteBalance.availableAmount : null,
     title: hasWasteBalance
       ? localise('registrations:wasteBalance.available.title')
       : localise('registrations:wasteBalance.notAvailable.title'),
