@@ -1,10 +1,11 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
@@ -265,36 +266,79 @@ describe('#organisationController', () => {
       ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
     })
 
-    it('should display formatted waste balance when available', async ({
-      server
-    }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureSingleReprocessing)
-
-      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
-        'acc-single-001': { amount: 1500.5, availableAmount: 1234.56 }
+    describe('when waste balance feature flag is enabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.wasteBalance', true)
       })
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906',
-        auth: mockAuth
+      afterAll(() => {
+        config.reset('featureFlags.wasteBalance')
       })
 
-      const $ = load(result)
+      it('should display formatted waste balance when available', async ({
+        server
+      }) => {
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const tableHeaders = $('thead th')
-        .map((_, el) => $(el).text())
-        .get()
+        vi.mocked(
+          fetchWasteBalancesModule.fetchWasteBalances
+        ).mockResolvedValue({
+          'acc-single-001': { amount: 1500.5, availableAmount: 1234.56 }
+        })
 
-      expect(tableHeaders).toContain('Available waste balance (tonnes)')
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943906',
+          auth: mockAuth
+        })
 
-      const tableCells = $('tbody td')
-        .map((_, el) => $(el).text().trim())
-        .get()
+        const $ = load(result)
 
-      expect(tableCells).toContain('1,234.56')
+        const tableHeaders = $('thead th')
+          .map((_, el) => $(el).text())
+          .get()
+
+        expect(tableHeaders).toContain('Available waste balance (tonnes)')
+
+        const tableCells = $('tbody td')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(tableCells).toContain('1,234.56')
+      })
+    })
+
+    describe('when waste balance feature flag is disabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.wasteBalance', false)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.wasteBalance')
+      })
+
+      it('should not display waste balance column', async ({ server }) => {
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue(fixtureSingleReprocessing)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943906',
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+
+        const tableHeaders = $('thead th')
+          .map((_, el) => $(el).text())
+          .get()
+
+        expect(tableHeaders).not.toContain('Available waste balance (tonnes)')
+        expect(tableHeaders).toHaveLength(4) // Material, Registration, Accreditation, Actions
+      })
     })
   })
 
@@ -316,32 +360,42 @@ describe('#organisationController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('should handle waste balance fetch failure gracefully and show 0.00', async ({
-      server
-    }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureSingleReprocessing)
-
-      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockRejectedValue(
-        new Error('Waste balance service unavailable')
-      )
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943906',
-        auth: mockAuth
+    describe('when waste balance feature flag is enabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.wasteBalance', true)
       })
 
-      const $ = load(result)
+      afterAll(() => {
+        config.reset('featureFlags.wasteBalance')
+      })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('should handle waste balance fetch failure gracefully and show 0.00', async ({
+        server
+      }) => {
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue(fixtureSingleReprocessing)
 
-      const tableCells = $('tbody td')
-        .map((_, el) => $(el).text().trim())
-        .get()
+        vi.mocked(
+          fetchWasteBalancesModule.fetchWasteBalances
+        ).mockRejectedValue(new Error('Waste balance service unavailable'))
 
-      expect(tableCells).toContain('0.00')
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943906',
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const tableCells = $('tbody td')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(tableCells).toContain('0.00')
+      })
     })
 
     it('should redirect to logged-out when not authenticated', async ({

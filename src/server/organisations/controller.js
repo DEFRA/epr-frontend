@@ -1,5 +1,6 @@
 import { capitalize } from 'lodash-es'
 
+import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
@@ -60,7 +61,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
   const accreditationId = registration.accreditationId
   const wasteBalance = wasteBalanceMap?.[accreditationId]
 
-  return [
+  const cells = [
     { text: getDisplayMaterial(registration) },
     {
       html: createTag(registration.status)
@@ -69,16 +70,22 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
       html: createTag(
         accreditation?.status ?? localise('organisations:table:notAccredited')
       )
-    },
-    {
-      text: formatTonnage(wasteBalance?.availableAmount),
-      format: 'numeric'
-    },
-    {
-      html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
-      classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
     }
   ]
+
+  if (config.get('featureFlags.wasteBalance')) {
+    cells.push({
+      text: formatTonnage(wasteBalance?.availableAmount),
+      format: 'numeric'
+    })
+  }
+
+  cells.push({
+    html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
+    classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
+  })
+
+  return cells
 }
 
 /**
@@ -87,20 +94,26 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
  * @returns {Array} Array of header objects
  */
 function createTableHeaders(localise) {
-  return [
+  const headers = [
     { text: localise('organisations:table:site:headings:materials') },
     {
       text: localise('organisations:table:site:headings:registrationStatuses')
     },
     {
       text: localise('organisations:table:site:headings:accreditationStatuses')
-    },
-    {
+    }
+  ]
+
+  if (config.get('featureFlags.wasteBalance')) {
+    headers.push({
       text: localise('organisations:table:site:headings:availableBalance'),
       format: 'numeric'
-    },
-    { text: '' }
-  ]
+    })
+  }
+
+  headers.push({ text: '' })
+
+  return headers
 }
 
 /**
@@ -304,12 +317,14 @@ export const controller = {
     const displayableRegistrations =
       getDisplayableRegistrations(organisationData)
 
-    const wasteBalanceMap = await getWasteBalanceMap(
-      organisationId,
-      displayableRegistrations,
-      session.idToken,
-      request.logger
-    )
+    const wasteBalanceMap = config.get('featureFlags.wasteBalance')
+      ? await getWasteBalanceMap(
+          organisationId,
+          displayableRegistrations,
+          session.idToken,
+          request.logger
+        )
+      : {}
 
     const reprocessorSites = getRegistrationSites(
       request,
