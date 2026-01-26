@@ -113,11 +113,7 @@ function buildViewModel({
   }
 
   if (config.get('featureFlags.wasteBalance')) {
-    viewModel.wasteBalance = getWasteBalanceViewData(
-      wasteBalance,
-      localise,
-      isExporter
-    )
+    viewModel.wasteBalance = getWasteBalanceViewData(wasteBalance, isExporter)
   }
 
   return viewModel
@@ -167,7 +163,7 @@ async function getWasteBalance(
   }
 }
 
-function getWasteBalanceViewData(wasteBalance, localise, isExporter) {
+function getWasteBalanceViewData(wasteBalance, isExporter) {
   return {
     availableAmount:
       wasteBalance === null ? null : wasteBalance.availableAmount,

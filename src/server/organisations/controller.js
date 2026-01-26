@@ -8,6 +8,7 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 import { getStatusClass } from './helpers/status-helpers.js'
 
 const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
+const FEATURE_FLAG_NAME_WASTE_BALANCE = 'featureFlags.wasteBalance'
 
 /**
  * Determines whether a site should be rendered based on its registration
@@ -73,7 +74,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
     }
   ]
 
-  if (config.get('featureFlags.wasteBalance')) {
+  if (config.get(FEATURE_FLAG_NAME_WASTE_BALANCE)) {
     cells.push({
       text: formatTonnage(wasteBalance?.availableAmount),
       format: 'numeric'
@@ -104,7 +105,7 @@ function createTableHeaders(localise) {
     }
   ]
 
-  if (config.get('featureFlags.wasteBalance')) {
+  if (config.get(FEATURE_FLAG_NAME_WASTE_BALANCE)) {
     headers.push({
       text: localise('organisations:table:site:headings:availableBalance'),
       format: 'numeric'
@@ -317,7 +318,7 @@ export const controller = {
     const displayableRegistrations =
       getDisplayableRegistrations(organisationData)
 
-    const wasteBalanceMap = config.get('featureFlags.wasteBalance')
+    const wasteBalanceMap = config.get(FEATURE_FLAG_NAME_WASTE_BALANCE)
       ? await getWasteBalanceMap(
           organisationId,
           displayableRegistrations,
