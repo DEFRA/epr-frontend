@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
@@ -15,6 +16,7 @@ import fixtureSingleReprocessing from '../../../fixtures/organisation/single-rep
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
+vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
 const mockAuth = {
   strategy: 'session',
@@ -22,8 +24,6 @@ const mockAuth = {
     idToken: 'test-id-token',
     profile: {
       id: 'user-123',
-      firstName: 'Test',
-      lastName: 'User',
       email: 'test@example.com'
     }
   }
@@ -264,6 +264,38 @@ describe('#organisationController', () => {
         fetchOrganisationModule.fetchOrganisationById
       ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
     })
+
+    it('should display formatted waste balance when available', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureSingleReprocessing)
+
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({
+        'acc-single-001': { amount: 1500.5, availableAmount: 1234.56 }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943906',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      const tableHeaders = $('thead th')
+        .map((_, el) => $(el).text())
+        .get()
+
+      expect(tableHeaders).toContain('Available waste balance (tonnes)')
+
+      const tableCells = $('tbody td')
+        .map((_, el) => $(el).text().trim())
+        .get()
+
+      expect(tableCells).toContain('1,234.56')
+    })
   })
 
   describe('unhappy Paths', () => {
@@ -282,6 +314,34 @@ describe('#organisationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    it('should handle waste balance fetch failure gracefully and show 0.00', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureSingleReprocessing)
+
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockRejectedValue(
+        new Error('Waste balance service unavailable')
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943906',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const tableCells = $('tbody td')
+        .map((_, el) => $(el).text().trim())
+        .get()
+
+      expect(tableCells).toContain('0.00')
     })
 
     it('should redirect to logged-out when not authenticated', async ({

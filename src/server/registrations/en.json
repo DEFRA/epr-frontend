@@ -29,6 +29,18 @@
   "summaryLogDescription": "Upload your summary log to record new packaging waste or adjust previously submitted data.",
   "unknownSite": "Unknown site",
   "uploadSummaryLog": "Upload your summary log",
-  "wasteBalanceDescription": "It will be shown here when it becomes available",
-  "wasteBalanceTitle": "Your waste balance is not yet available"
+  "wasteBalance": {
+    "units": "tonnes",
+    "available": {
+      "title": "Available waste balance",
+      "description": {
+        "prns": "This is the balance available for creating new PRNs",
+        "perns": "This is the balance available for creating new PERNs"
+      }
+    },
+    "notAvailable": {
+      "title": "Your waste balance is not yet available",
+      "description": "It will be shown here when it becomes available"
+    }
+  }
 }

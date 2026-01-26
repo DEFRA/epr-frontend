@@ -22,8 +22,6 @@ const mockAuth = {
     idToken: 'test-id-token',
     profile: {
       id: 'user-123',
-      firstName: 'Test',
-      lastName: 'User',
       email: 'test@example.com'
     }
   }

@@ -443,22 +443,7 @@ describe('#defraId', () => {
       expect(mockVerifyToken).toHaveBeenCalledWith('mock-id-token')
       expect(mockCredentials.profile).toStrictEqual({
         id: 'user-123',
-        correlationId: 'corr-123',
-        sessionId: 'sess-123',
-        contactId: 'contact-123',
-        serviceId: 'service-123',
-        firstName: 'John',
-        lastName: 'Doe',
-        displayName: 'John Doe',
-        email: 'john.doe@example.com',
-        uniqueReference: 'ref-123',
-        loa: 'substantial',
-        aal: 'aal2',
-        enrolmentCount: 2,
-        enrolmentRequestCount: 1,
-        currentRelationshipId: 'rel-123',
-        relationships: ['rel-1', 'rel-2'],
-        roles: ['admin', 'user']
+        email: 'john.doe@example.com'
       })
       expect(mockCredentials.expiresAt).toBe('2025-01-01T00:00:00.000Z')
       expect(mockCredentials.idToken).toBe('mock-id-token')
@@ -498,22 +483,7 @@ describe('#defraId', () => {
 
       expect(mockCredentials.profile).toStrictEqual({
         id: 'user-456',
-        correlationId: 'corr-456',
-        sessionId: 'sess-456',
-        contactId: 'contact-456',
-        serviceId: 'service-456',
-        firstName: 'Alice',
-        lastName: 'Johnson',
-        displayName: 'Alice Johnson',
-        email: 'alice@example.com',
-        uniqueReference: 'ref-456',
-        loa: 'high',
-        aal: 'aal3',
-        enrolmentCount: 5,
-        enrolmentRequestCount: 3,
-        currentRelationshipId: 'rel-456',
-        relationships: ['rel-a', 'rel-b', 'rel-c'],
-        roles: ['editor', 'viewer', 'admin']
+        email: 'alice@example.com'
       })
       expect(mockCredentials.expiresAt).toBe('2025-01-01T01:00:00.000Z')
 

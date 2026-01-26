@@ -10,7 +10,8 @@
       "headings": {
         "materials": "Material",
         "registrationStatuses": "Registration",
-        "accreditationStatuses": "Accreditation"
+        "accreditationStatuses": "Accreditation",
+        "availableBalance": "Available waste balance (tonnes)"
       },
       "actions": {
         "select": "Select"
