@@ -59,11 +59,10 @@
         </div>
 
 
-        {% if wasteBalance is defined %}
           <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+          {% if wasteBalance is defined %}
             <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
               <div>
-                {% if wasteBalance.availableAmount is not none %}
                   <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
                     {{ wasteBalance.availableAmount | formatTonnage }} {{ localise("registrations:wasteBalance.units") }}
                   </h2>
@@ -71,28 +70,28 @@
                      data-testid="waste-balance-subtitle">
                     {{ localise("registrations:wasteBalance.available.title") }}
                   </p>
-                {% else %}
-                  <h2 class="govuk-summary-card__title" data-testid="waste-balance-not-available-title">
-                    {{ localise("registrations:wasteBalance.notAvailable.title") }}
-                  </h2>
-                  <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-not-available-description">
-                    {{ localise("registrations:wasteBalance.notAvailable.description") }}
-                  </p>
-                {% endif %}
               </div>
-            </div>
-            {% if wasteBalance.availableAmount is not none %}
+              </div>
               <div class="govuk-summary-card__content govuk-!-padding-4">
                 <p class="govuk-body govuk-!-margin-bottom-0" data-testid="waste-balance-explanation">
                   {{ localise("registrations:wasteBalance.available.description." + wasteBalance.noteType) }}
                 </p>
               </div>
-            {% endif %}
+          {% else %}
+            <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
+              <div>
+                <h2 class="govuk-summary-card__title" data-testid="waste-balance-not-available-title">
+                  {{ localise("registrations:wasteBalance.notAvailable.title") }}
+                </h2>
+                <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-not-available-description">
+                  {{ localise("registrations:wasteBalance.notAvailable.description") }}
+                </p>
+              </div>
+            </div>
+          {% endif %}
           </div>
-        {% endif %}
 
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-
         <h2 class="govuk-heading-l">{{ localise("registrations:chooseTask") }}</h2>
 
         <div class="govuk-grid-row epr-task-cards">
