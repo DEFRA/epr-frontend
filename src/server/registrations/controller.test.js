@@ -443,7 +443,9 @@ describe('#accreditationDashboardController', () => {
       config.reset('featureFlags.wasteBalance')
     })
 
-    it('should display waste balance placeholder', async ({ server }) => {
+    it('should display zero balance when no waste balance data is available', async ({
+      server
+    }) => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureData)
@@ -454,9 +456,11 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      expect(result).toContain('Your waste balance is not yet available')
-      expect(result).toContain(
-        'It will be shown here when it becomes available'
+      const $ = load(result)
+
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain('0.00')
+      expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+        'tonnes'
       )
     })
 
@@ -576,7 +580,7 @@ describe('#accreditationDashboardController', () => {
         ).not.toContain('PRNs')
       })
 
-      it('should display placeholder when waste balance fetch fails', async ({
+      it('should display zero balance when waste balance fetch fails', async ({
         server
       }) => {
         vi.mocked(
@@ -596,9 +600,12 @@ describe('#accreditationDashboardController', () => {
 
         const $ = load(result)
 
-        expect(
-          $('[data-testid="waste-balance-not-available-title"]').text()
-        ).toContain('Your waste balance is not yet available')
+        expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+          '0.00'
+        )
+        expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+          'tonnes'
+        )
       })
 
       it('should call fetchWasteBalances with correct parameters', async ({
@@ -658,9 +665,9 @@ describe('#accreditationDashboardController', () => {
 
         const $ = load(result)
 
-        expect(
-          $('[data-testid="waste-balance-not-available-title"]')
-        ).toHaveLength(1)
+        expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+          '0.00'
+        )
       })
 
       it('should display zero balance correctly', async ({ server }) => {
@@ -714,7 +721,7 @@ describe('#accreditationDashboardController', () => {
         )
       })
 
-      it('should display placeholder when API returns empty object', async ({
+      it('should display zero balance when API returns empty object', async ({
         server
       }) => {
         vi.mocked(
@@ -732,12 +739,12 @@ describe('#accreditationDashboardController', () => {
 
         const $ = load(result)
 
-        expect(
-          $('[data-testid="waste-balance-not-available-title"]').text()
-        ).toContain('Your waste balance is not yet available')
-        expect(
-          $('[data-testid="waste-balance-not-available-description"]').text()
-        ).toContain('It will be shown here when it becomes available')
+        expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+          '0.00'
+        )
+        expect($('[data-testid="waste-balance-amount"]').text()).toContain(
+          'tonnes'
+        )
       })
     })
   })
@@ -751,7 +758,7 @@ describe('#accreditationDashboardController', () => {
       config.reset('featureFlags.wasteBalance')
     })
 
-    it('should not display waste balance and should not call fetchWasteBalances', async ({
+    it('should display not available message and should not call fetchWasteBalances', async ({
       server
     }) => {
       vi.mocked(
@@ -765,8 +772,12 @@ describe('#accreditationDashboardController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).not.toContain('Available waste balance')
-      expect(result).not.toContain('Your waste balance is not yet available')
+
+      const $ = load(result)
+
+      expect(
+        $('[data-testid="waste-balance-not-available-title"]').text()
+      ).toContain('Your waste balance is not yet available')
       expect(fetchWasteBalancesModule.fetchWasteBalances).not.toHaveBeenCalled()
     })
   })
