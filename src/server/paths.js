@@ -5,8 +5,5 @@ export const paths = Object.freeze({
     organisation: '/auth/organisation'
   }),
   loggedOut: '/logged-out',
-  prns: Object.freeze({
-    create: '/prns/create'
-  }),
   start: '/start'
 })

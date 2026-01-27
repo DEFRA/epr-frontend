@@ -1,0 +1,21 @@
+{
+  "helpSummary": "Can't find the producer or compliance scheme?",
+  "notesLabel": "Add issuer notes (optional)",
+  "perns": {
+    "pageTitle": "Create a PERN",
+    "tonnageLabel": "Enter PERN tonnage",
+    "recipientLabel": "Enter who this PERN will be issued to",
+    "helpText": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+    "notesHint": "These notes will appear on the PERN"
+  },
+  "prns": {
+    "pageTitle": "Create a PRN",
+    "tonnageLabel": "Enter PRN tonnage",
+    "recipientLabel": "Enter who this PRN will be issued to",
+    "helpText": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+    "notesHint": "These notes will appear on the PRN"
+  },
+  "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
+  "tonnageHint": "Enter a whole number without decimal places",
+  "tonnageSuffix": "tonnes"
+}
