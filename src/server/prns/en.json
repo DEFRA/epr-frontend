@@ -1,5 +1,6 @@
 {
   "helpSummary": "Can't find the producer or compliance scheme?",
+  "materialLabel": "Material",
   "notesLabel": "Add issuer notes (optional)",
   "perns": {
     "pageTitle": "Create a PERN",
@@ -16,6 +17,7 @@
     "notesHint": "These notes will appear on the PRN"
   },
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
+  "selectOption": "Select an option",
   "tonnageHint": "Enter a whole number without decimal places",
   "tonnageSuffix": "tonnes"
 }

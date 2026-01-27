@@ -34,6 +34,7 @@ const fixtureReprocessor = {
     id: 'reg-001',
     wasteProcessingType: 'reprocessor-input', // PRN
     material: 'glass',
+    glassRecyclingProcess: ['glass_re_melt'],
     site: { address: { line1: 'Reprocessing Site' } },
     accreditationId: 'acc-001'
   },
@@ -116,6 +117,21 @@ describe('#createPrnController', () => {
         const heading = getByRole(main, 'heading', { level: 1 })
 
         expect(heading.textContent).toContain('Create a PRN')
+      })
+
+      it('should render material type display', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Material:/i)).toBeDefined()
+        expect(getByText(main, 'Glass remelt')).toBeDefined()
       })
 
       it('should render tonnage input field with suffix', async ({

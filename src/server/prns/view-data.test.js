@@ -6,6 +6,7 @@ const createMockRequest = () => ({
     const translations = {
       'prns:prns:pageTitle': 'Create a PRN',
       'prns:perns:pageTitle': 'Create a PERN',
+      'prns:materialLabel': 'Material',
       'prns:prns:tonnageLabel': 'Enter PRN tonnage',
       'prns:perns:tonnageLabel': 'Enter PERN tonnage',
       'prns:tonnageHint': 'Enter a whole number without decimal places',
@@ -14,6 +15,7 @@ const createMockRequest = () => ({
       'prns:perns:recipientLabel': 'Enter who this PERN will be issued to',
       'prns:recipientHint':
         'Start typing the name of the packaging waste producer or compliance scheme',
+      'prns:selectOption': 'Select an option',
       'prns:helpSummary': "Can't find the producer or compliance scheme?",
       'prns:prns:helpText':
         'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
@@ -36,7 +38,8 @@ const stubRecipients = [
 const reprocessorRegistration = {
   id: 'reg-001',
   wasteProcessingType: 'reprocessor-input', // PRN
-  material: 'glass'
+  material: 'glass',
+  glassRecyclingProcess: ['glass_re_melt']
 }
 
 const exporterRegistration = {
@@ -55,6 +58,16 @@ describe('#buildCreatePrnViewData', () => {
 
       expect(result.pageTitle).toBe('Create a PRN')
       expect(result.heading).toBe('Create a PRN')
+    })
+
+    it('should return material with display name', () => {
+      const result = buildCreatePrnViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        recipients: stubRecipients
+      })
+
+      expect(result.material.label).toBe('Material')
+      expect(result.material.value).toBe('Glass remelt')
     })
 
     it('should return form labels with PRN text', () => {
@@ -98,6 +111,16 @@ describe('#buildCreatePrnViewData', () => {
 
       expect(result.pageTitle).toBe('Create a PERN')
       expect(result.heading).toBe('Create a PERN')
+    })
+
+    it('should return material with display name for non-glass', () => {
+      const result = buildCreatePrnViewData(createMockRequest(), {
+        registration: exporterRegistration,
+        recipients: stubRecipients
+      })
+
+      expect(result.material.label).toBe('Material')
+      expect(result.material.value).toBe('Plastic')
     })
 
     it('should return form labels with PERN text', () => {

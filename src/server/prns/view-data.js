@@ -1,8 +1,10 @@
+import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+
 /**
  * Build view data for the create PRN/PERN page
  * @param {Request} request
  * @param {object} options
- * @param {{wasteProcessingType: string}} options.registration
+ * @param {{wasteProcessingType: string, material: string, glassRecyclingProcess?: string[]}} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @returns {object}
  */
@@ -12,10 +14,15 @@ export function buildCreatePrnViewData(request, { registration, recipients }) {
     registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
 
   const pageTitle = localise(`prns:${noteType}:pageTitle`)
+  const material = getDisplayMaterial(registration)
 
   return {
     pageTitle,
     heading: pageTitle,
+    material: {
+      label: localise('prns:materialLabel'),
+      value: material
+    },
     tonnage: {
       label: localise(`prns:${noteType}:tonnageLabel`),
       hint: localise('prns:tonnageHint'),
@@ -24,7 +31,7 @@ export function buildCreatePrnViewData(request, { registration, recipients }) {
     recipient: {
       label: localise(`prns:${noteType}:recipientLabel`),
       hint: localise('prns:recipientHint'),
-      items: [{ value: '', text: 'Select an option' }, ...recipients]
+      items: [{ value: '', text: localise('prns:selectOption') }, ...recipients]
     },
     help: {
       summary: localise('prns:helpSummary'),
