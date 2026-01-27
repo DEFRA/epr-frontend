@@ -840,7 +840,9 @@ describe('#accreditationDashboardController', () => {
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
           title: 'PRNs',
           description: 'Raise, issue and manage PRNs.',
-          linkText: 'Create new PRN'
+          linkText: 'Create new PRN',
+          expectedCreateUrl:
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn'
         },
         {
           name: 'PERN (exporter)',
@@ -848,11 +850,16 @@ describe('#accreditationDashboardController', () => {
           url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
           title: 'PERNs',
           description: 'Raise, issue and manage PERNs.',
-          linkText: 'Create new PERN'
+          linkText: 'Create new PERN',
+          expectedCreateUrl:
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn'
         }
       ])(
         'should display $name card with create new link',
-        async ({ fixture, url, title, description, linkText }, { server }) => {
+        async (
+          { fixture, url, title, description, linkText, expectedCreateUrl },
+          { server }
+        ) => {
           vi.mocked(
             fetchOrganisationModule.fetchOrganisationById
           ).mockResolvedValue(fixture)
@@ -879,7 +886,7 @@ describe('#accreditationDashboardController', () => {
 
           expect(
             card.getByRole('link', { name: linkText }).getAttribute('href')
-          ).toBe('/prns/create')
+          ).toBe(expectedCreateUrl)
         }
       )
     })
