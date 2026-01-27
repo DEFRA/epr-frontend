@@ -7,5 +7,6 @@ export const summaryLogStatuses = {
   submitting: 'submitting',
   submitted: 'submitted',
   superseded: 'superseded',
-  validationFailed: 'validation_failed'
+  validationFailed: 'validation_failed',
+  submissionFailed: 'submission_failed'
 }
