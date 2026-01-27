@@ -16,6 +16,7 @@ const STUB_RECIPIENTS = [
 ]
 
 const MIN_TONNAGE = 1
+const MAX_NOTES_LENGTH = 200
 
 const payloadSchema = Joi.object({
   tonnage: Joi.number().integer().min(MIN_TONNAGE).required().messages({
@@ -28,9 +29,13 @@ const payloadSchema = Joi.object({
     'string.empty': 'Select who this will be issued to',
     'any.required': 'Select who this will be issued to'
   }),
-  notes: Joi.string().max(200).allow('').optional().messages({
-    'string.max': 'Notes must be 200 characters or fewer'
-  }),
+  notes: Joi.string()
+    .max(MAX_NOTES_LENGTH)
+    .allow('')
+    .optional()
+    .messages({
+      'string.max': `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`
+    }),
   material: Joi.string().required(),
   nation: Joi.string().required(),
   wasteProcessingType: Joi.string().required()
@@ -119,7 +124,7 @@ export const postController = {
         registrationId,
         {
           issuedToOrganisation: recipient,
-          tonnage: parseInt(tonnage, 10),
+          tonnage: Number.parseInt(tonnage, 10),
           material,
           nation,
           wasteProcessingType,
