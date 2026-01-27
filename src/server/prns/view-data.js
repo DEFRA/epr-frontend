@@ -2,7 +2,7 @@
  * Build view data for the create PRN/PERN page
  * @param {Request} request
  * @param {object} options
- * @param {object} options.registration
+ * @param {{wasteProcessingType: string}} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @returns {object}
  */

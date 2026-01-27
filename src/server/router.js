@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { account } from '#server/account/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
@@ -38,11 +39,14 @@ export const router = {
         login,
         logout,
         organisations,
-        prns,
         registrations,
         summaryLog,
         summaryLogUpload
       ])
+
+      if (config.get('featureFlags.prns')) {
+        await server.register([prns])
+      }
 
       // Static assets
       await server.register([serveStaticFiles])

@@ -239,6 +239,26 @@ describe('#createPrnController', () => {
     })
 
     describe('error handling', () => {
+      it('should return 404 for PRN when feature flag is disabled', async ({
+        server
+      }) => {
+        // Server created with flag ON (routes registered)
+        // Disable flag to test controller-level check
+        config.set('featureFlags.prns', false)
+
+        try {
+          const { statusCode } = await server.inject({
+            method: 'GET',
+            url: reprocessorUrl,
+            auth: mockAuth
+          })
+
+          expect(statusCode).toBe(statusCodes.notFound)
+        } finally {
+          config.set('featureFlags.prns', true)
+        }
+      })
+
       it('should return 404 when registration not found', async ({
         server
       }) => {
