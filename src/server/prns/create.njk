@@ -10,6 +10,11 @@
 
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
+      <p class="govuk-body">
+        <span class="govuk-!-font-weight-bold">{{ material.label }}:</span>
+        {{ material.value }}
+      </p>
+
       {{ govukInput({
         label: {
           text: tonnage.label,
