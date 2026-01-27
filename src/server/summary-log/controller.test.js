@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -9,7 +10,15 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
@@ -862,228 +871,296 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    it('status: submitted - should fetch waste balance data', async ({
-      server
-    }) => {
-      const accreditationId = 'accreditation-id-456'
-
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-001'
+    describe('when waste balance feature flag is enabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.wasteBalance', true)
       })
 
-      getRegistrationWithAccreditation.mockResolvedValueOnce({
-        organisationData: { id: organisationId },
-        registration: { id: registrationId, accreditationId },
-        accreditation: {
-          id: accreditationId,
+      afterAll(() => {
+        config.reset('featureFlags.wasteBalance')
+      })
+
+      it('status: validated - should not fetch waste balance data', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.validated,
+          loads: {
+            added: {
+              included: { count: 0, rowIds: [] },
+              excluded: { count: 0, rowIds: [] }
+            },
+            adjusted: {
+              included: { count: 0, rowIds: [] },
+              excluded: { count: 0, rowIds: [] }
+            }
+          }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(getRegistrationWithAccreditation).not.toHaveBeenCalled()
+        expect(fetchWasteBalances).not.toHaveBeenCalled()
+      })
+
+      it('status: submitted - should fetch waste balance data', async ({
+        server
+      }) => {
+        const accreditationId = 'accreditation-id-456'
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
-        }
+        })
+
+        getRegistrationWithAccreditation.mockResolvedValueOnce({
+          organisationData: { id: organisationId },
+          registration: { id: registrationId, accreditationId },
+          accreditation: {
+            id: accreditationId,
+            accreditationNumber: 'ACC-2025-001'
+          }
+        })
+
+        fetchWasteBalances.mockResolvedValueOnce({
+          [accreditationId]: {
+            amount: 1000,
+            availableAmount: 1234.56
+          }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(getRegistrationWithAccreditation).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          'test-id-token'
+        )
+        expect(fetchWasteBalances).toHaveBeenCalledWith(
+          organisationId,
+          [accreditationId],
+          'test-id-token'
+        )
       })
 
-      fetchWasteBalances.mockResolvedValueOnce({
-        [accreditationId]: {
-          amount: 1000,
-          availableAmount: 1234.56
-        }
+      it('status: submitted - should display waste balance in confirmation panel', async ({
+        server
+      }) => {
+        const accreditationId = 'accreditation-id-456'
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          accreditationNumber: 'ACC-2025-001'
+        })
+
+        getRegistrationWithAccreditation.mockResolvedValueOnce({
+          organisationData: { id: organisationId },
+          registration: { id: registrationId, accreditationId },
+          accreditation: {
+            id: accreditationId,
+            accreditationNumber: 'ACC-2025-001'
+          }
+        })
+
+        fetchWasteBalances.mockResolvedValueOnce({
+          [accreditationId]: {
+            amount: 1000,
+            availableAmount: 1234.56
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
+
+        expect(panelBody).toHaveLength(1)
+        expect(panelBody.text()).toContain('Your updated waste balance')
+        expect(panelBody.text()).toContain('1,234.56')
+        expect(panelBody.text()).toContain('tonnes')
       })
 
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
+      it('status: submitted - should not display waste balance section when balance unavailable', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          accreditationNumber: 'ACC-2025-001'
+        })
+
+        getRegistrationWithAccreditation.mockResolvedValueOnce({
+          organisationData: { id: organisationId },
+          registration: { id: registrationId },
+          accreditation: undefined
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = load(result)
+        const panel = $('.govuk-panel--confirmation')
+        const panelBody = panel.find('.govuk-panel__body')
+
+        expect(panel).toHaveLength(1)
+        expect(panelBody).toHaveLength(0)
+        expect(result).not.toContain('Your updated waste balance')
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(getRegistrationWithAccreditation).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        'test-id-token'
-      )
-      expect(fetchWasteBalances).toHaveBeenCalledWith(
-        organisationId,
-        [accreditationId],
-        'test-id-token'
-      )
+      it('status: submitted - should not display waste balance when balance not found', async ({
+        server
+      }) => {
+        const accreditationId = 'accreditation-id-456'
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          accreditationNumber: 'ACC-2025-001'
+        })
+
+        getRegistrationWithAccreditation.mockResolvedValueOnce({
+          organisationData: { id: organisationId },
+          registration: { id: registrationId, accreditationId },
+          accreditation: {
+            id: accreditationId,
+            accreditationNumber: 'ACC-2025-001'
+          }
+        })
+
+        fetchWasteBalances.mockResolvedValueOnce({})
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).not.toContain('Your updated waste balance')
+      })
+
+      it('status: submitted - should handle waste balance fetch failure gracefully', async ({
+        server
+      }) => {
+        const accreditationId = 'accreditation-id-456'
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          accreditationNumber: 'ACC-2025-001'
+        })
+
+        getRegistrationWithAccreditation.mockResolvedValueOnce({
+          organisationData: { id: organisationId },
+          registration: { id: registrationId, accreditationId },
+          accreditation: {
+            id: accreditationId,
+            accreditationNumber: 'ACC-2025-001'
+          }
+        })
+
+        fetchWasteBalances.mockRejectedValueOnce(
+          new Error('Waste balance service unavailable')
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('Summary log uploaded')
+        expect(result).not.toContain('Your updated waste balance')
+      })
+
+      it('status: submitted - should display zero waste balance correctly', async ({
+        server
+      }) => {
+        const accreditationId = 'accreditation-id-456'
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          accreditationNumber: 'ACC-2025-001'
+        })
+
+        getRegistrationWithAccreditation.mockResolvedValueOnce({
+          organisationData: { id: organisationId },
+          registration: { id: registrationId, accreditationId },
+          accreditation: {
+            id: accreditationId,
+            accreditationNumber: 'ACC-2025-001'
+          }
+        })
+
+        fetchWasteBalances.mockResolvedValueOnce({
+          [accreditationId]: {
+            amount: 0,
+            availableAmount: 0
+          }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = load(result)
+        const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
+
+        expect(panelBody).toHaveLength(1)
+        expect(panelBody.text()).toContain('0.00')
+        expect(panelBody.text()).toContain('tonnes')
+      })
     })
 
-    it('status: submitted - should display waste balance in confirmation panel', async ({
-      server
-    }) => {
-      const accreditationId = 'accreditation-id-456'
-
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-001'
+    describe('when waste balance feature flag is disabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.wasteBalance', false)
       })
 
-      getRegistrationWithAccreditation.mockResolvedValueOnce({
-        organisationData: { id: organisationId },
-        registration: { id: registrationId, accreditationId },
-        accreditation: {
-          id: accreditationId,
+      afterAll(() => {
+        config.reset('featureFlags.wasteBalance')
+      })
+
+      it('status: submitted - should not display waste balance section', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
-        }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).not.toContain('Your updated waste balance')
+        expect(getRegistrationWithAccreditation).not.toHaveBeenCalled()
+        expect(fetchWasteBalances).not.toHaveBeenCalled()
       })
-
-      fetchWasteBalances.mockResolvedValueOnce({
-        [accreditationId]: {
-          amount: 1000,
-          availableAmount: 1234.56
-        }
-      })
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      const $ = load(result)
-      const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
-
-      expect(panelBody).toHaveLength(1)
-      expect(panelBody.text()).toContain('Your updated waste balance')
-      expect(panelBody.text()).toContain('1,234.56')
-      expect(panelBody.text()).toContain('tonnes')
-    })
-
-    it('status: submitted - should not display waste balance section when balance unavailable', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-001'
-      })
-
-      getRegistrationWithAccreditation.mockResolvedValueOnce({
-        organisationData: { id: organisationId },
-        registration: { id: registrationId },
-        accreditation: undefined
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const panel = $('.govuk-panel--confirmation')
-      const panelBody = panel.find('.govuk-panel__body')
-
-      expect(panel).toHaveLength(1)
-      expect(panelBody).toHaveLength(0)
-      expect(result).not.toContain('Your updated waste balance')
-    })
-
-    it('status: submitted - should not display waste balance when balance not found', async ({
-      server
-    }) => {
-      const accreditationId = 'accreditation-id-456'
-
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-001'
-      })
-
-      getRegistrationWithAccreditation.mockResolvedValueOnce({
-        organisationData: { id: organisationId },
-        registration: { id: registrationId, accreditationId },
-        accreditation: {
-          id: accreditationId,
-          accreditationNumber: 'ACC-2025-001'
-        }
-      })
-
-      fetchWasteBalances.mockResolvedValueOnce({})
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).not.toContain('Your updated waste balance')
-    })
-
-    it('status: submitted - should handle waste balance fetch failure gracefully', async ({
-      server
-    }) => {
-      const accreditationId = 'accreditation-id-456'
-
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-001'
-      })
-
-      getRegistrationWithAccreditation.mockResolvedValueOnce({
-        organisationData: { id: organisationId },
-        registration: { id: registrationId, accreditationId },
-        accreditation: {
-          id: accreditationId,
-          accreditationNumber: 'ACC-2025-001'
-        }
-      })
-
-      fetchWasteBalances.mockRejectedValueOnce(
-        new Error('Waste balance service unavailable')
-      )
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Summary log uploaded')
-      expect(result).not.toContain('Your updated waste balance')
-    })
-
-    it('status: submitted - should display zero waste balance correctly', async ({
-      server
-    }) => {
-      const accreditationId = 'accreditation-id-456'
-
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.submitted,
-        accreditationNumber: 'ACC-2025-001'
-      })
-
-      getRegistrationWithAccreditation.mockResolvedValueOnce({
-        organisationData: { id: organisationId },
-        registration: { id: registrationId, accreditationId },
-        accreditation: {
-          id: accreditationId,
-          accreditationNumber: 'ACC-2025-001'
-        }
-      })
-
-      fetchWasteBalances.mockResolvedValueOnce({
-        [accreditationId]: {
-          amount: 0,
-          availableAmount: 0
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
-
-      expect(panelBody).toHaveLength(1)
-      expect(panelBody.text()).toContain('0.00')
-      expect(panelBody.text()).toContain('tonnes')
     })
 
     it('status: submitted with freshData from POST - should use freshData and not call backend', async ({

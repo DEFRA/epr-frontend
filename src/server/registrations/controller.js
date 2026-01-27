@@ -35,12 +35,14 @@ export const controller = {
       ({ id }) => id === registration.accreditationId
     )
 
-    const wasteBalance = await getWasteBalance(
-      organisationId,
-      registration.accreditationId,
-      session.idToken,
-      request.logger
-    )
+    const wasteBalance = config.get('featureFlags.wasteBalance')
+      ? await getWasteBalance(
+          organisationId,
+          registration.accreditationId,
+          session.idToken,
+          request.logger
+        )
+      : null
 
     const viewModel = buildViewModel({
       request,
@@ -86,7 +88,7 @@ function buildViewModel({
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
-  return {
+  const viewModel = {
     pageTitle: localise('registrations:pageTitle', { siteName, material }),
     siteName,
     material,
@@ -107,9 +109,14 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    prns: getPrnViewData(request, isExporter),
-    wasteBalance: getWasteBalanceViewData(wasteBalance, localise, isExporter)
+    prns: getPrnViewData(request, isExporter)
   }
+
+  if (config.get('featureFlags.wasteBalance')) {
+    viewModel.wasteBalance = getWasteBalanceViewData(wasteBalance, isExporter)
+  }
+
+  return viewModel
 }
 
 /**
@@ -156,19 +163,11 @@ async function getWasteBalance(
   }
 }
 
-function getWasteBalanceViewData(wasteBalance, localise, isExporter) {
-  const hasWasteBalance = wasteBalance !== null
-  const noteType = isExporter ? 'perns' : 'prns'
-
+function getWasteBalanceViewData(wasteBalance, isExporter) {
   return {
-    hasWasteBalance,
-    availableAmount: hasWasteBalance ? wasteBalance.availableAmount : null,
-    title: hasWasteBalance
-      ? localise('registrations:wasteBalance.available.title')
-      : localise('registrations:wasteBalance.notAvailable.title'),
-    description: hasWasteBalance
-      ? localise(`registrations:wasteBalance.available.description.${noteType}`)
-      : localise('registrations:wasteBalance.notAvailable.description')
+    availableAmount:
+      wasteBalance === null ? null : wasteBalance.availableAmount,
+    noteType: isExporter ? 'perns' : 'prns'
   }
 }
 

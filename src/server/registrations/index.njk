@@ -33,11 +33,11 @@
               </p>
             {% endif %}
             {% if hasRegistrationNumber %}
-                <p class="govuk-body govuk-!-margin-bottom-0">
-                  <span class="govuk-!-font-weight-bold">{{ localise("registrations:registrationNumber") }}:</span>
-                  {{ registrationNumber }}
-                </p>
-              {% endif %}
+              <p class="govuk-body govuk-!-margin-bottom-0">
+                <span class="govuk-!-font-weight-bold">{{ localise("registrations:registrationNumber") }}:</span>
+                {{ registrationNumber }}
+              </p>
+            {% endif %}
           </div>
           <div class="govuk-grid-column-one-half">
             {% if hasAccreditationStatus %}
@@ -58,37 +58,40 @@
           </div>
         </div>
 
-        <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
-          <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
-            <div>
-              {% if wasteBalance.hasWasteBalance %}
-                <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
-                  {{ wasteBalance.availableAmount | formatTonnage }} {{ localise("registrations:wasteBalance.units") }}
-                </h2>
-                <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-subtitle">
-                  {{ wasteBalance.title }}
+
+          <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
+          {% if wasteBalance is defined %}
+            <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
+              <div>
+                  <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
+                    {{ wasteBalance.availableAmount | formatTonnage }} {{ localise("registrations:wasteBalance.units") }}
+                  </h2>
+                  <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold"
+                     data-testid="waste-balance-subtitle">
+                    {{ localise("registrations:wasteBalance.available.title") }}
+                  </p>
+              </div>
+              </div>
+              <div class="govuk-summary-card__content govuk-!-padding-4">
+                <p class="govuk-body govuk-!-margin-bottom-0" data-testid="waste-balance-explanation">
+                  {{ localise("registrations:wasteBalance.available.description." + wasteBalance.noteType) }}
                 </p>
-              {% else %}
+              </div>
+          {% else %}
+            <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
+              <div>
                 <h2 class="govuk-summary-card__title" data-testid="waste-balance-not-available-title">
-                  {{ wasteBalance.title }}
+                  {{ localise("registrations:wasteBalance.notAvailable.title") }}
                 </h2>
                 <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-not-available-description">
-                  {{ wasteBalance.description }}
+                  {{ localise("registrations:wasteBalance.notAvailable.description") }}
                 </p>
-              {% endif %}
-            </div>
-          </div>
-          {% if wasteBalance.hasWasteBalance %}
-            <div class="govuk-summary-card__content govuk-!-padding-4">
-              <p class="govuk-body govuk-!-margin-bottom-0" data-testid="waste-balance-explanation">
-                {{ wasteBalance.description }}
-              </p>
+              </div>
             </div>
           {% endif %}
-        </div>
+          </div>
 
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-
         <h2 class="govuk-heading-l">{{ localise("registrations:chooseTask") }}</h2>
 
         <div class="govuk-grid-row epr-task-cards">
@@ -176,7 +179,8 @@
                 </p>
                 <p class="govuk-body">
                   {{ localise("registrations:registrationNotAvailablePart2") }}
-                  <a href="{{ contactRegulatorUrl }}" class="govuk-link">{{ localise("registrations:contactRegulator") }}</a>
+                  <a href="{{ contactRegulatorUrl }}"
+                     class="govuk-link">{{ localise("registrations:contactRegulator") }}</a>
                 </p>
               </div>
             </div>
