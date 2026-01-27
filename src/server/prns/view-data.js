@@ -18,7 +18,8 @@ export function buildCreatePrnViewData(request, { registration, recipients }) {
     heading: pageTitle,
     tonnage: {
       label: localise(`prns:${noteType}:tonnageLabel`),
-      hint: localise('prns:tonnageHint')
+      hint: localise('prns:tonnageHint'),
+      suffix: localise('prns:tonnageSuffix')
     },
     recipient: {
       label: localise(`prns:${noteType}:recipientLabel`),

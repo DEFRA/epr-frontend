@@ -9,6 +9,7 @@ const createMockRequest = () => ({
       'prns:prns:tonnageLabel': 'Enter PRN tonnage',
       'prns:perns:tonnageLabel': 'Enter PERN tonnage',
       'prns:tonnageHint': 'Enter a whole number without decimal places',
+      'prns:tonnageSuffix': 'tonnes',
       'prns:prns:recipientLabel': 'Enter who this PRN will be issued to',
       'prns:perns:recipientLabel': 'Enter who this PERN will be issued to',
       'prns:recipientHint':

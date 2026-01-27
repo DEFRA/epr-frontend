@@ -16,5 +16,6 @@
     "notesHint": "These notes will appear on the PRN"
   },
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
-  "tonnageHint": "Enter a whole number without decimal places"
+  "tonnageHint": "Enter a whole number without decimal places",
+  "tonnageSuffix": "tonnes"
 }

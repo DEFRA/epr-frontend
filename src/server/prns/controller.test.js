@@ -138,7 +138,7 @@ describe('#createPrnController', () => {
         expect(
           getByText(main, /Enter a whole number without decimal places/i)
         ).toBeDefined()
-        expect(getByText(main, /tonnes/i)).toBeDefined()
+        expect(getByText(main, 'tonnes')).toBeDefined()
       })
 
       it('should render recipient select field with options', async ({
