@@ -1,7 +1,6 @@
 import Boom from '@hapi/boom'
-import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
-import { buildCreatePrnViewData } from './view-data.js'
+import { buildCreateViewData } from './create-view-data.js'
 
 // Stub recipients until real API is available
 const STUB_RECIPIENTS = [
@@ -15,12 +14,8 @@ const STUB_RECIPIENTS = [
 /**
  * @satisfies {Partial<ServerRoute>}
  */
-export const controller = {
+export const createController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId } = request.params
     const session = request.auth.credentials
 
@@ -44,7 +39,7 @@ export const controller = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    const viewData = buildCreatePrnViewData(request, {
+    const viewData = buildCreateViewData(request, {
       registration,
       recipients: STUB_RECIPIENTS
     })

@@ -1,0 +1,38 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      {% if wasteBalance %}
+        <div class="govuk-panel govuk-panel--confirmation govuk-!-text-align-left">
+          <div class="govuk-panel__title">
+            {{ wasteBalance.availableAmount | formatTonnage }} tonnes
+          </div>
+          <div class="govuk-panel__body">
+            <strong>{{ localise('prns:list:availableWasteBalance') }}</strong>
+          </div>
+          <p class="govuk-body govuk-!-margin-top-3">
+            {{ balanceHint }}
+          </p>
+        </div>
+      {% endif %}
+
+      <h2 class="govuk-heading-m">{{ selectHeading }}</h2>
+
+      {{ govukInsetText({
+        text: cancelHint
+      }) }}
+
+      {{ govukTable({
+        head: table.head,
+        rows: table.rows
+      }) }}
+
+    </div>
+  </div>
+{% endblock %}
