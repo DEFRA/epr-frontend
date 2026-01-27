@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { account } from '#server/account/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
@@ -9,6 +10,7 @@ import { loggedOut } from '#server/logged-out/index.js'
 import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
 import { organisations } from '#server/organisations/index.js'
+import { prns } from '#server/prns/index.js'
 import { registrations } from '#server/registrations/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
@@ -41,6 +43,10 @@ export const router = {
         summaryLog,
         summaryLogUpload
       ])
+
+      if (config.get('featureFlags.prns')) {
+        await server.register([prns])
+      }
 
       // Static assets
       await server.register([serveStaticFiles])
