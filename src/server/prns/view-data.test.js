@@ -24,8 +24,6 @@ const createMockRequest = () => ({
       'prns:notesLabel': 'Add issuer notes (optional)',
       'prns:prns:notesHint': 'These notes will appear on the PRN',
       'prns:perns:notesHint': 'These notes will appear on the PERN',
-      'prns:materialLabel': 'Material',
-      'prns:selectOption': 'Select an option',
       'prns:prns:submitButton': 'Create PRN',
       'prns:perns:submitButton': 'Create PERN'
     }
