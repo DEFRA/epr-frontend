@@ -20,6 +20,8 @@
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
       <form method="POST" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+
         <p class="govuk-body">
           <span class="govuk-!-font-weight-bold">{{ material.label }}:</span>
           {{ material.value }}
