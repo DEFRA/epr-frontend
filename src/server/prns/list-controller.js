@@ -55,12 +55,13 @@ export const listController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    const wasteBalance = await getWasteBalance(
+    // TODO: PAE-931 - Remove fallback once waste balance API returns data
+    const wasteBalance = (await getWasteBalance(
       organisationId,
       accreditation.id,
       session.idToken,
       request.logger
-    )
+    )) ?? { amount: 20.5, availableAmount: 10.3 }
 
     // GET /v1/organisations/{organisationId}/accreditations/{accreditationId}/prns
     const prns = STUB_PRNS

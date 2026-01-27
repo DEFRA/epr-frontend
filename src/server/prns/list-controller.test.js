@@ -244,7 +244,7 @@ describe('#prnListController', () => {
         'org-123',
         'acc-001',
         'mock-id-token',
-        expect.any(Object) // logger
+        expect.any(Object)
       )
     })
   })
@@ -451,32 +451,6 @@ describe('#prnListController', () => {
 
       expect(table).toBeDefined()
       expect(headers).toHaveLength(4)
-    })
-  })
-
-  describe('waste balance feature flag', () => {
-    it('should not display waste balance when helper returns null', async ({
-      server
-    }) => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
-        fixtureReprocessor
-      )
-      vi.mocked(getWasteBalance).mockResolvedValue(null)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      // Waste balance panel should not be present
-      const panel = main.querySelector('.govuk-panel')
-
-      expect(panel).toBeNull()
     })
   })
 })
