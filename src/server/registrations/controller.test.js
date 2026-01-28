@@ -842,7 +842,10 @@ describe('#accreditationDashboardController', () => {
           description: 'Raise, issue and manage PRNs.',
           linkText: 'Create new PRN',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn'
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn',
+          manageLinkText: 'Manage PRNs',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/prns'
         },
         {
           name: 'PERN (exporter)',
@@ -852,12 +855,24 @@ describe('#accreditationDashboardController', () => {
           description: 'Raise, issue and manage PERNs.',
           linkText: 'Create new PERN',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn'
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn',
+          manageLinkText: 'Manage PERNs',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/prns'
         }
       ])(
         'should display $name card with create new link',
         async (
-          { fixture, url, title, description, linkText, expectedCreateUrl },
+          {
+            fixture,
+            url,
+            title,
+            description,
+            linkText,
+            expectedCreateUrl,
+            manageLinkText,
+            expectedManageUrl
+          },
           { server }
         ) => {
           vi.mocked(
@@ -887,6 +902,12 @@ describe('#accreditationDashboardController', () => {
           expect(
             card.getByRole('link', { name: linkText }).getAttribute('href')
           ).toBe(expectedCreateUrl)
+
+          expect(
+            card
+              .getByRole('link', { name: manageLinkText })
+              .getAttribute('href')
+          ).toBe(expectedManageUrl)
         }
       )
     })
