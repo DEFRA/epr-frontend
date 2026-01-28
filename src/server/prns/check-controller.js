@@ -66,11 +66,11 @@ export const checkController = {
             ]
           : [])
       ],
-      confirmButton: {
-        text: localise(`prns:${noteType}:confirmButton`)
+      createButton: {
+        text: localise(`prns:${noteType}:createButton`)
       },
-      cancelLink: {
-        text: localise('prns:cancelButton'),
+      cancelButton: {
+        text: localise(`prns:${noteType}:cancelButton`),
         href: `/organisations/${organisationId}/registrations/${registrationId}`
       },
       organisationId,

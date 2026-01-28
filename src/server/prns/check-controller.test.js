@@ -217,7 +217,7 @@ describe('#checkController', () => {
           expect(summaryList.textContent).not.toContain('Add issuer notes')
         })
 
-        it('displays confirm button and cancel link', async ({ server }) => {
+        it('displays create button and cancel button', async ({ server }) => {
           const { cookies } = await createPrnDraft(server)
 
           const { result } = await server.inject({
@@ -232,9 +232,11 @@ describe('#checkController', () => {
           const main = getByRole(body, 'main')
 
           expect(
-            getByRole(main, 'button', { name: /Confirm and create PRN/i })
+            getByRole(main, 'button', { name: /Create PRN/i })
           ).toBeDefined()
-          expect(getByText(main, /Cancel/i)).toBeDefined()
+          expect(
+            getByRole(main, 'button', { name: /Cancel without saving/i })
+          ).toBeDefined()
         })
 
         it('displays PERN text for exporter', async ({ server }) => {
@@ -262,7 +264,10 @@ describe('#checkController', () => {
             getByText(main, /Check your answers before creating this PERN/i)
           ).toBeDefined()
           expect(
-            getByRole(main, 'button', { name: /Confirm and create PERN/i })
+            getByRole(main, 'button', { name: /Create PERN/i })
+          ).toBeDefined()
+          expect(
+            getByRole(main, 'button', { name: /Cancel without saving/i })
           ).toBeDefined()
         })
       })
