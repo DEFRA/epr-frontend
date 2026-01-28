@@ -40,7 +40,8 @@ const PROCESSING_STATES = new Set([
 const REUPLOAD_STATES = new Set([
   summaryLogStatuses.invalid,
   summaryLogStatuses.rejected,
-  summaryLogStatuses.validationFailed
+  summaryLogStatuses.validationFailed,
+  summaryLogStatuses.submissionFailed
 ])
 
 /**
@@ -367,7 +368,8 @@ const viewResolvers = {
   [summaryLogStatuses.superseded]: renderSupersededView,
   [summaryLogStatuses.invalid]: renderValidationFailuresView,
   [summaryLogStatuses.rejected]: renderValidationFailuresView,
-  [summaryLogStatuses.validationFailed]: renderValidationFailuresView
+  [summaryLogStatuses.validationFailed]: renderValidationFailuresView,
+  [summaryLogStatuses.submissionFailed]: renderValidationFailuresView
 }
 
 /**

@@ -1777,6 +1777,45 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
+    it('status: submission_failed - should show validation failures page with re-upload option', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submissionFailed
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('Upload updated XLSX file')
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it('status: submission_failed - should initiate upload for re-upload', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submissionFailed
+      })
+
+      await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        idToken: 'test-id-token'
+      })
+    })
+
     describe('status: superseded', () => {
       it('should show superseded page with link to organisation', async ({
         server
