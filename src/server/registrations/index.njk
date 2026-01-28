@@ -132,6 +132,8 @@
                 <p class="govuk-body">
                   {% if prns.isEnabled %}
                     <a href="{{ prns.link.href }}" class="govuk-link">{{ prns.link.text }}</a>
+                    <br>
+                    <a href="{{ prns.manageLink.href }}" class="govuk-link">{{ prns.manageLink.text }}</a>
                   {% else %}
                     {{ prns.notAvailable }}
                   {% endif %}
