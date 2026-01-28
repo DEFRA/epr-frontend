@@ -11,8 +11,10 @@ vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/create-prn.js'))
+vi.mock(import('./helpers/update-prn-status.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
+const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
 const mockCredentials = {
   profile: {
@@ -75,6 +77,13 @@ const mockPrnCreated = {
   status: 'draft'
 }
 
+const mockPrnStatusUpdated = {
+  id: 'prn-789',
+  tonnage: 100,
+  material: 'plastic',
+  status: 'awaiting_authorisation'
+}
+
 /**
  * Helper to create PRN draft and return session cookies
  */
@@ -109,6 +118,7 @@ describe('#checkController', () => {
       fixtureReprocessor
     )
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
+    vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
   })
 
   describe('when feature flag is enabled', () => {
@@ -286,6 +296,63 @@ describe('#checkController', () => {
 
           expect(statusCode).toBe(statusCodes.found)
           expect(headers.location).toBe(successUrl)
+        })
+
+        it('calls updatePrnStatus with correct parameters', async ({
+          server
+        }) => {
+          const { cookies, crumb } = await createPrnDraft(server)
+
+          await server.inject({
+            method: 'POST',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies },
+            payload: { crumb }
+          })
+
+          expect(updatePrnStatus).toHaveBeenCalledWith(
+            organisationId,
+            registrationId,
+            mockPrnCreated.id,
+            { status: 'awaiting_authorisation' },
+            mockCredentials.idToken
+          )
+        })
+
+        it('returns 500 when updatePrnStatus fails', async ({ server }) => {
+          vi.mocked(updatePrnStatus).mockRejectedValue(new Error('API error'))
+
+          const { cookies, crumb } = await createPrnDraft(server)
+
+          const { statusCode } = await server.inject({
+            method: 'POST',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies },
+            payload: { crumb }
+          })
+
+          expect(statusCode).toBe(statusCodes.internalServerError)
+        })
+
+        it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
+          const { default: Boom } = await import('@hapi/boom')
+          vi.mocked(updatePrnStatus).mockRejectedValue(
+            Boom.notFound('PRN not found')
+          )
+
+          const { cookies, crumb } = await createPrnDraft(server)
+
+          const { statusCode } = await server.inject({
+            method: 'POST',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies },
+            payload: { crumb }
+          })
+
+          expect(statusCode).toBe(statusCodes.notFound)
         })
       })
 

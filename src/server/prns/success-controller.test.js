@@ -11,8 +11,10 @@ vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/create-prn.js'))
+vi.mock(import('./helpers/update-prn-status.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
+const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
 const mockCredentials = {
   profile: {
@@ -82,6 +84,20 @@ const mockPernCreated = {
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'exporter'
+}
+
+const mockPrnStatusUpdated = {
+  id: 'prn-789',
+  tonnage: 100,
+  material: 'plastic',
+  status: 'awaiting_authorisation'
+}
+
+const mockPernStatusUpdated = {
+  id: 'pern-123',
+  tonnage: 50,
+  material: 'plastic',
+  status: 'awaiting_authorisation'
 }
 
 /**
@@ -169,6 +185,7 @@ describe('#successController', () => {
       fixtureReprocessor
     )
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
+    vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
   })
 
   describe('when feature flag is enabled', () => {
@@ -251,6 +268,7 @@ describe('#successController', () => {
           fixtureExporter
         )
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+        vi.mocked(updatePrnStatus).mockResolvedValue(mockPernStatusUpdated)
 
         const exporterPayload = {
           ...validPayload,

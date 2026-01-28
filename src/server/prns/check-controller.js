@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -88,6 +89,7 @@ export const checkPostController = {
     }
 
     const { organisationId, registrationId } = request.params
+    const session = request.auth.credentials
 
     // Retrieve draft PRN data from session
     const prnDraft = request.yar.get('prnDraft')
@@ -99,19 +101,38 @@ export const checkPostController = {
       )
     }
 
-    // Clear draft and store for success page
-    request.yar.clear('prnDraft')
-    request.yar.set('prnCreated', {
-      id: prnDraft.id,
-      tonnage: prnDraft.tonnage,
-      material: prnDraft.material,
-      status: prnDraft.status,
-      wasteProcessingType: prnDraft.wasteProcessingType
-    })
+    try {
+      // Update PRN status from draft to awaiting_authorisation
+      const result = await updatePrnStatus(
+        organisationId,
+        registrationId,
+        prnDraft.id,
+        { status: 'awaiting_authorisation' },
+        session.idToken
+      )
 
-    return h.redirect(
-      `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
-    )
+      // Clear draft and store for success page
+      request.yar.clear('prnDraft')
+      request.yar.set('prnCreated', {
+        id: result.id,
+        tonnage: result.tonnage,
+        material: result.material,
+        status: result.status,
+        wasteProcessingType: prnDraft.wasteProcessingType
+      })
+
+      return h.redirect(
+        `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
+      )
+    } catch (error) {
+      request.logger.error({ error }, 'Failed to update PRN status')
+
+      if (error.isBoom) {
+        throw error
+      }
+
+      throw Boom.badImplementation('Failed to confirm PRN')
+    }
   }
 }
 
