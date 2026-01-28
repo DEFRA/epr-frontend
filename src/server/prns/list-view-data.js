@@ -42,13 +42,13 @@ function createStatusTag(status) {
  * @param {Request} request
  * @param {object} options
  * @param {{wasteProcessingType: string}} options.registration
- * @param {Array} options.prns - Array of PRN objects from API
  * @param {object|null} options.wasteBalance - Waste balance data
+ * @param {Array} options.prns - Array of PRN objects from API
  * @returns {object}
  */
 export function buildListViewData(
   request,
-  { registration, prns, wasteBalance }
+  { registration, wasteBalance, prns }
 ) {
   const { t: localise } = request
   const noteType =
@@ -67,7 +67,7 @@ export function buildListViewData(
     { text: prn.issuedToOrganisation.name },
     { text: formatDate(prn.createdAt) },
     { text: String(prn.tonnageValue), format: 'numeric' },
-    { html: createStatusTag(prn.status), classes: 'epr-nowrap' }
+    { html: createStatusTag(prn.status) }
   ])
 
   return {

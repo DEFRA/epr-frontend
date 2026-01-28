@@ -4,26 +4,6 @@ import { getPrns } from '#server/common/helpers/prns/get-prns.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { buildListViewData } from './list-view-data.js'
 
-// Stub data for development until PRN creation is implemented
-const STUB_PRNS = [
-  {
-    id: 'prn-001',
-    prnNumber: 'PRN-2026-00001',
-    issuedToOrganisation: { name: 'ComplyPak Ltd' },
-    tonnageValue: 9,
-    createdAt: '2026-01-21T10:30:00Z',
-    status: 'awaiting_authorisation'
-  },
-  {
-    id: 'prn-002',
-    prnNumber: 'PRN-2026-00002',
-    issuedToOrganisation: { name: 'Nestle (SEPA)', tradingName: 'Nestle UK' },
-    tonnageValue: 4,
-    createdAt: '2026-01-19T14:00:00Z',
-    status: 'awaiting_authorisation'
-  }
-]
-
 /**
  * @satisfies {Partial<ServerRoute>}
  */
@@ -52,27 +32,24 @@ export const listController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    // Remove fallback once waste balance API returns data
-    const wasteBalance = (await getWasteBalance(
-      organisationId,
-      accreditation.id,
-      session.idToken,
-      request.logger
-    )) ?? { amount: 20.5, availableAmount: 10.3 }
-
-    // Remove fallback once PRN creation is implemented
-    const apiPrns = await getPrns(
+    const wasteBalance = await getWasteBalance(
       organisationId,
       accreditation.id,
       session.idToken,
       request.logger
     )
-    const prns = apiPrns.length > 0 ? apiPrns : STUB_PRNS
+
+    const prns = await getPrns(
+      organisationId,
+      accreditation.id,
+      session.idToken,
+      request.logger
+    )
 
     const viewData = buildListViewData(request, {
       registration,
-      prns,
-      wasteBalance
+      wasteBalance,
+      prns
     })
 
     return h.view('prns/list', viewData)

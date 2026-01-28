@@ -287,7 +287,7 @@ describe('#prnListController', () => {
       )
     })
 
-    it('should use stub waste balance when API returns null', async ({
+    it('should not display waste balance banner when API returns null', async ({
       server
     }) => {
       vi.mocked(getWasteBalance).mockResolvedValue(null)
@@ -305,64 +305,7 @@ describe('#prnListController', () => {
       const main = getByRole(body, 'main')
       const banner = main.querySelector('.epr-waste-balance-banner')
 
-      // Should render with stub waste balance (10.30 tonnes)
-      expect(banner.textContent).toContain('10.30')
-    })
-
-    it('should use API PRNs when available instead of stub', async ({
-      server
-    }) => {
-      const apiPrns = [
-        {
-          id: 'api-prn-1',
-          prnNumber: 'PRN-API-001',
-          issuedToOrganisation: { name: 'API Organisation' },
-          tonnageValue: 50,
-          createdAt: '2026-01-25T12:00:00Z',
-          status: 'awaiting_authorisation'
-        }
-      ]
-      vi.mocked(getPrns).mockResolvedValue(apiPrns)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-      const table = getByRole(main, 'table')
-
-      // Should render with API data, not stub
-      expect(getByText(table, 'API Organisation')).toBeDefined()
-      expect(table.textContent).not.toContain('ComplyPak Ltd')
-    })
-
-    it('should use stub PRNs when API returns empty array', async ({
-      server
-    }) => {
-      vi.mocked(getPrns).mockResolvedValue([])
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-      const table = getByRole(main, 'table')
-
-      // Should fall back to stub data when API returns empty
-      expect(getByText(table, 'ComplyPak Ltd')).toBeDefined()
-      expect(getByText(table, 'Nestle (SEPA)')).toBeDefined()
+      expect(banner).toBeNull()
     })
   })
 
@@ -551,8 +494,8 @@ describe('#prnListController', () => {
     it('should render table with headers but no rows when no PRNs exist', async ({
       server
     }) => {
-      // This test verifies that an empty table renders correctly
-      // The stub PRN data will be empty for this case
+      vi.mocked(getPrns).mockResolvedValue([])
+
       const { result } = await server.inject({
         method: 'GET',
         url: reprocessorUrl,
@@ -566,9 +509,12 @@ describe('#prnListController', () => {
       // Table should still exist with headers
       const table = getByRole(main, 'table')
       const headers = within(table).getAllByRole('columnheader')
+      const rows = within(table).queryAllByRole('row')
 
       expect(table).toBeDefined()
       expect(headers).toHaveLength(4)
+      // Only header row, no data rows
+      expect(rows).toHaveLength(1)
     })
   })
 })

@@ -204,9 +204,8 @@ describe('#prnListViewData', () => {
         text: '9',
         format: 'numeric'
       })
-      // Fourth cell: status as HTML tag with nowrap class
+      // Fourth cell: status as HTML tag
       expect(result.table.rows[0][3].html).toContain('govuk-tag')
-      expect(result.table.rows[0][3].classes).toBe('epr-nowrap')
     })
 
     it('should handle empty PRN list', () => {
