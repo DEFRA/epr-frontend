@@ -1,15 +1,25 @@
 import { controller } from '#server/auth/callback/controller.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
+import * as metricsModule from '#server/common/helpers/metrics/index.js'
 import Boom from '@hapi/boom'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 vi.mock(import('node:crypto'), () => ({
   randomUUID: vi.fn(() => 'mock-uuid-1234')
 }))
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
+vi.mock(import('#server/common/helpers/metrics/index.js'))
 
 describe('#authCallbackController', () => {
+  beforeEach(() => {
+    vi.mocked(metricsModule.metrics.signInSuccess).mockResolvedValue(undefined)
+    vi.mocked(metricsModule.metrics.signInFailure).mockResolvedValue(undefined)
+    vi.mocked(
+      metricsModule.metrics.signInSuccessNonInitialUser
+    ).mockResolvedValue(undefined)
+  })
+
   describe('when user is authenticated', () => {
     it('should create session and redirect to flash referrer', async () => {
       const mockProfile = {
@@ -32,7 +42,8 @@ describe('#authCallbackController', () => {
             email: 'user@example.com',
             id: 'user-123'
           },
-          linkedAt: '2025-12-10T09:00:00.000Z'
+          linkedAt: '2025-12-10T09:00:00.000Z',
+          isInitialUser: true
         },
         unlinked: []
       }
@@ -152,7 +163,8 @@ describe('#authCallbackController', () => {
               email: 'user@example.com',
               id: 'user-123'
             },
-            linkedAt: '2025-12-10T09:00:00.000Z'
+            linkedAt: '2025-12-10T09:00:00.000Z',
+            isInitialUser: true
           },
           unlinked: []
         }
@@ -224,7 +236,8 @@ describe('#authCallbackController', () => {
             email: 'user@example.com',
             id: 'user-123'
           },
-          linkedAt: '2025-12-10T09:00:00.000Z'
+          linkedAt: '2025-12-10T09:00:00.000Z',
+          isInitialUser: true
         },
         unlinked: []
       }
@@ -301,7 +314,8 @@ describe('#authCallbackController', () => {
             email: 'user@example.com',
             id: 'user-123'
           },
-          linkedAt: '2025-12-10T09:00:00.000Z'
+          linkedAt: '2025-12-10T09:00:00.000Z',
+          isInitialUser: true
         },
         unlinked: [
           {
@@ -612,7 +626,8 @@ describe('#authCallbackController', () => {
             email: 'admin@example.com',
             id: 'admin-user-123'
           },
-          linkedAt: '2025-12-09T10:30:00.000Z'
+          linkedAt: '2025-12-09T10:30:00.000Z',
+          isInitialUser: false
         },
         unlinked: [
           {
