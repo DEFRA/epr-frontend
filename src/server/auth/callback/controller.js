@@ -49,6 +49,14 @@ const controller = {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
+      const isInitialUser =
+        organisations.linked.linkedBy?.id === session.profile.id
+      if (isInitialUser) {
+        await metrics.signInSuccessInitialUser()
+      } else {
+        await metrics.signInSuccessNonInitialUser()
+      }
+
       // Store linked organisation ID in session for navigation
       session.linkedOrganisationId = organisations.linked.id
       await request.server.app.cache.set(sessionId, session)

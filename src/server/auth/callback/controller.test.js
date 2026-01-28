@@ -1,15 +1,28 @@
 import { controller } from '#server/auth/callback/controller.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
+import * as metricsModule from '#server/common/helpers/metrics/index.js'
 import Boom from '@hapi/boom'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 vi.mock(import('node:crypto'), () => ({
   randomUUID: vi.fn(() => 'mock-uuid-1234')
 }))
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
+vi.mock(import('#server/common/helpers/metrics/index.js'))
 
 describe('#authCallbackController', () => {
+  beforeEach(() => {
+    vi.mocked(metricsModule.metrics.signInSuccess).mockResolvedValue(undefined)
+    vi.mocked(metricsModule.metrics.signInFailure).mockResolvedValue(undefined)
+    vi.mocked(metricsModule.metrics.signInSuccessInitialUser).mockResolvedValue(
+      undefined
+    )
+    vi.mocked(
+      metricsModule.metrics.signInSuccessNonInitialUser
+    ).mockResolvedValue(undefined)
+  })
+
   describe('when user is authenticated', () => {
     it('should create session and redirect to flash referrer', async () => {
       const mockProfile = {
@@ -805,6 +818,226 @@ describe('#authCallbackController', () => {
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-response')
+    })
+  })
+
+  describe('initial/non-initial user metrics', () => {
+    it('should emit signInSuccessInitialUser metric when user is the linkedBy user', async () => {
+      const mockProfile = {
+        id: 'user-123',
+        email: 'linker@example.com'
+      }
+
+      const mockOrganisations = {
+        current: { id: 'defra-org-uuid', name: 'Test Organisation' },
+        linked: {
+          id: 'linked-org-uuid',
+          name: 'Test Organisation',
+          linkedBy: { email: 'linker@example.com', id: 'user-123' },
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
+      }
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(mockOrganisations)
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            idToken: 'mock-id-token',
+            refreshToken: 'mock-refresh-token',
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: { flash: vi.fn().mockReturnValue([]) },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+
+      await controller.handler(mockRequest, mockH)
+
+      expect(
+        metricsModule.metrics.signInSuccessInitialUser
+      ).toHaveBeenCalledTimes(1)
+      expect(
+        metricsModule.metrics.signInSuccessNonInitialUser
+      ).not.toHaveBeenCalled()
+    })
+
+    it('should emit signInSuccessNonInitialUser metric when user is not the linkedBy user', async () => {
+      const mockProfile = {
+        id: 'invited-user-456',
+        email: 'invited@example.com'
+      }
+
+      const mockOrganisations = {
+        current: { id: 'defra-org-uuid', name: 'Test Organisation' },
+        linked: {
+          id: 'linked-org-uuid',
+          name: 'Test Organisation',
+          linkedBy: { email: 'linker@example.com', id: 'original-linker-123' },
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
+      }
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(mockOrganisations)
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            idToken: 'mock-id-token',
+            refreshToken: 'mock-refresh-token',
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: { flash: vi.fn().mockReturnValue([]) },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+
+      await controller.handler(mockRequest, mockH)
+
+      expect(
+        metricsModule.metrics.signInSuccessNonInitialUser
+      ).toHaveBeenCalledTimes(1)
+      expect(
+        metricsModule.metrics.signInSuccessInitialUser
+      ).not.toHaveBeenCalled()
+    })
+
+    it('should emit signInSuccessNonInitialUser metric when linkedBy is missing', async () => {
+      const mockProfile = {
+        id: 'user-789',
+        email: 'user@example.com'
+      }
+
+      const mockOrganisations = {
+        current: { id: 'defra-org-uuid', name: 'Test Organisation' },
+        linked: {
+          id: 'linked-org-uuid',
+          name: 'Test Organisation',
+          linkedBy: null,
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
+      }
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(mockOrganisations)
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            idToken: 'mock-id-token',
+            refreshToken: 'mock-refresh-token',
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: { flash: vi.fn().mockReturnValue([]) },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+
+      await controller.handler(mockRequest, mockH)
+
+      expect(
+        metricsModule.metrics.signInSuccessNonInitialUser
+      ).toHaveBeenCalledTimes(1)
+      expect(
+        metricsModule.metrics.signInSuccessInitialUser
+      ).not.toHaveBeenCalled()
+    })
+
+    it('should not emit initial/non-initial metrics when user has no linked organisation', async () => {
+      const mockProfile = {
+        id: 'user-999',
+        email: 'newuser@example.com'
+      }
+
+      const mockOrganisations = {
+        current: { id: 'defra-org-uuid', name: 'Test Organisation' },
+        linked: null,
+        unlinked: [{ id: 'org-1', name: 'Unlinked Org', orgId: '11111111' }]
+      }
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(mockOrganisations)
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            idToken: 'mock-id-token',
+            refreshToken: 'mock-refresh-token',
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: { flash: vi.fn().mockReturnValue(['/some-page']) }
+      }
+
+      const mockH = { redirect: vi.fn().mockReturnValue('redirect-to-linking') }
+
+      await controller.handler(mockRequest, mockH)
+
+      expect(
+        metricsModule.metrics.signInSuccessInitialUser
+      ).not.toHaveBeenCalled()
+      expect(
+        metricsModule.metrics.signInSuccessNonInitialUser
+      ).not.toHaveBeenCalled()
     })
   })
 })
