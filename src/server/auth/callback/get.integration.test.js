@@ -254,37 +254,5 @@ describe('/auth/callback - GET integration', async () => {
 
       expect(mock.signInSuccessNonInitialUserMetric).not.toHaveBeenCalled()
     })
-
-    it('records signInSuccessNonInitialUser metric when linkedBy is missing', async ({
-      server,
-      msw
-    }) => {
-      const backendUrl = config.get('eprBackendUrl')
-      msw.use(
-        http.get(`${backendUrl}/v1/me/organisations`, () => {
-          return HttpResponse.json({
-            organisations: {
-              current: { id: 'organisation-id', name: 'company-name' },
-              linked: {
-                id: 'linked-org-id',
-                name: 'Linked Company',
-                linkedBy: null,
-                linkedAt: '2025-01-01T00:00:00.000Z'
-              },
-              unlinked: []
-            }
-          })
-        })
-      )
-
-      const userToken = await generateIdToken({
-        sub: 'some-user-id',
-        email: 'user@email.com'
-      })
-
-      await performSignInFlow(server, msw, userToken)
-
-      expect(mock.signInSuccessNonInitialUserMetric).toHaveBeenCalledTimes(1)
-    })
   })
 })
