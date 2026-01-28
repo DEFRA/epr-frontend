@@ -380,6 +380,7 @@
       "formSubmissionTime": "2025-04-08T10:10:00.000Z",
       "material": "wood",
       "wasteProcessingType": "exporter",
+      "accreditationId": "acc-007-wood-export-approved",
       "cbduNumber": "CBDU007890",
       "exportPorts": ["Liverpool", "Bristol"],
       "submitterContactDetails": {
@@ -781,6 +782,43 @@
         "fullName": "Cassian Andor",
         "email": "cassian@starwars.com",
         "jobTitle": "PRN Signatory",
+        "phone": "7890123456"
+      }
+    },
+    {
+      "id": "acc-007-wood-export-approved",
+      "accreditationNumber": "ACCEXP007",
+      "status": "approved",
+      "formSubmissionTime": "2025-04-15T12:30:00.000Z",
+      "statusHistory": [
+        {
+          "status": "created",
+          "updatedAt": "2025-04-08T10:10:00.000Z"
+        },
+        {
+          "status": "approved",
+          "updatedAt": "2025-04-15T12:30:00.000Z"
+        }
+      ],
+      "submittedToRegulator": "ea",
+      "orgName": "ACME ltd",
+      "material": "wood",
+      "wasteProcessingType": "exporter",
+      "prnIssuance": {
+        "tonnageBand": "5001_to_10000",
+        "signatories": [
+          {
+            "fullName": "Finn Storm",
+            "email": "finn@starwars.com",
+            "jobTitle": "Logistics Manager",
+            "phone": "7890123456"
+          }
+        ]
+      },
+      "submitterContactDetails": {
+        "fullName": "Finn Storm",
+        "email": "finn@starwars.com",
+        "jobTitle": "Logistics Manager",
         "phone": "7890123456"
       }
     }
