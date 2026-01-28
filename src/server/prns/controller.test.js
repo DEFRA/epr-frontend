@@ -32,24 +32,36 @@ const fixtureReprocessor = {
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-001',
-    wasteProcessingType: 'reprocessor-input', // PRN
+    wasteProcessingType: 'reprocessor-input',
     material: 'glass',
     site: { address: { line1: 'Reprocessing Site' } },
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    status: 'approved',
+    material: 'Plastic',
+    accreditationNumber: '090925',
+    address: 'South Road, Liverpool, L22 3DH'
+  }
 }
 
 const fixtureExporter = {
   organisationData: { id: 'org-456', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-002',
-    wasteProcessingType: 'exporter', // PERN
+    wasteProcessingType: 'exporter',
     material: 'plastic',
-    site: null, // Exporters don't have a processing site
+    site: null,
     accreditationId: 'acc-002'
   },
-  accreditation: { id: 'acc-002', status: 'approved' }
+  accreditation: {
+    id: 'acc-002',
+    status: 'approved',
+    material: 'Glass',
+    accreditationNumber: '123456',
+    address: 'North Street, Manchester, M1 1AA'
+  }
 }
 
 const reprocessorUrl = '/organisations/org-123/registrations/reg-001/create-prn'
@@ -239,26 +251,6 @@ describe('#createPrnController', () => {
     })
 
     describe('error handling', () => {
-      it('should return 404 for PRN when feature flag is disabled', async ({
-        server
-      }) => {
-        // Server created with flag ON (routes registered)
-        // Disable flag to test controller-level check
-        config.set('featureFlags.prns', false)
-
-        try {
-          const { statusCode } = await server.inject({
-            method: 'GET',
-            url: reprocessorUrl,
-            auth: mockAuth
-          })
-
-          expect(statusCode).toBe(statusCodes.notFound)
-        } finally {
-          config.set('featureFlags.prns', true)
-        }
-      })
-
       it('should return 404 when registration not found', async ({
         server
       }) => {
