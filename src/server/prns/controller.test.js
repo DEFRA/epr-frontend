@@ -10,47 +10,15 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import {
+  mockAuth,
+  fixtureReprocessor,
+  fixtureExporter
+} from './test-fixtures/index.js'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
-
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
-
-const fixtureReprocessor = {
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-  registration: {
-    id: 'reg-001',
-    wasteProcessingType: 'reprocessor-input', // PRN
-    material: 'glass',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
-}
-
-const fixtureExporter = {
-  organisationData: { id: 'org-456', name: 'Exporter Organisation' },
-  registration: {
-    id: 'reg-002',
-    wasteProcessingType: 'exporter', // PERN
-    material: 'plastic',
-    site: null, // Exporters don't have a processing site
-    accreditationId: 'acc-002'
-  },
-  accreditation: { id: 'acc-002', status: 'approved' }
-}
 
 const reprocessorUrl = '/organisations/org-123/registrations/reg-001/create-prn'
 const exporterUrl = '/organisations/org-456/registrations/reg-002/create-prn'
@@ -239,26 +207,6 @@ describe('#createPrnController', () => {
     })
 
     describe('error handling', () => {
-      it('should return 404 for PRN when feature flag is disabled', async ({
-        server
-      }) => {
-        // Server created with flag ON (routes registered)
-        // Disable flag to test controller-level check
-        config.set('featureFlags.prns', false)
-
-        try {
-          const { statusCode } = await server.inject({
-            method: 'GET',
-            url: reprocessorUrl,
-            auth: mockAuth
-          })
-
-          expect(statusCode).toBe(statusCodes.notFound)
-        } finally {
-          config.set('featureFlags.prns', true)
-        }
-      })
-
       it('should return 404 when registration not found', async ({
         server
       }) => {

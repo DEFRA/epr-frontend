@@ -1,3 +1,5 @@
+import { getNoteType } from './helpers/get-note-type.js'
+
 /**
  * Build view data for the check PRN/PERN details page
  * @param {Request} request
@@ -14,8 +16,7 @@ export function buildCheckDetailsViewData(
   { registration, accreditation, organisationId, registrationId, prnData = {} }
 ) {
   const { t: localise } = request
-  const noteType =
-    registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+  const noteType = getNoteType(registration)
 
   const pageTitle = localise(`prns:checkDetails:${noteType}:pageTitle`)
 

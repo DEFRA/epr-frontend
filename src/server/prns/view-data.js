@@ -1,3 +1,5 @@
+import { getNoteType } from './helpers/get-note-type.js'
+
 /**
  * Build view data for the create PRN/PERN page
  * @param {Request} request
@@ -8,8 +10,7 @@
  */
 export function buildCreatePrnViewData(request, { registration, recipients }) {
   const { t: localise } = request
-  const noteType =
-    registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+  const noteType = getNoteType(registration)
 
   const pageTitle = localise(`prns:${noteType}:pageTitle`)
 
