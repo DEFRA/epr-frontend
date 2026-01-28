@@ -247,15 +247,125 @@ describe('#buildCheckDetailsViewData', () => {
       })
     })
 
+    it('should show issuer notes value when provided', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        prnData: { issuerNotes: 'Test notes' }
+      })
+
+      expect(result.prnDetails[9].value.text).toBe('Test notes')
+    })
+
     it('should show "Not provided" for issuer notes when empty', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
         organisationId: 'org-123',
-        registrationId: 'reg-001'
+        registrationId: 'reg-001',
+        prnData: {}
       })
 
       expect(result.prnDetails[9].value.text).toBe('Not provided')
+    })
+
+    it('should populate recipient, tonnage and tonnageInWords from prnData', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        prnData: {
+          recipient: 'Test Company Ltd',
+          tonnage: '100.50',
+          tonnageInWords: 'One hundred point five'
+        }
+      })
+
+      expect(result.prnDetails[0].value.text).toBe('Test Company Ltd')
+      expect(result.prnDetails[1].value.text).toBe('100.50')
+      expect(result.prnDetails[2].value.text).toBe('One hundred point five')
+    })
+
+    it('should populate processToBeUsed and decemberWaste from prnData', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        prnData: {
+          processToBeUsed: 'Chemical recycling',
+          decemberWaste: 'Yes'
+        }
+      })
+
+      expect(result.prnDetails[3].value.text).toBe('Chemical recycling')
+      expect(result.prnDetails[4].value.text).toBe('Yes')
+    })
+
+    it('should populate issuedDate, issuedBy and authorisedBy from prnData', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        prnData: {
+          issuedDate: '15 March 2026',
+          issuedBy: 'Alice Brown',
+          authorisedBy: 'Bob Green'
+        }
+      })
+
+      expect(result.prnDetails[5].value.text).toBe('15 March 2026')
+      expect(result.prnDetails[6].value.text).toBe('Alice Brown')
+      expect(result.prnDetails[7].value.text).toBe('Bob Green')
+    })
+
+    it('should populate position from prnData', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        prnData: {
+          position: 'Site Manager'
+        }
+      })
+
+      expect(result.prnDetails[8].value.text).toBe('Site Manager')
+    })
+
+    it('should default to empty strings when prnData fields are missing', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        prnData: {}
+      })
+
+      expect(result.prnDetails[0].value.text).toBe('')
+      expect(result.prnDetails[1].value.text).toBe('')
+      expect(result.prnDetails[2].value.text).toBe('')
+      expect(result.prnDetails[3].value.text).toBe('')
+      expect(result.prnDetails[4].value.text).toBe('')
+    })
+
+    it('should default remaining fields to empty strings when prnData fields are missing', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        prnData: {}
+      })
+
+      expect(result.prnDetails[5].value.text).toBe('')
+      expect(result.prnDetails[6].value.text).toBe('')
+      expect(result.prnDetails[7].value.text).toBe('')
+      expect(result.prnDetails[8].value.text).toBe('')
     })
   })
 

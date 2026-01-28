@@ -6,11 +6,12 @@
  * @param {object} options.accreditation
  * @param {string} options.organisationId
  * @param {string} options.registrationId
+ * @param {object} options.prnData
  * @returns {object}
  */
 export function buildCheckDetailsViewData(
   request,
-  { registration, accreditation, organisationId, registrationId }
+  { registration, accreditation, organisationId, registrationId, prnData = {} }
 ) {
   const { t: localise } = request
   const noteType =
@@ -30,70 +31,72 @@ export function buildCheckDetailsViewData(
           text: localise('prns:checkDetails:recipient'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.recipient ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:tonnage'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.tonnage ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:tonnageInWords'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.tonnageInWords ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:processToBeUsed'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.processToBeUsed ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:decemberWaste'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.decemberWaste ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:issuedDate'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.issuedDate ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:issuedBy'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.issuedBy ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:authorisedBy'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.authorisedBy ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:position'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: '' }
+        value: { text: prnData.position ?? '' }
       },
       {
         key: {
           text: localise('prns:checkDetails:issuerNotes'),
           classes: 'govuk-!-width-one-half'
         },
-        value: { text: localise('prns:checkDetails:notProvided') }
+        value: {
+          text: prnData.issuerNotes || localise('prns:checkDetails:notProvided')
+        }
       }
     ],
     accreditationDetailsHeading: localise(
@@ -123,8 +126,8 @@ export function buildCheckDetailsViewData(
       }
     ],
     createButtonText: localise(`prns:checkDetails:${noteType}:createButton`),
-    createUrl: `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check-details`,
     cancelButtonText: localise('prns:checkDetails:cancelButton'),
+    createUrl: `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check-details`,
     cancelUrl: `/organisations/${organisationId}/registrations/${registrationId}`,
     backUrl: `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
   }

@@ -35,11 +35,26 @@ export const checkDetailsController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
+    // TODO: Remove dummy data once form is implemented
+    const prnData = {
+      recipient: 'Acme Packaging Solutions Ltd',
+      tonnage: '150.75',
+      tonnageInWords: 'One hundred and fifty point seven five',
+      processToBeUsed: 'Mechanical recycling',
+      decemberWaste: 'No',
+      issuedDate: '28 January 2026',
+      issuedBy: 'John Smith',
+      authorisedBy: 'Jane Doe',
+      position: 'Operations Manager',
+      issuerNotes: 'Quarterly waste collection from Birmingham facility'
+    }
+
     const viewData = buildCheckDetailsViewData(request, {
       registration,
       accreditation,
       organisationId,
-      registrationId
+      registrationId,
+      prnData
     })
 
     return h.view('prns/check-details', viewData)
