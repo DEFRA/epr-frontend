@@ -67,7 +67,7 @@ export function buildListViewData(
     { text: prn.issuedToOrganisation.name },
     { text: formatDate(prn.createdAt) },
     { text: String(prn.tonnageValue), format: 'numeric' },
-    { html: createStatusTag(prn.status) }
+    { html: createStatusTag(prn.status), classes: 'epr-nowrap' }
   ])
 
   return {
