@@ -10,15 +10,59 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
-import {
-  mockAuth,
-  fixtureReprocessor,
-  fixtureExporter
-} from './test-fixtures/index.js'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
+
+const mockCredentials = {
+  profile: {
+    id: 'user-123',
+    email: 'test@example.com'
+  },
+  idToken: 'mock-id-token'
+}
+
+const mockAuth = {
+  strategy: 'session',
+  credentials: mockCredentials
+}
+
+const fixtureReprocessor = {
+  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
+  registration: {
+    id: 'reg-001',
+    wasteProcessingType: 'reprocessor-input',
+    material: 'glass',
+    site: { address: { line1: 'Reprocessing Site' } },
+    accreditationId: 'acc-001'
+  },
+  accreditation: {
+    id: 'acc-001',
+    status: 'approved',
+    material: 'Plastic',
+    accreditationNumber: '090925',
+    address: 'South Road, Liverpool, L22 3DH'
+  }
+}
+
+const fixtureExporter = {
+  organisationData: { id: 'org-456', name: 'Exporter Organisation' },
+  registration: {
+    id: 'reg-002',
+    wasteProcessingType: 'exporter',
+    material: 'plastic',
+    site: null,
+    accreditationId: 'acc-002'
+  },
+  accreditation: {
+    id: 'acc-002',
+    status: 'approved',
+    material: 'Glass',
+    accreditationNumber: '123456',
+    address: 'North Street, Manchester, M1 1AA'
+  }
+}
 
 const reprocessorUrl = '/organisations/org-123/registrations/reg-001/create-prn'
 const exporterUrl = '/organisations/org-456/registrations/reg-002/create-prn'
