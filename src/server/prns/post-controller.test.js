@@ -87,7 +87,9 @@ describe('#postCreatePrnController', () => {
     })
 
     describe('with valid payload', () => {
-      it('creates PRN and redirects to success page', async ({ server }) => {
+      it('creates PRN draft and redirects to check page', async ({
+        server
+      }) => {
         vi.mocked(createPrn).mockResolvedValue({
           id: 'prn-789',
           tonnage: 100,
@@ -109,7 +111,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
+          `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check`
         )
       })
 
@@ -173,6 +175,41 @@ describe('#postCreatePrnController', () => {
           registrationId,
           expect.objectContaining({
             issuerNotes: undefined
+          }),
+          'mock-id-token'
+        )
+      })
+
+      it('uses recipient value as name when not in stub list', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue({
+          id: 'prn-789',
+          tonnage: 100,
+          material: 'plastic',
+          status: 'draft'
+        })
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const unknownRecipient = 'unknown-recipient-id'
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, recipient: unknownRecipient, crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(createPrn).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          expect.objectContaining({
+            issuedToOrganisation: unknownRecipient
           }),
           'mock-id-token'
         )

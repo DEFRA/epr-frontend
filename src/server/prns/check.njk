@@ -1,0 +1,27 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    {{ govukSummaryList({
+      rows: summaryRows
+    }) }}
+
+    <form method="POST" novalidate>
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: confirmButton.text
+        }) }}
+
+        <a href="{{ cancelLink.href }}" class="govuk-link">{{ cancelLink.text }}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

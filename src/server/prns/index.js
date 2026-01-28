@@ -1,3 +1,4 @@
+import { checkController, checkPostController } from './check-controller.js'
 import { controller } from './controller.js'
 import { postController } from './post-controller.js'
 import { successController } from './success-controller.js'
@@ -22,6 +23,16 @@ export const prns = {
           ...postController,
           method: 'POST',
           path: basePath
+        },
+        {
+          ...checkController,
+          method: 'GET',
+          path: `${basePath}/check`
+        },
+        {
+          ...checkPostController,
+          method: 'POST',
+          path: `${basePath}/check`
         },
         {
           ...successController,

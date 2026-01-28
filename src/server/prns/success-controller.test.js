@@ -56,6 +56,7 @@ const fixtureExporter = {
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
 const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+const checkUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check`
 const successUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
 
 const validPayload = {
@@ -83,6 +84,84 @@ const mockPernCreated = {
   wasteProcessingType: 'exporter'
 }
 
+/**
+ * Extract cookie key=value pairs from Set-Cookie header(s)
+ * @param {string | string[] | undefined} setCookieHeader
+ * @returns {string[]}
+ */
+function extractCookieValues(setCookieHeader) {
+  if (!setCookieHeader) return []
+  const headers = Array.isArray(setCookieHeader)
+    ? setCookieHeader
+    : [setCookieHeader]
+  return headers.filter(Boolean).map((header) => header.split(';')[0])
+}
+
+/**
+ * Merge cookie strings, with later values overriding earlier ones
+ * @param {...string} cookieStrings
+ * @returns {string}
+ */
+function mergeCookies(...cookieStrings) {
+  const cookies = {}
+  for (const str of cookieStrings) {
+    if (!str) continue
+    for (const part of str.split(';')) {
+      const [key, ...valueParts] = part.trim().split('=')
+      if (key && valueParts.length > 0) {
+        cookies[key] = valueParts.join('=')
+      }
+    }
+  }
+  return Object.entries(cookies)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('; ')
+}
+
+/**
+ * Helper to go through full PRN creation flow and return session cookies
+ * @param {object} server
+ * @param {object} payload
+ * @returns {Promise<{cookies: string}>}
+ */
+async function createPrnAndConfirm(server, payload = validPayload) {
+  // Step 1: POST to create form to create draft and get redirected to check
+  const { cookie: csrfCookie, crumb } = await getCsrfToken(server, createUrl, {
+    auth: mockAuth
+  })
+
+  const postResponse = await server.inject({
+    method: 'POST',
+    url: createUrl,
+    auth: mockAuth,
+    headers: { cookie: csrfCookie },
+    payload: { ...payload, crumb }
+  })
+
+  // Merge cookies from POST response
+  const postCookieValues = extractCookieValues(
+    postResponse.headers['set-cookie']
+  )
+  const cookies1 = mergeCookies(csrfCookie, ...postCookieValues)
+
+  // Step 2: POST to check page to confirm and redirect to success
+  const checkPostResponse = await server.inject({
+    method: 'POST',
+    url: checkUrl,
+    auth: mockAuth,
+    headers: { cookie: cookies1 },
+    payload: { crumb }
+  })
+
+  // Merge all cookies, with check response cookies taking precedence
+  const checkCookieValues = extractCookieValues(
+    checkPostResponse.headers['set-cookie']
+  )
+  const cookies = mergeCookies(cookies1, ...checkCookieValues)
+
+  return { cookies }
+}
+
 describe('#successController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -103,29 +182,8 @@ describe('#successController', () => {
 
     describe('with PRN in session', () => {
       it('displays success page with PRN details', async ({ server }) => {
-        // First, create a PRN via POST to populate session
-        const { cookie, crumb } = await getCsrfToken(server, createUrl, {
-          auth: mockAuth
-        })
+        const { cookies } = await createPrnAndConfirm(server)
 
-        const postResponse = await server.inject({
-          method: 'POST',
-          url: createUrl,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...validPayload, crumb }
-        })
-
-        // Extract session cookie from POST response
-        const sessionCookie = postResponse.headers['set-cookie']
-        const cookies = [
-          cookie,
-          ...(Array.isArray(sessionCookie) ? sessionCookie : [sessionCookie])
-        ]
-          .filter(Boolean)
-          .join('; ')
-
-        // Now access the success page
         const { result, statusCode } = await server.inject({
           method: 'GET',
           url: successUrl,
@@ -145,25 +203,7 @@ describe('#successController', () => {
       })
 
       it('displays what happens next section', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, createUrl, {
-          auth: mockAuth
-        })
-
-        const postResponse = await server.inject({
-          method: 'POST',
-          url: createUrl,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...validPayload, crumb }
-        })
-
-        const sessionCookie = postResponse.headers['set-cookie']
-        const cookies = [
-          cookie,
-          ...(Array.isArray(sessionCookie) ? sessionCookie : [sessionCookie])
-        ]
-          .filter(Boolean)
-          .join('; ')
+        const { cookies } = await createPrnAndConfirm(server)
 
         const { result } = await server.inject({
           method: 'GET',
@@ -182,25 +222,7 @@ describe('#successController', () => {
       it('displays return link to registration dashboard', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, createUrl, {
-          auth: mockAuth
-        })
-
-        const postResponse = await server.inject({
-          method: 'POST',
-          url: createUrl,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...validPayload, crumb }
-        })
-
-        const sessionCookie = postResponse.headers['set-cookie']
-        const cookies = [
-          cookie,
-          ...(Array.isArray(sessionCookie) ? sessionCookie : [sessionCookie])
-        ]
-          .filter(Boolean)
-          .join('; ')
+        const { cookies } = await createPrnAndConfirm(server)
 
         const { result } = await server.inject({
           method: 'GET',
@@ -235,25 +257,7 @@ describe('#successController', () => {
           wasteProcessingType: 'exporter'
         }
 
-        const { cookie, crumb } = await getCsrfToken(server, createUrl, {
-          auth: mockAuth
-        })
-
-        const postResponse = await server.inject({
-          method: 'POST',
-          url: createUrl,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...exporterPayload, crumb }
-        })
-
-        const sessionCookie = postResponse.headers['set-cookie']
-        const cookies = [
-          cookie,
-          ...(Array.isArray(sessionCookie) ? sessionCookie : [sessionCookie])
-        ]
-          .filter(Boolean)
-          .join('; ')
+        const { cookies } = await createPrnAndConfirm(server, exporterPayload)
 
         const { result } = await server.inject({
           method: 'GET',

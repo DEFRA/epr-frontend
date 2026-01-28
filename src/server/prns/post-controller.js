@@ -7,7 +7,7 @@ import { createPrn } from './helpers/create-prn.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 // Stub recipients until real API is available
-const STUB_RECIPIENTS = [
+export const STUB_RECIPIENTS = [
   { value: 'producer-1', text: 'Acme Packaging Ltd' },
   { value: 'producer-2', text: 'BigCo Waste Solutions' },
   { value: 'producer-3', text: 'EcoRecycle Industries' },
@@ -118,7 +118,12 @@ export const postController = {
     const { tonnage, recipient, notes, material, nation, wasteProcessingType } =
       request.payload
 
+    // Find recipient name from stub list
+    const recipientItem = STUB_RECIPIENTS.find((r) => r.value === recipient)
+    const recipientName = recipientItem?.text ?? recipient
+
     try {
+      // Create PRN as draft in backend
       const result = await createPrn(
         organisationId,
         registrationId,
@@ -133,20 +138,22 @@ export const postController = {
         session.idToken
       )
 
-      // Store result in session for success page
-      request.yar.set('prnCreated', {
+      // Store PRN data in session for check/confirm page
+      request.yar.set('prnDraft', {
         id: result.id,
         tonnage: result.tonnage,
         material: result.material,
         status: result.status,
+        recipientName,
+        notes: notes || '',
         wasteProcessingType
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
+        `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check`
       )
     } catch (error) {
-      request.logger.error({ error }, 'Failed to create PRN')
+      request.logger.error({ error }, 'Failed to create PRN draft')
 
       if (error.isBoom) {
         throw error
