@@ -39,7 +39,11 @@ const fixtureReprocessor = {
     site: { address: { line1: 'Reprocessing Site' } },
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    status: 'approved',
+    accreditationNumber: 'ACC-2025-001'
+  }
 }
 
 const fixtureExporter = {
@@ -52,7 +56,11 @@ const fixtureExporter = {
     site: null,
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001', status: 'approved' }
+  accreditation: {
+    id: 'acc-001',
+    status: 'approved',
+    accreditationNumber: 'ACC-2025-002'
+  }
 }
 
 const organisationId = 'org-123'
@@ -275,6 +283,7 @@ describe('#checkController', () => {
           expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
           expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
           expect(getByText(main, /Plastic/i)).toBeDefined()
+          expect(getByText(main, /ACC-2025-001/)).toBeDefined()
         })
 
         it('displays notes when provided', async ({ server }) => {
@@ -328,6 +337,13 @@ describe('#checkController', () => {
             ...mockPrnCreated,
             tonnageInWords: null,
             processToBeUsed: null
+          })
+          vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
+            ...fixtureReprocessor,
+            accreditation: {
+              ...fixtureReprocessor.accreditation,
+              accreditationNumber: null
+            }
           })
 
           const { cookies } = await createPrnDraft(server)

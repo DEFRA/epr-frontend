@@ -48,7 +48,7 @@ export const checkController = {
       )
     }
 
-    const { organisationData, registration } =
+    const { organisationData, registration, accreditation } =
       await getRegistrationWithAccreditation(
         organisationId,
         registrationId,
@@ -116,7 +116,7 @@ export const checkController = {
       },
       {
         key: { text: localise('prns:accreditationNumberLabel') },
-        value: { text: registration.accreditationNumber || '' }
+        value: { text: accreditation?.accreditationNumber || '' }
       },
       {
         key: { text: localise('prns:accreditationAddressLabel') },
