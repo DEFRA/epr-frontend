@@ -1,4 +1,5 @@
 {
+  "errorSummaryTitle": "There is a problem",
   "helpSummary": "Can't find the producer or compliance scheme?",
   "materialLabel": "Material",
   "notesLabel": "Add issuer notes (optional)",
@@ -7,17 +8,29 @@
     "tonnageLabel": "Enter PERN tonnage",
     "recipientLabel": "Enter who this PERN will be issued to",
     "helpText": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
-    "notesHint": "These notes will appear on the PERN"
+    "notesHint": "These notes will appear on the PERN",
+    "submitButton": "Create PERN",
+    "successPageTitle": "PERN created",
+    "successHeading": "PERN created",
+    "successTonnageLabel": "Tonnage",
+    "successNextStepsText": "Your PERN has been created as a draft. You can view and manage it from your registration dashboard."
   },
   "prns": {
     "pageTitle": "Create a PRN",
     "tonnageLabel": "Enter PRN tonnage",
     "recipientLabel": "Enter who this PRN will be issued to",
     "helpText": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
-    "notesHint": "These notes will appear on the PRN"
+    "notesHint": "These notes will appear on the PRN",
+    "submitButton": "Create PRN",
+    "successPageTitle": "PRN created",
+    "successHeading": "PRN created",
+    "successTonnageLabel": "Tonnage",
+    "successNextStepsText": "Your PRN has been created as a draft. You can view and manage it from your registration dashboard."
   },
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
   "selectOption": "Select an option",
+  "successNextStepsHeading": "What happens next",
+  "successReturnLink": "Return to registration dashboard",
   "tonnageHint": "Enter a whole number without decimal places",
   "tonnageSuffix": "tonnes"
 }

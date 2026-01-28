@@ -23,7 +23,9 @@ const createMockRequest = () => ({
         'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
       'prns:notesLabel': 'Add issuer notes (optional)',
       'prns:prns:notesHint': 'These notes will appear on the PRN',
-      'prns:perns:notesHint': 'These notes will appear on the PERN'
+      'prns:perns:notesHint': 'These notes will appear on the PERN',
+      'prns:prns:submitButton': 'Create PRN',
+      'prns:perns:submitButton': 'Create PERN'
     }
     return translations[key] || key
   })

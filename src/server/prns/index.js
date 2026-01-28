@@ -1,4 +1,9 @@
 import { controller } from './controller.js'
+import { postController } from './post-controller.js'
+import { successController } from './success-controller.js'
+
+const basePath =
+  '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -11,7 +16,17 @@ export const prns = {
         {
           ...controller,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
+          path: basePath
+        },
+        {
+          ...postController,
+          method: 'POST',
+          path: basePath
+        },
+        {
+          ...successController,
+          method: 'GET',
+          path: `${basePath}/success`
         }
       ])
     }
