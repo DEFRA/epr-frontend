@@ -6,14 +6,12 @@ import { getNoteType } from './helpers/get-note-type.js'
  * @param {object} options
  * @param {{wasteProcessingType: string}} options.registration
  * @param {object} options.accreditation
- * @param {string} options.organisationId
- * @param {string} options.registrationId
  * @param {object} options.prnData
  * @returns {object}
  */
 export function buildCheckDetailsViewData(
   request,
-  { registration, accreditation, organisationId, registrationId, prnData = {} }
+  { registration, accreditation, prnData = {} }
 ) {
   const { t: localise } = request
   const noteType = getNoteType(registration)
@@ -125,12 +123,7 @@ export function buildCheckDetailsViewData(
         },
         value: { text: accreditation?.address ?? '' }
       }
-    ],
-    createButtonText: localise(`prns:checkDetails:${noteType}:createButton`),
-    cancelButtonText: localise('prns:checkDetails:cancelButton'),
-    createUrl: `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check-details`,
-    cancelUrl: `/organisations/${organisationId}/registrations/${registrationId}`,
-    backUrl: `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+    ]
   }
 }
 

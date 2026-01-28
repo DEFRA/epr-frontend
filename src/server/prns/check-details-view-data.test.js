@@ -59,9 +59,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return page title and heading with PRN text', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.pageTitle).toBe('Check before creating PRN')
@@ -71,9 +69,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return lead paragraph with PRN text', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.leadParagraph).toBe(
@@ -84,23 +80,10 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return PRN details heading', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.prnDetailsHeading).toBe('PRN details')
-    })
-
-    it('should return create button text with PRN', () => {
-      const result = buildCheckDetailsViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
-      })
-
-      expect(result.createButtonText).toBe('Create PRN')
     })
   })
 
@@ -108,9 +91,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return page title and heading with PERN text', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: exporterRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-456',
-        registrationId: 'reg-002'
+        accreditation: mockAccreditation
       })
 
       expect(result.pageTitle).toBe('Check before creating PERN')
@@ -120,9 +101,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return lead paragraph with PERN text', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: exporterRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-456',
-        registrationId: 'reg-002'
+        accreditation: mockAccreditation
       })
 
       expect(result.leadParagraph).toBe(
@@ -133,23 +112,10 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return PERN details heading', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: exporterRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-456',
-        registrationId: 'reg-002'
+        accreditation: mockAccreditation
       })
 
       expect(result.prnDetailsHeading).toBe('PERN details')
-    })
-
-    it('should return create button text with PERN', () => {
-      const result = buildCheckDetailsViewData(createMockRequest(), {
-        registration: exporterRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-456',
-        registrationId: 'reg-002'
-      })
-
-      expect(result.createButtonText).toBe('Create PERN')
     })
   })
 
@@ -157,9 +123,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return inset text', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.insetText).toBe(
@@ -167,23 +131,10 @@ describe('#buildCheckDetailsViewData', () => {
       )
     })
 
-    it('should return cancel button text', () => {
-      const result = buildCheckDetailsViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
-      })
-
-      expect(result.cancelButtonText).toBe('Cancel without saving')
-    })
-
     it('should return accreditation details heading', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.accreditationDetailsHeading).toBe('Accreditation details')
@@ -194,9 +145,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return 10 rows with correct keys for first 5 fields', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.prnDetails).toHaveLength(10)
@@ -211,9 +160,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return correct keys for remaining fields', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.prnDetails[4].key.text).toBe('December waste')
@@ -226,9 +173,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return correct key for issuer notes', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.prnDetails[9].key.text).toBe('Issuer notes')
@@ -237,9 +182,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should have width class on all keys', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       result.prnDetails.forEach((row) => {
@@ -373,9 +316,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should return 3 rows with correct keys', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.accreditationDetails).toHaveLength(3)
@@ -391,9 +332,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should have width class on all keys', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       result.accreditationDetails.forEach((row) => {
@@ -404,9 +343,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should populate values from accreditation data', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: mockAccreditation
       })
 
       expect(result.accreditationDetails[0].value.text).toBe('Plastic')
@@ -419,9 +356,7 @@ describe('#buildCheckDetailsViewData', () => {
     it('should handle missing accreditation gracefully', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: undefined,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: undefined
       })
 
       expect(result.accreditationDetails[0].value.text).toBe('')
@@ -432,55 +367,12 @@ describe('#buildCheckDetailsViewData', () => {
     it('should handle partial accreditation data', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: { material: 'Glass' },
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        accreditation: { material: 'Glass' }
       })
 
       expect(result.accreditationDetails[0].value.text).toBe('Glass')
       expect(result.accreditationDetails[1].value.text).toBe('')
       expect(result.accreditationDetails[2].value.text).toBe('')
-    })
-  })
-
-  describe('urls', () => {
-    it('should build correct createUrl', () => {
-      const result = buildCheckDetailsViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
-      })
-
-      expect(result.createUrl).toBe(
-        '/organisations/org-123/registrations/reg-001/create-prn/check-details'
-      )
-    })
-
-    it('should build correct cancelUrl', () => {
-      const result = buildCheckDetailsViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
-      })
-
-      expect(result.cancelUrl).toBe(
-        '/organisations/org-123/registrations/reg-001'
-      )
-    })
-
-    it('should build correct backUrl', () => {
-      const result = buildCheckDetailsViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
-      })
-
-      expect(result.backUrl).toBe(
-        '/organisations/org-123/registrations/reg-001/create-prn'
-      )
     })
   })
 
