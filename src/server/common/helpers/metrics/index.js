@@ -37,9 +37,6 @@ export const metrics = {
   async signInSuccess() {
     return metricsCounter('signInSuccess')
   },
-  async signInSuccessInitialUser() {
-    return metricsCounter('signInSuccessInitialUser')
-  },
   async signInSuccessNonInitialUser() {
     return metricsCounter('signInSuccessNonInitialUser')
   },
