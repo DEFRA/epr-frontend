@@ -26,6 +26,97 @@ function formatAddress(address) {
 }
 
 /**
+ * Builds the PRN/PERN details rows for the summary list
+ * @param {object} params
+ * @param {object} params.prnDraft - Draft PRN data from session
+ * @param {object} params.organisationData - Organisation data
+ * @param {(key: string) => string} params.localise - Translation function
+ * @returns {Array} Summary list rows
+ */
+function buildPrnDetailRows({ prnDraft, organisationData, localise }) {
+  return [
+    {
+      key: { text: localise('prns:issuedByLabel') },
+      value: {
+        text:
+          organisationData.companyDetails?.name || localise('prns:notAvailable')
+      }
+    },
+    {
+      key: { text: localise('prns:issuedToLabel') },
+      value: { text: prnDraft.recipientName }
+    },
+    {
+      key: { text: localise('prns:tonnageLabel') },
+      value: { text: prnDraft.tonnage }
+    },
+    {
+      key: { text: localise('prns:tonnageInWordsLabel') },
+      value: { text: prnDraft.tonnageInWords || '' }
+    },
+    {
+      key: { text: localise('prns:processToBeUsedLabel') },
+      value: { text: prnDraft.processToBeUsed || '' }
+    },
+    {
+      key: { text: localise('prns:decemberWasteLabel') },
+      value: {
+        text: prnDraft.isDecemberWaste
+          ? localise('prns:decemberWasteYes')
+          : localise('prns:decemberWasteNo')
+      }
+    },
+    {
+      key: { text: localise('prns:issueCommentsLabel') },
+      value: { text: prnDraft.notes || localise('prns:notProvided') }
+    },
+    {
+      key: { text: localise('prns:issuedDateLabel') },
+      value: { text: '' }
+    },
+    {
+      key: { text: localise('prns:authorisedByLabel') },
+      value: { text: '' }
+    },
+    {
+      key: { text: localise('prns:positionLabel') },
+      value: { text: '' }
+    }
+  ]
+}
+
+/**
+ * Builds the accreditation details rows for the summary list
+ * @param {object} params
+ * @param {object} params.registration - Registration data
+ * @param {object} params.accreditation - Accreditation data
+ * @param {string} params.displayMaterial - Formatted material name
+ * @param {(key: string) => string} params.localise - Translation function
+ * @returns {Array} Summary list rows
+ */
+function buildAccreditationRows({
+  registration,
+  accreditation,
+  displayMaterial,
+  localise
+}) {
+  return [
+    {
+      key: { text: localise('prns:materialLabel') },
+      value: { text: displayMaterial }
+    },
+    {
+      key: { text: localise('prns:accreditationNumberLabel') },
+      value: { text: accreditation?.accreditationNumber || '' }
+    },
+    {
+      key: { text: localise('prns:accreditationAddressLabel') },
+      value: { text: formatAddress(registration.site?.address) }
+    }
+  ]
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const checkController = {
@@ -60,73 +151,18 @@ export const checkController = {
 
     const displayMaterial = getDisplayMaterial(registration)
 
-    // Build PRN/PERN details rows
-    const prnDetailRows = [
-      {
-        key: { text: localise('prns:issuedByLabel') },
-        value: {
-          text:
-            organisationData.companyDetails?.name ||
-            localise('prns:notAvailable')
-        }
-      },
-      {
-        key: { text: localise('prns:issuedToLabel') },
-        value: { text: prnDraft.recipientName }
-      },
-      {
-        key: { text: localise('prns:tonnageLabel') },
-        value: { text: prnDraft.tonnage }
-      },
-      {
-        key: { text: localise('prns:tonnageInWordsLabel') },
-        value: { text: prnDraft.tonnageInWords || '' }
-      },
-      {
-        key: { text: localise('prns:processToBeUsedLabel') },
-        value: { text: prnDraft.processToBeUsed || '' }
-      },
-      {
-        key: { text: localise('prns:decemberWasteLabel') },
-        value: {
-          text: prnDraft.isDecemberWaste
-            ? localise('prns:decemberWasteYes')
-            : localise('prns:decemberWasteNo')
-        }
-      },
-      {
-        key: { text: localise('prns:issueCommentsLabel') },
-        value: { text: prnDraft.notes || localise('prns:notProvided') }
-      },
-      {
-        key: { text: localise('prns:issuedDateLabel') },
-        value: { text: '' }
-      },
-      {
-        key: { text: localise('prns:authorisedByLabel') },
-        value: { text: '' }
-      },
-      {
-        key: { text: localise('prns:positionLabel') },
-        value: { text: '' }
-      }
-    ]
+    const prnDetailRows = buildPrnDetailRows({
+      prnDraft,
+      organisationData,
+      localise
+    })
 
-    // Build accreditation details rows
-    const accreditationRows = [
-      {
-        key: { text: localise('prns:materialLabel') },
-        value: { text: displayMaterial }
-      },
-      {
-        key: { text: localise('prns:accreditationNumberLabel') },
-        value: { text: accreditation?.accreditationNumber || '' }
-      },
-      {
-        key: { text: localise('prns:accreditationAddressLabel') },
-        value: { text: formatAddress(registration.site?.address) }
-      }
-    ]
+    const accreditationRows = buildAccreditationRows({
+      registration,
+      accreditation,
+      displayMaterial,
+      localise
+    })
 
     return h.view('prns/check', {
       pageTitle: localise(`prns:${noteType}:checkPageTitle`),
