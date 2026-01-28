@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { getPrns } from '#server/common/helpers/prns/get-prns.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -12,6 +13,8 @@ vi.mock(
 )
 
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
+
+vi.mock(import('#server/common/helpers/prns/get-prns.js'))
 
 const mockCredentials = {
   profile: {
@@ -64,6 +67,25 @@ const fixtureExporter = {
 
 const stubWasteBalance = { amount: 20.5, availableAmount: 10.3 }
 
+const stubPrns = [
+  {
+    id: 'prn-001',
+    prnNumber: 'PRN-2026-00001',
+    issuedToOrganisation: { name: 'ComplyPak Ltd' },
+    tonnageValue: 9,
+    createdAt: '2026-01-21T10:30:00Z',
+    status: 'awaiting_authorisation'
+  },
+  {
+    id: 'prn-002',
+    prnNumber: 'PRN-2026-00002',
+    issuedToOrganisation: { name: 'Nestle (SEPA)', tradingName: 'Nestle UK' },
+    tonnageValue: 4,
+    createdAt: '2026-01-19T14:00:00Z',
+    status: 'awaiting_authorisation'
+  }
+]
+
 const reprocessorUrl = '/organisations/org-123/registrations/reg-001/prns'
 const reprocessorOutputUrl = '/organisations/org-789/registrations/reg-003/prns'
 const exporterUrl = '/organisations/org-456/registrations/reg-002/prns'
@@ -76,6 +98,7 @@ describe('#prnListController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getWasteBalance).mockResolvedValue(stubWasteBalance)
+    vi.mocked(getPrns).mockResolvedValue(stubPrns)
   })
 
   afterAll(() => {
@@ -172,7 +195,7 @@ describe('#prnListController', () => {
       const main = getByRole(body, 'main')
 
       // Check the waste balance panel content
-      const panel = main.querySelector('.govuk-panel')
+      const panel = main.querySelector('.epr-waste-balance-banner')
 
       expect(panel).not.toBeNull()
       expect(panel.textContent).toContain('10.30 tonnes')
@@ -192,8 +215,9 @@ describe('#prnListController', () => {
       const dom = new JSDOM(result)
       const { body } = dom.window.document
       const main = getByRole(body, 'main')
-      const subheading = getByRole(main, 'heading', { level: 2 })
+      const subheading = main.querySelector('.govuk-heading-m')
 
+      expect(subheading).not.toBeNull()
       expect(subheading.textContent).toContain('Select a PRN')
     })
 
@@ -246,6 +270,99 @@ describe('#prnListController', () => {
         'mock-id-token',
         expect.any(Object)
       )
+    })
+
+    it('should fetch PRNs with correct parameters', async ({ server }) => {
+      await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(getPrns).toHaveBeenCalledWith(
+        'org-123',
+        'acc-001',
+        'mock-id-token',
+        expect.any(Object)
+      )
+    })
+
+    it('should use stub waste balance when API returns null', async ({
+      server
+    }) => {
+      vi.mocked(getWasteBalance).mockResolvedValue(null)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const banner = main.querySelector('.epr-waste-balance-banner')
+
+      // Should render with stub waste balance (10.30 tonnes)
+      expect(banner.textContent).toContain('10.30')
+    })
+
+    it('should use API PRNs when available instead of stub', async ({
+      server
+    }) => {
+      const apiPrns = [
+        {
+          id: 'api-prn-1',
+          prnNumber: 'PRN-API-001',
+          issuedToOrganisation: { name: 'API Organisation' },
+          tonnageValue: 50,
+          createdAt: '2026-01-25T12:00:00Z',
+          status: 'awaiting_authorisation'
+        }
+      ]
+      vi.mocked(getPrns).mockResolvedValue(apiPrns)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const table = getByRole(main, 'table')
+
+      // Should render with API data, not stub
+      expect(getByText(table, 'API Organisation')).toBeDefined()
+      expect(table.textContent).not.toContain('ComplyPak Ltd')
+    })
+
+    it('should use stub PRNs when API returns empty array', async ({
+      server
+    }) => {
+      vi.mocked(getPrns).mockResolvedValue([])
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const table = getByRole(main, 'table')
+
+      // Should fall back to stub data when API returns empty
+      expect(getByText(table, 'ComplyPak Ltd')).toBeDefined()
+      expect(getByText(table, 'Nestle (SEPA)')).toBeDefined()
     })
   })
 
@@ -316,15 +433,16 @@ describe('#prnListController', () => {
       const { body } = dom.window.document
       const main = getByRole(body, 'main')
 
-      // Check panel has PERN-specific text
-      const panel = main.querySelector('.govuk-panel')
+      // Check banner has PERN-specific text
+      const banner = main.querySelector('.epr-waste-balance-banner')
 
-      expect(panel.textContent).toContain(
+      expect(banner.textContent).toContain(
         'This is the balance available for creating new PERNs'
       )
 
-      const subheading = getByRole(main, 'heading', { level: 2 })
+      const subheading = main.querySelector('.govuk-heading-m')
 
+      expect(subheading).not.toBeNull()
       expect(subheading.textContent).toContain('Select a PERN')
 
       const insetText = main.querySelector('.govuk-inset-text')

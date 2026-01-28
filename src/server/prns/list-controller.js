@@ -1,15 +1,15 @@
 import Boom from '@hapi/boom'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { getPrns } from '#server/common/helpers/prns/get-prns.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { buildListViewData } from './list-view-data.js'
 
+// Stub data for development until PRN creation is implemented
 const STUB_PRNS = [
   {
     id: 'prn-001',
     prnNumber: 'PRN-2026-00001',
-    issuedToOrganisation: {
-      name: 'ComplyPak Ltd'
-    },
+    issuedToOrganisation: { name: 'ComplyPak Ltd' },
     tonnageValue: 9,
     createdAt: '2026-01-21T10:30:00Z',
     status: 'awaiting_authorisation'
@@ -17,10 +17,7 @@ const STUB_PRNS = [
   {
     id: 'prn-002',
     prnNumber: 'PRN-2026-00002',
-    issuedToOrganisation: {
-      name: 'Nestle (SEPA)',
-      tradingName: 'Nestle UK'
-    },
+    issuedToOrganisation: { name: 'Nestle (SEPA)', tradingName: 'Nestle UK' },
     tonnageValue: 4,
     createdAt: '2026-01-19T14:00:00Z',
     status: 'awaiting_authorisation'
@@ -55,7 +52,7 @@ export const listController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    // TODO: PAE-931 - Remove fallback once waste balance API returns data
+    // Remove fallback once waste balance API returns data
     const wasteBalance = (await getWasteBalance(
       organisationId,
       accreditation.id,
@@ -63,8 +60,14 @@ export const listController = {
       request.logger
     )) ?? { amount: 20.5, availableAmount: 10.3 }
 
-    // GET /v1/organisations/{organisationId}/accreditations/{accreditationId}/prns
-    const prns = STUB_PRNS
+    // Remove fallback once PRN creation is implemented
+    const apiPrns = await getPrns(
+      organisationId,
+      accreditation.id,
+      session.idToken,
+      request.logger
+    )
+    const prns = apiPrns.length > 0 ? apiPrns : STUB_PRNS
 
     const viewData = buildListViewData(request, {
       registration,
