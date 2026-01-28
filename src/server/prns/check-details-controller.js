@@ -9,7 +9,7 @@ export const checkDetailsController = {
     const { registration, accreditation, organisationId, registrationId } =
       await getValidatedRegistration(request)
 
-    // TODO: Remove dummy data once form is implemented
+    // Temporary dummy data
     const prnData = {
       recipient: 'Acme Packaging Solutions Ltd',
       tonnage: '150.75',
