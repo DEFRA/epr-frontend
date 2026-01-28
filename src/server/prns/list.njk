@@ -1,0 +1,44 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      {% if wasteBalance %}
+        <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-bottom-6">
+          <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
+            <div>
+              <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
+                {{ wasteBalance.availableAmount | formatTonnage }} {{ localise('prns:create:tonnageSuffix') }}
+              </h2>
+              <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-subtitle">
+                {{ localise('prns:list:availableWasteBalance') }}
+              </p>
+            </div>
+          </div>
+          <div class="govuk-summary-card__content govuk-!-padding-4">
+            <p class="govuk-body govuk-!-margin-bottom-0" data-testid="waste-balance-explanation">
+              {{ balanceHint }}
+            </p>
+          </div>
+        </div>
+      {% endif %}
+
+      <h2 class="govuk-heading-m">{{ selectHeading }}</h2>
+
+      {{ govukInsetText({
+        text: cancelHint
+      }) }}
+
+      {{ govukTable({
+        head: table.head,
+        rows: table.rows
+      }) }}
+
+    </div>
+  </div>
+{% endblock %}

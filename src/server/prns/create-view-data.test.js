@@ -1,27 +1,30 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildCreatePrnViewData } from './view-data.js'
+import { buildCreateViewData } from './create-view-data.js'
 
 const createMockRequest = () => ({
   t: vi.fn((key) => {
     const translations = {
-      'prns:prns:pageTitle': 'Create a PRN',
-      'prns:perns:pageTitle': 'Create a PERN',
-      'prns:prns:tonnageLabel': 'Enter PRN tonnage',
-      'prns:perns:tonnageLabel': 'Enter PERN tonnage',
-      'prns:tonnageHint': 'Enter a whole number without decimal places',
-      'prns:tonnageSuffix': 'tonnes',
-      'prns:prns:recipientLabel': 'Enter who this PRN will be issued to',
-      'prns:perns:recipientLabel': 'Enter who this PERN will be issued to',
-      'prns:recipientHint':
+      'prns:selectOption': 'Select an option',
+      'prns:create:prns:pageTitle': 'Create a PRN',
+      'prns:create:perns:pageTitle': 'Create a PERN',
+      'prns:create:prns:tonnageLabel': 'Enter PRN tonnage',
+      'prns:create:perns:tonnageLabel': 'Enter PERN tonnage',
+      'prns:create:tonnageHint': 'Enter a whole number without decimal places',
+      'prns:create:tonnageSuffix': 'tonnes',
+      'prns:create:prns:recipientLabel': 'Enter who this PRN will be issued to',
+      'prns:create:perns:recipientLabel':
+        'Enter who this PERN will be issued to',
+      'prns:create:recipientHint':
         'Start typing the name of the packaging waste producer or compliance scheme',
-      'prns:helpSummary': "Can't find the producer or compliance scheme?",
-      'prns:prns:helpText':
+      'prns:create:helpSummary':
+        "Can't find the producer or compliance scheme?",
+      'prns:create:prns:helpText':
         'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'prns:perns:helpText':
+      'prns:create:perns:helpText':
         'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'prns:notesLabel': 'Add issuer notes (optional)',
-      'prns:prns:notesHint': 'These notes will appear on the PRN',
-      'prns:perns:notesHint': 'These notes will appear on the PERN'
+      'prns:create:notesLabel': 'Add issuer notes (optional)',
+      'prns:create:prns:notesHint': 'These notes will appear on the PRN',
+      'prns:create:perns:notesHint': 'These notes will appear on the PERN'
     }
     return translations[key] || key
   })
@@ -45,10 +48,10 @@ const exporterRegistration = {
   material: 'plastic'
 }
 
-describe('#buildCreatePrnViewData', () => {
+describe('#buildCreateViewData', () => {
   describe('for reprocessor (PRN)', () => {
     it('should return page title and heading with PRN text', () => {
-      const result = buildCreatePrnViewData(createMockRequest(), {
+      const result = buildCreateViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         recipients: stubRecipients
       })
@@ -58,7 +61,7 @@ describe('#buildCreatePrnViewData', () => {
     })
 
     it('should return form labels with PRN text', () => {
-      const result = buildCreatePrnViewData(createMockRequest(), {
+      const result = buildCreateViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         recipients: stubRecipients
       })
@@ -72,7 +75,7 @@ describe('#buildCreatePrnViewData', () => {
     })
 
     it('should include recipient options with placeholder', () => {
-      const result = buildCreatePrnViewData(createMockRequest(), {
+      const result = buildCreateViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         recipients: stubRecipients
       })
@@ -91,7 +94,7 @@ describe('#buildCreatePrnViewData', () => {
 
   describe('for exporter (PERN)', () => {
     it('should return page title and heading with PERN text', () => {
-      const result = buildCreatePrnViewData(createMockRequest(), {
+      const result = buildCreateViewData(createMockRequest(), {
         registration: exporterRegistration,
         recipients: stubRecipients
       })
@@ -101,7 +104,7 @@ describe('#buildCreatePrnViewData', () => {
     })
 
     it('should return form labels with PERN text', () => {
-      const result = buildCreatePrnViewData(createMockRequest(), {
+      const result = buildCreateViewData(createMockRequest(), {
         registration: exporterRegistration,
         recipients: stubRecipients
       })
@@ -123,7 +126,7 @@ describe('#buildCreatePrnViewData', () => {
     ])(
       'should detect PERN=$expected for wasteProcessingType=$type',
       ({ type, expected }) => {
-        const result = buildCreatePrnViewData(createMockRequest(), {
+        const result = buildCreateViewData(createMockRequest(), {
           registration: {
             ...reprocessorRegistration,
             wasteProcessingType: type
