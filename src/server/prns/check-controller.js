@@ -6,6 +6,117 @@ import { getRegistrationWithAccreditation } from '#server/common/helpers/organis
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
+ * Formats an address object into a single line string
+ * @param {object} address - Address object with line1, line2, town, postcode etc
+ * @returns {string} Formatted address string
+ */
+function formatAddress(address) {
+  if (!address) {
+    return ''
+  }
+
+  const parts = [
+    address.line1,
+    address.line2,
+    address.town,
+    address.postcode
+  ].filter(Boolean)
+
+  return parts.join(', ')
+}
+
+/**
+ * Builds the PRN/PERN details rows for the summary list
+ * @param {object} params
+ * @param {object} params.prnDraft - Draft PRN data from session
+ * @param {object} params.organisationData - Organisation data
+ * @param {(key: string) => string} params.localise - Translation function
+ * @returns {Array} Summary list rows
+ */
+function buildPrnDetailRows({ prnDraft, organisationData, localise }) {
+  return [
+    {
+      key: { text: localise('prns:issuedByLabel') },
+      value: {
+        text:
+          organisationData.companyDetails?.name || localise('prns:notAvailable')
+      }
+    },
+    {
+      key: { text: localise('prns:issuedToLabel') },
+      value: { text: prnDraft.recipientName }
+    },
+    {
+      key: { text: localise('prns:tonnageLabel') },
+      value: { text: prnDraft.tonnage }
+    },
+    {
+      key: { text: localise('prns:tonnageInWordsLabel') },
+      value: { text: prnDraft.tonnageInWords || '' }
+    },
+    {
+      key: { text: localise('prns:processToBeUsedLabel') },
+      value: { text: prnDraft.processToBeUsed || '' }
+    },
+    {
+      key: { text: localise('prns:decemberWasteLabel') },
+      value: {
+        text: prnDraft.isDecemberWaste
+          ? localise('prns:decemberWasteYes')
+          : localise('prns:decemberWasteNo')
+      }
+    },
+    {
+      key: { text: localise('prns:issueCommentsLabel') },
+      value: { text: prnDraft.notes || localise('prns:notProvided') }
+    },
+    {
+      key: { text: localise('prns:issuedDateLabel') },
+      value: { text: '' }
+    },
+    {
+      key: { text: localise('prns:authorisedByLabel') },
+      value: { text: '' }
+    },
+    {
+      key: { text: localise('prns:positionLabel') },
+      value: { text: '' }
+    }
+  ]
+}
+
+/**
+ * Builds the accreditation details rows for the summary list
+ * @param {object} params
+ * @param {object} params.registration - Registration data
+ * @param {object} params.accreditation - Accreditation data
+ * @param {string} params.displayMaterial - Formatted material name
+ * @param {(key: string) => string} params.localise - Translation function
+ * @returns {Array} Summary list rows
+ */
+function buildAccreditationRows({
+  registration,
+  accreditation,
+  displayMaterial,
+  localise
+}) {
+  return [
+    {
+      key: { text: localise('prns:materialLabel') },
+      value: { text: displayMaterial }
+    },
+    {
+      key: { text: localise('prns:accreditationNumberLabel') },
+      value: { text: accreditation?.accreditationNumber || '' }
+    },
+    {
+      key: { text: localise('prns:accreditationAddressLabel') },
+      value: { text: formatAddress(registration.site?.address) }
+    }
+  ]
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const checkController = {
@@ -28,44 +139,44 @@ export const checkController = {
       )
     }
 
-    const { registration } = await getRegistrationWithAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    )
+    const { organisationData, registration, accreditation } =
+      await getRegistrationWithAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      )
 
-    const noteType =
-      registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+    const isExporter = registration.wasteProcessingType === 'exporter'
+    const noteType = isExporter ? 'perns' : 'prns'
 
     const displayMaterial = getDisplayMaterial(registration)
 
+    const prnDetailRows = buildPrnDetailRows({
+      prnDraft,
+      organisationData,
+      localise
+    })
+
+    const accreditationRows = buildAccreditationRows({
+      registration,
+      accreditation,
+      displayMaterial,
+      localise
+    })
+
     return h.view('prns/check', {
       pageTitle: localise(`prns:${noteType}:checkPageTitle`),
+      caption: localise(`prns:${noteType}:caption`),
       heading: localise(`prns:${noteType}:checkHeading`),
-      summaryRows: [
-        {
-          key: { text: localise('prns:materialLabel') },
-          value: { text: displayMaterial }
-        },
-        {
-          key: { text: localise('prns:tonnageLabel') },
-          value: {
-            text: `${prnDraft.tonnage} ${localise('prns:tonnageSuffix')}`
-          }
-        },
-        {
-          key: { text: localise('prns:recipientSummaryLabel') },
-          value: { text: prnDraft.recipientName }
-        },
-        ...(prnDraft.notes
-          ? [
-              {
-                key: { text: localise('prns:notesLabel') },
-                value: { text: prnDraft.notes }
-              }
-            ]
-          : [])
-      ],
+      introText: localise(`prns:${noteType}:checkIntroText`),
+      authorisationText: localise(`prns:${noteType}:checkAuthorisationText`),
+      insetText: localise(`prns:${noteType}:checkInsetText`),
+      prnDetailsHeading: localise(
+        isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
+      ),
+      prnDetailRows,
+      accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
+      accreditationRows,
       createButton: {
         text: localise(`prns:${noteType}:createButton`)
       },

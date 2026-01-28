@@ -142,11 +142,14 @@ export const postController = {
       request.yar.set('prnDraft', {
         id: result.id,
         tonnage: result.tonnage,
+        tonnageInWords: result.tonnageInWords,
         material: result.material,
         status: result.status,
         recipientName,
         notes: notes || '',
-        wasteProcessingType
+        wasteProcessingType,
+        processToBeUsed: result.processToBeUsed,
+        isDecemberWaste: result.isDecemberWaste ?? false
       })
 
       return h.redirect(
