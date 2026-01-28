@@ -132,7 +132,9 @@ describe('#checkController', () => {
 
     describe('gET /check', () => {
       describe('with draft PRN in session', () => {
-        it('displays check your answers page', async ({ server }) => {
+        it('displays check page with caption and heading', async ({
+          server
+        }) => {
           const { cookies } = await createPrnDraft(server)
 
           const { result, statusCode } = await server.inject({
@@ -148,9 +150,68 @@ describe('#checkController', () => {
           const { body } = dom.window.document
           const main = getByRole(body, 'main')
 
+          // Check caption exists
+          const caption = main.querySelector('.govuk-caption-xl')
+          expect(caption.textContent).toBe('Create PRN')
+
+          // Check heading
           expect(
-            getByText(main, /Check your answers before creating this PRN/i)
+            getByRole(main, 'heading', { name: /Check before creating PRN/i })
           ).toBeDefined()
+        })
+
+        it('displays intro text and inset text', async ({ server }) => {
+          const { cookies } = await createPrnDraft(server)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const main = getByRole(body, 'main')
+
+          expect(
+            getByText(
+              main,
+              /Check the following information is correct before creating this PRN/i
+            )
+          ).toBeDefined()
+          expect(
+            getByText(
+              main,
+              /When created, the PRN will need to be authorised and issued/i
+            )
+          ).toBeDefined()
+          expect(
+            getByText(
+              main,
+              /Any information that is not shown here will be automatically populated/i
+            )
+          ).toBeDefined()
+        })
+
+        it('displays PRN details and accreditation sections', async ({
+          server
+        }) => {
+          const { cookies } = await createPrnDraft(server)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const main = getByRole(body, 'main')
+
+          expect(getByText(main, /PRN details/i)).toBeDefined()
+          expect(getByText(main, /Accreditation details/i)).toBeDefined()
         })
 
         it('displays summary list with PRN details', async ({ server }) => {
@@ -193,7 +254,7 @@ describe('#checkController', () => {
           expect(getByText(main, /My test notes/i)).toBeDefined()
         })
 
-        it('does not display notes row when notes are empty', async ({
+        it('displays "Not provided" when notes are empty', async ({
           server
         }) => {
           const { cookies } = await createPrnDraft(server, {
@@ -212,9 +273,8 @@ describe('#checkController', () => {
           const { body } = dom.window.document
           const main = getByRole(body, 'main')
 
-          // Notes label should not be present
-          const summaryList = main.querySelector('.govuk-summary-list')
-          expect(summaryList.textContent).not.toContain('Add issuer notes')
+          expect(getByText(main, /Issue comments/i)).toBeDefined()
+          expect(getByText(main, /Not provided/i)).toBeDefined()
         })
 
         it('displays create button and cancel button', async ({ server }) => {
@@ -260,9 +320,15 @@ describe('#checkController', () => {
           const { body } = dom.window.document
           const main = getByRole(body, 'main')
 
+          // Check caption
+          const caption = main.querySelector('.govuk-caption-xl')
+          expect(caption.textContent).toBe('Create PERN')
+
+          // Check heading and sections
           expect(
-            getByText(main, /Check your answers before creating this PERN/i)
+            getByRole(main, 'heading', { name: /Check before creating PERN/i })
           ).toBeDefined()
+          expect(getByText(main, /PERN details/i)).toBeDefined()
           expect(
             getByRole(main, 'button', { name: /Create PERN/i })
           ).toBeDefined()
