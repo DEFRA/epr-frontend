@@ -2,11 +2,17 @@
   "accreditationAddressLabel": "Accreditation address",
   "accreditationDetailsHeading": "Accreditation details",
   "accreditationNumberLabel": "Accreditation number",
+  "authorisedByLabel": "Authorised by",
   "cancelButton": "Cancel",
+  "decemberWasteLabel": "December waste",
+  "decemberWasteNo": "No",
+  "decemberWasteYes": "Yes",
   "errorSummaryTitle": "There is a problem",
   "helpSummary": "Can't find the producer or compliance scheme?",
+  "issueCommentsLabel": "Issue comments",
+  "issuedByLabel": "Issued by",
+  "issuedDateLabel": "Issued date",
   "issuedToLabel": "Packaging waste producer or compliance scheme",
-  "issuerNotesLabel": "Issue comments",
   "materialLabel": "Material",
   "notProvided": "Not provided",
   "notesLabel": "Add issuer notes (optional)",
@@ -31,6 +37,7 @@
     "successTonnageLabel": "Tonnage",
     "tonnageLabel": "Enter PERN tonnage"
   },
+  "positionLabel": "Position",
   "prnDetailsHeading": "PRN details",
   "prns": {
     "caption": "Create PRN",
@@ -52,12 +59,14 @@
     "successTonnageLabel": "Tonnage",
     "tonnageLabel": "Enter PRN tonnage"
   },
+  "processToBeUsedLabel": "Process to be used",
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
   "recipientSummaryLabel": "Issued to",
   "selectOption": "Select an option",
   "successNextStepsHeading": "What happens next",
   "successReturnLink": "Return to registration dashboard",
   "tonnageHint": "Enter a whole number without decimal places",
+  "tonnageInWordsLabel": "Tonnage in words",
   "tonnageLabel": "Tonnage",
   "tonnageSuffix": "tonnes"
 }

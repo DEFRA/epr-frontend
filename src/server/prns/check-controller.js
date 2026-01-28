@@ -48,11 +48,12 @@ export const checkController = {
       )
     }
 
-    const { registration } = await getRegistrationWithAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    )
+    const { organisationData, registration } =
+      await getRegistrationWithAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      )
 
     const isExporter = registration.wasteProcessingType === 'exporter'
     const noteType = isExporter ? 'perns' : 'prns'
@@ -62,18 +63,48 @@ export const checkController = {
     // Build PRN/PERN details rows
     const prnDetailRows = [
       {
+        key: { text: localise('prns:issuedByLabel') },
+        value: { text: organisationData.name }
+      },
+      {
         key: { text: localise('prns:issuedToLabel') },
         value: { text: prnDraft.recipientName }
       },
       {
         key: { text: localise('prns:tonnageLabel') },
+        value: { text: prnDraft.tonnage }
+      },
+      {
+        key: { text: localise('prns:tonnageInWordsLabel') },
+        value: { text: prnDraft.tonnageInWords || '' }
+      },
+      {
+        key: { text: localise('prns:processToBeUsedLabel') },
+        value: { text: prnDraft.processToBeUsed || '' }
+      },
+      {
+        key: { text: localise('prns:decemberWasteLabel') },
         value: {
-          text: `${prnDraft.tonnage} ${localise('prns:tonnageSuffix')}`
+          text: prnDraft.isDecemberWaste
+            ? localise('prns:decemberWasteYes')
+            : localise('prns:decemberWasteNo')
         }
       },
       {
-        key: { text: localise('prns:issuerNotesLabel') },
+        key: { text: localise('prns:issueCommentsLabel') },
         value: { text: prnDraft.notes || localise('prns:notProvided') }
+      },
+      {
+        key: { text: localise('prns:issuedDateLabel') },
+        value: { text: '' }
+      },
+      {
+        key: { text: localise('prns:authorisedByLabel') },
+        value: { text: '' }
+      },
+      {
+        key: { text: localise('prns:positionLabel') },
+        value: { text: '' }
       }
     ]
 

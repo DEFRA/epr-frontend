@@ -73,8 +73,11 @@ const validPayload = {
 const mockPrnCreated = {
   id: 'prn-789',
   tonnage: 100,
+  tonnageInWords: 'One hundred',
   material: 'plastic',
-  status: 'draft'
+  status: 'draft',
+  processToBeUsed: 'R3',
+  isDecemberWaste: false
 }
 
 const mockPrnStatusUpdated = {
@@ -214,7 +217,9 @@ describe('#checkController', () => {
           expect(getByText(main, /Accreditation details/i)).toBeDefined()
         })
 
-        it('displays summary list with PRN details', async ({ server }) => {
+        it('displays summary list with PRN details keys', async ({
+          server
+        }) => {
           const { cookies } = await createPrnDraft(server)
 
           const { result } = await server.inject({
@@ -228,10 +233,48 @@ describe('#checkController', () => {
           const { body } = dom.window.document
           const main = getByRole(body, 'main')
 
-          expect(getByText(main, /Material/i)).toBeDefined()
-          expect(getByText(main, /Plastic/i)).toBeDefined()
-          expect(getByText(main, /100 tonnes/i)).toBeDefined()
+          // PRN details section - check summary list keys
+          const summaryListKeys = main.querySelectorAll(
+            '.govuk-summary-list__key'
+          )
+          const keyTexts = Array.from(summaryListKeys).map((k) =>
+            k.textContent.trim()
+          )
+
+          expect(keyTexts).toStrictEqual(
+            expect.arrayContaining([
+              'Issued by',
+              'Packaging waste producer or compliance scheme',
+              'Tonnage',
+              'Tonnage in words',
+              'Process to be used',
+              'December waste',
+              'Issue comments',
+              'Issued date',
+              'Authorised by',
+              'Position',
+              'Material'
+            ])
+          )
+        })
+
+        it('displays summary list with correct values', async ({ server }) => {
+          const { cookies } = await createPrnDraft(server)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const main = getByRole(body, 'main')
+
+          expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
           expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+          expect(getByText(main, /Plastic/i)).toBeDefined()
         })
 
         it('displays notes when provided', async ({ server }) => {
@@ -252,6 +295,59 @@ describe('#checkController', () => {
           const main = getByRole(body, 'main')
 
           expect(getByText(main, /My test notes/i)).toBeDefined()
+        })
+
+        it('displays "Yes" for December waste when isDecemberWaste is true', async ({
+          server
+        }) => {
+          vi.mocked(createPrn).mockResolvedValue({
+            ...mockPrnCreated,
+            isDecemberWaste: true
+          })
+
+          const { cookies } = await createPrnDraft(server)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const main = getByRole(body, 'main')
+
+          expect(getByText(main, /^Yes$/)).toBeDefined()
+        })
+
+        it('displays empty values when optional fields are not provided', async ({
+          server
+        }) => {
+          vi.mocked(createPrn).mockResolvedValue({
+            ...mockPrnCreated,
+            tonnageInWords: null,
+            processToBeUsed: null
+          })
+
+          const { cookies } = await createPrnDraft(server)
+
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
+
+          expect(statusCode).toBe(statusCodes.ok)
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const main = getByRole(body, 'main')
+
+          // Verify the page renders without errors
+          expect(getByText(main, /Tonnage in words/i)).toBeDefined()
+          expect(getByText(main, /Process to be used/i)).toBeDefined()
         })
 
         it('displays "Not provided" when notes are empty', async ({
