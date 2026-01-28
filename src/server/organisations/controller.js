@@ -26,7 +26,7 @@ function shouldRenderSite(registration, accreditation, wasteProcessingType) {
 
   const isRegistrationExcluded = isExcludedStatus(registration.status)
   const isAccreditationExcluded =
-    accreditation && isExcludedStatus(accreditation.status)
+    !accreditation || isExcludedStatus(accreditation.status)
 
   return (
     isCorrectWasteProcessingType &&
@@ -68,9 +68,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
       html: createTag(registration.status)
     },
     {
-      html: createTag(
-        accreditation?.status ?? localise('organisations:table:notAccredited')
-      )
+      html: createTag(accreditation.status)
     }
   ]
 

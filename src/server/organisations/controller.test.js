@@ -641,6 +641,49 @@ describe('#organisationController', () => {
       expect(statusTags.length).toBeGreaterThan(0)
     })
 
+    it('should hide registrations without accreditations', async ({
+      server
+    }) => {
+      const dataWithNoAccreditations = {
+        ...fixtureData,
+        accreditations: [],
+        registrations: [
+          {
+            id: 'reg-no-acc-001',
+            status: 'approved',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            site: { address: { line1: 'Test Site' } }
+          },
+          {
+            id: 'reg-no-acc-002',
+            status: 'approved',
+            wasteProcessingType: 'exporter',
+            material: 'wood'
+          }
+        ]
+      }
+
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(dataWithNoAccreditations)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('No sites found.')
+
+      const tableRows = $('tbody tr')
+
+      expect(tableRows).toHaveLength(0)
+    })
+
     it('should display only exporting sites when no reprocessing sites exist', async ({
       server
     }) => {
@@ -1036,6 +1079,45 @@ describe('#organisationController', () => {
       expect($('.govuk-tag--green').length).toBeGreaterThan(0) // approved
       expect($('.govuk-tag--yellow').length).toBeGreaterThan(0) // suspended
       expect($('.govuk-tag--red').length).toBeGreaterThan(0) // cancelled
+    })
+
+    it('should display grey tag for unknown status', async ({ server }) => {
+      const dataWithUnknownStatus = {
+        ...fixtureData,
+        accreditations: [
+          {
+            id: 'acc-unknown',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'unknown_status',
+            site: { address: { line1: 'Test Site' } }
+          }
+        ],
+        registrations: [
+          {
+            id: 'reg-unknown',
+            accreditationId: 'acc-unknown',
+            status: 'pending_review',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            site: { address: { line1: 'Test Site' } }
+          }
+        ]
+      }
+
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(dataWithUnknownStatus)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('.govuk-tag--grey').length).toBeGreaterThan(0)
     })
   })
 })
