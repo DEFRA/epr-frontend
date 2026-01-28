@@ -49,9 +49,9 @@ const controller = {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
-      const isNonInitialUser =
-        organisations.linked.linkedBy?.id !== session.profile.id
-      if (isNonInitialUser) {
+      const isInitialUser =
+        organisations.linked.linkedBy?.id === session.profile.id
+      if (!isInitialUser) {
         await metrics.signInSuccessNonInitialUser()
       }
 
