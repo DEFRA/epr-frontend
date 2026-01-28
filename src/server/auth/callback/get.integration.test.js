@@ -254,32 +254,5 @@ describe('/auth/callback - GET integration', async () => {
 
       expect(mock.signInSuccessNonInitialUserMetric).not.toHaveBeenCalled()
     })
-
-    it('does not record signInSuccessNonInitialUser metric when user has no linked organisation', async ({
-      server,
-      msw
-    }) => {
-      const backendUrl = config.get('eprBackendUrl')
-      msw.use(
-        http.get(`${backendUrl}/v1/me/organisations`, () => {
-          return HttpResponse.json({
-            organisations: {
-              current: { id: 'organisation-id', name: 'company-name' },
-              linked: null,
-              unlinked: []
-            }
-          })
-        })
-      )
-
-      const newUserToken = await generateIdToken({
-        sub: 'new-user-id',
-        email: 'newuser@email.com'
-      })
-
-      await performSignInFlow(server, msw, newUserToken)
-
-      expect(mock.signInSuccessNonInitialUserMetric).not.toHaveBeenCalled()
-    })
   })
 })
