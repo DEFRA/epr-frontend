@@ -16,10 +16,14 @@
 
       <div class="govuk-button-group">
         {{ govukButton({
-          text: confirmButton.text
+          text: createButton.text
         }) }}
 
-        <a href="{{ cancelLink.href }}" class="govuk-link">{{ cancelLink.text }}</a>
+        {{ govukButton({
+          text: cancelButton.text,
+          href: cancelButton.href,
+          classes: "govuk-button--warning"
+        }) }}
       </div>
     </form>
   </div>
