@@ -14,6 +14,7 @@
   "issuedDateLabel": "Issued date",
   "issuedToLabel": "Packaging waste producer or compliance scheme",
   "materialLabel": "Material",
+  "notAvailable": "n/a",
   "notProvided": "Not provided",
   "notesLabel": "Add issuer notes (optional)",
   "pernDetailsHeading": "PERN details",

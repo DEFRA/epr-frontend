@@ -30,7 +30,10 @@ const mockAuth = {
 }
 
 const fixtureReprocessor = {
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Reprocessor Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'reprocessor-input',
@@ -47,7 +50,10 @@ const fixtureReprocessor = {
 }
 
 const fixtureExporter = {
-  organisationData: { id: 'org-123', name: 'Exporter Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Exporter Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'exporter',
@@ -286,14 +292,14 @@ describe('#checkController', () => {
           expect(getByText(main, /ACC-2025-001/)).toBeDefined()
         })
 
-        it('displays Issued by value from organisationData', async ({
+        it('displays Issued by value from organisationData.companyDetails.name', async ({
           server
         }) => {
           vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
             ...fixtureReprocessor,
             organisationData: {
               ...fixtureReprocessor.organisationData,
-              name: 'Custom Waste Services Ltd'
+              companyDetails: { name: 'Custom Waste Services Ltd' }
             }
           })
 
@@ -321,6 +327,42 @@ describe('#checkController', () => {
             ?.textContent.trim()
 
           expect(issuedByValue).toBe('Custom Waste Services Ltd')
+        })
+
+        it('displays "n/a" when companyDetails.name is not available', async ({
+          server
+        }) => {
+          vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
+            ...fixtureReprocessor,
+            organisationData: {
+              id: 'org-123',
+              companyDetails: null
+            }
+          })
+
+          const { cookies } = await createPrnDraft(server)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const summaryRows = body.querySelectorAll('.govuk-summary-list__row')
+
+          const issuedByRow = Array.from(summaryRows).find((row) =>
+            row
+              .querySelector('.govuk-summary-list__key')
+              ?.textContent.includes('Issued by')
+          )
+          const issuedByValue = issuedByRow
+            ?.querySelector('.govuk-summary-list__value')
+            ?.textContent.trim()
+
+          expect(issuedByValue).toBe('n/a')
         })
 
         it('displays notes when provided', async ({ server }) => {

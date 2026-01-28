@@ -64,7 +64,11 @@ export const checkController = {
     const prnDetailRows = [
       {
         key: { text: localise('prns:issuedByLabel') },
-        value: { text: organisationData.name }
+        value: {
+          text:
+            organisationData.companyDetails?.name ||
+            localise('prns:notAvailable')
+        }
       },
       {
         key: { text: localise('prns:issuedToLabel') },
