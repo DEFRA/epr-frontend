@@ -286,6 +286,43 @@ describe('#checkController', () => {
           expect(getByText(main, /ACC-2025-001/)).toBeDefined()
         })
 
+        it('displays Issued by value from organisationData', async ({
+          server
+        }) => {
+          vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
+            ...fixtureReprocessor,
+            organisationData: {
+              ...fixtureReprocessor.organisationData,
+              name: 'Custom Waste Services Ltd'
+            }
+          })
+
+          const { cookies } = await createPrnDraft(server)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: checkUrl,
+            auth: mockAuth,
+            headers: { cookie: cookies }
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const summaryRows = body.querySelectorAll('.govuk-summary-list__row')
+
+          // Find the "Issued by" row and check its value
+          const issuedByRow = Array.from(summaryRows).find((row) =>
+            row
+              .querySelector('.govuk-summary-list__key')
+              ?.textContent.includes('Issued by')
+          )
+          const issuedByValue = issuedByRow
+            ?.querySelector('.govuk-summary-list__value')
+            ?.textContent.trim()
+
+          expect(issuedByValue).toBe('Custom Waste Services Ltd')
+        })
+
         it('displays notes when provided', async ({ server }) => {
           const { cookies } = await createPrnDraft(server, {
             ...validPayload,
