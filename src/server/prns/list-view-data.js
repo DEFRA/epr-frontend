@@ -43,7 +43,7 @@ function formatDate(isoDate) {
  */
 function createStatusTag(status) {
   const { text, colour } = PRN_STATUS[status]
-  return `<strong class="govuk-tag govuk-tag--${colour}" style="max-width: none; white-space: nowrap">${text}</strong>`
+  return `<strong class="govuk-tag govuk-tag--${colour}" style="max-width: none; overflow-wrap: normal">${text}</strong>`
 }
 
 /**
@@ -78,28 +78,28 @@ export function buildListViewData(
     { html: `<span class="govuk-visually-hidden">${actionHeading}</span>` }
   ]
 
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/prns`
+  const dashboardUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+
+  const nowrap = { style: 'white-space: nowrap' }
 
   const tableRows = prns
     .filter((prn) => prn.status === prnStatuses.awaitingAuthorisation)
     .map((prn) => [
       { text: prn.issuedToOrganisation.name },
-      {
-        html: `<span style="white-space: nowrap">${formatDate(prn.createdAt)}</span>`
-      },
+      { text: formatDate(prn.createdAt), attributes: nowrap },
       { text: String(prn.tonnageValue), format: 'numeric' },
-      { html: createStatusTag(prn.status) },
+      { html: createStatusTag(prn.status), attributes: nowrap },
       {
-        html: `<a href="${basePath}/${prn.prnNumber}">${selectLinkText} <span class="govuk-visually-hidden">${prn.issuedToOrganisation.name}</span></a>`
+        html: `<a href="${dashboardUrl}/prns/${prn.prnNumber}">${selectLinkText} <span class="govuk-visually-hidden">${prn.issuedToOrganisation.name}</span></a>`
       }
     ])
 
   return {
     pageTitle,
     heading: pageTitle,
-    backUrl: `/organisations/${organisationId}/registrations/${registrationId}`,
+    backUrl: dashboardUrl,
     createText: localise(`prns:list:${noteType}:createText`),
-    createUrl: `/organisations/${organisationId}/registrations/${registrationId}/create-prn`,
+    createUrl: `${dashboardUrl}/create-prn`,
     selectHeading: localise(`prns:list:${noteType}:selectHeading`),
     balanceHint: localise(`prns:list:${noteType}:balanceHint`),
     wasteBalance,

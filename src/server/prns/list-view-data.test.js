@@ -222,9 +222,8 @@ describe('#prnListViewData', () => {
 
       // First cell: recipient name
       expect(result.table.rows[0][0]).toStrictEqual({ text: 'ComplyPak Ltd' })
-      // Second cell: formatted date (nowrap)
-      expect(result.table.rows[0][1].html).toContain('21 January 2026')
-      expect(result.table.rows[0][1].html).toContain('white-space: nowrap')
+      // Second cell: formatted date
+      expect(result.table.rows[0][1].text).toBe('21 January 2026')
       // Third cell: tonnage (numeric)
       expect(result.table.rows[0][2]).toStrictEqual({
         text: '9',
@@ -299,7 +298,7 @@ describe('#prnListViewData', () => {
       expect(statusCell.html).toContain('Awaiting authorisation')
     })
 
-    it('should prevent text wrapping with inline styles', () => {
+    it('should override govuk-tag max-width and overflow-wrap', () => {
       const request = createMockRequest({})
       const registration = { wasteProcessingType: 'reprocessor-input' }
 
@@ -312,7 +311,28 @@ describe('#prnListViewData', () => {
       const statusCell = result.table.rows[0][3]
 
       expect(statusCell.html).toContain('max-width: none')
-      expect(statusCell.html).toContain('white-space: nowrap')
+      expect(statusCell.html).toContain('overflow-wrap: normal')
+    })
+
+    it('should set nowrap on date and status cells via attributes', () => {
+      const request = createMockRequest({})
+      const registration = { wasteProcessingType: 'reprocessor-input' }
+
+      const result = buildListViewData(request, {
+        registration,
+        prns: [stubPrns[0]],
+        wasteBalance: stubWasteBalance
+      })
+
+      const dateCell = result.table.rows[0][1]
+      const statusCell = result.table.rows[0][3]
+
+      expect(dateCell.attributes).toStrictEqual({
+        style: 'white-space: nowrap'
+      })
+      expect(statusCell.attributes).toStrictEqual({
+        style: 'white-space: nowrap'
+      })
     })
   })
 
@@ -453,8 +473,7 @@ describe('#prnListViewData', () => {
         wasteBalance: stubWasteBalance
       })
 
-      expect(result.table.rows[0][1].html).toContain('15 March 2026')
-      expect(result.table.rows[0][1].html).toContain('white-space: nowrap')
+      expect(result.table.rows[0][1].text).toBe('15 March 2026')
     })
   })
 })
