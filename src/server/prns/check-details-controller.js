@@ -11,7 +11,7 @@ export const checkDetailsController = {
 
     // Temporary dummy data
     const prnData = {
-      recipient: 'Acme Packaging Solutions Ltd',
+      issuedToOrganisation: 'Acme Packaging Solutions Ltd',
       tonnage: 150,
       decemberWaste: 'No',
       issuedDate: '28 January 2026',

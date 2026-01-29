@@ -219,7 +219,7 @@ describe('#buildCheckDetailsViewData', () => {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
         prnData: {
-          recipient: 'Test Company Ltd',
+          issuedToOrganisation: 'Test Company Ltd',
           tonnage: 100
         }
       })

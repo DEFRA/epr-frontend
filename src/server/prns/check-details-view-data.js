@@ -24,7 +24,7 @@ function buildPrnDetails(localise, prnData, accreditation) {
   const l = (key) => localise(`prns:checkDetails:${key}`)
 
   return [
-    summaryRow(l('recipient'), prnData.recipient ?? ''),
+    summaryRow(l('recipient'), prnData.issuedToOrganisation ?? ''),
     summaryRow(l('tonnage'), prnData.tonnage ?? ''),
     summaryRow(
       l('tonnageInWords'),
