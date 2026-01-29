@@ -119,6 +119,60 @@ describe('#authCallbackController', () => {
       expect(result).toBe('redirect-response')
     })
 
+    it('should log sign-in with userId for unique user logging', async () => {
+      const mockProfile = {
+        id: 'user-456',
+        email: 'metrics@example.com'
+      }
+
+      const mockOrganisations = {
+        current: { id: 'defra-org-uuid', name: 'Test Organisation' },
+        linked: {
+          id: 'defra-org-uuid',
+          name: 'Test Organisation',
+          linkedBy: { email: 'user@example.com', id: 'user-456' },
+          linkedAt: '2025-12-10T09:00:00.000Z'
+        },
+        unlinked: []
+      }
+
+      vi.mocked(
+        fetchUserOrganisationsModule.fetchUserOrganisations
+      ).mockResolvedValue(mockOrganisations)
+
+      const mockRequest = {
+        auth: {
+          isAuthenticated: true,
+          credentials: {
+            profile: mockProfile,
+            idToken: 'mock-id-token',
+            refreshToken: 'mock-refresh-token',
+            expiresAt: new Date(Date.now() + 3600000).toISOString(),
+            urls: {
+              token: 'http://test.auth/token',
+              logout: 'http://test.auth/logout'
+            }
+          }
+        },
+        server: {
+          app: { cache: { set: vi.fn().mockResolvedValue(undefined) } }
+        },
+        cookieAuth: { set: vi.fn() },
+        logger: { info: vi.fn(), error: vi.fn() },
+        yar: { flash: vi.fn().mockReturnValue([]) },
+        localiseUrl: vi.fn((url) => url)
+      }
+
+      const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
+
+      await controller.handler(mockRequest, mockH)
+
+      expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
+        { userId: 'user-456', event: 'signInComplete' },
+        'User has been successfully authenticated'
+      )
+    })
+
     it.each([
       {
         referrer: '/start',

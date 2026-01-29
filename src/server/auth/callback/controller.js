@@ -41,7 +41,10 @@ const controller = {
 
       request.cookieAuth.set({ sessionId })
 
-      request.logger.info('User has been successfully authenticated')
+      request.logger.info(
+        { userId: session.profile.id, event: 'signInComplete' },
+        'User has been successfully authenticated'
+      )
 
       const organisations = await fetchUserOrganisations(session.idToken)
 
