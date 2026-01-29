@@ -3,6 +3,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -15,7 +16,14 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
 
-      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      <div class="epr-heading-with-action">
+        <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">{{ heading }}</h1>
+        {{ govukButton({
+          text: createLink.text,
+          href: createLink.href,
+          classes: "govuk-button--secondary"
+        }) }}
+      </div>
 
       <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-bottom-6">
         <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
@@ -35,44 +43,49 @@
         </div>
       </div>
 
-      <p class="govuk-body">
-        <a href="{{ createLink.href }}" class="govuk-link">{{ createLink.text }}</a>
-      </p>
+      <div class="govuk-tabs" data-module="govuk-tabs">
+        <h2 class="govuk-tabs__title">
+          Contents
+        </h2>
+        <ul class="govuk-tabs__list">
+          <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+            <a class="govuk-tabs__tab" href="#awaiting-action">
+              {{ tabs.awaitingAction }}
+            </a>
+          </li>
+          <li class="govuk-tabs__list-item">
+            <a class="govuk-tabs__tab" href="#issued">
+              {{ tabs.issued }}
+            </a>
+          </li>
+        </ul>
 
-      <h2 class="govuk-heading-l">{{ selectHeading }}</h2>
+        <div class="govuk-tabs__panel" id="awaiting-action">
+          {{ govukInsetText({
+            text: cancelHint
+          }) }}
 
-      {{ govukInsetText({
-        text: cancelHint
-      }) }}
+          {% if table.rows | length > 0 %}
+            <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
+            {{ govukTable({
+              head: [
+                { text: table.headings.recipient },
+                { text: table.headings.createdAt },
+                { text: table.headings.tonnage },
+                { text: table.headings.status },
+                { text: table.headings.action }
+              ],
+              rows: table.rows
+            }) }}
+          {% else %}
+            <p class="govuk-body">{{ noPrnsText }}</p>
+          {% endif %}
+        </div>
 
-      {% if table.rows.length > 0 %}
-        <table class="govuk-table">
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">{{ table.headings.recipient }}</th>
-              <th scope="col" class="govuk-table__header">{{ table.headings.createdAt }}</th>
-              <th scope="col" class="govuk-table__header">{{ table.headings.tonnage }}</th>
-              <th scope="col" class="govuk-table__header">{{ table.headings.status }}</th>
-              <th scope="col" class="govuk-table__header">{{ table.headings.action }}</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for row in table.rows %}
-              <tr class="govuk-table__row">
-                <td class="govuk-table__cell">{{ row.recipient }}</td>
-                <td class="govuk-table__cell">{{ row.createdAt }}</td>
-                <td class="govuk-table__cell">{{ row.tonnage }}</td>
-                <td class="govuk-table__cell">{{ row.status }}</td>
-                <td class="govuk-table__cell">
-                  <a href="{{ row.selectUrl }}" class="govuk-link">{{ selectText }}</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p class="govuk-body">{{ localise("prns:list:noPrns") }}</p>
-      {% endif %}
+        <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="issued">
+          <p class="govuk-body">{{ noIssuedText }}</p>
+        </div>
+      </div>
 
     </div>
   </div>

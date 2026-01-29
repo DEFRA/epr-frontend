@@ -25,15 +25,35 @@ export function buildListViewData(
     `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
   )
 
-  const prnRows = prns.map((prn) => ({
-    recipient: prn.recipient,
-    createdAt: formatDate(prn.createdAt),
-    tonnage: prn.tonnage,
-    status: formatStatus(prn.status, localise),
-    selectUrl: request.localiseUrl(
+  const selectText = localise('prns:list:table:selectText')
+
+  // Build rows in govukTable format: array of arrays of cell objects
+  const dataRows = prns.map((prn) => {
+    const viewUrl = request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prn.id}/view`
     )
-  }))
+    return [
+      { text: prn.recipient },
+      { text: formatDate(prn.createdAt) },
+      { text: prn.tonnage },
+      { html: buildStatusTagHtml(prn.status, localise) },
+      { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
+    ]
+  })
+
+  // Calculate total tonnage and add total row
+  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalRow = [
+    {
+      text: localise('prns:list:table:totalLabel'),
+      classes: 'govuk-!-font-weight-bold'
+    },
+    { text: '' },
+    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: '' },
+    { text: '' }
+  ]
+  const tableRows = dataRows.length > 0 ? [...dataRows, totalRow] : []
 
   return {
     pageTitle: localise(`prns:list:${noteType}:pageTitle`),
@@ -48,8 +68,16 @@ export function buildListViewData(
       label: localise('prns:list:availableWasteBalance'),
       hint: localise(`prns:list:${noteType}:balanceHint`)
     },
-    selectHeading: localise(`prns:list:${noteType}:selectHeading`),
+    tabs: {
+      awaitingAction: localise('prns:list:tabs:awaitingAction'),
+      issued: localise('prns:list:tabs:issued')
+    },
     cancelHint: localise(`prns:list:${noteType}:cancelHint`),
+    awaitingAuthorisationHeading: localise(
+      `prns:list:${noteType}:awaitingAuthorisationHeading`
+    ),
+    noPrnsText: localise('prns:list:noPrns'),
+    noIssuedText: localise(`prns:list:${noteType}:noIssuedPrns`),
     table: {
       headings: {
         recipient: localise('prns:list:table:recipientHeading'),
@@ -58,10 +86,20 @@ export function buildListViewData(
         status: localise('prns:list:table:statusHeading'),
         action: localise('prns:list:table:actionHeading')
       },
-      rows: prnRows
-    },
-    selectText: localise('prns:list:table:selectText')
+      rows: tableRows
+    }
   }
+}
+
+/**
+ * Build govukTag HTML for status display
+ * @param {string} status
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+function buildStatusTagHtml(status, localise) {
+  const statusText = formatStatus(status, localise)
+  return `<strong class="govuk-tag govuk-tag--blue epr-tag--no-max-width">${statusText}</strong>`
 }
 
 /**

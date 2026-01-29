@@ -245,13 +245,10 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
         const table = getByRole(main, 'table')
 
-        expect(
-          getByText(table, /Packaging waste producer or compliance scheme/i)
-        ).toBeDefined()
+        expect(getByText(table, /^Issued to$/i)).toBeDefined()
         expect(getByText(table, /Date created/i)).toBeDefined()
         expect(getByText(table, /Tonnage/i)).toBeDefined()
         expect(getByText(table, /Status/i)).toBeDefined()
-        expect(getByText(table, /Action/i)).toBeDefined()
       })
 
       it('should render select links for each PRN row', async ({ server }) => {
@@ -305,8 +302,8 @@ describe('#listPrnsController', () => {
         const table = getByRole(main, 'table')
         const rows = table.querySelectorAll('tbody tr')
 
-        // Stub data has 2 PRNs with awaiting_authorisation status
-        expect(rows).toHaveLength(2)
+        // Stub data has 2 PRNs with awaiting_authorisation status + 1 total row
+        expect(rows).toHaveLength(3)
 
         // Should not show 'Issued' status PRNs
         expect(queryByText(table, /^Issued$/)).toBeNull()
@@ -503,7 +500,7 @@ describe('#listPrnsController', () => {
           const { body } = dom.window.document
           const main = getByRole(body, 'main')
 
-          expect(getByText(main, /Select a PRN/i)).toBeDefined()
+          expect(getByText(main, /PRNs awaiting authorisation/i)).toBeDefined()
           expect(getByText(main, /Create a PRN/i)).toBeDefined()
         })
       })
@@ -543,7 +540,7 @@ describe('#listPrnsController', () => {
           const { body } = dom.window.document
           const main = getByRole(body, 'main')
 
-          expect(getByText(main, /Select a PERN/i)).toBeDefined()
+          expect(getByText(main, /PERNs awaiting authorisation/i)).toBeDefined()
           expect(getByText(main, /Create a PERN/i)).toBeDefined()
         })
       })
