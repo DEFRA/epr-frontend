@@ -1,5 +1,5 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { getNoteType } from './helpers/get-note-type.js'
+import { getPrnType } from './helpers/get-note-type.js'
 
 /**
  * @param {string} label
@@ -67,16 +67,16 @@ export function buildCheckDetailsViewData(
   { registration, accreditation, prnData = {} }
 ) {
   const { t: localise } = request
-  const noteType = getNoteType(registration)
+  const prnType = getPrnType(registration)
 
-  const pageTitle = localise(`prns:checkDetails:${noteType}:pageTitle`)
+  const pageTitle = localise(`prns:checkDetails:${prnType}:pageTitle`)
 
   return {
     pageTitle,
     heading: pageTitle,
-    leadParagraph: localise(`prns:checkDetails:${noteType}:leadParagraph`),
+    leadParagraph: localise(`prns:checkDetails:${prnType}:leadParagraph`),
     insetText: localise('prns:checkDetails:insetText'),
-    prnDetailsHeading: localise(`prns:checkDetails:${noteType}:detailsHeading`),
+    prnDetailsHeading: localise(`prns:checkDetails:${prnType}:detailsHeading`),
     prnDetails: buildPrnDetails(localise, prnData),
     accreditationDetailsHeading: localise(
       'prns:checkDetails:accreditationDetailsHeading'

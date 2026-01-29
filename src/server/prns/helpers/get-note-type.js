@@ -3,6 +3,6 @@
  * @param {{wasteProcessingType: string}} registration
  * @returns {'prns' | 'perns'}
  */
-export function getNoteType(registration) {
+export function getPrnType(registration) {
   return registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
 }

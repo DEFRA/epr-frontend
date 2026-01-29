@@ -1,4 +1,4 @@
-import { getNoteType } from './helpers/get-note-type.js'
+import { getPrnType } from './helpers/get-note-type.js'
 
 /**
  * Build view data for the create PRN/PERN page
@@ -10,30 +10,30 @@ import { getNoteType } from './helpers/get-note-type.js'
  */
 export function buildCreatePrnViewData(request, { registration, recipients }) {
   const { t: localise } = request
-  const noteType = getNoteType(registration)
+  const prnType = getPrnType(registration)
 
-  const pageTitle = localise(`prns:${noteType}:pageTitle`)
+  const pageTitle = localise(`prns:${prnType}:pageTitle`)
 
   return {
     pageTitle,
     heading: pageTitle,
     tonnage: {
-      label: localise(`prns:${noteType}:tonnageLabel`),
+      label: localise(`prns:${prnType}:tonnageLabel`),
       hint: localise('prns:tonnageHint'),
       suffix: localise('prns:tonnageSuffix')
     },
     recipient: {
-      label: localise(`prns:${noteType}:recipientLabel`),
+      label: localise(`prns:${prnType}:recipientLabel`),
       hint: localise('prns:recipientHint'),
       items: [{ value: '', text: 'Select an option' }, ...recipients]
     },
     help: {
       summary: localise('prns:helpSummary'),
-      text: localise(`prns:${noteType}:helpText`)
+      text: localise(`prns:${prnType}:helpText`)
     },
     notes: {
       label: localise('prns:notesLabel'),
-      hint: localise(`prns:${noteType}:notesHint`)
+      hint: localise(`prns:${prnType}:notesHint`)
     }
   }
 }
