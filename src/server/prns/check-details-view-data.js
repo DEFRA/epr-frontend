@@ -1,4 +1,57 @@
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getNoteType } from './helpers/get-note-type.js'
+
+/**
+ * @param {string} label
+ * @param {string} value
+ * @returns {object}
+ */
+function summaryRow(label, value) {
+  return {
+    key: { text: label, classes: cssClasses.widthOneHalf },
+    value: { text: value }
+  }
+}
+
+/**
+ * @param {(key: string) => string} localise
+ * @param {object} prnData
+ * @returns {object[]}
+ */
+function buildPrnDetails(localise, prnData) {
+  const l = (key) => localise(`prns:checkDetails:${key}`)
+
+  return [
+    summaryRow(l('recipient'), prnData.recipient ?? ''),
+    summaryRow(l('tonnage'), prnData.tonnage ?? ''),
+    summaryRow(l('tonnageInWords'), prnData.tonnageInWords ?? ''),
+    summaryRow(l('processToBeUsed'), prnData.processToBeUsed ?? ''),
+    summaryRow(l('decemberWaste'), prnData.decemberWaste ?? ''),
+    summaryRow(l('issuedDate'), prnData.issuedDate ?? ''),
+    summaryRow(l('issuedBy'), prnData.issuedBy ?? ''),
+    summaryRow(l('authorisedBy'), prnData.authorisedBy ?? ''),
+    summaryRow(l('position'), prnData.position ?? ''),
+    summaryRow(l('issuerNotes'), prnData.issuerNotes || l('notProvided'))
+  ]
+}
+
+/**
+ * @param {(key: string) => string} localise
+ * @param {object} [accreditation]
+ * @returns {object[]}
+ */
+function buildAccreditationDetails(localise, accreditation) {
+  const l = (key) => localise(`prns:checkDetails:${key}`)
+
+  return [
+    summaryRow(l('material'), accreditation?.material ?? ''),
+    summaryRow(
+      l('accreditationNumber'),
+      accreditation?.accreditationNumber ?? ''
+    ),
+    summaryRow(l('accreditationAddress'), accreditation?.address ?? '')
+  ]
+}
 
 /**
  * Build view data for the check PRN/PERN details page
@@ -24,106 +77,11 @@ export function buildCheckDetailsViewData(
     leadParagraph: localise(`prns:checkDetails:${noteType}:leadParagraph`),
     insetText: localise('prns:checkDetails:insetText'),
     prnDetailsHeading: localise(`prns:checkDetails:${noteType}:detailsHeading`),
-    prnDetails: [
-      {
-        key: {
-          text: localise('prns:checkDetails:recipient'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.recipient ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:tonnage'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.tonnage ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:tonnageInWords'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.tonnageInWords ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:processToBeUsed'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.processToBeUsed ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:decemberWaste'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.decemberWaste ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:issuedDate'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.issuedDate ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:issuedBy'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.issuedBy ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:authorisedBy'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.authorisedBy ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:position'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: prnData.position ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:issuerNotes'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: {
-          text: prnData.issuerNotes || localise('prns:checkDetails:notProvided')
-        }
-      }
-    ],
+    prnDetails: buildPrnDetails(localise, prnData),
     accreditationDetailsHeading: localise(
       'prns:checkDetails:accreditationDetailsHeading'
     ),
-    accreditationDetails: [
-      {
-        key: {
-          text: localise('prns:checkDetails:material'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: accreditation?.material ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:accreditationNumber'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: accreditation?.accreditationNumber ?? '' }
-      },
-      {
-        key: {
-          text: localise('prns:checkDetails:accreditationAddress'),
-          classes: 'govuk-!-width-one-half'
-        },
-        value: { text: accreditation?.address ?? '' }
-      }
-    ]
+    accreditationDetails: buildAccreditationDetails(localise, accreditation)
   }
 }
 
