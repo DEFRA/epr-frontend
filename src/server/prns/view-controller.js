@@ -159,8 +159,36 @@ function buildPrnDetailRows({ prn, organisationData, localise }) {
       value: { text: String(prn.tonnage) }
     },
     {
-      key: { text: localise('prns:view:dateCreated') },
-      value: { text: formatDate(prn.createdAt) }
+      key: { text: localise('prns:tonnageInWordsLabel') },
+      value: { text: prn.tonnageInWords || '' }
+    },
+    {
+      key: { text: localise('prns:processToBeUsedLabel') },
+      value: { text: prn.processToBeUsed || '' }
+    },
+    {
+      key: { text: localise('prns:decemberWasteLabel') },
+      value: {
+        text: prn.isDecemberWaste
+          ? localise('prns:decemberWasteYes')
+          : localise('prns:decemberWasteNo')
+      }
+    },
+    {
+      key: { text: localise('prns:issueCommentsLabel') },
+      value: { text: prn.notes || localise('prns:notProvided') }
+    },
+    {
+      key: { text: localise('prns:issuedDateLabel') },
+      value: { text: prn.authorisedAt ? formatDate(prn.authorisedAt) : '' }
+    },
+    {
+      key: { text: localise('prns:authorisedByLabel') },
+      value: { text: prn.authorisedBy?.name || '' }
+    },
+    {
+      key: { text: localise('prns:positionLabel') },
+      value: { text: prn.authorisedBy?.position || '' }
     }
   ]
 }

@@ -114,7 +114,12 @@ const mockPrnFromBackend = {
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation',
-  createdAt: '2026-01-15T10:00:00.000Z'
+  createdAt: '2026-01-15T10:00:00.000Z',
+  notes: 'Additional notes for this PRN',
+  isDecemberWaste: true,
+  authorisedAt: '2026-01-16T14:30:00.000Z',
+  authorisedBy: { name: 'John Smith', position: 'Director' },
+  wasteProcessingType: 'reprocessor'
 }
 
 const mockPernFromBackend = {
@@ -123,7 +128,12 @@ const mockPernFromBackend = {
   tonnage: 50,
   material: 'glass',
   status: 'issued',
-  createdAt: '2026-01-20T14:30:00.000Z'
+  createdAt: '2026-01-20T14:30:00.000Z',
+  notes: null,
+  isDecemberWaste: false,
+  authorisedAt: null,
+  authorisedBy: null,
+  wasteProcessingType: 'exporter'
 }
 
 /**
@@ -512,7 +522,7 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.notFound)
       })
 
-      it('formats date correctly', async ({ server }) => {
+      it('formats issued date correctly', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
@@ -523,7 +533,126 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /15 January 2026/i)).toBeDefined()
+        // Issued date is the authorisedAt date (16 January 2026)
+        expect(getByText(main, /16 January 2026/i)).toBeDefined()
+      })
+
+      it('displays December waste as Yes when true', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /December waste/i)).toBeDefined()
+        expect(getByText(main, /^Yes$/)).toBeDefined()
+      })
+
+      it('displays December waste as No when false', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          isDecemberWaste: false
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /^No$/)).toBeDefined()
+      })
+
+      it('displays issue comments when present', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Issue comments/i)).toBeDefined()
+        expect(getByText(main, /Additional notes for this PRN/i)).toBeDefined()
+      })
+
+      it('displays "Not provided" when notes are null', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          notes: null
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Not provided/i)).toBeDefined()
+      })
+
+      it('displays authorised by details when present', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Authorised by/i)).toBeDefined()
+        expect(getByText(main, /John Smith/i)).toBeDefined()
+        expect(getByText(main, /Position/i)).toBeDefined()
+        expect(getByText(main, /Director/i)).toBeDefined()
+      })
+
+      it('displays issued date when authorised', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Issued date/i)).toBeDefined()
+        expect(getByText(main, /16 January 2026/i)).toBeDefined()
+      })
+
+      it('displays empty values when authorisation details not present', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          authorisedAt: null,
+          authorisedBy: null
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
       })
 
       it('handles unknown status gracefully', async ({ server }) => {
