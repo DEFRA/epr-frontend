@@ -13,7 +13,7 @@ export const checkDetailsController = {
     const prnData = {
       issuedToOrganisation: 'Acme Packaging Solutions Ltd',
       tonnageValue: 150,
-      decemberWaste: 'No',
+      isDecemberWaste: 'No',
       issuedDate: '28 January 2026',
       issuedBy: 'John Smith',
       authorisedBy: 'Jane Doe',

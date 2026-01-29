@@ -263,7 +263,7 @@ describe('#buildCheckDetailsViewData', () => {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
         prnData: {
-          decemberWaste: 'Yes'
+          isDecemberWaste: 'Yes'
         }
       })
 
