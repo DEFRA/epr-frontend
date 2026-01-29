@@ -99,7 +99,7 @@ export function buildListViewData(
  */
 function buildStatusTagHtml(status, localise) {
   const statusText = formatStatus(status, localise)
-  return `<strong class="govuk-tag govuk-tag--blue">${statusText}</strong>`
+  return `<strong class="govuk-tag govuk-tag--blue epr-tag--no-max-width">${statusText}</strong>`
 }
 
 /**
