@@ -19,30 +19,6 @@ export const viewController = {
     const { t: localise } = request
     const session = request.auth.credentials
 
-    // Check for success session data first (after creating a PRN)
-    const prnCreated = request.yar.get('prnCreated')
-
-    if (prnCreated && prnCreated.id === prnId) {
-      // Clear the session data
-      request.yar.clear('prnCreated')
-
-      const noteType =
-        prnCreated.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
-
-      return h.view('prns/success', {
-        pageTitle: localise(`prns:${noteType}:successPageTitle`),
-        heading: localise(`prns:${noteType}:successHeading`),
-        tonnageLabel: localise(`prns:${noteType}:successTonnageLabel`),
-        tonnage: prnCreated.tonnage,
-        tonnageSuffix: localise('prns:tonnageSuffix'),
-        nextStepsHeading: localise('prns:successNextStepsHeading'),
-        nextStepsText: localise(`prns:${noteType}:successNextStepsText`),
-        returnLink: localise('prns:successReturnLink'),
-        organisationId,
-        registrationId
-      })
-    }
-
     // Check for draft PRN data in session (creation flow)
     const prnDraft = request.yar.get('prnDraft')
 
@@ -100,7 +76,7 @@ export const viewPostController = {
         session.idToken
       )
 
-      // Clear draft and store for view page
+      // Clear draft and store for created page
       request.yar.clear('prnDraft')
       request.yar.set('prnCreated', {
         id: result.id,
@@ -111,7 +87,7 @@ export const viewPostController = {
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
+        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/created`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to update PRN status')

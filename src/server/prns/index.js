@@ -1,4 +1,5 @@
 import { controller } from './controller.js'
+import { createdController } from './created-controller.js'
 import { listController } from './list-controller.js'
 import { postController } from './post-controller.js'
 import { viewController, viewPostController } from './view-controller.js'
@@ -38,6 +39,11 @@ export const prns = {
           ...viewPostController,
           method: 'POST',
           path: `${basePath}/{prnId}/view`
+        },
+        {
+          ...createdController,
+          method: 'GET',
+          path: `${basePath}/{prnId}/created`
         }
       ])
     }

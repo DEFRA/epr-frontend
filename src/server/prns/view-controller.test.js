@@ -100,13 +100,6 @@ const mockPrnStatusUpdated = {
   status: 'awaiting_authorisation'
 }
 
-const mockPernStatusUpdated = {
-  id: 'pern-123',
-  tonnage: 50,
-  material: 'plastic',
-  status: 'awaiting_authorisation'
-}
-
 const mockPrnFromBackend = {
   id: 'prn-789',
   issuedToOrganisation: 'Acme Packaging Ltd',
@@ -169,66 +162,6 @@ function mergeCookies(...cookieStrings) {
     .join('; ')
 }
 
-/**
- * Helper to go through full PRN creation flow and return session cookies
- * @param {object} server
- * @param {object} payload
- * @param {string} viewUrlOverride - Optional URL override for view page
- * @returns {Promise<{cookies: string}>}
- */
-async function createPrnAndConfirm(
-  server,
-  payload = validPayload,
-  viewUrlOverride = viewUrl
-) {
-  // Step 1: POST to create form to create draft and get redirected to view
-  const { cookie: csrfCookie, crumb } = await getCsrfToken(server, createUrl, {
-    auth: mockAuth
-  })
-
-  const postResponse = await server.inject({
-    method: 'POST',
-    url: createUrl,
-    auth: mockAuth,
-    headers: { cookie: csrfCookie },
-    payload: { ...payload, crumb }
-  })
-
-  // Merge cookies from POST response
-  const postCookieValues = extractCookieValues(
-    postResponse.headers['set-cookie']
-  )
-  const cookies1 = mergeCookies(csrfCookie, ...postCookieValues)
-
-  // Step 2: POST to view page to confirm and redirect to success
-  const viewPostResponse = await server.inject({
-    method: 'POST',
-    url: viewUrlOverride,
-    auth: mockAuth,
-    headers: { cookie: cookies1 },
-    payload: { crumb }
-  })
-
-  // Merge all cookies, with view response cookies taking precedence
-  const viewCookieValues = extractCookieValues(
-    viewPostResponse.headers['set-cookie']
-  )
-  const cookies = mergeCookies(cookies1, ...viewCookieValues)
-
-  return { cookies }
-}
-
-/**
- * Helper for PERN creation flow (uses pernId-based URLs)
- * @param {object} server
- * @param {object} payload
- * @returns {Promise<{cookies: string}>}
- */
-async function createPrnAndConfirmPern(server, payload) {
-  const pernViewUrlForCreate = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/view`
-  return createPrnAndConfirm(server, payload, pernViewUrlForCreate)
-}
-
 describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -247,104 +180,6 @@ describe('#viewController', () => {
 
     afterAll(() => {
       config.reset('featureFlags.prns')
-    })
-
-    describe('success page (after creating PRN)', () => {
-      it('displays success page with PRN details', async ({ server }) => {
-        const { cookies } = await createPrnAndConfirm(server)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(getByText(main, /PRN created/i)).toBeDefined()
-        expect(getByText(main, /100/)).toBeDefined()
-        expect(getByText(main, /tonnes/i)).toBeDefined()
-      })
-
-      it('displays what happens next section', async ({ server }) => {
-        const { cookies } = await createPrnAndConfirm(server)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(getByText(main, /What happens next/i)).toBeDefined()
-      })
-
-      it('displays return link to registration dashboard', async ({
-        server
-      }) => {
-        const { cookies } = await createPrnAndConfirm(server)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        const returnLink = getByText(main, /Return to registration dashboard/i)
-
-        expect(returnLink).toBeDefined()
-        expect(returnLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
-        )
-      })
-
-      it('displays PERN text for exporter wasteProcessingType', async ({
-        server
-      }) => {
-        // Set up exporter fixture for PERN
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
-        vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
-        vi.mocked(updatePrnStatus).mockResolvedValue(mockPernStatusUpdated)
-
-        const exporterPayload = {
-          ...validPayload,
-          wasteProcessingType: 'exporter'
-        }
-
-        const { cookies } = await createPrnAndConfirmPern(
-          server,
-          exporterPayload
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: pernViewUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(getByText(main, /PERN created/i)).toBeDefined()
-      })
     })
 
     describe('view existing PRN (from list page)', () => {
@@ -840,7 +675,7 @@ describe('#viewController', () => {
     })
 
     describe('POST /view (confirm creation)', () => {
-      it('redirects to view page after confirming', async ({ server }) => {
+      it('redirects to created page after confirming', async ({ server }) => {
         // Create draft first
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
@@ -870,8 +705,10 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/created`
+
         expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(viewUrl)
+        expect(headers.location).toBe(createdUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
           organisationId,
           registrationId,
