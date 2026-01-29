@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchPackagingRecyclingNotes } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js'
+import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 
 /**
@@ -41,29 +41,23 @@ export const viewController = {
       })
     }
 
-    // Fetch PRN data from backend for viewing existing PRN
-    const { registration } = await getRegistrationWithAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    )
+    // Fetch PRN and registration data from backend
+    const [{ registration }, prn] = await Promise.all([
+      getRegistrationWithAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      ),
+      fetchPackagingRecyclingNote(
+        organisationId,
+        registrationId,
+        prnId,
+        session.idToken
+      )
+    ])
 
     if (!registration) {
       throw Boom.notFound('Registration not found')
-    }
-
-    // Fetch all PRNs and find the one we need
-    // TODO: Replace with dedicated GET by ID endpoint when available
-    const prns = await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      session.idToken
-    )
-
-    const prn = prns.find((p) => p.id === prnId)
-
-    if (!prn) {
-      throw Boom.notFound('PRN not found')
     }
 
     const isExporter = registration.wasteProcessingType === 'exporter'
