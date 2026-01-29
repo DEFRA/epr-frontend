@@ -1,8 +1,7 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
-{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
-{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/tabs/macro.njk" import govukTabs %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -42,75 +41,24 @@
         </div>
       </div>
 
-      <div class="govuk-tabs" data-module="govuk-tabs">
-        <h2 class="govuk-tabs__title">
-          {{ localise("prns:list:tabs:title") }}
-        </h2>
-        <ul class="govuk-tabs__list">
-          <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
-            <a class="govuk-tabs__tab" href="#awaiting-action">
-              {{ tabs.awaitingAction }}
-            </a>
-          </li>
-          <li class="govuk-tabs__list-item">
-            <a class="govuk-tabs__tab" href="#issued">
-              {{ tabs.issued }}
-            </a>
-          </li>
-        </ul>
-
-        <div class="govuk-tabs__panel" id="awaiting-action">
-          {{ govukInsetText({
-            text: cancelHint
-          }) }}
-
-          {% if table.rows.length > 0 %}
-            <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
-            <table class="govuk-table">
-              <thead class="govuk-table__head">
-                <tr class="govuk-table__row">
-                  <th scope="col" class="govuk-table__header">{{ table.headings.recipient }}</th>
-                  <th scope="col" class="govuk-table__header">{{ table.headings.createdAt }}</th>
-                  <th scope="col" class="govuk-table__header">{{ table.headings.tonnage }}</th>
-                  <th scope="col" class="govuk-table__header">{{ table.headings.status }}</th>
-                  <th scope="col" class="govuk-table__header">{{ table.headings.action }}</th>
-                </tr>
-              </thead>
-              <tbody class="govuk-table__body">
-                {% for row in table.rows %}
-                  <tr class="govuk-table__row">
-                    <td class="govuk-table__cell">{{ row.recipient }}</td>
-                    <td class="govuk-table__cell">{{ row.createdAt }}</td>
-                    <td class="govuk-table__cell">{{ row.tonnage }}</td>
-                    <td class="govuk-table__cell">
-                      {{ govukTag({
-                        text: row.status,
-                        classes: "govuk-tag--blue"
-                      }) }}
-                    </td>
-                    <td class="govuk-table__cell">
-                      <a href="{{ row.selectUrl }}" class="govuk-link">{{ selectText }}</a>
-                    </td>
-                  </tr>
-                {% endfor %}
-                <tr class="govuk-table__row">
-                  <td class="govuk-table__cell govuk-!-font-weight-bold">{{ table.totalLabel }}</td>
-                  <td class="govuk-table__cell"></td>
-                  <td class="govuk-table__cell govuk-!-font-weight-bold">{{ table.totalTonnage }}</td>
-                  <td class="govuk-table__cell"></td>
-                  <td class="govuk-table__cell"></td>
-                </tr>
-              </tbody>
-            </table>
-          {% else %}
-            <p class="govuk-body">{{ noPrnsText }}</p>
-          {% endif %}
-        </div>
-
-        <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="issued">
-          <p class="govuk-body">{{ noIssuedText }}</p>
-        </div>
-      </div>
+      {{ govukTabs({
+        items: [
+          {
+            label: tabs.awaitingAction,
+            id: "awaiting-action",
+            panel: {
+              html: awaitingActionPanel
+            }
+          },
+          {
+            label: tabs.issued,
+            id: "issued",
+            panel: {
+              html: issuedPanel
+            }
+          }
+        ]
+      }) }}
 
     </div>
   </div>
