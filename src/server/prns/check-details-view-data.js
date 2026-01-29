@@ -33,7 +33,7 @@ function buildPrnDetails(localise, prnData, accreditation) {
     summaryRow(l('processToBeUsed'), getRecoveryCode(accreditation?.material)),
     summaryRow(l('decemberWaste'), prnData.isDecemberWaste ?? ''),
     summaryRow(l('issuedDate'), prnData.issuedDate ?? ''),
-    summaryRow(l('issuedBy'), prnData.issuedBy ?? ''),
+    summaryRow(l('issuedBy'), prnData.issuedByOrganisation ?? ''),
     summaryRow(l('authorisedBy'), prnData.authorisedBy ?? ''),
     summaryRow(l('position'), prnData.position ?? ''),
     summaryRow(l('issuerNotes'), prnData.issuerNotes || l('notProvided'))

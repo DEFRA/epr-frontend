@@ -270,7 +270,7 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[4].value.text).toBe('Yes')
     })
 
-    it('should populate issuedDate, issuedBy and authorisedBy from prnData', () => {
+    it('should populate issuedDate, issuedByOrganisation and authorisedBy from prnData', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
@@ -278,7 +278,7 @@ describe('#buildCheckDetailsViewData', () => {
         registrationId: 'reg-001',
         prnData: {
           issuedDate: '15 March 2026',
-          issuedBy: 'Alice Brown',
+          issuedByOrganisation: 'Alice Brown',
           authorisedBy: 'Bob Green'
         }
       })
