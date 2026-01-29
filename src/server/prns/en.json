@@ -17,6 +17,7 @@
     "availableWasteBalance": "Available waste balance",
     "noPrns": "No PRNs or PERNs have been created yet.",
     "tabs": {
+      "title": "Contents",
       "awaitingAction": "Awaiting action",
       "issued": "Issued"
     },
@@ -26,7 +27,8 @@
       "tonnageHeading": "Tonnage",
       "statusHeading": "Status",
       "actionHeading": "",
-      "selectText": "Select"
+      "selectText": "Select",
+      "totalLabel": "Total"
     },
     "status": {
       "awaitingAuthorisation": "Awaiting authorisation",
