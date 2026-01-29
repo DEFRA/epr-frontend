@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
-import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
+import { fetchPackagingRecyclingNotes } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -12,7 +12,7 @@ vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
 vi.mock(
-  import('#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js')
+  import('#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js')
 )
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
@@ -226,7 +226,9 @@ describe('#viewController', () => {
     vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
+    vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+      mockPrnFromBackend
+    ])
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
   })
@@ -415,9 +417,9 @@ describe('#viewController', () => {
         vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           mockPernFromBackend
-        )
+        ])
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -440,10 +442,12 @@ describe('#viewController', () => {
       })
 
       it('displays issued status with green tag', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'issued'
-        })
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            ...mockPrnFromBackend,
+            status: 'issued'
+          }
+        ])
 
         const { result } = await server.inject({
           method: 'GET',
@@ -461,10 +465,12 @@ describe('#viewController', () => {
       })
 
       it('displays cancelled status with red tag', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'cancelled'
-        })
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            ...mockPrnFromBackend,
+            status: 'cancelled'
+          }
+        ])
 
         const { result } = await server.inject({
           method: 'GET',
@@ -498,7 +504,7 @@ describe('#viewController', () => {
       })
 
       it('returns 404 when PRN not found', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(null)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -524,10 +530,12 @@ describe('#viewController', () => {
       })
 
       it('handles unknown status gracefully', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'some_unknown_status'
-        })
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            ...mockPrnFromBackend,
+            status: 'some_unknown_status'
+          }
+        ])
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -546,10 +554,12 @@ describe('#viewController', () => {
       })
 
       it('handles null material gracefully', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          material: null
-        })
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            ...mockPrnFromBackend,
+            material: null
+          }
+        ])
 
         const { statusCode } = await server.inject({
           method: 'GET',

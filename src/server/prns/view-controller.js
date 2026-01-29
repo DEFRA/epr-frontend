@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
+import { fetchPackagingRecyclingNotes } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 
 /**
@@ -52,12 +52,15 @@ export const viewController = {
       throw Boom.notFound('Registration not found')
     }
 
-    const prn = await fetchPackagingRecyclingNote(
+    // Fetch all PRNs and find the one we need
+    // TODO: Replace with dedicated GET by ID endpoint when available
+    const prns = await fetchPackagingRecyclingNotes(
       organisationId,
       registrationId,
-      prnId,
       session.idToken
     )
+
+    const prn = prns.find((p) => p.id === prnId)
 
     if (!prn) {
       throw Boom.notFound('PRN not found')
