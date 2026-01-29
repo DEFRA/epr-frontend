@@ -129,13 +129,18 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                <p class="govuk-body">
-                  {% if prns.isEnabled %}
-                    <a href="{{ prns.link.href }}" class="govuk-link">{{ prns.link.text }}</a>
-                  {% else %}
+                {% if prns.isEnabled %}
+                  <p class="govuk-body">
+                    <a href="{{ prns.createLink.href }}" class="govuk-link">{{ prns.createLink.text }}</a>
+                  </p>
+                  <p class="govuk-body">
+                    <a href="{{ prns.manageLink.href }}" class="govuk-link">{{ prns.manageLink.text }}</a>
+                  </p>
+                {% else %}
+                  <p class="govuk-body">
                     {{ prns.notAvailable }}
-                  {% endif %}
-                </p>
+                  </p>
+                {% endif %}
               </div>
             </div>
           </div>

@@ -816,7 +816,7 @@ describe('#accreditationDashboardController', () => {
         }).closest('.govuk-summary-card')
 
         const card = within(prnCard)
-        card.getByText('Raise, issue and manage PRNs.')
+        card.getByText('Create and manage PRNs.')
 
         expect(
           card.queryByText('PRN management is not yet available.')
@@ -839,25 +839,40 @@ describe('#accreditationDashboardController', () => {
           fixture: fixtureData,
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
           title: 'PRNs',
-          description: 'Raise, issue and manage PRNs.',
-          linkText: 'Create new PRN',
+          description: 'Create and manage PRNs.',
+          createLinkText: 'Create a PRN',
+          manageLinkText: 'Manage PRNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn'
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/packaging-recycling-notes'
         },
         {
           name: 'PERN (exporter)',
           fixture: fixtureExportingOnly,
           url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
           title: 'PERNs',
-          description: 'Raise, issue and manage PERNs.',
-          linkText: 'Create new PERN',
+          description: 'Create and manage PERNs.',
+          createLinkText: 'Create a PERN',
+          manageLinkText: 'Manage PERNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn'
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/packaging-recycling-notes'
         }
       ])(
-        'should display $name card with create new link',
+        'should display $name card with create and manage links',
         async (
-          { fixture, url, title, description, linkText, expectedCreateUrl },
+          {
+            fixture,
+            url,
+            title,
+            description,
+            createLinkText,
+            manageLinkText,
+            expectedCreateUrl,
+            expectedManageUrl
+          },
           { server }
         ) => {
           vi.mocked(
@@ -880,13 +895,15 @@ describe('#accreditationDashboardController', () => {
 
           const card = within(prnCard)
 
-          card.getByText(`Raise, issue and manage ${title}.`)
-          card.getByText(title)
           card.getByText(description)
 
           expect(
-            card.getByRole('link', { name: linkText }).getAttribute('href')
+            card.getByRole('link', { name: createLinkText }).getAttribute('href')
           ).toBe(expectedCreateUrl)
+
+          expect(
+            card.getByRole('link', { name: manageLinkText }).getAttribute('href')
+          ).toBe(expectedManageUrl)
         }
       )
     })
