@@ -25,10 +25,10 @@ function buildPrnDetails(localise, prnData, accreditation) {
 
   return [
     summaryRow(l('recipient'), prnData.issuedToOrganisation ?? ''),
-    summaryRow(l('tonnage'), prnData.tonnage ?? ''),
+    summaryRow(l('tonnage'), prnData.tonnageValue ?? ''),
     summaryRow(
       l('tonnageInWords'),
-      prnData.tonnage != null ? tonnageToWords(prnData.tonnage) : ''
+      prnData.tonnageValue != null ? tonnageToWords(prnData.tonnageValue) : ''
     ),
     summaryRow(l('processToBeUsed'), getRecoveryCode(accreditation?.material)),
     summaryRow(l('decemberWaste'), prnData.decemberWaste ?? ''),

@@ -220,7 +220,7 @@ describe('#buildCheckDetailsViewData', () => {
         accreditation: mockAccreditation,
         prnData: {
           issuedToOrganisation: 'Test Company Ltd',
-          tonnage: 100
+          tonnageValue: 100
         }
       })
 
@@ -228,17 +228,17 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[1].value.text).toBe(100)
     })
 
-    it('should derive tonnageInWords from tonnage', () => {
+    it('should derive tonnageInWords from tonnageValue', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
-        prnData: { tonnage: 150 }
+        prnData: { tonnageValue: 150 }
       })
 
       expect(result.prnDetails[2].value.text).toBe('One hundred and fifty')
     })
 
-    it('should return empty string for tonnageInWords when tonnage is missing', () => {
+    it('should return empty string for tonnageInWords when tonnageValue is missing', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
