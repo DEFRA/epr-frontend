@@ -32,19 +32,15 @@ export const listController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    const wasteBalance = await getWasteBalance(
-      organisationId,
-      accreditation.id,
-      session.idToken,
-      request.logger
-    )
-
-    const prns = await getPrns(
-      organisationId,
-      accreditation.id,
-      session.idToken,
-      request.logger
-    )
+    const [wasteBalance, prns] = await Promise.all([
+      getWasteBalance(
+        organisationId,
+        accreditation.id,
+        session.idToken,
+        request.logger
+      ),
+      getPrns(organisationId, accreditation.id, session.idToken, request.logger)
+    ])
 
     const viewData = buildListViewData(request, {
       registration,
