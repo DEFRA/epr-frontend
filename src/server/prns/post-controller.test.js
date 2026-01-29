@@ -43,7 +43,7 @@ const fixtureReprocessor = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
-const url = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+const url = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
 
 const validPayload = {
   tonnage: '100',
@@ -111,7 +111,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check`
+          `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/prn-789/view`
         )
       })
 

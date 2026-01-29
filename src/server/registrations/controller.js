@@ -129,14 +129,19 @@ function getPrnViewData(request, isExporter, organisationId, registrationId) {
   const { t: localise } = request
   const key = isExporter ? 'perns' : 'prns'
 
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
+  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
 
   return {
     isEnabled: config.get('featureFlags.prns'),
     description: localise(`registrations:${key}.description`),
-    link: {
-      href: request.localiseUrl(url),
+    createLink: {
+      href: request.localiseUrl(createUrl),
       text: localise(`registrations:${key}.createNew`)
+    },
+    manageLink: {
+      href: request.localiseUrl(manageUrl),
+      text: localise(`registrations:${key}.manage`)
     },
     notAvailable: localise(`registrations:${key}.notAvailable`),
     title: localise(`registrations:${key}.title`)

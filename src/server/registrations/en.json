@@ -6,15 +6,17 @@
   "pageTitle": "{{ siteName }}: {{ material }}",
   "perns": {
     "title": "PERNs",
-    "description": "Raise, issue and manage PERNs.",
+    "description": "Create and manage PERNs.",
     "notAvailable": "PERN management is not yet available.",
-    "createNew": "Create new PERN"
+    "createNew": "Create a PERN",
+    "manage": "Manage PERNs"
   },
   "prns": {
     "title": "PRNs",
-    "description": "Raise, issue and manage PRNs.",
+    "description": "Create and manage PRNs.",
     "notAvailable": "PRN management is not yet available.",
-    "createNew": "Create new PRN"
+    "createNew": "Create a PRN",
+    "manage": "Manage PRNs"
   },
   "registration": "Registration",
   "registrationAndAccreditation": "Registration and accreditation",

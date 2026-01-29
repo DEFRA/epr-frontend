@@ -13,6 +13,37 @@
   "issuedByLabel": "Issued by",
   "issuedDateLabel": "Issued date",
   "issuedToLabel": "Packaging waste producer or compliance scheme",
+  "list": {
+    "availableWasteBalance": "Available waste balance",
+    "noPrns": "No PRNs or PERNs have been created yet.",
+    "table": {
+      "recipientHeading": "Packaging waste producer or compliance scheme",
+      "dateHeading": "Date created",
+      "tonnageHeading": "Tonnage",
+      "statusHeading": "Status",
+      "actionHeading": "Action",
+      "selectText": "Select"
+    },
+    "status": {
+      "awaitingAuthorisation": "Awaiting authorisation",
+      "issued": "Issued",
+      "cancelled": "Cancelled"
+    },
+    "perns": {
+      "pageTitle": "PERNs",
+      "selectHeading": "Select a PERN",
+      "balanceHint": "This is the balance available for creating PERNs",
+      "cancelHint": "If you cancel a PERN, its tonnage will be added to your available waste balance.",
+      "createLink": "Create a PERN"
+    },
+    "prns": {
+      "pageTitle": "PRNs",
+      "selectHeading": "Select a PRN",
+      "balanceHint": "This is the balance available for creating PRNs",
+      "cancelHint": "If you cancel a PRN, its tonnage will be added to your available waste balance.",
+      "createLink": "Create a PRN"
+    }
+  },
   "materialLabel": "Material",
   "notAvailable": "n/a",
   "notProvided": "Not provided",
@@ -69,5 +100,19 @@
   "tonnageHint": "Enter a whole number without decimal places",
   "tonnageInWordsLabel": "Tonnage in words",
   "tonnageLabel": "Tonnage",
-  "tonnageSuffix": "tonnes"
+  "tonnageSuffix": "tonnes",
+  "view": {
+    "status": "Status",
+    "detailsHeading": "Details",
+    "issuedTo": "Issued to",
+    "tonnage": "Tonnage",
+    "material": "Material",
+    "dateCreated": "Date created",
+    "prns": {
+      "returnLink": "Return to PRN list"
+    },
+    "perns": {
+      "returnLink": "Return to PERN list"
+    }
+  }
 }

@@ -30,7 +30,10 @@ const mockAuth = {
 }
 
 const fixtureReprocessor = {
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Reprocessor Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'reprocessor-input',
@@ -43,7 +46,10 @@ const fixtureReprocessor = {
 }
 
 const fixtureExporter = {
-  organisationData: { id: 'org-123', name: 'Exporter Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Exporter Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'exporter',
@@ -57,9 +63,12 @@ const fixtureExporter = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
-const checkUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check`
-const successUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
+const prnId = 'prn-789'
+const pernId = 'pern-123'
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
+const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/created`
+const pernCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/created`
 
 const validPayload = {
   tonnage: '100',
@@ -138,10 +147,15 @@ function mergeCookies(...cookieStrings) {
  * Helper to go through full PRN creation flow and return session cookies
  * @param {object} server
  * @param {object} payload
+ * @param {string} viewUrlOverride - Optional URL override for view page
  * @returns {Promise<{cookies: string}>}
  */
-async function createPrnAndConfirm(server, payload = validPayload) {
-  // Step 1: POST to create form to create draft and get redirected to check
+async function createPrnAndConfirm(
+  server,
+  payload = validPayload,
+  viewUrlOverride = viewUrl
+) {
+  // Step 1: POST to create form to create draft and get redirected to view
   const { cookie: csrfCookie, crumb } = await getCsrfToken(server, createUrl, {
     auth: mockAuth
   })
@@ -160,25 +174,25 @@ async function createPrnAndConfirm(server, payload = validPayload) {
   )
   const cookies1 = mergeCookies(csrfCookie, ...postCookieValues)
 
-  // Step 2: POST to check page to confirm and redirect to success
-  const checkPostResponse = await server.inject({
+  // Step 2: POST to view page to confirm and redirect to created
+  const viewPostResponse = await server.inject({
     method: 'POST',
-    url: checkUrl,
+    url: viewUrlOverride,
     auth: mockAuth,
     headers: { cookie: cookies1 },
     payload: { crumb }
   })
 
-  // Merge all cookies, with check response cookies taking precedence
-  const checkCookieValues = extractCookieValues(
-    checkPostResponse.headers['set-cookie']
+  // Merge all cookies, with view response cookies taking precedence
+  const viewCookieValues = extractCookieValues(
+    viewPostResponse.headers['set-cookie']
   )
-  const cookies = mergeCookies(cookies1, ...checkCookieValues)
+  const cookies = mergeCookies(cookies1, ...viewCookieValues)
 
   return { cookies }
 }
 
-describe('#successController', () => {
+describe('#createdController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
@@ -197,13 +211,13 @@ describe('#successController', () => {
       config.reset('featureFlags.prns')
     })
 
-    describe('with PRN in session', () => {
+    describe('success page (after creating PRN)', () => {
       it('displays success page with PRN details', async ({ server }) => {
         const { cookies } = await createPrnAndConfirm(server)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: createdUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -224,7 +238,7 @@ describe('#successController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: createdUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -243,7 +257,7 @@ describe('#successController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: createdUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -275,11 +289,16 @@ describe('#successController', () => {
           wasteProcessingType: 'exporter'
         }
 
-        const { cookies } = await createPrnAndConfirm(server, exporterPayload)
+        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/view`
+        const { cookies } = await createPrnAndConfirm(
+          server,
+          exporterPayload,
+          pernViewUrl
+        )
 
         const { result } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: pernCreatedUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -290,20 +309,39 @@ describe('#successController', () => {
 
         expect(getByText(main, /PERN created/i)).toBeDefined()
       })
-    })
 
-    describe('without PRN in session', () => {
-      it('redirects to create PRN page', async ({ server }) => {
-        const { statusCode, headers } = await server.inject({
-          method: 'GET',
-          url: successUrl,
+      it('redirects to view when no session data', async ({ server }) => {
+        const { cookie: csrfCookie } = await getCsrfToken(server, createUrl, {
           auth: mockAuth
         })
 
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie }
+        })
+
         expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
-        )
+        expect(headers.location).toBe(viewUrl)
+      })
+
+      it('redirects to view when session ID mismatch', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
+
+        // Try to access created page with different prnId
+        const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/different-id/created`
+        const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/different-id/view`
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: differentCreatedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(differentViewUrl)
       })
     })
   })
@@ -318,13 +356,12 @@ describe('#successController', () => {
     })
 
     it('returns 404', async ({ server }) => {
-      // Disable feature flag before request
       config.set('featureFlags.prns', false)
 
       try {
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: createdUrl,
           auth: mockAuth
         })
 

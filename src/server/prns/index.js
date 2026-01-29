@@ -1,10 +1,11 @@
-import { checkController, checkPostController } from './check-controller.js'
 import { controller } from './controller.js'
+import { createdController } from './created-controller.js'
+import { listController } from './list-controller.js'
 import { postController } from './post-controller.js'
-import { successController } from './success-controller.js'
+import { viewController, viewPostController } from './view-controller.js'
 
 const basePath =
-  '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
+  '/organisations/{organisationId}/registrations/{registrationId}/packaging-recycling-notes'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -15,29 +16,34 @@ export const prns = {
     register(server) {
       server.route([
         {
-          ...controller,
+          ...listController,
           method: 'GET',
           path: basePath
+        },
+        {
+          ...controller,
+          method: 'GET',
+          path: `${basePath}/create`
         },
         {
           ...postController,
           method: 'POST',
-          path: basePath
+          path: `${basePath}/create`
         },
         {
-          ...checkController,
+          ...viewController,
           method: 'GET',
-          path: `${basePath}/check`
+          path: `${basePath}/{prnId}/view`
         },
         {
-          ...checkPostController,
+          ...viewPostController,
           method: 'POST',
-          path: `${basePath}/check`
+          path: `${basePath}/{prnId}/view`
         },
         {
-          ...successController,
+          ...createdController,
           method: 'GET',
-          path: `${basePath}/success`
+          path: `${basePath}/{prnId}/created`
         }
       ])
     }

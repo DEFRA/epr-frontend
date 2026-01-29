@@ -5,22 +5,22 @@ import { config } from '#config/config.js'
 /**
  * @satisfies {Partial<ServerRoute>}
  */
-export const successController = {
+export const createdController = {
   async handler(request, h) {
     if (!config.get('featureFlags.prns')) {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, prnId } = request.params
     const { t: localise } = request
 
-    // Retrieve PRN data from session
+    // Check for success session data
     const prnCreated = request.yar.get('prnCreated')
 
-    if (!prnCreated) {
-      // No PRN in session - redirect to create page
+    if (!prnCreated || prnCreated.id !== prnId) {
+      // No session data or ID mismatch - redirect to view page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
       )
     }
 
@@ -30,7 +30,7 @@ export const successController = {
     const noteType =
       prnCreated.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
 
-    return h.view('prns/success', {
+    return h.view('prns/created', {
       pageTitle: localise(`prns:${noteType}:successPageTitle`),
       heading: localise(`prns:${noteType}:successHeading`),
       tonnageLabel: localise(`prns:${noteType}:successTonnageLabel`),
