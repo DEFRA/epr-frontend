@@ -28,7 +28,7 @@ export function buildListViewData(
   const selectText = localise('prns:list:table:selectText')
 
   // Build rows in govukTable format: array of arrays of cell objects
-  const tableRows = prns.map((prn) => {
+  const dataRows = prns.map((prn) => {
     const viewUrl = request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prn.id}/view`
     )
@@ -40,6 +40,20 @@ export function buildListViewData(
       { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
     ]
   })
+
+  // Calculate total tonnage and add total row
+  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalRow = [
+    {
+      text: localise('prns:list:table:totalLabel'),
+      classes: 'govuk-!-font-weight-bold'
+    },
+    { text: '' },
+    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: '' },
+    { text: '' }
+  ]
+  const tableRows = dataRows.length > 0 ? [...dataRows, totalRow] : []
 
   return {
     pageTitle: localise(`prns:list:${noteType}:pageTitle`),

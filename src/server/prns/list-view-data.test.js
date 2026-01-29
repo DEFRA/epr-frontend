@@ -32,6 +32,7 @@ const createMockRequest = () => ({
       'prns:list:table:statusHeading': 'Status',
       'prns:list:table:actionHeading': '',
       'prns:list:table:selectText': 'Select',
+      'prns:list:table:totalLabel': 'Total',
       'prns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'prns:list:status:issued': 'Issued',
       'prns:list:status:cancelled': 'Cancelled'
@@ -160,7 +161,7 @@ describe('#buildListViewData', () => {
       )
     })
 
-    it('should return table rows in govukTable format', () => {
+    it('should return table rows in govukTable format with total row', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -169,13 +170,30 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows).toHaveLength(2)
+      // 2 data rows + 1 total row
+      expect(result.table.rows).toHaveLength(3)
       expect(result.table.rows[0]).toHaveLength(5)
       expect(result.table.rows[0][0]).toStrictEqual({
         text: 'Acme Packaging Ltd'
       })
       expect(result.table.rows[0][1]).toStrictEqual({ text: '15 January 2026' })
       expect(result.table.rows[0][2]).toStrictEqual({ text: 50 })
+    })
+
+    it('should return total row with sum of tonnage', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      const totalRow = result.table.rows[2]
+      expect(totalRow[0].text).toBe('Total')
+      expect(totalRow[0].classes).toBe('govuk-!-font-weight-bold')
+      expect(totalRow[2].text).toBe(170) // 50 + 120
+      expect(totalRow[2].classes).toBe('govuk-!-font-weight-bold')
     })
 
     it('should return status as govukTag HTML', () => {

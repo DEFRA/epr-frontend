@@ -302,8 +302,8 @@ describe('#listPrnsController', () => {
         const table = getByRole(main, 'table')
         const rows = table.querySelectorAll('tbody tr')
 
-        // Stub data has 2 PRNs with awaiting_authorisation status
-        expect(rows).toHaveLength(2)
+        // Stub data has 2 PRNs with awaiting_authorisation status + 1 total row
+        expect(rows).toHaveLength(3)
 
         // Should not show 'Issued' status PRNs
         expect(queryByText(table, /^Issued$/)).toBeNull()
