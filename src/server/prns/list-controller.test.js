@@ -286,6 +286,9 @@ describe('#prnListController', () => {
       expect(createButton).toBeDefined()
       expect(createButton.tagName).toBe('A')
       expect(createButton.classList.contains('govuk-button')).toBe(true)
+      expect(createButton.classList.contains('govuk-button--secondary')).toBe(
+        true
+      )
       expect(createButton.getAttribute('href')).toBe(
         '/organisations/org-123/registrations/reg-001/create-prn'
       )
@@ -480,6 +483,9 @@ describe('#prnListController', () => {
       expect(createButton).toBeDefined()
       expect(createButton.tagName).toBe('A')
       expect(createButton.classList.contains('govuk-button')).toBe(true)
+      expect(createButton.classList.contains('govuk-button--secondary')).toBe(
+        true
+      )
       expect(createButton.getAttribute('href')).toBe(
         '/organisations/org-456/registrations/reg-002/create-prn'
       )

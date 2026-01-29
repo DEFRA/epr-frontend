@@ -222,8 +222,9 @@ describe('#prnListViewData', () => {
 
       // First cell: recipient name
       expect(result.table.rows[0][0]).toStrictEqual({ text: 'ComplyPak Ltd' })
-      // Second cell: formatted date
-      expect(result.table.rows[0][1]).toStrictEqual({ text: '21 January 2026' })
+      // Second cell: formatted date (nowrap)
+      expect(result.table.rows[0][1].html).toContain('21 January 2026')
+      expect(result.table.rows[0][1].html).toContain('white-space: nowrap')
       // Third cell: tonnage (numeric)
       expect(result.table.rows[0][2]).toStrictEqual({
         text: '9',
@@ -298,7 +299,7 @@ describe('#prnListViewData', () => {
       expect(statusCell.html).toContain('Awaiting authorisation')
     })
 
-    it('should override max-width to prevent text wrapping', () => {
+    it('should prevent text wrapping with inline styles', () => {
       const request = createMockRequest({})
       const registration = { wasteProcessingType: 'reprocessor-input' }
 
@@ -311,6 +312,7 @@ describe('#prnListViewData', () => {
       const statusCell = result.table.rows[0][3]
 
       expect(statusCell.html).toContain('max-width: none')
+      expect(statusCell.html).toContain('white-space: nowrap')
     })
   })
 
@@ -451,7 +453,8 @@ describe('#prnListViewData', () => {
         wasteBalance: stubWasteBalance
       })
 
-      expect(result.table.rows[0][1].text).toBe('15 March 2026')
+      expect(result.table.rows[0][1].html).toContain('15 March 2026')
+      expect(result.table.rows[0][1].html).toContain('white-space: nowrap')
     })
   })
 })

@@ -43,7 +43,7 @@ function formatDate(isoDate) {
  */
 function createStatusTag(status) {
   const { text, colour } = PRN_STATUS[status]
-  return `<strong class="govuk-tag govuk-tag--${colour}" style="max-width: none">${text}</strong>`
+  return `<strong class="govuk-tag govuk-tag--${colour}" style="max-width: none; white-space: nowrap">${text}</strong>`
 }
 
 /**
@@ -84,7 +84,9 @@ export function buildListViewData(
     .filter((prn) => prn.status === prnStatuses.awaitingAuthorisation)
     .map((prn) => [
       { text: prn.issuedToOrganisation.name },
-      { text: formatDate(prn.createdAt) },
+      {
+        html: `<span style="white-space: nowrap">${formatDate(prn.createdAt)}</span>`
+      },
       { text: String(prn.tonnageValue), format: 'numeric' },
       { html: createStatusTag(prn.status) },
       {
