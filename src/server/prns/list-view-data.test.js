@@ -6,8 +6,6 @@ const createMockRequest = () => ({
     const translations = {
       'prns:list:prns:pageTitle': 'PRNs',
       'prns:list:perns:pageTitle': 'PERNs',
-      'prns:list:prns:selectHeading': 'Select a PRN',
-      'prns:list:perns:selectHeading': 'Select a PERN',
       'prns:list:prns:balanceHint':
         'This is the balance available for creating PRNs',
       'prns:list:perns:balanceHint':
@@ -145,7 +143,7 @@ describe('#buildListViewData', () => {
       expect(result.tabs.issued).toBe('Issued')
     })
 
-    it('should return awaiting action panel with inset text and heading', () => {
+    it('should return cancel hint and awaiting authorisation heading', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -154,16 +152,15 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.awaitingActionPanel).toContain('govuk-inset-text')
-      expect(result.awaitingActionPanel).toContain(
+      expect(result.cancelHint).toBe(
         'If you cancel a PRN, its tonnage will be added to your available waste balance.'
       )
-      expect(result.awaitingActionPanel).toContain(
+      expect(result.awaitingAuthorisationHeading).toBe(
         'PRNs awaiting authorisation'
       )
     })
 
-    it('should return awaiting action panel with table and PRN data', () => {
+    it('should return table rows in govukTable format', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -172,15 +169,44 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.awaitingActionPanel).toContain('govuk-table')
-      expect(result.awaitingActionPanel).toContain('Acme Packaging Ltd')
-      expect(result.awaitingActionPanel).toContain('15 January 2026')
-      expect(result.awaitingActionPanel).toContain(
+      expect(result.table.rows).toHaveLength(2)
+      expect(result.table.rows[0]).toHaveLength(5)
+      expect(result.table.rows[0][0]).toStrictEqual({
+        text: 'Acme Packaging Ltd'
+      })
+      expect(result.table.rows[0][1]).toStrictEqual({ text: '15 January 2026' })
+      expect(result.table.rows[0][2]).toStrictEqual({ text: 50 })
+    })
+
+    it('should return status as govukTag HTML', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.table.rows[0][3].html).toContain('govuk-tag')
+      expect(result.table.rows[0][3].html).toContain('Awaiting authorisation')
+    })
+
+    it('should return select link as HTML', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.table.rows[0][4].html).toContain('govuk-link')
+      expect(result.table.rows[0][4].html).toContain(
         '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/prn-001/view'
       )
     })
 
-    it('should return issued panel HTML', () => {
+    it('should return table headings', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -189,7 +215,22 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedPanel).toContain('No PRNs have been issued yet.')
+      expect(result.table.headings.recipient).toBe('Issued to')
+      expect(result.table.headings.createdAt).toBe('Date created')
+      expect(result.table.headings.tonnage).toBe('Tonnage')
+      expect(result.table.headings.status).toBe('Status')
+    })
+
+    it('should return no issued text for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.noIssuedText).toBe('No PRNs have been issued yet.')
     })
   })
 
@@ -219,7 +260,7 @@ describe('#buildListViewData', () => {
       expect(result.createLink.text).toBe('Create a PERN')
     })
 
-    it('should return awaiting action panel with PERN text', () => {
+    it('should return cancel hint with PERN text', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-456',
         registrationId: 'reg-002',
@@ -228,15 +269,15 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.awaitingActionPanel).toContain(
+      expect(result.cancelHint).toBe(
         'If you cancel a PERN, its tonnage will be added to your available waste balance.'
       )
-      expect(result.awaitingActionPanel).toContain(
+      expect(result.awaitingAuthorisationHeading).toBe(
         'PERNs awaiting authorisation'
       )
     })
 
-    it('should return issued panel with PERN text', () => {
+    it('should return no issued text for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-456',
         registrationId: 'reg-002',
@@ -245,7 +286,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedPanel).toContain('No PERNs have been issued yet.')
+      expect(result.noIssuedText).toBe('No PERNs have been issued yet.')
     })
   })
 
@@ -271,13 +312,11 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.awaitingActionPanel).toContain(
-        'No PRNs or PERNs have been created yet.'
-      )
-      expect(result.awaitingActionPanel).not.toContain('govuk-table')
+      expect(result.table.rows).toHaveLength(0)
+      expect(result.noPrnsText).toBe('No PRNs or PERNs have been created yet.')
     })
 
-    it('should return unknown status as-is', () => {
+    it('should return unknown status as-is in tag', () => {
       const prnWithUnknownStatus = [
         {
           id: 'prn-unknown',
@@ -296,30 +335,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.awaitingActionPanel).toContain('unknown_status')
-    })
-
-    it('should escape HTML in recipient names', () => {
-      const prnWithHtmlChars = [
-        {
-          id: 'prn-html',
-          recipient: '<script>alert("xss")</script>',
-          createdAt: '2026-01-15',
-          tonnage: 10,
-          status: 'awaiting_authorisation'
-        }
-      ]
-
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        registration: reprocessorRegistration,
-        prns: prnWithHtmlChars,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.awaitingActionPanel).not.toContain('<script>')
-      expect(result.awaitingActionPanel).toContain('&lt;script&gt;')
+      expect(result.table.rows[0][3].html).toContain('unknown_status')
     })
   })
 })
