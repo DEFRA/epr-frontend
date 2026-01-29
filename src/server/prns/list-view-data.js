@@ -43,7 +43,7 @@ function formatDate(isoDate) {
  */
 function createStatusTag(status) {
   const { text, colour } = PRN_STATUS[status]
-  return `<strong class="govuk-tag govuk-tag--${colour}" style="max-width: none; overflow-wrap: normal">${text}</strong>`
+  return `<strong class="govuk-tag govuk-tag--${colour} app-tag-nowrap">${text}</strong>`
 }
 
 /**
@@ -80,15 +80,13 @@ export function buildListViewData(
 
   const dashboardUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 
-  const nowrap = { style: 'white-space: nowrap' }
-
   const tableRows = prns
     .filter((prn) => prn.status === prnStatuses.awaitingAuthorisation)
     .map((prn) => [
       { text: prn.issuedToOrganisation.name },
-      { text: formatDate(prn.createdAt), attributes: nowrap },
+      { text: formatDate(prn.createdAt), classes: 'app-table-cell-nowrap' },
       { text: String(prn.tonnageValue), format: 'numeric' },
-      { html: createStatusTag(prn.status), attributes: nowrap },
+      { html: createStatusTag(prn.status), classes: 'app-table-cell-nowrap' },
       {
         html: `<a href="${dashboardUrl}/prns/${prn.prnNumber}">${selectLinkText} <span class="govuk-visually-hidden">${prn.issuedToOrganisation.name}</span></a>`
       }

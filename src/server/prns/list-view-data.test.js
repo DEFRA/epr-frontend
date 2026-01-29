@@ -298,7 +298,7 @@ describe('#prnListViewData', () => {
       expect(statusCell.html).toContain('Awaiting authorisation')
     })
 
-    it('should override govuk-tag max-width and overflow-wrap', () => {
+    it('should apply nowrap class to tag element', () => {
       const request = createMockRequest({})
       const registration = { wasteProcessingType: 'reprocessor-input' }
 
@@ -310,11 +310,10 @@ describe('#prnListViewData', () => {
 
       const statusCell = result.table.rows[0][3]
 
-      expect(statusCell.html).toContain('max-width: none')
-      expect(statusCell.html).toContain('overflow-wrap: normal')
+      expect(statusCell.html).toContain('app-tag-nowrap')
     })
 
-    it('should set nowrap on date and status cells via attributes', () => {
+    it('should apply nowrap class to date and status cells', () => {
       const request = createMockRequest({})
       const registration = { wasteProcessingType: 'reprocessor-input' }
 
@@ -324,15 +323,8 @@ describe('#prnListViewData', () => {
         wasteBalance: stubWasteBalance
       })
 
-      const dateCell = result.table.rows[0][1]
-      const statusCell = result.table.rows[0][3]
-
-      expect(dateCell.attributes).toStrictEqual({
-        style: 'white-space: nowrap'
-      })
-      expect(statusCell.attributes).toStrictEqual({
-        style: 'white-space: nowrap'
-      })
+      expect(result.table.rows[0][1].classes).toBe('app-table-cell-nowrap')
+      expect(result.table.rows[0][3].classes).toBe('app-table-cell-nowrap')
     })
   })
 
