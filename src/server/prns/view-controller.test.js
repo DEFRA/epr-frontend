@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -9,6 +10,9 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
+)
+vi.mock(
+  import('#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js')
 )
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
@@ -102,6 +106,24 @@ const mockPernStatusUpdated = {
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_authorisation'
+}
+
+const mockPrnFromBackend = {
+  id: 'prn-789',
+  issuedToOrganisation: 'Acme Packaging Ltd',
+  tonnage: 100,
+  material: 'plastic',
+  status: 'awaiting_authorisation',
+  createdAt: '2026-01-15T10:00:00.000Z'
+}
+
+const mockPernFromBackend = {
+  id: 'pern-123',
+  issuedToOrganisation: 'Export Solutions Ltd',
+  tonnage: 50,
+  material: 'glass',
+  status: 'issued',
+  createdAt: '2026-01-20T14:30:00.000Z'
 }
 
 /**
@@ -204,6 +226,7 @@ describe('#viewController', () => {
     vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
   })
@@ -217,8 +240,8 @@ describe('#viewController', () => {
       config.reset('featureFlags.prns')
     })
 
-    describe('with PRN in session', () => {
-      it('displays view page with PRN details', async ({ server }) => {
+    describe('success page (after creating PRN)', () => {
+      it('displays success page with PRN details', async ({ server }) => {
         const { cookies } = await createPrnAndConfirm(server)
 
         const { result, statusCode } = await server.inject({
@@ -315,16 +338,226 @@ describe('#viewController', () => {
       })
     })
 
-    describe('without PRN in session', () => {
-      it('redirects to list page', async ({ server }) => {
-        const { statusCode, headers } = await server.inject({
+    describe('view existing PRN (from list page)', () => {
+      it('displays PRN details from backend', async ({ server }) => {
+        const { result, statusCode } = await server.inject({
           method: 'GET',
           url: viewUrl,
           auth: mockAuth
         })
 
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(listUrl)
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Check PRN ID is displayed
+        expect(getByText(main, /prn-789/i)).toBeDefined()
+        // Check issued to
+        expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+        // Check tonnage
+        expect(getByText(main, /100 tonnes/i)).toBeDefined()
+        // Check material
+        expect(getByText(main, /Plastic/i)).toBeDefined()
+      })
+
+      it('displays status tag for awaiting authorisation', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Awaiting authorisation/i)).toBeDefined()
+      })
+
+      it('displays back link to list page', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink).toBeDefined()
+        expect(backLink.getAttribute('href')).toBe(listUrl)
+      })
+
+      it('displays return link to PRN list', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const returnLink = getByText(main, /Return to PRN list/i)
+        expect(returnLink).toBeDefined()
+        expect(returnLink.getAttribute('href')).toBe(listUrl)
+      })
+
+      it('displays PERN details for exporter registration', async ({
+        server
+      }) => {
+        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          mockPernFromBackend
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Check caption shows PERN
+        const caption = main.querySelector('.govuk-caption-xl')
+        expect(caption.textContent).toBe('PERN')
+
+        // Check return link text
+        expect(getByText(main, /Return to PERN list/i)).toBeDefined()
+      })
+
+      it('displays issued status with green tag', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'issued'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const tag = main.querySelector('.govuk-tag--green')
+        expect(tag).toBeDefined()
+        expect(tag.textContent.trim()).toBe('Issued')
+      })
+
+      it('displays cancelled status with red tag', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'cancelled'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const tag = main.querySelector('.govuk-tag--red')
+        expect(tag).toBeDefined()
+        expect(tag.textContent.trim()).toBe('Cancelled')
+      })
+
+      it('returns 404 when registration not found', async ({ server }) => {
+        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
+          organisationData: fixtureReprocessor.organisationData,
+          registration: null,
+          accreditation: null
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      it('returns 404 when PRN not found', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(null)
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      it('formats date correctly', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /15 January 2026/i)).toBeDefined()
+      })
+
+      it('handles unknown status gracefully', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'some_unknown_status'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Unknown status should be displayed as-is
+        expect(getByText(main, /some_unknown_status/i)).toBeDefined()
+      })
+
+      it('handles null material gracefully', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          material: null
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
       })
     })
   })

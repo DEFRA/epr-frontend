@@ -100,5 +100,19 @@
   "tonnageHint": "Enter a whole number without decimal places",
   "tonnageInWordsLabel": "Tonnage in words",
   "tonnageLabel": "Tonnage",
-  "tonnageSuffix": "tonnes"
+  "tonnageSuffix": "tonnes",
+  "view": {
+    "status": "Status",
+    "detailsHeading": "Details",
+    "issuedTo": "Issued to",
+    "tonnage": "Tonnage",
+    "material": "Material",
+    "dateCreated": "Date created",
+    "prns": {
+      "returnLink": "Return to PRN list"
+    },
+    "perns": {
+      "returnLink": "Return to PERN list"
+    }
+  }
 }
