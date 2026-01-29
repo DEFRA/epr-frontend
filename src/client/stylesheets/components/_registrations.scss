@@ -21,6 +21,18 @@
   }
 }
 
+.epr-heading-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: govuk-spacing(4);
+  margin-bottom: govuk-spacing(6);
+
+  .govuk-button {
+    margin-bottom: 0;
+  }
+}
+
 .epr-waste-balance-banner {
   border: none;
 

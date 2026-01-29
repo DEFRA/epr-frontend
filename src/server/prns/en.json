@@ -16,12 +16,16 @@
   "list": {
     "availableWasteBalance": "Available waste balance",
     "noPrns": "No PRNs or PERNs have been created yet.",
+    "tabs": {
+      "awaitingAction": "Awaiting action",
+      "issued": "Issued"
+    },
     "table": {
-      "recipientHeading": "Packaging waste producer or compliance scheme",
+      "recipientHeading": "Issued to",
       "dateHeading": "Date created",
       "tonnageHeading": "Tonnage",
       "statusHeading": "Status",
-      "actionHeading": "Action",
+      "actionHeading": "",
       "selectText": "Select"
     },
     "status": {
@@ -34,14 +38,18 @@
       "selectHeading": "Select a PERN",
       "balanceHint": "This is the balance available for creating PERNs",
       "cancelHint": "If you cancel a PERN, its tonnage will be added to your available waste balance.",
-      "createLink": "Create a PERN"
+      "createLink": "Create a PERN",
+      "awaitingAuthorisationHeading": "PERNs awaiting authorisation",
+      "noIssuedPrns": "No PERNs have been issued yet."
     },
     "prns": {
       "pageTitle": "PRNs",
       "selectHeading": "Select a PRN",
       "balanceHint": "This is the balance available for creating PRNs",
       "cancelHint": "If you cancel a PRN, its tonnage will be added to your available waste balance.",
-      "createLink": "Create a PRN"
+      "createLink": "Create a PRN",
+      "awaitingAuthorisationHeading": "PRNs awaiting authorisation",
+      "noIssuedPrns": "No PRNs have been issued yet."
     }
   },
   "materialLabel": "Material",
