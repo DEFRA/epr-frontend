@@ -125,17 +125,17 @@ export const checkController = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, prnId } = request.params
     const { t: localise } = request
     const session = request.auth.credentials
 
     // Retrieve draft PRN data from session
     const prnDraft = request.yar.get('prnDraft')
 
-    if (!prnDraft) {
-      // No draft in session - redirect to create page
+    if (!prnDraft || prnDraft.id !== prnId) {
+      // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
       )
     }
 
@@ -199,16 +199,16 @@ export const checkPostController = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, prnId } = request.params
     const session = request.auth.credentials
 
     // Retrieve draft PRN data from session
     const prnDraft = request.yar.get('prnDraft')
 
-    if (!prnDraft) {
-      // No draft in session - redirect to create page
+    if (!prnDraft || prnDraft.id !== prnId) {
+      // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
       )
     }
 
@@ -217,12 +217,12 @@ export const checkPostController = {
       const result = await updatePrnStatus(
         organisationId,
         registrationId,
-        prnDraft.id,
+        prnId,
         { status: 'awaiting_authorisation' },
         session.idToken
       )
 
-      // Clear draft and store for success page
+      // Clear draft and store for view page
       request.yar.clear('prnDraft')
       request.yar.set('prnCreated', {
         id: result.id,
@@ -233,7 +233,7 @@ export const checkPostController = {
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
+        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to update PRN status')

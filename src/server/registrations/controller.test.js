@@ -843,7 +843,7 @@ describe('#accreditationDashboardController', () => {
           createLinkText: 'Create a PRN',
           manageLinkText: 'Manage PRNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn',
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/packaging-recycling-notes/create',
           expectedManageUrl:
             '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/packaging-recycling-notes'
         },
@@ -856,7 +856,7 @@ describe('#accreditationDashboardController', () => {
           createLinkText: 'Create a PERN',
           manageLinkText: 'Manage PERNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn',
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/packaging-recycling-notes/create',
           expectedManageUrl:
             '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/packaging-recycling-notes'
         }
@@ -898,11 +898,15 @@ describe('#accreditationDashboardController', () => {
           card.getByText(description)
 
           expect(
-            card.getByRole('link', { name: createLinkText }).getAttribute('href')
+            card
+              .getByRole('link', { name: createLinkText })
+              .getAttribute('href')
           ).toBe(expectedCreateUrl)
 
           expect(
-            card.getByRole('link', { name: manageLinkText }).getAttribute('href')
+            card
+              .getByRole('link', { name: manageLinkText })
+              .getAttribute('href')
           ).toBe(expectedManageUrl)
         }
       )

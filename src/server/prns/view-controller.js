@@ -5,22 +5,22 @@ import { config } from '#config/config.js'
 /**
  * @satisfies {Partial<ServerRoute>}
  */
-export const successController = {
+export const viewController = {
   async handler(request, h) {
     if (!config.get('featureFlags.prns')) {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, prnId } = request.params
     const { t: localise } = request
 
     // Retrieve PRN data from session
     const prnCreated = request.yar.get('prnCreated')
 
-    if (!prnCreated) {
-      // No PRN in session - redirect to create page
+    if (!prnCreated || prnCreated.id !== prnId) {
+      // No PRN in session or ID mismatch - redirect to list page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
       )
     }
 

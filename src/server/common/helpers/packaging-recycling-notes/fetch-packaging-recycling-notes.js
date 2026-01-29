@@ -25,7 +25,7 @@ async function fetchPackagingRecyclingNotes(
 export { fetchPackagingRecyclingNotes }
 
 /**
- * @typedef {Object} PackagingRecyclingNote
+ * @typedef {object} PackagingRecyclingNote
  * @property {string} id
  * @property {string} issuedToOrganisation
  * @property {number} tonnage

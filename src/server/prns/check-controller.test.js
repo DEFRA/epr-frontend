@@ -71,9 +71,10 @@ const fixtureExporter = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
-const checkUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check`
-const successUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
+const prnId = 'prn-789'
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
+const checkUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/check`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
 
 const validPayload = {
   tonnage: '100',
@@ -557,7 +558,7 @@ describe('#checkController', () => {
           })
 
           expect(statusCode).toBe(statusCodes.found)
-          expect(headers.location).toBe(successUrl)
+          expect(headers.location).toBe(viewUrl)
         })
 
         it('calls updatePrnStatus with correct parameters', async ({

@@ -57,9 +57,13 @@ const fixtureExporter = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
-const checkUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/check`
-const successUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn/success`
+const prnId = 'prn-789'
+const pernId = 'pern-123'
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
+const checkUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/check`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
+const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/view`
+const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
 
 const validPayload = {
   tonnage: '100',
@@ -138,9 +142,14 @@ function mergeCookies(...cookieStrings) {
  * Helper to go through full PRN creation flow and return session cookies
  * @param {object} server
  * @param {object} payload
+ * @param {string} checkUrlOverride - Optional URL override for check page
  * @returns {Promise<{cookies: string}>}
  */
-async function createPrnAndConfirm(server, payload = validPayload) {
+async function createPrnAndConfirm(
+  server,
+  payload = validPayload,
+  checkUrlOverride = checkUrl
+) {
   // Step 1: POST to create form to create draft and get redirected to check
   const { cookie: csrfCookie, crumb } = await getCsrfToken(server, createUrl, {
     auth: mockAuth
@@ -160,10 +169,10 @@ async function createPrnAndConfirm(server, payload = validPayload) {
   )
   const cookies1 = mergeCookies(csrfCookie, ...postCookieValues)
 
-  // Step 2: POST to check page to confirm and redirect to success
+  // Step 2: POST to check page to confirm and redirect to view
   const checkPostResponse = await server.inject({
     method: 'POST',
-    url: checkUrl,
+    url: checkUrlOverride,
     auth: mockAuth,
     headers: { cookie: cookies1 },
     payload: { crumb }
@@ -178,7 +187,18 @@ async function createPrnAndConfirm(server, payload = validPayload) {
   return { cookies }
 }
 
-describe('#successController', () => {
+/**
+ * Helper for PERN creation flow (uses pernId-based URLs)
+ * @param {object} server
+ * @param {object} payload
+ * @returns {Promise<{cookies: string}>}
+ */
+async function createPrnAndConfirmPern(server, payload) {
+  const pernCheckUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/check`
+  return createPrnAndConfirm(server, payload, pernCheckUrl)
+}
+
+describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
@@ -198,12 +218,12 @@ describe('#successController', () => {
     })
 
     describe('with PRN in session', () => {
-      it('displays success page with PRN details', async ({ server }) => {
+      it('displays view page with PRN details', async ({ server }) => {
         const { cookies } = await createPrnAndConfirm(server)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: viewUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -224,7 +244,7 @@ describe('#successController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: viewUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -243,7 +263,7 @@ describe('#successController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: viewUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -275,11 +295,14 @@ describe('#successController', () => {
           wasteProcessingType: 'exporter'
         }
 
-        const { cookies } = await createPrnAndConfirm(server, exporterPayload)
+        const { cookies } = await createPrnAndConfirmPern(
+          server,
+          exporterPayload
+        )
 
         const { result } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: pernViewUrl,
           auth: mockAuth,
           headers: { cookie: cookies }
         })
@@ -293,17 +316,15 @@ describe('#successController', () => {
     })
 
     describe('without PRN in session', () => {
-      it('redirects to create PRN page', async ({ server }) => {
+      it('redirects to list page', async ({ server }) => {
         const { statusCode, headers } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: viewUrl,
           auth: mockAuth
         })
 
         expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
-        )
+        expect(headers.location).toBe(listUrl)
       })
     })
   })
@@ -324,7 +345,7 @@ describe('#successController', () => {
       try {
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: successUrl,
+          url: viewUrl,
           auth: mockAuth
         })
 

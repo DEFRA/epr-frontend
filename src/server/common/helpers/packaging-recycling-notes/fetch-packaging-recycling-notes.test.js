@@ -98,7 +98,9 @@ describe(fetchPackagingRecyclingNotes, () => {
     await fetchPackagingRecyclingNotes('org/123', 'reg&456', idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('organisations/org%2F123/registrations/reg%26456'),
+      expect.stringContaining(
+        'organisations/org%2F123/registrations/reg%26456'
+      ),
       expect.any(Object)
     )
   })

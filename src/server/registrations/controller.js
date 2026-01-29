@@ -129,7 +129,7 @@ function getPrnViewData(request, isExporter, organisationId, registrationId) {
   const { t: localise } = request
   const key = isExporter ? 'perns' : 'prns'
 
-  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
   const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
 
   return {

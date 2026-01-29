@@ -53,8 +53,10 @@ const fixtureExporter = {
   accreditation: { id: 'acc-002', status: 'approved' }
 }
 
-const reprocessorUrl = '/organisations/org-123/registrations/reg-001/create-prn'
-const exporterUrl = '/organisations/org-456/registrations/reg-002/create-prn'
+const reprocessorUrl =
+  '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/create'
+const exporterUrl =
+  '/organisations/org-456/registrations/reg-002/packaging-recycling-notes/create'
 
 describe('#createPrnController', () => {
   beforeEach(() => {
@@ -286,7 +288,7 @@ describe('#createPrnController', () => {
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-nonexistent/create-prn',
+          url: '/organisations/org-123/registrations/reg-nonexistent/packaging-recycling-notes/create',
           auth: mockAuth
         })
 

@@ -87,8 +87,10 @@ const mockPrns = [
   }
 ]
 
-const reprocessorListUrl = '/organisations/org-123/registrations/reg-001/packaging-recycling-notes'
-const exporterListUrl = '/organisations/org-456/registrations/reg-002/packaging-recycling-notes'
+const reprocessorListUrl =
+  '/organisations/org-123/registrations/reg-001/packaging-recycling-notes'
+const exporterListUrl =
+  '/organisations/org-456/registrations/reg-002/packaging-recycling-notes'
 
 describe('#listPrnsController', () => {
   beforeEach(() => {
@@ -200,7 +202,7 @@ describe('#listPrnsController', () => {
 
         expect(createLink).toBeDefined()
         expect(createLink.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/create-prn'
+          '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/create'
         )
       })
 
@@ -425,7 +427,9 @@ describe('#listPrnsController', () => {
         expect(statusCode).toBe(statusCodes.internalServerError)
       })
 
-      it('should show no PRNs message when no PRNs exist', async ({ server }) => {
+      it('should show no PRNs message when no PRNs exist', async ({
+        server
+      }) => {
         vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )

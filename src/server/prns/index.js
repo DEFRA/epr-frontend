@@ -2,11 +2,9 @@ import { checkController, checkPostController } from './check-controller.js'
 import { controller } from './controller.js'
 import { listController } from './list-controller.js'
 import { postController } from './post-controller.js'
-import { successController } from './success-controller.js'
+import { viewController } from './view-controller.js'
 
 const basePath =
-  '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
-const listPath =
   '/organisations/{organisationId}/registrations/{registrationId}/packaging-recycling-notes'
 
 /**
@@ -20,32 +18,32 @@ export const prns = {
         {
           ...listController,
           method: 'GET',
-          path: listPath
+          path: basePath
         },
         {
           ...controller,
           method: 'GET',
-          path: basePath
+          path: `${basePath}/create`
         },
         {
           ...postController,
           method: 'POST',
-          path: basePath
+          path: `${basePath}/create`
         },
         {
           ...checkController,
           method: 'GET',
-          path: `${basePath}/check`
+          path: `${basePath}/{prnId}/check`
         },
         {
           ...checkPostController,
           method: 'POST',
-          path: `${basePath}/check`
+          path: `${basePath}/{prnId}/check`
         },
         {
-          ...successController,
+          ...viewController,
           method: 'GET',
-          path: `${basePath}/success`
+          path: `${basePath}/{prnId}/view`
         }
       ])
     }

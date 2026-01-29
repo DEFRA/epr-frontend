@@ -103,7 +103,7 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.createLink.href).toBe(
-        '/organisations/org-123/registrations/reg-001/create-prn'
+        '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/create'
       )
       expect(result.createLink.text).toBe('Create a PRN')
     })
@@ -183,7 +183,8 @@ describe('#buildListViewData', () => {
         createdAt: '15 January 2026',
         tonnage: 50,
         status: 'Awaiting authorisation',
-        selectUrl: '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/prn-001'
+        selectUrl:
+          '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/prn-001/view'
       })
     })
 

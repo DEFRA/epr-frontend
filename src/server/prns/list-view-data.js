@@ -22,7 +22,7 @@ export function buildListViewData(
   )
 
   const createUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+    `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
   )
 
   const prnRows = prns.map((prn) => ({
@@ -31,7 +31,7 @@ export function buildListViewData(
     tonnage: prn.tonnage,
     status: formatStatus(prn.status, localise),
     selectUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prn.id}`
+      `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prn.id}/view`
     )
   }))
 
