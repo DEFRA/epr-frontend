@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchPackagingRecyclingNotes } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
@@ -12,6 +13,9 @@ vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+vi.mock(
+  import('#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js')
+)
 
 const mockCredentials = {
   profile: {
@@ -56,13 +60,41 @@ const mockWasteBalance = {
   'acc-002': { availableAmount: 200 }
 }
 
-const reprocessorListUrl = '/organisations/org-123/registrations/reg-001/prns'
-const exporterListUrl = '/organisations/org-456/registrations/reg-002/prns'
+const mockPrns = [
+  {
+    id: 'prn-001',
+    issuedToOrganisation: 'Acme Packaging Ltd',
+    createdAt: '2026-01-15T00:00:00.000Z',
+    tonnage: 50,
+    material: 'glass',
+    status: 'awaiting_authorisation'
+  },
+  {
+    id: 'prn-002',
+    issuedToOrganisation: 'BigCo Waste Solutions',
+    createdAt: '2026-01-18T00:00:00.000Z',
+    tonnage: 120,
+    material: 'plastic',
+    status: 'awaiting_authorisation'
+  },
+  {
+    id: 'prn-003',
+    issuedToOrganisation: 'Green Compliance Scheme',
+    createdAt: '2026-01-20T00:00:00.000Z',
+    tonnage: 75,
+    material: 'glass',
+    status: 'issued'
+  }
+]
+
+const reprocessorListUrl = '/organisations/org-123/registrations/reg-001/packaging-recycling-notes'
+const exporterListUrl = '/organisations/org-456/registrations/reg-002/packaging-recycling-notes'
 
 describe('#listPrnsController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchWasteBalances).mockResolvedValue(mockWasteBalance)
+    vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
   })
 
   describe('when feature is disabled', () => {
@@ -291,7 +323,7 @@ describe('#listPrnsController', () => {
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-nonexistent/prns',
+          url: '/organisations/org-123/registrations/reg-nonexistent/packaging-recycling-notes',
           auth: mockAuth
         })
 
@@ -374,6 +406,46 @@ describe('#listPrnsController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('should propagate error when PRN fetch fails', async ({ server }) => {
+        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockRejectedValue(
+          new Error('Backend unavailable')
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      })
+
+      it('should show no PRNs message when no PRNs exist', async ({ server }) => {
+        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /No PRNs or PERNs have been created yet/i)
+        ).toBeDefined()
       })
     })
 

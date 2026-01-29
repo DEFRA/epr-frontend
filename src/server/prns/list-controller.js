@@ -2,32 +2,8 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { fetchPackagingRecyclingNotes } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
-
-// Stub PRNs until real API is available
-const STUB_PRNS = [
-  {
-    id: 'prn-001',
-    recipient: 'Acme Packaging Ltd',
-    createdAt: '2026-01-15',
-    tonnage: 50,
-    status: 'awaiting_authorisation'
-  },
-  {
-    id: 'prn-002',
-    recipient: 'BigCo Waste Solutions',
-    createdAt: '2026-01-18',
-    tonnage: 120,
-    status: 'awaiting_authorisation'
-  },
-  {
-    id: 'prn-003',
-    recipient: 'Green Compliance Scheme',
-    createdAt: '2026-01-20',
-    tonnage: 75,
-    status: 'issued'
-  }
-]
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -68,10 +44,22 @@ export const listController = {
       request.logger
     )
 
-    // Filter to only show PRNs awaiting authorisation (PAE-948 requirement)
-    const prnsAwaitingAuthorisation = STUB_PRNS.filter(
-      (prn) => prn.status === 'awaiting_authorisation'
+    const prns = await fetchPackagingRecyclingNotes(
+      organisationId,
+      registrationId,
+      session.idToken
     )
+
+    // Map backend response and filter to awaiting authorisation (PAE-948 requirement)
+    const prnsAwaitingAuthorisation = prns
+      .filter((prn) => prn.status === 'awaiting_authorisation')
+      .map((prn) => ({
+        id: prn.id,
+        recipient: prn.issuedToOrganisation,
+        createdAt: prn.createdAt,
+        tonnage: prn.tonnage,
+        status: prn.status
+      }))
 
     const viewData = buildListViewData(request, {
       organisationId,

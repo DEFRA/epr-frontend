@@ -7,7 +7,7 @@ import { successController } from './success-controller.js'
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
 const listPath =
-  '/organisations/{organisationId}/registrations/{registrationId}/prns'
+  '/organisations/{organisationId}/registrations/{registrationId}/packaging-recycling-notes'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}

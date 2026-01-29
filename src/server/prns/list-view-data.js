@@ -31,7 +31,7 @@ export function buildListViewData(
     tonnage: prn.tonnage,
     status: formatStatus(prn.status, localise),
     selectUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/prns/${prn.id}`
+      `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prn.id}`
     )
   }))
 
