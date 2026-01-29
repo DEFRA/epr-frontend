@@ -357,8 +357,8 @@ describe('#viewController', () => {
         // Check issued to
         expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
         // Check tonnage
-        expect(getByText(main, /100 tonnes/i)).toBeDefined()
-        // Check material
+        expect(getByText(main, '100')).toBeDefined()
+        // Check material (in accreditation section)
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 

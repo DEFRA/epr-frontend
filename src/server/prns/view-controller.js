@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
+import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 
 /**
@@ -42,19 +43,20 @@ export const viewController = {
     }
 
     // Fetch PRN and registration data from backend
-    const [{ registration }, prn] = await Promise.all([
-      getRegistrationWithAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        prnId,
-        session.idToken
-      )
-    ])
+    const [{ organisationData, registration, accreditation }, prn] =
+      await Promise.all([
+        getRegistrationWithAccreditation(
+          organisationId,
+          registrationId,
+          session.idToken
+        ),
+        fetchPackagingRecyclingNote(
+          organisationId,
+          registrationId,
+          prnId,
+          session.idToken
+        )
+      ])
 
     if (!registration) {
       throw Boom.notFound('Registration not found')
@@ -67,75 +69,131 @@ export const viewController = {
       `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
     )
 
-    const viewData = buildViewData(request, {
-      organisationId,
-      registrationId,
+    const displayMaterial = getDisplayMaterial(registration)
+
+    const prnDetailRows = buildPrnDetailRows({
       prn,
-      noteType,
-      backUrl,
+      organisationData,
       localise
     })
 
-    return h.view('prns/view', viewData)
+    const accreditationRows = buildAccreditationRows({
+      registration,
+      accreditation,
+      displayMaterial,
+      localise
+    })
+
+    const statusConfig = getStatusConfig(prn.status, localise)
+
+    return h.view('prns/check', {
+      pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
+      caption: isExporter ? 'PERN' : 'PRN',
+      heading: prn.id,
+      status: {
+        label: localise('prns:view:status'),
+        text: statusConfig.text,
+        class: statusConfig.class
+      },
+      prnDetailsHeading: localise(
+        isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
+      ),
+      prnDetailRows,
+      accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
+      accreditationRows,
+      backUrl,
+      returnLink: {
+        href: request.localiseUrl(
+          `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
+        ),
+        text: localise(`prns:view:${noteType}:returnLink`)
+      }
+    })
   }
 }
 
 /**
- * Build view data for the PRN view page
- * @param {Request} request
- * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {object} options.prn
- * @param {string} options.noteType
- * @param {string} options.backUrl
- * @param {(key: string) => string} options.localise
- * @returns {object}
+ * Formats an address object into a single line string
+ * @param {object} address - Address object with line1, line2, town, postcode etc
+ * @returns {string} Formatted address string
  */
-function buildViewData(
-  request,
-  { organisationId, registrationId, prn, noteType, backUrl, localise }
-) {
-  const noteLabel = noteType === 'perns' ? 'PERN' : 'PRN'
+function formatAddress(address) {
+  if (!address) {
+    return ''
+  }
 
-  const statusConfig = getStatusConfig(prn.status, localise)
+  const parts = [
+    address.line1,
+    address.line2,
+    address.town,
+    address.postcode
+  ].filter(Boolean)
 
-  const detailRows = [
+  return parts.join(', ')
+}
+
+/**
+ * Builds the PRN/PERN details rows for the summary list (for viewing existing PRN)
+ * @param {object} params
+ * @param {object} params.prn - PRN data from backend
+ * @param {object} params.organisationData - Organisation data
+ * @param {(key: string) => string} params.localise - Translation function
+ * @returns {Array} Summary list rows
+ */
+function buildPrnDetailRows({ prn, organisationData, localise }) {
+  return [
     {
-      key: { text: localise('prns:view:issuedTo') },
+      key: { text: localise('prns:issuedByLabel') },
+      value: {
+        text:
+          organisationData?.companyDetails?.name ||
+          localise('prns:notAvailable')
+      }
+    },
+    {
+      key: { text: localise('prns:issuedToLabel') },
       value: { text: prn.issuedToOrganisation }
     },
     {
-      key: { text: localise('prns:view:tonnage') },
-      value: { text: `${prn.tonnage} ${localise('prns:tonnageSuffix')}` }
-    },
-    {
-      key: { text: localise('prns:view:material') },
-      value: { text: formatMaterial(prn.material) }
+      key: { text: localise('prns:tonnageLabel') },
+      value: { text: String(prn.tonnage) }
     },
     {
       key: { text: localise('prns:view:dateCreated') },
       value: { text: formatDate(prn.createdAt) }
     }
   ]
+}
 
-  return {
-    pageTitle: `${noteLabel} ${prn.id}`,
-    caption: noteLabel,
-    heading: prn.id,
-    statusLabel: localise('prns:view:status'),
-    statusText: statusConfig.text,
-    statusClass: statusConfig.class,
-    detailsHeading: localise('prns:view:detailsHeading'),
-    detailRows,
-    backUrl,
-    returnLink: {
-      href: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
-      ),
-      text: localise(`prns:view:${noteType}:returnLink`)
+/**
+ * Builds the accreditation details rows for the summary list
+ * @param {object} params
+ * @param {object} params.registration - Registration data
+ * @param {object} params.accreditation - Accreditation data
+ * @param {string} params.displayMaterial - Formatted material name
+ * @param {(key: string) => string} params.localise - Translation function
+ * @returns {Array} Summary list rows
+ */
+function buildAccreditationRows({
+  registration,
+  accreditation,
+  displayMaterial,
+  localise
+}) {
+  return [
+    {
+      key: { text: localise('prns:materialLabel') },
+      value: { text: displayMaterial }
+    },
+    {
+      key: { text: localise('prns:accreditationNumberLabel') },
+      value: { text: accreditation?.accreditationNumber || '' }
+    },
+    {
+      key: { text: localise('prns:accreditationAddressLabel') },
+      value: { text: formatAddress(registration.site?.address) }
     }
-  }
+  ]
 }
 
 /**
@@ -178,16 +236,5 @@ function formatDate(dateString) {
 }
 
 /**
- * Format material for display
- * @param {string} material
- * @returns {string}
- */
-function formatMaterial(material) {
-  if (!material) return ''
-  return material.charAt(0).toUpperCase() + material.slice(1)
-}
-
-/**
  * @import { ServerRoute } from '@hapi/hapi'
- * @import { Request } from '@hapi/hapi'
  */

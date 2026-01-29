@@ -1,7 +1,18 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block beforeContent %}
+  {% if backUrl %}
+    {{ govukBackLink({
+      text: localise("common:back"),
+      href: backUrl
+    }) }}
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -9,12 +20,28 @@
     <span class="govuk-caption-xl">{{ caption }}</span>
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-    <p class="govuk-body">{{ introText }}</p>
-    <p class="govuk-body">{{ authorisationText }}</p>
+    {% if status %}
+      <p class="govuk-body">
+        {{ status.label }}:
+        {{ govukTag({
+          text: status.text,
+          classes: status.class
+        }) }}
+      </p>
+    {% endif %}
 
-    {{ govukInsetText({
-      text: insetText
-    }) }}
+    {% if introText %}
+      <p class="govuk-body">{{ introText }}</p>
+    {% endif %}
+    {% if authorisationText %}
+      <p class="govuk-body">{{ authorisationText }}</p>
+    {% endif %}
+
+    {% if insetText %}
+      {{ govukInsetText({
+        text: insetText
+      }) }}
+    {% endif %}
 
     <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
 
@@ -28,21 +55,29 @@
       rows: accreditationRows
     }) }}
 
-    <form method="POST" novalidate>
-      <input type="hidden" name="crumb" value="{{ crumb }}" />
+    {% if createButton %}
+      <form method="POST" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
 
-      <div class="govuk-button-group">
-        {{ govukButton({
-          text: createButton.text
-        }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: createButton.text
+          }) }}
 
-        {{ govukButton({
-          text: cancelButton.text,
-          href: cancelButton.href,
-          classes: "govuk-button--warning"
-        }) }}
-      </div>
-    </form>
+          {{ govukButton({
+            text: cancelButton.text,
+            href: cancelButton.href,
+            classes: "govuk-button--warning"
+          }) }}
+        </div>
+      </form>
+    {% endif %}
+
+    {% if returnLink %}
+      <p class="govuk-body">
+        <a href="{{ returnLink.href }}" class="govuk-link">{{ returnLink.text }}</a>
+      </p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
