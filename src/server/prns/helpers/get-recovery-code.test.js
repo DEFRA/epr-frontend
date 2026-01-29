@@ -3,13 +3,13 @@ import { getRecoveryCode } from './get-recovery-code.js'
 
 describe('#getRecoveryCode', () => {
   it.each([
-    { material: 'Aluminium', expected: 'R4' },
-    { material: 'Paper and Board', expected: 'R3' },
-    { material: 'Fibre-based Composite', expected: 'R3' },
-    { material: 'Plastic', expected: 'R3' },
-    { material: 'Steel', expected: 'R4' },
-    { material: 'Wood', expected: 'R3' },
-    { material: 'Glass', expected: 'R5' }
+    { material: 'aluminium', expected: 'R4' },
+    { material: 'fibre', expected: 'R3' },
+    { material: 'paper', expected: 'R3' },
+    { material: 'plastic', expected: 'R3' },
+    { material: 'steel', expected: 'R4' },
+    { material: 'wood', expected: 'R3' },
+    { material: 'glass', expected: 'R5' }
   ])('should return $expected for $material', ({ material, expected }) => {
     expect(getRecoveryCode(material)).toBe(expected)
   })

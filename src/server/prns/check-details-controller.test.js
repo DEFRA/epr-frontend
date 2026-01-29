@@ -35,9 +35,9 @@ const fixtureReprocessor = {
   accreditation: {
     id: 'acc-001',
     status: 'approved',
-    material: 'Plastic',
+    material: 'plastic',
     accreditationNumber: '090925',
-    address: 'South Road, Liverpool, L22 3DH'
+    siteAddress: 'South Road, Liverpool, L22 3DH'
   }
 }
 
@@ -53,9 +53,10 @@ const fixtureExporter = {
   accreditation: {
     id: 'acc-002',
     status: 'approved',
-    material: 'Glass',
+    material: 'glass',
+    glassRecyclingProcess: ['glass_re_melt'],
     accreditationNumber: '123456',
-    address: 'North Street, Manchester, M1 1AA'
+    siteAddress: 'North Street, Manchester, M1 1AA'
   }
 }
 

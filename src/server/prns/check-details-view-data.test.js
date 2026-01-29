@@ -49,9 +49,9 @@ const exporterRegistration = {
 }
 
 const mockAccreditation = {
-  material: 'Plastic',
+  material: 'plastic',
   accreditationNumber: '090925',
-  address: 'South Road, Liverpool, L22 3DH'
+  siteAddress: 'South Road, Liverpool, L22 3DH'
 }
 
 describe('#buildCheckDetailsViewData', () => {
@@ -258,6 +258,19 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[3].value.text).toBe('R3')
     })
 
+    it('should derive processToBeUsed for glass material', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: {
+          material: 'glass',
+          glassRecyclingProcess: ['glass_re_melt']
+        },
+        prnData: {}
+      })
+
+      expect(result.prnDetails[3].value.text).toBe('R5')
+    })
+
     it('should populate decemberWaste from prnData', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
@@ -388,10 +401,13 @@ describe('#buildCheckDetailsViewData', () => {
     it('should handle partial accreditation data', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        accreditation: { material: 'Glass' }
+        accreditation: {
+          material: 'glass',
+          glassRecyclingProcess: ['glass_re_melt']
+        }
       })
 
-      expect(result.accreditationDetails[0].value.text).toBe('Glass')
+      expect(result.accreditationDetails[0].value.text).toBe('Glass remelt')
       expect(result.accreditationDetails[1].value.text).toBe('')
       expect(result.accreditationDetails[2].value.text).toBe('')
     })

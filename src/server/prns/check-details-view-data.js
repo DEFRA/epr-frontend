@@ -1,5 +1,6 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getPrnType } from './helpers/get-note-type.js'
+import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getRecoveryCode } from './helpers/get-recovery-code.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 
@@ -47,14 +48,16 @@ function buildPrnDetails(localise, prnData, accreditation) {
  */
 function buildAccreditationDetails(localise, accreditation) {
   const l = (key) => localise(`prns:checkDetails:${key}`)
-
+  const displayMaterial = accreditation?.material
+    ? getDisplayMaterial(accreditation)
+    : ''
   return [
-    summaryRow(l('material'), accreditation?.material ?? ''),
+    summaryRow(l('material'), displayMaterial),
     summaryRow(
       l('accreditationNumber'),
       accreditation?.accreditationNumber ?? ''
     ),
-    summaryRow(l('accreditationAddress'), accreditation?.address ?? '')
+    summaryRow(l('accreditationAddress'), accreditation?.siteAddress ?? '')
   ]
 }
 

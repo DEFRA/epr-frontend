@@ -1,11 +1,11 @@
 const recoveryCodes = {
-  Aluminium: 'R4',
-  'Paper and Board': 'R3',
-  'Fibre-based Composite': 'R3',
-  Plastic: 'R3',
-  Steel: 'R4',
-  Wood: 'R3',
-  Glass: 'R5'
+  aluminium: 'R4',
+  fibre: 'R3',
+  paper: 'R3',
+  plastic: 'R3',
+  steel: 'R4',
+  wood: 'R3',
+  glass: 'R5'
 }
 
 /**
