@@ -227,16 +227,24 @@ async function handleExistingView(
 
   const statusConfig = getStatusConfig(prn.status, localise)
 
+  const statusRows =
+    prn.status !== 'draft'
+      ? [
+          {
+            key: { text: localise('prns:view:status') },
+            value: {
+              html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
+            }
+          }
+        ]
+      : null
+
   return h.view('prns/view', {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
     caption: isExporter ? 'PERN' : 'PRN',
     heading: prn.id,
-    showRegulatorLogos: true,
-    status: {
-      label: localise('prns:view:status'),
-      text: statusConfig.text,
-      class: statusConfig.class
-    },
+    showRegulatorLogos: prn.status !== 'draft',
+    statusRows,
     prnDetailsHeading: localise(
       isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
     ),

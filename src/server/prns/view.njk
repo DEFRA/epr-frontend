@@ -43,14 +43,10 @@
     <span class="govuk-caption-xl">{{ caption }}</span>
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-    {% if status %}
-      <p class="govuk-body">
-        {{ status.label }}:
-        {{ govukTag({
-          text: status.text,
-          classes: status.class
-        }) }}
-      </p>
+    {% if statusRows %}
+      {{ govukSummaryList({
+        rows: statusRows
+      }) }}
     {% endif %}
 
     {% if introText %}

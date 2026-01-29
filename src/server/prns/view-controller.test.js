@@ -325,6 +325,31 @@ describe('#viewController', () => {
         expect(tag.textContent.trim()).toBe('Cancelled')
       })
 
+      it('hides status and logos for draft PRN', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'draft'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Should not show status tag
+        const tag = main.querySelector('.govuk-tag')
+        expect(tag).toBeNull()
+
+        // Should not show regulator logos
+        const logos = main.querySelector('.epr-regulator-logos')
+        expect(logos).toBeNull()
+      })
+
       it('returns 404 when registration not found', async ({ server }) => {
         vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
           organisationData: fixtureReprocessor.organisationData,
