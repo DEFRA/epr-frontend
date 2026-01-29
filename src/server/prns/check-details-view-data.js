@@ -1,6 +1,7 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getPrnType } from './helpers/get-note-type.js'
 import { getRecoveryCode } from './helpers/get-recovery-code.js'
+import { tonnageToWords } from './helpers/tonnage-to-words.js'
 
 /**
  * @param {string} label
@@ -25,7 +26,10 @@ function buildPrnDetails(localise, prnData, accreditation) {
   return [
     summaryRow(l('recipient'), prnData.recipient ?? ''),
     summaryRow(l('tonnage'), prnData.tonnage ?? ''),
-    summaryRow(l('tonnageInWords'), prnData.tonnageInWords ?? ''),
+    summaryRow(
+      l('tonnageInWords'),
+      prnData.tonnage != null ? tonnageToWords(prnData.tonnage) : ''
+    ),
     summaryRow(l('processToBeUsed'), getRecoveryCode(accreditation?.material)),
     summaryRow(l('decemberWaste'), prnData.decemberWaste ?? ''),
     summaryRow(l('issuedDate'), prnData.issuedDate ?? ''),

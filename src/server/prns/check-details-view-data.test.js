@@ -214,22 +214,38 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[9].value.text).toBe('Not provided')
     })
 
-    it('should populate recipient, tonnage and tonnageInWords from prnData', () => {
+    it('should populate recipient and tonnage from prnData', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
         prnData: {
           recipient: 'Test Company Ltd',
-          tonnage: '100.50',
-          tonnageInWords: 'One hundred point five'
+          tonnage: 100
         }
       })
 
       expect(result.prnDetails[0].value.text).toBe('Test Company Ltd')
-      expect(result.prnDetails[1].value.text).toBe('100.50')
-      expect(result.prnDetails[2].value.text).toBe('One hundred point five')
+      expect(result.prnDetails[1].value.text).toBe(100)
+    })
+
+    it('should derive tonnageInWords from tonnage', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        prnData: { tonnage: 150 }
+      })
+
+      expect(result.prnDetails[2].value.text).toBe('One hundred and fifty')
+    })
+
+    it('should return empty string for tonnageInWords when tonnage is missing', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        prnData: {}
+      })
+
+      expect(result.prnDetails[2].value.text).toBe('')
     })
 
     it('should derive processToBeUsed from accreditation material', () => {
