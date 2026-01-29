@@ -119,9 +119,11 @@
     "material": "Material",
     "dateCreated": "Date created",
     "prns": {
+      "heading": "Packaging recycling note",
       "returnLink": "Return to PRN list"
     },
     "perns": {
+      "heading": "Packaging export recycling note",
       "returnLink": "Return to PERN list"
     }
   }

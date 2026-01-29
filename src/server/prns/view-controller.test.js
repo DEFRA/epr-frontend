@@ -275,9 +275,13 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check caption shows PERN
+        // Check caption shows PERN ID (non-draft)
         const caption = main.querySelector('.govuk-caption-xl')
-        expect(caption.textContent).toBe('PERN')
+        expect(caption.textContent).toBe('pern-123')
+
+        // Check heading shows full title (non-draft)
+        const heading = main.querySelector('.govuk-heading-xl')
+        expect(heading.textContent).toContain('Packaging export recycling note')
 
         // Check return link text
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
@@ -348,6 +352,38 @@ describe('#viewController', () => {
         // Should not show regulator logos
         const logos = main.querySelector('.epr-regulator-logos')
         expect(logos).toBeNull()
+
+        // Caption shows PRN (not ID) for draft
+        const caption = main.querySelector('.govuk-caption-xl')
+        expect(caption.textContent).toBe('PRN')
+
+        // Heading shows ID for draft
+        const heading = main.querySelector('.govuk-heading-xl')
+        expect(heading.textContent).toContain('prn-789')
+      })
+
+      it('shows PERN caption for draft exporter PRN', async ({ server }) => {
+        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPernFromBackend,
+          status: 'draft'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Caption shows PERN (not ID) for draft exporter
+        const caption = main.querySelector('.govuk-caption-xl')
+        expect(caption.textContent).toBe('PERN')
       })
 
       it('returns 404 when registration not found', async ({ server }) => {

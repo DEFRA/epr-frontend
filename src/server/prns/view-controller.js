@@ -239,11 +239,13 @@ async function handleExistingView(
         ]
       : null
 
+  const isNotDraft = prn.status !== 'draft'
+
   return h.view('prns/view', {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
-    caption: isExporter ? 'PERN' : 'PRN',
-    heading: prn.id,
-    showRegulatorLogos: prn.status !== 'draft',
+    caption: isNotDraft ? prn.id : isExporter ? 'PERN' : 'PRN',
+    heading: isNotDraft ? localise(`prns:view:${noteType}:heading`) : prn.id,
+    showRegulatorLogos: isNotDraft,
     statusRows,
     prnDetailsHeading: localise(
       isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
