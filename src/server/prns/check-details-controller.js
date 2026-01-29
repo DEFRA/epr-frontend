@@ -14,7 +14,6 @@ export const checkDetailsController = {
       recipient: 'Acme Packaging Solutions Ltd',
       tonnage: '150.75',
       tonnageInWords: 'One hundred and fifty point seven five',
-      processToBeUsed: 'Mechanical recycling',
       decemberWaste: 'No',
       issuedDate: '28 January 2026',
       issuedBy: 'John Smith',

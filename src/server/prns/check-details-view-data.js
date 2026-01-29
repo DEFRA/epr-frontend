@@ -1,5 +1,6 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getPrnType } from './helpers/get-note-type.js'
+import { getRecoveryCode } from './helpers/get-recovery-code.js'
 
 /**
  * @param {string} label
@@ -18,14 +19,14 @@ function summaryRow(label, value) {
  * @param {object} prnData
  * @returns {object[]}
  */
-function buildPrnDetails(localise, prnData) {
+function buildPrnDetails(localise, prnData, accreditation) {
   const l = (key) => localise(`prns:checkDetails:${key}`)
 
   return [
     summaryRow(l('recipient'), prnData.recipient ?? ''),
     summaryRow(l('tonnage'), prnData.tonnage ?? ''),
     summaryRow(l('tonnageInWords'), prnData.tonnageInWords ?? ''),
-    summaryRow(l('processToBeUsed'), prnData.processToBeUsed ?? ''),
+    summaryRow(l('processToBeUsed'), getRecoveryCode(accreditation?.material)),
     summaryRow(l('decemberWaste'), prnData.decemberWaste ?? ''),
     summaryRow(l('issuedDate'), prnData.issuedDate ?? ''),
     summaryRow(l('issuedBy'), prnData.issuedBy ?? ''),
@@ -77,7 +78,7 @@ export function buildCheckDetailsViewData(
     leadParagraph: localise(`prns:checkDetails:${prnType}:leadParagraph`),
     insetText: localise('prns:checkDetails:insetText'),
     prnDetailsHeading: localise(`prns:checkDetails:${prnType}:detailsHeading`),
-    prnDetails: buildPrnDetails(localise, prnData),
+    prnDetails: buildPrnDetails(localise, prnData, accreditation),
     accreditationDetailsHeading: localise(
       'prns:checkDetails:accreditationDetailsHeading'
     ),

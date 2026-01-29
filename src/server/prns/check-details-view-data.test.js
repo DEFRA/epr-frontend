@@ -232,19 +232,25 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[2].value.text).toBe('One hundred point five')
     })
 
-    it('should populate processToBeUsed and decemberWaste from prnData', () => {
+    it('should derive processToBeUsed from accreditation material', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
+        prnData: {}
+      })
+
+      expect(result.prnDetails[3].value.text).toBe('R3')
+    })
+
+    it('should populate decemberWaste from prnData', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
         prnData: {
-          processToBeUsed: 'Chemical recycling',
           decemberWaste: 'Yes'
         }
       })
 
-      expect(result.prnDetails[3].value.text).toBe('Chemical recycling')
       expect(result.prnDetails[4].value.text).toBe('Yes')
     })
 
@@ -292,7 +298,6 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[0].value.text).toBe('')
       expect(result.prnDetails[1].value.text).toBe('')
       expect(result.prnDetails[2].value.text).toBe('')
-      expect(result.prnDetails[3].value.text).toBe('')
       expect(result.prnDetails[4].value.text).toBe('')
     })
 
