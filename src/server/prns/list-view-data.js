@@ -86,7 +86,9 @@ export function buildListViewData(
 }
 
 /**
- * Build HTML for the awaiting action tab panel
+ * Build HTML for the awaiting action tab panel.
+ * SECURITY: All string content must be escaped with escapeHtml() to prevent XSS.
+ * The tonnage field is a number and does not require escaping.
  * @param {Array<{recipient: string, createdAt: string, tonnage: number, status: string, selectUrl: string}>} rows
  * @param {{recipient: string, createdAt: string, tonnage: string, status: string, action: string}} headings
  * @param {string} selectText
