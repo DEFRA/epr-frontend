@@ -1,4 +1,5 @@
-import { controller } from './controller.js'
+import { createController } from './create-controller.js'
+import { listController } from './list-controller.js'
 import { checkDetailsController } from './check-details-controller.js'
 
 /**
@@ -10,7 +11,12 @@ export const prns = {
     register(server) {
       server.route([
         {
-          ...controller,
+          ...listController,
+          method: 'GET',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/prns'
+        },
+        {
+          ...createController,
           method: 'GET',
           path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
         },
