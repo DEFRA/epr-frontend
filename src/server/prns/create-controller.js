@@ -1,5 +1,4 @@
-import Boom from '@hapi/boom'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { buildCreateViewData } from './create-view-data.js'
 
 // Stub recipients until real API is available
@@ -19,25 +18,12 @@ export const createController = {
     const { organisationId, registrationId } = request.params
     const session = request.auth.credentials
 
-    const { registration, accreditation } =
-      await getRegistrationWithAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      )
-
-    if (!registration) {
-      request.logger.warn({ registrationId }, 'Registration not found')
-      throw Boom.notFound('Registration not found')
-    }
-
-    if (!accreditation) {
-      request.logger.warn(
-        { registrationId },
-        'Not accredited for this registration'
-      )
-      throw Boom.notFound('Not accredited for this registration')
-    }
+    const { registration } = await getRequiredRegistrationWithAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken,
+      request.logger
+    )
 
     const viewData = buildCreateViewData(request, {
       registration,

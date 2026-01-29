@@ -52,25 +52,35 @@
       "notesHint": "These notes will appear on the PRN"
     }
   },
+  "detail": {
+    "perns": {
+      "pageTitle": "PERN"
+    },
+    "prns": {
+      "pageTitle": "PRN"
+    }
+  },
   "list": {
     "availableWasteBalance": "Available waste balance",
     "table": {
       "recipientHeading": "Packaging waste producer or compliance scheme",
       "dateHeading": "Date created",
       "tonnageHeading": "Tonnage",
-      "statusHeading": "Status"
+      "statusHeading": "Status",
+      "actionHeading": "Action",
+      "selectLink": "Select"
     },
     "perns": {
       "pageTitle": "PERNs",
+      "createText": "Create a PERN",
       "selectHeading": "Select a PERN",
-      "balanceHint": "This is the balance available for creating new PERNs",
-      "cancelHint": "If you cancel a PERN, its tonnage will be added to your available waste balance."
+      "balanceHint": "This is the balance available for creating new PERNs"
     },
     "prns": {
       "pageTitle": "PRNs",
+      "createText": "Create a PRN",
       "selectHeading": "Select a PRN",
-      "balanceHint": "This is the balance available for creating new PRNs",
-      "cancelHint": "If you cancel a PRN, its tonnage will be added to your available waste balance."
+      "balanceHint": "This is the balance available for creating new PRNs"
     }
   },
   "selectOption": "Select an option"

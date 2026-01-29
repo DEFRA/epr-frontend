@@ -1,12 +1,22 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
-{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
 
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      <a href="{{ createUrl }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
+        {{ createText }}
+      </a>
 
       {% if wasteBalance %}
         <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-bottom-6">
@@ -29,10 +39,6 @@
       {% endif %}
 
       <h2 class="govuk-heading-m">{{ selectHeading }}</h2>
-
-      {{ govukInsetText({
-        text: cancelHint
-      }) }}
 
       {{ govukTable({
         head: table.head,

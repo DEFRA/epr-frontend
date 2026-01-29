@@ -1,5 +1,6 @@
+import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
@@ -12,7 +13,7 @@ import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 
 const mockCredentials = {
@@ -70,7 +71,7 @@ describe('#createPrnController', () => {
 
   describe('page rendering', () => {
     beforeEach(() => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
         fixtureReprocessor
       )
     })
@@ -205,21 +206,20 @@ describe('#createPrnController', () => {
         auth: mockAuth
       })
 
-      expect(getRegistrationWithAccreditation).toHaveBeenCalledWith(
+      expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith(
         'org-123',
         'reg-001',
-        'mock-id-token'
+        'mock-id-token',
+        expect.any(Object)
       )
     })
   })
 
   describe('error handling', () => {
     it('should return 404 when registration not found', async ({ server }) => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
-        organisationData: fixtureReprocessor.organisationData,
-        registration: undefined,
-        accreditation: undefined
-      })
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+        Boom.notFound('Registration not found')
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -233,11 +233,9 @@ describe('#createPrnController', () => {
     it('should return 404 when registration has no accreditation', async ({
       server
     }) => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
-        organisationData: fixtureReprocessor.organisationData,
-        registration: fixtureReprocessor.registration,
-        accreditation: undefined
-      })
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+        Boom.notFound('Not accredited for this registration')
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -266,7 +264,7 @@ describe('#createPrnController', () => {
   describe('dynamic PRN/PERN text', () => {
     describe('for reprocessor (PRN)', () => {
       beforeEach(() => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
       })
@@ -317,7 +315,7 @@ describe('#createPrnController', () => {
 
     describe('for exporter (PERN)', () => {
       beforeEach(() => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
       })
