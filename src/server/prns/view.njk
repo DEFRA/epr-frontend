@@ -17,6 +17,29 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
+    {% if showRegulatorLogos %}
+      <div class="epr-regulator-logos govuk-!-margin-bottom-6">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40" role="img" aria-label="Environment Agency">
+          <rect width="120" height="40" fill="#00703c"/>
+          <text x="60" y="25" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Environment</text>
+          <text x="60" y="36" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">Agency</text>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 40" width="80" height="40" role="img" aria-label="SEPA">
+          <rect width="80" height="40" fill="#0065bd"/>
+          <text x="40" y="27" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">SEPA</text>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40" role="img" aria-label="Natural Resources Wales">
+          <rect width="120" height="40" fill="#00703c"/>
+          <text x="60" y="18" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9" font-weight="bold">Natural Resources</text>
+          <text x="60" y="32" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Wales</text>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 40" width="80" height="40" role="img" aria-label="NIEA">
+          <rect width="80" height="40" fill="#003865"/>
+          <text x="40" y="27" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">NIEA</text>
+        </svg>
+      </div>
+    {% endif %}
+
     <span class="govuk-caption-xl">{{ caption }}</span>
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 

@@ -283,7 +283,7 @@ describe('#viewController', () => {
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
       })
 
-      it('displays issued status with green tag', async ({ server }) => {
+      it('displays issued status with blue tag', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           status: 'issued'
@@ -299,12 +299,12 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const tag = main.querySelector('.govuk-tag--green')
+        const tag = main.querySelector('.govuk-tag--blue')
         expect(tag).toBeDefined()
         expect(tag.textContent.trim()).toBe('Issued')
       })
 
-      it('displays cancelled status with red tag', async ({ server }) => {
+      it('displays cancelled status with grey tag', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           status: 'cancelled'
@@ -320,7 +320,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const tag = main.querySelector('.govuk-tag--red')
+        const tag = main.querySelector('.govuk-tag--grey')
         expect(tag).toBeDefined()
         expect(tag.textContent.trim()).toBe('Cancelled')
       })

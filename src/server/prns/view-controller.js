@@ -231,6 +231,7 @@ async function handleExistingView(
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
     caption: isExporter ? 'PERN' : 'PRN',
     heading: prn.id,
+    showRegulatorLogos: true,
     status: {
       label: localise('prns:view:status'),
       text: statusConfig.text,
@@ -434,19 +435,19 @@ function getStatusConfig(status, localise) {
   const statusMap = {
     awaiting_authorisation: {
       text: localise('prns:list:status:awaitingAuthorisation'),
-      class: 'govuk-tag--yellow'
+      class: 'govuk-tag--blue epr-tag--no-max-width'
     },
     issued: {
       text: localise('prns:list:status:issued'),
-      class: 'govuk-tag--green'
+      class: 'govuk-tag--blue epr-tag--no-max-width'
     },
     cancelled: {
       text: localise('prns:list:status:cancelled'),
-      class: 'govuk-tag--red'
+      class: 'govuk-tag--grey epr-tag--no-max-width'
     }
   }
 
-  return statusMap[status] ?? { text: status, class: '' }
+  return statusMap[status] ?? { text: status, class: 'epr-tag--no-max-width' }
 }
 
 /**

@@ -57,3 +57,12 @@
 .epr-tag--no-max-width {
   max-width: none;
 }
+
+.epr-regulator-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: govuk-spacing(4);
+  padding: govuk-spacing(4);
+  background: govuk-colour("light-grey");
+  border-bottom: 4px solid govuk-colour("blue");
+}
