@@ -103,7 +103,7 @@ export const viewPostController = {
 
 /**
  * Handle viewing a draft PRN (creation flow)
- * @param {object} request
+ * @param {object} _request
  * @param {object} h
  * @param {object} params
  * @param {string} params.organisationId
@@ -113,7 +113,7 @@ export const viewPostController = {
  * @param {object} params.session
  */
 async function handleDraftView(
-  request,
+  _request,
   h,
   { organisationId, registrationId, prnDraft, localise, session }
 ) {
