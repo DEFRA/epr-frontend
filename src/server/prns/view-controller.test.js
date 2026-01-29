@@ -64,7 +64,6 @@ const registrationId = 'reg-456'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
 const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
-const checkUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/check`
 const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
 const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/view`
 const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
@@ -174,15 +173,15 @@ function mergeCookies(...cookieStrings) {
  * Helper to go through full PRN creation flow and return session cookies
  * @param {object} server
  * @param {object} payload
- * @param {string} checkUrlOverride - Optional URL override for check page
+ * @param {string} viewUrlOverride - Optional URL override for view page
  * @returns {Promise<{cookies: string}>}
  */
 async function createPrnAndConfirm(
   server,
   payload = validPayload,
-  checkUrlOverride = checkUrl
+  viewUrlOverride = viewUrl
 ) {
-  // Step 1: POST to create form to create draft and get redirected to check
+  // Step 1: POST to create form to create draft and get redirected to view
   const { cookie: csrfCookie, crumb } = await getCsrfToken(server, createUrl, {
     auth: mockAuth
   })
@@ -201,20 +200,20 @@ async function createPrnAndConfirm(
   )
   const cookies1 = mergeCookies(csrfCookie, ...postCookieValues)
 
-  // Step 2: POST to check page to confirm and redirect to view
-  const checkPostResponse = await server.inject({
+  // Step 2: POST to view page to confirm and redirect to success
+  const viewPostResponse = await server.inject({
     method: 'POST',
-    url: checkUrlOverride,
+    url: viewUrlOverride,
     auth: mockAuth,
     headers: { cookie: cookies1 },
     payload: { crumb }
   })
 
-  // Merge all cookies, with check response cookies taking precedence
-  const checkCookieValues = extractCookieValues(
-    checkPostResponse.headers['set-cookie']
+  // Merge all cookies, with view response cookies taking precedence
+  const viewCookieValues = extractCookieValues(
+    viewPostResponse.headers['set-cookie']
   )
-  const cookies = mergeCookies(cookies1, ...checkCookieValues)
+  const cookies = mergeCookies(cookies1, ...viewCookieValues)
 
   return { cookies }
 }
@@ -226,8 +225,8 @@ async function createPrnAndConfirm(
  * @returns {Promise<{cookies: string}>}
  */
 async function createPrnAndConfirmPern(server, payload) {
-  const pernCheckUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/check`
-  return createPrnAndConfirm(server, payload, pernCheckUrl)
+  const pernViewUrlForCreate = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/view`
+  return createPrnAndConfirm(server, payload, pernViewUrlForCreate)
 }
 
 describe('#viewController', () => {
@@ -692,6 +691,286 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
     })
+
+    describe('draft PRN view (creation flow)', () => {
+      it('displays check page with create button when draft in session', async ({
+        server
+      }) => {
+        // Mock with isDecemberWaste: true to cover that branch
+        vi.mocked(createPrn).mockResolvedValue({
+          ...mockPrnCreated,
+          isDecemberWaste: true
+        })
+
+        // First create a draft by POSTing to create
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        // Now GET /view should show check page with draft
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Should show create button (draft flow)
+        const createButton = main.querySelector('button.govuk-button')
+        expect(createButton).toBeDefined()
+        expect(createButton.textContent).toContain('Create PRN')
+        // Should show check page heading
+        expect(getByText(main, /Check before creating PRN/i)).toBeDefined()
+        // Should show December waste as Yes
+        expect(getByText(main, /^Yes$/)).toBeDefined()
+      })
+
+      it('displays "Not provided" when notes are empty in draft', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        // Create draft without notes
+        const payloadWithoutNotes = { ...validPayload, notes: '' }
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...payloadWithoutNotes, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Not provided/i)).toBeDefined()
+      })
+
+      it('displays PERN check page for exporter registration', async ({
+        server
+      }) => {
+        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+
+        const exporterPayload = {
+          ...validPayload,
+          wasteProcessingType: 'exporter'
+        }
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...exporterPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const createButton = main.querySelector('button.govuk-button')
+        expect(createButton).toBeDefined()
+        expect(createButton.textContent).toContain('Create PERN')
+        expect(getByText(main, /Check before creating PERN/i)).toBeDefined()
+      })
+    })
+
+    describe('POST /view (confirm creation)', () => {
+      it('redirects to view page after confirming', async ({ server }) => {
+        // Create draft first
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        // POST to confirm
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(viewUrl)
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          prnId,
+          { status: 'awaiting_authorisation' },
+          mockCredentials.idToken
+        )
+      })
+
+      it('redirects to create when no draft in session', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createUrl)
+      })
+
+      it('returns 500 when updatePrnStatus fails', async ({ server }) => {
+        vi.mocked(updatePrnStatus).mockRejectedValueOnce(
+          new Error('Backend error')
+        )
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      })
+
+      it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
+        const Boom = await import('@hapi/boom')
+        vi.mocked(updatePrnStatus).mockRejectedValueOnce(
+          Boom.default.forbidden('Not authorised')
+        )
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
+      })
+    })
   })
 
   describe('when feature flag is disabled', () => {
@@ -703,7 +982,7 @@ describe('#viewController', () => {
       config.reset('featureFlags.prns')
     })
 
-    it('returns 404', async ({ server }) => {
+    it('returns 404 for GET', async ({ server }) => {
       // Disable feature flag before request
       config.set('featureFlags.prns', false)
 
@@ -712,6 +991,30 @@ describe('#viewController', () => {
           method: 'GET',
           url: viewUrl,
           auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      } finally {
+        config.set('featureFlags.prns', true)
+      }
+    })
+
+    it('returns 404 for POST', async ({ server }) => {
+      config.set('featureFlags.prns', false)
+
+      try {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
         })
 
         expect(statusCode).toBe(statusCodes.notFound)

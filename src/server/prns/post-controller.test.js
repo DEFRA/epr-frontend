@@ -111,7 +111,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/prn-789/check`
+          `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/prn-789/view`
         )
       })
 

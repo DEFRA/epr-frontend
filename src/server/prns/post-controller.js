@@ -153,7 +153,7 @@ export const postController = {
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${result.id}/check`
+        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to create PRN draft')
