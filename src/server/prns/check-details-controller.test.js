@@ -370,6 +370,23 @@ describe('#checkDetailsController', () => {
           getByRole(main, 'heading', { level: 2, name: /PRN details/i })
         ).toBeDefined()
       })
+
+      it('should display PRN in inset text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const insetText = main.querySelector('.govuk-inset-text')
+
+        expect(insetText.textContent).toContain(
+          'automatically populated when the PRN is issued'
+        )
+      })
     })
 
     describe('for exporter (PERN)', () => {
@@ -410,6 +427,23 @@ describe('#checkDetailsController', () => {
         expect(
           getByRole(main, 'heading', { level: 2, name: /PERN details/i })
         ).toBeDefined()
+      })
+
+      it('should display PERN in inset text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const insetText = main.querySelector('.govuk-inset-text')
+
+        expect(insetText.textContent).toContain(
+          'automatically populated when the PERN is issued'
+        )
       })
 
       it('should display PERN in lead paragraph', async ({ server }) => {
