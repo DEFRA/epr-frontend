@@ -220,9 +220,9 @@ describe('#checkDetailsController', () => {
       const { body } = dom.window.document
       const main = getByRole(body, 'main')
 
+      expect(getByText(main, /^Issuer$/)).toBeDefined()
       expect(getByText(main, /Issued date/i)).toBeDefined()
       expect(getByText(main, /Issued by/i)).toBeDefined()
-      expect(getByText(main, /Authorised by/i)).toBeDefined()
       expect(getByText(main, /Position/i)).toBeDefined()
       expect(getByText(main, /Issuer notes/i)).toBeDefined()
     })
@@ -464,6 +464,53 @@ describe('#checkDetailsController', () => {
           )
         ).toBeDefined()
       })
+    })
+  })
+
+  describe('navigation', () => {
+    beforeEach(() => {
+      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+    })
+
+    it('should render back link pointing to create PRN page', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const backLink = body.querySelector('.govuk-back-link')
+
+      expect(backLink).not.toBeNull()
+      expect(backLink.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/create-prn'
+      )
+    })
+
+    it('should render start again link pointing to create PRN page', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const startAgainLink = getByText(main, 'Start again')
+
+      expect(startAgainLink).toBeDefined()
+      expect(startAgainLink.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/create-prn'
+      )
     })
   })
 })
