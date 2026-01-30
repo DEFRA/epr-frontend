@@ -123,7 +123,7 @@ export default [
 
   // Test files with vitest
   {
-    files: ['**/*.test.{cjs,js}'],
+    files: ['**/*.test.{cjs,js}', '.vite/setup-files.js'],
     plugins: {
       vitest
     },
@@ -139,7 +139,7 @@ export default [
       'n/no-unpublished-import': [
         'error',
         {
-          allowModules: ['vitest']
+          allowModules: ['vitest', '@testing-library/jest-dom']
         }
       ],
 

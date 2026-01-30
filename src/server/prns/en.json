@@ -50,6 +50,7 @@
     "helpSummary": "Can't find the producer or compliance scheme?",
     "notesLabel": "Add issuer notes (optional)",
     "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
+    "recipientDefaultOption": "Select an option",
     "tonnageHint": "Enter a whole number without decimal places",
     "tonnageSuffix": "tonnes",
     "perns": {
@@ -97,6 +98,5 @@
       "selectHeading": "Select a PRN",
       "balanceHint": "This is the balance available for creating new PRNs"
     }
-  },
-  "selectOption": "Select an option"
+  }
 }

@@ -229,6 +229,32 @@ export const config = convict({
     default: 'http://localhost:3001',
     env: 'EPR_BACKEND_URL'
   },
+  wasteOrganisationsApi: {
+    url: {
+      doc: 'Waste Organisations API URL',
+      format: String,
+      env: 'WASTE_ORGANISATIONS_API_URL',
+      default: 'https://{env-path}/waste-organisations/organisations'
+    },
+    key: {
+      doc: 'Waste Organisations API x-api-key header value for local development',
+      format: String,
+      env: 'WASTE_ORGANISATIONS_API_KEY',
+      default: ''
+    },
+    username: {
+      doc: 'Waste Organisations API Auth username',
+      format: String,
+      env: 'WASTE_ORGANISATIONS_API_USERNAME',
+      default: ''
+    },
+    password: {
+      doc: 'Waste Organisations API Auth password',
+      format: String,
+      env: 'WASTE_ORGANISATIONS_API_PASSWORD',
+      default: ''
+    }
+  },
   defraId: {
     oidcConfigurationUrl: {
       doc: 'DEFRA ID OIDC Configuration URL',

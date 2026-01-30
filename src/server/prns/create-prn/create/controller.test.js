@@ -4,6 +4,7 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
+  getAllByRole,
   getByLabelText,
   getByRole,
   getByText,
@@ -11,9 +12,17 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import wasteOrganisations from '../../../fixtures/waste-organisations/organisations.json'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
+)
+
+vi.mock(
+  import('#server/common/helpers/waste-organisations/fetch-waste-organisations.js'),
+  () => ({
+    fetchWasteOrganisations: vi.fn().mockResolvedValue(wasteOrganisations)
+  })
 )
 
 const mockCredentials = {
@@ -132,21 +141,28 @@ describe('#createPrnController', () => {
       const main = getByRole(body, 'main')
 
       expect(
-        getByText(main, /Enter who this PRN will be issued to/i)
-      ).toBeDefined()
+        getByLabelText(main, 'Enter who this PRN will be issued to')
+      ).toBeInTheDocument()
 
       expect(
         getByText(
           main,
-          /Start typing the name of the packaging waste producer or compliance scheme/i
+          'Start typing the name of the packaging waste producer or compliance scheme'
         )
-      ).toBeDefined()
+      ).toBeInTheDocument()
 
-      const recipientSelect = getByRole(main, 'combobox', {
-        name: /Enter who this PRN will be issued to/i
-      })
+      expect(
+        getByRole(main, 'combobox', {
+          name: 'Enter who this PRN will be issued to'
+        })
+      ).toBeInTheDocument()
 
-      expect(recipientSelect.options.length).toBeGreaterThan(1)
+      expect(getAllByRole(main, 'option')).toHaveLength(4)
+      expect(
+        getByRole(main, 'option', {
+          name: 'Acme Compliance Scheme, 37th Place, Ashfield, Chicago, W1 L3Y'
+        })
+      ).toBeInTheDocument()
     })
 
     it('should render help text details component', async ({ server }) => {

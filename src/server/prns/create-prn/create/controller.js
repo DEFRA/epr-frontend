@@ -1,14 +1,6 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { buildCreateViewData } from './view-data.js'
-
-// Stub recipients until real API is available
-const STUB_RECIPIENTS = [
-  { value: 'producer-1', text: 'Acme Packaging Ltd' },
-  { value: 'producer-2', text: 'BigCo Waste Solutions' },
-  { value: 'producer-3', text: 'EcoRecycle Industries' },
-  { value: 'scheme-1', text: 'Green Compliance Scheme' },
-  { value: 'scheme-2', text: 'National Packaging Scheme' }
-]
+import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -25,9 +17,11 @@ export const createController = {
       request.logger
     )
 
+    const { organisations } = await fetchWasteOrganisations()
+
     const viewData = buildCreateViewData(request, {
       registration,
-      recipients: STUB_RECIPIENTS
+      recipients: organisations
     })
 
     return h.view('prns/create-prn/create/create', viewData)

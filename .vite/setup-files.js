@@ -1,9 +1,14 @@
+import { expect } from 'vitest'
+import * as matchers from '@testing-library/jest-dom/matchers'
+
 /**
  * Vitest setup file - runs before all tests and module imports
  *
  * Purpose: Configure global test environment with auth enabled.
  * MSW setup is handled by fixtures in .vite/fixtures/server.js
  */
+
+expect.extend(matchers)
 
 // Set env vars before any imports to ensure config picks them up
 process.env.DEFRA_ID_OIDC_CONFIGURATION_URL =
