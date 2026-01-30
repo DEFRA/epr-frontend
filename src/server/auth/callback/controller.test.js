@@ -4,9 +4,11 @@ import * as metricsModule from '#server/common/helpers/metrics/index.js'
 import Boom from '@hapi/boom'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-vi.mock(import('node:crypto'), async (importOriginal) => ({
-  ...(await importOriginal()),
-  randomUUID: vi.fn(() => 'mock-uuid-1234')
+vi.mock(import('node:crypto'), () => ({
+  randomUUID: vi.fn(() => 'mock-uuid-1234'),
+  createHash: vi.fn(() => ({
+    update: vi.fn((input) => ({ digest: vi.fn(() => `${input}-hashed`) }))
+  }))
 }))
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
@@ -169,7 +171,7 @@ describe('#authCallbackController', () => {
       await controller.handler(mockRequest, mockH)
 
       expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
-        { userIdHash: expect.any(String), event: 'signInSuccess' },
+        { userIdHash: 'user-456-hashed', event: 'signInSuccess' },
         'User has been successfully authenticated'
       )
     })
