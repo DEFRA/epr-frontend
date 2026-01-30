@@ -587,6 +587,28 @@ describe('#viewController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
       })
+
+      it('displays accreditationYear when present', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          accreditationYear: 2026
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Should show accreditation year in details
+        expect(getByText(main, '2026')).toBeDefined()
+      })
     })
 
     describe('draft PRN view (creation flow)', () => {

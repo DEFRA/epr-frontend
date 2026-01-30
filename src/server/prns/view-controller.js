@@ -212,48 +212,37 @@ async function handleExistingView(
 
   const displayMaterial = getDisplayMaterial(registration)
 
+  const statusConfig = getStatusConfig(prn.status, localise)
+  const isNotDraft = prn.status !== 'draft'
+
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
     organisationData,
     localise,
-    isExporter
+    isExporter,
+    statusConfig,
+    isNotDraft
   })
 
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
+    accreditationYear: prn.accreditationYear,
     displayMaterial,
     localise
   })
-
-  const statusConfig = getStatusConfig(prn.status, localise)
-
-  const statusRows =
-    prn.status !== 'draft'
-      ? [
-          {
-            key: { text: localise('prns:view:status') },
-            value: {
-              html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
-            }
-          }
-        ]
-      : null
-
-  const isNotDraft = prn.status !== 'draft'
-  const complianceYear = prn.complianceYear || new Date().getFullYear()
 
   return h.view('prns/view', {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
     caption: isNotDraft ? prn.id : isExporter ? 'PERN' : 'PRN',
     heading: isExporter ? 'PERN' : 'PRN',
     showRegulatorLogos: isNotDraft,
-    complianceYearText: isNotDraft
-      ? localise(`prns:view:${noteType}:complianceYearText`, {
-          year: `<strong>${complianceYear}</strong>`
-        })
-      : null,
-    statusRows,
+    complianceYearText:
+      isNotDraft && prn.accreditationYear != null
+        ? localise(`prns:view:${noteType}:complianceYearText`, {
+            year: `<strong>${prn.accreditationYear}</strong>`
+          })
+        : null,
     prnDetailsHeading: localise(
       isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
     ),
@@ -357,23 +346,39 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
  * @param {object} params.organisationData - Organisation data
  * @param {(key: string) => string} params.localise - Translation function
  * @param {boolean} params.isExporter - Whether the registration is for an exporter
+ * @param {{text: string, class: string}} params.statusConfig - Status display config
+ * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
  * @returns {Array} Summary list rows
  */
 function buildExistingPrnDetailRows({
   prn,
   organisationData,
   localise,
-  isExporter
+  isExporter,
+  statusConfig,
+  isNotDraft
 }) {
-  return [
+  const rows = [
     {
       key: {
         text: localise(
           isExporter ? 'prns:pernNumberLabel' : 'prns:prnNumberLabel'
         )
       },
-      value: { text: prn.id }
-    },
+      value: { text: '' }
+    }
+  ]
+
+  if (isNotDraft) {
+    rows.push({
+      key: { text: localise('prns:view:status') },
+      value: {
+        html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
+      }
+    })
+  }
+
+  rows.push(
     {
       key: { text: localise('prns:buyerLabel') },
       value: { text: prn.issuedToOrganisation }
@@ -422,7 +427,9 @@ function buildExistingPrnDetailRows({
       key: { text: localise('prns:issuerNotesLabel') },
       value: { text: prn.notes || localise('prns:notProvided') }
     }
-  ]
+  )
+
+  return rows
 }
 
 /**
@@ -430,6 +437,7 @@ function buildExistingPrnDetailRows({
  * @param {object} params
  * @param {object} params.registration - Registration data
  * @param {object} params.accreditation - Accreditation data
+ * @param {number} [params.accreditationYear] - Accreditation year (YYYY)
  * @param {string} params.displayMaterial - Formatted material name
  * @param {(key: string) => string} params.localise - Translation function
  * @returns {Array} Summary list rows
@@ -437,10 +445,17 @@ function buildExistingPrnDetailRows({
 function buildAccreditationRows({
   registration,
   accreditation,
+  accreditationYear,
   displayMaterial,
   localise
 }) {
   return [
+    {
+      key: { text: localise('prns:accreditationYearLabel') },
+      value: {
+        text: accreditationYear != null ? String(accreditationYear) : ''
+      }
+    },
     {
       key: { text: localise('prns:materialLabel') },
       value: { text: displayMaterial }
