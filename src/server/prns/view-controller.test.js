@@ -196,8 +196,9 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check PRN ID is displayed
-        expect(getByText(main, /prn-789/i)).toBeDefined()
+        // Check PRN ID is displayed (appears in caption and PRN number field)
+        const heading = main.querySelector('.govuk-heading-xl')
+        expect(heading.textContent).toBe('PRN')
         // Check issued to
         expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
         // Check tonnage
@@ -279,9 +280,9 @@ describe('#viewController', () => {
         const caption = main.querySelector('.govuk-caption-xl')
         expect(caption.textContent).toBe('pern-123')
 
-        // Check heading shows full title (non-draft)
+        // Check heading shows PERN
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toContain('Packaging export recycling note')
+        expect(heading.textContent).toBe('PERN')
 
         // Check return link text
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
@@ -357,9 +358,9 @@ describe('#viewController', () => {
         const caption = main.querySelector('.govuk-caption-xl')
         expect(caption.textContent).toBe('PRN')
 
-        // Heading shows ID for draft
+        // Heading shows PRN for draft
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toContain('prn-789')
+        expect(heading.textContent).toBe('PRN')
       })
 
       it('shows PERN caption for draft exporter PRN', async ({ server }) => {
@@ -466,7 +467,7 @@ describe('#viewController', () => {
         expect(getByText(main, /^No$/)).toBeDefined()
       })
 
-      it('displays issue comments when present', async ({ server }) => {
+      it('displays issuer notes when present', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
@@ -477,7 +478,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Issue comments/i)).toBeDefined()
+        expect(getByText(main, /Issuer notes/i)).toBeDefined()
         expect(getByText(main, /Additional notes for this PRN/i)).toBeDefined()
       })
 

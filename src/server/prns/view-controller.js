@@ -215,7 +215,8 @@ async function handleExistingView(
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
     organisationData,
-    localise
+    localise,
+    isExporter
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -240,12 +241,18 @@ async function handleExistingView(
       : null
 
   const isNotDraft = prn.status !== 'draft'
+  const complianceYear = prn.complianceYear || new Date().getFullYear()
 
   return h.view('prns/view', {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
     caption: isNotDraft ? prn.id : isExporter ? 'PERN' : 'PRN',
-    heading: isNotDraft ? localise(`prns:view:${noteType}:heading`) : prn.id,
+    heading: isExporter ? 'PERN' : 'PRN',
     showRegulatorLogos: isNotDraft,
+    complianceYearText: isNotDraft
+      ? localise(`prns:view:${noteType}:complianceYearText`, {
+          year: `<strong>${complianceYear}</strong>`
+        })
+      : null,
     statusRows,
     prnDetailsHeading: localise(
       isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
@@ -349,20 +356,26 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
  * @param {object} params.prn - PRN data from backend
  * @param {object} params.organisationData - Organisation data
  * @param {(key: string) => string} params.localise - Translation function
+ * @param {boolean} params.isExporter - Whether the registration is for an exporter
  * @returns {Array} Summary list rows
  */
-function buildExistingPrnDetailRows({ prn, organisationData, localise }) {
+function buildExistingPrnDetailRows({
+  prn,
+  organisationData,
+  localise,
+  isExporter
+}) {
   return [
     {
-      key: { text: localise('prns:issuedByLabel') },
-      value: {
-        text:
-          organisationData?.companyDetails?.name ||
-          localise('prns:notAvailable')
-      }
+      key: {
+        text: localise(
+          isExporter ? 'prns:pernNumberLabel' : 'prns:prnNumberLabel'
+        )
+      },
+      value: { text: prn.id }
     },
     {
-      key: { text: localise('prns:issuedToLabel') },
+      key: { text: localise('prns:buyerLabel') },
       value: { text: prn.issuedToOrganisation }
     },
     {
@@ -386,12 +399,16 @@ function buildExistingPrnDetailRows({ prn, organisationData, localise }) {
       }
     },
     {
-      key: { text: localise('prns:issueCommentsLabel') },
-      value: { text: prn.notes || localise('prns:notProvided') }
-    },
-    {
       key: { text: localise('prns:issuedDateLabel') },
       value: { text: prn.authorisedAt ? formatDate(prn.authorisedAt) : '' }
+    },
+    {
+      key: { text: localise('prns:issuedByLabel') },
+      value: {
+        text:
+          organisationData?.companyDetails?.name ||
+          localise('prns:notAvailable')
+      }
     },
     {
       key: { text: localise('prns:authorisedByLabel') },
@@ -400,6 +417,10 @@ function buildExistingPrnDetailRows({ prn, organisationData, localise }) {
     {
       key: { text: localise('prns:positionLabel') },
       value: { text: prn.authorisedBy?.position || '' }
+    },
+    {
+      key: { text: localise('prns:issuerNotesLabel') },
+      value: { text: prn.notes || localise('prns:notProvided') }
     }
   ]
 }
