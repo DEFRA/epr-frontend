@@ -7,7 +7,7 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * @param {string} idToken - JWT ID token for authorization
  * @returns {Promise<RegistrationWithAccreditation>} Organisation data with registration and accreditation
  */
-async function getRegistrationWithAccreditation(
+async function fetchRegistrationAndAccreditation(
   organisationId,
   registrationId,
   idToken
@@ -31,7 +31,7 @@ async function getRegistrationWithAccreditation(
   }
 }
 
-export { getRegistrationWithAccreditation }
+export { fetchRegistrationAndAccreditation }
 
 /**
  * @typedef {object} RegistrationWithAccreditation

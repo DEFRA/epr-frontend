@@ -28,7 +28,7 @@ describe('#fetchPrns', () => {
 
   it('returns response from backend', async () => {
     const mockResponse = {
-      items: [{ id: 'prn-1', prnNumber: 'PRN-001' }],
+      items: [{ id: 'prn-1', prnNumber: 'ER2625468U' }],
       hasMore: true
     }
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)

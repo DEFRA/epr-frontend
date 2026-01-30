@@ -1,5 +1,5 @@
 import Boom from '@hapi/boom'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 
 /**
  * Fetch and validate registration with accreditation
@@ -11,7 +11,7 @@ export async function getValidatedRegistration(request) {
   const session = request.auth.credentials
 
   const { registration, accreditation } =
-    await getRegistrationWithAccreditation(
+    await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       session.idToken
