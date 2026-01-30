@@ -588,7 +588,9 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      it('displays accreditationYear when present', async ({ server }) => {
+      it('displays complianceYearText when accreditationYear is present', async ({
+        server
+      }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           accreditationYear: 2026
@@ -606,8 +608,13 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Should show accreditation year in details
-        expect(getByText(main, '2026')).toBeDefined()
+        // Should show compliance year text with year
+        expect(
+          getByText(
+            main,
+            /This PRN relates to waste accepted for reprocessing/i
+          )
+        ).toBeDefined()
       })
     })
 

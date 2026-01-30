@@ -227,7 +227,6 @@ async function handleExistingView(
   const accreditationRows = buildAccreditationRows({
     registration,
     accreditation,
-    accreditationYear: prn.accreditationYear,
     displayMaterial,
     localise
   })
@@ -437,7 +436,6 @@ function buildExistingPrnDetailRows({
  * @param {object} params
  * @param {object} params.registration - Registration data
  * @param {object} params.accreditation - Accreditation data
- * @param {number} [params.accreditationYear] - Accreditation year (YYYY)
  * @param {string} params.displayMaterial - Formatted material name
  * @param {(key: string) => string} params.localise - Translation function
  * @returns {Array} Summary list rows
@@ -445,17 +443,10 @@ function buildExistingPrnDetailRows({
 function buildAccreditationRows({
   registration,
   accreditation,
-  accreditationYear,
   displayMaterial,
   localise
 }) {
   return [
-    {
-      key: { text: localise('prns:accreditationYearLabel') },
-      value: {
-        text: accreditationYear != null ? String(accreditationYear) : ''
-      }
-    },
     {
       key: { text: localise('prns:materialLabel') },
       value: { text: displayMaterial }
