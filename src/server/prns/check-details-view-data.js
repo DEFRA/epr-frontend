@@ -83,7 +83,7 @@ export function buildCheckDetailsViewData(
     pageTitle,
     heading: pageTitle,
     leadParagraph: localise(`prns:checkDetails:${prnType}:leadParagraph`),
-    insetText: localise('prns:checkDetails:insetText'),
+    insetText: localise(`prns:checkDetails:${prnType}:insetText`),
     prnDetailsHeading: localise(`prns:checkDetails:${prnType}:detailsHeading`),
     prnDetails: buildPrnDetails(localise, prnData, accreditation),
     accreditationDetailsHeading: localise(

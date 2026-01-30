@@ -13,12 +13,12 @@ export const checkDetailsController = {
     const prnData = {
       issuedToOrganisation: 'Acme Packaging Solutions Ltd',
       issuedByOrganisation: 'John Smith Ltd',
-      issuedDate: '28 January 2026',
+      issuedDate: '',
       issuerNotes: 'Quarterly waste collection from Birmingham facility',
       tonnageValue: 150,
       isDecemberWaste: 'No',
-      authorisedBy: 'Jane Doe',
-      position: 'Operations Manager'
+      authorisedBy: '',
+      position: ''
     }
 
     const viewData = buildCheckDetailsViewData(request, {

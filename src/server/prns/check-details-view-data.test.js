@@ -10,8 +10,10 @@ const createMockRequest = () => ({
         'Check the following information is correct before creating this PRN.',
       'prns:checkDetails:perns:leadParagraph':
         'Check the following information is correct before creating this PERN.',
-      'prns:checkDetails:insetText':
+      'prns:checkDetails:prns:insetText':
         'Any information not shown here will be automatically populated when the PRN is issued.',
+      'prns:checkDetails:perns:insetText':
+        'Any information not shown here will be automatically populated when the PERN is issued.',
       'prns:checkDetails:prns:detailsHeading': 'PRN details',
       'prns:checkDetails:perns:detailsHeading': 'PERN details',
       'prns:checkDetails:recipient':
@@ -120,7 +122,7 @@ describe('#buildCheckDetailsViewData', () => {
   })
 
   describe('common fields', () => {
-    it('should return inset text', () => {
+    it('should return inset text with PRN for reprocessor', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation
@@ -128,6 +130,17 @@ describe('#buildCheckDetailsViewData', () => {
 
       expect(result.insetText).toBe(
         'Any information not shown here will be automatically populated when the PRN is issued.'
+      )
+    })
+
+    it('should return inset text with PERN for exporter', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: exporterRegistration,
+        accreditation: mockAccreditation
+      })
+
+      expect(result.insetText).toBe(
+        'Any information not shown here will be automatically populated when the PERN is issued.'
       )
     })
 
