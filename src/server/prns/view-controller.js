@@ -360,7 +360,12 @@ function buildExistingPrnDetailRows({
   const numberLabel = isExporter
     ? 'prns:pernNumberLabel'
     : 'prns:prnNumberLabel'
-  const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
+  const rows = [
+    {
+      key: { text: localise(numberLabel) },
+      value: { text: prn.prnNumber ?? '' }
+    }
+  ]
 
   if (isNotDraft) {
     rows.push(buildStatusRow(statusConfig, localise))
