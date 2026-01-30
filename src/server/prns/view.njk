@@ -39,10 +39,6 @@
       </div>
     {% endif %}
 
-    {% if complianceYearText %}
-      <p class="govuk-body">{{ complianceYearText | safe }}</p>
-    {% endif %}
-
     {% if statusRows %}
       {{ govukSummaryList({
         rows: statusRows
@@ -63,6 +59,10 @@
     {% endif %}
 
     <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
+
+    {% if complianceYearText %}
+      <p class="govuk-body">{{ complianceYearText | safe }}</p>
+    {% endif %}
 
     {{ govukSummaryList({
       rows: prnDetailRows
