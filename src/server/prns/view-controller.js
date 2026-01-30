@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
+import { formatDateForDisplay } from '#server/common/helpers/format-date-for-display.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -212,10 +213,16 @@ async function handleExistingView(
 
   const displayMaterial = getDisplayMaterial(registration)
 
+  const statusConfig = getStatusConfig(prn.status, localise)
+  const isNotDraft = prn.status !== 'draft'
+
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
     organisationData,
-    localise
+    localise,
+    isExporter,
+    statusConfig,
+    isNotDraft
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -225,17 +232,16 @@ async function handleExistingView(
     localise
   })
 
-  const statusConfig = getStatusConfig(prn.status, localise)
-
   return h.view('prns/view', {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
-    caption: isExporter ? 'PERN' : 'PRN',
-    heading: prn.id,
-    status: {
-      label: localise('prns:view:status'),
-      text: statusConfig.text,
-      class: statusConfig.class
-    },
+    heading: isExporter ? 'PERN' : 'PRN',
+    showRegulatorLogos: isNotDraft,
+    complianceYearText:
+      isNotDraft && prn.accreditationYear != null
+        ? localise(`prns:view:${noteType}:complianceYearText`, {
+            year: `<strong>${prn.accreditationYear}</strong>`
+          })
+        : null,
     prnDetailsHeading: localise(
       isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
     ),
@@ -338,20 +344,65 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
  * @param {object} params.prn - PRN data from backend
  * @param {object} params.organisationData - Organisation data
  * @param {(key: string) => string} params.localise - Translation function
+ * @param {boolean} params.isExporter - Whether the registration is for an exporter
+ * @param {{text: string, class: string}} params.statusConfig - Status display config
+ * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
  * @returns {Array} Summary list rows
  */
-function buildExistingPrnDetailRows({ prn, organisationData, localise }) {
+function buildExistingPrnDetailRows({
+  prn,
+  organisationData,
+  localise,
+  isExporter,
+  statusConfig,
+  isNotDraft
+}) {
+  const numberLabel = isExporter
+    ? 'prns:pernNumberLabel'
+    : 'prns:prnNumberLabel'
+  const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
+
+  if (isNotDraft) {
+    rows.push(buildStatusRow(statusConfig, localise))
+  }
+
+  rows.push(
+    ...buildPrnCoreRows(prn, localise),
+    ...buildPrnAuthorisationRows(prn, organisationData, localise)
+  )
+
+  return rows
+}
+
+/**
+ * Build the status row for the PRN details
+ * @param {{text: string, class: string}} statusConfig
+ * @param {(key: string) => string} localise
+ * @returns {object}
+ */
+function buildStatusRow(statusConfig, localise) {
+  return {
+    key: { text: localise('prns:view:status') },
+    value: {
+      html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
+    }
+  }
+}
+
+/**
+ * Build core PRN detail rows (buyer, tonnage, process, december waste)
+ * @param {object} prn
+ * @param {(key: string) => string} localise
+ * @returns {Array}
+ */
+function buildPrnCoreRows(prn, localise) {
+  const decemberWasteText = prn.isDecemberWaste
+    ? localise('prns:decemberWasteYes')
+    : localise('prns:decemberWasteNo')
+
   return [
     {
-      key: { text: localise('prns:issuedByLabel') },
-      value: {
-        text:
-          organisationData?.companyDetails?.name ||
-          localise('prns:notAvailable')
-      }
-    },
-    {
-      key: { text: localise('prns:issuedToLabel') },
+      key: { text: localise('prns:buyerLabel') },
       value: { text: prn.issuedToOrganisation }
     },
     {
@@ -368,19 +419,34 @@ function buildExistingPrnDetailRows({ prn, organisationData, localise }) {
     },
     {
       key: { text: localise('prns:decemberWasteLabel') },
-      value: {
-        text: prn.isDecemberWaste
-          ? localise('prns:decemberWasteYes')
-          : localise('prns:decemberWasteNo')
-      }
-    },
-    {
-      key: { text: localise('prns:issueCommentsLabel') },
-      value: { text: prn.notes || localise('prns:notProvided') }
-    },
+      value: { text: decemberWasteText }
+    }
+  ]
+}
+
+/**
+ * Build authorisation-related PRN detail rows
+ * @param {object} prn
+ * @param {object} organisationData
+ * @param {(key: string) => string} localise
+ * @returns {Array}
+ */
+function buildPrnAuthorisationRows(prn, organisationData, localise) {
+  const issuedDate = prn.authorisedAt
+    ? formatDateForDisplay(prn.authorisedAt)
+    : ''
+  const issuedBy =
+    organisationData?.companyDetails?.name || localise('prns:notAvailable')
+  const notesText = prn.notes || localise('prns:notProvided')
+
+  return [
     {
       key: { text: localise('prns:issuedDateLabel') },
-      value: { text: prn.authorisedAt ? formatDate(prn.authorisedAt) : '' }
+      value: { text: issuedDate }
+    },
+    {
+      key: { text: localise('prns:issuedByLabel') },
+      value: { text: issuedBy }
     },
     {
       key: { text: localise('prns:authorisedByLabel') },
@@ -389,6 +455,10 @@ function buildExistingPrnDetailRows({ prn, organisationData, localise }) {
     {
       key: { text: localise('prns:positionLabel') },
       value: { text: prn.authorisedBy?.position || '' }
+    },
+    {
+      key: { text: localise('prns:issuerNotesLabel') },
+      value: { text: notesText }
     }
   ]
 }
@@ -434,33 +504,19 @@ function getStatusConfig(status, localise) {
   const statusMap = {
     awaiting_authorisation: {
       text: localise('prns:list:status:awaitingAuthorisation'),
-      class: 'govuk-tag--yellow'
+      class: 'govuk-tag--blue epr-tag--no-max-width'
     },
     issued: {
       text: localise('prns:list:status:issued'),
-      class: 'govuk-tag--green'
+      class: 'govuk-tag--blue epr-tag--no-max-width'
     },
     cancelled: {
       text: localise('prns:list:status:cancelled'),
-      class: 'govuk-tag--red'
+      class: 'govuk-tag--grey epr-tag--no-max-width'
     }
   }
 
-  return statusMap[status] ?? { text: status, class: '' }
-}
-
-/**
- * Format date for display
- * @param {string} dateString
- * @returns {string}
- */
-function formatDate(dateString) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
+  return statusMap[status] ?? { text: status, class: 'epr-tag--no-max-width' }
 }
 
 /**

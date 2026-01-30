@@ -20,14 +20,29 @@
     <span class="govuk-caption-xl">{{ caption }}</span>
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-    {% if status %}
-      <p class="govuk-body">
-        {{ status.label }}:
-        {{ govukTag({
-          text: status.text,
-          classes: status.class
-        }) }}
-      </p>
+    {% if showRegulatorLogos %}
+      <div class="epr-regulator-logos govuk-!-margin-bottom-6">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 40" width="80" height="40" role="img" aria-label="SEPA">
+          <text x="40" y="27" text-anchor="middle" fill="#0065bd" font-family="Arial, sans-serif" font-size="16" font-weight="bold">SEPA</text>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40" role="img" aria-label="Environment Agency">
+          <text x="60" y="25" text-anchor="middle" fill="#00703c" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Environment</text>
+          <text x="60" y="36" text-anchor="middle" fill="#00703c" font-family="Arial, sans-serif" font-size="9">Agency</text>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 40" width="80" height="40" role="img" aria-label="NIEA">
+          <text x="40" y="27" text-anchor="middle" fill="#003865" font-family="Arial, sans-serif" font-size="16" font-weight="bold">NIEA</text>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40" role="img" aria-label="Natural Resources Wales">
+          <text x="60" y="18" text-anchor="middle" fill="#00703c" font-family="Arial, sans-serif" font-size="9" font-weight="bold">Natural Resources</text>
+          <text x="60" y="32" text-anchor="middle" fill="#00703c" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Wales</text>
+        </svg>
+      </div>
+    {% endif %}
+
+    {% if statusRows %}
+      {{ govukSummaryList({
+        rows: statusRows
+      }) }}
     {% endif %}
 
     {% if introText %}
@@ -44,6 +59,10 @@
     {% endif %}
 
     <h2 class="govuk-heading-m">{{ prnDetailsHeading }}</h2>
+
+    {% if complianceYearText %}
+      <p class="govuk-body">{{ complianceYearText | safe }}</p>
+    {% endif %}
 
     {{ govukSummaryList({
       rows: prnDetailRows

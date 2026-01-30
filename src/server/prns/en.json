@@ -3,6 +3,7 @@
   "accreditationDetailsHeading": "Accreditation details",
   "accreditationNumberLabel": "Accreditation number",
   "authorisedByLabel": "Authorised by",
+  "buyerLabel": "Buyer",
   "cancelButton": "Cancel",
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
@@ -13,6 +14,7 @@
   "issuedByLabel": "Issued by",
   "issuedDateLabel": "Issued date",
   "issuedToLabel": "Packaging waste producer or compliance scheme",
+  "issuerNotesLabel": "Issuer notes",
   "list": {
     "availableWasteBalance": "Available waste balance",
     "noPrns": "No PRNs or PERNs have been created yet.",
@@ -59,6 +61,7 @@
   "notProvided": "Not provided",
   "notesLabel": "Add issuer notes (optional)",
   "pernDetailsHeading": "PERN details",
+  "pernNumberLabel": "PERN number",
   "perns": {
     "caption": "Create PERN",
     "checkHeading": "Check before creating PERN",
@@ -81,6 +84,7 @@
   },
   "positionLabel": "Position",
   "prnDetailsHeading": "PRN details",
+  "prnNumberLabel": "PRN number",
   "prns": {
     "caption": "Create PRN",
     "checkHeading": "Check before creating PRN",
@@ -119,9 +123,13 @@
     "material": "Material",
     "dateCreated": "Date created",
     "prns": {
+      "heading": "Packaging recycling note",
+      "complianceYearText": "This PRN relates to waste accepted for reprocessing in {{year}} and can count towards {{year}} obligations.",
       "returnLink": "Return to PRN list"
     },
     "perns": {
+      "heading": "Packaging export recycling note",
+      "complianceYearText": "This PERN relates to waste accepted for export in {{year}} and can count towards {{year}} obligations.",
       "returnLink": "Return to PERN list"
     }
   }

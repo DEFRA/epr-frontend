@@ -196,8 +196,9 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check PRN ID is displayed
-        expect(getByText(main, /prn-789/i)).toBeDefined()
+        // Check PRN ID is displayed (appears in caption and PRN number field)
+        const heading = main.querySelector('.govuk-heading-xl')
+        expect(heading.textContent).toBe('PRN')
         // Check issued to
         expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
         // Check tonnage
@@ -275,15 +276,15 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check caption shows PERN
-        const caption = main.querySelector('.govuk-caption-xl')
-        expect(caption.textContent).toBe('PERN')
+        // Check heading shows PERN
+        const heading = main.querySelector('.govuk-heading-xl')
+        expect(heading.textContent).toBe('PERN')
 
         // Check return link text
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
       })
 
-      it('displays issued status with green tag', async ({ server }) => {
+      it('displays issued status with blue tag', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           status: 'issued'
@@ -299,12 +300,12 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const tag = main.querySelector('.govuk-tag--green')
+        const tag = main.querySelector('.govuk-tag--blue')
         expect(tag).toBeDefined()
         expect(tag.textContent.trim()).toBe('Issued')
       })
 
-      it('displays cancelled status with red tag', async ({ server }) => {
+      it('displays cancelled status with grey tag', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           status: 'cancelled'
@@ -320,9 +321,38 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const tag = main.querySelector('.govuk-tag--red')
+        const tag = main.querySelector('.govuk-tag--grey')
         expect(tag).toBeDefined()
         expect(tag.textContent.trim()).toBe('Cancelled')
+      })
+
+      it('hides status and logos for draft PRN', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'draft'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Should not show status tag
+        const tag = main.querySelector('.govuk-tag')
+        expect(tag).toBeNull()
+
+        // Should not show regulator logos
+        const logos = main.querySelector('.epr-regulator-logos')
+        expect(logos).toBeNull()
+
+        // Heading shows PRN for draft
+        const heading = main.querySelector('.govuk-heading-xl')
+        expect(heading.textContent).toBe('PRN')
       })
 
       it('returns 404 when registration not found', async ({ server }) => {
@@ -405,7 +435,7 @@ describe('#viewController', () => {
         expect(getByText(main, /^No$/)).toBeDefined()
       })
 
-      it('displays issue comments when present', async ({ server }) => {
+      it('displays issuer notes when present', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
@@ -416,7 +446,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Issue comments/i)).toBeDefined()
+        expect(getByText(main, /Issuer notes/i)).toBeDefined()
         expect(getByText(main, /Additional notes for this PRN/i)).toBeDefined()
       })
 
@@ -524,6 +554,35 @@ describe('#viewController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('displays complianceYearText when accreditationYear is present', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          accreditationYear: 2026
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Should show compliance year text with year
+        expect(
+          getByText(
+            main,
+            /This PRN relates to waste accepted for reprocessing/i
+          )
+        ).toBeDefined()
       })
     })
 

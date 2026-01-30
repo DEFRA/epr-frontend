@@ -1,3 +1,5 @@
+import { formatDateForDisplay } from '#server/common/helpers/format-date-for-display.js'
+
 /**
  * Build view data for the PRN/PERN list page
  * @param {Request} request
@@ -34,7 +36,7 @@ export function buildListViewData(
     )
     return [
       { text: prn.recipient },
-      { text: formatDate(prn.createdAt) },
+      { text: formatDateForDisplay(prn.createdAt) },
       { text: prn.tonnage },
       { html: buildStatusTagHtml(prn.status, localise) },
       { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
@@ -100,20 +102,6 @@ export function buildListViewData(
 function buildStatusTagHtml(status, localise) {
   const statusText = formatStatus(status, localise)
   return `<strong class="govuk-tag govuk-tag--blue epr-tag--no-max-width">${statusText}</strong>`
-}
-
-/**
- * Format date for display
- * @param {string} dateString
- * @returns {string}
- */
-function formatDate(dateString) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
 }
 
 /**
