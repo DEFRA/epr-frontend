@@ -34,9 +34,9 @@ function buildPrnDetails(localise, prnData, accreditation) {
       getRecoveryCode(accreditation?.material)
     ),
     summaryRow(localise('decemberWaste'), prnData.isDecemberWaste ?? ''),
+    summaryRow(localise('issuer'), prnData.issuedByOrganisation ?? ''),
     summaryRow(localise('issuedDate'), prnData.issuedDate ?? ''),
-    summaryRow(localise('issuedBy'), prnData.issuedByOrganisation ?? ''),
-    summaryRow(localise('authorisedBy'), prnData.authorisedBy ?? ''),
+    summaryRow(localise('issuedBy'), prnData.authorisedBy ?? ''),
     summaryRow(localise('position'), prnData.position ?? ''),
     summaryRow(
       localise('issuerNotes'),
@@ -73,17 +73,20 @@ function buildAccreditationDetails(localise, accreditation) {
  * @param {object} options
  * @param {{wasteProcessingType: string}} options.registration
  * @param {object} options.accreditation
+ * @param {string} options.organisationId
+ * @param {string} options.registrationId
  * @param {object} options.prnData
  * @returns {object}
  */
 export function buildCheckDetailsViewData(
   request,
-  { registration, accreditation, prnData = {} }
+  { registration, accreditation, organisationId, registrationId, prnData = {} }
 ) {
   const localise = (key) => request.t(`prns:checkDetails:${key}`)
   const prnType = getPrnType(registration)
 
   const pageTitle = localise(`${prnType}:pageTitle`)
+  const createPrnUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
 
   return {
     pageTitle,
@@ -93,7 +96,11 @@ export function buildCheckDetailsViewData(
     prnDetailsHeading: localise(`${prnType}:detailsHeading`),
     prnDetails: buildPrnDetails(localise, prnData, accreditation),
     accreditationDetailsHeading: localise('accreditationDetailsHeading'),
-    accreditationDetails: buildAccreditationDetails(localise, accreditation)
+    accreditationDetails: buildAccreditationDetails(localise, accreditation),
+    backUrl: createPrnUrl,
+    createButtonText: localise(`${prnType}:createButton`),
+    startAgainUrl: createPrnUrl,
+    startAgainText: localise('startAgain')
   }
 }
 

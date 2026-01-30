@@ -1,5 +1,14 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -25,18 +34,13 @@
         rows: accreditationDetails
       }) }}
 
-      {# <div class="govuk-button-group">
-        {{ govukButton({
-          text: createButtonText,
-          href: createUrl
-        }) }}
+      <div class="govuk-button-group">
+        {# {{ govukButton({
+          text: createButtonText
+        }) }} #}
 
-        {{ govukButton({
-          text: cancelButtonText,
-          href: cancelUrl,
-          classes: "govuk-button--warning"
-        }) }}
-      </div> #}
+        <a class="govuk-link" href="{{ startAgainUrl }}">{{ startAgainText }}</a>
+      </div>
 
     </div>
   </div>
