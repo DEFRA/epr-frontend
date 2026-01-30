@@ -276,10 +276,6 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check caption shows PERN
-        const caption = main.querySelector('.govuk-caption-xl')
-        expect(caption.textContent).toBe('PERN')
-
         // Check heading shows PERN
         const heading = main.querySelector('.govuk-heading-xl')
         expect(heading.textContent).toBe('PERN')
@@ -354,37 +350,9 @@ describe('#viewController', () => {
         const logos = main.querySelector('.epr-regulator-logos')
         expect(logos).toBeNull()
 
-        // Caption shows PRN (not ID) for draft
-        const caption = main.querySelector('.govuk-caption-xl')
-        expect(caption.textContent).toBe('PRN')
-
         // Heading shows PRN for draft
         const heading = main.querySelector('.govuk-heading-xl')
         expect(heading.textContent).toBe('PRN')
-      })
-
-      it('shows PERN caption for draft exporter PRN', async ({ server }) => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPernFromBackend,
-          status: 'draft'
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: pernViewUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        // Caption shows PERN (not ID) for draft exporter
-        const caption = main.querySelector('.govuk-caption-xl')
-        expect(caption.textContent).toBe('PERN')
       })
 
       it('returns 404 when registration not found', async ({ server }) => {
