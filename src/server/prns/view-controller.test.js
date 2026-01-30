@@ -102,6 +102,7 @@ const mockPrnStatusUpdated = {
 
 const mockPrnFromBackend = {
   id: 'prn-789',
+  prnNumber: 'PRN-2026-00001',
   issuedToOrganisation: 'Acme Packaging Ltd',
   tonnage: 100,
   material: 'plastic',
@@ -111,11 +112,13 @@ const mockPrnFromBackend = {
   isDecemberWaste: true,
   authorisedAt: '2026-01-16T14:30:00.000Z',
   authorisedBy: { name: 'John Smith', position: 'Director' },
-  wasteProcessingType: 'reprocessor'
+  wasteProcessingType: 'reprocessor',
+  accreditationYear: 2026
 }
 
 const mockPernFromBackend = {
   id: 'pern-123',
+  prnNumber: 'PERN-2026-00001',
   issuedToOrganisation: 'Export Solutions Ltd',
   tonnage: 50,
   material: 'glass',
@@ -125,7 +128,8 @@ const mockPernFromBackend = {
   isDecemberWaste: false,
   authorisedAt: null,
   authorisedBy: null,
-  wasteProcessingType: 'exporter'
+  wasteProcessingType: 'exporter',
+  accreditationYear: 2026
 }
 
 /**
@@ -196,9 +200,8 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check PRN ID is displayed (appears in caption and PRN number field)
-        const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toBe('PRN')
+        // Check PRN number is displayed
+        expect(getByText(main, /PRN-2026-00001/i)).toBeDefined()
         // Check issued to
         expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
         // Check tonnage
@@ -545,6 +548,21 @@ describe('#viewController', () => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           material: null
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('handles null prnNumber gracefully', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          prnNumber: null
         })
 
         const { statusCode } = await server.inject({

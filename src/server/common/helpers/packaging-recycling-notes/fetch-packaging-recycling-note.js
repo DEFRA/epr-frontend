@@ -29,9 +29,16 @@ export { fetchPackagingRecyclingNote }
 /**
  * @typedef {object} PackagingRecyclingNote
  * @property {string} id
+ * @property {string|null} prnNumber
  * @property {string} issuedToOrganisation
  * @property {number} tonnage
  * @property {string} material
  * @property {string} status
  * @property {string} createdAt
+ * @property {string|null} notes
+ * @property {boolean} isDecemberWaste
+ * @property {string|null} authorisedAt
+ * @property {{name: string, position: string}|null} authorisedBy
+ * @property {string|null} wasteProcessingType
+ * @property {number|null} accreditationYear
  */
