@@ -357,27 +357,50 @@ function buildExistingPrnDetailRows({
   statusConfig,
   isNotDraft
 }) {
-  const rows = [
-    {
-      key: {
-        text: localise(
-          isExporter ? 'prns:pernNumberLabel' : 'prns:prnNumberLabel'
-        )
-      },
-      value: { text: '' }
-    }
-  ]
+  const numberLabel = isExporter
+    ? 'prns:pernNumberLabel'
+    : 'prns:prnNumberLabel'
+  const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
 
   if (isNotDraft) {
-    rows.push({
-      key: { text: localise('prns:view:status') },
-      value: {
-        html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
-      }
-    })
+    rows.push(buildStatusRow(statusConfig, localise))
   }
 
   rows.push(
+    ...buildPrnCoreRows(prn, localise),
+    ...buildPrnAuthorisationRows(prn, organisationData, localise)
+  )
+
+  return rows
+}
+
+/**
+ * Build the status row for the PRN details
+ * @param {{text: string, class: string}} statusConfig
+ * @param {(key: string) => string} localise
+ * @returns {object}
+ */
+function buildStatusRow(statusConfig, localise) {
+  return {
+    key: { text: localise('prns:view:status') },
+    value: {
+      html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
+    }
+  }
+}
+
+/**
+ * Build core PRN detail rows (buyer, tonnage, process, december waste)
+ * @param {object} prn
+ * @param {(key: string) => string} localise
+ * @returns {Array}
+ */
+function buildPrnCoreRows(prn, localise) {
+  const decemberWasteText = prn.isDecemberWaste
+    ? localise('prns:decemberWasteYes')
+    : localise('prns:decemberWasteNo')
+
+  return [
     {
       key: { text: localise('prns:buyerLabel') },
       value: { text: prn.issuedToOrganisation }
@@ -396,25 +419,34 @@ function buildExistingPrnDetailRows({
     },
     {
       key: { text: localise('prns:decemberWasteLabel') },
-      value: {
-        text: prn.isDecemberWaste
-          ? localise('prns:decemberWasteYes')
-          : localise('prns:decemberWasteNo')
-      }
-    },
+      value: { text: decemberWasteText }
+    }
+  ]
+}
+
+/**
+ * Build authorisation-related PRN detail rows
+ * @param {object} prn
+ * @param {object} organisationData
+ * @param {(key: string) => string} localise
+ * @returns {Array}
+ */
+function buildPrnAuthorisationRows(prn, organisationData, localise) {
+  const issuedDate = prn.authorisedAt
+    ? formatDateForDisplay(prn.authorisedAt)
+    : ''
+  const issuedBy =
+    organisationData?.companyDetails?.name || localise('prns:notAvailable')
+  const notesText = prn.notes || localise('prns:notProvided')
+
+  return [
     {
       key: { text: localise('prns:issuedDateLabel') },
-      value: {
-        text: prn.authorisedAt ? formatDateForDisplay(prn.authorisedAt) : ''
-      }
+      value: { text: issuedDate }
     },
     {
       key: { text: localise('prns:issuedByLabel') },
-      value: {
-        text:
-          organisationData?.companyDetails?.name ||
-          localise('prns:notAvailable')
-      }
+      value: { text: issuedBy }
     },
     {
       key: { text: localise('prns:authorisedByLabel') },
@@ -426,11 +458,9 @@ function buildExistingPrnDetailRows({
     },
     {
       key: { text: localise('prns:issuerNotesLabel') },
-      value: { text: prn.notes || localise('prns:notProvided') }
+      value: { text: notesText }
     }
-  )
-
-  return rows
+  ]
 }
 
 /**
