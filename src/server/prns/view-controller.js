@@ -233,7 +233,7 @@ async function handleExistingView(
 
   return h.view('prns/view', {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
-    caption: isNotDraft ? prn.id : isExporter ? 'PERN' : 'PRN',
+    caption: isExporter ? 'PERN' : 'PRN',
     heading: isExporter ? 'PERN' : 'PRN',
     showRegulatorLogos: isNotDraft,
     complianceYearText:

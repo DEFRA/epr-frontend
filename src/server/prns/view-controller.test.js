@@ -276,9 +276,9 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check caption shows PERN ID (non-draft)
+        // Check caption shows PERN
         const caption = main.querySelector('.govuk-caption-xl')
-        expect(caption.textContent).toBe('pern-123')
+        expect(caption.textContent).toBe('PERN')
 
         // Check heading shows PERN
         const heading = main.querySelector('.govuk-heading-xl')
