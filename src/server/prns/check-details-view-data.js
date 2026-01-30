@@ -22,22 +22,26 @@ function summaryRow(label, value) {
  * @returns {object[]}
  */
 function buildPrnDetails(localise, prnData, accreditation) {
-  const l = (key) => localise(`prns:checkDetails:${key}`)
-
   return [
-    summaryRow(l('recipient'), prnData.issuedToOrganisation ?? ''),
-    summaryRow(l('tonnage'), prnData.tonnageValue ?? ''),
+    summaryRow(localise('recipient'), prnData.issuedToOrganisation ?? ''),
+    summaryRow(localise('tonnage'), prnData.tonnageValue ?? ''),
     summaryRow(
-      l('tonnageInWords'),
+      localise('tonnageInWords'),
       prnData.tonnageValue == null ? '' : tonnageToWords(prnData.tonnageValue)
     ),
-    summaryRow(l('processToBeUsed'), getRecoveryCode(accreditation?.material)),
-    summaryRow(l('decemberWaste'), prnData.isDecemberWaste ?? ''),
-    summaryRow(l('issuedDate'), prnData.issuedDate ?? ''),
-    summaryRow(l('issuedBy'), prnData.issuedByOrganisation ?? ''),
-    summaryRow(l('authorisedBy'), prnData.authorisedBy ?? ''),
-    summaryRow(l('position'), prnData.position ?? ''),
-    summaryRow(l('issuerNotes'), prnData.issuerNotes || l('notProvided'))
+    summaryRow(
+      localise('processToBeUsed'),
+      getRecoveryCode(accreditation?.material)
+    ),
+    summaryRow(localise('decemberWaste'), prnData.isDecemberWaste ?? ''),
+    summaryRow(localise('issuedDate'), prnData.issuedDate ?? ''),
+    summaryRow(localise('issuedBy'), prnData.issuedByOrganisation ?? ''),
+    summaryRow(localise('authorisedBy'), prnData.authorisedBy ?? ''),
+    summaryRow(localise('position'), prnData.position ?? ''),
+    summaryRow(
+      localise('issuerNotes'),
+      prnData.issuerNotes || localise('notProvided')
+    )
   ]
 }
 
@@ -47,17 +51,19 @@ function buildPrnDetails(localise, prnData, accreditation) {
  * @returns {object[]}
  */
 function buildAccreditationDetails(localise, accreditation) {
-  const l = (key) => localise(`prns:checkDetails:${key}`)
   const displayMaterial = accreditation?.material
     ? getDisplayMaterial(accreditation)
     : ''
   return [
-    summaryRow(l('material'), displayMaterial),
+    summaryRow(localise('material'), displayMaterial),
     summaryRow(
-      l('accreditationNumber'),
+      localise('accreditationNumber'),
       accreditation?.accreditationNumber ?? ''
     ),
-    summaryRow(l('accreditationAddress'), accreditation?.siteAddress ?? '')
+    summaryRow(
+      localise('accreditationAddress'),
+      accreditation?.siteAddress ?? ''
+    )
   ]
 }
 
@@ -74,21 +80,19 @@ export function buildCheckDetailsViewData(
   request,
   { registration, accreditation, prnData = {} }
 ) {
-  const { t: localise } = request
+  const localise = (key) => request.t(`prns:checkDetails:${key}`)
   const prnType = getPrnType(registration)
 
-  const pageTitle = localise(`prns:checkDetails:${prnType}:pageTitle`)
+  const pageTitle = localise(`${prnType}:pageTitle`)
 
   return {
     pageTitle,
     heading: pageTitle,
-    leadParagraph: localise(`prns:checkDetails:${prnType}:leadParagraph`),
-    insetText: localise(`prns:checkDetails:${prnType}:insetText`),
-    prnDetailsHeading: localise(`prns:checkDetails:${prnType}:detailsHeading`),
+    leadParagraph: localise(`${prnType}:leadParagraph`),
+    insetText: localise(`${prnType}:insetText`),
+    prnDetailsHeading: localise(`${prnType}:detailsHeading`),
     prnDetails: buildPrnDetails(localise, prnData, accreditation),
-    accreditationDetailsHeading: localise(
-      'prns:checkDetails:accreditationDetailsHeading'
-    ),
+    accreditationDetailsHeading: localise('accreditationDetailsHeading'),
     accreditationDetails: buildAccreditationDetails(localise, accreditation)
   }
 }
