@@ -4,9 +4,16 @@ import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, createHash } from 'node:crypto'
 
 /** @import { ServerRoute } from '@hapi/hapi' */
+
+/**
+ * Hashes a user ID to avoid logging PII while preserving uniqueness for metrics
+ * @param {string} userId
+ * @returns {string}
+ */
+const hashUserId = (userId) => createHash('sha256').update(userId).digest('hex')
 
 /**
  * Returns the path and its Welsh localised variant
@@ -42,7 +49,7 @@ const controller = {
       request.cookieAuth.set({ sessionId })
 
       request.logger.info(
-        { userId: session.profile.id, event: 'signInComplete' },
+        { userId: hashUserId(session.profile.id), event: 'signInComplete' },
         'User has been successfully authenticated'
       )
 

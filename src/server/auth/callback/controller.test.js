@@ -4,7 +4,8 @@ import * as metricsModule from '#server/common/helpers/metrics/index.js'
 import Boom from '@hapi/boom'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-vi.mock(import('node:crypto'), () => ({
+vi.mock(import('node:crypto'), async (importOriginal) => ({
+  ...(await importOriginal()),
   randomUUID: vi.fn(() => 'mock-uuid-1234')
 }))
 
@@ -168,7 +169,7 @@ describe('#authCallbackController', () => {
       await controller.handler(mockRequest, mockH)
 
       expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
-        { userId: 'user-456', event: 'signInComplete' },
+        { userId: expect.any(String), event: 'signInComplete' },
         'User has been successfully authenticated'
       )
     })
