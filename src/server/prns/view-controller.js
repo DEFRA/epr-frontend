@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
+import { formatDateForDisplay } from '#server/common/helpers/format-date-for-display.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -403,7 +404,9 @@ function buildExistingPrnDetailRows({
     },
     {
       key: { text: localise('prns:issuedDateLabel') },
-      value: { text: prn.authorisedAt ? formatDate(prn.authorisedAt) : '' }
+      value: {
+        text: prn.authorisedAt ? formatDateForDisplay(prn.authorisedAt) : ''
+      }
     },
     {
       key: { text: localise('prns:issuedByLabel') },
@@ -484,20 +487,6 @@ function getStatusConfig(status, localise) {
   }
 
   return statusMap[status] ?? { text: status, class: 'epr-tag--no-max-width' }
-}
-
-/**
- * Format date for display
- * @param {string} dateString
- * @returns {string}
- */
-function formatDate(dateString) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
 }
 
 /**
