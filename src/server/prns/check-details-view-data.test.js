@@ -32,8 +32,6 @@ const createMockRequest = () => ({
       'prns:checkDetails:material': 'Material',
       'prns:checkDetails:accreditationNumber': 'Accreditation number',
       'prns:checkDetails:accreditationAddress': 'Accreditation address',
-      'prns:checkDetails:prns:createButton': 'Create PRN',
-      'prns:checkDetails:perns:createButton': 'Create PERN',
       'prns:checkDetails:startAgain': 'Start again'
     }
     return translations[key] || key

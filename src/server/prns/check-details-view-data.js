@@ -98,7 +98,6 @@ export function buildCheckDetailsViewData(
     accreditationDetailsHeading: localise('accreditationDetailsHeading'),
     accreditationDetails: buildAccreditationDetails(localise, accreditation),
     backUrl: createPrnUrl,
-    createButtonText: localise(`${prnType}:createButton`),
     startAgainUrl: createPrnUrl,
     startAgainText: localise('startAgain')
   }
