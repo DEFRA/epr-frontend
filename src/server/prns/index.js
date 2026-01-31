@@ -1,3 +1,4 @@
+import { confirmationController } from './confirmation-controller.js'
 import { createController } from './create-controller.js'
 import { listController } from './list-controller.js'
 import { checkDetailsController } from './check-details-controller.js'
@@ -24,6 +25,11 @@ export const prns = {
           ...checkDetailsController,
           method: 'GET',
           path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn/check-details'
+        },
+        {
+          ...confirmationController,
+          method: 'GET',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/prns/{prnNumber}/issue-confirmation'
         }
       ])
     }
