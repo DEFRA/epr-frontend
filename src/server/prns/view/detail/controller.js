@@ -1,4 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getPrn } from '#server/common/helpers/prns/get-prn.js'
 import { buildDetailViewData } from './view-data.js'
 
 /**
@@ -9,10 +10,18 @@ export const detailController = {
     const { organisationId, registrationId, prnNumber } = request.params
     const session = request.auth.credentials
 
-    const { registration } = await getRequiredRegistrationWithAccreditation(
+    const { registration, accreditation } =
+      await getRequiredRegistrationWithAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken,
+        request.logger
+      )
+
+    const prnData = await getPrn(
       organisationId,
-      registrationId,
-      session.idToken,
+      accreditation.id,
+      prnNumber,
       request.logger
     )
 
@@ -20,7 +29,8 @@ export const detailController = {
       registration,
       organisationId,
       registrationId,
-      prnNumber
+      prnNumber,
+      prnData
     })
 
     return h.view('prns/view/detail/detail', viewData)

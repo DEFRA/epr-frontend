@@ -1,3 +1,4 @@
+import { getPrn } from '#server/common/helpers/prns/get-prn.js'
 import { getValidatedRegistration } from '../../helpers/get-validated-registration.js'
 import { buildConfirmationViewData } from './view-data.js'
 
@@ -11,11 +12,12 @@ export const confirmationController = {
 
     const { prnNumber } = request.params
 
-    // Temporary dummy data until PAE-944 backend is ready
-    const prnData = {
+    const prnData = await getPrn(
+      organisationId,
+      accreditation.id,
       prnNumber,
-      issuedToOrganisation: 'Nestle (SEPA)'
-    }
+      request.logger
+    )
 
     const viewData = buildConfirmationViewData(request, {
       registration,

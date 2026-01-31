@@ -1,3 +1,4 @@
+import { getPrn } from '#server/common/helpers/prns/get-prn.js'
 import { getValidatedRegistration } from '../../helpers/get-validated-registration.js'
 import { buildCheckDetailsViewData } from './view-data.js'
 
@@ -9,17 +10,14 @@ export const checkDetailsController = {
     const { registration, accreditation, organisationId, registrationId } =
       await getValidatedRegistration(request)
 
-    // Temporary dummy data
-    const prnData = {
-      issuedToOrganisation: 'Acme Packaging Solutions Ltd',
-      issuedByOrganisation: 'John Smith Ltd',
-      issuedDate: '',
-      issuerNotes: 'Quarterly waste collection from Birmingham facility',
-      tonnageValue: 150,
-      isDecemberWaste: 'No',
-      authorisedBy: '',
-      position: ''
-    }
+    const { prnNumber } = request.params
+
+    const prnData = await getPrn(
+      organisationId,
+      accreditation.id,
+      prnNumber,
+      request.logger
+    )
 
     const viewData = buildCheckDetailsViewData(request, {
       registration,

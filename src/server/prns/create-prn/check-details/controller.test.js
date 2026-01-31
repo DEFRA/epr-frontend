@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getPrn } from '#server/common/helpers/prns/get-prn.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -9,6 +10,8 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
+
+vi.mock(import('#server/common/helpers/prns/get-prn.js'))
 
 const mockCredentials = {
   profile: {
@@ -60,6 +63,18 @@ const fixtureExporter = {
   }
 }
 
+const stubPrnData = {
+  prnNumber: 'ER2625468U',
+  issuedToOrganisation: 'Acme Packaging Solutions Ltd',
+  issuedByOrganisation: 'John Smith Ltd',
+  issuedDate: '',
+  issuerNotes: 'Quarterly waste collection from Birmingham facility',
+  tonnageValue: 150,
+  isDecemberWaste: 'No',
+  authorisedBy: '',
+  position: ''
+}
+
 const reprocessorUrl =
   '/organisations/org-123/registrations/reg-001/create-prn/ER2625468U/check-details'
 const exporterUrl =
@@ -72,6 +87,7 @@ describe('#checkDetailsController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getPrn).mockResolvedValue(stubPrnData)
   })
 
   afterAll(() => {
