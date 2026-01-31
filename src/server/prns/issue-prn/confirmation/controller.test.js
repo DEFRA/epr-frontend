@@ -61,9 +61,9 @@ const fixtureExporter = {
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/prns/ER992415095748M/issue-confirmation'
+  '/organisations/org-123/registrations/reg-001/issue-prn/ER992415095748M/confirmation'
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/prns/ER992415095748M/issue-confirmation'
+  '/organisations/org-456/registrations/reg-002/issue-prn/ER992415095748M/confirmation'
 
 describe('#confirmationController', () => {
   beforeAll(() => {
@@ -274,7 +274,7 @@ describe('#confirmationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/prns/ER992415095748M/issue-confirmation',
+        url: '/organisations/org-123/registrations/reg-nonexistent/issue-prn/ER992415095748M/confirmation',
         auth: mockAuth
       })
 

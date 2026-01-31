@@ -38,7 +38,7 @@ export const prns = {
         {
           ...confirmationController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/prns/{prnNumber}/issue-confirmation'
+          path: '/organisations/{organisationId}/registrations/{registrationId}/issue-prn/{prnNumber}/confirmation'
         }
       ])
     }
