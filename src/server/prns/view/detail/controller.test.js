@@ -4,7 +4,7 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getPrn } from '#server/common/helpers/prns/get-prn.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
@@ -175,6 +175,53 @@ describe('#prnDetailController', () => {
         expect.any(Object)
       )
     })
+
+    it('should render back link to PRN dashboard', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const backLink = body.querySelector('.govuk-back-link')
+
+      expect(backLink).not.toBeNull()
+      expect(backLink.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/prns'
+      )
+    })
+
+    it('should render Issue PRN button', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, 'Issue PRN')).toBeDefined()
+    })
+
+    it('should render Delete PRN warning button', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const deleteButton = getByText(main, 'Delete PRN')
+
+      expect(deleteButton).toBeDefined()
+      expect(deleteButton.className).toContain('warning')
+    })
   })
 
   describe('page rendering for reprocessor-output (PRN)', () => {
@@ -229,6 +276,23 @@ describe('#prnDetailController', () => {
 
       expect(heading.textContent).toContain('PERN')
       expect(heading.textContent).not.toContain('PRN')
+    })
+
+    it('should render Issue PERN and Delete PERN buttons', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, 'Issue PERN')).toBeDefined()
+      expect(getByText(main, 'Delete PERN')).toBeDefined()
     })
   })
 })
