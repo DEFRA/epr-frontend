@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 
 const mockCredentials = {
@@ -80,7 +80,7 @@ describe('#confirmationController', () => {
 
   describe('page rendering', () => {
     beforeEach(() => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         fixtureReprocessor
       )
     })
@@ -207,7 +207,7 @@ describe('#confirmationController', () => {
   describe('dynamic PRN/PERN text', () => {
     describe('for reprocessor (PRN)', () => {
       beforeEach(() => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
       })
@@ -229,7 +229,7 @@ describe('#confirmationController', () => {
 
     describe('for exporter (PERN)', () => {
       beforeEach(() => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureExporter
         )
       })
@@ -266,7 +266,7 @@ describe('#confirmationController', () => {
 
   describe('error handling', () => {
     it('should return 404 when registration not found', async ({ server }) => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
         organisationData: fixtureReprocessor.organisationData,
         registration: undefined,
         accreditation: undefined
@@ -284,7 +284,7 @@ describe('#confirmationController', () => {
     it('should return 404 when registration has no accreditation', async ({
       server
     }) => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
         organisationData: fixtureReprocessor.organisationData,
         registration: fixtureReprocessor.registration,
         accreditation: undefined

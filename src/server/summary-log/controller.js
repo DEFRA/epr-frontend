@@ -21,7 +21,7 @@ import {
 } from '#server/common/constants/validation-codes.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 
 /** Waste record section number to display in UI copy, mapped by processing type */
@@ -447,7 +447,7 @@ const getWasteBalanceData = async (
   }
 
   try {
-    const { registration } = await getRegistrationWithAccreditation(
+    const { registration } = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken

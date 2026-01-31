@@ -2,6 +2,7 @@ import { confirmationController } from './confirmation-controller.js'
 import { createController } from './create-controller.js'
 import { listController } from './list-controller.js'
 import { checkDetailsController } from './check-details-controller.js'
+import { detailController } from './detail-controller.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -25,6 +26,11 @@ export const prns = {
           ...checkDetailsController,
           method: 'GET',
           path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn/check-details'
+        },
+        {
+          ...detailController,
+          method: 'GET',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/prns/{prnNumber}'
         },
         {
           ...confirmationController,

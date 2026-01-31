@@ -1,5 +1,4 @@
-import Boom from '@hapi/boom'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getPrns } from '#server/common/helpers/prns/get-prns.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { buildListViewData } from './list-view-data.js'
@@ -13,24 +12,12 @@ export const listController = {
     const session = request.auth.credentials
 
     const { registration, accreditation } =
-      await getRegistrationWithAccreditation(
+      await getRequiredRegistrationWithAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.idToken,
+        request.logger
       )
-
-    if (!registration) {
-      request.logger.warn({ registrationId }, 'Registration not found')
-      throw Boom.notFound('Registration not found')
-    }
-
-    if (!accreditation) {
-      request.logger.warn(
-        { registrationId },
-        'Not accredited for this registration'
-      )
-      throw Boom.notFound('Not accredited for this registration')
-    }
 
     const [wasteBalance, prns] = await Promise.all([
       getWasteBalance(
@@ -43,6 +30,8 @@ export const listController = {
     ])
 
     const viewData = buildListViewData(request, {
+      organisationId,
+      registrationId,
       registration,
       wasteBalance,
       prns

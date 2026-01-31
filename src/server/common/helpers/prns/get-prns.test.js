@@ -17,8 +17,8 @@ describe('#getPrns', () => {
 
   it('returns API response items when available', async () => {
     const apiPrns = [
-      { id: 'api-prn-1', prnNumber: 'PRN-001' },
-      { id: 'api-prn-2', prnNumber: 'PRN-002' }
+      { id: 'api-prn-1', prnNumber: 'ER2625468U' },
+      { id: 'api-prn-2', prnNumber: 'ER2612345A' }
     ]
     vi.mocked(fetchPrns).mockResolvedValue({ items: apiPrns, hasMore: false })
 

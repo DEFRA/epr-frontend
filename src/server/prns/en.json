@@ -4,14 +4,12 @@
       "pageTitle": "Check before creating PERN",
       "leadParagraph": "Check the following information is correct before creating this PERN.",
       "detailsHeading": "PERN details",
-      "createButton": "Create PERN",
       "insetText": "Any information not shown here will be automatically populated when the PERN is issued."
     },
     "prns": {
       "pageTitle": "Check before creating PRN",
       "leadParagraph": "Check the following information is correct before creating this PRN.",
       "detailsHeading": "PRN details",
-      "createButton": "Create PRN",
       "insetText": "Any information not shown here will be automatically populated when the PRN is issued."
     },
     "recipient": "Packaging waste producer or compliance scheme",
@@ -19,9 +17,9 @@
     "tonnageInWords": "Tonnage in words",
     "processToBeUsed": "Process to be used",
     "decemberWaste": "December waste",
+    "issuer": "Issuer",
     "issuedDate": "Issued date",
     "issuedBy": "Issued by",
-    "authorisedBy": "Authorised by",
     "position": "Position",
     "issuerNotes": "Issuer notes",
     "notProvided": "Not provided",
@@ -29,7 +27,7 @@
     "material": "Material",
     "accreditationNumber": "Accreditation number",
     "accreditationAddress": "Accreditation address",
-    "cancelButton": "Cancel without saving"
+    "startAgain": "Start again"
   },
   "confirmation": {
     "prns": {
@@ -69,25 +67,35 @@
       "notesHint": "These notes will appear on the PRN"
     }
   },
+  "detail": {
+    "perns": {
+      "pageTitle": "PERN"
+    },
+    "prns": {
+      "pageTitle": "PRN"
+    }
+  },
   "list": {
     "availableWasteBalance": "Available waste balance",
     "table": {
       "recipientHeading": "Packaging waste producer or compliance scheme",
       "dateHeading": "Date created",
       "tonnageHeading": "Tonnage",
-      "statusHeading": "Status"
+      "statusHeading": "Status",
+      "actionHeading": "Action",
+      "selectLink": "Select"
     },
     "perns": {
       "pageTitle": "PERNs",
+      "createText": "Create a PERN",
       "selectHeading": "Select a PERN",
-      "balanceHint": "This is the balance available for creating new PERNs",
-      "cancelHint": "If you cancel a PERN, its tonnage will be added to your available waste balance."
+      "balanceHint": "This is the balance available for creating new PERNs"
     },
     "prns": {
       "pageTitle": "PRNs",
+      "createText": "Create a PRN",
       "selectHeading": "Select a PRN",
-      "balanceHint": "This is the balance available for creating new PRNs",
-      "cancelHint": "If you cancel a PRN, its tonnage will be added to your available waste balance."
+      "balanceHint": "This is the balance available for creating new PRNs"
     }
   },
   "selectOption": "Select an option"

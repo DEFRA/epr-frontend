@@ -23,3 +23,19 @@
 .app-content-width {
   max-width: 602px;
 }
+
+.app-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.app-table-cell-nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.app-tag-nowrap {
+  max-width: none;
+}

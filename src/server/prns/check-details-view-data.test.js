@@ -22,9 +22,9 @@ const createMockRequest = () => ({
       'prns:checkDetails:tonnageInWords': 'Tonnage in words',
       'prns:checkDetails:processToBeUsed': 'Process to be used',
       'prns:checkDetails:decemberWaste': 'December waste',
+      'prns:checkDetails:issuer': 'Issuer',
       'prns:checkDetails:issuedDate': 'Issued date',
       'prns:checkDetails:issuedBy': 'Issued by',
-      'prns:checkDetails:authorisedBy': 'Authorised by',
       'prns:checkDetails:position': 'Position',
       'prns:checkDetails:issuerNotes': 'Issuer notes',
       'prns:checkDetails:notProvided': 'Not provided',
@@ -32,9 +32,7 @@ const createMockRequest = () => ({
       'prns:checkDetails:material': 'Material',
       'prns:checkDetails:accreditationNumber': 'Accreditation number',
       'prns:checkDetails:accreditationAddress': 'Accreditation address',
-      'prns:checkDetails:prns:createButton': 'Create PRN',
-      'prns:checkDetails:perns:createButton': 'Create PERN',
-      'prns:checkDetails:cancelButton': 'Cancel without saving'
+      'prns:checkDetails:startAgain': 'Start again'
     }
     return translations[key] || key
   })
@@ -177,9 +175,9 @@ describe('#buildCheckDetailsViewData', () => {
       })
 
       expect(result.prnDetails[4].key.text).toBe('December waste')
-      expect(result.prnDetails[5].key.text).toBe('Issued date')
-      expect(result.prnDetails[6].key.text).toBe('Issued by')
-      expect(result.prnDetails[7].key.text).toBe('Authorised by')
+      expect(result.prnDetails[5].key.text).toBe('Issuer')
+      expect(result.prnDetails[6].key.text).toBe('Issued date')
+      expect(result.prnDetails[7].key.text).toBe('Issued by')
       expect(result.prnDetails[8].key.text).toBe('Position')
     })
 
@@ -296,21 +294,21 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[4].value.text).toBe('Yes')
     })
 
-    it('should populate issuedDate, issuedByOrganisation and authorisedBy from prnData', () => {
+    it('should populate issuer, issuedDate and issuedBy from prnData', () => {
       const result = buildCheckDetailsViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
         organisationId: 'org-123',
         registrationId: 'reg-001',
         prnData: {
-          issuedDate: '15 March 2026',
           issuedByOrganisation: 'Alice Brown',
+          issuedDate: '15 March 2026',
           authorisedBy: 'Bob Green'
         }
       })
 
-      expect(result.prnDetails[5].value.text).toBe('15 March 2026')
-      expect(result.prnDetails[6].value.text).toBe('Alice Brown')
+      expect(result.prnDetails[5].value.text).toBe('Alice Brown')
+      expect(result.prnDetails[6].value.text).toBe('15 March 2026')
       expect(result.prnDetails[7].value.text).toBe('Bob Green')
     })
 
@@ -356,6 +354,45 @@ describe('#buildCheckDetailsViewData', () => {
       expect(result.prnDetails[6].value.text).toBe('')
       expect(result.prnDetails[7].value.text).toBe('')
       expect(result.prnDetails[8].value.text).toBe('')
+    })
+  })
+
+  describe('navigation and actions', () => {
+    it('should return backUrl pointing to create PRN page', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001'
+      })
+
+      expect(result.backUrl).toBe(
+        '/organisations/org-123/registrations/reg-001/create-prn'
+      )
+    })
+
+    it('should return startAgainUrl pointing to create PRN page', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001'
+      })
+
+      expect(result.startAgainUrl).toBe(
+        '/organisations/org-123/registrations/reg-001/create-prn'
+      )
+    })
+
+    it('should return start again text', () => {
+      const result = buildCheckDetailsViewData(createMockRequest(), {
+        registration: reprocessorRegistration,
+        accreditation: mockAccreditation,
+        organisationId: 'org-123',
+        registrationId: 'reg-001'
+      })
+
+      expect(result.startAgainText).toBe('Start again')
     })
   })
 
