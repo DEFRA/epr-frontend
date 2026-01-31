@@ -1,4 +1,4 @@
-import { getPrnType } from './helpers/get-note-type.js'
+import { getPrnType } from '../../helpers/get-note-type.js'
 
 /**
  * Build view data for the PRN/PERN issuance confirmation page

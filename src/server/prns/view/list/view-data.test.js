@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { buildListViewData } from './list-view-data.js'
+import { buildListViewData } from './view-data.js'
 
 /**
  * Creates a mock request object with localisation

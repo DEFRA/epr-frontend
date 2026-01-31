@@ -1,8 +1,8 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { getPrnType } from './helpers/get-note-type.js'
+import { getPrnType } from '../../helpers/get-note-type.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { getRecoveryCode } from './helpers/get-recovery-code.js'
-import { tonnageToWords } from './helpers/tonnage-to-words.js'
+import { getRecoveryCode } from '../../helpers/get-recovery-code.js'
+import { tonnageToWords } from '../../helpers/tonnage-to-words.js'
 
 /**
  * @param {string} label

@@ -1,5 +1,5 @@
-import { getValidatedRegistration } from './helpers/get-validated-registration.js'
-import { buildCheckDetailsViewData } from './check-details-view-data.js'
+import { getValidatedRegistration } from '../../helpers/get-validated-registration.js'
+import { buildCheckDetailsViewData } from './view-data.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -29,7 +29,7 @@ export const checkDetailsController = {
       prnData
     })
 
-    return h.view('prns/check-details', viewData)
+    return h.view('prns/create-prn/check-details/check-details', viewData)
   }
 }
 

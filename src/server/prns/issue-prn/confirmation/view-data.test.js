@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildConfirmationViewData } from './confirmation-view-data.js'
+import { buildConfirmationViewData } from './view-data.js'
 
 const createMockRequest = () => ({
   t: vi.fn((key) => {

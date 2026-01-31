@@ -1,5 +1,5 @@
-import { getValidatedRegistration } from './helpers/get-validated-registration.js'
-import { buildConfirmationViewData } from './confirmation-view-data.js'
+import { getValidatedRegistration } from '../../helpers/get-validated-registration.js'
+import { buildConfirmationViewData } from './view-data.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -25,7 +25,7 @@ export const confirmationController = {
       prnData
     })
 
-    return h.view('prns/confirmation', viewData)
+    return h.view('prns/issue-prn/confirmation/confirmation', viewData)
   }
 }
 

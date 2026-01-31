@@ -1,5 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { buildDetailViewData } from './detail-view-data.js'
+import { buildDetailViewData } from './view-data.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -23,7 +23,7 @@ export const detailController = {
       prnNumber
     })
 
-    return h.view('prns/detail', viewData)
+    return h.view('prns/view/detail/detail', viewData)
   }
 }
 

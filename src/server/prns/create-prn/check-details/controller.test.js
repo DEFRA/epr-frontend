@@ -61,9 +61,9 @@ const fixtureExporter = {
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/create-prn/check-details'
+  '/organisations/org-123/registrations/reg-001/create-prn/ER2625468U/check-details'
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/create-prn/check-details'
+  '/organisations/org-456/registrations/reg-002/create-prn/EX2625468U/check-details'
 
 describe('#checkDetailsController', () => {
   beforeAll(() => {
@@ -290,7 +290,7 @@ describe('#checkDetailsController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/create-prn/check-details',
+        url: '/organisations/org-123/registrations/reg-nonexistent/create-prn/ER2625468U/check-details',
         auth: mockAuth
       })
 
