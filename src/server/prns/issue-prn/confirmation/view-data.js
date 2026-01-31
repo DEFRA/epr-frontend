@@ -16,8 +16,8 @@ export function buildConfirmationViewData(
 ) {
   const localise = (key) => request.t(`prns:confirmation:${key}`)
   const prnType = getPrnType(registration)
-
-  const panelTitle = `${localise(`${prnType}:panelTitle`)} ${prnData.issuedToOrganisation ?? ''}`
+  const panelHeader = localise(`${prnType}:panelTitle`)
+  const panelTitle = `${panelHeader} ${prnData.issuedToOrganisation ?? ''}`
   const prnNumber = prnData.prnNumber ?? ''
   const basePrnsUrl = `/organisations/${organisationId}/registrations/${registrationId}/prns`
   const createPrnUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
