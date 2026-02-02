@@ -1,4 +1,4 @@
-import { formatDateForDisplay } from '#server/common/helpers/format-date-for-display.js'
+import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 
 /**
  * Build view data for the PRN/PERN list page

@@ -21,18 +21,6 @@
   }
 }
 
-.epr-heading-with-action {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: govuk-spacing(4);
-  margin-bottom: govuk-spacing(6);
-
-  .govuk-button {
-    margin-bottom: 0;
-  }
-}
-
 .epr-waste-balance-banner {
   border: none;
 
@@ -52,14 +40,4 @@
   .govuk-summary-card__content {
     background: govuk-colour("light-grey");
   }
-}
-
-.epr-tag--no-max-width {
-  max-width: none;
-}
-
-.epr-regulator-logos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: govuk-spacing(4);
 }

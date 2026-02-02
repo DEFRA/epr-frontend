@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { formatDateForDisplay } from '#server/common/helpers/format-date-for-display.js'
+import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
