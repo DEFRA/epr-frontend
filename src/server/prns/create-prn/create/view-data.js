@@ -1,3 +1,5 @@
+import { NOTES_MAX_LENGTH } from './constants.js'
+
 /**
  * @typedef {object} CreateViewDataOptions
  * @property {{wasteProcessingType: string}} registration
@@ -63,6 +65,7 @@ export function buildCreateViewData(
     notes: {
       label: localise('prns:create:notesLabel'),
       hint: localise(`prns:create:${noteType}:notesHint`),
+      maxLength: NOTES_MAX_LENGTH,
       value: values?.notes ?? '',
       errorMessage: errors?.notes
     }

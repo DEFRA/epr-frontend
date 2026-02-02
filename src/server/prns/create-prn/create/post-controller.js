@@ -6,6 +6,7 @@ import Joi from 'joi'
 
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getPrnType } from '#server/prns/helpers/get-note-type.js'
+import { NOTES_MAX_LENGTH } from './constants.js'
 import { buildCreateViewData } from './view-data.js'
 
 const FIELDS = Object.freeze({
@@ -81,7 +82,7 @@ function getErrorMessageKey(detail) {
 const payloadSchema = Joi.object({
   [FIELDS.tonnage]: Joi.number().integer().positive().required(),
   [FIELDS.recipient]: Joi.string().min(1).required(),
-  [FIELDS.notes]: Joi.string().max(200).allow('').optional()
+  [FIELDS.notes]: Joi.string().max(NOTES_MAX_LENGTH).allow('').optional()
 })
 
 /**
