@@ -86,9 +86,9 @@ const mockPrns = [
 ]
 
 const reprocessorListUrl =
-  '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes'
+  '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes'
 const exporterListUrl =
-  '/organisations/org-456/registrations/reg-002/l-packaging-recycling-notes'
+  '/organisations/org-456/registrations/reg-002/accreditations/acc-002/l-packaging-recycling-notes'
 
 describe('#listPrnsController', () => {
   beforeEach(() => {
@@ -200,7 +200,7 @@ describe('#listPrnsController', () => {
 
         expect(createLink).toBeDefined()
         expect(createLink.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes/create'
+          '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/create'
         )
       })
 
@@ -320,7 +320,7 @@ describe('#listPrnsController', () => {
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-nonexistent/l-packaging-recycling-notes',
+          url: '/organisations/org-123/registrations/reg-nonexistent/accreditations/acc-001/l-packaging-recycling-notes',
           auth: mockAuth
         })
 

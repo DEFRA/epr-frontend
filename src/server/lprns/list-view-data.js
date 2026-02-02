@@ -6,6 +6,7 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
+ * @param {string} options.accreditationId
  * @param {{wasteProcessingType: string}} options.registration
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
  * @param {{availableAmount: number} | null} options.wasteBalance
@@ -13,7 +14,14 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  */
 export function buildListViewData(
   request,
-  { organisationId, registrationId, registration, prns, wasteBalance }
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    registration,
+    prns,
+    wasteBalance
+  }
 ) {
   const { t: localise } = request
   const isExporter = registration.wasteProcessingType === 'exporter'
@@ -24,7 +32,7 @@ export function buildListViewData(
   )
 
   const createUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
+    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
   )
 
   const selectText = localise('lprns:list:table:selectText')
@@ -32,7 +40,7 @@ export function buildListViewData(
   // Build rows in govukTable format: array of arrays of cell objects
   const dataRows = prns.map((prn) => {
     const viewUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prn.id}/view`
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prn.id}/view`
     )
     return [
       { text: prn.recipient },

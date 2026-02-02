@@ -20,6 +20,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 describe(fetchPackagingRecyclingNote, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
+  const accreditationId = 'acc-abc'
   const prnId = 'prn-789'
   const idToken = 'test-id-token'
 
@@ -45,6 +46,7 @@ describe(fetchPackagingRecyclingNote, () => {
     const result = await fetchPackagingRecyclingNote(
       organisationId,
       registrationId,
+      accreditationId,
       prnId,
       idToken
     )
@@ -61,13 +63,14 @@ describe(fetchPackagingRecyclingNote, () => {
     await fetchPackagingRecyclingNote(
       organisationId,
       registrationId,
+      accreditationId,
       prnId,
       idToken
     )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(
-        /\/v1\/organisations\/org-123\/registrations\/reg-456\/l-packaging-recycling-notes\/prn-789$/
+        /\/v1\/organisations\/org-123\/registrations\/reg-456\/accreditations\/acc-abc\/l-packaging-recycling-notes\/prn-789$/
       ),
       expect.any(Object)
     )
@@ -82,6 +85,7 @@ describe(fetchPackagingRecyclingNote, () => {
     await fetchPackagingRecyclingNote(
       organisationId,
       registrationId,
+      accreditationId,
       prnId,
       idToken
     )
@@ -105,11 +109,17 @@ describe(fetchPackagingRecyclingNote, () => {
       json: vi.fn().mockResolvedValue({})
     })
 
-    await fetchPackagingRecyclingNote('org/123', 'reg&456', 'prn#789', idToken)
+    await fetchPackagingRecyclingNote(
+      'org/123',
+      'reg&456',
+      'acc@abc',
+      'prn#789',
+      idToken
+    )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining(
-        'organisations/org%2F123/registrations/reg%26456/l-packaging-recycling-notes/prn%23789'
+        'organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/l-packaging-recycling-notes/prn%23789'
       ),
       expect.any(Object)
     )
@@ -127,6 +137,7 @@ describe(fetchPackagingRecyclingNote, () => {
       fetchPackagingRecyclingNote(
         organisationId,
         registrationId,
+        accreditationId,
         prnId,
         idToken
       )
@@ -148,6 +159,7 @@ describe(fetchPackagingRecyclingNote, () => {
       fetchPackagingRecyclingNote(
         organisationId,
         registrationId,
+        accreditationId,
         prnId,
         idToken
       )
