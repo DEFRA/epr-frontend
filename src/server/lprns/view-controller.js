@@ -12,7 +12,7 @@ import { updatePrnStatus } from './helpers/update-prn-status.js'
  */
 export const viewController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
+    if (!config.get('featureFlags.lprns')) {
       throw Boom.notFound()
     }
 
@@ -50,7 +50,7 @@ export const viewController = {
  */
 export const viewPostController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
+    if (!config.get('featureFlags.lprns')) {
       throw Boom.notFound()
     }
 

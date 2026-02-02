@@ -17,7 +17,7 @@ const STUB_RECIPIENTS = [
  */
 export const controller = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
+    if (!config.get('featureFlags.lprns')) {
       throw Boom.notFound()
     }
 

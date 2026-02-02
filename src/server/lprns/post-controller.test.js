@@ -64,11 +64,11 @@ describe('#postCreatePrnController', () => {
 
   describe('when feature flag is enabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', true)
+      config.set('featureFlags.lprns', true)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     describe('csrf protection', () => {
@@ -357,11 +357,11 @@ describe('#postCreatePrnController', () => {
 
   describe('when feature flag is disabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', true)
+      config.set('featureFlags.lprns', true)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     it('returns 404 for valid payload (handler check)', async ({ server }) => {
@@ -371,7 +371,7 @@ describe('#postCreatePrnController', () => {
       })
 
       // Disable feature flag before POST
-      config.set('featureFlags.prns', false)
+      config.set('featureFlags.lprns', false)
 
       try {
         const { statusCode } = await server.inject({
@@ -384,7 +384,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.notFound)
       } finally {
-        config.set('featureFlags.prns', true)
+        config.set('featureFlags.lprns', true)
       }
     })
 
@@ -397,7 +397,7 @@ describe('#postCreatePrnController', () => {
       })
 
       // Disable feature flag before POST with invalid payload
-      config.set('featureFlags.prns', false)
+      config.set('featureFlags.lprns', false)
 
       try {
         const { statusCode } = await server.inject({
@@ -410,7 +410,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.notFound)
       } finally {
-        config.set('featureFlags.prns', true)
+        config.set('featureFlags.lprns', true)
       }
     })
   })

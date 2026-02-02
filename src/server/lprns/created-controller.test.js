@@ -204,11 +204,11 @@ describe('#createdController', () => {
 
   describe('when feature flag is enabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', true)
+      config.set('featureFlags.lprns', true)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     describe('success page (after creating PRN)', () => {
@@ -348,15 +348,15 @@ describe('#createdController', () => {
 
   describe('when feature flag is disabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', true)
+      config.set('featureFlags.lprns', true)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     it('returns 404', async ({ server }) => {
-      config.set('featureFlags.prns', false)
+      config.set('featureFlags.lprns', false)
 
       try {
         const { statusCode } = await server.inject({
@@ -367,7 +367,7 @@ describe('#createdController', () => {
 
         expect(statusCode).toBe(statusCodes.notFound)
       } finally {
-        config.set('featureFlags.prns', true)
+        config.set('featureFlags.lprns', true)
       }
     })
   })

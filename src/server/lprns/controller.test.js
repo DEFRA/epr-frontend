@@ -65,11 +65,11 @@ describe('#createPrnController', () => {
 
   describe('when feature is disabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', false)
+      config.set('featureFlags.lprns', false)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     it('should return 404', async ({ server }) => {
@@ -85,11 +85,11 @@ describe('#createPrnController', () => {
 
   describe('when feature is enabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', true)
+      config.set('featureFlags.lprns', true)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     describe('page rendering', () => {
@@ -262,7 +262,7 @@ describe('#createPrnController', () => {
       }) => {
         // Server created with flag ON (routes registered)
         // Disable flag to test controller-level check
-        config.set('featureFlags.prns', false)
+        config.set('featureFlags.lprns', false)
 
         try {
           const { statusCode } = await server.inject({
@@ -273,7 +273,7 @@ describe('#createPrnController', () => {
 
           expect(statusCode).toBe(statusCodes.notFound)
         } finally {
-          config.set('featureFlags.prns', true)
+          config.set('featureFlags.lprns', true)
         }
       })
 

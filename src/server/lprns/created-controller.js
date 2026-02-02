@@ -7,7 +7,7 @@ import { config } from '#config/config.js'
  */
 export const createdController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
+    if (!config.get('featureFlags.lprns')) {
       throw Boom.notFound()
     }
 

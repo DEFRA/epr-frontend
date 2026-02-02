@@ -76,7 +76,7 @@ export const postController = {
     validate: {
       payload: payloadSchema,
       failAction: async (request, h, error) => {
-        if (!config.get('featureFlags.prns')) {
+        if (!config.get('featureFlags.lprns')) {
           throw Boom.notFound()
         }
 
@@ -109,7 +109,7 @@ export const postController = {
     }
   },
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
+    if (!config.get('featureFlags.lprns')) {
       throw Boom.notFound()
     }
 

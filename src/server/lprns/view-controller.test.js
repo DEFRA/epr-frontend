@@ -173,11 +173,11 @@ describe('#viewController', () => {
 
   describe('when feature flag is enabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', true)
+      config.set('featureFlags.lprns', true)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     describe('view existing PRN (from list page)', () => {
@@ -869,16 +869,16 @@ describe('#viewController', () => {
 
   describe('when feature flag is disabled', () => {
     beforeAll(() => {
-      config.set('featureFlags.prns', true)
+      config.set('featureFlags.lprns', true)
     })
 
     afterAll(() => {
-      config.reset('featureFlags.prns')
+      config.reset('featureFlags.lprns')
     })
 
     it('returns 404 for GET', async ({ server }) => {
       // Disable feature flag before request
-      config.set('featureFlags.prns', false)
+      config.set('featureFlags.lprns', false)
 
       try {
         const { statusCode } = await server.inject({
@@ -889,12 +889,12 @@ describe('#viewController', () => {
 
         expect(statusCode).toBe(statusCodes.notFound)
       } finally {
-        config.set('featureFlags.prns', true)
+        config.set('featureFlags.lprns', true)
       }
     })
 
     it('returns 404 for POST', async ({ server }) => {
-      config.set('featureFlags.prns', false)
+      config.set('featureFlags.lprns', false)
 
       try {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
@@ -913,7 +913,7 @@ describe('#viewController', () => {
 
         expect(statusCode).toBe(statusCodes.notFound)
       } finally {
-        config.set('featureFlags.prns', true)
+        config.set('featureFlags.lprns', true)
       }
     })
   })

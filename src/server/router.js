@@ -44,7 +44,8 @@ export const router = {
         summaryLogUpload
       ])
 
-      if (config.get('featureFlags.prns')) {
+      // Lumpy PRNs (accelerated implementation) - separate from engineering team's prns flag
+      if (config.get('featureFlags.lprns')) {
         await server.register([lprns])
       }
 

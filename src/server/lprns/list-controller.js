@@ -10,7 +10,7 @@ import { buildListViewData } from './list-view-data.js'
  */
 export const listController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
+    if (!config.get('featureFlags.lprns')) {
       throw Boom.notFound()
     }
 
