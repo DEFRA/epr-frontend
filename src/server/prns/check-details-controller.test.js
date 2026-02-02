@@ -469,7 +469,7 @@ describe('#checkDetailsController', () => {
 
   describe('navigation', () => {
     beforeEach(() => {
-      vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         fixtureReprocessor
       )
     })
