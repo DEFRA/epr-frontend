@@ -272,7 +272,7 @@ export const config = convict({
   },
   featureFlags: {
     prns: {
-      doc: 'Feature Flag: PRNs (engineering team implementation)',
+      doc: 'Feature Flag: PRNs',
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_PRNS'
