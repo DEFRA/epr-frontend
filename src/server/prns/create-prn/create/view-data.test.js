@@ -83,11 +83,13 @@ describe('#buildCreateViewData', () => {
       expect(result.recipient.items).toHaveLength(4) // placeholder + 3 options
       expect(result.recipient.items[0]).toStrictEqual({
         value: '',
-        text: 'Select an option'
+        text: 'Select an option',
+        selected: false
       })
       expect(result.recipient.items[1]).toStrictEqual({
         value: 'org-1',
-        text: 'Acme Compliance Scheme'
+        text: 'Acme Compliance Scheme',
+        selected: false
       })
     })
   })

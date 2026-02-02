@@ -47,6 +47,12 @@
     "returnToHome": "Return to home"
   },
   "create": {
+    "errors": {
+      "notesTooLong": "Issuer notes must be 200 characters or fewer",
+      "recipientRequired": "Select who this will be issued to",
+      "tonnagePositiveInteger": "Tonnage must be a positive whole number",
+      "tonnageRequired": "Enter the tonnage"
+    },
     "helpSummary": "Can't find the producer or compliance scheme?",
     "notesLabel": "Add issuer notes (optional)",
     "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",

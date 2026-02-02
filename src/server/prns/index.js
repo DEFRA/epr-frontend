@@ -1,8 +1,9 @@
-import { confirmationController } from './issue-prn/confirmation/controller.js'
-import { createController } from './create-prn/create/controller.js'
-import { listController } from './view/list/controller.js'
 import { checkDetailsController } from './create-prn/check-details/controller.js'
+import { createController } from './create-prn/create/controller.js'
+import { postCreateController } from './create-prn/create/post-controller.js'
+import { confirmationController } from './issue-prn/confirmation/controller.js'
 import { detailController } from './view/detail/controller.js'
+import { listController } from './view/list/controller.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -27,6 +28,11 @@ export const prns = {
         {
           ...createController,
           method: 'GET',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
+        },
+        {
+          ...postCreateController,
+          method: 'POST',
           path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn'
         },
         {
