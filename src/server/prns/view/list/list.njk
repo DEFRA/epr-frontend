@@ -43,10 +43,14 @@
 
       <h2 class="govuk-heading-m">{{ selectHeading }}</h2>
 
-      {{ govukTable({
-        head: table.head,
-        rows: table.rows
-      }) }}
+      {% if hasCreatedPrns %}
+        {{ govukTable({
+          head: table.head,
+          rows: table.rows
+        }) }}
+      {% else %}
+        <p class="govuk-body">{{ emptyMessage }}</p>
+      {% endif %}
 
     </div>
   </div>

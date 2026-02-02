@@ -1,3 +1,4 @@
+import { prnStatuses } from '#server/common/constants/statuses.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getPrns } from '#server/common/helpers/prns/get-prns.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
@@ -29,12 +30,17 @@ export const listController = {
       getPrns(organisationId, accreditation.id, session.idToken, request.logger)
     ])
 
+    const hasCreatedPrns = prns.some(
+      (prn) => prn.status !== prnStatuses.draft
+    )
+
     const viewData = buildListViewData(request, {
       organisationId,
       registrationId,
       registration,
       wasteBalance,
-      prns
+      prns,
+      hasCreatedPrns
     })
 
     return h.view('prns/view/list/list', viewData)

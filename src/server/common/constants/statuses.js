@@ -1,4 +1,5 @@
 export const prnStatuses = {
+  draft: 'draft',
   awaitingAuthorisation: 'awaiting_authorisation',
   awaitingAcceptance: 'awaiting_acceptance',
   accepted: 'accepted',
