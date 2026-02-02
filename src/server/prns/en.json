@@ -1,0 +1,85 @@
+{
+  "checkDetails": {
+    "perns": {
+      "pageTitle": "Check before creating PERN",
+      "leadParagraph": "Check the following information is correct before creating this PERN.",
+      "detailsHeading": "PERN details",
+      "insetText": "Any information not shown here will be automatically populated when the PERN is issued."
+    },
+    "prns": {
+      "pageTitle": "Check before creating PRN",
+      "leadParagraph": "Check the following information is correct before creating this PRN.",
+      "detailsHeading": "PRN details",
+      "insetText": "Any information not shown here will be automatically populated when the PRN is issued."
+    },
+    "recipient": "Packaging waste producer or compliance scheme",
+    "tonnage": "Tonnage",
+    "tonnageInWords": "Tonnage in words",
+    "processToBeUsed": "Process to be used",
+    "decemberWaste": "December waste",
+    "issuer": "Issuer",
+    "issuedDate": "Issued date",
+    "issuedBy": "Issued by",
+    "position": "Position",
+    "issuerNotes": "Issuer notes",
+    "notProvided": "Not provided",
+    "accreditationDetailsHeading": "Accreditation details",
+    "material": "Material",
+    "accreditationNumber": "Accreditation number",
+    "accreditationAddress": "Accreditation address",
+    "startAgain": "Start again"
+  },
+  "create": {
+    "helpSummary": "Can't find the producer or compliance scheme?",
+    "notesLabel": "Add issuer notes (optional)",
+    "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
+    "tonnageHint": "Enter a whole number without decimal places",
+    "tonnageSuffix": "tonnes",
+    "perns": {
+      "pageTitle": "Create a PERN",
+      "tonnageLabel": "Enter PERN tonnage",
+      "recipientLabel": "Enter who this PERN will be issued to",
+      "helpText": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+      "notesHint": "These notes will appear on the PERN"
+    },
+    "prns": {
+      "pageTitle": "Create a PRN",
+      "tonnageLabel": "Enter PRN tonnage",
+      "recipientLabel": "Enter who this PRN will be issued to",
+      "helpText": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+      "notesHint": "These notes will appear on the PRN"
+    }
+  },
+  "detail": {
+    "perns": {
+      "pageTitle": "PERN"
+    },
+    "prns": {
+      "pageTitle": "PRN"
+    }
+  },
+  "list": {
+    "availableWasteBalance": "Available waste balance",
+    "table": {
+      "recipientHeading": "Packaging waste producer or compliance scheme",
+      "dateHeading": "Date created",
+      "tonnageHeading": "Tonnage",
+      "statusHeading": "Status",
+      "actionHeading": "Action",
+      "selectLink": "Select"
+    },
+    "perns": {
+      "pageTitle": "PERNs",
+      "createText": "Create a PERN",
+      "selectHeading": "Select a PERN",
+      "balanceHint": "This is the balance available for creating new PERNs"
+    },
+    "prns": {
+      "pageTitle": "PRNs",
+      "createText": "Create a PRN",
+      "selectHeading": "Select a PRN",
+      "balanceHint": "This is the balance available for creating new PRNs"
+    }
+  },
+  "selectOption": "Select an option"
+}

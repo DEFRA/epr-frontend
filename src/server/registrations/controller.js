@@ -135,13 +135,13 @@ function getPrnViewData(request, isExporter, organisationId, registrationId) {
   const { t: localise } = request
   const key = isExporter ? 'perns' : 'prns'
 
-  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
-  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
+  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
+  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/prns`
 
   return {
     isEnabled: config.get('featureFlags.prns'),
     description: localise(`registrations:${key}.description`),
-    createLink: {
+    link: {
       href: request.localiseUrl(createUrl),
       text: localise(`registrations:${key}.createNew`)
     },
@@ -175,7 +175,7 @@ function getLumpyPrnViewData(
 
   return {
     isEnabled: config.get('featureFlags.lprns'),
-    createLink: {
+    link: {
       href: request.localiseUrl(createUrl),
       text: localise(`registrations:${key}.createNew`)
     },

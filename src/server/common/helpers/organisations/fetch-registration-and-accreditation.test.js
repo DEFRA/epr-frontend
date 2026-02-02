@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { getRegistrationWithAccreditation } from './get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-describe(getRegistrationWithAccreditation, () => {
+describe(fetchRegistrationAndAccreditation, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const accreditationId = 'acc-789'
@@ -29,7 +29,7 @@ describe(getRegistrationWithAccreditation, () => {
       json: vi.fn().mockResolvedValue(mockOrganisationData)
     })
 
-    const result = await getRegistrationWithAccreditation(
+    const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken
@@ -59,7 +59,7 @@ describe(getRegistrationWithAccreditation, () => {
       json: vi.fn().mockResolvedValue(mockOrganisationData)
     })
 
-    const result = await getRegistrationWithAccreditation(
+    const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken
@@ -86,7 +86,7 @@ describe(getRegistrationWithAccreditation, () => {
       json: vi.fn().mockResolvedValue(mockOrganisationData)
     })
 
-    const result = await getRegistrationWithAccreditation(
+    const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken
@@ -115,7 +115,7 @@ describe(getRegistrationWithAccreditation, () => {
       json: vi.fn().mockResolvedValue(mockOrganisationData)
     })
 
-    const result = await getRegistrationWithAccreditation(
+    const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken
@@ -140,7 +140,7 @@ describe(getRegistrationWithAccreditation, () => {
       json: vi.fn().mockResolvedValue(mockOrganisationData)
     })
 
-    const result = await getRegistrationWithAccreditation(
+    const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken
@@ -163,7 +163,7 @@ describe(getRegistrationWithAccreditation, () => {
       json: vi.fn().mockResolvedValue(mockOrganisationData)
     })
 
-    const result = await getRegistrationWithAccreditation(
+    const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken
@@ -182,7 +182,7 @@ describe(getRegistrationWithAccreditation, () => {
       json: vi.fn().mockResolvedValue({ id: organisationId })
     })
 
-    await getRegistrationWithAccreditation(
+    await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       idToken
@@ -208,7 +208,7 @@ describe(getRegistrationWithAccreditation, () => {
     })
 
     await expect(
-      getRegistrationWithAccreditation(organisationId, registrationId, idToken)
+      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }

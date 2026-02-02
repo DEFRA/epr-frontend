@@ -4,7 +4,7 @@ import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { formatDateForDisplay } from '#server/common/helpers/format-date-for-display.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
@@ -119,7 +119,7 @@ async function handleDraftView(
   { organisationId, registrationId, prnDraft, localise, session }
 ) {
   const { organisationData, registration, accreditation } =
-    await getRegistrationWithAccreditation(
+    await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       session.idToken
@@ -187,7 +187,7 @@ async function handleExistingView(
   // Fetch PRN and registration data from backend
   const [{ organisationData, registration, accreditation }, prn] =
     await Promise.all([
-      getRegistrationWithAccreditation(
+      fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
         session.idToken

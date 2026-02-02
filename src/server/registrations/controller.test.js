@@ -840,12 +840,12 @@ describe('#accreditationDashboardController', () => {
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
           title: 'PRNs',
           description: 'Create and manage PRNs.',
-          createLinkText: 'Create a PRN',
+          createLinkText: 'Create new PRN',
           manageLinkText: 'Manage PRNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/packaging-recycling-notes/create',
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn',
           expectedManageUrl:
-            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/packaging-recycling-notes'
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/prns'
         },
         {
           name: 'PERN (exporter)',
@@ -853,12 +853,12 @@ describe('#accreditationDashboardController', () => {
           url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
           title: 'PERNs',
           description: 'Create and manage PERNs.',
-          createLinkText: 'Create a PERN',
+          createLinkText: 'Create new PERN',
           manageLinkText: 'Manage PERNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/packaging-recycling-notes/create',
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn',
           expectedManageUrl:
-            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/packaging-recycling-notes'
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/prns'
         }
       ])(
         'should display $name card with create and manage links',
@@ -955,7 +955,7 @@ describe('#accreditationDashboardController', () => {
           fixture: fixtureData,
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
           title: 'PRNs',
-          createLinkText: 'Create a PRN',
+          createLinkText: 'Create new PRN',
           manageLinkText: 'Manage PRNs',
           expectedCreateUrl:
             '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes/create',
@@ -967,7 +967,7 @@ describe('#accreditationDashboardController', () => {
           fixture: fixtureExportingOnly,
           url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
           title: 'PERNs',
-          createLinkText: 'Create a PERN',
+          createLinkText: 'Create new PERN',
           manageLinkText: 'Manage PERNs',
           expectedCreateUrl:
             '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/l-packaging-recycling-notes/create',
@@ -1043,12 +1043,12 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        // Engineering team links (without l- prefix)
+        // Engineering team links
         expect(result).toContain(
-          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/packaging-recycling-notes/create'
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn'
         )
         expect(result).toContain(
-          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/packaging-recycling-notes"'
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/prns'
         )
 
         // Lumpy links (with l- prefix)

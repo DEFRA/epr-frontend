@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { config } from '#config/config.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { createPrn } from './helpers/create-prn.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
@@ -83,7 +83,7 @@ export const postController = {
         const { organisationId, registrationId } = request.params
         const session = request.auth.credentials
 
-        const { registration } = await getRegistrationWithAccreditation(
+        const { registration } = await fetchRegistrationAndAccreditation(
           organisationId,
           registrationId,
           session.idToken

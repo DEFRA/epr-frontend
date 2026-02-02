@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -9,7 +9,7 @@ import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
@@ -163,7 +163,7 @@ function mergeCookies(...cookieStrings) {
 describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
@@ -255,7 +255,7 @@ describe('#viewController', () => {
       it('displays PERN details for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
@@ -354,7 +354,7 @@ describe('#viewController', () => {
       })
 
       it('returns 404 when registration not found', async ({ server }) => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue({
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
           organisationData: fixtureReprocessor.organisationData,
           registration: null,
           accreditation: null
@@ -682,7 +682,7 @@ describe('#viewController', () => {
       it('displays PERN check page for exporter registration', async ({
         server
       }) => {
-        vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(createPrn).mockResolvedValue(mockPernCreated)

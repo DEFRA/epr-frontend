@@ -1,3 +1,12 @@
+export const prnStatuses = {
+  awaitingAuthorisation: 'awaiting_authorisation',
+  awaitingAcceptance: 'awaiting_acceptance',
+  accepted: 'accepted',
+  rejected: 'rejected',
+  cancelled: 'cancelled',
+  awaitingCancellation: 'awaiting_cancellation'
+}
+
 export const summaryLogStatuses = {
   preprocessing: 'preprocessing',
   rejected: 'rejected',
@@ -7,5 +16,6 @@ export const summaryLogStatuses = {
   submitting: 'submitting',
   submitted: 'submitted',
   superseded: 'superseded',
-  validationFailed: 'validation_failed'
+  validationFailed: 'validation_failed',
+  submissionFailed: 'submission_failed'
 }

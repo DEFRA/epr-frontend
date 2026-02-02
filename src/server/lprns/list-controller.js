@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
@@ -18,7 +18,7 @@ export const listController = {
     const session = request.auth.credentials
 
     const { registration, accreditation } =
-      await getRegistrationWithAccreditation(
+      await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
         session.idToken

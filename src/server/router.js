@@ -11,6 +11,7 @@ import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
 import { organisations } from '#server/organisations/index.js'
 import { lprns } from '#server/lprns/index.js'
+import { prns } from '#server/prns/index.js'
 import { registrations } from '#server/registrations/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
@@ -43,6 +44,11 @@ export const router = {
         summaryLog,
         summaryLogUpload
       ])
+
+      // Engineering team PRNs - standard implementation
+      if (config.get('featureFlags.prns')) {
+        await server.register([prns])
+      }
 
       // Lumpy PRNs (accelerated implementation) - separate from engineering team's prns flag
       if (config.get('featureFlags.lprns')) {

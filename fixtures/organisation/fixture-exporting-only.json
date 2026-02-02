@@ -38,6 +38,7 @@
       "formSubmissionTime": "2025-07-01T10:00:00.000Z",
       "material": "plastic",
       "wasteProcessingType": "exporter",
+      "accreditationId": "acc-export-001-plastic-approved",
       "cbduNumber": "CBDU100001",
       "exportPorts": ["Felixstowe", "Southampton"],
       "submitterContactDetails": {
@@ -70,6 +71,7 @@
       "formSubmissionTime": "2025-06-15T09:20:00.000Z",
       "material": "wood",
       "wasteProcessingType": "exporter",
+      "accreditationId": "acc-export-002-wood-approved",
       "cbduNumber": "CBDU100002",
       "exportPorts": ["Liverpool", "Bristol"],
       "submitterContactDetails": {
@@ -107,6 +109,7 @@
       "material": "glass",
       "glassRecyclingProcess": ["glass_re_melt"],
       "wasteProcessingType": "exporter",
+      "accreditationId": "acc-export-003-glass-suspended",
       "cbduNumber": "CBDU100003",
       "exportPorts": ["Dover"],
       "submitterContactDetails": {
@@ -139,6 +142,7 @@
       "formSubmissionTime": "2025-08-05T13:30:00.000Z",
       "material": "paper",
       "wasteProcessingType": "exporter",
+      "accreditationId": "acc-export-004-paper-approved",
       "cbduNumber": "CBDU100004",
       "exportPorts": ["Felixstowe"],
       "submitterContactDetails": {
@@ -175,6 +179,7 @@
       "formSubmissionTime": "2025-04-10T11:20:00.000Z",
       "material": "aluminium",
       "wasteProcessingType": "exporter",
+      "accreditationId": "acc-export-005-aluminium-cancelled",
       "cbduNumber": "CBDU100005",
       "exportPorts": ["Southampton"],
       "submitterContactDetails": {

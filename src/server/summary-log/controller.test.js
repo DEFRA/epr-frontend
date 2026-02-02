@@ -4,7 +4,7 @@ import { validationFailureCodes } from '#server/common/constants/validation-code
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -55,9 +55,9 @@ vi.mock(
 )
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-registration-with-accreditation.js'),
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
   () => ({
-    getRegistrationWithAccreditation: vi.fn().mockResolvedValue({
+    fetchRegistrationAndAccreditation: vi.fn().mockResolvedValue({
       organisationData: undefined,
       registration: undefined,
       accreditation: undefined
@@ -904,7 +904,7 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(getRegistrationWithAccreditation).not.toHaveBeenCalled()
+        expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
         expect(fetchWasteBalances).not.toHaveBeenCalled()
       })
 
@@ -918,7 +918,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        getRegistrationWithAccreditation.mockResolvedValueOnce({
+        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -941,7 +941,7 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(getRegistrationWithAccreditation).toHaveBeenCalledWith(
+        expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
           organisationId,
           registrationId,
           'test-id-token'
@@ -963,7 +963,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        getRegistrationWithAccreditation.mockResolvedValueOnce({
+        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -1002,7 +1002,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        getRegistrationWithAccreditation.mockResolvedValueOnce({
+        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId },
           accreditation: undefined
@@ -1035,7 +1035,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        getRegistrationWithAccreditation.mockResolvedValueOnce({
+        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -1066,7 +1066,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        getRegistrationWithAccreditation.mockResolvedValueOnce({
+        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -1100,7 +1100,7 @@ describe('#summaryLogUploadProgressController', () => {
           accreditationNumber: 'ACC-2025-001'
         })
 
-        getRegistrationWithAccreditation.mockResolvedValueOnce({
+        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -1158,7 +1158,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
         expect(result).not.toContain('Your updated waste balance')
-        expect(getRegistrationWithAccreditation).not.toHaveBeenCalled()
+        expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
         expect(fetchWasteBalances).not.toHaveBeenCalled()
       })
     })
@@ -1761,6 +1761,45 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed
+      })
+
+      await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(initiateSummaryLogUpload).toHaveBeenCalledWith({
+        organisationId,
+        registrationId,
+        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+        idToken: 'test-id-token'
+      })
+    })
+
+    it('status: submission_failed - should show validation failures page with re-upload option', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submissionFailed
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toContain('Your summary log cannot be uploaded')
+      expect(result).toContain('Upload updated XLSX file')
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it('status: submission_failed - should initiate upload for re-upload', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.submissionFailed
       })
 
       await server.inject({

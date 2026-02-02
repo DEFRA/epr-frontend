@@ -8,14 +8,14 @@
     "title": "PERNs",
     "description": "Create and manage PERNs.",
     "notAvailable": "PERN management is not yet available.",
-    "createNew": "Create a PERN",
+    "createNew": "Create new PERN",
     "manage": "Manage PERNs"
   },
   "prns": {
     "title": "PRNs",
     "description": "Create and manage PRNs.",
     "notAvailable": "PRN management is not yet available.",
-    "createNew": "Create a PRN",
+    "createNew": "Create new PRN",
     "manage": "Manage PRNs"
   },
   "registration": "Registration",

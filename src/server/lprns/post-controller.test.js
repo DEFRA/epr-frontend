@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
-import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -9,7 +9,7 @@ import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('./helpers/create-prn.js'))
 
@@ -57,7 +57,7 @@ const validPayload = {
 describe('#postCreatePrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRegistrationWithAccreditation).mockResolvedValue(
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
   })

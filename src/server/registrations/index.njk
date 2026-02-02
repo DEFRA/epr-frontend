@@ -131,17 +131,15 @@
               <div class="govuk-summary-card__content">
                 {% if prns.isEnabled %}
                   <p class="govuk-body">
-                    <a href="{{ prns.createLink.href }}" class="govuk-link">{{ prns.createLink.text }}</a>
-                  </p>
-                  <p class="govuk-body">
+                    <a href="{{ prns.link.href }}" class="govuk-link">{{ prns.link.text }}</a>
+                    <br>
                     <a href="{{ prns.manageLink.href }}" class="govuk-link">{{ prns.manageLink.text }}</a>
                   </p>
                 {% endif %}
                 {% if lprns.isEnabled %}
                   <p class="govuk-body">
-                    <a href="{{ lprns.createLink.href }}" class="govuk-link">{{ lprns.createLink.text }}</a>
-                  </p>
-                  <p class="govuk-body">
+                    <a href="{{ lprns.link.href }}" class="govuk-link">{{ lprns.link.text }}</a>
+                    <br>
                     <a href="{{ lprns.manageLink.href }}" class="govuk-link">{{ lprns.manageLink.text }}</a>
                   </p>
                 {% endif %}
