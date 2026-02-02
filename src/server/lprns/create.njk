@@ -1,0 +1,96 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if errors %}
+        {{ govukErrorSummary({
+          titleText: errorSummary.title,
+          errorList: errorSummary.list
+        }) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      <form method="POST" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+        <p class="govuk-body">
+          <span class="govuk-!-font-weight-bold">{{ material.label }}:</span>
+          {{ material.value }}
+        </p>
+
+        <input type="hidden" name="material" value="{{ hiddenFields.material }}">
+        <input type="hidden" name="nation" value="{{ hiddenFields.nation }}">
+        <input type="hidden" name="wasteProcessingType" value="{{ hiddenFields.wasteProcessingType }}">
+
+        {{ govukInput({
+          label: {
+            text: tonnage.label,
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: tonnage.hint
+          },
+          classes: "govuk-input--width-5",
+          id: "tonnage",
+          name: "tonnage",
+          value: formValues.tonnage if formValues else "",
+          suffix: {
+            text: tonnage.suffix
+          },
+          spellcheck: false,
+          errorMessage: errors.tonnage if errors else null
+        }) }}
+
+        {{ govukSelect({
+          id: "recipient",
+          name: "recipient",
+          label: {
+            text: recipient.label,
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: recipient.hint
+          },
+          items: recipient.items,
+          errorMessage: errors.recipient if errors else null
+        }) }}
+
+        {{ govukDetails({
+          summaryText: help.summary,
+          html: '<p class="govuk-body">' + help.text + '</p>'
+        }) }}
+
+        {{ govukTextarea({
+          name: "notes",
+          id: "notes",
+          label: {
+            text: notes.label,
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: notes.hint
+          },
+          value: formValues.notes if formValues else "",
+          attributes: {
+            maxlength: "200"
+          },
+          errorMessage: errors.notes if errors else null
+        }) }}
+
+        {{ govukButton({
+          text: submitButton.text
+        }) }}
+      </form>
+
+    </div>
+  </div>
+{% endblock %}
