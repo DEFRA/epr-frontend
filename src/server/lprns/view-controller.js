@@ -143,24 +143,24 @@ async function handleDraftView(
     localise
   })
 
-  return h.view('prns/view', {
-    pageTitle: localise(`prns:${noteType}:checkPageTitle`),
-    caption: localise(`prns:${noteType}:caption`),
-    heading: localise(`prns:${noteType}:checkHeading`),
-    introText: localise(`prns:${noteType}:checkIntroText`),
-    authorisationText: localise(`prns:${noteType}:checkAuthorisationText`),
-    insetText: localise(`prns:${noteType}:checkInsetText`),
+  return h.view('lprns/view', {
+    pageTitle: localise(`lprns:${noteType}:checkPageTitle`),
+    caption: localise(`lprns:${noteType}:caption`),
+    heading: localise(`lprns:${noteType}:checkHeading`),
+    introText: localise(`lprns:${noteType}:checkIntroText`),
+    authorisationText: localise(`lprns:${noteType}:checkAuthorisationText`),
+    insetText: localise(`lprns:${noteType}:checkInsetText`),
     prnDetailsHeading: localise(
-      isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
+      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
     ),
     prnDetailRows,
-    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
+    accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     createButton: {
-      text: localise(`prns:${noteType}:createButton`)
+      text: localise(`lprns:${noteType}:createButton`)
     },
     cancelButton: {
-      text: localise(`prns:${noteType}:cancelButton`),
+      text: localise(`lprns:${noteType}:cancelButton`),
       href: `/organisations/${organisationId}/registrations/${registrationId}`
     },
     organisationId,
@@ -232,28 +232,28 @@ async function handleExistingView(
     localise
   })
 
-  return h.view('prns/view', {
+  return h.view('lprns/view', {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
     heading: isExporter ? 'PERN' : 'PRN',
     showRegulatorLogos: isNotDraft,
     complianceYearText:
       isNotDraft && prn.accreditationYear != null
-        ? localise(`prns:view:${noteType}:complianceYearText`, {
+        ? localise(`lprns:view:${noteType}:complianceYearText`, {
             year: `<strong>${prn.accreditationYear}</strong>`
           })
         : null,
     prnDetailsHeading: localise(
-      isExporter ? 'prns:pernDetailsHeading' : 'prns:prnDetailsHeading'
+      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
     ),
     prnDetailRows,
-    accreditationDetailsHeading: localise('prns:accreditationDetailsHeading'),
+    accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
     returnLink: {
       href: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
       ),
-      text: localise(`prns:view:${noteType}:returnLink`)
+      text: localise(`lprns:view:${noteType}:returnLink`)
     }
   })
 }
@@ -289,50 +289,51 @@ function formatAddress(address) {
 function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
   return [
     {
-      key: { text: localise('prns:issuedByLabel') },
+      key: { text: localise('lprns:issuedByLabel') },
       value: {
         text:
-          organisationData.companyDetails?.name || localise('prns:notAvailable')
+          organisationData.companyDetails?.name ||
+          localise('lprns:notAvailable')
       }
     },
     {
-      key: { text: localise('prns:issuedToLabel') },
+      key: { text: localise('lprns:issuedToLabel') },
       value: { text: prnDraft.recipientName }
     },
     {
-      key: { text: localise('prns:tonnageLabel') },
+      key: { text: localise('lprns:tonnageLabel') },
       value: { text: prnDraft.tonnage }
     },
     {
-      key: { text: localise('prns:tonnageInWordsLabel') },
+      key: { text: localise('lprns:tonnageInWordsLabel') },
       value: { text: prnDraft.tonnageInWords || '' }
     },
     {
-      key: { text: localise('prns:processToBeUsedLabel') },
+      key: { text: localise('lprns:processToBeUsedLabel') },
       value: { text: prnDraft.processToBeUsed || '' }
     },
     {
-      key: { text: localise('prns:decemberWasteLabel') },
+      key: { text: localise('lprns:decemberWasteLabel') },
       value: {
         text: prnDraft.isDecemberWaste
-          ? localise('prns:decemberWasteYes')
-          : localise('prns:decemberWasteNo')
+          ? localise('lprns:decemberWasteYes')
+          : localise('lprns:decemberWasteNo')
       }
     },
     {
-      key: { text: localise('prns:issueCommentsLabel') },
-      value: { text: prnDraft.notes || localise('prns:notProvided') }
+      key: { text: localise('lprns:issueCommentsLabel') },
+      value: { text: prnDraft.notes || localise('lprns:notProvided') }
     },
     {
-      key: { text: localise('prns:issuedDateLabel') },
+      key: { text: localise('lprns:issuedDateLabel') },
       value: { text: '' }
     },
     {
-      key: { text: localise('prns:authorisedByLabel') },
+      key: { text: localise('lprns:authorisedByLabel') },
       value: { text: '' }
     },
     {
-      key: { text: localise('prns:positionLabel') },
+      key: { text: localise('lprns:positionLabel') },
       value: { text: '' }
     }
   ]
@@ -358,8 +359,8 @@ function buildExistingPrnDetailRows({
   isNotDraft
 }) {
   const numberLabel = isExporter
-    ? 'prns:pernNumberLabel'
-    : 'prns:prnNumberLabel'
+    ? 'lprns:pernNumberLabel'
+    : 'lprns:prnNumberLabel'
   const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
 
   if (isNotDraft) {
@@ -382,7 +383,7 @@ function buildExistingPrnDetailRows({
  */
 function buildStatusRow(statusConfig, localise) {
   return {
-    key: { text: localise('prns:view:status') },
+    key: { text: localise('lprns:view:status') },
     value: {
       html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
     }
@@ -397,28 +398,28 @@ function buildStatusRow(statusConfig, localise) {
  */
 function buildPrnCoreRows(prn, localise) {
   const decemberWasteText = prn.isDecemberWaste
-    ? localise('prns:decemberWasteYes')
-    : localise('prns:decemberWasteNo')
+    ? localise('lprns:decemberWasteYes')
+    : localise('lprns:decemberWasteNo')
 
   return [
     {
-      key: { text: localise('prns:buyerLabel') },
+      key: { text: localise('lprns:buyerLabel') },
       value: { text: prn.issuedToOrganisation }
     },
     {
-      key: { text: localise('prns:tonnageLabel') },
+      key: { text: localise('lprns:tonnageLabel') },
       value: { text: String(prn.tonnage) }
     },
     {
-      key: { text: localise('prns:tonnageInWordsLabel') },
+      key: { text: localise('lprns:tonnageInWordsLabel') },
       value: { text: prn.tonnageInWords || '' }
     },
     {
-      key: { text: localise('prns:processToBeUsedLabel') },
+      key: { text: localise('lprns:processToBeUsedLabel') },
       value: { text: prn.processToBeUsed || '' }
     },
     {
-      key: { text: localise('prns:decemberWasteLabel') },
+      key: { text: localise('lprns:decemberWasteLabel') },
       value: { text: decemberWasteText }
     }
   ]
@@ -436,28 +437,28 @@ function buildPrnAuthorisationRows(prn, organisationData, localise) {
     ? formatDateForDisplay(prn.authorisedAt)
     : ''
   const issuedBy =
-    organisationData?.companyDetails?.name || localise('prns:notAvailable')
-  const notesText = prn.notes || localise('prns:notProvided')
+    organisationData?.companyDetails?.name || localise('lprns:notAvailable')
+  const notesText = prn.notes || localise('lprns:notProvided')
 
   return [
     {
-      key: { text: localise('prns:issuedDateLabel') },
+      key: { text: localise('lprns:issuedDateLabel') },
       value: { text: issuedDate }
     },
     {
-      key: { text: localise('prns:issuedByLabel') },
+      key: { text: localise('lprns:issuedByLabel') },
       value: { text: issuedBy }
     },
     {
-      key: { text: localise('prns:authorisedByLabel') },
+      key: { text: localise('lprns:authorisedByLabel') },
       value: { text: prn.authorisedBy?.name || '' }
     },
     {
-      key: { text: localise('prns:positionLabel') },
+      key: { text: localise('lprns:positionLabel') },
       value: { text: prn.authorisedBy?.position || '' }
     },
     {
-      key: { text: localise('prns:issuerNotesLabel') },
+      key: { text: localise('lprns:issuerNotesLabel') },
       value: { text: notesText }
     }
   ]
@@ -480,15 +481,15 @@ function buildAccreditationRows({
 }) {
   return [
     {
-      key: { text: localise('prns:materialLabel') },
+      key: { text: localise('lprns:materialLabel') },
       value: { text: displayMaterial }
     },
     {
-      key: { text: localise('prns:accreditationNumberLabel') },
+      key: { text: localise('lprns:accreditationNumberLabel') },
       value: { text: accreditation?.accreditationNumber || '' }
     },
     {
-      key: { text: localise('prns:accreditationAddressLabel') },
+      key: { text: localise('lprns:accreditationAddressLabel') },
       value: { text: formatAddress(registration.site?.address) }
     }
   ]
@@ -503,15 +504,15 @@ function buildAccreditationRows({
 function getStatusConfig(status, localise) {
   const statusMap = {
     awaiting_authorisation: {
-      text: localise('prns:list:status:awaitingAuthorisation'),
+      text: localise('lprns:list:status:awaitingAuthorisation'),
       class: 'govuk-tag--blue epr-tag--no-max-width'
     },
     issued: {
-      text: localise('prns:list:status:issued'),
+      text: localise('lprns:list:status:issued'),
       class: 'govuk-tag--blue epr-tag--no-max-width'
     },
     cancelled: {
-      text: localise('prns:list:status:cancelled'),
+      text: localise('lprns:list:status:cancelled'),
       class: 'govuk-tag--grey epr-tag--no-max-width'
     }
   }

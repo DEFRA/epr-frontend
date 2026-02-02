@@ -69,7 +69,7 @@ export const listController = {
       wasteBalance
     })
 
-    return h.view('prns/list', viewData)
+    return h.view('lprns/list', viewData)
   }
 }
 

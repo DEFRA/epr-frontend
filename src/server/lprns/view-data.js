@@ -13,14 +13,14 @@ export function buildCreatePrnViewData(request, { registration, recipients }) {
   const noteType =
     registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
 
-  const pageTitle = localise(`prns:${noteType}:pageTitle`)
+  const pageTitle = localise(`lprns:${noteType}:pageTitle`)
   const material = getDisplayMaterial(registration)
 
   return {
     pageTitle,
     heading: pageTitle,
     material: {
-      label: localise('prns:materialLabel'),
+      label: localise('lprns:materialLabel'),
       value: material
     },
     hiddenFields: {
@@ -29,25 +29,28 @@ export function buildCreatePrnViewData(request, { registration, recipients }) {
       wasteProcessingType: registration.wasteProcessingType
     },
     tonnage: {
-      label: localise(`prns:${noteType}:tonnageLabel`),
-      hint: localise('prns:tonnageHint'),
-      suffix: localise('prns:tonnageSuffix')
+      label: localise(`lprns:${noteType}:tonnageLabel`),
+      hint: localise('lprns:tonnageHint'),
+      suffix: localise('lprns:tonnageSuffix')
     },
     recipient: {
-      label: localise(`prns:${noteType}:recipientLabel`),
-      hint: localise('prns:recipientHint'),
-      items: [{ value: '', text: localise('prns:selectOption') }, ...recipients]
+      label: localise(`lprns:${noteType}:recipientLabel`),
+      hint: localise('lprns:recipientHint'),
+      items: [
+        { value: '', text: localise('lprns:selectOption') },
+        ...recipients
+      ]
     },
     help: {
-      summary: localise('prns:helpSummary'),
-      text: localise(`prns:${noteType}:helpText`)
+      summary: localise('lprns:helpSummary'),
+      text: localise(`lprns:${noteType}:helpText`)
     },
     notes: {
-      label: localise('prns:notesLabel'),
-      hint: localise(`prns:${noteType}:notesHint`)
+      label: localise('lprns:notesLabel'),
+      hint: localise(`lprns:${noteType}:notesHint`)
     },
     submitButton: {
-      text: localise(`prns:${noteType}:submitButton`)
+      text: localise(`lprns:${noteType}:submitButton`)
     }
   }
 }

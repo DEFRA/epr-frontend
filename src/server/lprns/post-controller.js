@@ -62,7 +62,7 @@ function buildValidationErrors(validationError, localise) {
   return {
     errors,
     errorSummary: {
-      title: localise('prns:errorSummaryTitle'),
+      title: localise('lprns:errorSummaryTitle'),
       list: errorList
     }
   }
@@ -98,7 +98,7 @@ export const postController = {
         })
 
         return h
-          .view('prns/create', {
+          .view('lprns/create', {
             ...viewData,
             errors,
             errorSummary,

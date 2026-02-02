@@ -4,28 +4,28 @@ import { buildCreatePrnViewData } from './view-data.js'
 const createMockRequest = () => ({
   t: vi.fn((key) => {
     const translations = {
-      'prns:prns:pageTitle': 'Create a PRN',
-      'prns:perns:pageTitle': 'Create a PERN',
-      'prns:materialLabel': 'Material',
-      'prns:prns:tonnageLabel': 'Enter PRN tonnage',
-      'prns:perns:tonnageLabel': 'Enter PERN tonnage',
-      'prns:tonnageHint': 'Enter a whole number without decimal places',
-      'prns:tonnageSuffix': 'tonnes',
-      'prns:prns:recipientLabel': 'Enter who this PRN will be issued to',
-      'prns:perns:recipientLabel': 'Enter who this PERN will be issued to',
-      'prns:recipientHint':
+      'lprns:prns:pageTitle': 'Create a PRN',
+      'lprns:perns:pageTitle': 'Create a PERN',
+      'lprns:materialLabel': 'Material',
+      'lprns:prns:tonnageLabel': 'Enter PRN tonnage',
+      'lprns:perns:tonnageLabel': 'Enter PERN tonnage',
+      'lprns:tonnageHint': 'Enter a whole number without decimal places',
+      'lprns:tonnageSuffix': 'tonnes',
+      'lprns:prns:recipientLabel': 'Enter who this PRN will be issued to',
+      'lprns:perns:recipientLabel': 'Enter who this PERN will be issued to',
+      'lprns:recipientHint':
         'Start typing the name of the packaging waste producer or compliance scheme',
-      'prns:selectOption': 'Select an option',
-      'prns:helpSummary': "Can't find the producer or compliance scheme?",
-      'prns:prns:helpText':
+      'lprns:selectOption': 'Select an option',
+      'lprns:helpSummary': "Can't find the producer or compliance scheme?",
+      'lprns:prns:helpText':
         'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'prns:perns:helpText':
+      'lprns:perns:helpText':
         'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'prns:notesLabel': 'Add issuer notes (optional)',
-      'prns:prns:notesHint': 'These notes will appear on the PRN',
-      'prns:perns:notesHint': 'These notes will appear on the PERN',
-      'prns:prns:submitButton': 'Create PRN',
-      'prns:perns:submitButton': 'Create PERN'
+      'lprns:notesLabel': 'Add issuer notes (optional)',
+      'lprns:prns:notesHint': 'These notes will appear on the PRN',
+      'lprns:perns:notesHint': 'These notes will appear on the PERN',
+      'lprns:prns:submitButton': 'Create PRN',
+      'lprns:perns:submitButton': 'Create PERN'
     }
     return translations[key] || key
   })

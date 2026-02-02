@@ -10,9 +10,9 @@ const basePath =
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
-export const prns = {
+export const lprns = {
   plugin: {
-    name: 'prns',
+    name: 'lprns',
     register(server) {
       server.route([
         {

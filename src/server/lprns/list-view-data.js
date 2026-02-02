@@ -27,7 +27,7 @@ export function buildListViewData(
     `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
   )
 
-  const selectText = localise('prns:list:table:selectText')
+  const selectText = localise('lprns:list:table:selectText')
 
   // Build rows in govukTable format: array of arrays of cell objects
   const dataRows = prns.map((prn) => {
@@ -47,7 +47,7 @@ export function buildListViewData(
   const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
   const totalRow = [
     {
-      text: localise('prns:list:table:totalLabel'),
+      text: localise('lprns:list:table:totalLabel'),
       classes: 'govuk-!-font-weight-bold'
     },
     { text: '' },
@@ -58,35 +58,35 @@ export function buildListViewData(
   const tableRows = dataRows.length > 0 ? [...dataRows, totalRow] : []
 
   return {
-    pageTitle: localise(`prns:list:${noteType}:pageTitle`),
-    heading: localise(`prns:list:${noteType}:pageTitle`),
+    pageTitle: localise(`lprns:list:${noteType}:pageTitle`),
+    heading: localise(`lprns:list:${noteType}:pageTitle`),
     backUrl,
     createLink: {
       href: createUrl,
-      text: localise(`prns:list:${noteType}:createLink`)
+      text: localise(`lprns:list:${noteType}:createLink`)
     },
     wasteBalance: {
       amount: wasteBalance?.availableAmount ?? 0,
-      label: localise('prns:list:availableWasteBalance'),
-      hint: localise(`prns:list:${noteType}:balanceHint`)
+      label: localise('lprns:list:availableWasteBalance'),
+      hint: localise(`lprns:list:${noteType}:balanceHint`)
     },
     tabs: {
-      awaitingAction: localise('prns:list:tabs:awaitingAction'),
-      issued: localise('prns:list:tabs:issued')
+      awaitingAction: localise('lprns:list:tabs:awaitingAction'),
+      issued: localise('lprns:list:tabs:issued')
     },
-    cancelHint: localise(`prns:list:${noteType}:cancelHint`),
+    cancelHint: localise(`lprns:list:${noteType}:cancelHint`),
     awaitingAuthorisationHeading: localise(
-      `prns:list:${noteType}:awaitingAuthorisationHeading`
+      `lprns:list:${noteType}:awaitingAuthorisationHeading`
     ),
-    noPrnsText: localise('prns:list:noPrns'),
-    noIssuedText: localise(`prns:list:${noteType}:noIssuedPrns`),
+    noPrnsText: localise('lprns:list:noPrns'),
+    noIssuedText: localise(`lprns:list:${noteType}:noIssuedPrns`),
     table: {
       headings: {
-        recipient: localise('prns:list:table:recipientHeading'),
-        createdAt: localise('prns:list:table:dateHeading'),
-        tonnage: localise('prns:list:table:tonnageHeading'),
-        status: localise('prns:list:table:statusHeading'),
-        action: localise('prns:list:table:actionHeading')
+        recipient: localise('lprns:list:table:recipientHeading'),
+        createdAt: localise('lprns:list:table:dateHeading'),
+        tonnage: localise('lprns:list:table:tonnageHeading'),
+        status: localise('lprns:list:table:statusHeading'),
+        action: localise('lprns:list:table:actionHeading')
       },
       rows: tableRows
     }
@@ -112,9 +112,9 @@ function buildStatusTagHtml(status, localise) {
  */
 function formatStatus(status, localise) {
   const statusMap = {
-    awaiting_authorisation: localise('prns:list:status:awaitingAuthorisation'),
-    issued: localise('prns:list:status:issued'),
-    cancelled: localise('prns:list:status:cancelled')
+    awaiting_authorisation: localise('lprns:list:status:awaitingAuthorisation'),
+    issued: localise('lprns:list:status:issued'),
+    cancelled: localise('lprns:list:status:cancelled')
   }
   return statusMap[status] ?? status
 }

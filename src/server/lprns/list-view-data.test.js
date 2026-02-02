@@ -4,38 +4,38 @@ import { buildListViewData } from './list-view-data.js'
 const createMockRequest = () => ({
   t: vi.fn((key) => {
     const translations = {
-      'prns:list:prns:pageTitle': 'PRNs',
-      'prns:list:perns:pageTitle': 'PERNs',
-      'prns:list:prns:balanceHint':
+      'lprns:list:prns:pageTitle': 'PRNs',
+      'lprns:list:perns:pageTitle': 'PERNs',
+      'lprns:list:prns:balanceHint':
         'This is the balance available for creating PRNs',
-      'prns:list:perns:balanceHint':
+      'lprns:list:perns:balanceHint':
         'This is the balance available for creating PERNs',
-      'prns:list:prns:cancelHint':
+      'lprns:list:prns:cancelHint':
         'If you cancel a PRN, its tonnage will be added to your available waste balance.',
-      'prns:list:perns:cancelHint':
+      'lprns:list:perns:cancelHint':
         'If you cancel a PERN, its tonnage will be added to your available waste balance.',
-      'prns:list:prns:createLink': 'Create a PRN',
-      'prns:list:perns:createLink': 'Create a PERN',
-      'prns:list:prns:awaitingAuthorisationHeading':
+      'lprns:list:prns:createLink': 'Create a PRN',
+      'lprns:list:perns:createLink': 'Create a PERN',
+      'lprns:list:prns:awaitingAuthorisationHeading':
         'PRNs awaiting authorisation',
-      'prns:list:perns:awaitingAuthorisationHeading':
+      'lprns:list:perns:awaitingAuthorisationHeading':
         'PERNs awaiting authorisation',
-      'prns:list:prns:noIssuedPrns': 'No PRNs have been issued yet.',
-      'prns:list:perns:noIssuedPrns': 'No PERNs have been issued yet.',
-      'prns:list:availableWasteBalance': 'Available waste balance',
-      'prns:list:noPrns': 'No PRNs or PERNs have been created yet.',
-      'prns:list:tabs:awaitingAction': 'Awaiting action',
-      'prns:list:tabs:issued': 'Issued',
-      'prns:list:table:recipientHeading': 'Issued to',
-      'prns:list:table:dateHeading': 'Date created',
-      'prns:list:table:tonnageHeading': 'Tonnage',
-      'prns:list:table:statusHeading': 'Status',
-      'prns:list:table:actionHeading': '',
-      'prns:list:table:selectText': 'Select',
-      'prns:list:table:totalLabel': 'Total',
-      'prns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
-      'prns:list:status:issued': 'Issued',
-      'prns:list:status:cancelled': 'Cancelled'
+      'lprns:list:prns:noIssuedPrns': 'No PRNs have been issued yet.',
+      'lprns:list:perns:noIssuedPrns': 'No PERNs have been issued yet.',
+      'lprns:list:availableWasteBalance': 'Available waste balance',
+      'lprns:list:noPrns': 'No PRNs or PERNs have been created yet.',
+      'lprns:list:tabs:awaitingAction': 'Awaiting action',
+      'lprns:list:tabs:issued': 'Issued',
+      'lprns:list:table:recipientHeading': 'Issued to',
+      'lprns:list:table:dateHeading': 'Date created',
+      'lprns:list:table:tonnageHeading': 'Tonnage',
+      'lprns:list:table:statusHeading': 'Status',
+      'lprns:list:table:actionHeading': '',
+      'lprns:list:table:selectText': 'Select',
+      'lprns:list:table:totalLabel': 'Total',
+      'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
+      'lprns:list:status:issued': 'Issued',
+      'lprns:list:status:cancelled': 'Cancelled'
     }
     return translations[key] || key
   }),

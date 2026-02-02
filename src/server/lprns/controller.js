@@ -49,7 +49,7 @@ export const controller = {
       recipients: STUB_RECIPIENTS
     })
 
-    return h.view('prns/create', viewData)
+    return h.view('lprns/create', viewData)
   }
 }
 

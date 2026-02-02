@@ -10,7 +10,7 @@ import { loggedOut } from '#server/logged-out/index.js'
 import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
 import { organisations } from '#server/organisations/index.js'
-import { prns } from '#server/prns/index.js'
+import { lprns } from '#server/lprns/index.js'
 import { registrations } from '#server/registrations/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
@@ -45,7 +45,7 @@ export const router = {
       ])
 
       if (config.get('featureFlags.prns')) {
-        await server.register([prns])
+        await server.register([lprns])
       }
 
       // Static assets

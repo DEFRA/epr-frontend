@@ -30,15 +30,15 @@ export const createdController = {
     const noteType =
       prnCreated.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
 
-    return h.view('prns/created', {
-      pageTitle: localise(`prns:${noteType}:successPageTitle`),
-      heading: localise(`prns:${noteType}:successHeading`),
-      tonnageLabel: localise(`prns:${noteType}:successTonnageLabel`),
+    return h.view('lprns/created', {
+      pageTitle: localise(`lprns:${noteType}:successPageTitle`),
+      heading: localise(`lprns:${noteType}:successHeading`),
+      tonnageLabel: localise(`lprns:${noteType}:successTonnageLabel`),
       tonnage: prnCreated.tonnage,
-      tonnageSuffix: localise('prns:tonnageSuffix'),
-      nextStepsHeading: localise('prns:successNextStepsHeading'),
-      nextStepsText: localise(`prns:${noteType}:successNextStepsText`),
-      returnLink: localise('prns:successReturnLink'),
+      tonnageSuffix: localise('lprns:tonnageSuffix'),
+      nextStepsHeading: localise('lprns:successNextStepsHeading'),
+      nextStepsText: localise(`lprns:${noteType}:successNextStepsText`),
+      returnLink: localise('lprns:successReturnLink'),
       organisationId,
       registrationId
     })
