@@ -49,7 +49,12 @@ const controller = {
       request.cookieAuth.set({ sessionId })
 
       request.logger.info(
-        { userIdHash: hashUserId(session.profile.id), event: 'signInSuccess' },
+        {
+          event: {
+            action: 'signInSuccess',
+            reference: hashUserId(session.profile.id)
+          }
+        },
         'User has been successfully authenticated'
       )
 
