@@ -45,7 +45,7 @@ describe(updatePrnStatus, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/status`,
+      '/v1/organisations/org-123/registrations/reg-456/l-packaging-recycling-notes/prn-789/status',
       {
         method: 'POST',
         headers: {
@@ -53,6 +53,17 @@ describe(updatePrnStatus, () => {
         },
         body: JSON.stringify(payload)
       }
+    )
+  })
+
+  it('encodes URL path parameters with special characters', async () => {
+    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+
+    await updatePrnStatus('org/123', 'reg&456', 'prn#789', payload, idToken)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      '/v1/organisations/org%2F123/registrations/reg%26456/l-packaging-recycling-notes/prn%23789/status',
+      expect.any(Object)
     )
   })
 

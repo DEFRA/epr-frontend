@@ -42,7 +42,7 @@ describe(createPrn, () => {
     await createPrn(organisationId, registrationId, payload, idToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`,
+      '/v1/organisations/org-123/registrations/reg-456/l-packaging-recycling-notes',
       {
         method: 'POST',
         headers: {
@@ -50,6 +50,17 @@ describe(createPrn, () => {
         },
         body: JSON.stringify(payload)
       }
+    )
+  })
+
+  it('encodes URL path parameters with special characters', async () => {
+    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+
+    await createPrn('org/123', 'reg&456', payload, idToken)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      '/v1/organisations/org%2F123/registrations/reg%26456/l-packaging-recycling-notes',
+      expect.any(Object)
     )
   })
 
