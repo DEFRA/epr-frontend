@@ -28,8 +28,12 @@ describe('#fetchPrn', () => {
     expect(result).toStrictEqual(
       expect.objectContaining({
         prnNumber: 'ER2625468U',
-        issuedToOrganisation: expect.any(String),
-        issuedByOrganisation: expect.any(String),
+        issuedToOrganisation: expect.objectContaining({
+          name: expect.any(String)
+        }),
+        issuedByOrganisation: expect.objectContaining({
+          name: expect.any(String)
+        }),
         tonnageValue: expect.any(Number),
         status: expect.any(String)
       })

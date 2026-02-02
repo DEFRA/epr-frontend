@@ -66,8 +66,8 @@ const fixtureExporter = {
 
 const stubPrnData = {
   prnNumber: 'ER2625468U',
-  issuedToOrganisation: 'Acme Packaging Solutions Ltd',
-  issuedByOrganisation: 'John Smith Ltd',
+  issuedToOrganisation: { name: 'Acme Packaging Solutions Ltd' },
+  issuedByOrganisation: { name: 'John Smith Ltd' },
   issuedDate: '',
   issuerNotes: 'Quarterly waste collection from Birmingham facility',
   tonnageValue: 150,

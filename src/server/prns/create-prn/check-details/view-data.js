@@ -23,7 +23,7 @@ function summaryRow(label, value) {
  */
 function buildPrnDetails(localise, prnData, accreditation) {
   return [
-    summaryRow(localise('recipient'), prnData.issuedToOrganisation ?? ''),
+    summaryRow(localise('recipient'), prnData.issuedToOrganisation?.name ?? ''),
     summaryRow(localise('tonnage'), prnData.tonnageValue ?? ''),
     summaryRow(
       localise('tonnageInWords'),
@@ -34,7 +34,7 @@ function buildPrnDetails(localise, prnData, accreditation) {
       getRecoveryCode(accreditation?.material)
     ),
     summaryRow(localise('decemberWaste'), prnData.isDecemberWaste ?? ''),
-    summaryRow(localise('issuer'), prnData.issuedByOrganisation ?? ''),
+    summaryRow(localise('issuer'), prnData.issuedByOrganisation?.name ?? ''),
     summaryRow(localise('issuedDate'), prnData.issuedDate ?? ''),
     summaryRow(localise('issuedBy'), prnData.authorisedBy ?? ''),
     summaryRow(localise('position'), prnData.position ?? ''),

@@ -66,7 +66,7 @@ const fixtureExporter = {
 
 const stubPrnData = {
   prnNumber: 'ER992415095748M',
-  issuedToOrganisation: 'Nestle (SEPA)'
+  issuedToOrganisation: { name: 'Nestle (SEPA)' }
 }
 
 const reprocessorUrl =

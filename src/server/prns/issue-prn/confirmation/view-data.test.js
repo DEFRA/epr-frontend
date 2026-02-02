@@ -32,7 +32,7 @@ const exporterRegistration = {
 
 const mockPrnData = {
   prnNumber: 'ER992415095748M',
-  issuedToOrganisation: 'Nestle (SEPA)'
+  issuedToOrganisation: { name: 'Nestle (SEPA)' }
 }
 
 describe('#buildConfirmationViewData', () => {
