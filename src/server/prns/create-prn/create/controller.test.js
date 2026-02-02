@@ -12,7 +12,7 @@ import {
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
-import wasteOrganisations from '../../../fixtures/waste-organisations/organisations.json'
+import wasteOrganisations from '../../../../../fixtures/waste-organisations/organisations.json'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
