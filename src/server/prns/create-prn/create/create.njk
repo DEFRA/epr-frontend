@@ -57,7 +57,14 @@
 
         {{ govukDetails({
           summaryText: help.summary,
-          html: '<p class="govuk-body">' + help.text + '</p>'
+          html: '
+            <p class="govuk-body">' ~ help.intro ~ '</p>
+            <p class="govuk-body">' ~ help.listIntro ~ '</p>
+            <ul class="govuk-list govuk-list--bullet">
+              <li>' ~ help.listItems[0] ~ '</li>
+              <li>' ~ help.listItems[1] ~ '</li>
+            </ul>
+          '
         }) }}
 
         {{ govukCharacterCount({

@@ -18,10 +18,22 @@ const createMockRequest = () => ({
         'Start typing the name of the packaging waste producer or compliance scheme',
       'prns:create:helpSummary':
         "Can't find the producer or compliance scheme?",
-      'prns:create:prns:helpText':
+      'prns:create:prns:help:intro':
         'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'prns:create:perns:helpText':
+      'prns:create:prns:help:listIntro':
+        "If the buyer you're looking for is not appearing, check that:",
+      'prns:create:prns:help:listItemOne':
+        'you have spelled the name correctly',
+      'prns:create:prns:help:listItemTwo':
+        'they are registered with a regulator',
+      'prns:create:perns:help:intro':
         'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
+      'prns:create:perns:help:listIntro':
+        "If the buyer you're looking for is not appearing, check that:",
+      'prns:create:perns:help:listItemOne':
+        'you have spelled the name correctly',
+      'prns:create:perns:help:listItemTwo':
+        'they are registered with a regulator',
       'prns:create:notesLabel': 'Add issuer notes (optional)',
       'prns:create:prns:notesHint': 'These notes will appear on the PRN',
       'prns:create:perns:notesHint': 'These notes will appear on the PERN'
@@ -71,7 +83,8 @@ describe('#buildCreateViewData', () => {
         'Enter who this PRN will be issued to'
       )
       expect(result.notes.hint).toBe('These notes will appear on the PRN')
-      expect(result.help.text).toContain('PRNs can only be issued')
+      expect(result.help.intro).toContain('PRNs can only be issued')
+      expect(result.help.listItems).toHaveLength(2)
     })
 
     it('should include recipient options with placeholder', () => {
@@ -116,7 +129,8 @@ describe('#buildCreateViewData', () => {
         'Enter who this PERN will be issued to'
       )
       expect(result.notes.hint).toBe('These notes will appear on the PERN')
-      expect(result.help.text).toContain('PERNs can only be issued')
+      expect(result.help.intro).toContain('PERNs can only be issued')
+      expect(result.help.listItems).toHaveLength(2)
     })
   })
 
