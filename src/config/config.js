@@ -277,6 +277,12 @@ export const config = convict({
       default: false,
       env: 'FEATURE_FLAG_PRNS'
     },
+    lprns: {
+      doc: 'Feature Flag: Lumpy PRNs (accelerated implementation)',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_LPRNS'
+    },
     wasteBalance: {
       doc: 'Feature Flag: Waste Balance Display',
       format: Boolean,

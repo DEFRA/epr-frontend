@@ -1,0 +1,92 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      <div class="epr-heading-with-action">
+        <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">{{ heading }}</h1>
+        {{ govukButton({
+          text: createLink.text,
+          href: createLink.href,
+          classes: "govuk-button--secondary"
+        }) }}
+      </div>
+
+      <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-bottom-6">
+        <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
+          <div>
+            <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
+              {{ wasteBalance.amount | formatTonnage }} {{ localise("registrations:wasteBalance.units") }}
+            </h2>
+            <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold">
+              {{ wasteBalance.label }}
+            </p>
+          </div>
+        </div>
+        <div class="govuk-summary-card__content govuk-!-padding-4">
+          <p class="govuk-body govuk-!-margin-bottom-0">
+            {{ wasteBalance.hint }}
+          </p>
+        </div>
+      </div>
+
+      <div class="govuk-tabs" data-module="govuk-tabs">
+        <h2 class="govuk-tabs__title">
+          Contents
+        </h2>
+        <ul class="govuk-tabs__list">
+          <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+            <a class="govuk-tabs__tab" href="#awaiting-action">
+              {{ tabs.awaitingAction }}
+            </a>
+          </li>
+          <li class="govuk-tabs__list-item">
+            <a class="govuk-tabs__tab" href="#issued">
+              {{ tabs.issued }}
+            </a>
+          </li>
+        </ul>
+
+        <div class="govuk-tabs__panel" id="awaiting-action">
+          {{ govukInsetText({
+            text: cancelHint
+          }) }}
+
+          {% if table.rows | length > 0 %}
+            <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
+            {{ govukTable({
+              head: [
+                { text: table.headings.recipient },
+                { text: table.headings.createdAt },
+                { text: table.headings.tonnage },
+                { text: table.headings.status },
+                { text: table.headings.action }
+              ],
+              rows: table.rows
+            }) }}
+          {% else %}
+            <p class="govuk-body">{{ noPrnsText }}</p>
+          {% endif %}
+        </div>
+
+        <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="issued">
+          <p class="govuk-body">{{ noIssuedText }}</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}
