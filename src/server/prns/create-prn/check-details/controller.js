@@ -1,4 +1,4 @@
-import { getPrn } from '#server/common/helpers/prns/get-prn.js'
+import { getRequiredPrn } from '#server/common/helpers/prns/get-required-prn.js'
 import { getValidatedRegistration } from '../../helpers/get-validated-registration.js'
 import { buildCheckDetailsViewData } from './view-data.js'
 
@@ -12,7 +12,7 @@ export const checkDetailsController = {
 
     const { prnNumber } = request.params
 
-    const prnData = await getPrn(
+    const prnData = await getRequiredPrn(
       organisationId,
       accreditation.id,
       prnNumber,

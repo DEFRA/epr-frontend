@@ -1,5 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getPrn } from '#server/common/helpers/prns/get-prn.js'
+import { getRequiredPrn } from '#server/common/helpers/prns/get-required-prn.js'
 import { buildDetailViewData } from './view-data.js'
 
 /**
@@ -18,7 +18,7 @@ export const detailController = {
         request.logger
       )
 
-    const prnData = await getPrn(
+    const prnData = await getRequiredPrn(
       organisationId,
       accreditation.id,
       prnNumber,

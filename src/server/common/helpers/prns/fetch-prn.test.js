@@ -2,34 +2,37 @@ import { describe, it, expect } from 'vitest'
 import { fetchPrn } from './fetch-prn.js'
 
 describe('#fetchPrn', () => {
-  it('returns dummy PRN data with correct prnNumber', async () => {
+  it('returns PRN data matching the requested prnNumber', async () => {
     const result = await fetchPrn('org-123', 'acc-456', 'ER2625468U')
 
+    expect(result).not.toBeNull()
     expect(result.prnNumber).toBe('ER2625468U')
+    expect(result.status).toBe('awaiting_authorisation')
   })
 
-  it('returns dummy PRN data with expected fields', async () => {
+  it('returns null when prnNumber is not found', async () => {
+    const result = await fetchPrn('org-123', 'acc-456', 'NONEXISTENT')
+
+    expect(result).toBeNull()
+  })
+
+  it('returns a PRN with status', async () => {
+    const result = await fetchPrn('org-123', 'acc-456', 'ER992415095748M')
+
+    expect(result.status).toBe('awaiting_acceptance')
+  })
+
+  it('returns expected fields on a matched PRN', async () => {
     const result = await fetchPrn('org-123', 'acc-456', 'ER2625468U')
 
-    expect(result).toStrictEqual({
-      prnNumber: 'ER2625468U',
-      issuedToOrganisation: 'Acme Packaging Solutions Ltd',
-      issuedByOrganisation: 'John Smith Ltd',
-      issuedDate: '',
-      issuerNotes:
-        'retrieved from /v1/organisations/org-123/accreditations/acc-456/prns/ER2625468U',
-      tonnageValue: 150,
-      isDecemberWaste: 'No',
-      authorisedBy: '',
-      position: ''
-    })
-  })
-
-  it('includes API path in issuerNotes', async () => {
-    const result = await fetchPrn('org-999', 'acc-888', 'ER1111111A')
-
-    expect(result.issuerNotes).toBe(
-      'retrieved from /v1/organisations/org-999/accreditations/acc-888/prns/ER1111111A'
+    expect(result).toStrictEqual(
+      expect.objectContaining({
+        prnNumber: 'ER2625468U',
+        issuedToOrganisation: expect.any(String),
+        issuedByOrganisation: expect.any(String),
+        tonnageValue: expect.any(Number),
+        status: expect.any(String)
+      })
     )
   })
 })

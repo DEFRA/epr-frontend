@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getPrn } from '#server/common/helpers/prns/get-prn.js'
+import { getRequiredPrn } from '#server/common/helpers/prns/get-required-prn.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -12,7 +12,7 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 
-vi.mock(import('#server/common/helpers/prns/get-prn.js'))
+vi.mock(import('#server/common/helpers/prns/get-required-prn.js'))
 
 const mockCredentials = {
   profile: {
@@ -77,7 +77,7 @@ describe('#prnDetailController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getPrn).mockResolvedValue({ prnNumber: 'ER2625468U' })
+    vi.mocked(getRequiredPrn).mockResolvedValue({ prnNumber: 'ER2625468U' })
   })
 
   afterAll(() => {
@@ -118,6 +118,23 @@ describe('#prnDetailController', () => {
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
         Boom.notFound('Not accredited for this registration')
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('should return 404 when PRN not found', async ({ server }) => {
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      vi.mocked(getRequiredPrn).mockRejectedValue(
+        Boom.notFound('PRN not found')
       )
 
       const { statusCode } = await server.inject({
