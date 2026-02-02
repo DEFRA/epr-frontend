@@ -1,7 +1,8 @@
-import { checkDetailsController } from './check-details-controller.js'
-import { createController } from './create-controller.js'
-import { detailController } from './detail-controller.js'
-import { listController } from './list-controller.js'
+import { confirmationController } from './issue-prn/confirmation/controller.js'
+import { createController } from './create-prn/create/controller.js'
+import { listController } from './view/list/controller.js'
+import { checkDetailsController } from './create-prn/check-details/controller.js'
+import { detailController } from './view/detail/controller.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -11,11 +12,18 @@ export const prns = {
     name: 'prns',
     register(server) {
       server.route([
+        // view
         {
           ...listController,
           method: 'GET',
           path: '/organisations/{organisationId}/registrations/{registrationId}/prns'
         },
+        {
+          ...detailController,
+          method: 'GET',
+          path: '/organisations/{organisationId}/registrations/{registrationId}/prns/{prnNumber}'
+        },
+        // create
         {
           ...createController,
           method: 'GET',
@@ -24,12 +32,13 @@ export const prns = {
         {
           ...checkDetailsController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn/check-details'
+          path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn/{prnNumber}/check-details'
         },
+        // issue
         {
-          ...detailController,
+          ...confirmationController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/prns/{prnNumber}'
+          path: '/organisations/{organisationId}/registrations/{registrationId}/issue-prn/{prnNumber}/confirmation'
         }
       ])
     }

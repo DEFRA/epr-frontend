@@ -1,7 +1,7 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getPrns } from '#server/common/helpers/prns/get-prns.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
-import { buildListViewData } from './list-view-data.js'
+import { buildListViewData } from './view-data.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -37,7 +37,7 @@ export const listController = {
       prns
     })
 
-    return h.view('prns/list', viewData)
+    return h.view('prns/view/list/list', viewData)
   }
 }
 

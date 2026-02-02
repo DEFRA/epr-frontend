@@ -29,6 +29,23 @@
     "accreditationAddress": "Accreditation address",
     "startAgain": "Start again"
   },
+  "confirmation": {
+    "prns": {
+      "panelTitle": "PRN issued to",
+      "prnNumberLabel": "PRN number",
+      "viewPrn": "View PRN (opens in a new tab)",
+      "createPrn": "Create a PRN",
+      "managePrns": "Manage PRNs"
+    },
+    "perns": {
+      "panelTitle": "PERN issued to",
+      "prnNumberLabel": "PERN number",
+      "viewPrn": "View PERN (opens in a new tab)",
+      "createPrn": "Create a PERN",
+      "managePrns": "Manage PERNs"
+    },
+    "returnToHome": "Return to home"
+  },
   "create": {
     "helpSummary": "Can't find the producer or compliance scheme?",
     "notesLabel": "Add issuer notes (optional)",
