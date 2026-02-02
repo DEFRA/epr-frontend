@@ -816,7 +816,7 @@ describe('#accreditationDashboardController', () => {
         }).closest('.govuk-summary-card')
 
         const card = within(prnCard)
-        card.getByText('Raise, issue and manage PRNs.')
+        card.getByText('Create and manage PRNs.')
 
         expect(
           card.queryByText('PRN management is not yet available.')
@@ -839,11 +839,11 @@ describe('#accreditationDashboardController', () => {
           fixture: fixtureData,
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
           title: 'PRNs',
-          description: 'Raise, issue and manage PRNs.',
-          linkText: 'Create new PRN',
+          description: 'Create and manage PRNs.',
+          createLinkText: 'Create new PRN',
+          manageLinkText: 'Manage PRNs',
           expectedCreateUrl:
             '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn',
-          manageLinkText: 'Manage PRNs',
           expectedManageUrl:
             '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/prns'
         },
@@ -852,25 +852,25 @@ describe('#accreditationDashboardController', () => {
           fixture: fixtureExportingOnly,
           url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
           title: 'PERNs',
-          description: 'Raise, issue and manage PERNs.',
-          linkText: 'Create new PERN',
+          description: 'Create and manage PERNs.',
+          createLinkText: 'Create new PERN',
+          manageLinkText: 'Manage PERNs',
           expectedCreateUrl:
             '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/create-prn',
-          manageLinkText: 'Manage PERNs',
           expectedManageUrl:
             '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/prns'
         }
       ])(
-        'should display $name card with create new link',
+        'should display $name card with create and manage links',
         async (
           {
             fixture,
             url,
             title,
             description,
-            linkText,
-            expectedCreateUrl,
+            createLinkText,
             manageLinkText,
+            expectedCreateUrl,
             expectedManageUrl
           },
           { server }
@@ -895,12 +895,12 @@ describe('#accreditationDashboardController', () => {
 
           const card = within(prnCard)
 
-          card.getByText(`Raise, issue and manage ${title}.`)
-          card.getByText(title)
           card.getByText(description)
 
           expect(
-            card.getByRole('link', { name: linkText }).getAttribute('href')
+            card
+              .getByRole('link', { name: createLinkText })
+              .getAttribute('href')
           ).toBe(expectedCreateUrl)
 
           expect(
@@ -910,6 +910,155 @@ describe('#accreditationDashboardController', () => {
           ).toBe(expectedManageUrl)
         }
       )
+    })
+  })
+
+  describe('lumpy packaging-recycling-notes (lprns)', () => {
+    beforeEach(() => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureData)
+    })
+
+    describe('when lprns feature flag is disabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.lprns', false)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.lprns')
+      })
+
+      it('should not display lumpy PRN links', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        expect(result).not.toContain('/l-packaging-recycling-notes')
+      })
+    })
+
+    describe('when lprns feature flag is enabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.lprns', true)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.lprns')
+      })
+
+      it.for([
+        {
+          name: 'lumpy PRN (reprocessor)',
+          fixture: fixtureData,
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          title: 'PRNs',
+          createLinkText: 'Create new PRN',
+          manageLinkText: 'Manage PRNs',
+          expectedCreateUrl:
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes/create',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes'
+        },
+        {
+          name: 'lumpy PERN (exporter)',
+          fixture: fixtureExportingOnly,
+          url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+          title: 'PERNs',
+          createLinkText: 'Create new PERN',
+          manageLinkText: 'Manage PERNs',
+          expectedCreateUrl:
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/l-packaging-recycling-notes/create',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/l-packaging-recycling-notes'
+        }
+      ])(
+        'should display $name card with create and manage links',
+        async (
+          {
+            fixture,
+            url,
+            title,
+            createLinkText,
+            manageLinkText,
+            expectedCreateUrl,
+            expectedManageUrl
+          },
+          { server }
+        ) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue(fixture)
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const prnCard = getByRole(body, 'heading', {
+            name: title,
+            level: 3
+          }).closest('.govuk-summary-card')
+
+          const card = within(prnCard)
+
+          expect(
+            card
+              .getByRole('link', { name: createLinkText })
+              .getAttribute('href')
+          ).toBe(expectedCreateUrl)
+
+          expect(
+            card
+              .getByRole('link', { name: manageLinkText })
+              .getAttribute('href')
+          ).toBe(expectedManageUrl)
+        }
+      )
+    })
+
+    describe('when both prns and lprns feature flags are enabled', () => {
+      beforeAll(() => {
+        config.set('featureFlags.prns', true)
+        config.set('featureFlags.lprns', true)
+      })
+
+      afterAll(() => {
+        config.reset('featureFlags.prns')
+        config.reset('featureFlags.lprns')
+      })
+
+      it('should display both engineering and lumpy PRN links for reprocessor', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        // PRN links
+        expect(result).toContain(
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn'
+        )
+        expect(result).toContain(
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/prns'
+        )
+
+        // Lumpy links (with l- prefix)
+        expect(result).toContain(
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes/create'
+        )
+        expect(result).toContain(
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes"'
+        )
+      })
     })
   })
 })
