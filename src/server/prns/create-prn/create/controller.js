@@ -26,9 +26,9 @@ export const createController = {
     )
 
     const viewData = buildCreateViewData(request, {
-      registration,
-      recipients: STUB_RECIPIENTS,
       organisationId,
+      recipients: STUB_RECIPIENTS,
+      registration,
       registrationId
     })
 

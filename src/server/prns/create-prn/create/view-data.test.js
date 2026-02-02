@@ -66,9 +66,9 @@ const exporterRegistration = {
 describe('#buildCreateViewData', () => {
   it('should return backUrl using organisation and registration IDs', () => {
     const result = buildCreateViewData(createMockRequest(), {
-      registration: reprocessorRegistration,
-      recipients: stubRecipients,
       organisationId: stubOrganisationId,
+      recipients: stubRecipients,
+      registration: reprocessorRegistration,
       registrationId: stubRegistrationId
     })
 
@@ -80,9 +80,9 @@ describe('#buildCreateViewData', () => {
   describe('for reprocessor (PRN)', () => {
     it('should return page title and heading with PRN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        recipients: stubRecipients,
         organisationId: stubOrganisationId,
+        recipients: stubRecipients,
+        registration: reprocessorRegistration,
         registrationId: stubRegistrationId
       })
 
@@ -92,9 +92,9 @@ describe('#buildCreateViewData', () => {
 
     it('should return form labels with PRN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        recipients: stubRecipients,
         organisationId: stubOrganisationId,
+        recipients: stubRecipients,
+        registration: reprocessorRegistration,
         registrationId: stubRegistrationId
       })
 
@@ -109,9 +109,9 @@ describe('#buildCreateViewData', () => {
 
     it('should include recipient options with placeholder', () => {
       const result = buildCreateViewData(createMockRequest(), {
-        registration: reprocessorRegistration,
-        recipients: stubRecipients,
         organisationId: stubOrganisationId,
+        recipients: stubRecipients,
+        registration: reprocessorRegistration,
         registrationId: stubRegistrationId
       })
 
@@ -132,9 +132,9 @@ describe('#buildCreateViewData', () => {
   describe('for exporter (PERN)', () => {
     it('should return page title and heading with PERN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
-        registration: exporterRegistration,
-        recipients: stubRecipients,
         organisationId: stubOrganisationId,
+        recipients: stubRecipients,
+        registration: exporterRegistration,
         registrationId: stubRegistrationId
       })
 
@@ -144,9 +144,9 @@ describe('#buildCreateViewData', () => {
 
     it('should return form labels with PERN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
-        registration: exporterRegistration,
-        recipients: stubRecipients,
         organisationId: stubOrganisationId,
+        recipients: stubRecipients,
+        registration: exporterRegistration,
         registrationId: stubRegistrationId
       })
 
@@ -169,12 +169,12 @@ describe('#buildCreateViewData', () => {
       'should detect PERN=$expected for wasteProcessingType=$type',
       ({ type, expected }) => {
         const result = buildCreateViewData(createMockRequest(), {
+          organisationId: stubOrganisationId,
+          recipients: stubRecipients,
           registration: {
             ...reprocessorRegistration,
             wasteProcessingType: type
           },
-          recipients: stubRecipients,
-          organisationId: stubOrganisationId,
           registrationId: stubRegistrationId
         })
 
