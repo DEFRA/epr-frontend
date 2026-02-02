@@ -45,12 +45,12 @@ export const router = {
         summaryLogUpload
       ])
 
-      // Engineering team PRNs - standard implementation
+      // PRNs
       if (config.get('featureFlags.prns')) {
         await server.register([prns])
       }
 
-      // Lumpy PRNs (accelerated implementation) - separate from engineering team's prns flag
+      // Lumpy PRNs (accelerated implementation)
       if (config.get('featureFlags.lprns')) {
         await server.register([lprns])
       }

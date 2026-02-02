@@ -1043,7 +1043,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        // Engineering team links
+        // PRN links
         expect(result).toContain(
           '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/create-prn'
         )
