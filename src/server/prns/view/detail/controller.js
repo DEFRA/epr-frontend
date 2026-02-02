@@ -7,7 +7,7 @@ import { buildDetailViewData } from './view-data.js'
  */
 export const detailController = {
   async handler(request, h) {
-    const { organisationId, registrationId, prnNumber } = request.params
+    const { organisationId, registrationId, prnId } = request.params
     const session = request.auth.credentials
 
     const { registration, accreditation } =
@@ -21,7 +21,7 @@ export const detailController = {
     const prnData = await getRequiredPrn(
       organisationId,
       accreditation.id,
-      prnNumber,
+      prnId,
       request.logger
     )
 
@@ -29,7 +29,6 @@ export const detailController = {
       registration,
       organisationId,
       registrationId,
-      prnNumber,
       prnData
     })
 

@@ -10,12 +10,12 @@ export const confirmationController = {
     const { registration, accreditation, organisationId, registrationId } =
       await getValidatedRegistration(request)
 
-    const { prnNumber } = request.params
+    const { prnId } = request.params
 
     const prnData = await getRequiredPrn(
       organisationId,
       accreditation.id,
-      prnNumber,
+      prnId,
       request.logger
     )
 

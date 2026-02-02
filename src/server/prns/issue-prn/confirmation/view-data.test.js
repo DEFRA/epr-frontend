@@ -31,6 +31,7 @@ const exporterRegistration = {
 }
 
 const mockPrnData = {
+  id: 'prn-002',
   prnNumber: 'ER992415095748M',
   issuedToOrganisation: { name: 'Nestle (SEPA)' }
 }
@@ -114,7 +115,7 @@ describe('#buildConfirmationViewData', () => {
   })
 
   describe('urls', () => {
-    it('should return viewPrnUrl with prn number', () => {
+    it('should return viewPrnUrl with prn id', () => {
       const result = buildConfirmationViewData(createMockRequest(), {
         registration: reprocessorRegistration,
         organisationId: 'org-123',
@@ -123,7 +124,7 @@ describe('#buildConfirmationViewData', () => {
       })
 
       expect(result.viewPrnUrl).toBe(
-        '/organisations/org-123/registrations/reg-001/prns/ER992415095748M'
+        '/organisations/org-123/registrations/reg-001/prns/prn-002'
       )
     })
 

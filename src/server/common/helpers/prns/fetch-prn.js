@@ -5,16 +5,16 @@ import { stubPrns } from './stub-prns.js'
  * Fetches a PRN from EPR Backend for an accreditation
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
- * @param {string} prnNumber - The prnNumber
+ * @param {string} prnId - The PRN ID
  * @returns {Promise<object|null>}
  */
 async function fetchPrn(
   organisationId,
   accreditationId,
-  prnNumber
+  prnId
   //, idToken
 ) {
-  // const path = `/v1/organisations/${organisationId}/accreditations/${accreditationId}/prns/${prnNumber}`
+  // const path = `/v1/organisations/${organisationId}/accreditations/${accreditationId}/prns/${prnId}`
   //   return fetchJsonFromBackend(path, {
   //     method: 'GET',
   //     headers: {
@@ -22,7 +22,7 @@ async function fetchPrn(
   //     }
   //   })
 
-  return stubPrns.find((prn) => prn.prnNumber === prnNumber) ?? null
+  return stubPrns.find((prn) => prn.id === prnId) ?? null
 }
 
 export { fetchPrn }

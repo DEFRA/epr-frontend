@@ -16,14 +16,14 @@ describe('#getPrn', () => {
   })
 
   it('returns PRN data when found', async () => {
-    const apiPrn = { prnNumber: 'ER2625468U', status: 'awaiting_authorisation' }
+    const apiPrn = { id: 'prn-001', status: 'awaiting_authorisation' }
 
     vi.mocked(fetchPrn).mockResolvedValue(apiPrn)
 
-    const result = await getPrn('org-123', 'acc-456', 'ER2625468U', mockLogger)
+    const result = await getPrn('org-123', 'acc-456', 'prn-001', mockLogger)
 
     expect(result).toStrictEqual(apiPrn)
-    expect(fetchPrn).toHaveBeenCalledWith('org-123', 'acc-456', 'ER2625468U')
+    expect(fetchPrn).toHaveBeenCalledWith('org-123', 'acc-456', 'prn-001')
   })
 
   it('returns null when PRN is not found', async () => {
@@ -37,12 +37,12 @@ describe('#getPrn', () => {
   it('returns null and logs warning when fetch fails', async () => {
     vi.mocked(fetchPrn).mockRejectedValue(new Error('Network error'))
 
-    const result = await getPrn('org-123', 'acc-456', 'ER2625468U', mockLogger)
+    const result = await getPrn('org-123', 'acc-456', 'prn-001', mockLogger)
 
     expect(result).toBeNull()
     expect(mockLogger.warn).toHaveBeenCalledWith(
       { error: expect.any(Error) },
-      'Failed to fetch PRN ER2625468U'
+      'Failed to fetch PRN prn-001'
     )
   })
 })

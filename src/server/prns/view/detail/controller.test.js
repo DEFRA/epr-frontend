@@ -64,11 +64,10 @@ const fixtureExporter = {
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/prns/ER2625468U'
+  '/organisations/org-123/registrations/reg-001/prns/prn-001'
 const reprocessorOutputUrl =
-  '/organisations/org-789/registrations/reg-003/prns/ER2625468U'
-const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/prns/EX2625468U'
+  '/organisations/org-789/registrations/reg-003/prns/prn-001'
+const exporterUrl = '/organisations/org-456/registrations/reg-002/prns/prn-005'
 
 describe('#prnDetailController', () => {
   beforeAll(() => {
@@ -77,7 +76,7 @@ describe('#prnDetailController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredPrn).mockResolvedValue({ prnNumber: 'ER2625468U' })
+    vi.mocked(getRequiredPrn).mockResolvedValue({ id: 'prn-001' })
   })
 
   afterAll(() => {
@@ -106,7 +105,7 @@ describe('#prnDetailController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/prns/ER2625468U',
+        url: '/organisations/org-123/registrations/reg-nonexistent/prns/prn-001',
         auth: mockAuth
       })
 

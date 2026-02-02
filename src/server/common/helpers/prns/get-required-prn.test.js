@@ -18,7 +18,7 @@ describe('#getRequiredPrn', () => {
 
   it('returns PRN data when found', async () => {
     const prnData = {
-      prnNumber: 'ER2625468U',
+      id: 'prn-001',
       status: 'awaiting_authorisation'
     }
 
@@ -27,7 +27,7 @@ describe('#getRequiredPrn', () => {
     const result = await getRequiredPrn(
       'org-123',
       'acc-456',
-      'ER2625468U',
+      'prn-001',
       mockLogger
     )
 
@@ -35,7 +35,7 @@ describe('#getRequiredPrn', () => {
     expect(getPrn).toHaveBeenCalledWith(
       'org-123',
       'acc-456',
-      'ER2625468U',
+      'prn-001',
       mockLogger
     )
   })
@@ -48,7 +48,7 @@ describe('#getRequiredPrn', () => {
     ).rejects.toThrowError(Boom.notFound('PRN NONEXISTENT not found'))
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      { prnNumber: 'NONEXISTENT' },
+      { prnId: 'NONEXISTENT' },
       'PRN NONEXISTENT not found'
     )
   })
@@ -57,7 +57,7 @@ describe('#getRequiredPrn', () => {
     vi.mocked(getPrn).mockRejectedValue(new Error('Unexpected error'))
 
     await expect(
-      getRequiredPrn('org-123', 'acc-456', 'ER2625468U', mockLogger)
+      getRequiredPrn('org-123', 'acc-456', 'prn-001', mockLogger)
     ).rejects.toThrowError('Unexpected error')
   })
 })

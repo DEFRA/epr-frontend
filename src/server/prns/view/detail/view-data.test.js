@@ -31,7 +31,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-123',
         registrationId: 'reg-001',
-        prnNumber: 'ER2625468U'
+        prnData: { id: 'prn-001' }
       })
 
       expect(result.pageTitle).toBe('PRN')
@@ -46,7 +46,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-789',
         registrationId: 'reg-003',
-        prnNumber: 'ER2625468U'
+        prnData: { id: 'prn-001' }
       })
 
       expect(result.pageTitle).toBe('PRN')
@@ -61,7 +61,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-456',
         registrationId: 'reg-002',
-        prnNumber: 'EX2625468U'
+        prnData: { id: 'prn-005' }
       })
 
       expect(result.pageTitle).toBe('PERN')
@@ -78,7 +78,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-123',
         registrationId: 'reg-001',
-        prnNumber: 'ER2625468U'
+        prnData: { id: 'prn-001' }
       })
 
       expect(result.backUrl).toBe(
@@ -96,7 +96,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-123',
         registrationId: 'reg-001',
-        prnNumber: 'ER2625468U'
+        prnData: { id: 'prn-001' }
       })
 
       expect(result.issuePrnText).toBe('Issue PRN')
@@ -110,7 +110,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-456',
         registrationId: 'reg-002',
-        prnNumber: 'EX2625468U'
+        prnData: { id: 'prn-005' }
       })
 
       expect(result.issuePrnText).toBe('Issue PERN')
@@ -124,7 +124,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-123',
         registrationId: 'reg-001',
-        prnNumber: 'ER2625468U'
+        prnData: { id: 'prn-001' }
       })
 
       expect(result.deletePrnText).toBe('Delete PRN')
@@ -138,7 +138,7 @@ describe('#prnDetailViewData', () => {
         registration,
         organisationId: 'org-456',
         registrationId: 'reg-002',
-        prnNumber: 'EX2625468U'
+        prnData: { id: 'prn-005' }
       })
 
       expect(result.deletePrnText).toBe('Delete PERN')

@@ -1,7 +1,8 @@
 // this will be removed when the real api is available
 const stubPrns = [
   {
-    prnNumber: 'ER2625468U',
+    id: 'prn-001',
+    prnNumber: '',
     status: 'awaiting_authorisation',
     issuedToOrganisation: { name: 'Acme Packaging Solutions Ltd' },
     issuedByOrganisation: { name: 'John Smith Ltd' },
@@ -14,7 +15,8 @@ const stubPrns = [
     createdAt: '2026-01-01'
   },
   {
-    prnNumber: 'ER992415095748M',
+    id: 'prn-002',
+    prnNumber: '',
     status: 'awaiting_acceptance',
     issuedToOrganisation: { name: 'Nestle (SEPA)' },
     issuedByOrganisation: { name: 'John Smith Ltd' },
@@ -27,6 +29,7 @@ const stubPrns = [
     createdAt: '2026-01-01'
   },
   {
+    id: 'prn-003',
     prnNumber: 'ER1122334455A',
     status: 'accepted',
     issuedToOrganisation: { name: 'GreenPack Ltd' },
@@ -40,6 +43,7 @@ const stubPrns = [
     createdAt: '2026-01-01'
   },
   {
+    id: 'prn-004',
     prnNumber: 'ER5566778899B',
     status: 'rejected',
     issuedToOrganisation: { name: 'WasteAway Corp' },
@@ -53,6 +57,7 @@ const stubPrns = [
     createdAt: '2026-01-01'
   },
   {
+    id: 'prn-005',
     prnNumber: 'EX9988776655C',
     status: 'cancelled',
     issuedToOrganisation: { name: 'EuroPack GmbH' },
@@ -66,6 +71,7 @@ const stubPrns = [
     createdAt: '2026-01-01'
   },
   {
+    id: 'prn-006',
     prnNumber: 'ER4433221100D',
     status: 'awaiting_cancellation',
     issuedToOrganisation: { name: 'RecycleCo Ltd' },

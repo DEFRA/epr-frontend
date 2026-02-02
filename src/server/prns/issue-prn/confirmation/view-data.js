@@ -29,7 +29,7 @@ export function buildConfirmationViewData(
     prnNumberLabel: localise(`${prnType}:prnNumberLabel`),
     prnNumber,
     viewPrnText: localise(`${prnType}:viewPrn`),
-    viewPrnUrl: `${basePrnsUrl}/${prnNumber}`,
+    viewPrnUrl: `${basePrnsUrl}/${prnData.id ?? ''}`,
     createPrnText: localise(`${prnType}:createPrn`),
     createPrnUrl,
     managePrnsText: localise(`${prnType}:managePrns`),

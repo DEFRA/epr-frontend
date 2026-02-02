@@ -65,6 +65,7 @@ const fixtureExporter = {
 }
 
 const stubPrnData = {
+  id: 'prn-001',
   prnNumber: 'ER2625468U',
   issuedToOrganisation: { name: 'Acme Packaging Solutions Ltd' },
   issuedByOrganisation: { name: 'John Smith Ltd' },
@@ -77,9 +78,9 @@ const stubPrnData = {
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/create-prn/ER2625468U/check-details'
+  '/organisations/org-123/registrations/reg-001/create-prn/prn-001/check-details'
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/create-prn/EX2625468U/check-details'
+  '/organisations/org-456/registrations/reg-002/create-prn/prn-005/check-details'
 
 describe('#checkDetailsController', () => {
   beforeAll(() => {
@@ -307,7 +308,7 @@ describe('#checkDetailsController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/create-prn/ER2625468U/check-details',
+        url: '/organisations/org-123/registrations/reg-nonexistent/create-prn/prn-001/check-details',
         auth: mockAuth
       })
 

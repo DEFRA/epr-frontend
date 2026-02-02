@@ -65,14 +65,15 @@ const fixtureExporter = {
 }
 
 const stubPrnData = {
+  id: 'prn-002',
   prnNumber: 'ER992415095748M',
   issuedToOrganisation: { name: 'Nestle (SEPA)' }
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/issue-prn/ER992415095748M/confirmation'
+  '/organisations/org-123/registrations/reg-001/issue-prn/prn-002/confirmation'
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/issue-prn/ER992415095748M/confirmation'
+  '/organisations/org-456/registrations/reg-002/issue-prn/prn-002/confirmation'
 
 describe('#confirmationController', () => {
   beforeAll(() => {
@@ -284,7 +285,7 @@ describe('#confirmationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/issue-prn/ER992415095748M/confirmation',
+        url: '/organisations/org-123/registrations/reg-nonexistent/issue-prn/prn-002/confirmation',
         auth: mockAuth
       })
 
