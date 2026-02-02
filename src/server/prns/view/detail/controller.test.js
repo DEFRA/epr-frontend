@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getPrn } from '#server/common/helpers/prns/get-prn.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
@@ -10,6 +11,8 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
+
+vi.mock(import('#server/common/helpers/prns/get-prn.js'))
 
 const mockCredentials = {
   profile: {
@@ -74,6 +77,7 @@ describe('#prnDetailController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getPrn).mockResolvedValue({ prnNumber: 'ER2625468U' })
   })
 
   afterAll(() => {

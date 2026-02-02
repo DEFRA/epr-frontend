@@ -1,5 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { buildCreateViewData } from './create-view-data.js'
+import { buildCreateViewData } from './view-data.js'
 
 // Stub recipients until real API is available
 const STUB_RECIPIENTS = [
@@ -30,7 +30,7 @@ export const createController = {
       recipients: STUB_RECIPIENTS
     })
 
-    return h.view('prns/create', viewData)
+    return h.view('prns/create-prn/create/create', viewData)
   }
 }
 
