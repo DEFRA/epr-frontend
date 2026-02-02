@@ -4,7 +4,7 @@
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
-{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -60,10 +60,11 @@
           html: '<p class="govuk-body">' + help.text + '</p>'
         }) }}
 
-        {{ govukTextarea({
+        {{ govukCharacterCount({
           name: "notes",
           id: "notes",
           value: notes.value,
+          maxlength: 200,
           label: {
             text: notes.label,
             classes: "govuk-label--m"
@@ -71,9 +72,7 @@
           hint: {
             text: notes.hint
           },
-          attributes: {
-            maxlength: "200"
-          }
+          errorMessage: notes.errorMessage
         }) }}
 
         {{ govukButton({

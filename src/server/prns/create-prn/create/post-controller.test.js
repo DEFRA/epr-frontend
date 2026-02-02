@@ -3,8 +3,8 @@
  */
 
 import { config } from '#config/config.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
@@ -316,10 +316,7 @@ describe('#postCreatePrnController', () => {
         const errorSummary = getByRole(body, 'alert')
 
         expect(
-          getByText(
-            errorSummary,
-            'Issuer notes must be 200 characters or fewer'
-          )
+          getByText(errorSummary, 'Enter a maximum of 200 characters')
         ).toBeDefined()
       })
     })

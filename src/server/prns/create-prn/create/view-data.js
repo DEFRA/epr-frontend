@@ -53,7 +53,8 @@ export function buildCreateViewData(
     notes: {
       label: localise('prns:create:notesLabel'),
       hint: localise(`prns:create:${noteType}:notesHint`),
-      value: values?.notes ?? ''
+      value: values?.notes ?? '',
+      errorMessage: errors?.notes
     }
   }
 
