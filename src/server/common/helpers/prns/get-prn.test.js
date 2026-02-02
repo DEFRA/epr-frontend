@@ -26,7 +26,7 @@ describe('#getPrn', () => {
     expect(fetchPrn).toHaveBeenCalledWith('org-123', 'acc-456', 'prn-789')
   })
 
-  it('returns empty array when API returns empty items', async () => {
+  it('returns null when API returns empty items', async () => {
     vi.mocked(fetchPrn).mockResolvedValue(null)
 
     const result = await getPrn('org-123', 'acc-456', 'prn-789', mockLogger)

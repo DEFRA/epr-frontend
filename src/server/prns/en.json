@@ -32,14 +32,14 @@
   "confirmation": {
     "prns": {
       "panelTitle": "PRN issued to",
-      "prnNumberLabel": "PRN number:",
+      "prnNumberLabel": "PRN number",
       "viewPrn": "View PRN (opens in a new tab)",
       "createPrn": "Create a PRN",
       "managePrns": "Manage PRNs"
     },
     "perns": {
       "panelTitle": "PERN issued to",
-      "prnNumberLabel": "PERN number:",
+      "prnNumberLabel": "PERN number",
       "viewPrn": "View PERN (opens in a new tab)",
       "createPrn": "Create a PERN",
       "managePrns": "Manage PERNs"

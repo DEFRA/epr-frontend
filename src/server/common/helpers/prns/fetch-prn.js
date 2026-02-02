@@ -6,7 +6,7 @@
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
  * @param {string} prnNumber - The prnNumber
- * @returns {Promise<{items: Array, hasMore: boolean}>}
+ * @returns {Promise<object>}
  */
 async function fetchPrn(
   organisationId,

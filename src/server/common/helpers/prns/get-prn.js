@@ -6,7 +6,7 @@ import { fetchPrn } from './fetch-prn.js'
  * @param {string} accreditationId - The accreditation ID
  * @param {string} prnNumber - The prn number
  * @param {object} logger - Logger instance for error reporting
- * @returns {Promise<Array>} PRN items array (empty array on failure)
+ * @returns {Promise<object>} PRN items array (empty array on failure)
  */
 async function getPrn(
   organisationId,
