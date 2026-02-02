@@ -26,11 +26,12 @@ const STUB_RECIPIENTS = [
 /**
  * @param {import('@hapi/hapi').Request} request
  * @param {{wasteProcessingType: string}} registration
+ * @param {Joi.ValidationError} validationError
  * @returns {Record<string, {text: string}>}
  */
-function buildValidationErrors(request, registration) {
+function buildValidationErrors(request, registration, validationError) {
   const errors = {}
-  const details = request.pre.validationError.details
+  const details = validationError.details
   const noteType = getPrnType(registration)
 
   for (const detail of details) {
@@ -93,48 +94,36 @@ export const postCreateController = {
     validate: {
       payload: payloadSchema,
       failAction: async (request, h, error) => {
-        request.pre.validationError = error
-        return h.continue
-      }
-    },
-    pre: [
-      {
-        method: async (request, h) => {
-          if (request.pre.validationError) {
-            const { organisationId, registrationId } = request.params
-            const session = request.auth.credentials
+        const { organisationId, registrationId } = request.params
+        const session = request.auth.credentials
 
-            const { registration } =
-              await getRequiredRegistrationWithAccreditation(
-                organisationId,
-                registrationId,
-                session.idToken,
-                request.logger
-              )
+        const { registration } = await getRequiredRegistrationWithAccreditation(
+          organisationId,
+          registrationId,
+          session.idToken,
+          request.logger
+        )
 
-            const errors = buildValidationErrors(request, registration)
-            const payload = request.payload
-            const values = {
-              tonnage: payload.tonnage?.toString() ?? '',
-              recipient: payload.recipient ?? '',
-              notes: payload.notes ?? ''
-            }
-
-            const viewData = buildCreateViewData(request, {
-              errors,
-              organisationId,
-              recipients: STUB_RECIPIENTS,
-              registration,
-              registrationId,
-              values
-            })
-
-            return h.view('prns/create-prn/create/create', viewData).takeover()
-          }
-          return h.continue
+        const errors = buildValidationErrors(request, registration, error)
+        const payload = request.payload
+        const values = {
+          tonnage: payload.tonnage?.toString() ?? '',
+          recipient: payload.recipient ?? '',
+          notes: payload.notes ?? ''
         }
+
+        const viewData = buildCreateViewData(request, {
+          errors,
+          organisationId,
+          recipients: STUB_RECIPIENTS,
+          registration,
+          registrationId,
+          values
+        })
+
+        return h.view('prns/create-prn/create/create', viewData).takeover()
       }
-    ]
+    }
   },
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
