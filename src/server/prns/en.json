@@ -4,14 +4,12 @@
       "pageTitle": "Check before creating PERN",
       "leadParagraph": "Check the following information is correct before creating this PERN.",
       "detailsHeading": "PERN details",
-      "createButton": "Create PERN",
       "insetText": "Any information not shown here will be automatically populated when the PERN is issued."
     },
     "prns": {
       "pageTitle": "Check before creating PRN",
       "leadParagraph": "Check the following information is correct before creating this PRN.",
       "detailsHeading": "PRN details",
-      "createButton": "Create PRN",
       "insetText": "Any information not shown here will be automatically populated when the PRN is issued."
     },
     "recipient": "Packaging waste producer or compliance scheme",
@@ -19,9 +17,9 @@
     "tonnageInWords": "Tonnage in words",
     "processToBeUsed": "Process to be used",
     "decemberWaste": "December waste",
+    "issuer": "Issuer",
     "issuedDate": "Issued date",
     "issuedBy": "Issued by",
-    "authorisedBy": "Authorised by",
     "position": "Position",
     "issuerNotes": "Issuer notes",
     "notProvided": "Not provided",
@@ -29,7 +27,7 @@
     "material": "Material",
     "accreditationNumber": "Accreditation number",
     "accreditationAddress": "Accreditation address",
-    "cancelButton": "Cancel without saving"
+    "startAgain": "Start again"
   },
   "create": {
     "helpSummary": "Can't find the producer or compliance scheme?",
