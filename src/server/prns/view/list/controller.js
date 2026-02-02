@@ -30,9 +30,7 @@ export const listController = {
       getPrns(organisationId, accreditation.id, session.idToken, request.logger)
     ])
 
-    const hasCreatedPrns = prns.some(
-      (prn) => prn.status !== prnStatuses.draft
-    )
+    const hasCreatedPrns = prns.some((prn) => prn.status !== prnStatuses.draft)
 
     const viewData = buildListViewData(request, {
       organisationId,

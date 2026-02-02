@@ -862,9 +862,7 @@ describe('#prnListController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(main.textContent).toContain(
-          'You have not created any PRNs.'
-        )
+        expect(main.textContent).toContain('You have not created any PRNs.')
       })
 
       it('should not render table when only draft PRNs exist', async ({
@@ -885,7 +883,7 @@ describe('#prnListController', () => {
       })
     })
 
-    describe('PRNs exist but none awaiting authorisation', () => {
+    describe('pRNs exist but none awaiting authorisation', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
