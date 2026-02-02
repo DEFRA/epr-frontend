@@ -5,7 +5,14 @@
 import Joi from 'joi'
 
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getPrnType } from '#server/prns/helpers/get-note-type.js'
 import { buildCreateViewData } from './view-data.js'
+
+const FIELDS = Object.freeze({
+  tonnage: 'tonnage',
+  recipient: 'recipient',
+  notes: 'notes'
+})
 
 const STUB_RECIPIENTS = [
   { value: 'producer-1', text: 'Acme Packaging Ltd' },
@@ -17,17 +24,26 @@ const STUB_RECIPIENTS = [
 
 /**
  * @param {import('@hapi/hapi').Request} request
+ * @param {{wasteProcessingType: string}} registration
  * @returns {Record<string, {text: string}>}
  */
-function buildValidationErrors(request) {
+function buildValidationErrors(request, registration) {
   const errors = {}
   const details = request.pre.validationError.details
+  const noteType = getPrnType(registration)
 
   for (const detail of details) {
     const field = detail.path[0]
     const messageKey = getErrorMessageKey(detail)
-    errors[field] = {
-      text: request.t(`prns:create:errors:${messageKey}`)
+
+    if (field === FIELDS.tonnage) {
+      errors[field] = {
+        text: request.t(`prns:create:errors:${noteType}:${messageKey}`)
+      }
+    } else {
+      errors[field] = {
+        text: request.t(`prns:create:errors:${messageKey}`)
+      }
     }
   }
 
@@ -41,14 +57,21 @@ function buildValidationErrors(request) {
 function getErrorMessageKey(detail) {
   const field = detail.path[0]
 
-  if (field === 'tonnage') {
-    if (detail.type === 'any.required' || detail.type === 'number.base') {
-      return 'tonnageRequired'
+  if (field === FIELDS.tonnage) {
+    if (detail.type === 'any.required' || detail.type === 'number.integer') {
+      return 'tonnageWholeNumber'
     }
-    return 'tonnagePositiveInteger'
+    if (detail.type === 'number.base') {
+      const value = detail.context?.value
+      if (value === '' || value === undefined || value === null) {
+        return 'tonnageWholeNumber'
+      }
+      return 'tonnageGreaterThanZero'
+    }
+    return 'tonnageGreaterThanZero'
   }
 
-  if (field === 'recipient') {
+  if (field === FIELDS.recipient) {
     return 'recipientRequired'
   }
 
@@ -56,9 +79,9 @@ function getErrorMessageKey(detail) {
 }
 
 const payloadSchema = Joi.object({
-  tonnage: Joi.number().integer().positive().required(),
-  recipient: Joi.string().min(1).required(),
-  notes: Joi.string().max(200).allow('').optional()
+  [FIELDS.tonnage]: Joi.number().integer().positive().required(),
+  [FIELDS.recipient]: Joi.string().min(1).required(),
+  [FIELDS.notes]: Joi.string().max(200).allow('').optional()
 })
 
 /**
@@ -88,7 +111,7 @@ export const postCreateController = {
                 request.logger
               )
 
-            const errors = buildValidationErrors(request)
+            const errors = buildValidationErrors(request, registration)
             const payload = request.payload
             const values = {
               tonnage: payload.tonnage?.toString() ?? '',

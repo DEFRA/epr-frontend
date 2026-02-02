@@ -148,7 +148,9 @@ describe('#postCreatePrnController', () => {
 
         const errorSummary = getByRole(body, 'alert')
 
-        expect(getByText(errorSummary, 'Enter the tonnage')).toBeDefined()
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
       })
 
       it('should show error when tonnage is not a number', async ({
@@ -178,7 +180,12 @@ describe('#postCreatePrnController', () => {
 
         const errorSummary = getByRole(body, 'alert')
 
-        expect(getByText(errorSummary, 'Enter the tonnage')).toBeDefined()
+        expect(
+          getByText(
+            errorSummary,
+            'Enter PRN tonnage as a whole number greater than zero'
+          )
+        ).toBeDefined()
       })
 
       it('should show error when tonnage is a decimal', async ({ server }) => {
@@ -207,7 +214,7 @@ describe('#postCreatePrnController', () => {
         const errorSummary = getByRole(body, 'alert')
 
         expect(
-          getByText(errorSummary, 'Tonnage must be a positive whole number')
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
         ).toBeDefined()
       })
 
@@ -237,7 +244,10 @@ describe('#postCreatePrnController', () => {
         const errorSummary = getByRole(body, 'alert')
 
         expect(
-          getByText(errorSummary, 'Tonnage must be a positive whole number')
+          getByText(
+            errorSummary,
+            'Enter PRN tonnage as a whole number greater than zero'
+          )
         ).toBeDefined()
       })
 
@@ -267,7 +277,10 @@ describe('#postCreatePrnController', () => {
         const errorSummary = getByRole(body, 'alert')
 
         expect(
-          getByText(errorSummary, 'Tonnage must be a positive whole number')
+          getByText(
+            errorSummary,
+            'Enter PRN tonnage as a whole number greater than zero'
+          )
         ).toBeDefined()
       })
     })
@@ -373,7 +386,9 @@ describe('#postCreatePrnController', () => {
         const errorLinks = getAllByRole(errorSummary, 'link')
 
         expect(errorLinks).toHaveLength(2)
-        expect(getByText(errorSummary, 'Enter the tonnage')).toBeDefined()
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
         expect(
           getByText(errorSummary, 'Select who this will be issued to')
         ).toBeDefined()
@@ -495,7 +510,7 @@ describe('#postCreatePrnController', () => {
 
         const errorSummary = getByRole(body, 'alert')
         const errorLink = getByRole(errorSummary, 'link', {
-          name: /Enter the tonnage/i
+          name: /Enter PRN tonnage as a whole number/i
         })
 
         expect(errorLink.getAttribute('href')).toBe('#tonnage')
@@ -559,7 +574,9 @@ describe('#postCreatePrnController', () => {
 
       const errorSummary = getByRole(body, 'alert')
 
-      expect(getByText(errorSummary, 'Enter the tonnage')).toBeDefined()
+      expect(
+        getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+      ).toBeDefined()
       expect(
         getByText(errorSummary, 'Select who this will be issued to')
       ).toBeDefined()
@@ -650,6 +667,74 @@ describe('#postCreatePrnController', () => {
       expect(getByRole(main, 'heading', { level: 1 }).textContent).toContain(
         'Create a PERN'
       )
+    })
+
+    it('should display PRN tonnage error message for reprocessor', async ({
+      server
+    }) => {
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+
+      const { cookie, crumb } = await getCsrfToken(server, reprocessorUrl, {
+        auth: mockAuth
+      })
+
+      const { result } = await server.inject({
+        method: 'POST',
+        url: reprocessorUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: {
+          crumb,
+          tonnage: '',
+          recipient: 'producer-1',
+          notes: ''
+        }
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const errorSummary = getByRole(body, 'alert')
+
+      expect(
+        getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+      ).toBeDefined()
+    })
+
+    it('should display PERN tonnage error message for exporter', async ({
+      server
+    }) => {
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        fixtureExporter
+      )
+
+      const { cookie, crumb } = await getCsrfToken(server, exporterUrl, {
+        auth: mockAuth
+      })
+
+      const { result } = await server.inject({
+        method: 'POST',
+        url: exporterUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: {
+          crumb,
+          tonnage: '',
+          recipient: 'producer-1',
+          notes: ''
+        }
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const errorSummary = getByRole(body, 'alert')
+
+      expect(
+        getByText(errorSummary, 'Enter PERN tonnage as a whole number')
+      ).toBeDefined()
     })
   })
 
