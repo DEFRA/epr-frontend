@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { fetchPackagingRecyclingNotes } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js'
+import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
 
 /**

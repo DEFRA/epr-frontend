@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
-import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
+import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -11,9 +11,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
-vi.mock(
-  import('#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js')
-)
+vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
@@ -63,10 +61,10 @@ const organisationId = 'org-123'
 const registrationId = 'reg-456'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
-const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/view`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/view`
+const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${pernId}/view`
+const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
 
 const validPayload = {
   tonnage: '100',
@@ -764,7 +762,7 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)

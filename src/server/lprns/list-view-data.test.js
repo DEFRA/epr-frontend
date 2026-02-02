@@ -110,7 +110,7 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.createLink.href).toBe(
-        '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/create'
+        '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes/create'
       )
       expect(result.createLink.text).toBe('Create a PRN')
     })
@@ -220,7 +220,7 @@ describe('#buildListViewData', () => {
 
       expect(result.table.rows[0][4].html).toContain('govuk-link')
       expect(result.table.rows[0][4].html).toContain(
-        '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/prn-001/view'
+        '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes/prn-001/view'
       )
     })
 

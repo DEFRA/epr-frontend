@@ -45,7 +45,7 @@ describe(updatePrnStatus, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/status`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/status`,
       {
         method: 'POST',
         headers: {

@@ -32,7 +32,7 @@ async function updatePrnStatus(
   payload,
   idToken
 ) {
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/status`
+  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/status`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',

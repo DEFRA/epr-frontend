@@ -1,18 +1,20 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
- * Fetches packaging recycling notes for a registration from EPR Backend
+ * Fetches a single packaging recycling note by ID from EPR Backend
  * @param {string} organisationId - The organisation ID
  * @param {string} registrationId - The registration ID
+ * @param {string} prnId - The PRN ID
  * @param {string} idToken - JWT ID token for authorisation
- * @returns {Promise<PackagingRecyclingNote[]>} List of packaging recycling notes
+ * @returns {Promise<PackagingRecyclingNote>} The packaging recycling note
  */
-async function fetchPackagingRecyclingNotes(
+async function fetchPackagingRecyclingNote(
   organisationId,
   registrationId,
+  prnId,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/packaging-recycling-notes`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/l-packaging-recycling-notes/${encodeURIComponent(prnId)}`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',
@@ -22,7 +24,7 @@ async function fetchPackagingRecyclingNotes(
   })
 }
 
-export { fetchPackagingRecyclingNotes }
+export { fetchPackagingRecyclingNote }
 
 /**
  * @typedef {object} PackagingRecyclingNote

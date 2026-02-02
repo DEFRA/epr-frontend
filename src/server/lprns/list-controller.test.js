@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { fetchPackagingRecyclingNotes } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js'
+import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
@@ -13,9 +13,7 @@ vi.mock(
   import('#server/common/helpers/organisations/get-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
-vi.mock(
-  import('#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-notes.js')
-)
+vi.mock(import('./helpers/fetch-packaging-recycling-notes.js'))
 
 const mockCredentials = {
   profile: {
@@ -88,9 +86,9 @@ const mockPrns = [
 ]
 
 const reprocessorListUrl =
-  '/organisations/org-123/registrations/reg-001/packaging-recycling-notes'
+  '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes'
 const exporterListUrl =
-  '/organisations/org-456/registrations/reg-002/packaging-recycling-notes'
+  '/organisations/org-456/registrations/reg-002/l-packaging-recycling-notes'
 
 describe('#listPrnsController', () => {
   beforeEach(() => {
@@ -202,7 +200,7 @@ describe('#listPrnsController', () => {
 
         expect(createLink).toBeDefined()
         expect(createLink.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/create'
+          '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes/create'
         )
       })
 
@@ -322,7 +320,7 @@ describe('#listPrnsController', () => {
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-nonexistent/packaging-recycling-notes',
+          url: '/organisations/org-123/registrations/reg-nonexistent/l-packaging-recycling-notes',
           auth: mockAuth
         })
 

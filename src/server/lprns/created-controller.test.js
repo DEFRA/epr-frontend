@@ -65,10 +65,10 @@ const organisationId = 'org-123'
 const registrationId = 'reg-456'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
-const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/created`
-const pernCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/created`
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/view`
+const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/created`
+const pernCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${pernId}/created`
 
 const validPayload = {
   tonnage: '100',
@@ -289,7 +289,7 @@ describe('#createdController', () => {
           wasteProcessingType: 'exporter'
         }
 
-        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${pernId}/view`
+        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${pernId}/view`
         const { cookies } = await createPrnAndConfirm(
           server,
           exporterPayload,
@@ -330,8 +330,8 @@ describe('#createdController', () => {
         const { cookies } = await createPrnAndConfirm(server)
 
         // Try to access created page with different prnId
-        const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/different-id/created`
-        const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/different-id/view`
+        const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/different-id/created`
+        const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/different-id/view`
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',

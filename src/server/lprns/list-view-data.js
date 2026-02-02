@@ -24,7 +24,7 @@ export function buildListViewData(
   )
 
   const createUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
+    `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
   )
 
   const selectText = localise('lprns:list:table:selectText')
@@ -32,7 +32,7 @@ export function buildListViewData(
   // Build rows in govukTable format: array of arrays of cell objects
   const dataRows = prns.map((prn) => {
     const viewUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prn.id}/view`
+      `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prn.id}/view`
     )
     return [
       { text: prn.recipient },

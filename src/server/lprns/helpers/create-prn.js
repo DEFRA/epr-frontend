@@ -30,7 +30,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @returns {Promise<CreatePrnResponse>}
  */
 async function createPrn(organisationId, registrationId, payload, idToken) {
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
+  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',

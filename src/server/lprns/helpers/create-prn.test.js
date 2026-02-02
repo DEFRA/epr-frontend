@@ -42,7 +42,7 @@ describe(createPrn, () => {
     await createPrn(organisationId, registrationId, payload, idToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`,
+      `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`,
       {
         method: 'POST',
         headers: {

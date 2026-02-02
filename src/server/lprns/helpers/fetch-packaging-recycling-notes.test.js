@@ -62,7 +62,7 @@ describe(fetchPackagingRecyclingNotes, () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(
-        /\/v1\/organisations\/org-123\/registrations\/reg-456\/packaging-recycling-notes$/
+        /\/v1\/organisations\/org-123\/registrations\/reg-456\/l-packaging-recycling-notes$/
       ),
       expect.any(Object)
     )

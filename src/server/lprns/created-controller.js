@@ -20,7 +20,7 @@ export const createdController = {
     if (!prnCreated || prnCreated.id !== prnId) {
       // No session data or ID mismatch - redirect to view page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/view`
+        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/view`
       )
     }
 

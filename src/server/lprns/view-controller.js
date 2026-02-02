@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchPackagingRecyclingNote } from '#server/common/helpers/packaging-recycling-notes/fetch-packaging-recycling-note.js'
+import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { formatDateForDisplay } from '#server/common/helpers/format-date-for-display.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-registration-with-accreditation.js'
@@ -63,7 +63,7 @@ export const viewPostController = {
     if (!prnDraft || prnDraft.id !== prnId) {
       // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/create`
+        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
       )
     }
 
@@ -88,7 +88,7 @@ export const viewPostController = {
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes/${prnId}/created`
+        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/created`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to update PRN status')
@@ -208,7 +208,7 @@ async function handleExistingView(
   const noteType = isExporter ? 'perns' : 'prns'
 
   const backUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
+    `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
   )
 
   const displayMaterial = getDisplayMaterial(registration)
@@ -251,7 +251,7 @@ async function handleExistingView(
     backUrl,
     returnLink: {
       href: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/packaging-recycling-notes`
+        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
       ),
       text: localise(`lprns:view:${noteType}:returnLink`)
     }

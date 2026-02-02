@@ -5,7 +5,7 @@ import { postController } from './post-controller.js'
 import { viewController, viewPostController } from './view-controller.js'
 
 const basePath =
-  '/organisations/{organisationId}/registrations/{registrationId}/packaging-recycling-notes'
+  '/organisations/{organisationId}/registrations/{registrationId}/l-packaging-recycling-notes'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}

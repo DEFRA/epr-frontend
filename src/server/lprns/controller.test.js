@@ -54,9 +54,9 @@ const fixtureExporter = {
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/packaging-recycling-notes/create'
+  '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes/create'
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/packaging-recycling-notes/create'
+  '/organisations/org-456/registrations/reg-002/l-packaging-recycling-notes/create'
 
 describe('#createPrnController', () => {
   beforeEach(() => {
@@ -288,7 +288,7 @@ describe('#createPrnController', () => {
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-nonexistent/packaging-recycling-notes/create',
+          url: '/organisations/org-123/registrations/reg-nonexistent/l-packaging-recycling-notes/create',
           auth: mockAuth
         })
 
