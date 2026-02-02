@@ -2,6 +2,8 @@
  * @typedef {object} CreateViewDataOptions
  * @property {{wasteProcessingType: string}} registration
  * @property {Array<{value: string, text: string}>} recipients
+ * @property {string} organisationId
+ * @property {string} registrationId
  * @property {Record<string, {text: string}>} [errors]
  * @property {{tonnage?: string, recipient?: string, notes?: string}} [values]
  */
@@ -14,7 +16,7 @@
  */
 export function buildCreateViewData(
   request,
-  { registration, recipients, errors, values }
+  { errors, organisationId, recipients, registration, registrationId, values }
 ) {
   const { t: localise } = request
   const noteType =
@@ -30,7 +32,10 @@ export function buildCreateViewData(
     selected: values?.recipient === item.value
   }))
 
+  const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
+
   const viewData = {
+    backUrl,
     pageTitle,
     heading: pageTitle,
     tonnage: {

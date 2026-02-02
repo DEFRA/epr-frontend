@@ -48,6 +48,9 @@ const stubRecipients = [
   { value: 'org-3', text: 'Green Waste Solutions' }
 ]
 
+const stubOrganisationId = 'org-123'
+const stubRegistrationId = 'reg-456'
+
 const reprocessorRegistration = {
   id: 'reg-001',
   wasteProcessingType: 'reprocessor-input', // PRN
@@ -61,11 +64,26 @@ const exporterRegistration = {
 }
 
 describe('#buildCreateViewData', () => {
+  it('should return backUrl using organisation and registration IDs', () => {
+    const result = buildCreateViewData(createMockRequest(), {
+      registration: reprocessorRegistration,
+      recipients: stubRecipients,
+      organisationId: stubOrganisationId,
+      registrationId: stubRegistrationId
+    })
+
+    expect(result.backUrl).toBe(
+      `/organisations/${stubOrganisationId}/registrations/${stubRegistrationId}`
+    )
+  })
+
   describe('for reprocessor (PRN)', () => {
     it('should return page title and heading with PRN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        organisationId: stubOrganisationId,
+        registrationId: stubRegistrationId
       })
 
       expect(result.pageTitle).toBe('Create a PRN')
@@ -75,7 +93,9 @@ describe('#buildCreateViewData', () => {
     it('should return form labels with PRN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        organisationId: stubOrganisationId,
+        registrationId: stubRegistrationId
       })
 
       expect(result.tonnage.label).toBe('Enter PRN tonnage')
@@ -90,7 +110,9 @@ describe('#buildCreateViewData', () => {
     it('should include recipient options with placeholder', () => {
       const result = buildCreateViewData(createMockRequest(), {
         registration: reprocessorRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        organisationId: stubOrganisationId,
+        registrationId: stubRegistrationId
       })
 
       expect(result.recipient.items).toHaveLength(4) // placeholder + 3 options
@@ -111,7 +133,9 @@ describe('#buildCreateViewData', () => {
     it('should return page title and heading with PERN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         registration: exporterRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        organisationId: stubOrganisationId,
+        registrationId: stubRegistrationId
       })
 
       expect(result.pageTitle).toBe('Create a PERN')
@@ -121,7 +145,9 @@ describe('#buildCreateViewData', () => {
     it('should return form labels with PERN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         registration: exporterRegistration,
-        recipients: stubRecipients
+        recipients: stubRecipients,
+        organisationId: stubOrganisationId,
+        registrationId: stubRegistrationId
       })
 
       expect(result.tonnage.label).toBe('Enter PERN tonnage')
@@ -147,7 +173,9 @@ describe('#buildCreateViewData', () => {
             ...reprocessorRegistration,
             wasteProcessingType: type
           },
-          recipients: stubRecipients
+          recipients: stubRecipients,
+          organisationId: stubOrganisationId,
+          registrationId: stubRegistrationId
         })
 
         const isPern = result.pageTitle.includes('PERN')

@@ -27,7 +27,9 @@ export const createController = {
 
     const viewData = buildCreateViewData(request, {
       registration,
-      recipients: STUB_RECIPIENTS
+      recipients: STUB_RECIPIENTS,
+      organisationId,
+      registrationId
     })
 
     return h.view('prns/create-prn/create/create', viewData)
