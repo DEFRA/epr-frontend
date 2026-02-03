@@ -10,11 +10,14 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
+const { fetchWasteBalances } =
+  await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
 
 const mockCredentials = {
   profile: {
@@ -201,6 +204,9 @@ describe('#createdController', () => {
     )
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
+    vi.mocked(fetchWasteBalances).mockResolvedValue({
+      'acc-001': { amount: 1000, availableAmount: 500 }
+    })
   })
 
   describe('when feature flag is enabled', () => {
