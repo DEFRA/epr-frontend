@@ -21,7 +21,7 @@ export const fetchJsonFromBackend = async (path, options) => {
     })
   }
 
-  const url = `${eprBackendUrl}${path}`
+  const url = path.startsWith('http') ? path : `${eprBackendUrl}${path}`
 
   try {
     const response = await fetch(url, completeOptions)

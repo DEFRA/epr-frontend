@@ -1,9 +1,28 @@
+/** @import {WasteOrganisation} from '../common/helpers/waste-organisations/types.js' */
+
+/**
+ * Transform waste organisation object to option strings
+ * @param {WasteOrganisation[]} recipients
+ * @returns {Array<{value: string, text: string}>}
+ */
+function mapRecipientOptions(recipients) {
+  return recipients.map((recipient) => {
+    const name = recipient.tradingName || recipient.name
+    const address = Object.values(recipient.address).filter(Boolean).join(', ')
+
+    return {
+      value: recipient.id,
+      text: `${name}, ${address}`
+    }
+  })
+}
+
 /**
  * Build view data for the create PRN/PERN page
  * @param {Request} request
  * @param {object} options
  * @param {{wasteProcessingType: string}} options.registration
- * @param {Array<{value: string, text: string}>} options.recipients
+ * @param {WasteOrganisation[]} options.recipients
  * @returns {object}
  */
 export function buildCreateViewData(request, { registration, recipients }) {
@@ -24,7 +43,10 @@ export function buildCreateViewData(request, { registration, recipients }) {
     recipient: {
       label: localise(`prns:create:${noteType}:recipientLabel`),
       hint: localise('prns:create:recipientHint'),
-      items: [{ value: '', text: localise('prns:selectOption') }, ...recipients]
+      items: [
+        { value: '', text: localise('prns:create:recipientDefaultOption') },
+        ...mapRecipientOptions(recipients)
+      ]
     },
     help: {
       summary: localise('prns:create:helpSummary'),
