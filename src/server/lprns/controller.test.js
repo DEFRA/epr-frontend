@@ -431,5 +431,64 @@ describe('#createPrnController', () => {
         })
       })
     })
+
+    describe('insufficient balance error', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+      })
+
+      it('should display error summary when error=insufficient_balance query param is present', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: `${reprocessorUrl}?error=insufficient_balance`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Error summary should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).not.toBeNull()
+
+        // Error summary should have correct title
+        expect(getByText(errorSummary, /There is a problem/i)).toBeDefined()
+
+        // Error summary should explain the issue
+        expect(
+          getByText(
+            errorSummary,
+            /The tonnage you entered exceeds your available waste balance/i
+          )
+        ).toBeDefined()
+      })
+
+      it('should not display error summary when no error query param', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Error summary should NOT be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).toBeNull()
+      })
+    })
   })
 })
