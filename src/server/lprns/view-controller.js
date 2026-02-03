@@ -626,23 +626,31 @@ function buildAccreditationRows({
  * @param {(key: string) => string} localise
  * @returns {{text: string, class: string}}
  */
+const TAG_CLASS_BLUE = 'govuk-tag--blue epr-tag--no-max-width'
+const TAG_CLASS_GREY = 'govuk-tag--grey epr-tag--no-max-width'
+const TAG_CLASS_DEFAULT = 'epr-tag--no-max-width'
+
 function getStatusConfig(status, localise) {
   const statusMap = {
     awaiting_authorisation: {
       text: localise('lprns:list:status:awaitingAuthorisation'),
-      class: 'govuk-tag--blue epr-tag--no-max-width'
+      class: TAG_CLASS_BLUE
+    },
+    awaiting_acceptance: {
+      text: localise('lprns:list:status:awaitingAcceptance'),
+      class: TAG_CLASS_BLUE
     },
     issued: {
       text: localise('lprns:list:status:issued'),
-      class: 'govuk-tag--blue epr-tag--no-max-width'
+      class: TAG_CLASS_BLUE
     },
     cancelled: {
       text: localise('lprns:list:status:cancelled'),
-      class: 'govuk-tag--grey epr-tag--no-max-width'
+      class: TAG_CLASS_GREY
     }
   }
 
-  return statusMap[status] ?? { text: status, class: 'epr-tag--no-max-width' }
+  return statusMap[status] ?? { text: status, class: TAG_CLASS_DEFAULT }
 }
 
 /**
