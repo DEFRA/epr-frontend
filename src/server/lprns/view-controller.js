@@ -269,6 +269,7 @@ async function handleExistingView(
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
+  const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
@@ -304,6 +305,14 @@ async function handleExistingView(
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
+    issueButton: isAwaitingAuthorisation
+      ? {
+          text: localise(`lprns:view:${noteType}:issueButton`),
+          action: request.localiseUrl(
+            `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
+          )
+        }
+      : null,
     returnLink: {
       href: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
