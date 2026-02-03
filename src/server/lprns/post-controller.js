@@ -4,16 +4,11 @@ import Joi from 'joi'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { createPrn } from './helpers/create-prn.js'
+import {
+  STUB_RECIPIENTS,
+  getRecipientDisplayName
+} from './helpers/stub-recipients.js'
 import { buildCreatePrnViewData } from './view-data.js'
-
-// Stub recipients until real API is available
-export const STUB_RECIPIENTS = [
-  { value: 'producer-1', text: 'Acme Packaging Ltd' },
-  { value: 'producer-2', text: 'BigCo Waste Solutions' },
-  { value: 'producer-3', text: 'EcoRecycle Industries' },
-  { value: 'scheme-1', text: 'Green Compliance Scheme' },
-  { value: 'scheme-2', text: 'National Packaging Scheme' }
-]
 
 const MIN_TONNAGE = 1
 const MAX_NOTES_LENGTH = 200
@@ -119,8 +114,7 @@ export const postController = {
       request.payload
 
     // Find recipient name from stub list
-    const recipientItem = STUB_RECIPIENTS.find((r) => r.value === recipient)
-    const recipientName = recipientItem?.text ?? recipient
+    const recipientName = getRecipientDisplayName(recipient)
 
     try {
       // Create PRN as draft in backend

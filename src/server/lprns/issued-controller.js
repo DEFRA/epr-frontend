@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { getRecipientDisplayName } from './helpers/stub-recipients.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 
 /**
@@ -50,7 +51,7 @@ export const issuedController = {
     return h.view('lprns/issued', {
       pageTitle: localise(`lprns:issued:${noteType}:pageTitle`),
       heading: localise(`lprns:issued:${noteType}:heading`, {
-        recipient: prn.issuedToOrganisation
+        recipient: getRecipientDisplayName(prn.issuedToOrganisation)
       }),
       prnNumberLabel: localise(`lprns:issued:${noteType}:prnNumberLabel`),
       prnNumber: prn.prnNumber,

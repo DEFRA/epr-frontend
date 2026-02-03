@@ -4,6 +4,7 @@ import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
+import { getRecipientDisplayName } from './helpers/stub-recipients.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -522,7 +523,7 @@ function buildPrnCoreRows(prn, localise) {
   return [
     {
       key: { text: localise('lprns:buyerLabel') },
-      value: { text: prn.issuedToOrganisation }
+      value: { text: getRecipientDisplayName(prn.issuedToOrganisation) }
     },
     {
       key: { text: localise('lprns:tonnageLabel') },
