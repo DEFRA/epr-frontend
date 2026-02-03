@@ -70,7 +70,8 @@
     "pageTitle": "{{noteTypePlural}}",
     "createText": "Create a {{noteType}}",
     "selectHeading": "Select a {{noteType}}",
-    "balanceHint": "This is the balance available for creating new {{noteTypePlural}}"
+    "balanceHint": "This is the balance available for creating new {{noteTypePlural}}",
+    "emptyMessage": "You have not created any {{noteTypePlural}}."
   },
   "selectOption": "Select an option"
 }

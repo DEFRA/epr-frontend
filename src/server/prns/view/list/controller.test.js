@@ -733,37 +733,205 @@ describe('#prnListController', () => {
     })
   })
 
-  describe('empty state', () => {
-    beforeEach(() => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureReprocessor
-      )
-    })
-
-    it('should render table with headers but no rows when no PRNs exist', async ({
-      server
-    }) => {
-      vi.mocked(getPrns).mockResolvedValue([])
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
+  describe('zero PRN state', () => {
+    describe('reprocessor (PRN)', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(getPrns).mockResolvedValue([])
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('should display empty message when no PRNs exist', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
 
-      // Table should still exist with headers
-      const table = getByRole(main, 'table')
-      const headers = within(table).getAllByRole('columnheader')
-      const rows = within(table).queryAllByRole('row')
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
 
-      expect(table).toBeDefined()
-      expect(headers).toHaveLength(5)
-      // Only header row, no data rows
-      expect(rows).toHaveLength(1)
+        expect(main.textContent).toContain('You have not created any PRNs.')
+      })
+
+      it('should not render table when no PRNs exist', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const table = main.querySelector('table')
+
+        expect(table).toBeNull()
+      })
+
+      it('should still render "Select a PRN" heading when no PRNs exist', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const subheading = main.querySelector('.govuk-heading-m')
+
+        expect(subheading).not.toBeNull()
+        expect(subheading.textContent).toContain('Select a PRN')
+      })
+    })
+
+    describe('exporter (PERN)', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(getPrns).mockResolvedValue([])
+      })
+
+      it('should display PERN empty message when no PERNs exist', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.textContent).toContain('You have not created any PERNs.')
+      })
+
+      it('should not render table when no PERNs exist', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const table = main.querySelector('table')
+
+        expect(table).toBeNull()
+      })
+    })
+
+    describe('only draft PRNs exist', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(getPrns).mockResolvedValue([
+          {
+            id: 'prn-draft',
+            prnNumber: 'ER2600001A',
+            issuedToOrganisation: { name: 'Draft Corp' },
+            tonnageValue: 5,
+            createdAt: '2026-01-20T10:00:00Z',
+            status: 'draft'
+          }
+        ])
+      })
+
+      it('should display empty message when only draft PRNs exist', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.textContent).toContain('You have not created any PRNs.')
+      })
+
+      it('should not render table when only draft PRNs exist', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const table = main.querySelector('table')
+
+        expect(table).toBeNull()
+      })
+    })
+
+    describe('pRNs exist but none awaiting authorisation', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(getPrns).mockResolvedValue([
+          {
+            id: 'prn-accepted',
+            prnNumber: 'ER2688888F',
+            issuedToOrganisation: { name: 'Already Accepted Corp' },
+            tonnageValue: 10,
+            createdAt: '2026-01-20T10:00:00Z',
+            status: 'accepted'
+          }
+        ])
+      })
+
+      it('should render table when PRNs exist even if none are awaiting authorisation', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const table = main.querySelector('table')
+
+        expect(table).not.toBeNull()
+      })
+
+      it('should not display empty message when PRNs exist', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.textContent).not.toContain('You have not created any PRNs.')
+      })
     })
   })
 })
