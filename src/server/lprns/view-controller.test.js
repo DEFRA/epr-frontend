@@ -4,19 +4,22 @@ import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText } from '@testing-library/dom'
+import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
+const { fetchWasteBalances } =
+  await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
 
 const mockCredentials = {
   profile: {
@@ -59,12 +62,14 @@ const fixtureExporter = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
+const accreditationId = 'acc-001'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/view`
-const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${pernId}/view`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
+const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
+const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${pernId}/view`
+const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
 
 const validPayload = {
   tonnage: '100',
@@ -169,6 +174,9 @@ describe('#viewController', () => {
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
+    vi.mocked(fetchWasteBalances).mockResolvedValue({
+      'acc-001': { amount: 1000, availableAmount: 500 }
+    })
   })
 
   describe('when feature flag is enabled', () => {
@@ -280,6 +288,88 @@ describe('#viewController', () => {
 
         // Check return link text
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
+      })
+
+      it('shows accreditation address for reprocessors', async ({ server }) => {
+        const reprocessorWithAddress = {
+          ...fixtureReprocessor,
+          registration: {
+            ...fixtureReprocessor.registration,
+            site: {
+              address: {
+                line1: '123 Reprocessing Lane',
+                town: 'Manchester',
+                postcode: 'M1 1AA'
+              }
+            }
+          }
+        }
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          reprocessorWithAddress
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Accreditation address/i)).toBeDefined()
+        expect(
+          getByText(main, /123 Reprocessing Lane, Manchester, M1 1AA/i)
+        ).toBeDefined()
+      })
+
+      it('shows empty accreditation address when site address is null', async ({
+        server
+      }) => {
+        const reprocessorWithoutAddress = {
+          ...fixtureReprocessor,
+          registration: {
+            ...fixtureReprocessor.registration,
+            site: null
+          }
+        }
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          reprocessorWithoutAddress
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('hides accreditation address for exporters', async ({ server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          mockPernFromBackend
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const html = body.innerHTML
+
+        expect(html).not.toContain('Accreditation address')
       })
 
       it('displays issued status with blue tag', async ({ server }) => {
@@ -554,6 +644,147 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
+      it('displays Issue PRN button when status is awaiting_authorisation', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_authorisation'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByRole(main, 'button', { name: /Issue PRN/i })).toBeDefined()
+      })
+
+      it('displays Issue PERN button for exporter when status is awaiting_authorisation', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPernFromBackend,
+          status: 'awaiting_authorisation'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByRole(main, 'button', { name: /Issue PERN/i })).toBeDefined()
+      })
+
+      it('does not display Issue button when status is issued', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'issued'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      })
+
+      it('does not display Issue button when status is cancelled', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'cancelled'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      })
+
+      it('does not display Issue button when status is draft', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'draft'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      })
+
+      it('Issue button form posts to /issue endpoint', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_authorisation'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const issueButton = getByRole(main, 'button', { name: /Issue PRN/i })
+        const form = issueButton.closest('form')
+        expect(form.getAttribute('action')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
+        )
+      })
+
       it('displays complianceYearText when accreditationYear is present', async ({
         server
       }) => {
@@ -581,6 +812,49 @@ describe('#viewController', () => {
             /This PRN relates to waste accepted for reprocessing/i
           )
         ).toBeDefined()
+      })
+    })
+
+    describe('POST /issue (issue PRN)', () => {
+      it('updates PRN status to awaiting_acceptance and redirects to issued page', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_authorisation'
+        })
+        vi.mocked(updatePrnStatus).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_acceptance',
+          prnNumber: 'ER2625001A'
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          viewUrl,
+          { auth: mockAuth }
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: issueUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issued`
+        )
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'awaiting_acceptance' },
+          mockCredentials.idToken
+        )
       })
     })
 
@@ -762,13 +1036,14 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
           organisationId,
           registrationId,
+          accreditationId,
           prnId,
           { status: 'awaiting_authorisation' },
           mockCredentials.idToken
@@ -863,6 +1138,145 @@ describe('#viewController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.forbidden)
+      })
+
+      it('cancels draft and redirects to error when tonnage exceeds available waste balance', async ({
+        server
+      }) => {
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': { amount: 1000, availableAmount: 50 }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain(createUrl)
+        expect(headers.location).toContain('error=insufficient_balance')
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'cancelled' },
+          mockCredentials.idToken
+        )
+      })
+
+      it('proceeds when tonnage is within available waste balance', async ({
+        server
+      }) => {
+        vi.mocked(fetchWasteBalances).mockResolvedValue({
+          'acc-001': { amount: 1000, availableAmount: 100 }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/created`
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createdUrl)
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'awaiting_authorisation' },
+          mockCredentials.idToken
+        )
+      })
+
+      it('treats missing waste balance as zero available', async ({
+        server
+      }) => {
+        vi.mocked(fetchWasteBalances).mockResolvedValue({})
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const createResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const createCookieValues = extractCookieValues(
+          createResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...createCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toContain('error=insufficient_balance')
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'cancelled' },
+          mockCredentials.idToken
+        )
       })
     })
   })

@@ -14,7 +14,7 @@ export const listController = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
 
     const { registration, accreditation } =
@@ -47,6 +47,7 @@ export const listController = {
     const prns = await fetchPackagingRecyclingNotes(
       organisationId,
       registrationId,
+      accreditationId,
       session.idToken
     )
 
@@ -64,6 +65,7 @@ export const listController = {
     const viewData = buildListViewData(request, {
       organisationId,
       registrationId,
+      accreditationId,
       registration,
       prns: prnsAwaitingAuthorisation,
       wasteBalance

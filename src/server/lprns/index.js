@@ -1,11 +1,12 @@
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
+import { issueController } from './issue-controller.js'
 import { listController } from './list-controller.js'
 import { postController } from './post-controller.js'
 import { viewController, viewPostController } from './view-controller.js'
 
 const basePath =
-  '/organisations/{organisationId}/registrations/{registrationId}/l-packaging-recycling-notes'
+  '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/l-packaging-recycling-notes'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -44,6 +45,11 @@ export const lprns = {
           ...createdController,
           method: 'GET',
           path: `${basePath}/{prnId}/created`
+        },
+        {
+          ...issueController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/issue`
         }
       ])
     }

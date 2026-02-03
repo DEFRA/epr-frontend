@@ -11,7 +11,8 @@ export const createdController = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId, prnId } = request.params
+    const { organisationId, registrationId, accreditationId, prnId } =
+      request.params
     const { t: localise } = request
 
     // Check for success session data
@@ -20,7 +21,7 @@ export const createdController = {
     if (!prnCreated || prnCreated.id !== prnId) {
       // No session data or ID mismatch - redirect to view page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/view`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
       )
     }
 
@@ -40,7 +41,8 @@ export const createdController = {
       nextStepsText: localise(`lprns:${noteType}:successNextStepsText`),
       returnLink: localise('lprns:successReturnLink'),
       organisationId,
-      registrationId
+      registrationId,
+      accreditationId
     })
   }
 }

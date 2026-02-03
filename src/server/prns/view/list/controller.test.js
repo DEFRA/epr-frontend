@@ -605,7 +605,7 @@ describe('#prnListController', () => {
 
       expect(selectLinks).toHaveLength(2)
       expect(selectLinks[0].getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/prns/ER2625468U'
+        '/organisations/org-123/registrations/reg-001/prns/prn-001'
       )
       expect(selectLinks[0].textContent).toContain('Select')
 
@@ -631,7 +631,7 @@ describe('#prnListController', () => {
       const selectLinks = table.querySelectorAll('td a')
 
       expect(selectLinks[1].getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/prns/ER2612345A'
+        '/organisations/org-123/registrations/reg-001/prns/prn-002'
       )
       expect(selectLinks[1].textContent).toContain('Select')
 

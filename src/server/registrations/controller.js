@@ -113,7 +113,8 @@ function buildViewModel({
       request,
       isExporter,
       organisationId,
-      registration.id
+      registration.id,
+      registration.accreditationId
     )
   }
 
@@ -160,18 +161,20 @@ function getPrnViewData(request, isExporter, organisationId, registrationId) {
  * @param {boolean} isExporter
  * @param {string} organisationId
  * @param {string} registrationId
+ * @param {string | undefined} accreditationId
  */
 function getLumpyPrnViewData(
   request,
   isExporter,
   organisationId,
-  registrationId
+  registrationId,
+  accreditationId
 ) {
   const { t: localise } = request
   const key = isExporter ? 'perns' : 'prns'
 
-  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
-  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
+  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
 
   return {
     isEnabled: config.get('featureFlags.lprns'),
