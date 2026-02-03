@@ -210,9 +210,9 @@ async function handleDraftView(
     createButton: {
       text: localise(`lprns:${noteType}:createButton`)
     },
-    cancelButton: {
-      text: localise(`lprns:${noteType}:cancelButton`),
-      href: `/organisations/${organisationId}/registrations/${registrationId}`
+    discardLink: {
+      text: localise(`lprns:${noteType}:discardLink`),
+      href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
     },
     organisationId,
     registrationId,
