@@ -4,20 +4,10 @@ import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
+import { getRecipientDisplayName } from './helpers/stub-recipients.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
-import { STUB_RECIPIENTS } from './post-controller.js'
-
-/**
- * Look up recipient display name from stub list
- * @param {string} recipientId - The recipient ID stored in the PRN
- * @returns {string} The display name or the original ID if not found
- */
-function getRecipientDisplayName(recipientId) {
-  const recipient = STUB_RECIPIENTS.find((r) => r.value === recipientId)
-  return recipient?.text ?? recipientId
-}
 
 /**
  * @satisfies {Partial<ServerRoute>}

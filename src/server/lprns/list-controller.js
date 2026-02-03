@@ -3,6 +3,7 @@ import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
+import { getRecipientDisplayName } from './helpers/stub-recipients.js'
 import { buildListViewData } from './list-view-data.js'
 
 /**
@@ -56,7 +57,7 @@ export const listController = {
       .filter((prn) => prn.status === 'awaiting_authorisation')
       .map((prn) => ({
         id: prn.id,
-        recipient: prn.issuedToOrganisation,
+        recipient: getRecipientDisplayName(prn.issuedToOrganisation),
         createdAt: prn.createdAt,
         tonnage: prn.tonnage,
         status: prn.status
