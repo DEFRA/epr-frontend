@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildCreatePrnViewData } from './view-data.js'
+import { buildCreatePrnViewData, mapRecipientOptions } from './view-data.js'
 
 const createMockRequest = () => ({
   t: vi.fn((key) => {
@@ -161,5 +161,103 @@ describe('#buildCreatePrnViewData', () => {
         expect(isPern).toBe(expected)
       }
     )
+  })
+})
+
+describe('#mapRecipientOptions', () => {
+  it('should transform organisations to select options with trading name and full address', () => {
+    const organisations = [
+      {
+        id: 'org-123',
+        name: 'Legal Name Ltd',
+        tradingName: 'Trading Name',
+        address: {
+          addressLine1: '123 Test Street',
+          addressLine2: 'Building A',
+          town: 'Test Town',
+          county: 'Test County',
+          postcode: 'AB1 2CD'
+        }
+      }
+    ]
+
+    const result = mapRecipientOptions(organisations)
+
+    expect(result).toStrictEqual([
+      {
+        value: 'org-123',
+        text: 'Trading Name, 123 Test Street, Building A, Test Town, Test County, AB1 2CD'
+      }
+    ])
+  })
+
+  it('should use legal name when trading name is not provided', () => {
+    const organisations = [
+      {
+        id: 'org-456',
+        name: 'Legal Name Only Ltd',
+        tradingName: null,
+        address: {
+          addressLine1: '456 Main Road',
+          town: 'City',
+          postcode: 'XY9 8ZW'
+        }
+      }
+    ]
+
+    const result = mapRecipientOptions(organisations)
+
+    expect(result).toStrictEqual([
+      {
+        value: 'org-456',
+        text: 'Legal Name Only Ltd, 456 Main Road, City, XY9 8ZW'
+      }
+    ])
+  })
+
+  it('should filter out null/undefined address parts', () => {
+    const organisations = [
+      {
+        id: 'org-789',
+        name: 'Sparse Address Ltd',
+        address: {
+          addressLine1: '789 Some Lane',
+          addressLine2: null,
+          town: 'Somewhere',
+          county: undefined,
+          postcode: 'ZZ1 1ZZ'
+        }
+      }
+    ]
+
+    const result = mapRecipientOptions(organisations)
+
+    expect(result).toStrictEqual([
+      {
+        value: 'org-789',
+        text: 'Sparse Address Ltd, 789 Some Lane, Somewhere, ZZ1 1ZZ'
+      }
+    ])
+  })
+
+  it('should handle multiple organisations', () => {
+    const organisations = [
+      {
+        id: 'a',
+        name: 'First Ltd',
+        address: { addressLine1: '1 First St', postcode: 'AA1 1AA' }
+      },
+      {
+        id: 'b',
+        name: 'Second Ltd',
+        address: { addressLine1: '2 Second St', postcode: 'BB2 2BB' }
+      }
+    ]
+
+    const result = mapRecipientOptions(organisations)
+
+    expect(result).toHaveLength(2)
+    expect(result[0].value).toBe('a')
+    expect(result[1].value).toBe('b')
   })
 })

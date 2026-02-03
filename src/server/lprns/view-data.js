@@ -1,5 +1,31 @@
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 
+/** @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js' */
+
+/**
+ * Transform waste organisation objects to autocomplete option format
+ * @param {WasteOrganisation[]} organisations
+ * @returns {Array<{value: string, text: string}>}
+ */
+export function mapRecipientOptions(organisations) {
+  return organisations.map((org) => {
+    const name = org.tradingName || org.name
+    const addressParts = [
+      org.address.addressLine1,
+      org.address.addressLine2,
+      org.address.town,
+      org.address.county,
+      org.address.postcode
+    ].filter(Boolean)
+    const address = addressParts.join(', ')
+
+    return {
+      value: org.id,
+      text: `${name}, ${address}`
+    }
+  })
+}
+
 /**
  * Build view data for the create PRN/PERN page
  * @param {Request} request

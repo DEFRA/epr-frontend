@@ -3,17 +3,9 @@ import Joi from 'joi'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
 import { createPrn } from './helpers/create-prn.js'
-import { buildCreatePrnViewData } from './view-data.js'
-
-// Stub recipients until real API is available
-export const STUB_RECIPIENTS = [
-  { value: 'producer-1', text: 'Acme Packaging Ltd' },
-  { value: 'producer-2', text: 'BigCo Waste Solutions' },
-  { value: 'producer-3', text: 'EcoRecycle Industries' },
-  { value: 'scheme-1', text: 'Green Compliance Scheme' },
-  { value: 'scheme-2', text: 'National Packaging Scheme' }
-]
+import { buildCreatePrnViewData, mapRecipientOptions } from './view-data.js'
 
 const MIN_TONNAGE = 1
 const MAX_NOTES_LENGTH = 200
@@ -29,6 +21,7 @@ const payloadSchema = Joi.object({
     'string.empty': 'Select who this will be issued to',
     'any.required': 'Select who this will be issued to'
   }),
+  recipientName: Joi.string().allow('').optional(),
   notes: Joi.string()
     .max(MAX_NOTES_LENGTH)
     .allow('')
@@ -92,9 +85,12 @@ export const postController = {
         const { t: localise } = request
         const { errors, errorSummary } = buildValidationErrors(error, localise)
 
+        const { organisations } = await fetchWasteOrganisations()
+        const recipients = mapRecipientOptions(organisations)
+
         const viewData = buildCreatePrnViewData(request, {
           registration,
-          recipients: STUB_RECIPIENTS
+          recipients
         })
 
         return h
@@ -115,12 +111,18 @@ export const postController = {
 
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
-    const { tonnage, recipient, notes, material, nation, wasteProcessingType } =
-      request.payload
+    const {
+      tonnage,
+      recipient,
+      recipientName: submittedRecipientName,
+      notes,
+      material,
+      nation,
+      wasteProcessingType
+    } = request.payload
 
-    // Find recipient name from stub list
-    const recipientItem = STUB_RECIPIENTS.find((r) => r.value === recipient)
-    const recipientName = recipientItem?.text ?? recipient
+    // Use submitted recipient name, falling back to recipient ID if not provided
+    const recipientName = submittedRecipientName || recipient
 
     try {
       // Create PRN as draft in backend

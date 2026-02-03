@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
@@ -13,6 +14,9 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+)
+vi.mock(
+  import('#server/common/helpers/waste-organisations/fetch-waste-organisations.js')
 )
 
 const mockCredentials = {
@@ -58,9 +62,34 @@ const reprocessorUrl =
 const exporterUrl =
   '/organisations/org-456/registrations/reg-002/accreditations/acc-002/l-packaging-recycling-notes/create'
 
+const fixtureOrganisations = {
+  organisations: [
+    {
+      id: 'producer-org-1',
+      name: 'Test Producer Ltd',
+      tradingName: 'Test Producer',
+      address: {
+        addressLine1: '123 Test Street',
+        town: 'Test Town',
+        postcode: 'AB1 2CD'
+      }
+    },
+    {
+      id: 'scheme-org-1',
+      name: 'Test Compliance Scheme',
+      address: {
+        addressLine1: '456 Scheme Road',
+        town: 'Scheme City',
+        postcode: 'XY9 8ZW'
+      }
+    }
+  ]
+}
+
 describe('#createPrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchWasteOrganisations).mockResolvedValue(fixtureOrganisations)
   })
 
   describe('when feature is disabled', () => {

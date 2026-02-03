@@ -1,16 +1,8 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { buildCreatePrnViewData } from './view-data.js'
-
-// Stub recipients until real API is available
-const STUB_RECIPIENTS = [
-  { value: 'producer-1', text: 'Acme Packaging Ltd' },
-  { value: 'producer-2', text: 'BigCo Waste Solutions' },
-  { value: 'producer-3', text: 'EcoRecycle Industries' },
-  { value: 'scheme-1', text: 'Green Compliance Scheme' },
-  { value: 'scheme-2', text: 'National Packaging Scheme' }
-]
+import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
+import { buildCreatePrnViewData, mapRecipientOptions } from './view-data.js'
 
 /**
  * Build error data for insufficient balance redirect
@@ -60,9 +52,12 @@ export const controller = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
+    const { organisations } = await fetchWasteOrganisations()
+    const recipients = mapRecipientOptions(organisations)
+
     const viewData = buildCreatePrnViewData(request, {
       registration,
-      recipients: STUB_RECIPIENTS
+      recipients
     })
 
     // Check for insufficient balance error from redirect

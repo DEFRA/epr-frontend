@@ -9,6 +9,8 @@ import {
   SkipLink
 } from 'govuk-frontend'
 
+import { initAutocomplete } from './autocomplete.js'
+
 createAll(Accordion)
 createAll(Button)
 createAll(Checkboxes)
@@ -16,6 +18,8 @@ createAll(ErrorSummary)
 createAll(Header)
 createAll(Radios)
 createAll(SkipLink)
+
+initAutocomplete()
 
 /**
  * Prevents stale uploadId errors when user navigates back to upload page.

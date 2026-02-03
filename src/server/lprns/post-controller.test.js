@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -10,6 +11,9 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+)
+vi.mock(
+  import('#server/common/helpers/waste-organisations/fetch-waste-organisations.js')
 )
 vi.mock(import('./helpers/create-prn.js'))
 
@@ -49,15 +53,32 @@ const url = `/organisations/${organisationId}/registrations/${registrationId}/ac
 const validPayload = {
   tonnage: '100',
   recipient: 'producer-1',
+  recipientName: 'Test Producer, 123 Test Street, Test Town, AB1 2CD',
   notes: 'Test notes',
   material: 'plastic',
   nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
 
+const fixtureOrganisations = {
+  organisations: [
+    {
+      id: 'producer-1',
+      name: 'Test Producer Ltd',
+      tradingName: 'Test Producer',
+      address: {
+        addressLine1: '123 Test Street',
+        town: 'Test Town',
+        postcode: 'AB1 2CD'
+      }
+    }
+  ]
+}
+
 describe('#postCreatePrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchWasteOrganisations).mockResolvedValue(fixtureOrganisations)
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       fixtureReprocessor
     )

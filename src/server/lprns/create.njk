@@ -50,6 +50,8 @@
           errorMessage: errors.tonnage if errors else null
         }) }}
 
+        <input type="hidden" id="recipientName" name="recipientName" value="{{ formValues.recipientName if formValues else '' }}">
+
         {{ govukSelect({
           id: "recipient",
           name: "recipient",
@@ -61,7 +63,11 @@
             text: recipient.hint
           },
           items: recipient.items,
-          errorMessage: errors.recipient if errors else null
+          value: formValues.recipient if formValues else "",
+          errorMessage: errors.recipient if errors else null,
+          attributes: {
+            "data-module": "autocomplete"
+          }
         }) }}
 
         {{ govukDetails({
