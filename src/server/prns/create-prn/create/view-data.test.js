@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { createMockLocalise } from '#server/test-helpers/localise.js'
+import { organisations } from '../../../../../fixtures/waste-organisations/organisations.json'
 import { buildCreateViewData } from './view-data.js'
 
 const translations = {
@@ -22,12 +23,6 @@ const createMockRequest = () => ({
   t: vi.fn(createMockLocalise(translations))
 })
 
-const stubRecipients = [
-  { value: 'org-1', text: 'Acme Compliance Scheme' },
-  { value: 'org-2', text: 'BigCo Packaging Ltd' },
-  { value: 'org-3', text: 'Green Waste Solutions' }
-]
-
 const stubOrganisationId = 'org-123'
 const stubRegistrationId = 'reg-456'
 
@@ -47,7 +42,7 @@ describe('#buildCreateViewData', () => {
   it('should return backUrl using organisation and registration IDs', () => {
     const result = buildCreateViewData(createMockRequest(), {
       organisationId: stubOrganisationId,
-      recipients: stubRecipients,
+      recipients: organisations,
       registration: reprocessorRegistration,
       registrationId: stubRegistrationId
     })
@@ -61,7 +56,7 @@ describe('#buildCreateViewData', () => {
     it('should return page title and heading with PRN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         organisationId: stubOrganisationId,
-        recipients: stubRecipients,
+        recipients: organisations,
         registration: reprocessorRegistration,
         registrationId: stubRegistrationId
       })
@@ -73,7 +68,7 @@ describe('#buildCreateViewData', () => {
     it('should return form labels with PRN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         organisationId: stubOrganisationId,
-        recipients: stubRecipients,
+        recipients: organisations,
         registration: reprocessorRegistration,
         registrationId: stubRegistrationId
       })
@@ -97,22 +92,34 @@ describe('#buildCreateViewData', () => {
     it('should include recipient options with placeholder', () => {
       const result = buildCreateViewData(createMockRequest(), {
         organisationId: stubOrganisationId,
-        recipients: stubRecipients,
+        recipients: organisations,
         registration: reprocessorRegistration,
         registrationId: stubRegistrationId
       })
 
       expect(result.recipient.items).toHaveLength(4) // placeholder + 3 options
-      expect(result.recipient.items[0]).toStrictEqual({
-        value: '',
-        text: 'Select an option',
-        selected: false
-      })
-      expect(result.recipient.items[1]).toStrictEqual({
-        value: 'org-1',
-        text: 'Acme Compliance Scheme',
-        selected: false
-      })
+      expect(result.recipient.items).toStrictEqual([
+        {
+          selected: false,
+          text: 'Select an option',
+          value: ''
+        },
+        {
+          selected: false,
+          text: 'Acme Compliance Scheme, 37th Place, Ashfield, Chicago, W1 L3Y',
+          value: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde'
+        },
+        {
+          selected: false,
+          text: 'Bigco Packaging Ltd, Zig Zag road, Box Hill, Tadworth, KT20 7LB',
+          value: 'dd793573-b218-47a7-be85-1c777ca0d0d8'
+        },
+        {
+          selected: false,
+          text: 'Green Waste Solutions, 1 Worlds End Lane, Green St Green, BR6 6AG, England',
+          value: 'b7b158e1-c72f-45d4-8868-5c6e14bc10af'
+        }
+      ])
     })
   })
 
@@ -120,9 +127,9 @@ describe('#buildCreateViewData', () => {
     it('should return page title and heading with PERN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         organisationId: stubOrganisationId,
-        recipients: stubRecipients,
         registration: exporterRegistration,
-        registrationId: stubRegistrationId
+        registrationId: stubRegistrationId,
+        recipients: organisations
       })
 
       expect(result.pageTitle).toBe('Create a PERN')
@@ -132,7 +139,7 @@ describe('#buildCreateViewData', () => {
     it('should return form labels with PERN text', () => {
       const result = buildCreateViewData(createMockRequest(), {
         organisationId: stubOrganisationId,
-        recipients: stubRecipients,
+        recipients: organisations,
         registration: exporterRegistration,
         registrationId: stubRegistrationId
       })
@@ -164,7 +171,7 @@ describe('#buildCreateViewData', () => {
       ({ type, expected }) => {
         const result = buildCreateViewData(createMockRequest(), {
           organisationId: stubOrganisationId,
-          recipients: stubRecipients,
+          recipients: organisations,
           registration: {
             ...reprocessorRegistration,
             wasteProcessingType: type

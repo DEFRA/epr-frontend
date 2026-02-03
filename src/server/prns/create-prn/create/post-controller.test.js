@@ -9,6 +9,7 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
+import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -60,10 +61,31 @@ describe('#postCreatePrnController', () => {
     config.set('featureFlags.prns', true)
   })
 
-  beforeEach(() => {
+  beforeEach(({ msw }) => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
+    )
+
+    const backendUrl = 'http://waste-orgs.api/waste-organisations/organisations'
+
+    // GET
+    // https://{env-path}/waste-organisations/organisations?registrations=LARGE_PRODUCER%2CCOMPLIANCE_SCHEME&registrationYears=2026&statuses=REGISTERED
+
+    const STUB_RECIPIENTS = [
+      { value: 'producer-1', text: 'Acme Packaging Ltd' },
+      { value: 'producer-2', text: 'BigCo Waste Solutions' },
+      { value: 'producer-3', text: 'EcoRecycle Industries' },
+      { value: 'scheme-1', text: 'Green Compliance Scheme' },
+      { value: 'scheme-2', text: 'National Packaging Scheme' }
+    ]
+
+    config.set('wasteOrganisationsApi', backendUrl)
+
+    msw.use(
+      http.get(backendUrl, () => {
+        return HttpResponse.json(STUB_RECIPIENTS)
+      })
     )
   })
 

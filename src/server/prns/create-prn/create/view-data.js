@@ -1,15 +1,34 @@
 import { getNoteTypeDisplayNames } from '#server/prns/helpers/get-note-type.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 
+/** @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js' */
+
 /**
  * @typedef {object} CreateViewDataOptions
  * @property {{wasteProcessingType: string}} registration
- * @property {Array<{value: string, text: string}>} recipients
+ * @property {WasteOrganisation[]} recipients
  * @property {string} organisationId
  * @property {string} registrationId
  * @property {Record<string, {text: string}>} [errors]
  * @property {{tonnage?: string, recipient?: string, notes?: string}} [values]
  */
+
+/**
+ * Transform waste organisation object to option strings
+ * @param {WasteOrganisation[]} recipients
+ * @returns {Array<{value: string, text: string}>}
+ */
+function mapRecipientOptions(recipients) {
+  return recipients.map((recipient) => {
+    const name = recipient.tradingName || recipient.name
+    const address = Object.values(recipient.address).filter(Boolean).join(', ')
+
+    return {
+      value: recipient.id,
+      text: `${name}, ${address}`
+    }
+  })
+}
 
 /**
  * Build view data for the create PRN/PERN page
@@ -28,7 +47,7 @@ export function buildCreateViewData(
 
   const recipientItems = [
     { value: '', text: localise('prns:selectOption') },
-    ...recipients
+    ...mapRecipientOptions(recipients)
   ].map((item) => ({
     ...item,
     selected: values?.recipient === item.value
