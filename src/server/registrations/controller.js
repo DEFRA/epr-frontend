@@ -113,10 +113,9 @@ function buildViewModel({
       organisationId,
       registration.id,
       registration.accreditationId
-    )
+    ),
+    wasteBalance: getWasteBalanceViewData(wasteBalance, isExporter)
   }
-
-  viewModel.wasteBalance = getWasteBalanceViewData(wasteBalance, isExporter)
 
   return viewModel
 }
