@@ -958,9 +958,9 @@ describe('#accreditationDashboardController', () => {
           createLinkText: 'Create new PRN',
           manageLinkText: 'Manage PRNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes/create',
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/l-packaging-recycling-notes/create',
           expectedManageUrl:
-            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes'
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/l-packaging-recycling-notes'
         },
         {
           name: 'lumpy PERN (exporter)',
@@ -970,9 +970,9 @@ describe('#accreditationDashboardController', () => {
           createLinkText: 'Create new PERN',
           manageLinkText: 'Manage PERNs',
           expectedCreateUrl:
-            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/l-packaging-recycling-notes/create',
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/accreditations/acc-export-001-plastic-approved/l-packaging-recycling-notes/create',
           expectedManageUrl:
-            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/l-packaging-recycling-notes'
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/accreditations/acc-export-001-plastic-approved/l-packaging-recycling-notes'
         }
       ])(
         'should display $name card with create and manage links',
@@ -1051,12 +1051,12 @@ describe('#accreditationDashboardController', () => {
           '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/prns'
         )
 
-        // Lumpy links (with l- prefix)
+        // Lumpy links (with l- prefix and accreditation)
         expect(result).toContain(
-          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes/create'
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/l-packaging-recycling-notes/create'
         )
         expect(result).toContain(
-          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/l-packaging-recycling-notes"'
+          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/l-packaging-recycling-notes"'
         )
       })
     })
