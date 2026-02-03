@@ -4,6 +4,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * Fetches a single packaging recycling note by ID from EPR Backend
  * @param {string} organisationId - The organisation ID
  * @param {string} registrationId - The registration ID
+ * @param {string} accreditationId - The accreditation ID
  * @param {string} prnId - The PRN ID
  * @param {string} idToken - JWT ID token for authorisation
  * @returns {Promise<PackagingRecyclingNote>} The packaging recycling note
@@ -11,10 +12,11 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 async function fetchPackagingRecyclingNote(
   organisationId,
   registrationId,
+  accreditationId,
   prnId,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/l-packaging-recycling-notes/${encodeURIComponent(prnId)}`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/l-packaging-recycling-notes/${encodeURIComponent(prnId)}`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',

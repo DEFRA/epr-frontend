@@ -16,7 +16,8 @@ export const viewController = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId, prnId } = request.params
+    const { organisationId, registrationId, accreditationId, prnId } =
+      request.params
     const { t: localise } = request
     const session = request.auth.credentials
 
@@ -28,6 +29,7 @@ export const viewController = {
       return handleDraftView(request, h, {
         organisationId,
         registrationId,
+        accreditationId,
         prnDraft,
         localise,
         session
@@ -38,6 +40,7 @@ export const viewController = {
     return handleExistingView(request, h, {
       organisationId,
       registrationId,
+      accreditationId,
       prnId,
       localise,
       session
@@ -54,7 +57,8 @@ export const viewPostController = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId, prnId } = request.params
+    const { organisationId, registrationId, accreditationId, prnId } =
+      request.params
     const session = request.auth.credentials
 
     // Retrieve draft PRN data from session
@@ -63,7 +67,7 @@ export const viewPostController = {
     if (!prnDraft || prnDraft.id !== prnId) {
       // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
       )
     }
 
@@ -72,6 +76,7 @@ export const viewPostController = {
       const result = await updatePrnStatus(
         organisationId,
         registrationId,
+        accreditationId,
         prnId,
         { status: 'awaiting_authorisation' },
         session.idToken
@@ -88,7 +93,7 @@ export const viewPostController = {
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/created`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/created`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to update PRN status')
@@ -109,6 +114,7 @@ export const viewPostController = {
  * @param {object} params
  * @param {string} params.organisationId
  * @param {string} params.registrationId
+ * @param {string} params.accreditationId
  * @param {object} params.prnDraft
  * @param {(key: string) => string} params.localise
  * @param {object} params.session
@@ -116,7 +122,14 @@ export const viewPostController = {
 async function handleDraftView(
   _request,
   h,
-  { organisationId, registrationId, prnDraft, localise, session }
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnDraft,
+    localise,
+    session
+  }
 ) {
   const { organisationData, registration, accreditation } =
     await fetchRegistrationAndAccreditation(
@@ -164,7 +177,8 @@ async function handleDraftView(
       href: `/organisations/${organisationId}/registrations/${registrationId}`
     },
     organisationId,
-    registrationId
+    registrationId,
+    accreditationId
   })
 }
 
@@ -175,6 +189,7 @@ async function handleDraftView(
  * @param {object} params
  * @param {string} params.organisationId
  * @param {string} params.registrationId
+ * @param {string} params.accreditationId
  * @param {string} params.prnId
  * @param {(key: string) => string} params.localise
  * @param {object} params.session
@@ -182,7 +197,7 @@ async function handleDraftView(
 async function handleExistingView(
   request,
   h,
-  { organisationId, registrationId, prnId, localise, session }
+  { organisationId, registrationId, accreditationId, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
   const [{ organisationData, registration, accreditation }, prn] =
@@ -195,6 +210,7 @@ async function handleExistingView(
       fetchPackagingRecyclingNote(
         organisationId,
         registrationId,
+        accreditationId,
         prnId,
         session.idToken
       )
@@ -208,7 +224,7 @@ async function handleExistingView(
   const noteType = isExporter ? 'perns' : 'prns'
 
   const backUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
+    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
   )
 
   const displayMaterial = getDisplayMaterial(registration)
@@ -251,7 +267,7 @@ async function handleExistingView(
     backUrl,
     returnLink: {
       href: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
       ),
       text: localise(`lprns:view:${noteType}:returnLink`)
     }
