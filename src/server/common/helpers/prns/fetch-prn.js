@@ -1,38 +1,28 @@
 //import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { stubPrns } from './stub-prns.js'
 
-// this will be updated when the real api is available
 /**
- * Fetches PRNs from EPR Backend for an accreditation
+ * Fetches a PRN from EPR Backend for an accreditation
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
- * @param {string} prnNumber - The prnNumber
- * @returns {Promise<object>}
+ * @param {string} prnId - The PRN ID
+ * @returns {Promise<object|null>}
  */
 async function fetchPrn(
   organisationId,
   accreditationId,
-  prnNumber
+  prnId
   //, idToken
 ) {
-  const path = `/v1/organisations/${organisationId}/accreditations/${accreditationId}/prns/${prnNumber}`
-
-  return {
-    prnNumber,
-    issuedToOrganisation: 'Acme Packaging Solutions Ltd',
-    issuedByOrganisation: 'John Smith Ltd',
-    issuedDate: '',
-    issuerNotes: `retrieved from ${path}`,
-    tonnageValue: 150,
-    isDecemberWaste: 'No',
-    authorisedBy: '',
-    position: ''
-  }
+  // const path = `/v1/organisations/${organisationId}/accreditations/${accreditationId}/prns/${prnId}`
   //   return fetchJsonFromBackend(path, {
   //     method: 'GET',
   //     headers: {
   //       Authorization: `Bearer ${idToken}`
   //     }
   //   })
+
+  return stubPrns.find((prn) => prn.id === prnId) ?? null
 }
 
 export { fetchPrn }

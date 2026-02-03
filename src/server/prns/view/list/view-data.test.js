@@ -419,7 +419,7 @@ describe('#prnListViewData', () => {
       const selectCell = result.table.rows[0][4]
 
       expect(selectCell.html).toContain(
-        '/organisations/org-123/registrations/reg-001/prns/ER2625468U'
+        '/organisations/org-123/registrations/reg-001/prns/prn-001'
       )
     })
 
