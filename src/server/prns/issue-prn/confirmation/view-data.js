@@ -1,4 +1,4 @@
-import { getPrnType } from '../../helpers/get-note-type.js'
+import { getNoteTypeDisplayNames } from '../../helpers/get-note-type.js'
 
 /**
  * Build view data for the PRN/PERN issuance confirmation page
@@ -14,9 +14,10 @@ export function buildConfirmationViewData(
   request,
   { registration, organisationId, registrationId, prnData = {} }
 ) {
-  const localise = (key) => request.t(`prns:confirmation:${key}`)
-  const prnType = getPrnType(registration)
-  const panelHeader = localise(`${prnType}:panelTitle`)
+  const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
+  const localise = (key) =>
+    request.t(`prns:confirmation:${key}`, { noteType, noteTypePlural })
+  const panelHeader = localise('panelTitle')
   const panelTitle = `${panelHeader} ${prnData.issuedToOrganisation?.name ?? ''}`
   const prnNumber = prnData.prnNumber ?? ''
   const basePrnsUrl = `/organisations/${organisationId}/registrations/${registrationId}/prns`
@@ -26,13 +27,13 @@ export function buildConfirmationViewData(
   return {
     pageTitle: panelTitle,
     panelTitle,
-    prnNumberLabel: localise(`${prnType}:prnNumberLabel`),
+    prnNumberLabel: localise('noteNumberLabel'),
     prnNumber,
-    viewPrnText: localise(`${prnType}:viewPrn`),
-    viewPrnUrl: `${basePrnsUrl}/${prnData.id ?? ''}`,
-    createPrnText: localise(`${prnType}:createPrn`),
+    viewPrnText: localise('viewNote'),
+    viewPrnUrl: `${basePrnsUrl}/${prnData.id}`,
+    createPrnText: localise('createNote'),
     createPrnUrl,
-    managePrnsText: localise(`${prnType}:managePrns`),
+    managePrnsText: localise('manageNotes'),
     managePrnsUrl: basePrnsUrl,
     returnToHomeText: localise('returnToHome'),
     returnToHomeUrl

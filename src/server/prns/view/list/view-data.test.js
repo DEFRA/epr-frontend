@@ -1,14 +1,16 @@
 import { describe, it, expect, vi } from 'vitest'
+
+import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { buildListViewData } from './view-data.js'
 
 /**
  * Creates a mock request object with localisation
- * @param {Record<string, string>} translations - Key-value pairs for translations
+ * @param {Record<string, string>} [translations] - Key-value pairs for translations
  * @returns {object} Mock request object
  */
 function createMockRequest(translations = {}) {
   return {
-    t: vi.fn((key) => translations[key] || key)
+    t: vi.fn(createMockLocalise(translations))
   }
 }
 
@@ -77,14 +79,10 @@ const stubWasteBalance = {
 describe('#prnListViewData', () => {
   describe('prn vs pern text', () => {
     const translations = {
-      'prns:list:prns:pageTitle': 'PRNs',
-      'prns:list:perns:pageTitle': 'PERNs',
-      'prns:list:prns:selectHeading': 'Select a PRN',
-      'prns:list:perns:selectHeading': 'Select a PERN',
-      'prns:list:prns:balanceHint':
-        'This is the balance available for creating new PRNs',
-      'prns:list:perns:balanceHint':
-        'This is the balance available for creating new PERNs',
+      'prns:list:pageTitle': '{{noteTypePlural}}',
+      'prns:list:selectHeading': 'Select a {{noteType}}',
+      'prns:list:balanceHint':
+        'This is the balance available for creating new {{noteTypePlural}}',
       'prns:list:availableWasteBalance': 'Available waste balance'
     }
 
@@ -349,8 +347,7 @@ describe('#prnListViewData', () => {
 
   describe('create button', () => {
     const translations = {
-      'prns:list:prns:createText': 'Create a PRN',
-      'prns:list:perns:createText': 'Create a PERN'
+      'prns:list:createText': 'Create a {{noteType}}'
     }
 
     it('should return create PRN URL from organisationId and registrationId', () => {

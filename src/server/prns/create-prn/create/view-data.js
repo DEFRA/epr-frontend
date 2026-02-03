@@ -1,3 +1,4 @@
+import { getNoteTypeDisplayNames } from '#server/prns/helpers/get-note-type.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 
 /**
@@ -21,10 +22,9 @@ export function buildCreateViewData(
   { errors, organisationId, recipients, registration, registrationId, values }
 ) {
   const { t: localise } = request
-  const noteType =
-    registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+  const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
-  const pageTitle = localise(`prns:create:${noteType}:pageTitle`)
+  const pageTitle = localise('prns:create:pageTitle', { noteType })
 
   const recipientItems = [
     { value: '', text: localise('prns:selectOption') },
@@ -41,30 +41,30 @@ export function buildCreateViewData(
     pageTitle,
     heading: pageTitle,
     tonnage: {
-      label: localise(`prns:create:${noteType}:tonnageLabel`),
+      label: localise('prns:create:tonnageLabel', { noteType }),
       hint: localise('prns:create:tonnageHint'),
       suffix: localise('prns:create:tonnageSuffix'),
       value: values?.tonnage ?? '',
       errorMessage: errors?.tonnage
     },
     recipient: {
-      label: localise(`prns:create:${noteType}:recipientLabel`),
+      label: localise('prns:create:recipientLabel', { noteType }),
       hint: localise('prns:create:recipientHint'),
       items: recipientItems,
       errorMessage: errors?.recipient
     },
     help: {
       summary: localise('prns:create:helpSummary'),
-      intro: localise(`prns:create:${noteType}:help:intro`),
-      listIntro: localise(`prns:create:${noteType}:help:listIntro`),
+      intro: localise('prns:create:help:intro', { noteTypePlural }),
+      listIntro: localise('prns:create:help:listIntro'),
       listItems: [
-        localise(`prns:create:${noteType}:help:listItemOne`),
-        localise(`prns:create:${noteType}:help:listItemTwo`)
+        localise('prns:create:help:listItemOne'),
+        localise('prns:create:help:listItemTwo')
       ]
     },
     notes: {
       label: localise('prns:create:notesLabel'),
-      hint: localise(`prns:create:${noteType}:notesHint`),
+      hint: localise('prns:create:notesHint', { noteType }),
       maxLength: NOTES_MAX_LENGTH,
       value: values?.notes ?? '',
       errorMessage: errors?.notes

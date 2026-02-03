@@ -1,28 +1,31 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { buildDetailViewData } from './view-data.js'
 
 /**
  * Creates a mock request object with localisation
- * @param {Record<string, string>} translations - Key-value pairs for translations
+ * @param {Record<string, string>} [translations] - Key-value pairs for translations
  * @returns {object} Mock request object
  */
 function createMockRequest(translations = {}) {
   return {
-    t: vi.fn((key) => translations[key] || key)
+    t: vi.fn(createMockLocalise(translations))
   }
 }
 
 const translations = {
-  'prns:detail:prns:pageTitle': 'PRN',
-  'prns:detail:perns:pageTitle': 'PERN',
-  'prns:detail:prns:issuePrn': 'Issue PRN',
-  'prns:detail:perns:issuePrn': 'Issue PERN',
-  'prns:detail:prns:deletePrn': 'Delete PRN',
-  'prns:detail:perns:deletePrn': 'Delete PERN'
+  'prns:detail:pageTitle': '{{noteType}}',
+  'prns:detail:issuePrn': 'Issue {{noteType}}',
+  'prns:detail:deletePrn': 'Delete {{noteType}}'
 }
 
 describe('#prnDetailViewData', () => {
   describe('prn vs pern text', () => {
+    const translations = {
+      'prns:detail:pageTitle': '{{noteType}}'
+    }
+
     it('should return PRN page title for reprocessor-input', () => {
       const request = createMockRequest(translations)
       const registration = { wasteProcessingType: 'reprocessor-input' }

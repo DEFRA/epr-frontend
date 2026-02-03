@@ -1,23 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
+
+import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { buildConfirmationViewData } from './view-data.js'
 
+const translations = {
+  'prns:confirmation:panelTitle': '{{noteType}} issued to',
+  'prns:confirmation:noteNumberLabel': '{{noteType}} number:',
+  'prns:confirmation:viewNote': 'View {{noteType}} (opens in a new tab)',
+  'prns:confirmation:createNote': 'Create a {{noteType}}',
+  'prns:confirmation:manageNotes': 'Manage {{noteTypePlural}}',
+  'prns:confirmation:returnToHome': 'Return to home'
+}
+
 const createMockRequest = () => ({
-  t: vi.fn((key) => {
-    const translations = {
-      'prns:confirmation:prns:panelTitle': 'PRN issued to',
-      'prns:confirmation:perns:panelTitle': 'PERN issued to',
-      'prns:confirmation:prns:prnNumberLabel': 'PRN number:',
-      'prns:confirmation:perns:prnNumberLabel': 'PERN number:',
-      'prns:confirmation:prns:viewPrn': 'View PRN (opens in a new tab)',
-      'prns:confirmation:perns:viewPrn': 'View PERN (opens in a new tab)',
-      'prns:confirmation:prns:createPrn': 'Create a PRN',
-      'prns:confirmation:perns:createPrn': 'Create a PERN',
-      'prns:confirmation:prns:managePrns': 'Manage PRNs',
-      'prns:confirmation:perns:managePrns': 'Manage PERNs',
-      'prns:confirmation:returnToHome': 'Return to home'
-    }
-    return translations[key] || key
-  })
+  t: vi.fn(createMockLocalise(translations))
 })
 
 const reprocessorRegistration = {

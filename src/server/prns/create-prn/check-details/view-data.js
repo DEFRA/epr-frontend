@@ -1,6 +1,6 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { getPrnType } from '../../helpers/get-note-type.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getNoteTypeDisplayNames } from '../../helpers/get-note-type.js'
 import { getRecoveryCode } from '../../helpers/get-recovery-code.js'
 import { tonnageToWords } from '../../helpers/tonnage-to-words.js'
 
@@ -82,18 +82,18 @@ export function buildCheckDetailsViewData(
   request,
   { registration, accreditation, organisationId, registrationId, prnData = {} }
 ) {
-  const localise = (key) => request.t(`prns:checkDetails:${key}`)
-  const prnType = getPrnType(registration)
+  const { noteType } = getNoteTypeDisplayNames(registration)
+  const localise = (key) => request.t(`prns:checkDetails:${key}`, { noteType })
 
-  const pageTitle = localise(`${prnType}:pageTitle`)
+  const pageTitle = localise('pageTitle')
   const createPrnUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
 
   return {
     pageTitle,
     heading: pageTitle,
-    leadParagraph: localise(`${prnType}:leadParagraph`),
-    insetText: localise(`${prnType}:insetText`),
-    prnDetailsHeading: localise(`${prnType}:detailsHeading`),
+    leadParagraph: localise('leadParagraph'),
+    insetText: localise('insetText'),
+    prnDetailsHeading: localise('detailsHeading'),
     prnDetails: buildPrnDetails(localise, prnData, accreditation),
     accreditationDetailsHeading: localise('accreditationDetailsHeading'),
     accreditationDetails: buildAccreditationDetails(localise, accreditation),

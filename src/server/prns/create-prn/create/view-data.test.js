@@ -1,45 +1,20 @@
 import { describe, expect, it, vi } from 'vitest'
+
+import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { buildCreateViewData } from './view-data.js'
 
+const translations = {
+  'prns:selectOption': 'Select an option',
+  'prns:create:pageTitle': 'Create a {{noteType}}',
+  'prns:create:tonnageLabel': 'Enter {{noteType}} tonnage',
+  'prns:create:recipientLabel': 'Enter who this {{noteType}} will be issued to',
+  'prns:create:notesHint': 'These notes will appear on the {{noteType}}',
+  'prns:create:help:intro':
+    '{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.'
+}
+
 const createMockRequest = () => ({
-  t: vi.fn((key) => {
-    const translations = {
-      'prns:selectOption': 'Select an option',
-      'prns:create:prns:pageTitle': 'Create a PRN',
-      'prns:create:perns:pageTitle': 'Create a PERN',
-      'prns:create:prns:tonnageLabel': 'Enter PRN tonnage',
-      'prns:create:perns:tonnageLabel': 'Enter PERN tonnage',
-      'prns:create:tonnageHint': 'Enter a whole number without decimal places',
-      'prns:create:tonnageSuffix': 'tonnes',
-      'prns:create:prns:recipientLabel': 'Enter who this PRN will be issued to',
-      'prns:create:perns:recipientLabel':
-        'Enter who this PERN will be issued to',
-      'prns:create:recipientHint':
-        'Start typing the name of the packaging waste producer or compliance scheme',
-      'prns:create:helpSummary':
-        "Can't find the producer or compliance scheme?",
-      'prns:create:prns:help:intro':
-        'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'prns:create:prns:help:listIntro':
-        "If the buyer you're looking for is not appearing, check that:",
-      'prns:create:prns:help:listItemOne':
-        'you have spelled the name correctly',
-      'prns:create:prns:help:listItemTwo':
-        'they are registered with a regulator',
-      'prns:create:perns:help:intro':
-        'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'prns:create:perns:help:listIntro':
-        "If the buyer you're looking for is not appearing, check that:",
-      'prns:create:perns:help:listItemOne':
-        'you have spelled the name correctly',
-      'prns:create:perns:help:listItemTwo':
-        'they are registered with a regulator',
-      'prns:create:notesLabel': 'Add issuer notes (optional)',
-      'prns:create:prns:notesHint': 'These notes will appear on the PRN',
-      'prns:create:perns:notesHint': 'These notes will appear on the PERN'
-    }
-    return translations[key] || key
-  })
+  t: vi.fn(createMockLocalise(translations))
 })
 
 const stubRecipients = [

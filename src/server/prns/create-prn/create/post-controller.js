@@ -5,7 +5,7 @@
 import Joi from 'joi'
 
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getPrnType } from '#server/prns/helpers/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/prns/helpers/get-note-type.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { buildCreateViewData } from './view-data.js'
 
@@ -32,7 +32,7 @@ const STUB_RECIPIENTS = [
 function buildValidationErrors(request, registration, validationError) {
   const errors = {}
   const details = validationError.details
-  const noteType = getPrnType(registration)
+  const { noteType } = getNoteTypeDisplayNames(registration)
 
   for (const detail of details) {
     const field = detail.path[0]
@@ -40,7 +40,7 @@ function buildValidationErrors(request, registration, validationError) {
 
     if (field === FIELDS.tonnage) {
       errors[field] = {
-        text: request.t(`prns:create:errors:${noteType}:${messageKey}`)
+        text: request.t(`prns:create:errors:${messageKey}`, { noteType })
       }
     } else {
       errors[field] = {

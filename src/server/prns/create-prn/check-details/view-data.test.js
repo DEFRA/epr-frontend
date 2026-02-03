@@ -1,41 +1,36 @@
 import { describe, expect, it, vi } from 'vitest'
+
+import { createMockLocalise } from '#server/test-helpers/localise.js'
 import { buildCheckDetailsViewData } from './view-data.js'
 
+const translations = {
+  'prns:checkDetails:pageTitle': 'Check before creating {{noteType}}',
+  'prns:checkDetails:leadParagraph':
+    'Check the following information is correct before creating this {{noteType}}.',
+  'prns:checkDetails:insetText':
+    'Any information not shown here will be automatically populated when the {{noteType}} is issued.',
+  'prns:checkDetails:detailsHeading': '{{noteType}} details',
+  'prns:checkDetails:recipient':
+    'Packaging waste producer or compliance scheme',
+  'prns:checkDetails:tonnage': 'Tonnage',
+  'prns:checkDetails:tonnageInWords': 'Tonnage in words',
+  'prns:checkDetails:processToBeUsed': 'Process to be used',
+  'prns:checkDetails:decemberWaste': 'December waste',
+  'prns:checkDetails:issuer': 'Issuer',
+  'prns:checkDetails:issuedDate': 'Issued date',
+  'prns:checkDetails:issuedBy': 'Issued by',
+  'prns:checkDetails:position': 'Position',
+  'prns:checkDetails:issuerNotes': 'Issuer notes',
+  'prns:checkDetails:notProvided': 'Not provided',
+  'prns:checkDetails:accreditationDetailsHeading': 'Accreditation details',
+  'prns:checkDetails:material': 'Material',
+  'prns:checkDetails:accreditationNumber': 'Accreditation number',
+  'prns:checkDetails:accreditationAddress': 'Accreditation address',
+  'prns:checkDetails:startAgain': 'Start again'
+}
+
 const createMockRequest = () => ({
-  t: vi.fn((key) => {
-    const translations = {
-      'prns:checkDetails:prns:pageTitle': 'Check before creating PRN',
-      'prns:checkDetails:perns:pageTitle': 'Check before creating PERN',
-      'prns:checkDetails:prns:leadParagraph':
-        'Check the following information is correct before creating this PRN.',
-      'prns:checkDetails:perns:leadParagraph':
-        'Check the following information is correct before creating this PERN.',
-      'prns:checkDetails:prns:insetText':
-        'Any information not shown here will be automatically populated when the PRN is issued.',
-      'prns:checkDetails:perns:insetText':
-        'Any information not shown here will be automatically populated when the PERN is issued.',
-      'prns:checkDetails:prns:detailsHeading': 'PRN details',
-      'prns:checkDetails:perns:detailsHeading': 'PERN details',
-      'prns:checkDetails:recipient':
-        'Packaging waste producer or compliance scheme',
-      'prns:checkDetails:tonnage': 'Tonnage',
-      'prns:checkDetails:tonnageInWords': 'Tonnage in words',
-      'prns:checkDetails:processToBeUsed': 'Process to be used',
-      'prns:checkDetails:decemberWaste': 'December waste',
-      'prns:checkDetails:issuer': 'Issuer',
-      'prns:checkDetails:issuedDate': 'Issued date',
-      'prns:checkDetails:issuedBy': 'Issued by',
-      'prns:checkDetails:position': 'Position',
-      'prns:checkDetails:issuerNotes': 'Issuer notes',
-      'prns:checkDetails:notProvided': 'Not provided',
-      'prns:checkDetails:accreditationDetailsHeading': 'Accreditation details',
-      'prns:checkDetails:material': 'Material',
-      'prns:checkDetails:accreditationNumber': 'Accreditation number',
-      'prns:checkDetails:accreditationAddress': 'Accreditation address',
-      'prns:checkDetails:startAgain': 'Start again'
-    }
-    return translations[key] || key
-  })
+  t: vi.fn(createMockLocalise(translations))
 })
 
 const reprocessorRegistration = {

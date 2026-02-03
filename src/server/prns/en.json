@@ -1,17 +1,9 @@
 {
   "checkDetails": {
-    "perns": {
-      "pageTitle": "Check before creating PERN",
-      "leadParagraph": "Check the following information is correct before creating this PERN.",
-      "detailsHeading": "PERN details",
-      "insetText": "Any information not shown here will be automatically populated when the PERN is issued."
-    },
-    "prns": {
-      "pageTitle": "Check before creating PRN",
-      "leadParagraph": "Check the following information is correct before creating this PRN.",
-      "detailsHeading": "PRN details",
-      "insetText": "Any information not shown here will be automatically populated when the PRN is issued."
-    },
+    "pageTitle": "Check before creating {{noteType}}",
+    "leadParagraph": "Check the following information is correct before creating this {{noteType}}.",
+    "detailsHeading": "{{noteType}} details",
+    "insetText": "Any information not shown here will be automatically populated when the {{noteType}} is issued.",
     "recipient": "Packaging waste producer or compliance scheme",
     "tonnage": "Tonnage",
     "tonnageInWords": "Tonnage in words",
@@ -30,76 +22,40 @@
     "startAgain": "Start again"
   },
   "confirmation": {
-    "prns": {
-      "panelTitle": "PRN issued to",
-      "prnNumberLabel": "PRN number",
-      "viewPrn": "View PRN (opens in a new tab)",
-      "createPrn": "Create a PRN",
-      "managePrns": "Manage PRNs"
-    },
-    "perns": {
-      "panelTitle": "PERN issued to",
-      "prnNumberLabel": "PERN number",
-      "viewPrn": "View PERN (opens in a new tab)",
-      "createPrn": "Create a PERN",
-      "managePrns": "Manage PERNs"
-    },
+    "panelTitle": "{{noteType}} issued to",
+    "noteNumberLabel": "{{noteType}} number",
+    "viewNote": "View {{noteType}} (opens in a new tab)",
+    "createNote": "Create a {{noteType}}",
+    "manageNotes": "Manage {{noteTypePlural}}",
     "returnToHome": "Return to home"
   },
   "create": {
     "errors": {
       "notesTooLong": "Enter a maximum of 200 characters",
       "recipientRequired": "Select who this will be issued to",
-      "prns": {
-        "tonnageWholeNumber": "Enter PRN tonnage as a whole number",
-        "tonnageGreaterThanZero": "Enter PRN tonnage as a whole number greater than zero"
-      },
-      "perns": {
-        "tonnageWholeNumber": "Enter PERN tonnage as a whole number",
-        "tonnageGreaterThanZero": "Enter PERN tonnage as a whole number greater than zero"
-      }
+      "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
+      "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
     },
     "helpSummary": "Can't find the producer or compliance scheme?",
     "notesLabel": "Add issuer notes (optional)",
     "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
     "tonnageHint": "Enter a whole number without decimal places",
     "tonnageSuffix": "tonnes",
-    "perns": {
-      "pageTitle": "Create a PERN",
-      "tonnageLabel": "Enter PERN tonnage",
-      "recipientLabel": "Enter who this PERN will be issued to",
-      "help": {
-        "intro": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
-        "listIntro": "If the buyer you're looking for is not appearing, check that:",
-        "listItemOne": "you have spelled the name correctly",
-        "listItemTwo": "they are registered with a regulator"
-      },
-      "notesHint": "These notes will appear on the PERN"
+    "pageTitle": "Create a {{noteType}}",
+    "tonnageLabel": "Enter {{noteType}} tonnage",
+    "recipientLabel": "Enter who this {{noteType}} will be issued to",
+    "help": {
+      "intro": "{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
+      "listIntro": "If the buyer you're looking for is not appearing, check that:",
+      "listItemOne": "you have spelled the name correctly",
+      "listItemTwo": "they are registered with a regulator"
     },
-    "prns": {
-      "pageTitle": "Create a PRN",
-      "tonnageLabel": "Enter PRN tonnage",
-      "recipientLabel": "Enter who this PRN will be issued to",
-      "help": {
-        "intro": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
-        "listIntro": "If the buyer you're looking for is not appearing, check that:",
-        "listItemOne": "you have spelled the name correctly",
-        "listItemTwo": "they are registered with a regulator"
-      },
-      "notesHint": "These notes will appear on the PRN"
-    }
+    "notesHint": "These notes will appear on the {{noteType}}"
   },
   "detail": {
-    "perns": {
-      "pageTitle": "PERN",
-      "issuePrn": "Issue PERN",
-      "deletePrn": "Delete PERN"
-    },
-    "prns": {
-      "pageTitle": "PRN",
-      "issuePrn": "Issue PRN",
-      "deletePrn": "Delete PRN"
-    }
+    "pageTitle": "{{noteType}}",
+    "issuePrn": "Issue {{noteType}}",
+    "deletePrn": "Delete {{noteType}}"
   },
   "list": {
     "availableWasteBalance": "Available waste balance",
@@ -111,18 +67,10 @@
       "actionHeading": "Action",
       "selectLink": "Select"
     },
-    "perns": {
-      "pageTitle": "PERNs",
-      "createText": "Create a PERN",
-      "selectHeading": "Select a PERN",
-      "balanceHint": "This is the balance available for creating new PERNs"
-    },
-    "prns": {
-      "pageTitle": "PRNs",
-      "createText": "Create a PRN",
-      "selectHeading": "Select a PRN",
-      "balanceHint": "This is the balance available for creating new PRNs"
-    }
+    "pageTitle": "{{noteTypePlural}}",
+    "createText": "Create a {{noteType}}",
+    "selectHeading": "Select a {{noteType}}",
+    "balanceHint": "This is the balance available for creating new {{noteTypePlural}}"
   },
   "selectOption": "Select an option"
 }
