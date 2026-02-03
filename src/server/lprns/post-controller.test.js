@@ -43,7 +43,8 @@ const fixtureReprocessor = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
-const url = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
+const accreditationId = 'acc-001'
+const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
 
 const validPayload = {
   tonnage: '100',
@@ -111,7 +112,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/prn-789/view`
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/prn-789/view`
         )
       })
 
@@ -138,6 +139,7 @@ describe('#postCreatePrnController', () => {
         expect(createPrn).toHaveBeenCalledWith(
           organisationId,
           registrationId,
+          accreditationId,
           {
             issuedToOrganisation: 'producer-1',
             tonnage: 100,
@@ -173,6 +175,7 @@ describe('#postCreatePrnController', () => {
         expect(createPrn).toHaveBeenCalledWith(
           organisationId,
           registrationId,
+          accreditationId,
           expect.objectContaining({
             issuerNotes: undefined
           }),
@@ -208,6 +211,7 @@ describe('#postCreatePrnController', () => {
         expect(createPrn).toHaveBeenCalledWith(
           organisationId,
           registrationId,
+          accreditationId,
           expect.objectContaining({
             issuedToOrganisation: unknownRecipient
           }),

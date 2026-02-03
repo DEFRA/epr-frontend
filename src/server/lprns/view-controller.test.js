@@ -59,12 +59,13 @@ const fixtureExporter = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
+const accreditationId = 'acc-001'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/view`
-const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${pernId}/view`
-const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
+const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${pernId}/view`
+const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
 
 const validPayload = {
   tonnage: '100',
@@ -762,13 +763,14 @@ describe('#viewController', () => {
           payload: { crumb }
         })
 
-        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/created`
+        const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/created`
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(createdUrl)
         expect(updatePrnStatus).toHaveBeenCalledWith(
           organisationId,
           registrationId,
+          accreditationId,
           prnId,
           { status: 'awaiting_authorisation' },
           mockCredentials.idToken
