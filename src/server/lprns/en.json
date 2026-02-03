@@ -10,6 +10,7 @@
   "decemberWasteYes": "Yes",
   "errorSummaryTitle": "There is a problem",
   "helpSummary": "Can't find the producer or compliance scheme?",
+  "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
   "issueCommentsLabel": "Issue comments",
   "issuedByLabel": "Issued by",
   "issuedDateLabel": "Issued date",
