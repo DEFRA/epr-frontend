@@ -229,6 +229,25 @@ describe('#viewController', () => {
         expect(getByText(main, /Awaiting authorisation/i)).toBeDefined()
       })
 
+      it('displays status tag for awaiting acceptance', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_acceptance'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Awaiting acceptance/i)).toBeDefined()
+      })
+
       it('displays back link to list page', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',

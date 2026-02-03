@@ -55,6 +55,7 @@
     },
     "status": {
       "awaitingAuthorisation": "Awaiting authorisation",
+      "awaitingAcceptance": "Awaiting acceptance",
       "issued": "Issued",
       "cancelled": "Cancelled"
     },

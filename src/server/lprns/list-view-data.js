@@ -148,6 +148,7 @@ function buildStatusTagHtml(status, localise) {
 function formatStatus(status, localise) {
   const statusMap = {
     awaiting_authorisation: localise('lprns:list:status:awaitingAuthorisation'),
+    awaiting_acceptance: localise('lprns:list:status:awaitingAcceptance'),
     issued: localise('lprns:list:status:issued'),
     cancelled: localise('lprns:list:status:cancelled')
   }

@@ -34,6 +34,7 @@ const createMockRequest = () => ({
       'lprns:list:table:selectText': 'Select',
       'lprns:list:table:totalLabel': 'Total',
       'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
+      'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
       'lprns:list:status:issued': 'Issued',
       'lprns:list:status:cancelled': 'Cancelled'
     }
@@ -350,6 +351,29 @@ describe('#buildListViewData', () => {
 
       expect(result.table.rows).toHaveLength(0)
       expect(result.noPrnsText).toBe('No PRNs or PERNs have been created yet.')
+    })
+
+    it('should format awaiting_acceptance status correctly', () => {
+      const prnAwaitingAcceptance = [
+        {
+          id: 'prn-accept',
+          recipient: 'Accept Ltd',
+          createdAt: '2026-01-15',
+          tonnage: 25,
+          status: 'awaiting_acceptance'
+        }
+      ]
+
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: prnAwaitingAcceptance,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.table.rows[0][3].html).toContain('Awaiting acceptance')
     })
 
     it('should return unknown status as-is in tag', () => {

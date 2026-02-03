@@ -632,6 +632,10 @@ function getStatusConfig(status, localise) {
       text: localise('lprns:list:status:awaitingAuthorisation'),
       class: 'govuk-tag--blue epr-tag--no-max-width'
     },
+    awaiting_acceptance: {
+      text: localise('lprns:list:status:awaitingAcceptance'),
+      class: 'govuk-tag--blue epr-tag--no-max-width'
+    },
     issued: {
       text: localise('lprns:list:status:issued'),
       class: 'govuk-tag--blue epr-tag--no-max-width'
