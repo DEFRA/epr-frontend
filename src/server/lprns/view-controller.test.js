@@ -739,6 +739,29 @@ describe('#viewController', () => {
         expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
       })
 
+      it('does not display Issue button when status is draft', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'draft'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      })
+
       it('Issue button form posts to /issue endpoint', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
