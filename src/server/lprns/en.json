@@ -11,6 +11,26 @@
   "helpSummary": "Can't find the producer or compliance scheme?",
   "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
   "issueCommentsLabel": "Issue comments",
+  "issued": {
+    "wasteBalanceMessage": "Your waste balance has been updated.",
+    "returnHomeLink": "Return to home",
+    "prns": {
+      "pageTitle": "PRN issued",
+      "heading": "PRN issued to {{recipient}}",
+      "prnNumberLabel": "PRN number:",
+      "viewButton": "View PRN (PDF)",
+      "issueAnotherLink": "Issue another PRN",
+      "managePrnsLink": "Manage PRNs"
+    },
+    "perns": {
+      "pageTitle": "PERN issued",
+      "heading": "PERN issued to {{recipient}}",
+      "prnNumberLabel": "PERN number:",
+      "viewButton": "View PERN (PDF)",
+      "issueAnotherLink": "Issue another PERN",
+      "managePrnsLink": "Manage PERNs"
+    }
+  },
   "issuedByLabel": "Issued by",
   "issuedDateLabel": "Issued date",
   "issuedToLabel": "Packaging waste producer or compliance scheme",
