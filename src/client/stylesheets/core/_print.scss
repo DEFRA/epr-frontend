@@ -1,0 +1,73 @@
+// Print-specific styles for PRN/PERN view pages
+// Hides navigation elements and ensures clean PDF output
+// stylelint-disable declaration-no-important -- print overrides require !important
+
+@media print {
+  // Hide header, navigation, and footer
+  .govuk-header,
+  .app-header,
+  .govuk-phase-banner,
+  .govuk-back-link,
+  .govuk-footer,
+  .app-navigation {
+    display: none !important;
+  }
+
+  // Remove skip link from print
+  .govuk-skip-link {
+    display: none !important;
+  }
+
+  // Generic class for hiding elements in print
+  .epr-print-hide {
+    display: none !important;
+  }
+
+  // Ensure main content fills the page
+  .govuk-width-container {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .app-main-wrapper {
+    padding-top: 0;
+  }
+
+  // Remove margins from headings for tighter layout
+  .govuk-heading-xl {
+    margin-top: 0;
+  }
+
+  // Ensure regulator logos print correctly
+  .epr-regulator-logos {
+    display: flex !important;
+    break-inside: avoid;
+
+    svg {
+      // Ensure SVGs render in print
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+
+  // Ensure summary lists don't break across pages
+  .govuk-summary-list {
+    break-inside: avoid;
+  }
+
+  // Remove interactive elements from print
+  .govuk-button,
+  .govuk-button-group,
+  form {
+    display: none !important;
+  }
+
+  // Ensure tags print with their colours
+  .govuk-tag {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+// stylelint-enable declaration-no-important
