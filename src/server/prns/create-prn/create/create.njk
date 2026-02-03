@@ -1,64 +1,99 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
-{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
+      {% if errorSummary %}
+        {{ govukErrorSummary({
+          titleText: localise('common:errorSummaryTitle'),
+          errorList: errorSummary
+        }) }}
+      {% endif %}
+
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-      {{ govukInput({
-        label: {
-          text: tonnage.label,
-          classes: "govuk-label--m"
-        },
-        hint: {
-          text: tonnage.hint
-        },
-        classes: "govuk-input--width-5",
-        id: "tonnage",
-        name: "tonnage",
-        suffix: {
-          text: tonnage.suffix
-        },
-        spellcheck: false
-      }) }}
+      <form method="POST">
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
 
-      {{ govukSelect({
-        id: "recipient",
-        name: "recipient",
-        label: {
-          text: recipient.label,
-          classes: "govuk-label--m"
-        },
-        hint: {
-          text: recipient.hint
-        },
-        items: recipient.items
-      }) }}
+        {{ govukInput({
+          label: {
+            text: tonnage.label,
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: tonnage.hint
+          },
+          classes: "govuk-input--width-5",
+          id: "tonnage",
+          name: "tonnage",
+          value: tonnage.value,
+          suffix: {
+            text: tonnage.suffix
+          },
+          spellcheck: false,
+          errorMessage: tonnage.errorMessage
+        }) }}
 
-      {{ govukDetails({
-        summaryText: help.summary,
-        html: '<p class="govuk-body">' + help.text + '</p>'
-      }) }}
+        {{ govukSelect({
+          id: "recipient",
+          name: "recipient",
+          label: {
+            text: recipient.label,
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: recipient.hint
+          },
+          items: recipient.items,
+          errorMessage: recipient.errorMessage
+        }) }}
 
-      {{ govukTextarea({
-        name: "notes",
-        id: "notes",
-        label: {
-          text: notes.label,
-          classes: "govuk-label--m"
-        },
-        hint: {
-          text: notes.hint
-        },
-        attributes: {
-          maxlength: "200"
-        }
-      }) }}
+        {{ govukDetails({
+          summaryText: help.summary,
+          html: '
+            <p class="govuk-body">' ~ help.intro ~ '</p>
+            <p class="govuk-body">' ~ help.listIntro ~ '</p>
+            <ul class="govuk-list govuk-list--bullet">
+              <li>' ~ help.listItemOne ~ '</li>
+              <li>' ~ help.listItemTwo ~ '</li>
+            </ul>
+          '
+        }) }}
+
+        {{ govukCharacterCount({
+          name: "notes",
+          id: "notes",
+          value: notes.value,
+          maxlength: notes.maxLength,
+          label: {
+            text: notes.label,
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: notes.hint
+          },
+          errorMessage: notes.errorMessage
+        }) }}
+
+        {{ govukButton({
+          text: localise('common:continue')
+        }) }}
+      </form>
 
     </div>
   </div>

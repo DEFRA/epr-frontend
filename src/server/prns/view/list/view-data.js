@@ -1,4 +1,5 @@
 import { prnStatuses } from '#server/common/constants/statuses.js'
+import { getNoteTypeDisplayNames } from '#server/prns/helpers/get-note-type.js'
 
 /**
  * PRN status display configuration
@@ -70,10 +71,9 @@ export function buildListViewData(
   }
 ) {
   const { t: localise } = request
-  const noteType =
-    registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+  const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
-  const pageTitle = localise(`prns:list:${noteType}:pageTitle`)
+  const pageTitle = localise('prns:list:pageTitle', { noteTypePlural })
 
   const selectLinkText = localise('prns:list:table:selectLink')
   const actionHeading = localise('prns:list:table:actionHeading')
@@ -104,11 +104,11 @@ export function buildListViewData(
     pageTitle,
     heading: pageTitle,
     backUrl: dashboardUrl,
-    createText: localise(`prns:list:${noteType}:createText`),
+    createText: localise('prns:list:createText', { noteType }),
     createUrl: `${dashboardUrl}/create-prn`,
-    selectHeading: localise(`prns:list:${noteType}:selectHeading`),
-    balanceHint: localise(`prns:list:${noteType}:balanceHint`),
-    emptyMessage: localise(`prns:list:${noteType}:emptyMessage`),
+    selectHeading: localise('prns:list:selectHeading', { noteType }),
+    balanceHint: localise('prns:list:balanceHint', { noteTypePlural }),
+    emptyMessage: localise('prns:list:emptyMessage', { noteTypePlural }),
     hasCreatedPrns,
     wasteBalance,
     table: {

@@ -1,8 +1,12 @@
 /**
- * Determine if a registration is for PRN or PERN based on waste processing type
+ * Get display names for PRN/PERN based on waste processing type
  * @param {{wasteProcessingType: string}} registration
- * @returns {'prns' | 'perns'}
+ * @returns {{noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs'}}
  */
-export function getPrnType(registration) {
-  return registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+export function getNoteTypeDisplayNames(registration) {
+  const isExporter = registration.wasteProcessingType === 'exporter'
+  return {
+    noteType: isExporter ? 'PERN' : 'PRN',
+    noteTypePlural: isExporter ? 'PERNs' : 'PRNs'
+  }
 }

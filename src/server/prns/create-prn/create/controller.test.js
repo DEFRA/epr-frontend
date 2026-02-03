@@ -189,7 +189,9 @@ describe('#createPrnController', () => {
       ).toBeDefined()
     })
 
-    it('should render notes textarea with maxlength', async ({ server }) => {
+    it('should render notes textarea with character count', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: reprocessorUrl,
@@ -210,7 +212,10 @@ describe('#createPrnController', () => {
         name: /Add issuer notes/i
       })
 
-      expect(notesTextarea.getAttribute('maxlength')).toBe('200')
+      expect(notesTextarea).toBeDefined()
+      expect(
+        getByText(main, /You can enter up to 200 characters/i)
+      ).toBeDefined()
     })
 
     it('should fetch registration data with correct parameters', async ({

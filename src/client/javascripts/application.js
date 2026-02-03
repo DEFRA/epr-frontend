@@ -2,6 +2,7 @@ import {
   createAll,
   Accordion,
   Button,
+  CharacterCount,
   Checkboxes,
   ErrorSummary,
   Header,
@@ -11,6 +12,7 @@ import {
 
 createAll(Accordion)
 createAll(Button)
+createAll(CharacterCount)
 createAll(Checkboxes)
 createAll(ErrorSummary)
 createAll(Header)

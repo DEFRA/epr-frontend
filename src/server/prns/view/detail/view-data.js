@@ -1,4 +1,4 @@
-import { getPrnType } from '../../helpers/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/prns/helpers/get-note-type.js'
 
 /**
  * Build view data for the PRN detail page
@@ -14,17 +14,17 @@ export function buildDetailViewData(
   { registration, organisationId, registrationId }
 ) {
   const { t: localise } = request
-  const prnType = getPrnType(registration)
+  const { noteType } = getNoteTypeDisplayNames(registration)
 
-  const pageTitle = localise(`prns:detail:${prnType}:pageTitle`)
+  const pageTitle = localise('prns:detail:pageTitle', { noteType })
   const basePrnsUrl = `/organisations/${organisationId}/registrations/${registrationId}/prns`
 
   return {
     pageTitle,
     heading: pageTitle,
     backUrl: basePrnsUrl,
-    issuePrnText: localise(`prns:detail:${prnType}:issuePrn`),
-    deletePrnText: localise(`prns:detail:${prnType}:deletePrn`)
+    issuePrnText: localise('prns:detail:issuePrn', { noteType }),
+    deletePrnText: localise('prns:detail:deletePrn', { noteType })
   }
 }
 

@@ -20,8 +20,10 @@ export const createController = {
     const { organisations } = await fetchWasteOrganisations()
 
     const viewData = buildCreateViewData(request, {
+      organisationId,
+      recipients: organisations,
       registration,
-      recipients: organisations
+      registrationId
     })
 
     return h.view('prns/create-prn/create/create', viewData)
