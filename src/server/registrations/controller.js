@@ -34,14 +34,12 @@ export const controller = {
       ({ id }) => id === registration.accreditationId
     )
 
-    const wasteBalance = config.get('featureFlags.wasteBalance')
-      ? await getWasteBalance(
-          organisationId,
-          registration.accreditationId,
-          session.idToken,
-          request.logger
-        )
-      : null
+    const wasteBalance = await getWasteBalance(
+      organisationId,
+      registration.accreditationId,
+      session.idToken,
+      request.logger
+    )
 
     const viewModel = buildViewModel({
       request,
@@ -118,9 +116,7 @@ function buildViewModel({
     )
   }
 
-  if (config.get('featureFlags.wasteBalance')) {
-    viewModel.wasteBalance = getWasteBalanceViewData(wasteBalance, isExporter)
-  }
+  viewModel.wasteBalance = getWasteBalanceViewData(wasteBalance, isExporter)
 
   return viewModel
 }

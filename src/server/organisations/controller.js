@@ -1,6 +1,5 @@
 import { capitalize } from 'lodash-es'
 
-import { config } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
@@ -8,7 +7,6 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 import { getStatusClass } from './helpers/status-helpers.js'
 
 const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
-const FEATURE_FLAG_NAME_WASTE_BALANCE = 'featureFlags.wasteBalance'
 
 /**
  * Determines whether a site should be rendered based on its registration
@@ -72,12 +70,10 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
     }
   ]
 
-  if (config.get(FEATURE_FLAG_NAME_WASTE_BALANCE)) {
-    cells.push({
-      text: formatTonnage(wasteBalance?.availableAmount),
-      format: 'numeric'
-    })
-  }
+  cells.push({
+    text: formatTonnage(wasteBalance?.availableAmount),
+    format: 'numeric'
+  })
 
   cells.push({
     html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
@@ -103,12 +99,10 @@ function createTableHeaders(localise) {
     }
   ]
 
-  if (config.get(FEATURE_FLAG_NAME_WASTE_BALANCE)) {
-    headers.push({
-      text: localise('organisations:table:site:headings:availableBalance'),
-      format: 'numeric'
-    })
-  }
+  headers.push({
+    text: localise('organisations:table:site:headings:availableBalance'),
+    format: 'numeric'
+  })
 
   headers.push({ text: '' })
 
@@ -316,14 +310,12 @@ export const controller = {
     const displayableRegistrations =
       getDisplayableRegistrations(organisationData)
 
-    const wasteBalanceMap = config.get(FEATURE_FLAG_NAME_WASTE_BALANCE)
-      ? await getWasteBalanceMap(
-          organisationId,
-          displayableRegistrations,
-          session.idToken,
-          request.logger
-        )
-      : {}
+    const wasteBalanceMap = await getWasteBalanceMap(
+      organisationId,
+      displayableRegistrations,
+      session.idToken,
+      request.logger
+    )
 
     const reprocessorSites = getRegistrationSites(
       request,

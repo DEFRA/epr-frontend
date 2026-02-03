@@ -434,15 +434,7 @@ describe('#accreditationDashboardController', () => {
     })
   })
 
-  describe('when waste balance feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.wasteBalance', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.wasteBalance')
-    })
-
+  describe('waste balance', () => {
     it('should display zero balance when no waste balance data is available', async ({
       server
     }) => {
@@ -746,39 +738,6 @@ describe('#accreditationDashboardController', () => {
           'tonnes'
         )
       })
-    })
-  })
-
-  describe('when waste balance feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.wasteBalance', false)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.wasteBalance')
-    })
-
-    it('should display not available message and should not call fetchWasteBalances', async ({
-      server
-    }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-
-      expect(
-        $('[data-testid="waste-balance-not-available-title"]').text()
-      ).toContain('Your waste balance is not yet available')
-      expect(fetchWasteBalancesModule.fetchWasteBalances).not.toHaveBeenCalled()
     })
   })
 

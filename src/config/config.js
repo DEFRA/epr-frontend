@@ -308,12 +308,6 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_LPRNS'
-    },
-    wasteBalance: {
-      doc: 'Feature Flag: Waste Balance Display',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_WASTE_BALANCE'
     }
   }
 })
