@@ -5,6 +5,7 @@
 import Joi from 'joi'
 
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
 import { getNoteTypeDisplayNames } from '#server/prns/helpers/get-note-type.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { buildCreateViewData } from './view-data.js'
@@ -21,14 +22,6 @@ const ERROR_KEYS = Object.freeze({
   tonnageGreaterThanZero: 'tonnageGreaterThanZero',
   tonnageWholeNumber: 'tonnageWholeNumber'
 })
-
-const STUB_RECIPIENTS = [
-  { value: 'producer-1', text: 'Acme Packaging Ltd' },
-  { value: 'producer-2', text: 'BigCo Waste Solutions' },
-  { value: 'producer-3', text: 'EcoRecycle Industries' },
-  { value: 'scheme-1', text: 'Green Compliance Scheme' },
-  { value: 'scheme-2', text: 'National Packaging Scheme' }
-]
 
 /**
  * @param {import('joi').ValidationErrorItem} detail
@@ -111,6 +104,8 @@ export const postCreateController = {
           request.logger
         )
 
+        const { organisations } = await fetchWasteOrganisations()
+
         const errors = buildValidationErrors(request, registration, error)
         const payload = request.payload
         const values = {
@@ -122,7 +117,7 @@ export const postCreateController = {
         const viewData = buildCreateViewData(request, {
           errors,
           organisationId,
-          recipients: STUB_RECIPIENTS,
+          recipients: organisations,
           registration,
           registrationId,
           values

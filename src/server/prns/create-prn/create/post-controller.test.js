@@ -11,6 +11,7 @@ import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import wasteOrganisations from '../../../../../fixtures/waste-organisations/organisations.json'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -67,24 +68,13 @@ describe('#postCreatePrnController', () => {
       fixtureReprocessor
     )
 
-    const backendUrl = 'http://waste-orgs.api/waste-organisations/organisations'
+    const backendUrl = 'http://waste-orgs.api'
 
-    // GET
-    // https://{env-path}/waste-organisations/organisations?registrations=LARGE_PRODUCER%2CCOMPLIANCE_SCHEME&registrationYears=2026&statuses=REGISTERED
-
-    const STUB_RECIPIENTS = [
-      { value: 'producer-1', text: 'Acme Packaging Ltd' },
-      { value: 'producer-2', text: 'BigCo Waste Solutions' },
-      { value: 'producer-3', text: 'EcoRecycle Industries' },
-      { value: 'scheme-1', text: 'Green Compliance Scheme' },
-      { value: 'scheme-2', text: 'National Packaging Scheme' }
-    ]
-
-    config.set('wasteOrganisationsApi', backendUrl)
+    config.set('wasteOrganisationsApi.url', backendUrl)
 
     msw.use(
       http.get(backendUrl, () => {
-        return HttpResponse.json(STUB_RECIPIENTS)
+        return HttpResponse.json(wasteOrganisations)
       })
     )
   })
@@ -109,7 +99,7 @@ describe('#postCreatePrnController', () => {
         payload: {
           crumb,
           tonnage: '100',
-          recipient: 'producer-1',
+          recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
           notes: 'Test notes'
         }
       })
@@ -133,7 +123,7 @@ describe('#postCreatePrnController', () => {
         payload: {
           crumb,
           tonnage: '50',
-          recipient: 'producer-2',
+          recipient: 'dd793573-b218-47a7-be85-1c777ca0d0d8',
           notes: ''
         }
       })
@@ -158,7 +148,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: '',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: ''
           }
         })
@@ -190,7 +180,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: 'abc',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: ''
           }
         })
@@ -223,7 +213,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: '1.5',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: ''
           }
         })
@@ -253,7 +243,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: '0',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: ''
           }
         })
@@ -286,7 +276,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: '-5',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: ''
           }
         })
@@ -325,7 +315,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: '100',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: longNotes
           }
         })
@@ -459,7 +449,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: '',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: ''
           }
         })
@@ -472,7 +462,9 @@ describe('#postCreatePrnController', () => {
         const selectedOption =
           recipientSelect?.querySelector('option[selected]')
 
-        expect(selectedOption?.getAttribute('value')).toBe('producer-1')
+        expect(selectedOption?.getAttribute('value')).toBe(
+          '9eb099a7-bda0-456c-96ba-e0af3fdb9cde'
+        )
       })
 
       it('should preserve notes value on validation error', async ({
@@ -519,7 +511,7 @@ describe('#postCreatePrnController', () => {
           payload: {
             crumb,
             tonnage: '',
-            recipient: 'producer-1',
+            recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
             notes: ''
           }
         })
@@ -611,7 +603,7 @@ describe('#postCreatePrnController', () => {
         url: reprocessorUrl,
         payload: {
           tonnage: '100',
-          recipient: 'producer-1',
+          recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
           notes: ''
         }
       })
@@ -707,7 +699,7 @@ describe('#postCreatePrnController', () => {
         payload: {
           crumb,
           tonnage: '',
-          recipient: 'producer-1',
+          recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
           notes: ''
         }
       })
@@ -741,7 +733,7 @@ describe('#postCreatePrnController', () => {
         payload: {
           crumb,
           tonnage: '',
-          recipient: 'producer-1',
+          recipient: '9eb099a7-bda0-456c-96ba-e0af3fdb9cde',
           notes: ''
         }
       })
