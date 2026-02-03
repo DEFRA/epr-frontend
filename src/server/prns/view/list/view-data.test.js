@@ -468,4 +468,73 @@ describe('#prnListViewData', () => {
       expect(result.table.rows[0][1].text).toBe('15 March 2026')
     })
   })
+
+  describe('zero PRN state', () => {
+    it('should pass through hasCreatedPrns from caller rather than computing it', () => {
+      const request = createMockRequest({})
+      const registration = { wasteProcessingType: 'reprocessor-input' }
+
+      // Pass hasCreatedPrns: true with an empty PRN list
+      // If view-data computes it internally, this would be false
+      const result = buildListViewData(request, {
+        registration,
+        prns: [],
+        wasteBalance: stubWasteBalance,
+        hasCreatedPrns: true
+      })
+
+      expect(result.hasCreatedPrns).toBe(true)
+    })
+
+    it('should return PRN empty message for reprocessor-input', () => {
+      const translations = {
+        'prns:list:prns:emptyMessage': 'You have not created any PRNs.'
+      }
+      const request = createMockRequest(translations)
+      const registration = { wasteProcessingType: 'reprocessor-input' }
+
+      const result = buildListViewData(request, {
+        registration,
+        prns: [],
+        wasteBalance: stubWasteBalance,
+        hasCreatedPrns: false
+      })
+
+      expect(result.emptyMessage).toBe('You have not created any PRNs.')
+    })
+
+    it('should return PRN empty message for reprocessor-output', () => {
+      const translations = {
+        'prns:list:prns:emptyMessage': 'You have not created any PRNs.'
+      }
+      const request = createMockRequest(translations)
+      const registration = { wasteProcessingType: 'reprocessor-output' }
+
+      const result = buildListViewData(request, {
+        registration,
+        prns: [],
+        wasteBalance: stubWasteBalance,
+        hasCreatedPrns: false
+      })
+
+      expect(result.emptyMessage).toBe('You have not created any PRNs.')
+    })
+
+    it('should return PERN empty message for exporter', () => {
+      const translations = {
+        'prns:list:perns:emptyMessage': 'You have not created any PERNs.'
+      }
+      const request = createMockRequest(translations)
+      const registration = { wasteProcessingType: 'exporter' }
+
+      const result = buildListViewData(request, {
+        registration,
+        prns: [],
+        wasteBalance: stubWasteBalance,
+        hasCreatedPrns: false
+      })
+
+      expect(result.emptyMessage).toBe('You have not created any PERNs.')
+    })
+  })
 })

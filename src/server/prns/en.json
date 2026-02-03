@@ -94,13 +94,15 @@
       "pageTitle": "PERNs",
       "createText": "Create a PERN",
       "selectHeading": "Select a PERN",
-      "balanceHint": "This is the balance available for creating new PERNs"
+      "balanceHint": "This is the balance available for creating new PERNs",
+      "emptyMessage": "You have not created any PERNs."
     },
     "prns": {
       "pageTitle": "PRNs",
       "createText": "Create a PRN",
       "selectHeading": "Select a PRN",
-      "balanceHint": "This is the balance available for creating new PRNs"
+      "balanceHint": "This is the balance available for creating new PRNs",
+      "emptyMessage": "You have not created any PRNs."
     }
   }
 }
