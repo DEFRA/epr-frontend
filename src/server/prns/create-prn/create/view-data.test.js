@@ -9,8 +9,13 @@ const translations = {
   'prns:create:tonnageLabel': 'Enter {{noteType}} tonnage',
   'prns:create:recipientLabel': 'Enter who this {{noteType}} will be issued to',
   'prns:create:notesHint': 'These notes will appear on the {{noteType}}',
+  'prns:create:helpSummary': "Can't find the producer or compliance scheme?",
   'prns:create:help:intro':
-    '{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.'
+    '{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
+  'prns:create:help:listIntro':
+    "If the buyer you're looking for is not appearing, check that:",
+  'prns:create:help:listItemOne': 'you have spelled the name correctly',
+  'prns:create:help:listItemTwo': 'they are registered with a regulator'
 }
 
 const createMockRequest = () => ({
@@ -78,8 +83,15 @@ describe('#buildCreateViewData', () => {
         'Enter who this PRN will be issued to'
       )
       expect(result.notes.hint).toBe('These notes will appear on the PRN')
-      expect(result.help.intro).toContain('PRNs can only be issued')
-      expect(result.help.listItems).toHaveLength(2)
+      expect(result.help).toStrictEqual({
+        summary: "Can't find the producer or compliance scheme?",
+        intro:
+          'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
+        listIntro:
+          "If the buyer you're looking for is not appearing, check that:",
+        listItemOne: 'you have spelled the name correctly',
+        listItemTwo: 'they are registered with a regulator'
+      })
     })
 
     it('should include recipient options with placeholder', () => {
@@ -130,8 +142,15 @@ describe('#buildCreateViewData', () => {
         'Enter who this PERN will be issued to'
       )
       expect(result.notes.hint).toBe('These notes will appear on the PERN')
-      expect(result.help.intro).toContain('PERNs can only be issued')
-      expect(result.help.listItems).toHaveLength(2)
+      expect(result.help).toStrictEqual({
+        summary: "Can't find the producer or compliance scheme?",
+        intro:
+          'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
+        listIntro:
+          "If the buyer you're looking for is not appearing, check that:",
+        listItemOne: 'you have spelled the name correctly',
+        listItemTwo: 'they are registered with a regulator'
+      })
     })
   })
 

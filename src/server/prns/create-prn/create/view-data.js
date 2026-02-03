@@ -57,10 +57,8 @@ export function buildCreateViewData(
       summary: localise('prns:create:helpSummary'),
       intro: localise('prns:create:help:intro', { noteTypePlural }),
       listIntro: localise('prns:create:help:listIntro'),
-      listItems: [
-        localise('prns:create:help:listItemOne'),
-        localise('prns:create:help:listItemTwo')
-      ]
+      listItemOne: localise('prns:create:help:listItemOne'),
+      listItemTwo: localise('prns:create:help:listItemTwo')
     },
     notes: {
       label: localise('prns:create:notesLabel'),
