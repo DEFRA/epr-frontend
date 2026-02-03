@@ -193,6 +193,7 @@ describe('#issuedController', () => {
 
         const viewButton = getByRole(main, 'button', { name: /View PRN/i })
         expect(viewButton).toBeDefined()
+        expect(viewButton.getAttribute('href')).toBe(viewUrl)
       })
 
       it('displays Issue another PRN link', async ({ server }) => {
