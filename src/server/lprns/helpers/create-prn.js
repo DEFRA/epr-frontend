@@ -25,12 +25,19 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * Creates a new PRN/PERN via the backend API
  * @param {string} organisationId - The issuing organisation ID
  * @param {string} registrationId - The registration ID
+ * @param {string} accreditationId - The accreditation ID
  * @param {CreatePrnPayload} payload - PRN creation data
  * @param {string} idToken - JWT ID token for authorisation
  * @returns {Promise<CreatePrnResponse>}
  */
-async function createPrn(organisationId, registrationId, payload, idToken) {
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`
+async function createPrn(
+  organisationId,
+  registrationId,
+  accreditationId,
+  payload,
+  idToken
+) {
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/l-packaging-recycling-notes`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',

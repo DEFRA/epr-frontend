@@ -54,9 +54,9 @@ const fixtureExporter = {
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/l-packaging-recycling-notes/create'
+  '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/create'
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/l-packaging-recycling-notes/create'
+  '/organisations/org-456/registrations/reg-002/accreditations/acc-002/l-packaging-recycling-notes/create'
 
 describe('#createPrnController', () => {
   beforeEach(() => {
@@ -288,7 +288,7 @@ describe('#createPrnController', () => {
 
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-nonexistent/l-packaging-recycling-notes/create',
+          url: '/organisations/org-123/registrations/reg-nonexistent/accreditations/acc-001/l-packaging-recycling-notes/create',
           auth: mockAuth
         })
 
@@ -429,6 +429,65 @@ describe('#createPrnController', () => {
             within(details).getByText(/PERNs can only be issued to/i)
           ).toBeDefined()
         })
+      })
+    })
+
+    describe('insufficient balance error', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+      })
+
+      it('should display error summary when error=insufficient_balance query param is present', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: `${reprocessorUrl}?error=insufficient_balance`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Error summary should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).not.toBeNull()
+
+        // Error summary should have correct title
+        expect(getByText(errorSummary, /There is a problem/i)).toBeDefined()
+
+        // Error summary should explain the issue
+        expect(
+          getByText(
+            errorSummary,
+            /The tonnage you entered exceeds your available waste balance/i
+          )
+        ).toBeDefined()
+      })
+
+      it('should not display error summary when no error query param', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Error summary should NOT be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).toBeNull()
       })
     })
   })

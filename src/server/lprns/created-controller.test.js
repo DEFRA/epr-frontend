@@ -10,11 +10,14 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
+const { fetchWasteBalances } =
+  await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
 
 const mockCredentials = {
   profile: {
@@ -63,12 +66,13 @@ const fixtureExporter = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
+const accreditationId = 'acc-001'
 const prnId = 'prn-789'
 const pernId = 'pern-123'
-const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
-const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/view`
-const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prnId}/created`
-const pernCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${pernId}/created`
+const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
+const createdUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/created`
+const pernCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${pernId}/created`
 
 const validPayload = {
   tonnage: '100',
@@ -200,6 +204,9 @@ describe('#createdController', () => {
     )
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
+    vi.mocked(fetchWasteBalances).mockResolvedValue({
+      'acc-001': { amount: 1000, availableAmount: 500 }
+    })
   })
 
   describe('when feature flag is enabled', () => {
@@ -289,7 +296,7 @@ describe('#createdController', () => {
           wasteProcessingType: 'exporter'
         }
 
-        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${pernId}/view`
+        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${pernId}/view`
         const { cookies } = await createPrnAndConfirm(
           server,
           exporterPayload,
@@ -330,8 +337,8 @@ describe('#createdController', () => {
         const { cookies } = await createPrnAndConfirm(server)
 
         // Try to access created page with different prnId
-        const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/different-id/created`
-        const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/different-id/view`
+        const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/different-id/created`
+        const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/different-id/view`
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',

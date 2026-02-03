@@ -1,30 +1,29 @@
 import { fetchPrn } from './fetch-prn.js'
 
 /**
- * Fetches PRNs for an accreditation with error handling
+ * Fetches a PRN for an accreditation with error handling
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
- * @param {string} prnNumber - The prn number
+ * @param {string} prnId - The PRN ID
  * @param {object} logger - Logger instance for error reporting
- * @returns {Promise<object>} PRN items array (empty array on failure)
+ * @returns {Promise<object|null>} PRN data or null if not found/on failure
  */
 async function getPrn(
   organisationId,
   accreditationId,
-  prnNumber,
+  prnId,
   // idToken,
   logger
 ) {
   try {
-    const response = await fetchPrn(
+    return await fetchPrn(
       organisationId,
       accreditationId,
-      prnNumber
+      prnId
       // , idToken
     )
-    return response
   } catch (error) {
-    logger.warn({ error }, `Failed to fetch PRN ${prnNumber}`)
+    logger.warn({ error }, `Failed to fetch PRN ${prnId}`)
     return null
   }
 }

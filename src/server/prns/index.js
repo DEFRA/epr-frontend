@@ -22,7 +22,7 @@ export const prns = {
         {
           ...detailController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/prns/{prnNumber}'
+          path: '/organisations/{organisationId}/registrations/{registrationId}/prns/{prnId}'
         },
         // create
         {
@@ -38,13 +38,13 @@ export const prns = {
         {
           ...checkDetailsController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn/{prnNumber}/check-details'
+          path: '/organisations/{organisationId}/registrations/{registrationId}/create-prn/{prnId}/check-details'
         },
         // issue
         {
           ...confirmationController,
           method: 'GET',
-          path: '/organisations/{organisationId}/registrations/{registrationId}/issue-prn/{prnNumber}/confirmation'
+          path: '/organisations/{organisationId}/registrations/{registrationId}/issue-prn/{prnId}/confirmation'
         }
       ])
     }

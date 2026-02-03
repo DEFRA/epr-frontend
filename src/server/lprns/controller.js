@@ -13,6 +13,22 @@ const STUB_RECIPIENTS = [
 ]
 
 /**
+ * Build error data for insufficient balance redirect
+ * @param {(key: string) => string} localise
+ * @returns {{errors: object, errorSummary: {title: string, list: Array}}}
+ */
+function buildInsufficientBalanceError(localise) {
+  const message = localise('lprns:insufficientBalanceError')
+  return {
+    errors: {},
+    errorSummary: {
+      title: localise('lprns:errorSummaryTitle'),
+      list: [{ text: message, href: '#tonnage' }]
+    }
+  }
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
@@ -48,6 +64,15 @@ export const controller = {
       registration,
       recipients: STUB_RECIPIENTS
     })
+
+    // Check for insufficient balance error from redirect
+    const { t: localise } = request
+    const errorParam = request.query.error
+
+    if (errorParam === 'insufficient_balance') {
+      const { errors, errorSummary } = buildInsufficientBalanceError(localise)
+      return h.view('lprns/create', { ...viewData, errors, errorSummary })
+    }
 
     return h.view('lprns/create', viewData)
   }

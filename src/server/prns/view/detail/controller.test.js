@@ -1,10 +1,10 @@
 import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { getPrn } from '#server/common/helpers/prns/get-prn.js'
+import { getRequiredPrn } from '#server/common/helpers/prns/get-required-prn.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
@@ -12,7 +12,7 @@ vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 
-vi.mock(import('#server/common/helpers/prns/get-prn.js'))
+vi.mock(import('#server/common/helpers/prns/get-required-prn.js'))
 
 const mockCredentials = {
   profile: {
@@ -64,11 +64,10 @@ const fixtureExporter = {
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/prns/ER2625468U'
+  '/organisations/org-123/registrations/reg-001/prns/prn-001'
 const reprocessorOutputUrl =
-  '/organisations/org-789/registrations/reg-003/prns/ER2625468U'
-const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/prns/EX2625468U'
+  '/organisations/org-789/registrations/reg-003/prns/prn-001'
+const exporterUrl = '/organisations/org-456/registrations/reg-002/prns/prn-005'
 
 describe('#prnDetailController', () => {
   beforeAll(() => {
@@ -77,7 +76,7 @@ describe('#prnDetailController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getPrn).mockResolvedValue({ prnNumber: 'ER2625468U' })
+    vi.mocked(getRequiredPrn).mockResolvedValue({ id: 'prn-001' })
   })
 
   afterAll(() => {
@@ -106,7 +105,7 @@ describe('#prnDetailController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/prns/ER2625468U',
+        url: '/organisations/org-123/registrations/reg-nonexistent/prns/prn-001',
         auth: mockAuth
       })
 
@@ -118,6 +117,23 @@ describe('#prnDetailController', () => {
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
         Boom.notFound('Not accredited for this registration')
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('should return 404 when PRN not found', async ({ server }) => {
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      vi.mocked(getRequiredPrn).mockRejectedValue(
+        Boom.notFound('PRN not found')
       )
 
       const { statusCode } = await server.inject({
@@ -175,6 +191,53 @@ describe('#prnDetailController', () => {
         expect.any(Object)
       )
     })
+
+    it('should render back link to PRN dashboard', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const backLink = body.querySelector('.govuk-back-link')
+
+      expect(backLink).not.toBeNull()
+      expect(backLink.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/prns'
+      )
+    })
+
+    it('should render Issue PRN button', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, 'Issue PRN')).toBeDefined()
+    })
+
+    it('should render Delete PRN warning button', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+      const deleteButton = getByText(main, 'Delete PRN')
+
+      expect(deleteButton).toBeDefined()
+      expect(deleteButton.className).toContain('warning')
+    })
   })
 
   describe('page rendering for reprocessor-output (PRN)', () => {
@@ -229,6 +292,23 @@ describe('#prnDetailController', () => {
 
       expect(heading.textContent).toContain('PERN')
       expect(heading.textContent).not.toContain('PRN')
+    })
+
+    it('should render Issue PERN and Delete PERN buttons', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, 'Issue PERN')).toBeDefined()
+      expect(getByText(main, 'Delete PERN')).toBeDefined()
     })
   })
 })

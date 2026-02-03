@@ -12,6 +12,7 @@ const { fetchJsonFromBackend } =
 describe(createPrn, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
+  const accreditationId = 'acc-789'
   const idToken = 'test-token'
 
   const payload = {
@@ -39,10 +40,16 @@ describe(createPrn, () => {
   it('calls fetchJsonFromBackend with correct path and options', async () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
-    await createPrn(organisationId, registrationId, payload, idToken)
+    await createPrn(
+      organisationId,
+      registrationId,
+      accreditationId,
+      payload,
+      idToken
+    )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      `/v1/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes`,
+      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/l-packaging-recycling-notes',
       {
         method: 'POST',
         headers: {
@@ -53,12 +60,24 @@ describe(createPrn, () => {
     )
   })
 
+  it('encodes URL path parameters with special characters', async () => {
+    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+
+    await createPrn('org/123', 'reg&456', 'acc#789', payload, idToken)
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/l-packaging-recycling-notes',
+      expect.any(Object)
+    )
+  })
+
   it('returns the response from fetchJsonFromBackend', async () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     const result = await createPrn(
       organisationId,
       registrationId,
+      accreditationId,
       payload,
       idToken
     )
@@ -71,7 +90,13 @@ describe(createPrn, () => {
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await expect(
-      createPrn(organisationId, registrationId, payload, idToken)
+      createPrn(
+        organisationId,
+        registrationId,
+        accreditationId,
+        payload,
+        idToken
+      )
     ).rejects.toThrowError('Network error')
   })
 })

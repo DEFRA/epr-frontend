@@ -20,6 +20,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 describe(fetchPackagingRecyclingNotes, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
+  const accreditationId = 'acc-789'
   const idToken = 'test-id-token'
 
   beforeEach(() => {
@@ -46,6 +47,7 @@ describe(fetchPackagingRecyclingNotes, () => {
     const result = await fetchPackagingRecyclingNotes(
       organisationId,
       registrationId,
+      accreditationId,
       idToken
     )
 
@@ -58,11 +60,16 @@ describe(fetchPackagingRecyclingNotes, () => {
       json: vi.fn().mockResolvedValue([])
     })
 
-    await fetchPackagingRecyclingNotes(organisationId, registrationId, idToken)
+    await fetchPackagingRecyclingNotes(
+      organisationId,
+      registrationId,
+      accreditationId,
+      idToken
+    )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(
-        /\/v1\/organisations\/org-123\/registrations\/reg-456\/l-packaging-recycling-notes$/
+        /\/v1\/organisations\/org-123\/registrations\/reg-456\/accreditations\/acc-789\/l-packaging-recycling-notes$/
       ),
       expect.any(Object)
     )
@@ -74,7 +81,12 @@ describe(fetchPackagingRecyclingNotes, () => {
       json: vi.fn().mockResolvedValue([])
     })
 
-    await fetchPackagingRecyclingNotes(organisationId, registrationId, idToken)
+    await fetchPackagingRecyclingNotes(
+      organisationId,
+      registrationId,
+      accreditationId,
+      idToken
+    )
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
@@ -95,11 +107,11 @@ describe(fetchPackagingRecyclingNotes, () => {
       json: vi.fn().mockResolvedValue([])
     })
 
-    await fetchPackagingRecyclingNotes('org/123', 'reg&456', idToken)
+    await fetchPackagingRecyclingNotes('org/123', 'reg&456', 'acc#789', idToken)
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining(
-        'organisations/org%2F123/registrations/reg%26456'
+        'organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789'
       ),
       expect.any(Object)
     )
@@ -114,7 +126,12 @@ describe(fetchPackagingRecyclingNotes, () => {
     })
 
     await expect(
-      fetchPackagingRecyclingNotes(organisationId, registrationId, idToken)
+      fetchPackagingRecyclingNotes(
+        organisationId,
+        registrationId,
+        accreditationId,
+        idToken
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }
@@ -130,7 +147,12 @@ describe(fetchPackagingRecyclingNotes, () => {
     })
 
     await expect(
-      fetchPackagingRecyclingNotes(organisationId, registrationId, idToken)
+      fetchPackagingRecyclingNotes(
+        organisationId,
+        registrationId,
+        accreditationId,
+        idToken
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }

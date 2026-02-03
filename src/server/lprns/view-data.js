@@ -1,4 +1,4 @@
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 
 /**
  * Build view data for the create PRN/PERN page
@@ -14,7 +14,7 @@ export function buildCreatePrnViewData(request, { registration, recipients }) {
     registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
 
   const pageTitle = localise(`lprns:${noteType}:pageTitle`)
-  const material = getDisplayMaterial(registration)
+  const material = getLumpyDisplayMaterial(registration)
 
   return {
     pageTitle,

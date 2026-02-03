@@ -113,7 +113,7 @@ export const postController = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
     const { tonnage, recipient, notes, material, nation, wasteProcessingType } =
       request.payload
@@ -127,6 +127,7 @@ export const postController = {
       const result = await createPrn(
         organisationId,
         registrationId,
+        accreditationId,
         {
           issuedToOrganisation: recipient,
           tonnage: Number.parseInt(tonnage, 10),
@@ -153,7 +154,7 @@ export const postController = {
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${result.id}/view`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to create PRN draft')
