@@ -55,11 +55,19 @@ function createStatusTag(status) {
  * @param {string} options.registrationId
  * @param {object|null} options.wasteBalance - Waste balance data
  * @param {Array} options.prns - Array of PRN objects from API
+ * @param {boolean} options.hasCreatedPrns - Whether any non-draft PRNs exist
  * @returns {object}
  */
 export function buildListViewData(
   request,
-  { registration, organisationId, registrationId, wasteBalance, prns }
+  {
+    registration,
+    organisationId,
+    registrationId,
+    wasteBalance,
+    prns,
+    hasCreatedPrns
+  }
 ) {
   const { t: localise } = request
   const noteType =
@@ -100,6 +108,8 @@ export function buildListViewData(
     createUrl: `${dashboardUrl}/create-prn`,
     selectHeading: localise(`prns:list:${noteType}:selectHeading`),
     balanceHint: localise(`prns:list:${noteType}:balanceHint`),
+    emptyMessage: localise(`prns:list:${noteType}:emptyMessage`),
+    hasCreatedPrns,
     wasteBalance,
     table: {
       head: tableHead,
