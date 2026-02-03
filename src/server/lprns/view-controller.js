@@ -269,6 +269,7 @@ async function handleExistingView(
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
+  const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
@@ -287,7 +288,65 @@ async function handleExistingView(
     isExporter
   })
 
-  return h.view('lprns/view', {
+  const viewData = buildExistingPrnViewData({
+    prn,
+    isExporter,
+    noteType,
+    isNotDraft,
+    isAwaitingAuthorisation,
+    prnDetailRows,
+    accreditationRows,
+    backUrl,
+    localise,
+    request,
+    organisationId,
+    registrationId,
+    accreditationId,
+    prnId
+  })
+
+  return h.view('lprns/view', viewData)
+}
+
+/**
+ * Builds the view data object for an existing PRN
+ * @param {object} params
+ * @param {object} params.prn - PRN data from backend
+ * @param {boolean} params.isExporter - Whether the registration is for an exporter
+ * @param {string} params.noteType - 'prns' or 'perns'
+ * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
+ * @param {boolean} params.isAwaitingAuthorisation - Whether the PRN is awaiting authorisation
+ * @param {Array} params.prnDetailRows - PRN detail summary rows
+ * @param {Array} params.accreditationRows - Accreditation summary rows
+ * @param {string} params.backUrl - Back link URL
+ * @param {(key: string, params?: object) => string} params.localise - Translation function
+ * @param {object} params.request - Hapi request object
+ * @param {string} params.organisationId
+ * @param {string} params.registrationId
+ * @param {string} params.accreditationId
+ * @param {string} params.prnId
+ * @returns {object} View data object
+ */
+function buildExistingPrnViewData({
+  prn,
+  isExporter,
+  noteType,
+  isNotDraft,
+  isAwaitingAuthorisation,
+  prnDetailRows,
+  accreditationRows,
+  backUrl,
+  localise,
+  request,
+  organisationId,
+  registrationId,
+  accreditationId,
+  prnId
+}) {
+  const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
+  const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+
+  return {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
     heading: isExporter ? 'PERN' : 'PRN',
     showRegulatorLogos: isNotDraft,
@@ -304,13 +363,17 @@ async function handleExistingView(
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
+    issueButton: isAwaitingAuthorisation
+      ? {
+          text: localise(`lprns:view:${noteType}:issueButton`),
+          action: request.localiseUrl(issueUrl)
+        }
+      : null,
     returnLink: {
-      href: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
-      ),
+      href: request.localiseUrl(returnUrl),
       text: localise(`lprns:view:${noteType}:returnLink`)
     }
-  })
+  }
 }
 
 /**

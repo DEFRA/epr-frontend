@@ -4,7 +4,7 @@ import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText } from '@testing-library/dom'
+import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
@@ -67,6 +67,7 @@ const prnId = 'prn-789'
 const pernId = 'pern-123'
 const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
 const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
+const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
 const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${pernId}/view`
 const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
 
@@ -643,6 +644,147 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
+      it('displays Issue PRN button when status is awaiting_authorisation', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_authorisation'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByRole(main, 'button', { name: /Issue PRN/i })).toBeDefined()
+      })
+
+      it('displays Issue PERN button for exporter when status is awaiting_authorisation', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPernFromBackend,
+          status: 'awaiting_authorisation'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByRole(main, 'button', { name: /Issue PERN/i })).toBeDefined()
+      })
+
+      it('does not display Issue button when status is issued', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'issued'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      })
+
+      it('does not display Issue button when status is cancelled', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'cancelled'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      })
+
+      it('does not display Issue button when status is draft', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'draft'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      })
+
+      it('Issue button form posts to /issue endpoint', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_authorisation'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const issueButton = getByRole(main, 'button', { name: /Issue PRN/i })
+        const form = issueButton.closest('form')
+        expect(form.getAttribute('action')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
+        )
+      })
+
       it('displays complianceYearText when accreditationYear is present', async ({
         server
       }) => {
@@ -670,6 +812,49 @@ describe('#viewController', () => {
             /This PRN relates to waste accepted for reprocessing/i
           )
         ).toBeDefined()
+      })
+    })
+
+    describe('POST /issue (issue PRN)', () => {
+      it('updates PRN status to awaiting_acceptance and redirects to issued page', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_authorisation'
+        })
+        vi.mocked(updatePrnStatus).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_acceptance',
+          prnNumber: 'ER2625001A'
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          viewUrl,
+          { auth: mockAuth }
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: issueUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issued`
+        )
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'awaiting_acceptance' },
+          mockCredentials.idToken
+        )
       })
     })
 
