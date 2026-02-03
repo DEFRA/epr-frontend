@@ -15,6 +15,13 @@ const FIELDS = Object.freeze({
   notes: 'notes'
 })
 
+const ERROR_KEYS = Object.freeze({
+  notesTooLong: 'notesTooLong',
+  recipientRequired: 'recipientRequired',
+  tonnageGreaterThanZero: 'tonnageGreaterThanZero',
+  tonnageWholeNumber: 'tonnageWholeNumber'
+})
+
 const STUB_RECIPIENTS = [
   { value: 'producer-1', text: 'Acme Packaging Ltd' },
   { value: 'producer-2', text: 'BigCo Waste Solutions' },
@@ -24,9 +31,37 @@ const STUB_RECIPIENTS = [
 ]
 
 /**
+ * @param {import('joi').ValidationErrorItem} detail
+ * @returns {string}
+ */
+function getErrorMessageKey(detail) {
+  const field = detail.path[0]
+
+  if (field === FIELDS.tonnage) {
+    if (detail.type === 'any.required' || detail.type === 'number.integer') {
+      return ERROR_KEYS.tonnageWholeNumber
+    }
+    if (detail.type === 'number.base') {
+      const value = detail.context?.value
+      if (value === '' || value === undefined || value === null) {
+        return ERROR_KEYS.tonnageWholeNumber
+      }
+      return ERROR_KEYS.tonnageGreaterThanZero
+    }
+    return ERROR_KEYS.tonnageGreaterThanZero
+  }
+
+  if (field === FIELDS.recipient) {
+    return ERROR_KEYS.recipientRequired
+  }
+
+  return ERROR_KEYS.notesTooLong
+}
+
+/**
  * @param {import('@hapi/hapi').Request} request
- * @param {{wasteProcessingType: string}} registration
- * @param {Joi.ValidationError} validationError
+ * @param {{ wasteProcessingType: string }} registration
+ * @param {import('joi').ValidationError} validationError
  * @returns {Record<string, {text: string}>}
  */
 function buildValidationErrors(request, registration, validationError) {
@@ -50,34 +85,6 @@ function buildValidationErrors(request, registration, validationError) {
   }
 
   return errors
-}
-
-/**
- * @param {Joi.ValidationErrorItem} detail
- * @returns {string}
- */
-function getErrorMessageKey(detail) {
-  const field = detail.path[0]
-
-  if (field === FIELDS.tonnage) {
-    if (detail.type === 'any.required' || detail.type === 'number.integer') {
-      return 'tonnageWholeNumber'
-    }
-    if (detail.type === 'number.base') {
-      const value = detail.context?.value
-      if (value === '' || value === undefined || value === null) {
-        return 'tonnageWholeNumber'
-      }
-      return 'tonnageGreaterThanZero'
-    }
-    return 'tonnageGreaterThanZero'
-  }
-
-  if (field === FIELDS.recipient) {
-    return 'recipientRequired'
-  }
-
-  return 'notesTooLong'
 }
 
 const payloadSchema = Joi.object({
