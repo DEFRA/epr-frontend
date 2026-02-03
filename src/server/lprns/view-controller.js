@@ -407,14 +407,6 @@ function formatAddress(address) {
 function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
   return [
     {
-      key: { text: localise('lprns:issuedByLabel') },
-      value: {
-        text:
-          organisationData.companyDetails?.name ||
-          localise('lprns:notAvailable')
-      }
-    },
-    {
       key: { text: localise('lprns:issuedToLabel') },
       value: { text: prnDraft.recipientName }
     },
@@ -439,20 +431,28 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
       }
     },
     {
-      key: { text: localise('lprns:issueCommentsLabel') },
-      value: { text: prnDraft.notes || localise('lprns:notProvided') }
+      key: { text: localise('lprns:issuerLabel') },
+      value: {
+        text:
+          organisationData.companyDetails?.name ||
+          localise('lprns:notAvailable')
+      }
     },
     {
       key: { text: localise('lprns:issuedDateLabel') },
       value: { text: '' }
     },
     {
-      key: { text: localise('lprns:authorisedByLabel') },
+      key: { text: localise('lprns:issuedByLabel') },
       value: { text: '' }
     },
     {
       key: { text: localise('lprns:positionLabel') },
       value: { text: '' }
+    },
+    {
+      key: { text: localise('lprns:issuerNotesLabel') },
+      value: { text: prnDraft.notes || localise('lprns:notProvided') }
     }
   ]
 }
