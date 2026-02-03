@@ -3,8 +3,9 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
@@ -72,6 +73,42 @@ export const viewPostController = {
     }
 
     try {
+      // Re-validate tonnage against Available Waste Balance before confirming
+      const wasteBalanceMap = await fetchWasteBalances(
+        organisationId,
+        [accreditationId],
+        session.idToken
+      )
+      const wasteBalance = wasteBalanceMap[accreditationId]
+      const availableAmount = wasteBalance?.availableAmount ?? 0
+
+      if (prnDraft.tonnage > availableAmount) {
+        // Tonnage exceeds available balance - cancel draft and redirect with error
+        request.logger.warn(
+          {
+            tonnage: prnDraft.tonnage,
+            availableAmount,
+            prnId
+          },
+          'PRN tonnage exceeds available waste balance'
+        )
+
+        await updatePrnStatus(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'cancelled' },
+          session.idToken
+        )
+
+        request.yar.clear('prnDraft')
+
+        return h.redirect(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create?error=insufficient_balance`
+        )
+      }
+
       // Update PRN status from draft to awaiting_authorisation
       const result = await updatePrnStatus(
         organisationId,
@@ -141,7 +178,7 @@ async function handleDraftView(
   const isExporter = registration.wasteProcessingType === 'exporter'
   const noteType = isExporter ? 'perns' : 'prns'
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getLumpyDisplayMaterial(registration)
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
@@ -153,7 +190,8 @@ async function handleDraftView(
     registration,
     accreditation,
     displayMaterial,
-    localise
+    localise,
+    isExporter
   })
 
   return h.view('lprns/view', {
@@ -227,7 +265,7 @@ async function handleExistingView(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
   )
 
-  const displayMaterial = getDisplayMaterial(registration)
+  const displayMaterial = getLumpyDisplayMaterial(registration)
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
@@ -245,7 +283,8 @@ async function handleExistingView(
     registration,
     accreditation,
     displayMaterial,
-    localise
+    localise,
+    isExporter
   })
 
   return h.view('lprns/view', {
@@ -487,15 +526,17 @@ function buildPrnAuthorisationRows(prn, organisationData, localise) {
  * @param {object} params.accreditation - Accreditation data
  * @param {string} params.displayMaterial - Formatted material name
  * @param {(key: string) => string} params.localise - Translation function
+ * @param {boolean} params.isExporter - Whether the registration is for an exporter
  * @returns {Array} Summary list rows
  */
 function buildAccreditationRows({
   registration,
   accreditation,
   displayMaterial,
-  localise
+  localise,
+  isExporter
 }) {
-  return [
+  const rows = [
     {
       key: { text: localise('lprns:materialLabel') },
       value: { text: displayMaterial }
@@ -503,12 +544,17 @@ function buildAccreditationRows({
     {
       key: { text: localise('lprns:accreditationNumberLabel') },
       value: { text: accreditation?.accreditationNumber || '' }
-    },
-    {
-      key: { text: localise('lprns:accreditationAddressLabel') },
-      value: { text: formatAddress(registration.site?.address) }
     }
   ]
+
+  if (!isExporter) {
+    rows.push({
+      key: { text: localise('lprns:accreditationAddressLabel') },
+      value: { text: formatAddress(registration.site?.address) }
+    })
+  }
+
+  return rows
 }
 
 /**
