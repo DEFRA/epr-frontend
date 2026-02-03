@@ -912,6 +912,49 @@ describe('#viewController', () => {
         expect(getByText(main, /^Yes$/)).toBeDefined()
       })
 
+      it('displays discard link below create button on check page', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Should show discard link with correct attributes (not a warning button)
+        const discardLink = getByText(main, /Discard and start again/i)
+        expect(discardLink.tagName).toBe('A')
+        expect(discardLink.classList.contains('govuk-link')).toBe(true)
+        expect(discardLink.getAttribute('href')).toBe(createUrl)
+        expect(main.querySelector('.govuk-button--warning')).toBeNull()
+      })
+
       it('displays "Not provided" when notes are empty in draft', async ({
         server
       }) => {
@@ -951,6 +994,62 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /Not provided/i)).toBeDefined()
+      })
+
+      it('displays PRN details rows in correct order per design', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const summaryLists = body.querySelectorAll('.govuk-summary-list')
+        // First summary list is PRN details
+        const prnDetailsList = summaryLists[0]
+        const keys = [
+          ...prnDetailsList.querySelectorAll('.govuk-summary-list__key')
+        ].map((el) => el.textContent.trim())
+
+        expect(keys).toStrictEqual([
+          'Packaging waste producer or compliance scheme',
+          'Tonnage',
+          'Tonnage in words',
+          'Process to be used',
+          'December waste',
+          'Issuer',
+          'Issued date',
+          'Issued by',
+          'Position',
+          'Issuer notes'
+        ])
       })
 
       it('displays PERN check page for exporter registration', async ({
