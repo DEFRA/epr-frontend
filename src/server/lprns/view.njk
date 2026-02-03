@@ -78,18 +78,16 @@
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
-        <div class="govuk-button-group">
-          {{ govukButton({
-            text: createButton.text
-          }) }}
-
-          {{ govukButton({
-            text: cancelButton.text,
-            href: cancelButton.href,
-            classes: "govuk-button--warning"
-          }) }}
-        </div>
+        {{ govukButton({
+          text: createButton.text
+        }) }}
       </form>
+
+      {% if discardLink %}
+        <p class="govuk-body">
+          <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
+        </p>
+      {% endif %}
     {% endif %}
 
     {% if issueButton %}
