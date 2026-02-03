@@ -39,10 +39,6 @@
         "prns": "This is the balance available for creating new PRNs",
         "perns": "This is the balance available for creating new PERNs"
       }
-    },
-    "notAvailable": {
-      "title": "Your waste balance is not yet available",
-      "description": "It will be shown here when it becomes available"
     }
   }
 }
