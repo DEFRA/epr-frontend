@@ -1,0 +1,159 @@
+{
+  "accreditationAddressLabel": "Accreditation address",
+  "accreditationDetailsHeading": "Accreditation details",
+  "accreditationNumberLabel": "Accreditation number",
+  "authorisedByLabel": "Authorised by",
+  "buyerLabel": "Buyer",
+  "decemberWasteLabel": "December waste",
+  "decemberWasteNo": "No",
+  "decemberWasteYes": "Yes",
+  "errorSummaryTitle": "There is a problem",
+  "helpSummary": "Can't find the producer or compliance scheme?",
+  "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
+  "issueCommentsLabel": "Issue comments",
+  "issued": {
+    "wasteBalanceMessage": "Your waste balance has been updated.",
+    "returnHomeLink": "Return to home",
+    "prns": {
+      "pageTitle": "PRN issued",
+      "heading": "PRN issued to {{recipient}}",
+      "prnNumberLabel": "PRN number:",
+      "viewButton": "View PRN (PDF)",
+      "issueAnotherLink": "Issue another PRN",
+      "managePrnsLink": "Manage PRNs"
+    },
+    "perns": {
+      "pageTitle": "PERN issued",
+      "heading": "PERN issued to {{recipient}}",
+      "prnNumberLabel": "PERN number:",
+      "viewButton": "View PERN (PDF)",
+      "issueAnotherLink": "Issue another PERN",
+      "managePrnsLink": "Manage PERNs"
+    }
+  },
+  "issuedByLabel": "Issued by",
+  "issuedDateLabel": "Issued date",
+  "issuedToLabel": "Packaging waste producer or compliance scheme",
+  "issuerLabel": "Issuer",
+  "issuerNotesLabel": "Issuer notes",
+  "list": {
+    "availableWasteBalance": "Available waste balance",
+    "noPrns": "No PRNs or PERNs have been created yet.",
+    "tabs": {
+      "title": "Contents",
+      "awaitingAction": "Awaiting action",
+      "issued": "Issued"
+    },
+    "table": {
+      "recipientHeading": "Issued to",
+      "dateHeading": "Date created",
+      "tonnageHeading": "Tonnage",
+      "statusHeading": "Status",
+      "actionHeading": "",
+      "selectText": "Select",
+      "totalLabel": "Total"
+    },
+    "status": {
+      "awaitingAuthorisation": "Awaiting authorisation",
+      "issued": "Issued",
+      "cancelled": "Cancelled"
+    },
+    "perns": {
+      "pageTitle": "PERNs",
+      "selectHeading": "Select a PERN",
+      "balanceHint": "This is the balance available for creating PERNs",
+      "cancelHint": "If you cancel a PERN, its tonnage will be added to your available waste balance.",
+      "createLink": "Create a PERN",
+      "awaitingAuthorisationHeading": "PERNs awaiting authorisation",
+      "noIssuedPrns": "No PERNs have been issued yet."
+    },
+    "prns": {
+      "pageTitle": "PRNs",
+      "selectHeading": "Select a PRN",
+      "balanceHint": "This is the balance available for creating PRNs",
+      "cancelHint": "If you cancel a PRN, its tonnage will be added to your available waste balance.",
+      "createLink": "Create a PRN",
+      "awaitingAuthorisationHeading": "PRNs awaiting authorisation",
+      "noIssuedPrns": "No PRNs have been issued yet."
+    }
+  },
+  "materialLabel": "Material",
+  "notAvailable": "n/a",
+  "notProvided": "Not provided",
+  "notesLabel": "Add issuer notes (optional)",
+  "pernDetailsHeading": "PERN details",
+  "pernNumberLabel": "PERN number",
+  "perns": {
+    "caption": "Create PERN",
+    "checkHeading": "Check before creating PERN",
+    "checkIntroText": "Check the following information is correct before creating this PERN.",
+    "checkAuthorisationText": "When created, the PERN will need to be authorised and issued by a PERN signatory from your company.",
+    "checkInsetText": "Any information that is not shown here will be automatically populated when the PERN is issued.",
+    "checkPageTitle": "Check before creating PERN",
+    "createButton": "Create PERN",
+    "discardLink": "Discard and start again",
+    "helpText": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+    "notesHint": "These notes will appear on the PERN",
+    "pageTitle": "Create a PERN",
+    "recipientLabel": "Enter who this PERN will be issued to",
+    "submitButton": "Continue",
+    "successHeading": "PERN created",
+    "successNextStepsText": "Your PERN has been created as a draft. You can view and manage it from your registration dashboard.",
+    "successPageTitle": "PERN created",
+    "successTonnageLabel": "Tonnage",
+    "tonnageLabel": "Enter PERN tonnage"
+  },
+  "positionLabel": "Position",
+  "prnDetailsHeading": "PRN details",
+  "prnNumberLabel": "PRN number",
+  "prns": {
+    "caption": "Create PRN",
+    "checkHeading": "Check before creating PRN",
+    "checkIntroText": "Check the following information is correct before creating this PRN.",
+    "checkAuthorisationText": "When created, the PRN will need to be authorised and issued by a PRN signatory from your company.",
+    "checkInsetText": "Any information that is not shown here will be automatically populated when the PRN is issued.",
+    "checkPageTitle": "Check before creating PRN",
+    "createButton": "Create PRN",
+    "discardLink": "Discard and start again",
+    "helpText": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+    "notesHint": "These notes will appear on the PRN",
+    "pageTitle": "Create a PRN",
+    "recipientLabel": "Enter who this PRN will be issued to",
+    "submitButton": "Continue",
+    "successHeading": "PRN created",
+    "successNextStepsText": "Your PRN has been created as a draft. You can view and manage it from your registration dashboard.",
+    "successPageTitle": "PRN created",
+    "successTonnageLabel": "Tonnage",
+    "tonnageLabel": "Enter PRN tonnage"
+  },
+  "processToBeUsedLabel": "Process to be used",
+  "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
+  "recipientSummaryLabel": "Issued to",
+  "selectOption": "Select an option",
+  "successNextStepsHeading": "What happens next",
+  "successReturnLink": "Return to registration dashboard",
+  "tonnageHint": "Enter a whole number without decimal places",
+  "tonnageInWordsLabel": "Tonnage in words",
+  "tonnageLabel": "Tonnage",
+  "tonnageSuffix": "tonnes",
+  "view": {
+    "status": "Status",
+    "detailsHeading": "Details",
+    "issuedTo": "Issued to",
+    "tonnage": "Tonnage",
+    "material": "Material",
+    "dateCreated": "Date created",
+    "prns": {
+      "heading": "Packaging recycling note",
+      "complianceYearText": "This PRN relates to waste accepted for reprocessing in {{year}} and can count towards {{year}} obligations.",
+      "returnLink": "Return to PRN list",
+      "issueButton": "Issue PRN"
+    },
+    "perns": {
+      "heading": "Packaging export recycling note",
+      "complianceYearText": "This PERN relates to waste accepted for export in {{year}} and can count towards {{year}} obligations.",
+      "returnLink": "Return to PERN list",
+      "issueButton": "Issue PERN"
+    }
+  }
+}

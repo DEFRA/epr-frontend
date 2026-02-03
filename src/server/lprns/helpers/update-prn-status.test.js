@@ -1,0 +1,109 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+import { updatePrnStatus } from './update-prn-status.js'
+
+vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
+  fetchJsonFromBackend: vi.fn()
+}))
+
+const { fetchJsonFromBackend } =
+  await import('#server/common/helpers/fetch-json-from-backend.js')
+
+describe(updatePrnStatus, () => {
+  const organisationId = 'org-123'
+  const registrationId = 'reg-456'
+  const accreditationId = 'acc-abc'
+  const prnId = 'prn-789'
+  const idToken = 'test-token'
+
+  const payload = {
+    status: 'awaiting_authorisation'
+  }
+
+  const mockResponse = {
+    id: 'prn-789',
+    prnNumber: 'PRN-2026-001',
+    tonnage: 100,
+    material: 'plastic',
+    issuedToOrganisation: 'producer-org',
+    status: 'awaiting_authorisation',
+    updatedAt: '2026-01-28T12:00:00.000Z'
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('calls fetchJsonFromBackend with correct path and options', async () => {
+    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+
+    await updatePrnStatus(
+      organisationId,
+      registrationId,
+      accreditationId,
+      prnId,
+      payload,
+      idToken
+    )
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-abc/l-packaging-recycling-notes/prn-789/status',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${idToken}`
+        },
+        body: JSON.stringify(payload)
+      }
+    )
+  })
+
+  it('encodes URL path parameters with special characters', async () => {
+    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+
+    await updatePrnStatus(
+      'org/123',
+      'reg&456',
+      'acc@abc',
+      'prn#789',
+      payload,
+      idToken
+    )
+
+    expect(fetchJsonFromBackend).toHaveBeenCalledWith(
+      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/l-packaging-recycling-notes/prn%23789/status',
+      expect.any(Object)
+    )
+  })
+
+  it('returns the response from fetchJsonFromBackend', async () => {
+    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+
+    const result = await updatePrnStatus(
+      organisationId,
+      registrationId,
+      accreditationId,
+      prnId,
+      payload,
+      idToken
+    )
+
+    expect(result).toStrictEqual(mockResponse)
+  })
+
+  it('propagates errors from fetchJsonFromBackend', async () => {
+    const error = new Error('Network error')
+    fetchJsonFromBackend.mockRejectedValue(error)
+
+    await expect(
+      updatePrnStatus(
+        organisationId,
+        registrationId,
+        accreditationId,
+        prnId,
+        payload,
+        idToken
+      )
+    ).rejects.toThrowError('Network error')
+  })
+})

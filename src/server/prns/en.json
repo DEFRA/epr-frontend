@@ -70,10 +70,14 @@
   },
   "detail": {
     "perns": {
-      "pageTitle": "PERN"
+      "pageTitle": "PERN",
+      "issuePrn": "Issue PERN",
+      "deletePrn": "Delete PERN"
     },
     "prns": {
-      "pageTitle": "PRN"
+      "pageTitle": "PRN",
+      "issuePrn": "Issue PRN",
+      "deletePrn": "Delete PRN"
     }
   },
   "list": {

@@ -230,7 +230,7 @@ describe('#buildCheckDetailsViewData', () => {
         registration: reprocessorRegistration,
         accreditation: mockAccreditation,
         prnData: {
-          issuedToOrganisation: 'Test Company Ltd',
+          issuedToOrganisation: { name: 'Test Company Ltd' },
           tonnageValue: 100
         }
       })
@@ -301,7 +301,7 @@ describe('#buildCheckDetailsViewData', () => {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         prnData: {
-          issuedByOrganisation: 'Alice Brown',
+          issuedByOrganisation: { name: 'Alice Brown' },
           issuedDate: '15 March 2026',
           authorisedBy: 'Bob Green'
         }

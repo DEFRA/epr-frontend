@@ -108,7 +108,14 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    prns: getPrnViewData(request, isExporter, organisationId, registration.id)
+    prns: getPrnViewData(request, isExporter, organisationId, registration.id),
+    lprns: getLumpyPrnViewData(
+      request,
+      isExporter,
+      organisationId,
+      registration.id,
+      registration.accreditationId
+    )
   }
 
   if (config.get('featureFlags.wasteBalance')) {
@@ -145,6 +152,40 @@ function getPrnViewData(request, isExporter, organisationId, registrationId) {
     },
     notAvailable: localise(`registrations:${key}.notAvailable`),
     title: localise(`registrations:${key}.title`)
+  }
+}
+
+/**
+ * Get lumpy PRN/PERN view data based on registration type and feature flag
+ * @param {Request} request
+ * @param {boolean} isExporter
+ * @param {string} organisationId
+ * @param {string} registrationId
+ * @param {string | undefined} accreditationId
+ */
+function getLumpyPrnViewData(
+  request,
+  isExporter,
+  organisationId,
+  registrationId,
+  accreditationId
+) {
+  const { t: localise } = request
+  const key = isExporter ? 'perns' : 'prns'
+
+  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+
+  return {
+    isEnabled: config.get('featureFlags.lprns'),
+    link: {
+      href: request.localiseUrl(createUrl),
+      text: localise(`registrations:${key}.createNew`)
+    },
+    manageLink: {
+      href: request.localiseUrl(manageUrl),
+      text: localise(`registrations:${key}.manage`)
+    }
   }
 }
 
