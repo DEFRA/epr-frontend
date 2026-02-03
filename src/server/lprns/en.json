@@ -126,12 +126,14 @@
     "prns": {
       "heading": "Packaging recycling note",
       "complianceYearText": "This PRN relates to waste accepted for reprocessing in {{year}} and can count towards {{year}} obligations.",
-      "returnLink": "Return to PRN list"
+      "returnLink": "Return to PRN list",
+      "issueButton": "Issue PRN"
     },
     "perns": {
       "heading": "Packaging export recycling note",
       "complianceYearText": "This PERN relates to waste accepted for export in {{year}} and can count towards {{year}} obligations.",
-      "returnLink": "Return to PERN list"
+      "returnLink": "Return to PERN list",
+      "issueButton": "Issue PERN"
     }
   }
 }
