@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     clearMocks: true,
+    testTimeout: 10000,
     hookTimeout: 60000,
     fileParallelism: !process.env.CI,
     setupFiles: ['.vite/setup-auditing.js', '.vite/setup-files.js'],

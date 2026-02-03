@@ -146,8 +146,11 @@ export default [
       // Custom vitest rule overrides
       'vitest/consistent-test-it': 'off',
       'vitest/no-hooks': 'off',
+      'vitest/padding-around-all': 'off', // Let Prettier handle formatting
+      'vitest/padding-around-expect-groups': 'off', // Let Prettier handle formatting
       'vitest/prefer-expect-assertions': 'off',
       'vitest/prefer-importing-vitest-globals': 'off', // Incompatible with test.extend() fixtures
+      'vitest/prefer-lowercase-title': 'off', // Allow #ControllerName convention
       'vitest/require-mock-type-parameters': 'off',
       'vitest/valid-title': [
         'error',

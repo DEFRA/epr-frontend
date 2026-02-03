@@ -1,0 +1,23 @@
+@use "govuk-frontend" as *;
+
+.epr-heading-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: govuk-spacing(4);
+  margin-bottom: govuk-spacing(6);
+
+  .govuk-button {
+    margin-bottom: 0;
+  }
+}
+
+.epr-tag--no-max-width {
+  max-width: none;
+}
+
+.epr-regulator-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: govuk-spacing(4);
+}
