@@ -1,6 +1,7 @@
+import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getPrn } from '#server/common/helpers/prns/get-prn.js'
+import { getRequiredPrn } from '#server/common/helpers/prns/get-required-prn.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -11,7 +12,7 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 
-vi.mock(import('#server/common/helpers/prns/get-prn.js'))
+vi.mock(import('#server/common/helpers/prns/get-required-prn.js'))
 
 const mockCredentials = {
   profile: {
@@ -64,14 +65,15 @@ const fixtureExporter = {
 }
 
 const stubPrnData = {
+  id: 'prn-002',
   prnNumber: 'ER992415095748M',
-  issuedToOrganisation: 'Nestle (SEPA)'
+  issuedToOrganisation: { name: 'Nestle (SEPA)' }
 }
 
 const reprocessorUrl =
-  '/organisations/org-123/registrations/reg-001/issue-prn/ER992415095748M/confirmation'
+  '/organisations/org-123/registrations/reg-001/issue-prn/prn-002/confirmation'
 const exporterUrl =
-  '/organisations/org-456/registrations/reg-002/issue-prn/ER992415095748M/confirmation'
+  '/organisations/org-456/registrations/reg-002/issue-prn/prn-002/confirmation'
 
 describe('#confirmationController', () => {
   beforeAll(() => {
@@ -80,7 +82,7 @@ describe('#confirmationController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getPrn).mockResolvedValue(stubPrnData)
+    vi.mocked(getRequiredPrn).mockResolvedValue(stubPrnData)
   })
 
   afterAll(() => {
@@ -283,7 +285,7 @@ describe('#confirmationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/issue-prn/ER992415095748M/confirmation',
+        url: '/organisations/org-123/registrations/reg-nonexistent/issue-prn/prn-002/confirmation',
         auth: mockAuth
       })
 
@@ -298,6 +300,23 @@ describe('#confirmationController', () => {
         registration: fixtureReprocessor.registration,
         accreditation: undefined
       })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('should return 404 when PRN not found', async ({ server }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        fixtureReprocessor
+      )
+      vi.mocked(getRequiredPrn).mockRejectedValue(
+        Boom.notFound('PRN not found')
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',

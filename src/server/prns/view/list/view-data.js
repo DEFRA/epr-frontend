@@ -88,7 +88,7 @@ export function buildListViewData(
       { text: String(prn.tonnageValue), format: 'numeric' },
       { html: createStatusTag(prn.status), classes: 'app-table-cell-nowrap' },
       {
-        html: `<a href="${dashboardUrl}/prns/${prn.prnNumber}">${selectLinkText} <span class="govuk-visually-hidden">${prn.issuedToOrganisation.name}</span></a>`
+        html: `<a href="${dashboardUrl}/prns/${prn.id}">${selectLinkText} <span class="govuk-visually-hidden">${prn.issuedToOrganisation.name}</span></a>`
       }
     ])
 

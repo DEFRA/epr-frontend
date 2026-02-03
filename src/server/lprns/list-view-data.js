@@ -6,6 +6,7 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
+ * @param {string} options.accreditationId
  * @param {{wasteProcessingType: string}} options.registration
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
  * @param {{availableAmount: number} | null} options.wasteBalance
@@ -13,7 +14,14 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  */
 export function buildListViewData(
   request,
-  { organisationId, registrationId, registration, prns, wasteBalance }
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    registration,
+    prns,
+    wasteBalance
+  }
 ) {
   const { t: localise } = request
   const isExporter = registration.wasteProcessingType === 'exporter'
@@ -24,38 +32,16 @@ export function buildListViewData(
   )
 
   const createUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/create`
+    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
   )
 
-  const selectText = localise('lprns:list:table:selectText')
-
-  // Build rows in govukTable format: array of arrays of cell objects
-  const dataRows = prns.map((prn) => {
-    const viewUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/l-packaging-recycling-notes/${prn.id}/view`
-    )
-    return [
-      { text: prn.recipient },
-      { text: formatDateForDisplay(prn.createdAt) },
-      { text: prn.tonnage },
-      { html: buildStatusTagHtml(prn.status, localise) },
-      { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
-    ]
+  const tableRows = buildTableRows(request, {
+    organisationId,
+    registrationId,
+    accreditationId,
+    prns,
+    localise
   })
-
-  // Calculate total tonnage and add total row
-  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
-  const totalRow = [
-    {
-      text: localise('lprns:list:table:totalLabel'),
-      classes: 'govuk-!-font-weight-bold'
-    },
-    { text: '' },
-    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
-    { text: '' },
-    { text: '' }
-  ]
-  const tableRows = dataRows.length > 0 ? [...dataRows, totalRow] : []
 
   return {
     pageTitle: localise(`lprns:list:${noteType}:pageTitle`),
@@ -91,6 +77,55 @@ export function buildListViewData(
       rows: tableRows
     }
   }
+}
+
+/**
+ * Build table rows including data rows and total row
+ * @param {Request} request
+ * @param {object} options
+ * @param {string} options.organisationId
+ * @param {string} options.registrationId
+ * @param {string} options.accreditationId
+ * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
+ * @param {(key: string) => string} options.localise
+ * @returns {Array<Array<{text?: string, html?: string, classes?: string}>>}
+ */
+function buildTableRows(
+  request,
+  { organisationId, registrationId, accreditationId, prns, localise }
+) {
+  const selectText = localise('lprns:list:table:selectText')
+
+  const dataRows = prns.map((prn) => {
+    const viewUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prn.id}/view`
+    )
+    return [
+      { text: prn.recipient },
+      { text: formatDateForDisplay(prn.createdAt) },
+      { text: prn.tonnage },
+      { html: buildStatusTagHtml(prn.status, localise) },
+      { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
+    ]
+  })
+
+  if (dataRows.length === 0) {
+    return []
+  }
+
+  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalRow = [
+    {
+      text: localise('lprns:list:table:totalLabel'),
+      classes: 'govuk-!-font-weight-bold'
+    },
+    { text: '' },
+    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: '' },
+    { text: '' }
+  ]
+
+  return [...dataRows, totalRow]
 }
 
 /**

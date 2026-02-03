@@ -20,6 +20,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * Updates the status of a PRN/PERN via the backend API
  * @param {string} organisationId - The issuing organisation ID
  * @param {string} registrationId - The registration ID
+ * @param {string} accreditationId - The accreditation ID
  * @param {string} prnId - The PRN ID
  * @param {UpdatePrnStatusPayload} payload - Status update data
  * @param {string} idToken - JWT ID token for authorisation
@@ -28,11 +29,12 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
 async function updatePrnStatus(
   organisationId,
   registrationId,
+  accreditationId,
   prnId,
   payload,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/l-packaging-recycling-notes/${encodeURIComponent(prnId)}/status`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/l-packaging-recycling-notes/${encodeURIComponent(prnId)}/status`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',

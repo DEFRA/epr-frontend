@@ -15,34 +15,34 @@ describe('#getPrn', () => {
     vi.clearAllMocks()
   })
 
-  it('returns API response items when available', async () => {
-    const apiPrn = { id: 'api-prn-1', prnNumber: 'prn-789' }
+  it('returns PRN data when found', async () => {
+    const apiPrn = { id: 'prn-001', status: 'awaiting_authorisation' }
 
     vi.mocked(fetchPrn).mockResolvedValue(apiPrn)
 
-    const result = await getPrn('org-123', 'acc-456', 'prn-789', mockLogger)
+    const result = await getPrn('org-123', 'acc-456', 'prn-001', mockLogger)
 
     expect(result).toStrictEqual(apiPrn)
-    expect(fetchPrn).toHaveBeenCalledWith('org-123', 'acc-456', 'prn-789')
+    expect(fetchPrn).toHaveBeenCalledWith('org-123', 'acc-456', 'prn-001')
   })
 
-  it('returns null when API returns empty items', async () => {
+  it('returns null when PRN is not found', async () => {
     vi.mocked(fetchPrn).mockResolvedValue(null)
 
-    const result = await getPrn('org-123', 'acc-456', 'prn-789', mockLogger)
+    const result = await getPrn('org-123', 'acc-456', 'NONEXISTENT', mockLogger)
 
     expect(result).toBeNull()
   })
 
-  it('returns empty array and logs warning when API call fails', async () => {
+  it('returns null and logs warning when fetch fails', async () => {
     vi.mocked(fetchPrn).mockRejectedValue(new Error('Network error'))
 
-    const result = await getPrn('org-123', 'acc-456', 'prn-789', mockLogger)
+    const result = await getPrn('org-123', 'acc-456', 'prn-001', mockLogger)
 
     expect(result).toBeNull()
     expect(mockLogger.warn).toHaveBeenCalledWith(
       { error: expect.any(Error) },
-      'Failed to fetch PRN prn-789'
+      'Failed to fetch PRN prn-001'
     )
   })
 })
