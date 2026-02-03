@@ -70,15 +70,16 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
     }
   ]
 
-  cells.push({
-    text: formatTonnage(wasteBalance?.availableAmount),
-    format: 'numeric'
-  })
-
-  cells.push({
-    html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
-    classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
-  })
+  cells.push(
+    {
+      text: formatTonnage(wasteBalance?.availableAmount),
+      format: 'numeric'
+    },
+    {
+      html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
+      classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
+    }
+  )
 
   return cells
 }
@@ -99,12 +100,13 @@ function createTableHeaders(localise) {
     }
   ]
 
-  headers.push({
-    text: localise('organisations:table:site:headings:availableBalance'),
-    format: 'numeric'
-  })
-
-  headers.push({ text: '' })
+  headers.push(
+    {
+      text: localise('organisations:table:site:headings:availableBalance'),
+      format: 'numeric'
+    },
+    { text: '' }
+  )
 
   return headers
 }
