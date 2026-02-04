@@ -231,7 +231,7 @@ describe('#listPrnsController', () => {
           /Available waste balance/i
         )
         expect(wasteBalanceBanner?.textContent).toMatch(
-          /This is the balance available for creating PRNs/i
+          /This is the balance available for creating new PRNs/i
         )
       })
 
@@ -250,9 +250,7 @@ describe('#listPrnsController', () => {
         const awaitingPanel = main.querySelector('#awaiting-action')
         const table = getByRole(awaitingPanel, 'table')
 
-        expect(
-          getByText(table, /Packaging waste producer or compliance scheme/i)
-        ).toBeDefined()
+        expect(getByText(table, /Producer or compliance scheme/i)).toBeDefined()
         expect(getByText(table, /Date created/i)).toBeDefined()
         expect(getByText(table, /Tonnage/i)).toBeDefined()
         expect(getByText(table, /Status/i)).toBeDefined()
