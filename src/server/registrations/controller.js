@@ -106,8 +106,7 @@ function buildViewModel({
       : request.localiseUrl(`/organisations/${organisationId}`),
     uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    prns: getPrnViewData(request, isExporter, organisationId, registration.id),
-    lprns: getLumpyPrnViewData(
+    prns: getPrnViewData(
       request,
       isExporter,
       organisationId,
@@ -126,39 +125,9 @@ function buildViewModel({
  * @param {boolean} isExporter
  * @param {string} organisationId
  * @param {string} registrationId
- */
-function getPrnViewData(request, isExporter, organisationId, registrationId) {
-  const { t: localise } = request
-  const key = isExporter ? 'perns' : 'prns'
-
-  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/create-prn`
-  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/prns`
-
-  return {
-    isEnabled: config.get('featureFlags.prns'),
-    description: localise(`registrations:${key}.description`),
-    link: {
-      href: request.localiseUrl(createUrl),
-      text: localise(`registrations:${key}.createNew`)
-    },
-    manageLink: {
-      href: request.localiseUrl(manageUrl),
-      text: localise(`registrations:${key}.manage`)
-    },
-    notAvailable: localise(`registrations:${key}.notAvailable`),
-    title: localise(`registrations:${key}.title`)
-  }
-}
-
-/**
- * Get lumpy PRN/PERN view data based on registration type and feature flag
- * @param {Request} request
- * @param {boolean} isExporter
- * @param {string} organisationId
- * @param {string} registrationId
  * @param {string | undefined} accreditationId
  */
-function getLumpyPrnViewData(
+function getPrnViewData(
   request,
   isExporter,
   organisationId,
@@ -173,6 +142,7 @@ function getLumpyPrnViewData(
 
   return {
     isEnabled: config.get('featureFlags.lprns'),
+    description: localise(`registrations:${key}.description`),
     link: {
       href: request.localiseUrl(createUrl),
       text: localise(`registrations:${key}.createNew`)
@@ -180,7 +150,9 @@ function getLumpyPrnViewData(
     manageLink: {
       href: request.localiseUrl(manageUrl),
       text: localise(`registrations:${key}.manage`)
-    }
+    },
+    notAvailable: localise(`registrations:${key}.notAvailable`),
+    title: localise(`registrations:${key}.title`)
   }
 }
 

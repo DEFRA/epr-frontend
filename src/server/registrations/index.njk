@@ -122,15 +122,7 @@
                     <br>
                     <a href="{{ prns.manageLink.href }}" class="govuk-link">{{ prns.manageLink.text }}</a>
                   </p>
-                {% endif %}
-                {% if lprns.isEnabled %}
-                  <p class="govuk-body">
-                    <a href="{{ lprns.link.href }}" class="govuk-link">{{ lprns.link.text }}</a>
-                    <br>
-                    <a href="{{ lprns.manageLink.href }}" class="govuk-link">{{ lprns.manageLink.text }}</a>
-                  </p>
-                {% endif %}
-                {% if not prns.isEnabled and not lprns.isEnabled %}
+                {% else %}
                   <p class="govuk-body">
                     {{ prns.notAvailable }}
                   </p>
