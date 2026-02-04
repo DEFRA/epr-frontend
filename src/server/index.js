@@ -19,11 +19,15 @@ import Crumb from '@hapi/crumb'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import path from 'path'
+import wasteOrganisationsFixture from '../../fixtures/waste-organisations/test-sample.json' with { type: 'json' }
 import { initI18n } from './common/helpers/i18n/i18n.js'
 import { i18nPlugin } from './common/helpers/i18next.js'
 import { router } from './router.js'
 
-export async function createServer() {
+/**
+ * @param {CreateServerOptions} [options]
+ */
+export async function createServer(options = {}) {
   setupProxy()
 
   const routes = {
@@ -84,7 +88,10 @@ export async function createServer() {
     userAgentProtection, // Must be registered before Scooter to intercept malicious User-Agents
     Scooter,
     contentSecurityPolicy,
-    createWasteOrganisationsPlugin(),
+    createWasteOrganisationsPlugin({
+      initialOrganisations:
+        options.wasteOrganisations ?? wasteOrganisationsFixture.organisations
+    }),
     {
       plugin: i18nPlugin,
       options: {
@@ -134,4 +141,10 @@ export async function createServer() {
 
 /**
  * @import {Engine} from '#server/common/helpers/session-cache/cache-engine.js'
+ * @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js'
+ */
+
+/**
+ * @typedef {object} CreateServerOptions
+ * @property {WasteOrganisation[]} [wasteOrganisations]
  */
