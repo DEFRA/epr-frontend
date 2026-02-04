@@ -70,21 +70,17 @@
               text: cancelHint
             }) }}
 
-            {% if table.rows | length > 0 %}
-              <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
-              {{ govukTable({
-                head: [
-                  { text: table.headings.recipient },
-                  { text: table.headings.createdAt },
-                  { text: table.headings.tonnage },
-                  { text: table.headings.status },
-                  { text: table.headings.action }
-                ],
-                rows: table.rows
-              }) }}
-            {% else %}
-              <p class="govuk-body">{{ noPrnsText }}</p>
-            {% endif %}
+            <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
+            {{ govukTable({
+              head: [
+                { text: table.headings.recipient },
+                { text: table.headings.createdAt },
+                { text: table.headings.tonnage },
+                { text: table.headings.status },
+                { text: table.headings.action }
+              ],
+              rows: table.rows
+            }) }}
           </div>
 
           <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="issued">

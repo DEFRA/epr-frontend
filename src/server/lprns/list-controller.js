@@ -52,7 +52,10 @@ export const listController = {
       session.idToken
     )
 
-    // Map backend response and filter to awaiting authorisation (PAE-948 requirement)
+    // Only awaiting-authorisation PRNs shown for now (PAE-948).
+    // Zero state is based on this filtered list. When the Issued tab
+    // is populated (Defra-963a), pass the full list so hasCreatedPrns
+    // reflects all PRNs, not just those awaiting authorisation.
     const prnsAwaitingAuthorisation = prns
       .filter((prn) => prn.status === 'awaiting_authorisation')
       .map((prn) => ({

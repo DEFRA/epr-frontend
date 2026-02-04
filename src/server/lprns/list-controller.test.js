@@ -437,7 +437,9 @@ describe('#listPrnsController', () => {
 
         expect(statusCode).toBe(statusCodes.internalServerError)
       })
+    })
 
+    describe('empty state', () => {
       it('should show empty state without tabs when no PRNs exist', async ({
         server
       }) => {
