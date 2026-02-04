@@ -3,6 +3,7 @@ import Joi from 'joi'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import {
   STUB_RECIPIENTS,
@@ -11,7 +12,6 @@ import {
 import { buildCreatePrnViewData } from './view-data.js'
 
 const MIN_TONNAGE = 1
-const MAX_NOTES_LENGTH = 200
 
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
@@ -21,9 +21,23 @@ const ERROR_KEYS = Object.freeze({
 })
 
 const payloadSchema = Joi.object({
-  tonnage: Joi.number().integer().min(MIN_TONNAGE).required(),
-  recipient: Joi.string().min(1).required(),
-  notes: Joi.string().max(MAX_NOTES_LENGTH).allow('').optional(),
+  tonnage: Joi.number().integer().min(MIN_TONNAGE).required().messages({
+    'number.base': 'Enter a whole number',
+    'number.integer': 'Enter a whole number without decimal places',
+    'number.min': 'Tonnage must be at least 1',
+    'any.required': 'Enter the tonnage'
+  }),
+  recipient: Joi.string().min(1).required().messages({
+    'string.empty': 'Select who this will be issued to',
+    'any.required': 'Select who this will be issued to'
+  }),
+  notes: Joi.string()
+    .max(NOTES_MAX_LENGTH)
+    .allow('')
+    .optional()
+    .messages({
+      'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
+    }),
   material: Joi.string().required(),
   nation: Joi.string().required(),
   wasteProcessingType: Joi.string().required()

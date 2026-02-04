@@ -1,10 +1,10 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
-{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -69,9 +69,10 @@
           html: '<p class="govuk-body">' + help.text + '</p>'
         }) }}
 
-        {{ govukTextarea({
+        {{ govukCharacterCount({
           name: "notes",
           id: "notes",
+          maxlength: notes.maxLength,
           label: {
             text: notes.label,
             classes: "govuk-label--m"
@@ -80,9 +81,6 @@
             text: notes.hint
           },
           value: formValues.notes if formValues else "",
-          attributes: {
-            maxlength: "200"
-          },
           errorMessage: errors.notes if errors else null
         }) }}
 
