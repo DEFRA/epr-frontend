@@ -514,6 +514,37 @@ describe('#listPrnsController', () => {
         expect(main.querySelector('.govuk-tabs')).not.toBeNull()
       })
 
+      it('should not render tabs when only draft PRNs exist', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            id: 'prn-draft',
+            issuedToOrganisation: 'Draft Corp',
+            createdAt: '2026-01-20T00:00:00.000Z',
+            tonnage: 10,
+            material: 'glass',
+            status: 'draft'
+          }
+        ])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.querySelector('.govuk-tabs')).toBeNull()
+        expect(getByText(main, /You have not created any PRNs/i)).toBeDefined()
+      })
+
       it('should show PERN-specific empty message for exporters', async ({
         server
       }) => {
