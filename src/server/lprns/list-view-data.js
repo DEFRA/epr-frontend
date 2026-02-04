@@ -9,6 +9,7 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  * @param {string} options.accreditationId
  * @param {{wasteProcessingType: string}} options.registration
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
+ * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.issuedPrns]
  * @param {boolean} options.hasCreatedPrns
  * @param {{availableAmount: number} | null} options.wasteBalance
  * @param {boolean} options.hasIssuedPrns
@@ -22,6 +23,7 @@ export function buildListViewData(
     accreditationId,
     registration,
     prns,
+    issuedPrns = [],
     hasCreatedPrns,
     wasteBalance,
     hasIssuedPrns
@@ -44,6 +46,14 @@ export function buildListViewData(
     registrationId,
     accreditationId,
     prns,
+    localise
+  })
+
+  const issuedTableRows = buildIssuedTableRows(request, {
+    organisationId,
+    registrationId,
+    accreditationId,
+    issuedPrns,
     localise
   })
 
@@ -83,6 +93,17 @@ export function buildListViewData(
         action: localise('lprns:list:table:actionHeading')
       },
       rows: tableRows
+    },
+    issuedHeading: localise(`lprns:list:${noteType}:issuedHeading`),
+    issuedTable: {
+      headings: {
+        prnNumber: localise('lprns:list:issuedTable:prnNumberHeading'),
+        recipient: localise('lprns:list:issuedTable:recipientHeading'),
+        dateIssued: localise('lprns:list:issuedTable:dateIssuedHeading'),
+        status: localise('lprns:list:issuedTable:statusHeading'),
+        action: localise('lprns:list:issuedTable:actionHeading')
+      },
+      rows: issuedTableRows
     }
   }
 }
@@ -134,6 +155,37 @@ function buildTableRows(
   ]
 
   return [...dataRows, totalRow]
+}
+
+/**
+ * Build issued table rows
+ * @param {Request} request
+ * @param {object} options
+ * @param {string} options.organisationId
+ * @param {string} options.registrationId
+ * @param {string} options.accreditationId
+ * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} options.issuedPrns
+ * @param {(key: string) => string} options.localise
+ * @returns {Array<Array<{text?: string, html?: string}>>}
+ */
+function buildIssuedTableRows(
+  request,
+  { organisationId, registrationId, accreditationId, issuedPrns, localise }
+) {
+  const selectText = localise('lprns:list:issuedTable:selectText')
+
+  return issuedPrns.map((prn) => {
+    const viewUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prn.id}/view`
+    )
+    return [
+      { text: prn.prnNumber },
+      { text: prn.recipient },
+      { text: formatDateForDisplay(prn.issuedAt) },
+      { html: buildStatusTagHtml(prn.status, localise) },
+      { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
+    ]
+  })
 }
 
 /**

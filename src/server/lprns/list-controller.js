@@ -68,12 +68,25 @@ export const listController = {
         status: prn.status
       }))
 
+    const issuedPrns = prns
+      .filter(
+        (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
+      )
+      .map((prn) => ({
+        id: prn.id,
+        prnNumber: prn.prnNumber,
+        recipient: getRecipientDisplayName(prn.issuedToOrganisation),
+        issuedAt: prn.issuedAt,
+        status: prn.status
+      }))
+
     const viewData = buildListViewData(request, {
       organisationId,
       registrationId,
       accreditationId,
       registration,
       prns: prnsAwaitingAuthorisation,
+      issuedPrns,
       hasCreatedPrns,
       wasteBalance,
       hasIssuedPrns
