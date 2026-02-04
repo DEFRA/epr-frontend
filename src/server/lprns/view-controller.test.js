@@ -241,6 +241,52 @@ describe('#viewController', () => {
         expect(html).not.toContain('>producer-1<')
       })
 
+      it('displays tonnage in words generated from tonnage value', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          tonnageInWords: undefined
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /One hundred/)).toBeDefined()
+      })
+
+      it('displays tonnage in words from backend when provided', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          tonnageInWords: 'One hundred'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /One hundred/)).toBeDefined()
+      })
+
       it('displays status tag for awaiting authorisation', async ({
         server
       }) => {
@@ -1143,6 +1189,46 @@ describe('#viewController', () => {
           'Position',
           'Issuer notes'
         ])
+      })
+
+      it('displays tonnage in words generated from tonnage value', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /One hundred/)).toBeDefined()
       })
 
       it('displays PERN check page for exporter registration', async ({
