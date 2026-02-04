@@ -9,6 +9,7 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  * @param {string} options.accreditationId
  * @param {{wasteProcessingType: string}} options.registration
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
+ * @param {boolean} options.hasCreatedPrns
  * @param {{availableAmount: number} | null} options.wasteBalance
  * @returns {object}
  */
@@ -20,6 +21,7 @@ export function buildListViewData(
     accreditationId,
     registration,
     prns,
+    hasCreatedPrns,
     wasteBalance
   }
 ) {
@@ -56,7 +58,9 @@ export function buildListViewData(
       label: localise('lprns:list:availableWasteBalance'),
       hint: localise(`lprns:list:${noteType}:balanceHint`)
     },
+    hasCreatedPrns,
     selectHeading: localise(`lprns:list:${noteType}:selectHeading`),
+    noPrnsCreatedText: localise(`lprns:list:${noteType}:noPrnsCreated`),
     tabs: {
       awaitingAction: localise('lprns:list:tabs:awaitingAction'),
       issued: localise('lprns:list:tabs:issued')

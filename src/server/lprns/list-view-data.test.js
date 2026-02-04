@@ -36,6 +36,8 @@ const createMockRequest = () => ({
       'lprns:list:table:actionHeading': '',
       'lprns:list:table:selectText': 'Select',
       'lprns:list:table:totalLabel': 'Total',
+      'lprns:list:prns:noPrnsCreated': 'You have not created any PRNs.',
+      'lprns:list:perns:noPrnsCreated': 'You have not created any PERNs.',
       'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
       'lprns:list:status:issued': 'Issued',
@@ -356,6 +358,64 @@ describe('#buildListViewData', () => {
     })
   })
 
+  describe('hasCreatedPrns flag', () => {
+    it('should pass through hasCreatedPrns as true when PRNs exist', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.hasCreatedPrns).toBe(true)
+    })
+
+    it('should pass through hasCreatedPrns as false when no PRNs exist', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: [],
+        hasCreatedPrns: false,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.hasCreatedPrns).toBe(false)
+    })
+
+    it('should return type-specific noPrnsCreatedText for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: [],
+        hasCreatedPrns: false,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.noPrnsCreatedText).toBe('You have not created any PRNs.')
+    })
+
+    it('should return type-specific noPrnsCreatedText for PERNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-456',
+        registrationId: 'reg-002',
+        accreditationId: 'acc-002',
+        registration: exporterRegistration,
+        prns: [],
+        hasCreatedPrns: false,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.noPrnsCreatedText).toBe('You have not created any PERNs.')
+    })
+  })
+
   describe('edge cases', () => {
     it('should handle null waste balance', () => {
       const result = buildListViewData(createMockRequest(), {
@@ -364,6 +424,7 @@ describe('#buildListViewData', () => {
         accreditationId: 'acc-001',
         registration: reprocessorRegistration,
         prns: stubPrns,
+        hasCreatedPrns: true,
         wasteBalance: null
       })
 
@@ -377,6 +438,7 @@ describe('#buildListViewData', () => {
         accreditationId: 'acc-001',
         registration: reprocessorRegistration,
         prns: [],
+        hasCreatedPrns: false,
         wasteBalance: mockWasteBalance
       })
 
