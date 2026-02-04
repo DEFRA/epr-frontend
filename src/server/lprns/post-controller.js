@@ -5,6 +5,7 @@ import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
+import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import {
   STUB_RECIPIENTS,
   getRecipientDisplayName
@@ -180,7 +181,7 @@ export const postController = {
       request.yar.set('prnDraft', {
         id: result.id,
         tonnage: result.tonnage,
-        tonnageInWords: result.tonnageInWords,
+        tonnageInWords: tonnageToWords(result.tonnage),
         material: result.material,
         status: result.status,
         recipientName,

@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getRecipientDisplayName } from './helpers/stub-recipients.js'
@@ -417,7 +418,7 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
     },
     {
       key: { text: localise('lprns:tonnageInWordsLabel') },
-      value: { text: prnDraft.tonnageInWords || '' }
+      value: { text: prnDraft.tonnageInWords }
     },
     {
       key: { text: localise('lprns:processToBeUsedLabel') },
@@ -520,6 +521,8 @@ function buildPrnCoreRows(prn, localise) {
     ? localise('lprns:decemberWasteYes')
     : localise('lprns:decemberWasteNo')
 
+  const tonnageInWords = prn.tonnageInWords || tonnageToWords(prn.tonnage)
+
   return [
     {
       key: { text: localise('lprns:buyerLabel') },
@@ -531,7 +534,7 @@ function buildPrnCoreRows(prn, localise) {
     },
     {
       key: { text: localise('lprns:tonnageInWordsLabel') },
-      value: { text: prn.tonnageInWords || '' }
+      value: { text: tonnageInWords }
     },
     {
       key: { text: localise('lprns:processToBeUsedLabel') },
