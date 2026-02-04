@@ -458,9 +458,112 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(
-          getByText(main, /No PRNs or PERNs have been created yet/i)
-        ).toBeDefined()
+        expect(getByText(main, /You have not created any PRNs/i)).toBeDefined()
+      })
+    })
+
+    describe('zero PRN state', () => {
+      it('should not render tabs when no PRNs have been created', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.querySelector('.govuk-tabs')).toBeNull()
+      })
+
+      it('should not render tabs when PRNs exist but none are awaiting authorisation', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            id: 'prn-003',
+            issuedToOrganisation: 'Green Compliance Scheme',
+            createdAt: '2026-01-20T00:00:00.000Z',
+            tonnage: 75,
+            material: 'glass',
+            status: 'awaiting_acceptance'
+          }
+        ])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.querySelector('.govuk-tabs')).toBeNull()
+      })
+
+      it('should not render tabs when only draft PRNs exist', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            id: 'prn-draft',
+            issuedToOrganisation: 'Draft Corp',
+            createdAt: '2026-01-20T00:00:00.000Z',
+            tonnage: 10,
+            material: 'glass',
+            status: 'draft'
+          }
+        ])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.querySelector('.govuk-tabs')).toBeNull()
+        expect(getByText(main, /You have not created any PRNs/i)).toBeDefined()
+      })
+
+      it('should show PERN-specific empty message for exporters', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /You have not created any PERNs/i)).toBeDefined()
       })
     })
 

@@ -86,6 +86,7 @@
       "cancelHint": "If you delete or cancel a PERN, its tonnage will be added to your available waste balance.",
       "createLink": "Create a PERN",
       "awaitingAuthorisationHeading": "PERNs awaiting authorisation",
+      "noPrnsCreated": "You have not created any PERNs.",
       "noIssuedPrns": "No PERNs have been issued yet."
     },
     "prns": {
@@ -95,6 +96,7 @@
       "cancelHint": "If you delete or cancel a PRN, its tonnage will be added to your available waste balance.",
       "createLink": "Create a PRN",
       "awaitingAuthorisationHeading": "PRNs awaiting authorisation",
+      "noPrnsCreated": "You have not created any PRNs.",
       "noIssuedPrns": "No PRNs have been issued yet."
     }
   },

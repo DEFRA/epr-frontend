@@ -36,6 +36,8 @@ const createMockRequest = () => ({
       'lprns:list:table:actionHeading': '',
       'lprns:list:table:selectText': 'Select',
       'lprns:list:table:totalLabel': 'Total',
+      'lprns:list:prns:noPrnsCreated': 'You have not created any PRNs.',
+      'lprns:list:perns:noPrnsCreated': 'You have not created any PERNs.',
       'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
       'lprns:list:status:issued': 'Issued',
@@ -155,20 +157,6 @@ describe('#buildListViewData', () => {
       )
     })
 
-    it('should return tab labels', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.tabs.awaitingAction).toBe('Awaiting action')
-      expect(result.tabs.issued).toBe('Issued')
-    })
-
     it('should return cancel hint with delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
@@ -182,19 +170,6 @@ describe('#buildListViewData', () => {
       expect(result.cancelHint).toBe(
         'If you delete or cancel a PRN, its tonnage will be added to your available waste balance.'
       )
-    })
-
-    it('should return no issued text for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noIssuedText).toBe('No PRNs have been issued yet.')
     })
 
     it('should return table rows in govukTable format with total row', () => {
@@ -341,18 +316,63 @@ describe('#buildListViewData', () => {
         'If you delete or cancel a PERN, its tonnage will be added to your available waste balance.'
       )
     })
+  })
 
-    it('should return no issued text for PERNs', () => {
+  describe('hasCreatedPrns flag', () => {
+    it('should pass through hasCreatedPrns as true when PRNs exist', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.hasCreatedPrns).toBe(true)
+    })
+
+    it('should pass through hasCreatedPrns as false when no PRNs exist', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: [],
+        hasCreatedPrns: false,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.hasCreatedPrns).toBe(false)
+    })
+
+    it('should return type-specific noPrnsCreatedText for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: [],
+        hasCreatedPrns: false,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.noPrnsCreatedText).toBe('You have not created any PRNs.')
+    })
+
+    it('should return type-specific noPrnsCreatedText for PERNs', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-456',
         registrationId: 'reg-002',
         accreditationId: 'acc-002',
         registration: exporterRegistration,
-        prns: stubPrns,
+        prns: [],
+        hasCreatedPrns: false,
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.noIssuedText).toBe('No PERNs have been issued yet.')
+      expect(result.noPrnsCreatedText).toBe('You have not created any PERNs.')
     })
   })
 
@@ -364,6 +384,7 @@ describe('#buildListViewData', () => {
         accreditationId: 'acc-001',
         registration: reprocessorRegistration,
         prns: stubPrns,
+        hasCreatedPrns: true,
         wasteBalance: null
       })
 
@@ -377,6 +398,7 @@ describe('#buildListViewData', () => {
         accreditationId: 'acc-001',
         registration: reprocessorRegistration,
         prns: [],
+        hasCreatedPrns: false,
         wasteBalance: mockWasteBalance
       })
 
