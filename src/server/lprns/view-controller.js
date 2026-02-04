@@ -360,7 +360,6 @@ function buildExistingPrnViewData({
   return {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
     heading: isExporter ? 'PERN' : 'PRN',
-    showRegulatorLogos: isNotDraft,
     complianceYearText:
       isNotDraft && prn.accreditationYear != null
         ? localise(`lprns:view:${noteType}:complianceYearText`, {

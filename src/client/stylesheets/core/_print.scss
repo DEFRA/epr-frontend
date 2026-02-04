@@ -41,18 +41,6 @@
     margin-top: 0;
   }
 
-  // Ensure regulator logos print correctly
-  .epr-regulator-logos {
-    display: flex !important;
-    break-inside: avoid;
-
-    svg {
-      // Ensure SVGs render in print
-      print-color-adjust: exact;
-      -webkit-print-color-adjust: exact;
-    }
-  }
-
   // Ensure summary lists don't break across pages
   .govuk-summary-list {
     break-inside: avoid;

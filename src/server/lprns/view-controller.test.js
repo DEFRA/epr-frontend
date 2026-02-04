@@ -507,7 +507,7 @@ describe('#viewController', () => {
         expect(tag.textContent.trim()).toBe('Cancelled')
       })
 
-      it('hides status and logos for draft PRN', async ({ server }) => {
+      it('hides status for draft PRN', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           status: 'draft'
@@ -526,10 +526,6 @@ describe('#viewController', () => {
         // Should not show status tag
         const tag = main.querySelector('.govuk-tag')
         expect(tag).toBeNull()
-
-        // Should not show regulator logos
-        const logos = main.querySelector('.epr-regulator-logos')
-        expect(logos).toBeNull()
 
         // Heading shows PRN for draft
         const heading = main.querySelector('.govuk-heading-xl')
