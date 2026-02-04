@@ -1,6 +1,6 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+
 import { buildCreateViewData } from './view-data.js'
-import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -17,7 +17,8 @@ export const createController = {
       request.logger
     )
 
-    const { organisations } = await fetchWasteOrganisations()
+    const { organisations } =
+      await request.wasteOrganisationsService.getOrganisations()
 
     const viewData = buildCreateViewData(request, {
       organisationId,

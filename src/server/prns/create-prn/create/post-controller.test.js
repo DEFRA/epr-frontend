@@ -1,6 +1,4 @@
-/**
- * @import { ServerRoute } from '@hapi/hapi'
- */
+/** @import {ServerRoute} from '@hapi/hapi' */
 
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -9,9 +7,7 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
-import wasteOrganisations from '../../../../../fixtures/waste-organisations/organisations.json'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -62,20 +58,10 @@ describe('#postCreatePrnController', () => {
     config.set('featureFlags.prns', true)
   })
 
-  beforeEach(({ msw }) => {
+  beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
-    )
-
-    const backendUrl = 'http://waste-orgs.api'
-
-    config.set('wasteOrganisationsApi.url', backendUrl)
-
-    msw.use(
-      http.get(backendUrl, () => {
-        return HttpResponse.json(wasteOrganisations)
-      })
     )
   })
 

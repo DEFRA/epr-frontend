@@ -1,12 +1,10 @@
-/**
- * @import { ServerRoute } from '@hapi/hapi'
- */
+/** @import {ServerRoute} from '@hapi/hapi' */
 
 import Joi from 'joi'
 
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { fetchWasteOrganisations } from '#server/common/helpers/waste-organisations/fetch-waste-organisations.js'
 import { getNoteTypeDisplayNames } from '#server/prns/helpers/get-note-type.js'
+
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { buildCreateViewData } from './view-data.js'
 
@@ -104,7 +102,8 @@ export const postCreateController = {
           request.logger
         )
 
-        const { organisations } = await fetchWasteOrganisations()
+        const { organisations } =
+          await request.wasteOrganisationsService.getOrganisations()
 
         const errors = buildValidationErrors(request, registration, error)
         const payload = request.payload

@@ -14,6 +14,7 @@ import { secureContext } from '#server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '#server/common/helpers/session-cache/session-cache.js'
 import { userAgentProtection } from '#server/common/helpers/useragent-protection.js'
+import { createWasteOrganisationsPlugin } from '#server/common/helpers/waste-organisations/waste-organisations.plugin.js'
 import Crumb from '@hapi/crumb'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
@@ -83,6 +84,7 @@ export async function createServer() {
     userAgentProtection, // Must be registered before Scooter to intercept malicious User-Agents
     Scooter,
     contentSecurityPolicy,
+    createWasteOrganisationsPlugin(),
     {
       plugin: i18nPlugin,
       options: {

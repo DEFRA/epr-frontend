@@ -230,6 +230,12 @@ export const config = convict({
     env: 'EPR_BACKEND_URL'
   },
   wasteOrganisationsApi: {
+    useInMemory: {
+      doc: 'Use in-memory adapter instead of real API',
+      format: Boolean,
+      default: false,
+      env: 'WASTE_ORGANISATIONS_API_USE_INMEMORY'
+    },
     url: {
       doc: 'Waste Organisations API URL',
       format: String,
