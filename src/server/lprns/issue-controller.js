@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { config } from '#config/config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
@@ -32,7 +33,7 @@ export const issueController = {
     } catch (error) {
       request.logger.error({ error }, 'Failed to issue PRN')
 
-      if (error.isBoom && error.output.statusCode === 409) {
+      if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
         return h.redirect(
           `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view?error=insufficient_balance`
         )
