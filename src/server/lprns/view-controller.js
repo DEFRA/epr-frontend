@@ -177,8 +177,8 @@ async function handleDraftView(
       session.idToken
     )
 
-  const { noteType, noteTypeKey } = getNoteTypeDisplayNames(registration)
-  const isExporter = noteType === 'PERN'
+  const isExporter = registration.wasteProcessingType === 'exporter'
+  const { noteTypeKey } = getNoteTypeDisplayNames(registration)
 
   const displayMaterial = getLumpyDisplayMaterial(registration)
 
@@ -260,8 +260,8 @@ async function handleExistingView(
     throw Boom.notFound('Registration not found')
   }
 
+  const isExporter = registration.wasteProcessingType === 'exporter'
   const { noteType, noteTypeKey } = getNoteTypeDisplayNames(registration)
-  const isExporter = noteType === 'PERN'
 
   const backUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
