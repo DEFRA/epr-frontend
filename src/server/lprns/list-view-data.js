@@ -11,6 +11,7 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
  * @param {boolean} options.hasCreatedPrns
  * @param {{availableAmount: number} | null} options.wasteBalance
+ * @param {boolean} options.hasIssuedPrns
  * @returns {object}
  */
 export function buildListViewData(
@@ -22,7 +23,8 @@ export function buildListViewData(
     registration,
     prns,
     hasCreatedPrns,
-    wasteBalance
+    wasteBalance,
+    hasIssuedPrns
   }
 ) {
   const { t: localise } = request
@@ -48,6 +50,7 @@ export function buildListViewData(
   return {
     pageTitle: localise(`lprns:list:${noteType}:pageTitle`),
     heading: localise(`lprns:list:${noteType}:pageTitle`),
+    showTabs: hasIssuedPrns === true,
     backUrl,
     createLink: {
       href: createUrl,
@@ -61,11 +64,16 @@ export function buildListViewData(
     hasCreatedPrns,
     selectHeading: localise(`lprns:list:${noteType}:selectHeading`),
     noPrnsCreatedText: localise(`lprns:list:${noteType}:noPrnsCreated`),
+    tabs: {
+      awaitingAction: localise('lprns:list:tabs:awaitingAction'),
+      issued: localise('lprns:list:tabs:issued')
+    },
     cancelHint: localise(`lprns:list:${noteType}:cancelHint`),
     awaitingAuthorisationHeading: localise(
       `lprns:list:${noteType}:awaitingAuthorisationHeading`
     ),
     noPrnsText: localise('lprns:list:noPrns'),
+    noIssuedText: localise(`lprns:list:${noteType}:noIssuedPrns`),
     table: {
       headings: {
         recipient: localise('lprns:list:table:recipientHeading'),

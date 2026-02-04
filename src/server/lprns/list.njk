@@ -48,24 +48,70 @@
       <h2 class="govuk-heading-m">{{ selectHeading }}</h2>
 
       {% if hasCreatedPrns %}
-        {{ govukInsetText({
-          text: cancelHint
-        }) }}
+        {% if showTabs %}
+          <div class="govuk-tabs" data-module="govuk-tabs">
+            <h2 class="govuk-tabs__title">
+              Contents
+            </h2>
+            <ul class="govuk-tabs__list">
+              <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+                <a class="govuk-tabs__tab" href="#awaiting-action">
+                  {{ tabs.awaitingAction }}
+                </a>
+              </li>
+              <li class="govuk-tabs__list-item">
+                <a class="govuk-tabs__tab" href="#issued">
+                  {{ tabs.issued }}
+                </a>
+              </li>
+            </ul>
 
-        {% if table.rows | length > 0 %}
-          <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
-          {{ govukTable({
-            head: [
-              { text: table.headings.recipient },
-              { text: table.headings.createdAt },
-              { text: table.headings.tonnage },
-              { text: table.headings.status },
-              { text: table.headings.action }
-            ],
-            rows: table.rows
-          }) }}
+            <div class="govuk-tabs__panel" id="awaiting-action">
+              {{ govukInsetText({
+                text: cancelHint
+              }) }}
+
+              {% if table.rows | length > 0 %}
+                <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
+                {{ govukTable({
+                  head: [
+                    { text: table.headings.recipient },
+                    { text: table.headings.createdAt },
+                    { text: table.headings.tonnage },
+                    { text: table.headings.status },
+                    { text: table.headings.action }
+                  ],
+                  rows: table.rows
+                }) }}
+              {% else %}
+                <p class="govuk-body">{{ noPrnsText }}</p>
+              {% endif %}
+            </div>
+
+            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="issued">
+              <p class="govuk-body">{{ noIssuedText }}</p>
+            </div>
+          </div>
         {% else %}
-          <p class="govuk-body">{{ noPrnsText }}</p>
+          {{ govukInsetText({
+            text: cancelHint
+          }) }}
+
+          {% if table.rows | length > 0 %}
+            <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
+            {{ govukTable({
+              head: [
+                { text: table.headings.recipient },
+                { text: table.headings.createdAt },
+                { text: table.headings.tonnage },
+                { text: table.headings.status },
+                { text: table.headings.action }
+              ],
+              rows: table.rows
+            }) }}
+          {% else %}
+            <p class="govuk-body">{{ noPrnsText }}</p>
+          {% endif %}
         {% endif %}
       {% else %}
         <p class="govuk-body">{{ noPrnsCreatedText }}</p>
