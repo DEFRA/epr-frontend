@@ -32,6 +32,12 @@ export const issueController = {
     } catch (error) {
       request.logger.error({ error }, 'Failed to issue PRN')
 
+      if (error.isBoom && error.output.statusCode === 409) {
+        return h.redirect(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view?error=insufficient_balance`
+        )
+      }
+
       if (error.isBoom) {
         throw error
       }
