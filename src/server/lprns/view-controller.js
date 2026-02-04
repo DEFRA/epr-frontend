@@ -271,7 +271,6 @@ async function handleExistingView(
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
-  const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
@@ -295,7 +294,6 @@ async function handleExistingView(
     isExporter,
     noteType,
     isNotDraft,
-    isAwaitingAuthorisation,
     prnDetailRows,
     accreditationRows,
     backUrl,
@@ -303,18 +301,8 @@ async function handleExistingView(
     request,
     organisationId,
     registrationId,
-    accreditationId,
-    prnId
+    accreditationId
   })
-
-  if (request.query.error === 'insufficient_balance') {
-    const message = localise('lprns:insufficientBalanceError')
-    viewData.errors = {}
-    viewData.errorSummary = {
-      title: localise('lprns:errorSummaryTitle'),
-      list: [{ text: message }]
-    }
-  }
 
   return h.view('lprns/view', viewData)
 }
@@ -326,7 +314,6 @@ async function handleExistingView(
  * @param {boolean} params.isExporter - Whether the registration is for an exporter
  * @param {string} params.noteType - 'prns' or 'perns'
  * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
- * @param {boolean} params.isAwaitingAuthorisation - Whether the PRN is awaiting authorisation
  * @param {Array} params.prnDetailRows - PRN detail summary rows
  * @param {Array} params.accreditationRows - Accreditation summary rows
  * @param {string} params.backUrl - Back link URL
@@ -335,7 +322,6 @@ async function handleExistingView(
  * @param {string} params.organisationId
  * @param {string} params.registrationId
  * @param {string} params.accreditationId
- * @param {string} params.prnId
  * @returns {object} View data object
  */
 function buildExistingPrnViewData({
@@ -343,7 +329,6 @@ function buildExistingPrnViewData({
   isExporter,
   noteType,
   isNotDraft,
-  isAwaitingAuthorisation,
   prnDetailRows,
   accreditationRows,
   backUrl,
@@ -351,10 +336,8 @@ function buildExistingPrnViewData({
   request,
   organisationId,
   registrationId,
-  accreditationId,
-  prnId
+  accreditationId
 }) {
-  const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
   const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
 
   return {
@@ -374,12 +357,6 @@ function buildExistingPrnViewData({
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
-    issueButton: isAwaitingAuthorisation
-      ? {
-          text: localise(`lprns:view:${noteType}:issueButton`),
-          action: request.localiseUrl(issueUrl)
-        }
-      : null,
     returnLink: {
       href: request.localiseUrl(returnUrl),
       text: localise(`lprns:view:${noteType}:returnLink`)
