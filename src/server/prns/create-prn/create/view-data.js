@@ -18,17 +18,20 @@ import { NOTES_MAX_LENGTH } from './constants.js'
  * @param {WasteOrganisation[]} recipients
  * @returns {Array<{value: string, text: string}>}
  */
-function mapRecipientOptions(recipients) {
-  return recipients.map((recipient) => {
-    const name = recipient.tradingName || recipient.name
-    const address = Object.values(recipient.address).filter(Boolean).join(', ')
+const mapRecipientOptions = (recipients) =>
+  recipients
+    .map((recipient) => {
+      const name = recipient.tradingName || recipient.name
+      const address = Object.values(recipient.address)
+        .filter(Boolean)
+        .join(', ')
 
-    return {
-      value: recipient.id,
-      text: `${name}, ${address}`
-    }
-  })
-}
+      return {
+        value: recipient.id,
+        text: `${name}, ${address}`
+      }
+    })
+    .toSorted((a, b) => a.text.localeCompare(b.text))
 
 /**
  * Build view data for the create PRN/PERN page
@@ -46,7 +49,7 @@ export function buildCreateViewData(
   const pageTitle = localise('prns:create:pageTitle', { noteType })
 
   const recipientItems = [
-    { value: '', text: localise('prns:selectOption') },
+    { value: '', text: /** @type {string} */ (localise('prns:selectOption')) },
     ...mapRecipientOptions(recipients)
   ].map((item) => ({
     ...item,

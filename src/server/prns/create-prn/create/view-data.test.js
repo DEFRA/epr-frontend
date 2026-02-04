@@ -161,6 +161,61 @@ describe('#buildCreateViewData', () => {
     })
   })
 
+  describe('recipient sorting', () => {
+    it('should sort recipient options alphabetically by name', () => {
+      const unsortedRecipients = [
+        {
+          id: 'zebra-id',
+          name: 'Zebra Corp',
+          tradingName: null,
+          address: {
+            addressLine1: '1 Zoo Lane',
+            town: 'London',
+            postcode: 'Z1 1ZZ'
+          }
+        },
+        {
+          id: 'alpha-id',
+          name: 'Alpha Ltd',
+          tradingName: null,
+          address: {
+            addressLine1: '1 First St',
+            town: 'Bristol',
+            postcode: 'A1 1AA'
+          }
+        },
+        {
+          id: 'middle-id',
+          name: 'Middle Inc',
+          tradingName: null,
+          address: {
+            addressLine1: '1 Mid Road',
+            town: 'Leeds',
+            postcode: 'M1 1MM'
+          }
+        }
+      ]
+
+      const result = buildCreateViewData(createMockRequest(), {
+        organisationId: stubOrganisationId,
+        recipients: unsortedRecipients,
+        registration: reprocessorRegistration,
+        registrationId: stubRegistrationId
+      })
+
+      const recipientNames = result.recipient.items.map(
+        (item) => item.text.split(',')[0]
+      )
+
+      expect(recipientNames).toStrictEqual([
+        'Select an option',
+        'Alpha Ltd',
+        'Middle Inc',
+        'Zebra Corp'
+      ])
+    })
+  })
+
   describe('noteType detection', () => {
     it.for([
       { type: 'exporter', expected: true },
