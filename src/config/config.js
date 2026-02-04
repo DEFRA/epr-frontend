@@ -297,14 +297,8 @@ export const config = convict({
     }
   },
   featureFlags: {
-    prns: {
-      doc: 'Feature Flag: PRNs',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_PRNS'
-    },
     lprns: {
-      doc: 'Feature Flag: Lumpy PRNs (accelerated implementation)',
+      doc: 'Feature Flag: PRNs',
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_LPRNS'
