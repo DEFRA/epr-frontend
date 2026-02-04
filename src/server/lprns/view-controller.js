@@ -307,7 +307,6 @@ async function handleExistingView(
   })
 
   if (request.query.error === 'insufficient_balance') {
-    const { t: localise } = request
     const message = localise('lprns:insufficientBalanceError')
     viewData.errors = {}
     viewData.errorSummary = {

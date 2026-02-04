@@ -886,6 +886,25 @@ describe('#viewController', () => {
           )
         ).toBeDefined()
       })
+
+      it('does not display error summary without error query parameter', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).toBeNull()
+      })
     })
 
     describe('POST /issue (issue PRN)', () => {
