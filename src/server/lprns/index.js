@@ -1,5 +1,9 @@
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
+import {
+  discardGetController,
+  discardPostController
+} from './discard-controller.js'
 import { issueController } from './issue-controller.js'
 import { issuedController } from './issued-controller.js'
 import { listController } from './list-controller.js'
@@ -46,6 +50,16 @@ export const lprns = {
           ...createdController,
           method: 'GET',
           path: `${basePath}/{prnId}/created`
+        },
+        {
+          ...discardGetController,
+          method: 'GET',
+          path: `${basePath}/{prnId}/discard`
+        },
+        {
+          ...discardPostController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/discard`
         },
         {
           ...issueController,
