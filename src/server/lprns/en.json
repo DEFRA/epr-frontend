@@ -7,6 +7,20 @@
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
   "decemberWasteYes": "Yes",
+  "discard": {
+    "prns": {
+      "pageTitle": "Discard PRN",
+      "heading": "Are you sure you want to discard this PRN?",
+      "warningText": "This will discard the PRN you are creating. You will need to start again.",
+      "confirmButton": "Discard and start again"
+    },
+    "perns": {
+      "pageTitle": "Discard PERN",
+      "heading": "Are you sure you want to discard this PERN?",
+      "warningText": "This will discard the PERN you are creating. You will need to start again.",
+      "confirmButton": "Discard and start again"
+    }
+  },
   "errorSummaryTitle": "There is a problem",
   "helpSummary": "Can't find the producer or compliance scheme?",
   "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",

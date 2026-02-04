@@ -213,7 +213,7 @@ async function handleDraftView(
     },
     discardLink: {
       text: localise(`lprns:${noteType}:discardLink`),
-      href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+      href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnDraft.id}/discard`
     },
     organisationId,
     registrationId,
