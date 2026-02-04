@@ -994,11 +994,12 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Should show discard link with correct attributes (not a warning button)
+        // Should show discard link pointing to discard confirmation page
         const discardLink = getByText(main, /Discard and start again/i)
         expect(discardLink.tagName).toBe('A')
         expect(discardLink.classList.contains('govuk-link')).toBe(true)
-        expect(discardLink.getAttribute('href')).toBe(createUrl)
+        const expectedDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/discard`
+        expect(discardLink.getAttribute('href')).toBe(expectedDiscardUrl)
         expect(main.querySelector('.govuk-button--warning')).toBeNull()
       })
 
