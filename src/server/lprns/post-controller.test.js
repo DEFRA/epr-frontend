@@ -286,6 +286,32 @@ describe('#postCreatePrnController', () => {
         ).toBeDefined()
       })
 
+      it('shows "Enter PRN tonnage as a whole number" when tonnage is a decimal', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '1.5', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
+      })
+
       it('shows "Enter PRN tonnage as a whole number greater than zero" when tonnage is zero', async ({
         server
       }) => {
