@@ -6,6 +6,8 @@ import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getRecipientDisplayName } from './helpers/stub-recipients.js'
+import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
+import { getStatusConfig } from './helpers/get-status-config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -365,26 +367,6 @@ function buildExistingPrnViewData({
 }
 
 /**
- * Formats an address object into a single line string
- * @param {object} address - Address object with line1, line2, town, postcode etc
- * @returns {string} Formatted address string
- */
-function formatAddress(address) {
-  if (!address) {
-    return ''
-  }
-
-  const parts = [
-    address.line1,
-    address.line2,
-    address.town,
-    address.postcode
-  ].filter(Boolean)
-
-  return parts.join(', ')
-}
-
-/**
  * Builds the PRN/PERN details rows for a draft PRN (creation flow)
  * @param {object} params
  * @param {object} params.prnDraft - Draft PRN data from session
@@ -570,77 +552,6 @@ function buildPrnAuthorisationRows(prn, organisationData, localise) {
       value: { text: notesText }
     }
   ]
-}
-
-/**
- * Builds the accreditation details rows for the summary list
- * @param {object} params
- * @param {object} params.registration - Registration data
- * @param {object} params.accreditation - Accreditation data
- * @param {string} params.displayMaterial - Formatted material name
- * @param {(key: string) => string} params.localise - Translation function
- * @param {boolean} params.isExporter - Whether the registration is for an exporter
- * @returns {Array} Summary list rows
- */
-function buildAccreditationRows({
-  registration,
-  accreditation,
-  displayMaterial,
-  localise,
-  isExporter
-}) {
-  const rows = [
-    {
-      key: { text: localise('lprns:materialLabel') },
-      value: { text: displayMaterial }
-    },
-    {
-      key: { text: localise('lprns:accreditationNumberLabel') },
-      value: { text: accreditation?.accreditationNumber || '' }
-    }
-  ]
-
-  if (!isExporter) {
-    rows.push({
-      key: { text: localise('lprns:accreditationAddressLabel') },
-      value: { text: formatAddress(registration.site?.address) }
-    })
-  }
-
-  return rows
-}
-
-/**
- * Get status display configuration
- * @param {string} status
- * @param {(key: string) => string} localise
- * @returns {{text: string, class: string}}
- */
-const TAG_CLASS_BLUE = 'govuk-tag--blue epr-tag--no-max-width'
-const TAG_CLASS_GREY = 'govuk-tag--grey epr-tag--no-max-width'
-const TAG_CLASS_DEFAULT = 'epr-tag--no-max-width'
-
-function getStatusConfig(status, localise) {
-  const statusMap = {
-    awaiting_authorisation: {
-      text: localise('lprns:list:status:awaitingAuthorisation'),
-      class: TAG_CLASS_BLUE
-    },
-    awaiting_acceptance: {
-      text: localise('lprns:list:status:awaitingAcceptance'),
-      class: TAG_CLASS_BLUE
-    },
-    issued: {
-      text: localise('lprns:list:status:issued'),
-      class: TAG_CLASS_BLUE
-    },
-    cancelled: {
-      text: localise('lprns:list:status:cancelled'),
-      class: TAG_CLASS_GREY
-    }
-  }
-
-  return statusMap[status] ?? { text: status, class: TAG_CLASS_DEFAULT }
 }
 
 /**
