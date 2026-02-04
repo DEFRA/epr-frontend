@@ -4,6 +4,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
 {% block beforeContent %}
   {% if backUrl %}
@@ -17,6 +18,13 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
+    {% if errors %}
+      {{ govukErrorSummary({
+        titleText: errorSummary.title,
+        errorList: errorSummary.list
+      }) }}
+    {% endif %}
+
     <span class="govuk-caption-xl">{{ caption }}</span>
     <h1 class="govuk-heading-xl">{{ heading }}</h1>
 

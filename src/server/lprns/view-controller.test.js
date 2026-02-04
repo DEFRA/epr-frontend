@@ -906,6 +906,51 @@ describe('#viewController', () => {
           )
         ).toBeDefined()
       })
+
+      it('displays error summary when redirected with insufficient_balance error', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: `${viewUrl}?error=insufficient_balance`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).not.toBeNull()
+        expect(getByText(main, /There is a problem/i)).toBeDefined()
+        expect(
+          getByText(
+            main,
+            /The tonnage you entered exceeds your available waste balance/i
+          )
+        ).toBeDefined()
+      })
+
+      it('does not display error summary without error query parameter', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).toBeNull()
+      })
     })
 
     describe('POST /issue (issue PRN)', () => {
