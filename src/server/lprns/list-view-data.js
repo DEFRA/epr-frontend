@@ -56,6 +56,7 @@ export function buildListViewData(
       label: localise('lprns:list:availableWasteBalance'),
       hint: localise(`lprns:list:${noteType}:balanceHint`)
     },
+    selectHeading: localise(`lprns:list:${noteType}:selectHeading`),
     tabs: {
       awaitingAction: localise('lprns:list:tabs:awaitingAction'),
       issued: localise('lprns:list:tabs:issued')

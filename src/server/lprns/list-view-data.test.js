@@ -11,9 +11,9 @@ const createMockRequest = () => ({
       'lprns:list:perns:balanceHint':
         'This is the balance available for creating PERNs',
       'lprns:list:prns:cancelHint':
-        'If you cancel a PRN, its tonnage will be added to your available waste balance.',
+        'If you delete or cancel a PRN, its tonnage will be added to your available waste balance.',
       'lprns:list:perns:cancelHint':
-        'If you cancel a PERN, its tonnage will be added to your available waste balance.',
+        'If you delete or cancel a PERN, its tonnage will be added to your available waste balance.',
       'lprns:list:prns:createLink': 'Create a PRN',
       'lprns:list:perns:createLink': 'Create a PERN',
       'lprns:list:prns:awaitingAuthorisationHeading':
@@ -26,7 +26,10 @@ const createMockRequest = () => ({
       'lprns:list:noPrns': 'No PRNs or PERNs have been created yet.',
       'lprns:list:tabs:awaitingAction': 'Awaiting action',
       'lprns:list:tabs:issued': 'Issued',
-      'lprns:list:table:recipientHeading': 'Issued to',
+      'lprns:list:prns:selectHeading': 'Select a PRN',
+      'lprns:list:perns:selectHeading': 'Select a PERN',
+      'lprns:list:table:recipientHeading':
+        'Packaging waste producer or compliance scheme',
       'lprns:list:table:dateHeading': 'Date created',
       'lprns:list:table:tonnageHeading': 'Tonnage',
       'lprns:list:table:statusHeading': 'Status',
@@ -136,6 +139,22 @@ describe('#buildListViewData', () => {
       )
     })
 
+    it('should return select heading and awaiting authorisation heading', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.selectHeading).toBe('Select a PRN')
+      expect(result.awaitingAuthorisationHeading).toBe(
+        'PRNs awaiting authorisation'
+      )
+    })
+
     it('should return tab labels', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
@@ -150,7 +169,7 @@ describe('#buildListViewData', () => {
       expect(result.tabs.issued).toBe('Issued')
     })
 
-    it('should return cancel hint and awaiting authorisation heading', () => {
+    it('should return cancel hint with delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -161,11 +180,21 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.cancelHint).toBe(
-        'If you cancel a PRN, its tonnage will be added to your available waste balance.'
+        'If you delete or cancel a PRN, its tonnage will be added to your available waste balance.'
       )
-      expect(result.awaitingAuthorisationHeading).toBe(
-        'PRNs awaiting authorisation'
-      )
+    })
+
+    it('should return no issued text for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.noIssuedText).toBe('No PRNs have been issued yet.')
     })
 
     it('should return table rows in govukTable format with total row', () => {
@@ -245,23 +274,12 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.headings.recipient).toBe('Issued to')
+      expect(result.table.headings.recipient).toBe(
+        'Packaging waste producer or compliance scheme'
+      )
       expect(result.table.headings.createdAt).toBe('Date created')
       expect(result.table.headings.tonnage).toBe('Tonnage')
       expect(result.table.headings.status).toBe('Status')
-    })
-
-    it('should return no issued text for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noIssuedText).toBe('No PRNs have been issued yet.')
     })
   })
 
@@ -293,7 +311,23 @@ describe('#buildListViewData', () => {
       expect(result.createLink.text).toBe('Create a PERN')
     })
 
-    it('should return cancel hint with PERN text', () => {
+    it('should return select heading and awaiting authorisation heading with PERN text', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-456',
+        registrationId: 'reg-002',
+        accreditationId: 'acc-002',
+        registration: exporterRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.selectHeading).toBe('Select a PERN')
+      expect(result.awaitingAuthorisationHeading).toBe(
+        'PERNs awaiting authorisation'
+      )
+    })
+
+    it('should return cancel hint with PERN text and delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-456',
         registrationId: 'reg-002',
@@ -304,10 +338,7 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.cancelHint).toBe(
-        'If you cancel a PERN, its tonnage will be added to your available waste balance.'
-      )
-      expect(result.awaitingAuthorisationHeading).toBe(
-        'PERNs awaiting authorisation'
+        'If you delete or cancel a PERN, its tonnage will be added to your available waste balance.'
       )
     })
 
