@@ -13,42 +13,67 @@ import { buildCreatePrnViewData } from './view-data.js'
 const MIN_TONNAGE = 1
 const MAX_NOTES_LENGTH = 200
 
+const ERROR_KEYS = Object.freeze({
+  notesTooLong: 'notesTooLong',
+  recipientRequired: 'recipientRequired',
+  tonnageGreaterThanZero: 'tonnageGreaterThanZero',
+  tonnageWholeNumber: 'tonnageWholeNumber'
+})
+
 const payloadSchema = Joi.object({
-  tonnage: Joi.number().integer().min(MIN_TONNAGE).required().messages({
-    'number.base': 'Enter a whole number',
-    'number.integer': 'Enter a whole number without decimal places',
-    'number.min': 'Tonnage must be at least 1',
-    'any.required': 'Enter the tonnage'
-  }),
-  recipient: Joi.string().min(1).required().messages({
-    'string.empty': 'Select who this will be issued to',
-    'any.required': 'Select who this will be issued to'
-  }),
-  notes: Joi.string()
-    .max(MAX_NOTES_LENGTH)
-    .allow('')
-    .optional()
-    .messages({
-      'string.max': `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`
-    }),
+  tonnage: Joi.number().integer().min(MIN_TONNAGE).required(),
+  recipient: Joi.string().min(1).required(),
+  notes: Joi.string().max(MAX_NOTES_LENGTH).allow('').optional(),
   material: Joi.string().required(),
   nation: Joi.string().required(),
   wasteProcessingType: Joi.string().required()
 })
 
 /**
+ * @param {import('joi').ValidationErrorItem} detail
+ * @returns {string}
+ */
+function getErrorMessageKey(detail) {
+  const field = detail.path[0]
+
+  if (field === 'tonnage') {
+    if (detail.type === 'number.min') {
+      return ERROR_KEYS.tonnageGreaterThanZero
+    }
+    return ERROR_KEYS.tonnageWholeNumber
+  }
+
+  if (field === 'recipient') {
+    return ERROR_KEYS.recipientRequired
+  }
+
+  return ERROR_KEYS.notesTooLong
+}
+
+/**
+ * @param {string} wasteProcessingType
+ * @returns {string}
+ */
+function getNoteType(wasteProcessingType) {
+  return wasteProcessingType === 'exporter' ? 'PERN' : 'PRN'
+}
+
+/**
  * Build error objects for form display
  * @param {Joi.ValidationError} validationError
- * @param {(key: string) => string} localise
+ * @param {(key: string, params?: object) => string} localise
+ * @param {string} wasteProcessingType
  * @returns {{errors: object, errorSummary: {title: string, list: Array}}}
  */
-function buildValidationErrors(validationError, localise) {
+function buildValidationErrors(validationError, localise, wasteProcessingType) {
   const errors = {}
   const errorList = []
+  const noteType = getNoteType(wasteProcessingType)
 
   for (const detail of validationError.details) {
     const field = detail.path[0]
-    const message = detail.message
+    const messageKey = getErrorMessageKey(detail)
+    const message = localise(`lprns:errors:${messageKey}`, { noteType })
 
     errors[field] = { text: message }
     errorList.push({ text: message, href: `#${field}` })
@@ -85,7 +110,11 @@ export const postController = {
         )
 
         const { t: localise } = request
-        const { errors, errorSummary } = buildValidationErrors(error, localise)
+        const { errors, errorSummary } = buildValidationErrors(
+          error,
+          localise,
+          registration.wasteProcessingType
+        )
 
         const viewData = buildCreatePrnViewData(request, {
           registration,
