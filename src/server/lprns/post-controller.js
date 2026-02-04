@@ -3,6 +3,7 @@ import Joi from 'joi'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import {
   STUB_RECIPIENTS,
@@ -11,7 +12,6 @@ import {
 import { buildCreatePrnViewData } from './view-data.js'
 
 const MIN_TONNAGE = 1
-const MAX_NOTES_LENGTH = 200
 
 const payloadSchema = Joi.object({
   tonnage: Joi.number().integer().min(MIN_TONNAGE).required().messages({
@@ -25,11 +25,11 @@ const payloadSchema = Joi.object({
     'any.required': 'Select who this will be issued to'
   }),
   notes: Joi.string()
-    .max(MAX_NOTES_LENGTH)
+    .max(NOTES_MAX_LENGTH)
     .allow('')
     .optional()
     .messages({
-      'string.max': `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`
+      'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
   material: Joi.string().required(),
   nation: Joi.string().required(),

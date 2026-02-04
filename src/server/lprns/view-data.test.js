@@ -83,6 +83,7 @@ describe('#buildCreatePrnViewData', () => {
         'Enter who this PRN will be issued to'
       )
       expect(result.notes.hint).toBe('These notes will appear on the PRN')
+      expect(result.notes.maxLength).toBe(200)
       expect(result.help.text).toContain('PRNs can only be issued')
     })
 
