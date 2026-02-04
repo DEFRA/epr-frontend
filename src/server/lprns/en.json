@@ -52,7 +52,6 @@
   "issuerNotesLabel": "Issuer notes",
   "list": {
     "availableWasteBalance": "Available waste balance",
-    "noPrns": "No PRNs or PERNs have been created yet.",
     "tabs": {
       "title": "Contents",
       "awaitingAction": "Awaiting action",
@@ -75,6 +74,7 @@
     },
     "perns": {
       "pageTitle": "PERNs",
+      "noPrns": "You have not created any PERNs.",
       "selectHeading": "Select a PERN",
       "balanceHint": "This is the balance available for creating PERNs",
       "cancelHint": "If you delete or cancel a PERN, its tonnage will be added to your available waste balance.",
@@ -84,6 +84,7 @@
     },
     "prns": {
       "pageTitle": "PRNs",
+      "noPrns": "You have not created any PRNs.",
       "selectHeading": "Select a PRN",
       "balanceHint": "This is the balance available for creating PRNs",
       "cancelHint": "If you delete or cancel a PRN, its tonnage will be added to your available waste balance.",

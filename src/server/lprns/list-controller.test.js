@@ -438,7 +438,7 @@ describe('#listPrnsController', () => {
         expect(statusCode).toBe(statusCodes.internalServerError)
       })
 
-      it('should show no PRNs message when no PRNs exist', async ({
+      it('should show empty state without tabs when no PRNs exist', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -458,9 +458,55 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(
-          getByText(main, /No PRNs or PERNs have been created yet/i)
-        ).toBeDefined()
+        expect(getByText(main, /You have not created any PRNs/i)).toBeDefined()
+
+        const tabs = main.querySelector('.govuk-tabs')
+        expect(tabs).toBeNull()
+      })
+
+      it('should show empty state without tabs for exporters when no PERNs exist', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /You have not created any PERNs/i)).toBeDefined()
+
+        const tabs = main.querySelector('.govuk-tabs')
+        expect(tabs).toBeNull()
+      })
+
+      it('should show tabs when PRNs exist', async ({ server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const tabs = main.querySelector('.govuk-tabs')
+        expect(tabs).not.toBeNull()
       })
     })
 

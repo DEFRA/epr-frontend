@@ -23,7 +23,8 @@ const createMockRequest = () => ({
       'lprns:list:prns:noIssuedPrns': 'No PRNs have been issued yet.',
       'lprns:list:perns:noIssuedPrns': 'No PERNs have been issued yet.',
       'lprns:list:availableWasteBalance': 'Available waste balance',
-      'lprns:list:noPrns': 'No PRNs or PERNs have been created yet.',
+      'lprns:list:prns:noPrns': 'You have not created any PRNs.',
+      'lprns:list:perns:noPrns': 'You have not created any PERNs.',
       'lprns:list:tabs:awaitingAction': 'Awaiting action',
       'lprns:list:tabs:issued': 'Issued',
       'lprns:list:prns:selectHeading': 'Select a PRN',
@@ -370,6 +371,32 @@ describe('#buildListViewData', () => {
       expect(result.wasteBalance.amount).toBe(0)
     })
 
+    it('should set hasCreatedPrns to true when PRNs exist', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.hasCreatedPrns).toBe(true)
+    })
+
+    it('should set hasCreatedPrns to false when no PRNs exist', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: [],
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.hasCreatedPrns).toBe(false)
+    })
+
     it('should handle empty PRN list', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
@@ -381,7 +408,20 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.table.rows).toHaveLength(0)
-      expect(result.noPrnsText).toBe('No PRNs or PERNs have been created yet.')
+      expect(result.noPrnsText).toBe('You have not created any PRNs.')
+    })
+
+    it('should return type-specific noPrnsText for PERNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-456',
+        registrationId: 'reg-002',
+        accreditationId: 'acc-002',
+        registration: exporterRegistration,
+        prns: [],
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.noPrnsText).toBe('You have not created any PERNs.')
     })
 
     it('should format awaiting_acceptance status correctly', () => {

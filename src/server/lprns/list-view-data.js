@@ -65,7 +65,8 @@ export function buildListViewData(
     awaitingAuthorisationHeading: localise(
       `lprns:list:${noteType}:awaitingAuthorisationHeading`
     ),
-    noPrnsText: localise('lprns:list:noPrns'),
+    hasCreatedPrns: prns.length > 0,
+    noPrnsText: localise(`lprns:list:${noteType}:noPrns`),
     noIssuedText: localise(`lprns:list:${noteType}:noIssuedPrns`),
     table: {
       headings: {
