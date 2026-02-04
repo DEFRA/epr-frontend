@@ -22,6 +22,12 @@
     }
   },
   "errorSummaryTitle": "There is a problem",
+  "errors": {
+    "notesTooLong": "Enter a maximum of 200 characters",
+    "recipientRequired": "Select who this will be issued to",
+    "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
+    "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
+  },
   "helpSummary": "Can't find the producer or compliance scheme?",
   "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
   "issueCommentsLabel": "Issue comments",
