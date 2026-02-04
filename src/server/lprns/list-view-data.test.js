@@ -7,9 +7,9 @@ const createMockRequest = () => ({
       'lprns:list:prns:pageTitle': 'PRNs',
       'lprns:list:perns:pageTitle': 'PERNs',
       'lprns:list:prns:balanceHint':
-        'This is the balance available for creating PRNs',
+        'This is the balance available for creating new PRNs',
       'lprns:list:perns:balanceHint':
-        'This is the balance available for creating PERNs',
+        'This is the balance available for creating new PERNs',
       'lprns:list:prns:cancelHint':
         'If you delete or cancel a PRN, its tonnage will be added to your available waste balance.',
       'lprns:list:perns:cancelHint':
@@ -28,8 +28,7 @@ const createMockRequest = () => ({
       'lprns:list:tabs:issued': 'Issued',
       'lprns:list:prns:selectHeading': 'Select a PRN',
       'lprns:list:perns:selectHeading': 'Select a PERN',
-      'lprns:list:table:recipientHeading':
-        'Packaging waste producer or compliance scheme',
+      'lprns:list:table:recipientHeading': 'Producer or compliance scheme',
       'lprns:list:table:dateHeading': 'Date created',
       'lprns:list:table:tonnageHeading': 'Tonnage',
       'lprns:list:table:statusHeading': 'Status',
@@ -163,7 +162,7 @@ describe('#buildListViewData', () => {
       expect(result.wasteBalance.amount).toBe(150.5)
       expect(result.wasteBalance.label).toBe('Available waste balance')
       expect(result.wasteBalance.hint).toBe(
-        'This is the balance available for creating PRNs'
+        'This is the balance available for creating new PRNs'
       )
     })
 
@@ -303,7 +302,7 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.table.headings.recipient).toBe(
-        'Packaging waste producer or compliance scheme'
+        'Producer or compliance scheme'
       )
       expect(result.table.headings.createdAt).toBe('Date created')
       expect(result.table.headings.tonnage).toBe('Tonnage')
