@@ -52,6 +52,8 @@ export const listController = {
       session.idToken
     )
 
+    const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
+
     // Map backend response and filter to awaiting authorisation (PAE-948 requirement)
     const prnsAwaitingAuthorisation = prns
       .filter((prn) => prn.status === 'awaiting_authorisation')
@@ -69,6 +71,7 @@ export const listController = {
       accreditationId,
       registration,
       prns: prnsAwaitingAuthorisation,
+      hasCreatedPrns,
       wasteBalance
     })
 
