@@ -61,27 +61,33 @@ const mockWasteBalance = {
 const mockPrns = [
   {
     id: 'prn-001',
+    prnNumber: null,
     issuedToOrganisation: 'Acme Packaging Ltd',
     createdAt: '2026-01-15T00:00:00.000Z',
+    issuedAt: null,
     tonnage: 50,
     material: 'glass',
     status: 'awaiting_authorisation'
   },
   {
     id: 'prn-002',
+    prnNumber: null,
     issuedToOrganisation: 'BigCo Waste Solutions',
     createdAt: '2026-01-18T00:00:00.000Z',
+    issuedAt: null,
     tonnage: 120,
     material: 'plastic',
     status: 'awaiting_authorisation'
   },
   {
     id: 'prn-003',
+    prnNumber: 'ER2612345',
     issuedToOrganisation: 'Green Compliance Scheme',
     createdAt: '2026-01-20T00:00:00.000Z',
+    issuedAt: '2026-01-22T10:00:00.000Z',
     tonnage: 75,
     material: 'glass',
-    status: 'issued'
+    status: 'awaiting_acceptance'
   }
 ]
 
@@ -241,7 +247,8 @@ describe('#listPrnsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
-        const table = getByRole(main, 'table')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+        const table = getByRole(awaitingPanel, 'table')
 
         expect(
           getByText(table, /Packaging waste producer or compliance scheme/i)
@@ -275,7 +282,8 @@ describe('#listPrnsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
-        const table = getByRole(main, 'table')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+        const table = getByRole(awaitingPanel, 'table')
 
         const selectLinks = table.querySelectorAll('tbody a.govuk-link')
 
@@ -301,7 +309,7 @@ describe('#listPrnsController', () => {
         ).toBeDefined()
       })
 
-      it('should only show PRNs with awaiting authorisation status', async ({
+      it('should only show PRNs with awaiting authorisation status in awaiting action tab', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -313,13 +321,14 @@ describe('#listPrnsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
-        const table = getByRole(main, 'table')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+        const table = getByRole(awaitingPanel, 'table')
         const rows = table.querySelectorAll('tbody tr')
 
         // Stub data has 2 PRNs with awaiting_authorisation status + 1 total row
         expect(rows).toHaveLength(3)
 
-        // Should not show 'Issued' status PRNs
+        // Should not show 'Issued' status PRNs in the awaiting action tab
         expect(queryByText(table, /^Issued$/)).toBeNull()
       })
     })
@@ -370,6 +379,49 @@ describe('#listPrnsController', () => {
 
         const tabs = main.querySelector('.govuk-tabs')
         expect(tabs).not.toBeNull()
+      })
+
+      it('should render issued tab heading and column headers', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const issuedPanel = getByRole(body, 'main').querySelector('#issued')
+        expect(issuedPanel).not.toBeNull()
+
+        expect(getByText(issuedPanel, /Issued PRNs/i)).toBeDefined()
+        expect(getByText(issuedPanel, /PRN number/i)).toBeDefined()
+        expect(
+          getByText(issuedPanel, /Producer or compliance scheme/i)
+        ).toBeDefined()
+        expect(getByText(issuedPanel, /Date issued/i)).toBeDefined()
+      })
+
+      it('should render issued PRN data in issued tab panel', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const issuedPanel = getByRole(body, 'main').querySelector('#issued')
+
+        expect(getByText(issuedPanel, /ER2612345/)).toBeDefined()
+        expect(getByText(issuedPanel, /22 January 2026/)).toBeDefined()
       })
 
       it('should show content directly without tabs when no issued PRNs', async ({
@@ -572,8 +624,10 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
             id: 'prn-003',
+            prnNumber: 'ER2612345',
             issuedToOrganisation: 'Green Compliance Scheme',
             createdAt: '2026-01-20T00:00:00.000Z',
+            issuedAt: '2026-01-22T10:00:00.000Z',
             tonnage: 75,
             material: 'glass',
             status: 'awaiting_acceptance'

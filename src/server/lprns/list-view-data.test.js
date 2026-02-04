@@ -41,7 +41,16 @@ const createMockRequest = () => ({
       'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
       'lprns:list:status:issued': 'Issued',
-      'lprns:list:status:cancelled': 'Cancelled'
+      'lprns:list:status:cancelled': 'Cancelled',
+      'lprns:list:prns:issuedHeading': 'Issued PRNs',
+      'lprns:list:perns:issuedHeading': 'Issued PERNs',
+      'lprns:list:issuedTable:prnNumberHeading': 'PRN number',
+      'lprns:list:issuedTable:recipientHeading':
+        'Producer or compliance scheme',
+      'lprns:list:issuedTable:dateIssuedHeading': 'Date issued',
+      'lprns:list:issuedTable:statusHeading': 'Status',
+      'lprns:list:issuedTable:actionHeading': 'View in new tab',
+      'lprns:list:issuedTable:selectText': 'Select'
     }
     return translations[key] || key
   }),
@@ -62,6 +71,23 @@ const stubPrns = [
     createdAt: '2026-01-18',
     tonnage: 120,
     status: 'issued'
+  }
+]
+
+const stubIssuedPrns = [
+  {
+    id: 'prn-003',
+    prnNumber: 'ER2612345',
+    recipient: 'Radar',
+    issuedAt: '2026-01-29',
+    status: 'awaiting_acceptance'
+  },
+  {
+    id: 'prn-004',
+    prnNumber: 'ER2654321',
+    recipient: 'Renewable Products',
+    issuedAt: '2026-01-26',
+    status: 'awaiting_acceptance'
   }
 ]
 
@@ -443,6 +469,141 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.showTabs).toBe(true)
+    })
+  })
+
+  describe('issued table', () => {
+    it('should return issued table rows with PRN number, recipient and date issued', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        hasCreatedPrns: true,
+        hasIssuedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedTable.rows).toHaveLength(2)
+      expect(result.issuedTable.rows[0][0]).toStrictEqual({
+        text: 'ER2612345'
+      })
+      expect(result.issuedTable.rows[0][1]).toStrictEqual({
+        text: 'Radar'
+      })
+      expect(result.issuedTable.rows[0][2]).toStrictEqual({
+        text: '29 January 2026'
+      })
+    })
+
+    it('should return issued table status as govuk-tag', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        hasCreatedPrns: true,
+        hasIssuedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedTable.rows[0][3].html).toContain(
+        'Awaiting acceptance'
+      )
+      expect(result.issuedTable.rows[0][3].html).toContain('govuk-tag')
+    })
+
+    it('should return issued table headings matching mockup', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        hasCreatedPrns: true,
+        hasIssuedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedTable.headings.prnNumber).toBe('PRN number')
+      expect(result.issuedTable.headings.recipient).toBe(
+        'Producer or compliance scheme'
+      )
+      expect(result.issuedTable.headings.dateIssued).toBe('Date issued')
+      expect(result.issuedTable.headings.status).toBe('Status')
+      expect(result.issuedTable.headings.action).toBe('View in new tab')
+    })
+
+    it('should return view links for each issued PRN', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        hasCreatedPrns: true,
+        hasIssuedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedTable.rows[0][4].html).toContain('govuk-link')
+      expect(result.issuedTable.rows[0][4].html).toContain(
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/prn-003/view'
+      )
+    })
+
+    it('should return empty issued table rows when no issued PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        issuedPrns: [],
+        hasCreatedPrns: true,
+        hasIssuedPrns: false,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedTable.rows).toHaveLength(0)
+    })
+
+    it('should return issued heading for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        hasCreatedPrns: true,
+        hasIssuedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedHeading).toBe('Issued PRNs')
+    })
+
+    it('should return issued heading for PERNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-456',
+        registrationId: 'reg-002',
+        accreditationId: 'acc-002',
+        registration: exporterRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        hasCreatedPrns: true,
+        hasIssuedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedHeading).toBe('Issued PERNs')
     })
   })
 
