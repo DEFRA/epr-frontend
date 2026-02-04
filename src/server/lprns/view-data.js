@@ -1,3 +1,4 @@
+import { NOTES_MAX_LENGTH } from './constants.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 
 /**
@@ -47,7 +48,8 @@ export function buildCreatePrnViewData(request, { registration, recipients }) {
     },
     notes: {
       label: localise('lprns:notesLabel'),
-      hint: localise(`lprns:${noteType}:notesHint`)
+      hint: localise(`lprns:${noteType}:notesHint`),
+      maxLength: NOTES_MAX_LENGTH
     },
     submitButton: {
       text: localise(`lprns:${noteType}:submitButton`)
