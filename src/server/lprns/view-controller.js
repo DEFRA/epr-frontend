@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
@@ -176,8 +177,8 @@ async function handleDraftView(
       session.idToken
     )
 
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { noteType, noteTypeKey } = getNoteTypeDisplayNames(registration)
+  const isExporter = noteType === 'PERN'
 
   const displayMaterial = getLumpyDisplayMaterial(registration)
 
@@ -196,12 +197,12 @@ async function handleDraftView(
   })
 
   return h.view('lprns/view', {
-    pageTitle: localise(`lprns:${noteType}:checkPageTitle`),
-    caption: localise(`lprns:${noteType}:caption`),
-    heading: localise(`lprns:${noteType}:checkHeading`),
-    introText: localise(`lprns:${noteType}:checkIntroText`),
-    authorisationText: localise(`lprns:${noteType}:checkAuthorisationText`),
-    insetText: localise(`lprns:${noteType}:checkInsetText`),
+    pageTitle: localise(`lprns:${noteTypeKey}:checkPageTitle`),
+    caption: localise(`lprns:${noteTypeKey}:caption`),
+    heading: localise(`lprns:${noteTypeKey}:checkHeading`),
+    introText: localise(`lprns:${noteTypeKey}:checkIntroText`),
+    authorisationText: localise(`lprns:${noteTypeKey}:checkAuthorisationText`),
+    insetText: localise(`lprns:${noteTypeKey}:checkInsetText`),
     prnDetailsHeading: localise(
       isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
     ),
@@ -209,10 +210,10 @@ async function handleDraftView(
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     createButton: {
-      text: localise(`lprns:${noteType}:createButton`)
+      text: localise(`lprns:${noteTypeKey}:createButton`)
     },
     discardLink: {
-      text: localise(`lprns:${noteType}:discardLink`),
+      text: localise(`lprns:${noteTypeKey}:discardLink`),
       href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnDraft.id}/discard`
     },
     organisationId,
@@ -259,8 +260,8 @@ async function handleExistingView(
     throw Boom.notFound('Registration not found')
   }
 
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { noteType, noteTypeKey } = getNoteTypeDisplayNames(registration)
+  const isExporter = noteType === 'PERN'
 
   const backUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
@@ -293,6 +294,7 @@ async function handleExistingView(
     prn,
     isExporter,
     noteType,
+    noteTypeKey,
     isNotDraft,
     isAwaitingAuthorisation,
     prnDetailRows,
@@ -314,7 +316,8 @@ async function handleExistingView(
  * @param {object} params
  * @param {object} params.prn - PRN data from backend
  * @param {boolean} params.isExporter - Whether the registration is for an exporter
- * @param {string} params.noteType - 'prns' or 'perns'
+ * @param {'PRN' | 'PERN'} params.noteType - Uppercase display name
+ * @param {'prns' | 'perns'} params.noteTypeKey - Lowercase key for localisation
  * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
  * @param {boolean} params.isAwaitingAuthorisation - Whether the PRN is awaiting authorisation
  * @param {Array} params.prnDetailRows - PRN detail summary rows
@@ -332,6 +335,7 @@ function buildExistingPrnViewData({
   prn,
   isExporter,
   noteType,
+  noteTypeKey,
   isNotDraft,
   isAwaitingAuthorisation,
   prnDetailRows,
@@ -348,12 +352,12 @@ function buildExistingPrnViewData({
   const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
 
   return {
-    pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
-    heading: isExporter ? 'PERN' : 'PRN',
+    pageTitle: `${noteType} ${prn.id}`,
+    heading: noteType,
     showRegulatorLogos: isNotDraft,
     complianceYearText:
       isNotDraft && prn.accreditationYear != null
-        ? localise(`lprns:view:${noteType}:complianceYearText`, {
+        ? localise(`lprns:view:${noteTypeKey}:complianceYearText`, {
             year: `<strong>${prn.accreditationYear}</strong>`
           })
         : null,
@@ -366,13 +370,13 @@ function buildExistingPrnViewData({
     backUrl,
     issueButton: isAwaitingAuthorisation
       ? {
-          text: localise(`lprns:view:${noteType}:issueButton`),
+          text: localise(`lprns:view:${noteTypeKey}:issueButton`),
           action: request.localiseUrl(issueUrl)
         }
       : null,
     returnLink: {
       href: request.localiseUrl(returnUrl),
-      text: localise(`lprns:view:${noteType}:returnLink`)
+      text: localise(`lprns:view:${noteTypeKey}:returnLink`)
     }
   }
 }

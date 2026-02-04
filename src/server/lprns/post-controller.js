@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { config } from '#config/config.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
@@ -65,14 +66,6 @@ function getErrorMessageKey(detail) {
 }
 
 /**
- * @param {string} wasteProcessingType
- * @returns {string}
- */
-function getNoteType(wasteProcessingType) {
-  return wasteProcessingType === 'exporter' ? 'PERN' : 'PRN'
-}
-
-/**
  * Build error objects for form display
  * @param {Joi.ValidationError} validationError
  * @param {(key: string, params?: object) => string} localise
@@ -82,7 +75,7 @@ function getNoteType(wasteProcessingType) {
 function buildValidationErrors(validationError, localise, wasteProcessingType) {
   const errors = {}
   const errorList = []
-  const noteType = getNoteType(wasteProcessingType)
+  const { noteType } = getNoteTypeDisplayNames({ wasteProcessingType })
 
   for (const detail of validationError.details) {
     const field = detail.path[0]

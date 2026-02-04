@@ -1,3 +1,5 @@
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 
 /**
@@ -26,8 +28,7 @@ export function buildListViewData(
   }
 ) {
   const { t: localise } = request
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { noteTypeKey: noteType } = getNoteTypeDisplayNames(registration)
 
   const backUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registrationId}`

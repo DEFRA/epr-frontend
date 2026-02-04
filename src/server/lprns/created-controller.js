@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -28,8 +29,7 @@ export const createdController = {
     // Clear the session data
     request.yar.clear('prnCreated')
 
-    const noteType =
-      prnCreated.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+    const { noteTypeKey: noteType } = getNoteTypeDisplayNames(prnCreated)
 
     return h.view('lprns/created', {
       pageTitle: localise(`lprns:${noteType}:successPageTitle`),

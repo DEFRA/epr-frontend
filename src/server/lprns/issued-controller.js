@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getRecipientDisplayName } from './helpers/stub-recipients.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -41,8 +42,7 @@ export const issuedController = {
       )
     }
 
-    const isExporter = registration.wasteProcessingType === 'exporter'
-    const noteType = isExporter ? 'perns' : 'prns'
+    const { noteTypeKey: noteType } = getNoteTypeDisplayNames(registration)
 
     const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
     const homeUrl = `/organisations/${organisationId}/registrations/${registrationId}`

@@ -1,3 +1,5 @@
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 
@@ -11,8 +13,7 @@ import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js
  */
 export function buildCreatePrnViewData(request, { registration, recipients }) {
   const { t: localise } = request
-  const noteType =
-    registration.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+  const { noteTypeKey: noteType } = getNoteTypeDisplayNames(registration)
 
   const pageTitle = localise(`lprns:${noteType}:pageTitle`)
   const material = getLumpyDisplayMaterial(registration)
