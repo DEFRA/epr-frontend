@@ -157,20 +157,6 @@ describe('#buildListViewData', () => {
       )
     })
 
-    it('should return tab labels', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.tabs.awaitingAction).toBe('Awaiting action')
-      expect(result.tabs.issued).toBe('Issued')
-    })
-
     it('should return cancel hint with delete wording', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
@@ -184,19 +170,6 @@ describe('#buildListViewData', () => {
       expect(result.cancelHint).toBe(
         'If you delete or cancel a PRN, its tonnage will be added to your available waste balance.'
       )
-    })
-
-    it('should return no issued text for PRNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noIssuedText).toBe('No PRNs have been issued yet.')
     })
 
     it('should return table rows in govukTable format with total row', () => {
@@ -342,19 +315,6 @@ describe('#buildListViewData', () => {
       expect(result.cancelHint).toBe(
         'If you delete or cancel a PERN, its tonnage will be added to your available waste balance.'
       )
-    })
-
-    it('should return no issued text for PERNs', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-456',
-        registrationId: 'reg-002',
-        accreditationId: 'acc-002',
-        registration: exporterRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance
-      })
-
-      expect(result.noIssuedText).toBe('No PERNs have been issued yet.')
     })
   })
 

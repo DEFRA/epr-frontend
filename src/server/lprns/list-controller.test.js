@@ -484,7 +484,7 @@ describe('#listPrnsController', () => {
         expect(main.querySelector('.govuk-tabs')).toBeNull()
       })
 
-      it('should render tabs when PRNs exist but none are awaiting authorisation', async ({
+      it('should not render tabs when PRNs exist but none are awaiting authorisation', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -511,7 +511,7 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(main.querySelector('.govuk-tabs')).not.toBeNull()
+        expect(main.querySelector('.govuk-tabs')).toBeNull()
       })
 
       it('should not render tabs when only draft PRNs exist', async ({
