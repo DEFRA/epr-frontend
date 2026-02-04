@@ -1,11 +1,10 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
@@ -266,15 +265,7 @@ describe('#organisationController', () => {
       ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
     })
 
-    describe('when waste balance feature flag is enabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.wasteBalance', true)
-      })
-
-      afterAll(() => {
-        config.reset('featureFlags.wasteBalance')
-      })
-
+    describe('waste balance', () => {
       it('should not fetch waste balances when no displayable registrations', async ({
         server
       }) => {
@@ -328,37 +319,6 @@ describe('#organisationController', () => {
         expect(tableCells).toContain('1,234.56')
       })
     })
-
-    describe('when waste balance feature flag is disabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.wasteBalance', false)
-      })
-
-      afterAll(() => {
-        config.reset('featureFlags.wasteBalance')
-      })
-
-      it('should not display waste balance column', async ({ server }) => {
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureSingleReprocessing)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943906',
-          auth: mockAuth
-        })
-
-        const $ = load(result)
-
-        const tableHeaders = $('thead th')
-          .map((_, el) => $(el).text())
-          .get()
-
-        expect(tableHeaders).not.toContain('Available waste balance (tonnes)')
-        expect(tableHeaders).toHaveLength(4) // Material, Registration, Accreditation, Actions
-      })
-    })
   })
 
   describe('unhappy Paths', () => {
@@ -379,42 +339,32 @@ describe('#organisationController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    describe('when waste balance feature flag is enabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.wasteBalance', true)
+    it('should handle waste balance fetch failure gracefully and show 0.00', async ({
+      server
+    }) => {
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureSingleReprocessing)
+
+      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockRejectedValue(
+        new Error('Waste balance service unavailable')
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943906',
+        auth: mockAuth
       })
 
-      afterAll(() => {
-        config.reset('featureFlags.wasteBalance')
-      })
+      const $ = load(result)
 
-      it('should handle waste balance fetch failure gracefully and show 0.00', async ({
-        server
-      }) => {
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureSingleReprocessing)
+      expect(statusCode).toBe(statusCodes.ok)
 
-        vi.mocked(
-          fetchWasteBalancesModule.fetchWasteBalances
-        ).mockRejectedValue(new Error('Waste balance service unavailable'))
+      const tableCells = $('tbody td')
+        .map((_, el) => $(el).text().trim())
+        .get()
 
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943906',
-          auth: mockAuth
-        })
-
-        const $ = load(result)
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const tableCells = $('tbody td')
-          .map((_, el) => $(el).text().trim())
-          .get()
-
-        expect(tableCells).toContain('0.00')
-      })
+      expect(tableCells).toContain('0.00')
     })
 
     it('should redirect to logged-out when not authenticated', async ({

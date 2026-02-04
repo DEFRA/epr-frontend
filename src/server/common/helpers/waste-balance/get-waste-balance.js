@@ -1,13 +1,12 @@
-import { config } from '#config/config.js'
 import { fetchWasteBalances } from './fetch-waste-balances.js'
 
 /**
- * Fetches waste balance for a single accreditation with feature flag check and error handling
+ * Fetches waste balance for a single accreditation with error handling
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
  * @param {string} idToken - JWT ID token for authorization
  * @param {object} logger - Logger instance for error reporting
- * @returns {Promise<WasteBalance|null>} Balance data or null if unavailable/disabled
+ * @returns {Promise<WasteBalance|null>} Balance data or null if unavailable
  */
 async function getWasteBalance(
   organisationId,
@@ -15,10 +14,6 @@ async function getWasteBalance(
   idToken,
   logger
 ) {
-  if (!config.get('featureFlags.wasteBalance')) {
-    return null
-  }
-
   try {
     const wasteBalanceMap = await fetchWasteBalances(
       organisationId,
