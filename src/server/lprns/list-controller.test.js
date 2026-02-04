@@ -243,10 +243,26 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
         const table = getByRole(main, 'table')
 
-        expect(getByText(table, /^Issued to$/i)).toBeDefined()
+        expect(
+          getByText(table, /Packaging waste producer or compliance scheme/i)
+        ).toBeDefined()
         expect(getByText(table, /Date created/i)).toBeDefined()
         expect(getByText(table, /Tonnage/i)).toBeDefined()
         expect(getByText(table, /Status/i)).toBeDefined()
+      })
+
+      it('should render select heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Select a PRN/i)).toBeDefined()
       })
 
       it('should render select links for each PRN row', async ({ server }) => {
@@ -280,7 +296,7 @@ describe('#listPrnsController', () => {
         expect(
           getByText(
             main,
-            /If you cancel a PRN, its tonnage will be added to your available waste balance/i
+            /If you delete or cancel a PRN, its tonnage will be added to your available waste balance/i
           )
         ).toBeDefined()
       })
