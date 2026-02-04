@@ -54,7 +54,10 @@ export const listController = {
 
     const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
 
-    // Map backend response and filter to awaiting authorisation (PAE-948 requirement)
+    const hasIssuedPrns = prns.some(
+      (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
+    )
+
     const prnsAwaitingAuthorisation = prns
       .filter((prn) => prn.status === 'awaiting_authorisation')
       .map((prn) => ({
@@ -72,7 +75,8 @@ export const listController = {
       registration,
       prns: prnsAwaitingAuthorisation,
       hasCreatedPrns,
-      wasteBalance
+      wasteBalance,
+      hasIssuedPrns
     })
 
     return h.view('lprns/list', viewData)

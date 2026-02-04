@@ -324,6 +324,85 @@ describe('#listPrnsController', () => {
       })
     })
 
+    describe('conditional tabs', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+      })
+
+      it('should not render tabs when no issued PRNs exist', async ({
+        server
+      }) => {
+        const onlyAwaitingAuth = mockPrns.filter(
+          (prn) => prn.status === 'awaiting_authorisation'
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          onlyAwaitingAuth
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const tabs = main.querySelector('.govuk-tabs')
+        expect(tabs).toBeNull()
+      })
+
+      it('should render tabs when issued PRNs exist', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const tabs = main.querySelector('.govuk-tabs')
+        expect(tabs).not.toBeNull()
+      })
+
+      it('should show content directly without tabs when no issued PRNs', async ({
+        server
+      }) => {
+        const onlyAwaitingAuth = mockPrns.filter(
+          (prn) => prn.status === 'awaiting_authorisation'
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          onlyAwaitingAuth
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /PRNs awaiting authorisation/i)).toBeDefined()
+        expect(getByRole(main, 'table')).toBeDefined()
+        expect(
+          getByText(
+            main,
+            /If you delete or cancel a PRN, its tonnage will be added to your available waste balance/i
+          )
+        ).toBeDefined()
+      })
+    })
+
     describe('error handling', () => {
       it('should return 404 when registration not found', async ({
         server
@@ -484,7 +563,7 @@ describe('#listPrnsController', () => {
         expect(main.querySelector('.govuk-tabs')).toBeNull()
       })
 
-      it('should not render tabs when PRNs exist but none are awaiting authorisation', async ({
+      it('should render tabs when PRNs exist with issued status', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -507,7 +586,37 @@ describe('#listPrnsController', () => {
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result)
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.querySelector('.govuk-tabs')).not.toBeNull()
+      })
+
+      it('should not render tabs when non-draft PRNs exist but none are issued', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            id: 'prn-004',
+            issuedToOrganisation: 'Auth Only Corp',
+            createdAt: '2026-01-20T00:00:00.000Z',
+            tonnage: 30,
+            material: 'glass',
+            status: 'awaiting_authorisation'
+          }
+        ])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
