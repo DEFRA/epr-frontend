@@ -89,7 +89,7 @@ describe('#deleteController', () => {
     )
     vi.mocked(updatePrnStatus).mockResolvedValue({
       ...mockPrnAwaitingAuth,
-      status: 'cancelled'
+      status: 'deleted'
     })
   })
 
@@ -253,7 +253,7 @@ describe('#deleteController', () => {
           registrationId,
           accreditationId,
           prnId,
-          { status: 'cancelled' },
+          { status: 'deleted' },
           mockCredentials.idToken
         )
       })

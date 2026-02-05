@@ -133,7 +133,7 @@ describe('#discardController', () => {
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue({
       ...mockPrnCreated,
-      status: 'cancelled'
+      status: 'discarded'
     })
   })
 
@@ -430,7 +430,7 @@ describe('#discardController', () => {
           registrationId,
           accreditationId,
           prnId,
-          { status: 'cancelled' },
+          { status: 'discarded' },
           mockCredentials.idToken
         )
       })
