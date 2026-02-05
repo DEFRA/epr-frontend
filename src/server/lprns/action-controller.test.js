@@ -342,6 +342,27 @@ describe('#actionController', () => {
       expect(getByText(main, /There is a problem/i)).toBeDefined()
     })
 
+    it('displays error summary when redirected with issue_failed error', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `${actionUrl}?error=issue_failed`,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      const errorSummary = main.querySelector('.govuk-error-summary')
+      expect(errorSummary).not.toBeNull()
+      expect(getByText(main, /There is a problem/i)).toBeDefined()
+      expect(getByText(main, /could not issue this PRN or PERN/i)).toBeDefined()
+    })
+
     it('hides status row for draft PRN', async ({ server }) => {
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
         ...mockPrnAwaitingAuth,
