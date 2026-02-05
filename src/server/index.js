@@ -14,12 +14,12 @@ import { secureContext } from '#server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '#server/common/helpers/session-cache/session-cache.js'
 import { userAgentProtection } from '#server/common/helpers/useragent-protection.js'
+import wasteOrganisationsFixture from '#server/common/helpers/waste-organisations/fixtures/in-memory.json' with { type: 'json' }
 import { createWasteOrganisationsPlugin } from '#server/common/helpers/waste-organisations/waste-organisations.plugin.js'
 import Crumb from '@hapi/crumb'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
 import path from 'path'
-import wasteOrganisationsFixture from '../../fixtures/waste-organisations/test-sample.json' with { type: 'json' }
 import { initI18n } from './common/helpers/i18n/i18n.js'
 import { i18nPlugin } from './common/helpers/i18next.js'
 import { router } from './router.js'
