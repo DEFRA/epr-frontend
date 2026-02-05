@@ -10,6 +10,7 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 
@@ -91,7 +92,7 @@ function buildActionViewData({
   recipientDisplayName
 }) {
   const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { noteType } = getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   const displayMaterial = getLumpyDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'
@@ -117,11 +118,11 @@ function buildActionViewData({
   })
 
   const viewData = {
-    pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
-    heading: isExporter ? 'PERN' : 'PRN',
-    insetText: localise(`lprns:action:${noteType}:insetText`),
+    pageTitle: `${noteType} ${prn.id}`,
+    heading: noteType,
+    insetText: localise('lprns:action:insetText', { noteType }),
     viewLink: {
-      text: localise(`lprns:action:${noteType}:viewLink`),
+      text: localise('lprns:action:viewLink', { noteType }),
       href: request.localiseUrl(`${basePath}/${prnId}/view`)
     },
     prnDetailsHeading: localise(
@@ -133,19 +134,19 @@ function buildActionViewData({
     backUrl: request.localiseUrl(basePath),
     issueButton: isAwaitingAuthorisation
       ? {
-          text: localise(`lprns:action:${noteType}:issueButton`),
+          text: localise('lprns:action:issueButton', { noteType }),
           action: request.localiseUrl(`${basePath}/${prnId}/issue`)
         }
       : null,
     deleteLink: isAwaitingAuthorisation
       ? {
-          text: localise(`lprns:action:${noteType}:deleteLink`),
+          text: localise('lprns:action:deleteLink', { noteType }),
           href: request.localiseUrl(`${basePath}/${prnId}/delete`)
         }
       : null,
     returnLink: {
       href: request.localiseUrl(basePath),
-      text: localise(`lprns:action:${noteType}:returnLink`)
+      text: localise('lprns:action:returnLink', { noteType })
     }
   }
 

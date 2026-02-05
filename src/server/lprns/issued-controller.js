@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 /**
@@ -47,31 +48,31 @@ export const issuedController = {
       prn.issuedToOrganisation
     )
 
-    const isExporter = registration.wasteProcessingType === 'exporter'
-    const noteType = isExporter ? 'perns' : 'prns'
+    const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
     const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
     const homeUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
 
     return h.view('lprns/issued', {
-      pageTitle: localise(`lprns:issued:${noteType}:pageTitle`),
-      heading: localise(`lprns:issued:${noteType}:heading`, {
+      pageTitle: localise('lprns:issued:pageTitle', { noteType }),
+      heading: localise('lprns:issued:heading', {
+        noteType,
         recipient: recipientDisplayName
       }),
-      prnNumberLabel: localise(`lprns:issued:${noteType}:prnNumberLabel`),
+      prnNumberLabel: localise('lprns:issued:prnNumberLabel', { noteType }),
       prnNumber: prn.prnNumber,
       wasteBalanceMessage: localise('lprns:issued:wasteBalanceMessage'),
       viewButton: {
-        text: localise(`lprns:issued:${noteType}:viewButton`),
+        text: localise('lprns:issued:viewButton', { noteType }),
         href: viewUrl
       },
       issueAnotherLink: {
-        text: localise(`lprns:issued:${noteType}:issueAnotherLink`),
+        text: localise('lprns:issued:issueAnotherLink', { noteType }),
         href: listUrl
       },
       managePrnsLink: {
-        text: localise(`lprns:issued:${noteType}:managePrnsLink`),
+        text: localise('lprns:issued:managePrnsLink', { noteTypePlural }),
         href: listUrl
       },
       returnHomeLink: {

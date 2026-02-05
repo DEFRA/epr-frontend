@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -28,17 +29,18 @@ export const createdController = {
     // Clear the session data
     request.yar.clear('prnCreated')
 
-    const noteType =
-      prnCreated.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+    const { noteType } = getNoteTypeDisplayNames(prnCreated)
 
     return h.view('lprns/created', {
-      pageTitle: localise(`lprns:${noteType}:successPageTitle`),
-      heading: localise(`lprns:${noteType}:successHeading`),
-      tonnageLabel: localise(`lprns:${noteType}:successTonnageLabel`),
+      pageTitle: localise('lprns:create:successPageTitle', { noteType }),
+      heading: localise('lprns:create:successHeading', { noteType }),
+      tonnageLabel: localise('lprns:create:successTonnageLabel'),
       tonnage: prnCreated.tonnage,
       tonnageSuffix: localise('lprns:tonnageSuffix'),
       nextStepsHeading: localise('lprns:successNextStepsHeading'),
-      nextStepsText: localise(`lprns:${noteType}:successNextStepsText`),
+      nextStepsText: localise('lprns:create:successNextStepsText', {
+        noteType
+      }),
       returnLink: localise('lprns:successReturnLink'),
       organisationId,
       registrationId,
