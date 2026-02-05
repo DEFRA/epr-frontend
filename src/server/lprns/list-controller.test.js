@@ -338,7 +338,7 @@ describe('#listPrnsController', () => {
         )
       })
 
-      it('should not render tabs when no issued PRNs exist', async ({
+      it('should render tabs when non-draft PRNs exist even without issued PRNs', async ({
         server
       }) => {
         const onlyAwaitingAuth = mockPrns.filter(
@@ -359,7 +359,7 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
 
         const tabs = main.querySelector('.govuk-tabs')
-        expect(tabs).toBeNull()
+        expect(tabs).not.toBeNull()
       })
 
       it('should render tabs when issued PRNs exist', async ({ server }) => {
@@ -422,7 +422,7 @@ describe('#listPrnsController', () => {
         expect(getByText(issuedPanel, /22 January 2026/)).toBeDefined()
       })
 
-      it('should show content directly without tabs when no issued PRNs', async ({
+      it('should show awaiting action content inside tabs when no issued PRNs', async ({
         server
       }) => {
         const onlyAwaitingAuth = mockPrns.filter(
@@ -441,12 +441,15 @@ describe('#listPrnsController', () => {
         const dom = new JSDOM(result, { url: 'http://localhost' })
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
+        const awaitingPanel = main.querySelector('#awaiting-action')
 
-        expect(getByText(main, /PRNs awaiting authorisation/i)).toBeDefined()
-        expect(getByRole(main, 'table')).toBeDefined()
+        expect(
+          getByText(awaitingPanel, /PRNs awaiting authorisation/i)
+        ).toBeDefined()
+        expect(getByRole(awaitingPanel, 'table')).toBeDefined()
         expect(
           getByText(
-            main,
+            awaitingPanel,
             /If you delete or cancel a PRN, its tonnage will be added to your available waste balance/i
           )
         ).toBeDefined()
@@ -645,7 +648,7 @@ describe('#listPrnsController', () => {
         expect(main.querySelector('.govuk-tabs')).not.toBeNull()
       })
 
-      it('should not render tabs when non-draft PRNs exist but none are issued', async ({
+      it('should render tabs when non-draft PRNs exist even if none are issued', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -672,7 +675,7 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(main.querySelector('.govuk-tabs')).toBeNull()
+        expect(main.querySelector('.govuk-tabs')).not.toBeNull()
       })
 
       it('should not render tabs when only draft PRNs exist', async ({
