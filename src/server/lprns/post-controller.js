@@ -1,5 +1,3 @@
-/** @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js' */
-
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
@@ -102,18 +100,6 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
- * Gets the display name for an organisation by ID
- * @param {WasteOrganisation[]} organisations
- * @param {string} organisationId
- * @returns {string} The display name or the original ID if not found
- */
-export function getOrganisationDisplayName(organisations, organisationId) {
-  const options = mapToSelectOptions(organisations)
-  const item = options.find((r) => r.value === organisationId)
-  return item?.text ?? organisationId
-}
-
-/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const postController = {
@@ -172,7 +158,14 @@ export const postController = {
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
 
-    const recipientName = getOrganisationDisplayName(organisations, recipient)
+    const organisation = organisations.find((org) => org.id === recipient)
+    const issuedToOrganisation = organisation
+      ? {
+          id: organisation.id,
+          name: organisation.name,
+          tradingName: organisation.tradingName
+        }
+      : { id: recipient, name: recipient, tradingName: null }
 
     try {
       // Create PRN as draft in backend
@@ -181,10 +174,7 @@ export const postController = {
         registrationId,
         accreditationId,
         {
-          issuedToOrganisation: {
-            id: recipient,
-            name: recipientName
-          },
+          issuedToOrganisation,
           tonnage: Number.parseInt(tonnage, 10),
           material,
           notes: notes || undefined
@@ -199,7 +189,7 @@ export const postController = {
         tonnageInWords: tonnageToWords(result.tonnage),
         material: result.material,
         status: result.status,
-        recipientName: getOrganisationDisplayName(organisations, recipient),
+        recipientName: issuedToOrganisation.name,
         notes: notes || '',
         wasteProcessingType: result.wasteProcessingType,
         processToBeUsed: result.processToBeUsed,

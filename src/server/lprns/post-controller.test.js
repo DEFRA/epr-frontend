@@ -162,7 +162,8 @@ describe('#postCreatePrnController', () => {
           {
             issuedToOrganisation: {
               id: validPayload.recipient,
-              name: 'Bigco Packaging Ltd, Zig Zag road, Box Hill, Tadworth, KT20 7LB'
+              name: 'Bigco Packaging Ltd',
+              tradingName: undefined
             },
             tonnage: 100,
             material: 'plastic',
@@ -241,7 +242,8 @@ describe('#postCreatePrnController', () => {
           expect.objectContaining({
             issuedToOrganisation: {
               id: unknownRecipient,
-              name: unknownRecipient
+              name: unknownRecipient,
+              tradingName: null
             }
           }),
           'mock-id-token'
