@@ -167,8 +167,8 @@ function buildActionPrnDetailRows({
     rows.push(buildStatusRow(localise, statusConfig))
   }
 
-  rows.push(...buildPrnCoreRows(prn, localise))
   rows.push(
+    ...buildPrnCoreRows(prn, localise),
     ...buildPrnAuthorisationRows(prn, organisationData, localise, {
       includeIssuerRow: true
     })
