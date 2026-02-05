@@ -136,21 +136,27 @@ function buildActionViewData({
     }
   }
 
-  if (request.query.error === 'insufficient_balance') {
-    viewData.errors = {}
-    viewData.errorSummary = {
-      title: localise('lprns:errorSummaryTitle'),
-      list: [{ text: localise('lprns:insufficientBalanceError') }]
-    }
-  } else if (request.query.error === 'issue_failed') {
-    viewData.errors = {}
-    viewData.errorSummary = {
-      title: localise('lprns:errorSummaryTitle'),
-      list: [{ text: localise('lprns:issueFailedError') }]
-    }
-  }
+  addErrorSummaryIfNeeded(viewData, request.query.error, localise)
 
   return viewData
+}
+
+/**
+ * Adds error summary to view data if an error query param is present
+ */
+function addErrorSummaryIfNeeded(viewData, errorType, localise) {
+  const errorMessageKey = {
+    insufficient_balance: 'lprns:insufficientBalanceError',
+    issue_failed: 'lprns:issueFailedError'
+  }[errorType]
+
+  if (errorMessageKey) {
+    viewData.errors = {}
+    viewData.errorSummary = {
+      title: localise('lprns:errorSummaryTitle'),
+      list: [{ text: localise(errorMessageKey) }]
+    }
+  }
 }
 
 /**
