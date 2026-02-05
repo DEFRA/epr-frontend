@@ -219,7 +219,9 @@ describe('#createdController', () => {
     })
 
     describe('success page (after creating PRN)', () => {
-      it('displays success page with PRN details', async ({ server }) => {
+      it('displays success page with PRN created heading', async ({
+        server
+      }) => {
         const { cookies } = await createPrnAndConfirm(server)
 
         const { result, statusCode } = await server.inject({
@@ -236,11 +238,31 @@ describe('#createdController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /PRN created/i)).toBeDefined()
-        expect(getByText(main, /100/)).toBeDefined()
-        expect(getByText(main, /tonnes/i)).toBeDefined()
       })
 
-      it('displays what happens next section', async ({ server }) => {
+      it('displays status awaiting authorisation in panel', async ({
+        server
+      }) => {
+        const { cookies } = await createPrnAndConfirm(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const panel = body.querySelector('.govuk-panel--confirmation')
+
+        expect(panel.textContent).toContain('Status:')
+        expect(panel.textContent).toContain('Awaiting authorisation')
+      })
+
+      it('displays View PRN button that opens in new tab', async ({
+        server
+      }) => {
         const { cookies } = await createPrnAndConfirm(server)
 
         const { result } = await server.inject({
@@ -253,11 +275,16 @@ describe('#createdController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
+        const viewButton = getByText(main, /View PRN \(opens in a new tab\)/i)
 
-        expect(getByText(main, /What happens next/i)).toBeDefined()
+        expect(viewButton).toBeDefined()
+        expect(viewButton.getAttribute('target')).toBe('_blank')
+        expect(viewButton.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+        )
       })
 
-      it('displays return link to registration dashboard', async ({
+      it('displays what happens next section with waste balance message', async ({
         server
       }) => {
         const { cookies } = await createPrnAndConfirm(server)
@@ -273,11 +300,73 @@ describe('#createdController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const returnLink = getByText(main, /Return to registration dashboard/i)
+        expect(getByText(main, /What happens next/i)).toBeDefined()
+        expect(
+          getByText(main, /Your available waste balance has been updated/i)
+        ).toBeDefined()
+      })
+
+      it('displays PRNs page link within issue text', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const prnsPageLink = getByText(main, /PRNs page/i)
+
+        expect(prnsPageLink).toBeDefined()
+        expect(prnsPageLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+        )
+      })
+
+      it('displays Create another PRN link', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const createAnotherLink = getByText(main, /Create another PRN/i)
+
+        expect(createAnotherLink).toBeDefined()
+        expect(createAnotherLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+        )
+      })
+
+      it('displays return to home link', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const returnLink = getByText(main, /Return to home/i)
 
         expect(returnLink).toBeDefined()
         expect(returnLink.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}`
+          `/organisations/${organisationId}`
         )
       })
 
@@ -315,6 +404,11 @@ describe('#createdController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /PERN created/i)).toBeDefined()
+        expect(
+          getByText(main, /View PERN \(opens in a new tab\)/i)
+        ).toBeDefined()
+        expect(getByText(main, /PERNs page/i)).toBeDefined()
+        expect(getByText(main, /Create another PERN/i)).toBeDefined()
       })
 
       it('redirects to view when no session data', async ({ server }) => {
