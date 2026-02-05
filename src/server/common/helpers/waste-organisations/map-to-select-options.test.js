@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-
-import {
-  getOrganisationDisplayName,
-  mapToSelectOptions
-} from './map-to-select-options.js'
+import { mapToSelectOptions } from './map-to-select-options.js'
 
 describe('#mapToSelectOptions', () => {
   it('should sort options alphabetically by display text', () => {
@@ -94,54 +90,5 @@ describe('#mapToSelectOptions', () => {
     const result = mapToSelectOptions([])
 
     expect(result).toStrictEqual([])
-  })
-})
-
-describe('#getOrganisationDisplayName', () => {
-  const organisations = [
-    {
-      id: 'org-1',
-      name: 'Test Organisation',
-      tradingName: null,
-      address: {
-        addressLine1: '1 High St',
-        town: 'London',
-        postcode: 'W1 1AA'
-      }
-    },
-    {
-      id: 'org-2',
-      name: 'Another Org',
-      tradingName: 'Trading Name',
-      address: {
-        addressLine1: '2 Low St',
-        town: 'Bristol',
-        postcode: 'BS1 1BB'
-      }
-    }
-  ]
-
-  it('should return display name when organisation is found', () => {
-    const result = getOrganisationDisplayName(organisations, 'org-1')
-
-    expect(result).toBe('Test Organisation, 1 High St, London, W1 1AA')
-  })
-
-  it('should use trading name when available', () => {
-    const result = getOrganisationDisplayName(organisations, 'org-2')
-
-    expect(result).toBe('Trading Name, 2 Low St, Bristol, BS1 1BB')
-  })
-
-  it('should return the original ID when organisation is not found', () => {
-    const result = getOrganisationDisplayName(organisations, 'unknown-id')
-
-    expect(result).toBe('unknown-id')
-  })
-
-  it('should return the original ID when organisations list is empty', () => {
-    const result = getOrganisationDisplayName([], 'any-id')
-
-    expect(result).toBe('any-id')
   })
 })

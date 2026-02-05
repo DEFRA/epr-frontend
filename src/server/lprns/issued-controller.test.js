@@ -64,7 +64,7 @@ const fixtureExporter = {
 const mockIssuedPrn = {
   id: 'prn-789',
   prnNumber: 'ER2612345A',
-  issuedToOrganisation: 'ComplyPak Ltd',
+  issuedToOrganisation: { id: 'producer-1', name: 'ComplyPak Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_acceptance'
@@ -73,7 +73,7 @@ const mockIssuedPrn = {
 const mockIssuedPern = {
   id: 'pern-123',
   prnNumber: 'EX2654321B',
-  issuedToOrganisation: 'Export Corp',
+  issuedToOrganisation: { id: 'exporter-1', name: 'Export Corp' },
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_acceptance'
@@ -173,7 +173,7 @@ describe('#issuedController', () => {
         ).toBeDefined()
       })
 
-      it('displays View PRN (PDF) button linking to certificate page in new tab', async ({
+      it('displays View PRN button linking to certificate page in new tab', async ({
         server
       }) => {
         const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
@@ -191,7 +191,7 @@ describe('#issuedController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const viewButton = getByRole(main, 'button', { name: /View PRN/i })
+        const viewButton = getByRole(main, 'button', { name: 'View PRN' })
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('href')).toBe(viewUrl)
         expect(viewButton.getAttribute('target')).toBe('_blank')

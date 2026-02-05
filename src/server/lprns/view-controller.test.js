@@ -105,7 +105,7 @@ const mockPrnStatusUpdated = {
 
 const mockPrnFromBackend = {
   id: 'prn-789',
-  issuedToOrganisation: 'producer-1',
+  issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation',
@@ -119,7 +119,7 @@ const mockPrnFromBackend = {
 
 const mockPernFromBackend = {
   id: 'pern-123',
-  issuedToOrganisation: 'Export Solutions Ltd',
+  issuedToOrganisation: { id: 'export-1', name: 'Export Solutions Ltd' },
   tonnage: 50,
   material: 'glass',
   status: 'issued',
@@ -213,12 +213,13 @@ describe('#viewController', () => {
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 
-      it('displays buyer name from waste organisations service when backend returns org ID', async ({
-        server
-      }) => {
+      it('displays recipient name from PRN data', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
-          issuedToOrganisation: 'producer-1'
+          issuedToOrganisation: {
+            id: 'producer-1',
+            name: 'Custom Recipient Ltd'
+          }
         })
 
         const { result, statusCode } = await server.inject({
@@ -233,7 +234,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+        expect(getByText(main, /Custom Recipient Ltd/i)).toBeDefined()
         const html = body.innerHTML
         expect(html).not.toContain('>producer-1<')
       })
@@ -836,6 +837,30 @@ describe('#viewController', () => {
             /This PRN relates to waste accepted for reprocessing/i
           )
         ).toBeDefined()
+      })
+
+      it('should render complianceYearText with year in strong tags', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          accreditationYear: 2026
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const complianceText = main.querySelector('.govuk-body')
+        expect(complianceText.innerHTML).toContain('<strong>2026</strong>')
       })
 
       it('does not display error summary on certificate page (errors shown on action page)', async ({

@@ -162,7 +162,8 @@ describe('#postCreatePrnController', () => {
           {
             issuedToOrganisation: {
               id: validPayload.recipient,
-              name: 'Bigco Packaging Ltd, Zig Zag road, Box Hill, Tadworth, KT20 7LB'
+              name: 'Bigco Packaging Ltd',
+              tradingName: undefined
             },
             tonnage: 100,
             material: 'plastic',
@@ -206,19 +207,9 @@ describe('#postCreatePrnController', () => {
         )
       })
 
-      it('should use recipient value as name when not in organisations list', async ({
+      it('should return 400 when recipient not in organisations list', async ({
         server
       }) => {
-        vi.mocked(createPrn).mockResolvedValue({
-          id: 'prn-789',
-          tonnage: 100,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
-
         const { cookie, crumb } = await getCsrfToken(server, url, {
           auth: mockAuth
         })
@@ -233,19 +224,8 @@ describe('#postCreatePrnController', () => {
           payload: { ...validPayload, recipient: unknownRecipient, crumb }
         })
 
-        expect(statusCode).toBe(statusCodes.found)
-        expect(createPrn).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          accreditationId,
-          expect.objectContaining({
-            issuedToOrganisation: {
-              id: unknownRecipient,
-              name: unknownRecipient
-            }
-          }),
-          'mock-id-token'
-        )
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(createPrn).not.toHaveBeenCalled()
       })
     })
 

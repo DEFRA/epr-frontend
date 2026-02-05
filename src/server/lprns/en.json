@@ -87,7 +87,7 @@
       "pageTitle": "PRN issued",
       "heading": "PRN issued to {{recipient}}",
       "prnNumberLabel": "PRN number:",
-      "viewButton": "View PRN (PDF)",
+      "viewButton": "View PRN",
       "issueAnotherLink": "Issue another PRN",
       "managePrnsLink": "Manage PRNs"
     },
@@ -95,7 +95,7 @@
       "pageTitle": "PERN issued",
       "heading": "PERN issued to {{recipient}}",
       "prnNumberLabel": "PERN number:",
-      "viewButton": "View PERN (PDF)",
+      "viewButton": "View PERN",
       "issueAnotherLink": "Issue another PERN",
       "managePrnsLink": "Manage PERNs"
     }
@@ -230,12 +230,12 @@
     "dateCreated": "Date created",
     "prns": {
       "heading": "Packaging recycling note",
-      "complianceYearText": "This PRN relates to waste accepted for reprocessing in {{year}} and can count towards {{year}} obligations.",
+      "complianceYearText": "This PRN relates to waste accepted for reprocessing in {{- year}} and can count towards {{- year}} obligations.",
       "returnLink": "Return to PRN list"
     },
     "perns": {
       "heading": "Packaging export recycling note",
-      "complianceYearText": "This PERN relates to waste accepted for export in {{year}} and can count towards {{year}} obligations.",
+      "complianceYearText": "This PERN relates to waste accepted for export in {{- year}} and can count towards {{- year}} obligations.",
       "returnLink": "Return to PERN list"
     }
   }
