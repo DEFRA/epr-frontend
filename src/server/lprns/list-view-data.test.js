@@ -43,13 +43,20 @@ const createMockRequest = () => ({
       'lprns:list:status:cancelled': 'Cancelled',
       'lprns:list:prns:issuedHeading': 'Issued PRNs',
       'lprns:list:perns:issuedHeading': 'Issued PERNs',
-      'lprns:list:issuedTable:prnNumberHeading': 'PRN number',
-      'lprns:list:issuedTable:recipientHeading':
+      'lprns:list:prns:issuedTable:noteNumberHeading': 'PRN number',
+      'lprns:list:prns:issuedTable:recipientHeading':
         'Producer or compliance scheme',
-      'lprns:list:issuedTable:dateIssuedHeading': 'Date issued',
-      'lprns:list:issuedTable:statusHeading': 'Status',
-      'lprns:list:issuedTable:actionHeading': 'View in new tab',
-      'lprns:list:issuedTable:selectText': 'Select'
+      'lprns:list:prns:issuedTable:dateIssuedHeading': 'Date issued',
+      'lprns:list:prns:issuedTable:statusHeading': 'Status',
+      'lprns:list:prns:issuedTable:actionHeading': 'View in new tab',
+      'lprns:list:prns:issuedTable:selectText': 'Select',
+      'lprns:list:perns:issuedTable:noteNumberHeading': 'PERN number',
+      'lprns:list:perns:issuedTable:recipientHeading':
+        'Producer or compliance scheme',
+      'lprns:list:perns:issuedTable:dateIssuedHeading': 'Date issued',
+      'lprns:list:perns:issuedTable:statusHeading': 'Status',
+      'lprns:list:perns:issuedTable:actionHeading': 'View in new tab',
+      'lprns:list:perns:issuedTable:selectText': 'Select'
     }
     return translations[key] || key
   }),
@@ -487,7 +494,7 @@ describe('#buildListViewData', () => {
       expect(result.issuedTable.rows[0][3].html).toContain('govuk-tag')
     })
 
-    it('should return issued table headings matching mockup', () => {
+    it('should return issued table headings for PRNs', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -501,6 +508,28 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.issuedTable.headings.prnNumber).toBe('PRN number')
+      expect(result.issuedTable.headings.recipient).toBe(
+        'Producer or compliance scheme'
+      )
+      expect(result.issuedTable.headings.dateIssued).toBe('Date issued')
+      expect(result.issuedTable.headings.status).toBe('Status')
+      expect(result.issuedTable.headings.action).toBe('View in new tab')
+    })
+
+    it('should return issued table headings for PERNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: exporterRegistration,
+        prns: stubPrns,
+        issuedPrns: stubIssuedPrns,
+        hasCreatedPrns: true,
+
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.issuedTable.headings.prnNumber).toBe('PERN number')
       expect(result.issuedTable.headings.recipient).toBe(
         'Producer or compliance scheme'
       )
