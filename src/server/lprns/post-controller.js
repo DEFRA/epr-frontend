@@ -160,13 +160,16 @@ export const postController = {
       await request.wasteOrganisationsService.getOrganisations()
 
     const organisation = organisations.find((org) => org.id === recipient)
-    const issuedToOrganisation = organisation
-      ? {
-          id: organisation.id,
-          name: organisation.name,
-          tradingName: organisation.tradingName
-        }
-      : { id: recipient, name: recipient, tradingName: null }
+
+    if (!organisation) {
+      throw Boom.badRequest('Selected recipient organisation not found')
+    }
+
+    const issuedToOrganisation = {
+      id: organisation.id,
+      name: organisation.name,
+      tradingName: organisation.tradingName
+    }
 
     try {
       // Create PRN as draft in backend
