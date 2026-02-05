@@ -737,7 +737,7 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      it('displays Issue PRN button when status is awaiting_authorisation', async ({
+      it('does not display Issue button on certificate page (actions are on action page)', async ({
         server
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
@@ -757,125 +757,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByRole(main, 'button', { name: /Issue PRN/i })).toBeDefined()
-      })
-
-      it('displays Issue PERN button for exporter when status is awaiting_authorisation', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPernFromBackend,
-          status: 'awaiting_authorisation'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: pernViewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(getByRole(main, 'button', { name: /Issue PERN/i })).toBeDefined()
-      })
-
-      it('does not display Issue button when status is issued', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'issued'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
         expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
-      })
-
-      it('does not display Issue button when status is cancelled', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'cancelled'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
-      })
-
-      it('does not display Issue button when status is draft', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'draft'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
-      })
-
-      it('Issue button form posts to /issue endpoint', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'awaiting_authorisation'
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        const issueButton = getByRole(main, 'button', { name: /Issue PRN/i })
-        const form = issueButton.closest('form')
-        expect(form.getAttribute('action')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
-        )
       })
 
       it('displays complianceYearText when accreditationYear is present', async ({
@@ -907,38 +789,12 @@ describe('#viewController', () => {
         ).toBeDefined()
       })
 
-      it('displays error summary when redirected with insufficient_balance error', async ({
+      it('does not display error summary on certificate page (errors shown on action page)', async ({
         server
       }) => {
         const { result, statusCode } = await server.inject({
           method: 'GET',
           url: `${viewUrl}?error=insufficient_balance`,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        const errorSummary = main.querySelector('.govuk-error-summary')
-        expect(errorSummary).not.toBeNull()
-        expect(getByText(main, /There is a problem/i)).toBeDefined()
-        expect(
-          getByText(
-            main,
-            /The tonnage you entered exceeds your available waste balance/i
-          )
-        ).toBeDefined()
-      })
-
-      it('does not display error summary without error query parameter', async ({
-        server
-      }) => {
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
           auth: mockAuth
         })
 
