@@ -1,18 +1,21 @@
+import { http, HttpResponse } from 'msw'
+import { setupServer } from 'msw/node'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it
+} from 'vitest'
+
 import { config } from '#config/config.js'
 import hapi from '@hapi/hapi'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import fixture from '../../../../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 import { createWasteOrganisationsPlugin } from './waste-organisations.plugin.js'
-
-vi.mock(import('./api-adapter.js'), () => ({
-  createApiWasteOrganisationsService: vi.fn(() => ({
-    getOrganisations: vi
-      .fn()
-      .mockResolvedValue({ organisations: [{ id: 'api-org' }] })
-  }))
-}))
 
 describe('#createWasteOrganisationsPlugin', () => {
   let server
@@ -23,79 +26,118 @@ describe('#createWasteOrganisationsPlugin', () => {
 
   afterEach(async () => {
     await server.stop()
-    config.reset('wasteOrganisationsApi.useInMemory')
   })
 
-  it('should use in-memory adapter when useInMemory is true', async () => {
-    config.set('wasteOrganisationsApi.useInMemory', true)
+  describe('inmemory', () => {
+    beforeEach(() => {
+      config.set('wasteOrganisationsApi.useInMemory', true)
+    })
 
-    await server.register(
-      createWasteOrganisationsPlugin({
-        initialOrganisations: fixture.organisations
+    afterEach(() => {
+      config.reset('wasteOrganisationsApi.useInMemory')
+    })
+
+    it('should return fixture organisations', async () => {
+      await server.register(
+        createWasteOrganisationsPlugin({
+          initialOrganisations: fixture.organisations
+        })
+      )
+      server.route({
+        method: 'GET',
+        path: '/test',
+        handler: async (request) => {
+          const { organisations } =
+            await request.wasteOrganisationsService.getOrganisations()
+          return { count: organisations.length }
+        },
+        options: { auth: false }
       })
-    )
-    server.route({
-      method: 'GET',
-      path: '/test',
-      handler: async (request) => {
-        const { organisations } =
-          await request.wasteOrganisationsService.getOrganisations()
-        return { count: organisations.length }
-      },
-      options: { auth: false }
+      await server.initialize()
+
+      const response = await server.inject({ method: 'GET', url: '/test' })
+      const result = JSON.parse(response.payload)
+
+      expect(result.count).toBe(8)
     })
-    await server.initialize()
 
-    const response = await server.inject({ method: 'GET', url: '/test' })
-    const result = JSON.parse(response.payload)
+    it('should return custom initial organisations', async () => {
+      const customOrgs = [{ id: 'custom-1', name: 'Custom' }]
+      await server.register(
+        createWasteOrganisationsPlugin({ initialOrganisations: customOrgs })
+      )
+      server.route({
+        method: 'GET',
+        path: '/test',
+        handler: async (request) => {
+          const { organisations } =
+            await request.wasteOrganisationsService.getOrganisations()
+          return { organisations }
+        },
+        options: { auth: false }
+      })
+      await server.initialize()
 
-    expect(result.count).toBe(8)
+      const response = await server.inject({ method: 'GET', url: '/test' })
+      const result = JSON.parse(response.payload)
+
+      expect(result.organisations).toStrictEqual(customOrgs)
+    })
   })
 
-  it('should use API adapter when useInMemory is false', async () => {
-    config.set('wasteOrganisationsApi.useInMemory', false)
+  describe('api', () => {
+    const apiUrl = 'http://waste-orgs-test.api'
+    const mockApiOrganisations = [{ id: 'api-org' }]
 
-    await server.register(createWasteOrganisationsPlugin())
-    server.route({
-      method: 'GET',
-      path: '/test',
-      handler: async (request) => {
-        const { organisations } =
-          await request.wasteOrganisationsService.getOrganisations()
-        return { organisations }
-      },
-      options: { auth: false }
-    })
-    await server.initialize()
-
-    const response = await server.inject({ method: 'GET', url: '/test' })
-    const result = JSON.parse(response.payload)
-
-    expect(result.organisations).toStrictEqual([{ id: 'api-org' }])
-  })
-
-  it('should use custom initial organisations for in-memory adapter', async () => {
-    config.set('wasteOrganisationsApi.useInMemory', true)
-
-    const customOrgs = [{ id: 'custom-1', name: 'Custom' }]
-    await server.register(
-      createWasteOrganisationsPlugin({ initialOrganisations: customOrgs })
+    const msw = setupServer(
+      http.get(apiUrl, () => HttpResponse.json(mockApiOrganisations))
     )
-    server.route({
-      method: 'GET',
-      path: '/test',
-      handler: async (request) => {
-        const { organisations } =
-          await request.wasteOrganisationsService.getOrganisations()
-        return { organisations }
-      },
-      options: { auth: false }
+
+    beforeAll(() => {
+      msw.listen({ onUnhandledRequest: 'error' })
     })
-    await server.initialize()
 
-    const response = await server.inject({ method: 'GET', url: '/test' })
-    const result = JSON.parse(response.payload)
+    beforeEach(() => {
+      config.set('wasteOrganisationsApi.useInMemory', false)
+      config.set('wasteOrganisationsApi.url', apiUrl)
+      config.set('wasteOrganisationsApi.username', 'testuser')
+      config.set('wasteOrganisationsApi.password', 'testpass')
+      config.set('wasteOrganisationsApi.key', 'test-key')
+      config.set('isDevelopment', true)
+    })
 
-    expect(result.organisations).toStrictEqual(customOrgs)
+    afterEach(() => {
+      msw.resetHandlers()
+      config.reset('wasteOrganisationsApi.useInMemory')
+      config.reset('wasteOrganisationsApi.url')
+      config.reset('wasteOrganisationsApi.username')
+      config.reset('wasteOrganisationsApi.password')
+      config.reset('wasteOrganisationsApi.key')
+      config.reset('isDevelopment')
+    })
+
+    afterAll(() => {
+      msw.close()
+    })
+
+    it('should return organisations from API', async () => {
+      await server.register(createWasteOrganisationsPlugin())
+      server.route({
+        method: 'GET',
+        path: '/test',
+        handler: async (request) => {
+          const { organisations } =
+            await request.wasteOrganisationsService.getOrganisations()
+          return { organisations }
+        },
+        options: { auth: false }
+      })
+      await server.initialize()
+
+      const response = await server.inject({ method: 'GET', url: '/test' })
+      const result = JSON.parse(response.payload)
+
+      expect(result.organisations).toStrictEqual(mockApiOrganisations)
+    })
   })
 })
