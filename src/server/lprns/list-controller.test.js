@@ -256,7 +256,9 @@ describe('#listPrnsController', () => {
         expect(getByText(table, /Status/i)).toBeDefined()
       })
 
-      it('should render select heading', async ({ server }) => {
+      it('should not render select heading when PRNs exist', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: reprocessorListUrl,
@@ -267,7 +269,7 @@ describe('#listPrnsController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Select a PRN/i)).toBeDefined()
+        expect(queryByText(main, /Select a PRN/i)).toBeNull()
       })
 
       it('should render select links for each PRN row', async ({ server }) => {
@@ -614,6 +616,27 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
 
         expect(main.querySelector('.govuk-tabs')).toBeNull()
+      })
+
+      it('should render select heading when no PRNs have been created', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Select a PRN/i)).toBeDefined()
       })
 
       it('should render tabs when PRNs exist with issued status', async ({
