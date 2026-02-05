@@ -48,7 +48,7 @@ const url = `/organisations/${organisationId}/registrations/${registrationId}/ac
 
 const validPayload = {
   tonnage: '100',
-  recipient: 'producer-1',
+  recipient: 'dd793573-b218-47a7-be85-1c777ca0d0d8',
   notes: 'Test notes',
   material: 'plastic',
   nation: 'england',
@@ -141,7 +141,7 @@ describe('#postCreatePrnController', () => {
           registrationId,
           accreditationId,
           {
-            issuedToOrganisation: 'producer-1',
+            issuedToOrganisation: 'dd793573-b218-47a7-be85-1c777ca0d0d8',
             tonnage: 100,
             material: 'plastic',
             nation: 'england',
@@ -183,7 +183,7 @@ describe('#postCreatePrnController', () => {
         )
       })
 
-      it('uses recipient value as name when not in stub list', async ({
+      it('should use recipient value as name when not in organisations list', async ({
         server
       }) => {
         vi.mocked(createPrn).mockResolvedValue({
