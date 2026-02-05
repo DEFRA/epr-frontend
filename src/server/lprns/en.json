@@ -40,6 +40,10 @@
     "warningText": "This will permanently delete the {{noteType}}. The tonnage will be returned to your available waste balance.",
     "confirmButton": "Delete {{noteType}}"
   },
+  "details": {
+    "heading": "{{noteType}} details",
+    "numberLabel": "{{noteType}} number"
+  },
   "discard": {
     "pageTitle": "Discard {{noteType}}",
     "heading": "Are you sure you want to discard this {{noteType}}?",
@@ -117,11 +121,7 @@
   "notAvailable": "n/a",
   "notProvided": "Not provided",
   "notesLabel": "Add issuer notes (optional)",
-  "pernDetailsHeading": "PERN details",
-  "pernNumberLabel": "PERN number",
   "positionLabel": "Position",
-  "prnDetailsHeading": "PRN details",
-  "prnNumberLabel": "PRN number",
   "processToBeUsedLabel": "Process to be used",
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
   "recipientSummaryLabel": "Issued to",

@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
@@ -10,7 +11,6 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 
@@ -103,7 +103,7 @@ function buildActionViewData({
     prn,
     organisationData,
     localise,
-    isExporter,
+    noteType,
     statusConfig,
     isNotDraft,
     recipientDisplayName
@@ -125,9 +125,7 @@ function buildActionViewData({
       text: localise('lprns:action:viewLink', { noteType }),
       href: request.localiseUrl(`${basePath}/${prnId}/view`)
     },
-    prnDetailsHeading: localise(
-      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
-    ),
+    prnDetailsHeading: localise('lprns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
@@ -180,15 +178,17 @@ function buildActionPrnDetailRows({
   prn,
   organisationData,
   localise,
-  isExporter,
+  noteType,
   statusConfig,
   isNotDraft,
   recipientDisplayName
 }) {
-  const numberLabel = isExporter
-    ? 'lprns:pernNumberLabel'
-    : 'lprns:prnNumberLabel'
-  const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
+  const rows = [
+    {
+      key: { text: localise('lprns:details:numberLabel', { noteType }) },
+      value: { text: '' }
+    }
+  ]
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))

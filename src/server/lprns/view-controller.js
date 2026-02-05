@@ -211,9 +211,7 @@ async function handleDraftView(
       noteType
     }),
     insetText: localise('lprns:create:checkInsetText', { noteType }),
-    prnDetailsHeading: localise(
-      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
-    ),
+    prnDetailsHeading: localise('lprns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
@@ -294,7 +292,7 @@ async function handleExistingView(
     prn,
     organisationData,
     localise,
-    isExporter,
+    noteType,
     statusConfig,
     isNotDraft,
     recipientDisplayName
@@ -310,7 +308,6 @@ async function handleExistingView(
 
   const viewData = buildExistingPrnViewData({
     prn,
-    isExporter,
     noteType,
     wasteAction,
     isNotDraft,
@@ -331,7 +328,6 @@ async function handleExistingView(
  * Builds the view data object for an existing PRN
  * @param {object} params
  * @param {object} params.prn - PRN data from backend
- * @param {boolean} params.isExporter - Whether the registration is for an exporter
  * @param {string} params.noteType - 'PRN' or 'PERN'
  * @param {string} params.wasteAction - 'export' or 'reprocessing'
  * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
@@ -347,7 +343,6 @@ async function handleExistingView(
  */
 function buildExistingPrnViewData({
   prn,
-  isExporter,
   noteType,
   wasteAction,
   isNotDraft,
@@ -374,9 +369,7 @@ function buildExistingPrnViewData({
             year: `<strong>${prn.accreditationYear}</strong>`
           })
         : null,
-    prnDetailsHeading: localise(
-      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
-    ),
+    prnDetailsHeading: localise('lprns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
@@ -456,15 +449,17 @@ function buildExistingPrnDetailRows({
   prn,
   organisationData,
   localise,
-  isExporter,
+  noteType,
   statusConfig,
   isNotDraft,
   recipientDisplayName
 }) {
-  const numberLabel = isExporter
-    ? 'lprns:pernNumberLabel'
-    : 'lprns:prnNumberLabel'
-  const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
+  const rows = [
+    {
+      key: { text: localise('lprns:details:numberLabel', { noteType }) },
+      value: { text: '' }
+    }
+  ]
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))
