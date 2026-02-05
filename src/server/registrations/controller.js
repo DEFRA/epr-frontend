@@ -3,7 +3,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
@@ -73,7 +73,8 @@ function buildViewModel({
   wasteBalance
 }) {
   const { t: localise } = request
-  const isExporter = isExporterRegistration(registration)
+  const { isExporter, noteType, noteTypePlural } =
+    getNoteTypeDisplayNames(registration)
   const siteName = isExporter
     ? null
     : (registration.site?.address?.line1 ??
@@ -110,12 +111,12 @@ function buildViewModel({
     contactRegulatorUrl: request.localiseUrl('/contact'),
     prns: getPrnViewData(
       request,
-      isExporter,
+      { noteType, noteTypePlural },
       organisationId,
       registration.id,
       registration.accreditationId
     ),
-    wasteBalance: getWasteBalanceViewData(wasteBalance, isExporter)
+    wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural)
   }
 
   return viewModel
@@ -124,37 +125,38 @@ function buildViewModel({
 /**
  * Get PRN/PERN view data based on registration type and feature flag
  * @param {Request} request
- * @param {boolean} isExporter
+ * @param {{noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs'}} noteTypes
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string | undefined} accreditationId
  */
 function getPrnViewData(
   request,
-  isExporter,
+  { noteType, noteTypePlural },
   organisationId,
   registrationId,
   accreditationId
 ) {
   const { t: localise } = request
-  const key = isExporter ? 'perns' : 'prns'
 
   const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
   const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
     isEnabled: config.get('featureFlags.lprns'),
-    description: localise(`registrations:${key}.description`),
+    description: localise('registrations:notes.description', {
+      noteTypePlural
+    }),
     link: {
       href: request.localiseUrl(createUrl),
-      text: localise(`registrations:${key}.createNew`)
+      text: localise('registrations:notes.createNew', { noteType })
     },
     manageLink: {
       href: request.localiseUrl(manageUrl),
-      text: localise(`registrations:${key}.manage`)
+      text: localise('registrations:notes.manage', { noteTypePlural })
     },
-    notAvailable: localise(`registrations:${key}.notAvailable`),
-    title: localise(`registrations:${key}.title`)
+    notAvailable: localise('registrations:notes.notAvailable', { noteType }),
+    title: localise('registrations:notes.title', { noteTypePlural })
   }
 }
 
@@ -181,11 +183,15 @@ async function getWasteBalance(
   }
 }
 
-function getWasteBalanceViewData(wasteBalance, isExporter) {
+/**
+ * @param {WasteBalance | null} wasteBalance
+ * @param {'PRNs' | 'PERNs'} noteTypePlural
+ */
+function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
   return {
     availableAmount:
       wasteBalance === null ? null : wasteBalance.availableAmount,
-    noteType: isExporter ? 'perns' : 'prns'
+    noteTypePlural
   }
 }
 
