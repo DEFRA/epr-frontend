@@ -60,7 +60,6 @@
 
 
           <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
-          {% if wasteBalance is defined %}
             <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
               <div>
                   <h2 class="govuk-summary-card__title" data-testid="waste-balance-amount">
@@ -77,18 +76,6 @@
                   {{ localise("registrations:wasteBalance.available.description." + wasteBalance.noteType) }}
                 </p>
               </div>
-          {% else %}
-            <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
-              <div>
-                <h2 class="govuk-summary-card__title" data-testid="waste-balance-not-available-title">
-                  {{ localise("registrations:wasteBalance.notAvailable.title") }}
-                </h2>
-                <p class="govuk-body-l govuk-!-margin-bottom-0 govuk-!-font-weight-bold" data-testid="waste-balance-not-available-description">
-                  {{ localise("registrations:wasteBalance.notAvailable.description") }}
-                </p>
-              </div>
-            </div>
-          {% endif %}
           </div>
 
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
@@ -135,15 +122,7 @@
                     <br>
                     <a href="{{ prns.manageLink.href }}" class="govuk-link">{{ prns.manageLink.text }}</a>
                   </p>
-                {% endif %}
-                {% if lprns.isEnabled %}
-                  <p class="govuk-body">
-                    <a href="{{ lprns.link.href }}" class="govuk-link">{{ lprns.link.text }}</a>
-                    <br>
-                    <a href="{{ lprns.manageLink.href }}" class="govuk-link">{{ lprns.manageLink.text }}</a>
-                  </p>
-                {% endif %}
-                {% if not prns.isEnabled and not lprns.isEnabled %}
+                {% else %}
                   <p class="govuk-body">
                     {{ prns.notAvailable }}
                   </p>

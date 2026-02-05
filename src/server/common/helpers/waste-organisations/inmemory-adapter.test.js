@@ -26,7 +26,7 @@ describe('#createInMemoryWasteOrganisationsService', () => {
   }) => {
     const { organisations } = await wasteOrganisationsService.getOrganisations()
 
-    expect(organisations).toHaveLength(3)
+    expect(organisations).toHaveLength(8)
     expect(organisations[0].id).toBe('9eb099a7-bda0-456c-96ba-e0af3fdb9cde')
   })
 

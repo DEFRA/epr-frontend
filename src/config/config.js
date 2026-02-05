@@ -303,23 +303,11 @@ export const config = convict({
     }
   },
   featureFlags: {
-    prns: {
+    lprns: {
       doc: 'Feature Flag: PRNs',
       format: Boolean,
       default: false,
-      env: 'FEATURE_FLAG_PRNS'
-    },
-    lprns: {
-      doc: 'Feature Flag: Lumpy PRNs (accelerated implementation)',
-      format: Boolean,
-      default: false,
       env: 'FEATURE_FLAG_LPRNS'
-    },
-    wasteBalance: {
-      doc: 'Feature Flag: Waste Balance Display',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_WASTE_BALANCE'
     }
   }
 })

@@ -3,12 +3,23 @@ import Joi from 'joi'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import {
+  getOrganisationDisplayName,
+  mapToSelectOptions
+} from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
+import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 const MIN_TONNAGE = 1
-const MAX_NOTES_LENGTH = 200
+
+const ERROR_KEYS = Object.freeze({
+  notesTooLong: 'notesTooLong',
+  recipientRequired: 'recipientRequired',
+  tonnageGreaterThanZero: 'tonnageGreaterThanZero',
+  tonnageWholeNumber: 'tonnageWholeNumber'
+})
 
 const payloadSchema = Joi.object({
   tonnage: Joi.number().integer().min(MIN_TONNAGE).required().messages({
@@ -22,11 +33,11 @@ const payloadSchema = Joi.object({
     'any.required': 'Select who this will be issued to'
   }),
   notes: Joi.string()
-    .max(MAX_NOTES_LENGTH)
+    .max(NOTES_MAX_LENGTH)
     .allow('')
     .optional()
     .messages({
-      'string.max': `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`
+      'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
   material: Joi.string().required(),
   nation: Joi.string().required(),
@@ -34,18 +45,50 @@ const payloadSchema = Joi.object({
 })
 
 /**
+ * @param {import('joi').ValidationErrorItem} detail
+ * @returns {string}
+ */
+function getErrorMessageKey(detail) {
+  const field = detail.path[0]
+
+  if (field === 'tonnage') {
+    if (detail.type === 'number.min') {
+      return ERROR_KEYS.tonnageGreaterThanZero
+    }
+    return ERROR_KEYS.tonnageWholeNumber
+  }
+
+  if (field === 'recipient') {
+    return ERROR_KEYS.recipientRequired
+  }
+
+  return ERROR_KEYS.notesTooLong
+}
+
+/**
+ * @param {string} wasteProcessingType
+ * @returns {string}
+ */
+function getNoteType(wasteProcessingType) {
+  return wasteProcessingType === 'exporter' ? 'PERN' : 'PRN'
+}
+
+/**
  * Build error objects for form display
  * @param {Joi.ValidationError} validationError
- * @param {(key: string) => string} localise
+ * @param {(key: string, params?: object) => string} localise
+ * @param {string} wasteProcessingType
  * @returns {{errors: object, errorSummary: {title: string, list: Array}}}
  */
-function buildValidationErrors(validationError, localise) {
+function buildValidationErrors(validationError, localise, wasteProcessingType) {
   const errors = {}
   const errorList = []
+  const noteType = getNoteType(wasteProcessingType)
 
   for (const detail of validationError.details) {
     const field = detail.path[0]
-    const message = detail.message
+    const messageKey = getErrorMessageKey(detail)
+    const message = localise(`lprns:errors:${messageKey}`, { noteType })
 
     errors[field] = { text: message }
     errorList.push({ text: message, href: `#${field}` })
@@ -82,7 +125,11 @@ export const postController = {
         )
 
         const { t: localise } = request
-        const { errors, errorSummary } = buildValidationErrors(error, localise)
+        const { errors, errorSummary } = buildValidationErrors(
+          error,
+          localise,
+          registration.wasteProcessingType
+        )
 
         const { organisations } =
           await request.wasteOrganisationsService.getOrganisations()
@@ -115,9 +162,6 @@ export const postController = {
 
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
-    const recipients = mapToSelectOptions(organisations)
-    const recipientItem = recipients.find((r) => r.value === recipient)
-    const recipientName = recipientItem?.text ?? recipient
 
     try {
       // Create PRN as draft in backend
@@ -140,10 +184,10 @@ export const postController = {
       request.yar.set('prnDraft', {
         id: result.id,
         tonnage: result.tonnage,
-        tonnageInWords: result.tonnageInWords,
+        tonnageInWords: tonnageToWords(result.tonnage),
         material: result.material,
         status: result.status,
-        recipientName,
+        recipientName: getOrganisationDisplayName(organisations, recipient),
         notes: notes || '',
         wasteProcessingType,
         processToBeUsed: result.processToBeUsed,

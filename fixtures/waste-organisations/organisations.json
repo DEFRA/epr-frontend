@@ -30,6 +30,51 @@
         "postcode": "BR6 6AG",
         "country": "England"
       }
+    },
+    {
+      "id": "producer-1",
+      "name": "Acme Packaging Ltd",
+      "address": {
+        "addressLine1": "123 Industrial Estate",
+        "town": "Manchester",
+        "postcode": "M1 1AA"
+      }
+    },
+    {
+      "id": "producer-2",
+      "name": "BigCo Waste Solutions",
+      "address": {
+        "addressLine1": "456 Recycling Road",
+        "town": "Birmingham",
+        "postcode": "B1 1BB"
+      }
+    },
+    {
+      "id": "producer-3",
+      "name": "EcoRecycle Industries",
+      "address": {
+        "addressLine1": "789 Green Lane",
+        "town": "Leeds",
+        "postcode": "LS1 1CC"
+      }
+    },
+    {
+      "id": "scheme-1",
+      "name": "Green Compliance Scheme",
+      "address": {
+        "addressLine1": "10 Compliance Way",
+        "town": "London",
+        "postcode": "EC1 1DD"
+      }
+    },
+    {
+      "id": "scheme-2",
+      "name": "National Packaging Scheme",
+      "address": {
+        "addressLine1": "20 Packaging Plaza",
+        "town": "Bristol",
+        "postcode": "BS1 1EE"
+      }
     }
   ]
 }

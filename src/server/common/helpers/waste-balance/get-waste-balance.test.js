@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { config } from '#config/config.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getWasteBalance } from './get-waste-balance.js'
 import { fetchWasteBalances } from './fetch-waste-balances.js'
 
@@ -21,83 +20,58 @@ const stubWasteBalance = {
 describe(getWasteBalance, () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    config.set('featureFlags.wasteBalance', true)
   })
 
-  afterEach(() => {
-    config.reset('featureFlags.wasteBalance')
+  it('should return waste balance for accreditation', async () => {
+    vi.mocked(fetchWasteBalances).mockResolvedValue({
+      [accreditationId]: stubWasteBalance
+    })
+
+    const result = await getWasteBalance(
+      organisationId,
+      accreditationId,
+      idToken,
+      mockLogger
+    )
+
+    expect(result).toStrictEqual(stubWasteBalance)
+    expect(fetchWasteBalances).toHaveBeenCalledWith(
+      organisationId,
+      [accreditationId],
+      idToken
+    )
   })
 
-  describe('when feature flag is enabled', () => {
-    it('should return waste balance for accreditation', async () => {
-      vi.mocked(fetchWasteBalances).mockResolvedValue({
-        [accreditationId]: stubWasteBalance
-      })
-
-      const result = await getWasteBalance(
-        organisationId,
-        accreditationId,
-        idToken,
-        mockLogger
-      )
-
-      expect(result).toStrictEqual(stubWasteBalance)
-      expect(fetchWasteBalances).toHaveBeenCalledWith(
-        organisationId,
-        [accreditationId],
-        idToken
-      )
+  it('should return null when accreditation not found in response', async () => {
+    vi.mocked(fetchWasteBalances).mockResolvedValue({
+      'other-acc': stubWasteBalance
     })
 
-    it('should return null when accreditation not found in response', async () => {
-      vi.mocked(fetchWasteBalances).mockResolvedValue({
-        'other-acc': stubWasteBalance
-      })
+    const result = await getWasteBalance(
+      organisationId,
+      accreditationId,
+      idToken,
+      mockLogger
+    )
 
-      const result = await getWasteBalance(
-        organisationId,
-        accreditationId,
-        idToken,
-        mockLogger
-      )
-
-      expect(result).toBeNull()
-    })
-
-    it('should return null and log error when fetch fails', async () => {
-      const error = new Error('Network error')
-      vi.mocked(fetchWasteBalances).mockRejectedValue(error)
-
-      const result = await getWasteBalance(
-        organisationId,
-        accreditationId,
-        idToken,
-        mockLogger
-      )
-
-      expect(result).toBeNull()
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { error },
-        'Failed to fetch waste balance'
-      )
-    })
+    expect(result).toBeNull()
   })
 
-  describe('when feature flag is disabled', () => {
-    beforeEach(() => {
-      config.set('featureFlags.wasteBalance', false)
-    })
+  it('should return null and log error when fetch fails', async () => {
+    const error = new Error('Network error')
+    vi.mocked(fetchWasteBalances).mockRejectedValue(error)
 
-    it('should return null without calling API', async () => {
-      const result = await getWasteBalance(
-        organisationId,
-        accreditationId,
-        idToken,
-        mockLogger
-      )
+    const result = await getWasteBalance(
+      organisationId,
+      accreditationId,
+      idToken,
+      mockLogger
+    )
 
-      expect(result).toBeNull()
-      expect(fetchWasteBalances).not.toHaveBeenCalled()
-    })
+    expect(result).toBeNull()
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      { error },
+      'Failed to fetch waste balance'
+    )
   })
 })

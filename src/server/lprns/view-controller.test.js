@@ -105,7 +105,7 @@ const mockPrnStatusUpdated = {
 
 const mockPrnFromBackend = {
   id: 'prn-789',
-  issuedToOrganisation: 'Acme Packaging Ltd',
+  issuedToOrganisation: 'producer-1',
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation',
@@ -213,6 +213,77 @@ describe('#viewController', () => {
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 
+      it('displays buyer name from waste organisations service when backend returns org ID', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          issuedToOrganisation: 'producer-1'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+        const html = body.innerHTML
+        expect(html).not.toContain('>producer-1<')
+      })
+
+      it('displays tonnage in words generated from tonnage value', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          tonnageInWords: undefined
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /One hundred/)).toBeDefined()
+      })
+
+      it('displays tonnage in words from backend when provided', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          tonnageInWords: 'One hundred'
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /One hundred/)).toBeDefined()
+      })
+
       it('displays status tag for awaiting authorisation', async ({
         server
       }) => {
@@ -227,6 +298,25 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /Awaiting authorisation/i)).toBeDefined()
+      })
+
+      it('displays status tag for awaiting acceptance', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          status: 'awaiting_acceptance'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Awaiting acceptance/i)).toBeDefined()
       })
 
       it('displays back link to list page', async ({ server }) => {
@@ -644,7 +734,7 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      it('displays Issue PRN button when status is awaiting_authorisation', async ({
+      it('does not display Issue button on certificate page (actions are on action page)', async ({
         server
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
@@ -664,125 +754,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByRole(main, 'button', { name: /Issue PRN/i })).toBeDefined()
-      })
-
-      it('displays Issue PERN button for exporter when status is awaiting_authorisation', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPernFromBackend,
-          status: 'awaiting_authorisation'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: pernViewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(getByRole(main, 'button', { name: /Issue PERN/i })).toBeDefined()
-      })
-
-      it('does not display Issue button when status is issued', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'issued'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
         expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
-      })
-
-      it('does not display Issue button when status is cancelled', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'cancelled'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
-      })
-
-      it('does not display Issue button when status is draft', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'draft'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
-      })
-
-      it('Issue button form posts to /issue endpoint', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          status: 'awaiting_authorisation'
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        const issueButton = getByRole(main, 'button', { name: /Issue PRN/i })
-        const form = issueButton.closest('form')
-        expect(form.getAttribute('action')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
-        )
       })
 
       it('displays complianceYearText when accreditationYear is present', async ({
@@ -812,6 +784,25 @@ describe('#viewController', () => {
             /This PRN relates to waste accepted for reprocessing/i
           )
         ).toBeDefined()
+      })
+
+      it('does not display error summary on certificate page (errors shown on action page)', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: `${viewUrl}?error=insufficient_balance`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).toBeNull()
       })
     })
 
@@ -947,11 +938,12 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Should show discard link with correct attributes (not a warning button)
+        // Should show discard link pointing to discard confirmation page
         const discardLink = getByText(main, /Discard and start again/i)
         expect(discardLink.tagName).toBe('A')
         expect(discardLink.classList.contains('govuk-link')).toBe(true)
-        expect(discardLink.getAttribute('href')).toBe(createUrl)
+        const expectedDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/discard`
+        expect(discardLink.getAttribute('href')).toBe(expectedDiscardUrl)
         expect(main.querySelector('.govuk-button--warning')).toBeNull()
       })
 
@@ -1050,6 +1042,46 @@ describe('#viewController', () => {
           'Position',
           'Issuer notes'
         ])
+      })
+
+      it('displays tonnage in words generated from tonnage value', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /One hundred/)).toBeDefined()
       })
 
       it('displays PERN check page for exporter registration', async ({

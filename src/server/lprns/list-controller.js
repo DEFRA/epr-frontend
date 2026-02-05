@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
+
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
@@ -37,28 +39,49 @@ export const listController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    const wasteBalance = await getWasteBalance(
-      organisationId,
-      registration.accreditationId,
-      session.idToken,
-      request.logger
-    )
+    const [wasteBalance, prns, { organisations }] = await Promise.all([
+      getWasteBalance(
+        organisationId,
+        registration.accreditationId,
+        session.idToken,
+        request.logger
+      ),
+      fetchPackagingRecyclingNotes(
+        organisationId,
+        registrationId,
+        accreditationId,
+        session.idToken
+      ),
+      request.wasteOrganisationsService.getOrganisations()
+    ])
 
-    const prns = await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      session.idToken
-    )
+    const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
 
-    // Map backend response and filter to awaiting authorisation (PAE-948 requirement)
     const prnsAwaitingAuthorisation = prns
       .filter((prn) => prn.status === 'awaiting_authorisation')
       .map((prn) => ({
         id: prn.id,
-        recipient: prn.issuedToOrganisation,
+        recipient: getOrganisationDisplayName(
+          organisations,
+          prn.issuedToOrganisation
+        ),
         createdAt: prn.createdAt,
         tonnage: prn.tonnage,
+        status: prn.status
+      }))
+
+    const issuedPrns = prns
+      .filter(
+        (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
+      )
+      .map((prn) => ({
+        id: prn.id,
+        prnNumber: prn.prnNumber,
+        recipient: getOrganisationDisplayName(
+          organisations,
+          prn.issuedToOrganisation
+        ),
+        issuedAt: prn.issuedAt,
         status: prn.status
       }))
 
@@ -68,6 +91,8 @@ export const listController = {
       accreditationId,
       registration,
       prns: prnsAwaitingAuthorisation,
+      issuedPrns,
+      hasCreatedPrns,
       wasteBalance
     })
 

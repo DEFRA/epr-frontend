@@ -1,7 +1,8 @@
+import Boom from '@hapi/boom'
+
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
-import Boom from '@hapi/boom'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**

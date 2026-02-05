@@ -90,18 +90,6 @@
       {% endif %}
     {% endif %}
 
-    {% if issueButton %}
-      <form method="POST" action="{{ issueButton.action }}" novalidate>
-        <input type="hidden" name="crumb" value="{{ crumb }}" />
-
-        <div class="govuk-button-group">
-          {{ govukButton({
-            text: issueButton.text
-          }) }}
-        </div>
-      </form>
-    {% endif %}
-
     {% if returnLink %}
       <p class="govuk-body epr-print-hide">
         <a href="{{ returnLink.href }}" class="govuk-link">{{ returnLink.text }}</a>

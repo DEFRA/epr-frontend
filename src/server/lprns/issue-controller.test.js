@@ -26,6 +26,7 @@ const registrationId = 'reg-456'
 const accreditationId = 'acc-001'
 const prnId = 'prn-789'
 const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
+const actionUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}`
 const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
 const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issued`
 
@@ -103,7 +104,35 @@ describe('#issueController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
+    it('redirects to action page with error when backend returns 409 conflict', async ({
+      server
+    }) => {
+      const Boom = await import('@hapi/boom')
+      vi.mocked(updatePrnStatus).mockRejectedValueOnce(
+        Boom.default.conflict('Insufficient total waste balance')
+      )
+
+      const { cookie: csrfCookie, crumb } = await getCsrfToken(
+        server,
+        viewUrl,
+        { auth: mockAuth }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: issueUrl,
+        auth: mockAuth,
+        headers: { cookie: csrfCookie },
+        payload: { crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${actionUrl}?error=insufficient_balance`)
+    })
+
+    it('re-throws non-conflict Boom errors from updatePrnStatus', async ({
+      server
+    }) => {
       const Boom = await import('@hapi/boom')
       vi.mocked(updatePrnStatus).mockRejectedValueOnce(
         Boom.default.forbidden('Not authorised')

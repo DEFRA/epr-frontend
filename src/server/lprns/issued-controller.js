@@ -1,8 +1,9 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -18,7 +19,7 @@ export const issuedController = {
     const { t: localise } = request
     const session = request.auth.credentials
 
-    const [{ registration }, prn] = await Promise.all([
+    const [{ registration }, prn, { organisations }] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -30,7 +31,8 @@ export const issuedController = {
         accreditationId,
         prnId,
         session.idToken
-      )
+      ),
+      request.wasteOrganisationsService.getOrganisations()
     ])
 
     // Only show success page if PRN has been issued (status is awaiting_acceptance)
@@ -39,6 +41,11 @@ export const issuedController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
       )
     }
+
+    const recipientDisplayName = getOrganisationDisplayName(
+      organisations,
+      prn.issuedToOrganisation
+    )
 
     const isExporter = registration.wasteProcessingType === 'exporter'
     const noteType = isExporter ? 'perns' : 'prns'
@@ -50,7 +57,7 @@ export const issuedController = {
     return h.view('lprns/issued', {
       pageTitle: localise(`lprns:issued:${noteType}:pageTitle`),
       heading: localise(`lprns:issued:${noteType}:heading`, {
-        recipient: prn.issuedToOrganisation
+        recipient: recipientDisplayName
       }),
       prnNumberLabel: localise(`lprns:issued:${noteType}:prnNumberLabel`),
       prnNumber: prn.prnNumber,

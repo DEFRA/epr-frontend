@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -10,15 +9,7 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi
-} from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
@@ -871,15 +862,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    describe('when waste balance feature flag is enabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.wasteBalance', true)
-      })
-
-      afterAll(() => {
-        config.reset('featureFlags.wasteBalance')
-      })
-
+    describe('waste balance', () => {
       it('status: validated - should not fetch waste balance data', async ({
         server
       }) => {
@@ -1130,36 +1113,6 @@ describe('#summaryLogUploadProgressController', () => {
         expect(panelBody).toHaveLength(1)
         expect(panelBody.text()).toContain('0.00')
         expect(panelBody.text()).toContain('tonnes')
-      })
-    })
-
-    describe('when waste balance feature flag is disabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.wasteBalance', false)
-      })
-
-      afterAll(() => {
-        config.reset('featureFlags.wasteBalance')
-      })
-
-      it('status: submitted - should not display waste balance section', async ({
-        server
-      }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          accreditationNumber: 'ACC-2025-001'
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).not.toContain('Your updated waste balance')
-        expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
-        expect(fetchWasteBalances).not.toHaveBeenCalled()
       })
     })
 

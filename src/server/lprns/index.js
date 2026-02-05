@@ -1,5 +1,14 @@
+import { actionController } from './action-controller.js'
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
+import {
+  deleteGetController,
+  deletePostController
+} from './delete-controller.js'
+import {
+  discardGetController,
+  discardPostController
+} from './discard-controller.js'
 import { issueController } from './issue-controller.js'
 import { issuedController } from './issued-controller.js'
 import { listController } from './list-controller.js'
@@ -33,6 +42,11 @@ export const lprns = {
           path: `${basePath}/create`
         },
         {
+          ...actionController,
+          method: 'GET',
+          path: `${basePath}/{prnId}`
+        },
+        {
           ...viewController,
           method: 'GET',
           path: `${basePath}/{prnId}/view`
@@ -46,6 +60,26 @@ export const lprns = {
           ...createdController,
           method: 'GET',
           path: `${basePath}/{prnId}/created`
+        },
+        {
+          ...deleteGetController,
+          method: 'GET',
+          path: `${basePath}/{prnId}/delete`
+        },
+        {
+          ...deletePostController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/delete`
+        },
+        {
+          ...discardGetController,
+          method: 'GET',
+          path: `${basePath}/{prnId}/discard`
+        },
+        {
+          ...discardPostController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/discard`
         },
         {
           ...issueController,

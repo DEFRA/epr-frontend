@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import {
@@ -508,15 +507,13 @@ export const summaryLogUploadProgressController = {
       session.idToken
     )
 
-    const { wasteBalance } = config.get('featureFlags.wasteBalance')
-      ? await getWasteBalanceData(
-          status,
-          organisationId,
-          registrationId,
-          session.idToken,
-          request.logger
-        )
-      : {}
+    const { wasteBalance } = await getWasteBalanceData(
+      status,
+      organisationId,
+      registrationId,
+      session.idToken,
+      request.logger
+    )
 
     return renderViewForStatus({
       h,

@@ -49,7 +49,7 @@ describe('#createWasteOrganisationsPlugin', () => {
     const response = await server.inject({ method: 'GET', url: '/test' })
     const result = JSON.parse(response.payload)
 
-    expect(result.count).toBe(3)
+    expect(result.count).toBe(8)
   })
 
   it('should use API adapter when useInMemory is false', async () => {
