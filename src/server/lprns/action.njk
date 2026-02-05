@@ -59,8 +59,12 @@
             text: issueButton.text
           }) }}
 
-          {% if deleteLink %}
-            <a href="{{ deleteLink.href }}" class="govuk-link govuk-link--no-visited-state">{{ deleteLink.text }}</a>
+          {% if deleteButton %}
+            {{ govukButton({
+              text: deleteButton.text,
+              href: deleteButton.href,
+              classes: "govuk-button--warning"
+            }) }}
           {% endif %}
         </div>
       </form>

@@ -104,7 +104,7 @@ export const viewPostController = {
           registrationId,
           accreditationId,
           prnId,
-          { status: 'cancelled' },
+          { status: 'discarded' },
           session.idToken
         )
 
