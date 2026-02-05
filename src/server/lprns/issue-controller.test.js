@@ -80,7 +80,7 @@ describe('#issueController', () => {
       )
     })
 
-    it('returns 500 when updatePrnStatus fails with non-Boom error', async ({
+    it('redirects to action page with issue_failed error when updatePrnStatus fails', async ({
       server
     }) => {
       vi.mocked(updatePrnStatus).mockRejectedValueOnce(
@@ -93,7 +93,7 @@ describe('#issueController', () => {
         { auth: mockAuth }
       )
 
-      const { statusCode } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: issueUrl,
         auth: mockAuth,
@@ -101,7 +101,8 @@ describe('#issueController', () => {
         payload: { crumb }
       })
 
-      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${actionUrl}?error=issue_failed`)
     })
 
     it('redirects to action page with error when backend returns 409 conflict', async ({
@@ -130,7 +131,7 @@ describe('#issueController', () => {
       expect(headers.location).toBe(`${actionUrl}?error=insufficient_balance`)
     })
 
-    it('re-throws non-conflict Boom errors from updatePrnStatus', async ({
+    it('redirects to action page with issue_failed error for non-conflict Boom errors', async ({
       server
     }) => {
       const Boom = await import('@hapi/boom')
@@ -144,7 +145,7 @@ describe('#issueController', () => {
         { auth: mockAuth }
       )
 
-      const { statusCode } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: issueUrl,
         auth: mockAuth,
@@ -152,7 +153,8 @@ describe('#issueController', () => {
         payload: { crumb }
       })
 
-      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(statusCode).toBe(statusCodes.found)
+      expect(headers.location).toBe(`${actionUrl}?error=issue_failed`)
     })
   })
 

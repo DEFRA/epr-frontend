@@ -33,17 +33,14 @@ export const issueController = {
     } catch (error) {
       request.logger.error({ error }, 'Failed to issue PRN')
 
+      const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
+
       if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
-        return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}?error=insufficient_balance`
-        )
+        return h.redirect(`${basePath}?error=insufficient_balance`)
       }
 
-      if (error.isBoom) {
-        throw error
-      }
-
-      throw Boom.badImplementation('Failed to issue PRN')
+      // All other errors (including WB calculation failures) redirect to action page
+      return h.redirect(`${basePath}?error=issue_failed`)
     }
   }
 }

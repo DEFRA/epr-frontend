@@ -61,6 +61,7 @@
   "helpSummary": "Can't find the producer or compliance scheme?",
   "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
   "issueCommentsLabel": "Issue comments",
+  "issueFailedError": "We could not issue this PRN or PERN. Try again later.",
   "issued": {
     "wasteBalanceMessage": "Your waste balance has been updated.",
     "returnHomeLink": "Return to home",
