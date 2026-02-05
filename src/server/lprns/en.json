@@ -31,6 +31,16 @@
     "successTonnageLabel": "Tonnage",
     "tonnageLabel": "Enter {{noteType}} tonnage"
   },
+  "created": {
+    "statusLabel": "Status:",
+    "statusValue": "Awaiting authorisation",
+    "wasteBalanceMessage": "Your available waste balance has been updated.",
+    "returnHomeLink": "Return to home",
+    "viewButton": "View {{noteType}} (opens in a new tab)",
+    "issueTextPrefix": "You can now issue this {{noteType}} through your",
+    "prnsPageLink": "{{noteTypePlural}} page",
+    "createAnotherLink": "Create another {{noteType}}"
+  },
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
   "decemberWasteYes": "Yes",
@@ -127,7 +137,6 @@
   "recipientSummaryLabel": "Issued to",
   "selectOption": "Select an option",
   "successNextStepsHeading": "What happens next",
-  "successReturnLink": "Return to registration dashboard",
   "tonnageHint": "Enter a whole number without decimal places",
   "tonnageInWordsLabel": "Tonnage in words",
   "tonnageLabel": "Tonnage",

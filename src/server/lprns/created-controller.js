@@ -29,22 +29,40 @@ export const createdController = {
     // Clear the session data
     request.yar.clear('prnCreated')
 
-    const { noteType } = getNoteTypeDisplayNames(prnCreated)
+    const { noteType, noteTypePlural } = getNoteTypeDisplayNames(prnCreated)
+
+    const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+    const viewUrl = `${listUrl}/${prnId}/view`
+    const createUrl = `${listUrl}/create`
+    const homeUrl = `/organisations/${organisationId}`
 
     return h.view('lprns/created', {
       pageTitle: localise('lprns:create:successPageTitle', { noteType }),
       heading: localise('lprns:create:successHeading', { noteType }),
-      tonnageLabel: localise('lprns:create:successTonnageLabel'),
-      tonnage: prnCreated.tonnage,
-      tonnageSuffix: localise('lprns:tonnageSuffix'),
+      statusLabel: localise('lprns:created:statusLabel'),
+      statusValue: localise('lprns:created:statusValue'),
+      viewButton: {
+        text: localise('lprns:created:viewButton', { noteType }),
+        href: viewUrl
+      },
       nextStepsHeading: localise('lprns:successNextStepsHeading'),
-      nextStepsText: localise('lprns:create:successNextStepsText', {
-        noteType
-      }),
-      returnLink: localise('lprns:successReturnLink'),
-      organisationId,
-      registrationId,
-      accreditationId
+      wasteBalanceMessage: localise('lprns:created:wasteBalanceMessage'),
+      issueText: {
+        prefix: localise('lprns:created:issueTextPrefix', { noteType }),
+        link: {
+          text: localise('lprns:created:prnsPageLink', { noteTypePlural }),
+          href: listUrl
+        },
+        suffix: '.'
+      },
+      createAnotherLink: {
+        text: localise('lprns:created:createAnotherLink', { noteType }),
+        href: createUrl
+      },
+      returnHomeLink: {
+        text: localise('lprns:created:returnHomeLink'),
+        href: homeUrl
+      }
     })
   }
 }
