@@ -28,17 +28,12 @@ export function createApiWasteOrganisationsService() {
 
       const auth = Buffer.from(`${username}:${password}`).toString('base64')
 
-      const organisations = await fetchJsonFromBackend(
-        `${url}?${params.toString()}`,
-        {
-          headers: {
-            ...(isDevelopment && { 'x-api-key': key }),
-            authorization: `Basic ${auth}`
-          }
+      return fetchJsonFromBackend(`${url}?${params.toString()}`, {
+        headers: {
+          ...(isDevelopment && { 'x-api-key': key }),
+          authorization: `Basic ${auth}`
         }
-      )
-
-      return { organisations }
+      })
     }
   }
 }
