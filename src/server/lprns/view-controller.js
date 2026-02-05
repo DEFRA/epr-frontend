@@ -1,17 +1,18 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
-import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
-import { getStatusConfig } from './helpers/get-status-config.js'
-import {
-  buildStatusRow,
-  buildPrnCoreRows,
-  buildPrnAuthorisationRows
-} from './helpers/build-prn-detail-rows.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
+import {
+  buildPrnAuthorisationRows,
+  buildPrnCoreRows,
+  buildStatusRow
+} from './helpers/build-prn-detail-rows.js'
+import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
+import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
@@ -244,25 +245,34 @@ async function handleExistingView(
   { organisationId, registrationId, accreditationId, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
-  const [{ organisationData, registration, accreditation }, prn] =
-    await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        session.idToken
-      )
-    ])
+  const [
+    { organisationData, registration, accreditation },
+    prn,
+    { organisations }
+  ] = await Promise.all([
+    fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    ),
+    fetchPackagingRecyclingNote(
+      organisationId,
+      registrationId,
+      accreditationId,
+      prnId,
+      session.idToken
+    ),
+    request.wasteOrganisationsService.getOrganisations()
+  ])
 
   if (!registration) {
     throw Boom.notFound('Registration not found')
   }
+
+  const recipientDisplayName = getOrganisationDisplayName(
+    organisations,
+    prn.issuedToOrganisation
+  )
 
   const isExporter = registration.wasteProcessingType === 'exporter'
   const noteType = isExporter ? 'perns' : 'prns'
@@ -282,7 +292,8 @@ async function handleExistingView(
     localise,
     isExporter,
     statusConfig,
-    isNotDraft
+    isNotDraft,
+    recipientDisplayName
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -438,7 +449,8 @@ function buildExistingPrnDetailRows({
   localise,
   isExporter,
   statusConfig,
-  isNotDraft
+  isNotDraft,
+  recipientDisplayName
 }) {
   const numberLabel = isExporter
     ? 'lprns:pernNumberLabel'
@@ -450,7 +462,7 @@ function buildExistingPrnDetailRows({
   }
 
   rows.push(
-    ...buildPrnCoreRows(prn, localise),
+    ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnAuthorisationRows(prn, organisationData, localise)
   )
 

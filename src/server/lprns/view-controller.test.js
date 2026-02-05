@@ -105,7 +105,7 @@ const mockPrnStatusUpdated = {
 
 const mockPrnFromBackend = {
   id: 'prn-789',
-  issuedToOrganisation: 'Acme Packaging Ltd',
+  issuedToOrganisation: 'producer-1',
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation',
@@ -213,10 +213,9 @@ describe('#viewController', () => {
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 
-      it('displays buyer name from stub list when backend returns stub ID', async ({
+      it('displays buyer name from waste organisations service when backend returns org ID', async ({
         server
       }) => {
-        // Backend stores the stub ID (e.g. 'producer-1'), not the display name
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           issuedToOrganisation: 'producer-1'
@@ -234,9 +233,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Should display the human-readable name from STUB_RECIPIENTS, not the stub ID
         expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
-        // Should NOT display the raw stub ID
         const html = body.innerHTML
         expect(html).not.toContain('>producer-1<')
       })

@@ -16,3 +16,4 @@ process.env.DEFRA_ID_OIDC_CONFIGURATION_URL =
 process.env.DEFRA_ID_CLIENT_ID = 'test-client-id'
 process.env.DEFRA_ID_CLIENT_SECRET = 'test-secret'
 process.env.DEFRA_ID_SERVICE_ID = 'test-service-id'
+process.env.WASTE_ORGANISATIONS_API_USE_INMEMORY = 'true'

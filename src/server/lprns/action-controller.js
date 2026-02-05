@@ -1,16 +1,17 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
+import {
+  buildPrnAuthorisationRows,
+  buildPrnCoreRows,
+  buildStatusRow
+} from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
-import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
-import {
-  buildStatusRow,
-  buildPrnCoreRows,
-  buildPrnAuthorisationRows
-} from './helpers/build-prn-detail-rows.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -26,25 +27,34 @@ export const actionController = {
     const { t: localise } = request
     const session = request.auth.credentials
 
-    const [{ organisationData, registration, accreditation }, prn] =
-      await Promise.all([
-        fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        ),
-        fetchPackagingRecyclingNote(
-          organisationId,
-          registrationId,
-          accreditationId,
-          prnId,
-          session.idToken
-        )
-      ])
+    const [
+      { organisationData, registration, accreditation },
+      prn,
+      { organisations }
+    ] = await Promise.all([
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      ),
+      fetchPackagingRecyclingNote(
+        organisationId,
+        registrationId,
+        accreditationId,
+        prnId,
+        session.idToken
+      ),
+      request.wasteOrganisationsService.getOrganisations()
+    ])
 
     if (!registration) {
       throw Boom.notFound('Registration not found')
     }
+
+    const recipientDisplayName = getOrganisationDisplayName(
+      organisations,
+      prn.issuedToOrganisation
+    )
 
     const viewData = buildActionViewData({
       request,
@@ -56,7 +66,8 @@ export const actionController = {
       registration,
       accreditation,
       prn,
-      localise
+      localise,
+      recipientDisplayName
     })
 
     return h.view('lprns/action', viewData)
@@ -76,7 +87,8 @@ function buildActionViewData({
   registration,
   accreditation,
   prn,
-  localise
+  localise,
+  recipientDisplayName
 }) {
   const isExporter = registration.wasteProcessingType === 'exporter'
   const noteType = isExporter ? 'perns' : 'prns'
@@ -92,7 +104,8 @@ function buildActionViewData({
     localise,
     isExporter,
     statusConfig,
-    isNotDraft
+    isNotDraft,
+    recipientDisplayName
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -168,7 +181,8 @@ function buildActionPrnDetailRows({
   localise,
   isExporter,
   statusConfig,
-  isNotDraft
+  isNotDraft,
+  recipientDisplayName
 }) {
   const numberLabel = isExporter
     ? 'lprns:pernNumberLabel'
@@ -180,7 +194,7 @@ function buildActionPrnDetailRows({
   }
 
   rows.push(
-    ...buildPrnCoreRows(prn, localise),
+    ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnAuthorisationRows(prn, organisationData, localise, {
       includeIssuerRow: true
     })

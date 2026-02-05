@@ -1,6 +1,5 @@
 import { tonnageToWords } from './tonnage-to-words.js'
 import { formatDateForDisplay } from './format-date-for-display.js'
-import { getRecipientDisplayName } from './stub-recipients.js'
 
 /**
  * Builds the status row for PRN details
@@ -21,9 +20,10 @@ export function buildStatusRow(localise, statusConfig) {
  * Builds the core PRN rows (buyer, tonnage, process, december waste)
  * @param {object} prn
  * @param {(key: string) => string} localise
+ * @param {string} recipientDisplayName
  * @returns {Array}
  */
-export function buildPrnCoreRows(prn, localise) {
+export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
   const decemberWasteText = prn.isDecemberWaste
     ? localise('lprns:decemberWasteYes')
     : localise('lprns:decemberWasteNo')
@@ -32,7 +32,7 @@ export function buildPrnCoreRows(prn, localise) {
   return [
     {
       key: { text: localise('lprns:buyerLabel') },
-      value: { text: getRecipientDisplayName(prn.issuedToOrganisation) }
+      value: { text: recipientDisplayName }
     },
     {
       key: { text: localise('lprns:tonnageLabel') },
