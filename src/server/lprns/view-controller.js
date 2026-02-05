@@ -74,7 +74,7 @@ export const viewPostController = {
     if (!prnDraft || prnDraft.id !== prnId) {
       // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
       )
     }
 
@@ -111,7 +111,7 @@ export const viewPostController = {
         request.yar.clear('prnDraft')
 
         return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create?error=insufficient_balance`
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create?error=insufficient_balance`
         )
       }
 
@@ -136,7 +136,7 @@ export const viewPostController = {
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/created`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to update PRN status')
@@ -218,7 +218,7 @@ async function handleDraftView(
     },
     discardLink: {
       text: localise(`lprns:${noteType}:discardLink`),
-      href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnDraft.id}/discard`
+      href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnDraft.id}/discard`
     },
     organisationId,
     registrationId,
@@ -268,7 +268,7 @@ async function handleExistingView(
   const noteType = isExporter ? 'perns' : 'prns'
 
   const backUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   )
 
   const displayMaterial = getLumpyDisplayMaterial(registration)
@@ -342,7 +342,7 @@ function buildExistingPrnViewData({
   registrationId,
   accreditationId
 }) {
-  const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+  const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
     pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,

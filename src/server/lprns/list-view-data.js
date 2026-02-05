@@ -38,7 +38,7 @@ export function buildListViewData(
   )
 
   const createUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
   )
 
   const table = buildAwaitingActionTable(request, {
@@ -117,7 +117,7 @@ function buildAwaitingActionTable(
 
   const dataRows = prns.map((prn) => {
     const actionUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prn.id}`
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}`
     )
     return [
       { text: prn.recipient },
@@ -174,7 +174,7 @@ function buildIssuedTable(
 
   const rows = issuedPrns.map((prn) => {
     const viewUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prn.id}/view`
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}/view`
     )
     return [
       { text: prn.prnNumber },

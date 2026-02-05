@@ -1,24 +1,32 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
+ * @typedef {object} IssuedToOrganisation
+ * @property {string} id - The recipient organisation ID
+ * @property {string} name - The recipient organisation name
+ * @property {string} [tradingName] - The recipient organisation trading name
+ */
+
+/**
  * @typedef {object} CreatePrnPayload
- * @property {string} issuedToOrganisation - The recipient organisation ID
+ * @property {IssuedToOrganisation} issuedToOrganisation - The recipient organisation
  * @property {number} tonnage - Tonnage amount (whole number)
  * @property {string} material - Material type (e.g. 'glass', 'plastic')
- * @property {string} nation - Nation code (e.g. 'england', 'wales')
- * @property {string} wasteProcessingType - Processing type ('reprocessor' or 'exporter')
- * @property {string} [issuerNotes] - Optional notes from issuer
+ * @property {string} [notes] - Optional notes from issuer
  */
 
 /**
  * @typedef {object} CreatePrnResponse
  * @property {string} id - The created PRN ID
- * @property {string} [prnNumber] - The PRN number (assigned when issued)
+ * @property {string|null} prnNumber - The PRN number (assigned when issued)
  * @property {number} tonnage - Tonnage amount
  * @property {string} material - Material type
- * @property {string} issuedToOrganisation - Recipient organisation ID
+ * @property {IssuedToOrganisation} issuedToOrganisation - Recipient organisation
  * @property {string} status - Current PRN status
  * @property {string} createdAt - Creation timestamp
+ * @property {string} processToBeUsed - The recycling process code
+ * @property {boolean} isDecemberWaste - Whether this is December waste
+ * @property {string} wasteProcessingType - Processing type ('reprocessor' or 'exporter')
  */
 
 /**
@@ -37,7 +45,7 @@ async function createPrn(
   payload,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/l-packaging-recycling-notes`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',

@@ -70,7 +70,7 @@ describe(fetchPackagingRecyclingNote, () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringMatching(
-        /\/v1\/organisations\/org-123\/registrations\/reg-456\/accreditations\/acc-abc\/l-packaging-recycling-notes\/prn-789$/
+        /\/v1\/organisations\/org-123\/registrations\/reg-456\/accreditations\/acc-abc\/packaging-recycling-notes\/prn-789$/
       ),
       expect.any(Object)
     )
@@ -119,7 +119,7 @@ describe(fetchPackagingRecyclingNote, () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining(
-        'organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/l-packaging-recycling-notes/prn%23789'
+        'organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/packaging-recycling-notes/prn%23789'
       ),
       expect.any(Object)
     )

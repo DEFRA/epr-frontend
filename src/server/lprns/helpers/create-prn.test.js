@@ -16,21 +16,28 @@ describe(createPrn, () => {
   const idToken = 'test-token'
 
   const payload = {
-    issuedToOrganisation: 'producer-1',
+    issuedToOrganisation: {
+      id: 'producer-1',
+      name: 'Acme Packaging Ltd'
+    },
     tonnage: 100,
     material: 'plastic',
-    nation: 'england',
-    wasteProcessingType: 'reprocessor',
-    issuerNotes: 'Test notes'
+    notes: 'Test notes'
   }
 
   const mockResponse = {
     id: 'prn-789',
     tonnage: 100,
     material: 'plastic',
-    issuedToOrganisation: 'producer-1',
+    issuedToOrganisation: {
+      id: 'producer-1',
+      name: 'Acme Packaging Ltd'
+    },
     status: 'draft',
-    createdAt: '2026-01-27T12:00:00.000Z'
+    createdAt: '2026-01-27T12:00:00.000Z',
+    wasteProcessingType: 'reprocessor',
+    processToBeUsed: 'R3',
+    isDecemberWaste: false
   }
 
   beforeEach(() => {
@@ -49,7 +56,7 @@ describe(createPrn, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/l-packaging-recycling-notes',
+      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes',
       {
         method: 'POST',
         headers: {
@@ -66,7 +73,7 @@ describe(createPrn, () => {
     await createPrn('org/123', 'reg&456', 'acc#789', payload, idToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/l-packaging-recycling-notes',
+      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/packaging-recycling-notes',
       expect.any(Object)
     )
   })

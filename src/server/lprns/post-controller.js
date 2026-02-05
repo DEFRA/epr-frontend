@@ -154,8 +154,7 @@ export const postController = {
 
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
-    const { tonnage, recipient, notes, material, nation, wasteProcessingType } =
-      request.payload
+    const { tonnage, recipient, notes, material } = request.payload
 
     // Find recipient name from stub list
     const recipientName = getRecipientDisplayName(recipient)
@@ -167,12 +166,13 @@ export const postController = {
         registrationId,
         accreditationId,
         {
-          issuedToOrganisation: recipient,
+          issuedToOrganisation: {
+            id: recipient,
+            name: recipientName
+          },
           tonnage: Number.parseInt(tonnage, 10),
           material,
-          nation,
-          wasteProcessingType,
-          issuerNotes: notes || undefined
+          notes: notes || undefined
         },
         session.idToken
       )
@@ -186,13 +186,13 @@ export const postController = {
         status: result.status,
         recipientName,
         notes: notes || '',
-        wasteProcessingType,
+        wasteProcessingType: result.wasteProcessingType,
         processToBeUsed: result.processToBeUsed,
         isDecemberWaste: result.isDecemberWaste ?? false
       })
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${result.id}/view`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to create PRN draft')
