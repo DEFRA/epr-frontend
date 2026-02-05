@@ -839,6 +839,30 @@ describe('#viewController', () => {
         ).toBeDefined()
       })
 
+      it('should render complianceYearText with year in strong tags', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          accreditationYear: 2026
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const complianceText = main.querySelector('.govuk-body')
+        expect(complianceText.innerHTML).toContain('<strong>2026</strong>')
+      })
+
       it('does not display error summary on certificate page (errors shown on action page)', async ({
         server
       }) => {
