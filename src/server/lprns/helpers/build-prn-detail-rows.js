@@ -68,9 +68,7 @@ export function buildPrnAuthorisationRows(
   localise,
   { includeIssuerRow = false } = {}
 ) {
-  const issuedDate = prn.authorisedAt
-    ? formatDateForDisplay(prn.authorisedAt)
-    : ''
+  const issuedDate = prn.issuedAt ? formatDateForDisplay(prn.issuedAt) : ''
   const issuedBy =
     organisationData?.companyDetails?.name || localise('lprns:notAvailable')
   const notesText = prn.notes || localise('lprns:notProvided')

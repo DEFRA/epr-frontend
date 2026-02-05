@@ -112,7 +112,7 @@ const mockPrnFromBackend = {
   createdAt: '2026-01-15T10:00:00.000Z',
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
-  authorisedAt: '2026-01-16T14:30:00.000Z',
+  issuedAt: '2026-01-16T14:30:00.000Z',
   authorisedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
 }
@@ -126,8 +126,8 @@ const mockPernFromBackend = {
   createdAt: '2026-01-20T14:30:00.000Z',
   notes: null,
   isDecemberWaste: false,
-  authorisedAt: null,
-  authorisedBy: null,
+  issuedAt: '2026-01-21T09:00:00.000Z',
+  authorisedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
 }
 
@@ -383,6 +383,58 @@ describe('#viewController', () => {
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
       })
 
+      it('displays issued date for issued PERN', async ({ server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          mockPernFromBackend
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Check issued date is displayed (from issuedAt: '2026-01-21T09:00:00.000Z')
+        expect(getByText(main, /Issued date/i)).toBeDefined()
+        expect(getByText(main, /21 January 2026/i)).toBeDefined()
+      })
+
+      it('displays authorised by and position for issued PERN', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          mockPernFromBackend
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Check authorised by and position are displayed
+        expect(getByText(main, /Jane Doe/i)).toBeDefined()
+        expect(getByText(main, /Operations Manager/i)).toBeDefined()
+      })
+
       it('shows accreditation address for reprocessors', async ({ server }) => {
         const reprocessorWithAddress = {
           ...fixtureReprocessor,
@@ -578,7 +630,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Issued date is the authorisedAt date (16 January 2026)
+        // Issued date is the issuedAt date (16 January 2026)
         expect(getByText(main, /16 January 2026/i)).toBeDefined()
       })
 
@@ -687,7 +739,7 @@ describe('#viewController', () => {
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
-          authorisedAt: null,
+          issuedAt: null,
           authorisedBy: null
         })
 
