@@ -87,7 +87,7 @@
       "pageTitle": "PRN issued",
       "heading": "PRN issued to {{recipient}}",
       "prnNumberLabel": "PRN number:",
-      "viewButton": "View PRN (PDF)",
+      "viewButton": "View PRN",
       "issueAnotherLink": "Issue another PRN",
       "managePrnsLink": "Manage PRNs"
     },
@@ -95,7 +95,7 @@
       "pageTitle": "PERN issued",
       "heading": "PERN issued to {{recipient}}",
       "prnNumberLabel": "PERN number:",
-      "viewButton": "View PERN (PDF)",
+      "viewButton": "View PERN",
       "issueAnotherLink": "Issue another PERN",
       "managePrnsLink": "Manage PERNs"
     }
