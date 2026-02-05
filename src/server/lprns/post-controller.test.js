@@ -57,7 +57,7 @@ const fixtureExporter = {
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
 const accreditationId = 'acc-001'
-const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+const url = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
 
 const validPayload = {
   tonnage: '100',
@@ -108,7 +108,10 @@ describe('#postCreatePrnController', () => {
           id: 'prn-789',
           tonnage: 100,
           material: 'plastic',
-          status: 'draft'
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
         })
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -125,7 +128,7 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/prn-789/view`
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-789/view`
         )
       })
 
@@ -134,7 +137,10 @@ describe('#postCreatePrnController', () => {
           id: 'prn-789',
           tonnage: 100,
           material: 'plastic',
-          status: 'draft'
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
         })
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -154,23 +160,27 @@ describe('#postCreatePrnController', () => {
           registrationId,
           accreditationId,
           {
-            issuedToOrganisation: 'dd793573-b218-47a7-be85-1c777ca0d0d8',
+            issuedToOrganisation: {
+              id: validPayload.recipient,
+              name: 'Bigco Packaging Ltd, Zig Zag road, Box Hill, Tadworth, KT20 7LB'
+            },
             tonnage: 100,
             material: 'plastic',
-            nation: 'england',
-            wasteProcessingType: 'reprocessor-input',
-            issuerNotes: 'Test notes'
+            notes: 'Test notes'
           },
           'mock-id-token'
         )
       })
 
-      it('omits issuerNotes when notes is empty', async ({ server }) => {
+      it('omits notes when notes is empty', async ({ server }) => {
         vi.mocked(createPrn).mockResolvedValue({
           id: 'prn-789',
           tonnage: 100,
           material: 'plastic',
-          status: 'draft'
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
         })
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -190,7 +200,7 @@ describe('#postCreatePrnController', () => {
           registrationId,
           accreditationId,
           expect.objectContaining({
-            issuerNotes: undefined
+            notes: undefined
           }),
           'mock-id-token'
         )
@@ -203,7 +213,10 @@ describe('#postCreatePrnController', () => {
           id: 'prn-789',
           tonnage: 100,
           material: 'plastic',
-          status: 'draft'
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
         })
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -226,7 +239,10 @@ describe('#postCreatePrnController', () => {
           registrationId,
           accreditationId,
           expect.objectContaining({
-            issuedToOrganisation: unknownRecipient
+            issuedToOrganisation: {
+              id: unknownRecipient,
+              name: unknownRecipient
+            }
           }),
           'mock-id-token'
         )

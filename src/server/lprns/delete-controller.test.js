@@ -60,7 +60,7 @@ const organisationId = 'org-123'
 const registrationId = 'reg-456'
 const accreditationId = 'acc-001'
 const prnId = 'prn-789'
-const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 const listUrl = basePath
 const deleteUrl = `${basePath}/${prnId}/delete`
 

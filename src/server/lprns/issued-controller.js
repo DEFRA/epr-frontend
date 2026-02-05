@@ -38,7 +38,7 @@ export const issuedController = {
     // Only show success page if PRN has been issued (status is awaiting_acceptance)
     if (prn.status !== 'awaiting_acceptance') {
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
       )
     }
 
@@ -50,9 +50,9 @@ export const issuedController = {
     const isExporter = registration.wasteProcessingType === 'exporter'
     const noteType = isExporter ? 'perns' : 'prns'
 
-    const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+    const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
     const homeUrl = `/organisations/${organisationId}/registrations/${registrationId}`
-    const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
+    const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
 
     return h.view('lprns/issued', {
       pageTitle: localise(`lprns:issued:${noteType}:pageTitle`),

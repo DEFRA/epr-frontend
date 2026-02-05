@@ -144,7 +144,7 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.createLink.href).toBe(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/create'
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/create'
       )
       expect(result.createLink.text).toBe('Create a PRN')
     })
@@ -287,7 +287,7 @@ describe('#buildListViewData', () => {
 
       expect(result.table.rows[0][4].html).toContain('govuk-link')
       expect(result.table.rows[0][4].html).toContain(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/prn-001'
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-001'
       )
       expect(result.table.rows[0][4].html).not.toContain('prn-001/view')
     })
@@ -524,7 +524,7 @@ describe('#buildListViewData', () => {
 
       expect(result.issuedTable.rows[0][4].html).toContain('govuk-link')
       expect(result.issuedTable.rows[0][4].html).toContain(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/prn-003/view'
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-003/view'
       )
       expect(result.issuedTable.rows[0][4].html).toContain('target="_blank"')
     })

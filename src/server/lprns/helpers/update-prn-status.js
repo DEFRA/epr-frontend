@@ -6,14 +6,24 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  */
 
 /**
+ * @typedef {object} IssuedToOrganisation
+ * @property {string} id
+ * @property {string} name
+ * @property {string} [tradingName]
+ */
+
+/**
  * @typedef {object} UpdatePrnStatusResponse
  * @property {string} id - The PRN ID
- * @property {string} [prnNumber] - The PRN number
+ * @property {string|null} prnNumber - The PRN number
  * @property {number} tonnage - Tonnage amount
  * @property {string} material - Material type
- * @property {string} issuedToOrganisation - Recipient organisation ID
+ * @property {IssuedToOrganisation} issuedToOrganisation - Recipient organisation
  * @property {string} status - Current PRN status
  * @property {string} updatedAt - Update timestamp
+ * @property {string} wasteProcessingType - Processing type
+ * @property {string} processToBeUsed - The recycling process code
+ * @property {boolean} isDecemberWaste - Whether this is December waste
  */
 
 /**
@@ -34,7 +44,7 @@ async function updatePrnStatus(
   payload,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/l-packaging-recycling-notes/${encodeURIComponent(prnId)}/status`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/${encodeURIComponent(prnId)}/status`
 
   return fetchJsonFromBackend(path, {
     method: 'POST',

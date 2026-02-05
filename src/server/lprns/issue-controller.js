@@ -28,14 +28,14 @@ export const issueController = {
       )
 
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issued`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
       )
     } catch (error) {
       request.logger.error({ error }, 'Failed to issue PRN')
 
       if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
         return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}?error=insufficient_balance`
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}?error=insufficient_balance`
         )
       }
 

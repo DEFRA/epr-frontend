@@ -47,7 +47,7 @@ describe(updatePrnStatus, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-abc/l-packaging-recycling-notes/prn-789/status',
+      '/v1/organisations/org-123/registrations/reg-456/accreditations/acc-abc/packaging-recycling-notes/prn-789/status',
       {
         method: 'POST',
         headers: {
@@ -71,7 +71,7 @@ describe(updatePrnStatus, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/l-packaging-recycling-notes/prn%23789/status',
+      '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%40abc/packaging-recycling-notes/prn%23789/status',
       expect.any(Object)
     )
   })

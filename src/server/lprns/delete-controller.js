@@ -19,7 +19,7 @@ export const deleteGetController = {
     const { t: localise } = request
     const session = request.auth.credentials
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
     const [{ registration }, prn] = await Promise.all([
       fetchRegistrationAndAccreditation(
@@ -66,7 +66,7 @@ export const deletePostController = {
       request.params
     const session = request.auth.credentials
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
     const prn = await fetchPackagingRecyclingNote(
       organisationId,

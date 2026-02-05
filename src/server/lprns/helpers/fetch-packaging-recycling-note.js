@@ -16,7 +16,7 @@ async function fetchPackagingRecyclingNote(
   prnId,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/l-packaging-recycling-notes/${encodeURIComponent(prnId)}`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes/${encodeURIComponent(prnId)}`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',
@@ -29,11 +29,26 @@ async function fetchPackagingRecyclingNote(
 export { fetchPackagingRecyclingNote }
 
 /**
+ * @typedef {object} IssuedToOrganisation
+ * @property {string} id
+ * @property {string} name
+ * @property {string} [tradingName]
+ */
+
+/**
  * @typedef {object} PackagingRecyclingNote
  * @property {string} id
- * @property {string} issuedToOrganisation
+ * @property {string|null} prnNumber
+ * @property {IssuedToOrganisation} issuedToOrganisation
  * @property {number} tonnage
  * @property {string} material
  * @property {string} status
  * @property {string} createdAt
+ * @property {string|null} notes
+ * @property {boolean} isDecemberWaste
+ * @property {string} wasteProcessingType
+ * @property {string} processToBeUsed
+ * @property {number|null} accreditationYear
+ * @property {string|null} authorisedAt
+ * @property {{id: string, name: string, position: string}|null} authorisedBy
  */

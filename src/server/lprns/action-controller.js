@@ -92,7 +92,7 @@ function buildActionViewData({
 }) {
   const isExporter = registration.wasteProcessingType === 'exporter'
   const noteType = isExporter ? 'perns' : 'prns'
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   const displayMaterial = getLumpyDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'
   const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
