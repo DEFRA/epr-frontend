@@ -2,6 +2,8 @@ import { config } from '#config/config.js'
 import hapi from '@hapi/hapi'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import fixture from '../../../../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+
 import { createWasteOrganisationsPlugin } from './waste-organisations.plugin.js'
 
 vi.mock(import('./api-adapter.js'), () => ({
@@ -27,7 +29,11 @@ describe('#createWasteOrganisationsPlugin', () => {
   it('should use in-memory adapter when useInMemory is true', async () => {
     config.set('wasteOrganisationsApi.useInMemory', true)
 
-    await server.register(createWasteOrganisationsPlugin())
+    await server.register(
+      createWasteOrganisationsPlugin({
+        initialOrganisations: fixture.organisations
+      })
+    )
     server.route({
       method: 'GET',
       path: '/test',
