@@ -101,6 +101,7 @@ const mockPernCreated = {
 
 const mockPrnStatusUpdated = {
   id: 'prn-789',
+  prnNumber: 'PRN-2026-00001',
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation'
@@ -108,6 +109,7 @@ const mockPrnStatusUpdated = {
 
 const mockPernStatusUpdated = {
   id: 'pern-123',
+  prnNumber: 'PERN-2026-00001',
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_authorisation'
@@ -260,6 +262,24 @@ describe('#createdController', () => {
         expect(panel.textContent).toContain('Awaiting authorisation')
       })
 
+      it('displays PRN number in panel', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const panel = body.querySelector('.govuk-panel--confirmation')
+
+        expect(panel.textContent).toContain('PRN number:')
+        expect(panel.textContent).toContain('PRN-2026-00001')
+      })
+
       it('displays View PRN button that opens in new tab', async ({
         server
       }) => {
@@ -409,6 +429,41 @@ describe('#createdController', () => {
         ).toBeDefined()
         expect(getByText(main, /PERNs page/i)).toBeDefined()
         expect(getByText(main, /Create another PERN/i)).toBeDefined()
+      })
+
+      it('displays PERN number in panel for exporter', async ({ server }) => {
+        // Set up exporter fixture for PERN
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+        vi.mocked(updatePrnStatus).mockResolvedValue(mockPernStatusUpdated)
+
+        const exporterPayload = {
+          ...validPayload,
+          wasteProcessingType: 'exporter'
+        }
+
+        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/view`
+        const { cookies } = await createPrnAndConfirm(
+          server,
+          exporterPayload,
+          pernViewUrl
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: pernCreatedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const panel = body.querySelector('.govuk-panel--confirmation')
+
+        expect(panel.textContent).toContain('PERN number:')
+        expect(panel.textContent).toContain('PERN-2026-00001')
       })
 
       it('redirects to view when no session data', async ({ server }) => {

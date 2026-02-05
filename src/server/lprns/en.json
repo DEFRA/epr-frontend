@@ -32,14 +32,15 @@
     "tonnageLabel": "Enter {{noteType}} tonnage"
   },
   "created": {
+    "createAnotherLink": "Create another {{noteType}}",
+    "issueTextPrefix": "You can now issue this {{noteType}} through your",
+    "prnNumberLabel": "{{noteType}} number:",
+    "prnsPageLink": "{{noteTypePlural}} page",
+    "returnHomeLink": "Return to home",
     "statusLabel": "Status:",
     "statusValue": "Awaiting authorisation",
-    "wasteBalanceMessage": "Your available waste balance has been updated.",
-    "returnHomeLink": "Return to home",
     "viewButton": "View {{noteType}} (opens in a new tab)",
-    "issueTextPrefix": "You can now issue this {{noteType}} through your",
-    "prnsPageLink": "{{noteTypePlural}} page",
-    "createAnotherLink": "Create another {{noteType}}"
+    "wasteBalanceMessage": "Your available waste balance has been updated."
   },
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
