@@ -442,36 +442,6 @@ describe('#buildListViewData', () => {
     })
   })
 
-  describe('showTabs', () => {
-    it('should return showTabs false when hasIssuedPrns is false', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance,
-        hasIssuedPrns: false
-      })
-
-      expect(result.showTabs).toBe(false)
-    })
-
-    it('should return showTabs true when hasIssuedPrns is true', () => {
-      const result = buildListViewData(createMockRequest(), {
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        accreditationId: 'acc-001',
-        registration: reprocessorRegistration,
-        prns: stubPrns,
-        wasteBalance: mockWasteBalance,
-        hasIssuedPrns: true
-      })
-
-      expect(result.showTabs).toBe(true)
-    })
-  })
-
   describe('issued table', () => {
     it('should return issued table rows with PRN number, recipient and date issued', () => {
       const result = buildListViewData(createMockRequest(), {
@@ -482,7 +452,7 @@ describe('#buildListViewData', () => {
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
         hasCreatedPrns: true,
-        hasIssuedPrns: true,
+
         wasteBalance: mockWasteBalance
       })
 
@@ -507,7 +477,7 @@ describe('#buildListViewData', () => {
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
         hasCreatedPrns: true,
-        hasIssuedPrns: true,
+
         wasteBalance: mockWasteBalance
       })
 
@@ -526,7 +496,7 @@ describe('#buildListViewData', () => {
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
         hasCreatedPrns: true,
-        hasIssuedPrns: true,
+
         wasteBalance: mockWasteBalance
       })
 
@@ -548,7 +518,7 @@ describe('#buildListViewData', () => {
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
         hasCreatedPrns: true,
-        hasIssuedPrns: true,
+
         wasteBalance: mockWasteBalance
       })
 
@@ -568,7 +538,7 @@ describe('#buildListViewData', () => {
         prns: stubPrns,
         issuedPrns: [],
         hasCreatedPrns: true,
-        hasIssuedPrns: false,
+
         wasteBalance: mockWasteBalance
       })
 
@@ -584,7 +554,7 @@ describe('#buildListViewData', () => {
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
         hasCreatedPrns: true,
-        hasIssuedPrns: true,
+
         wasteBalance: mockWasteBalance
       })
 
@@ -600,7 +570,7 @@ describe('#buildListViewData', () => {
         prns: stubPrns,
         issuedPrns: stubIssuedPrns,
         hasCreatedPrns: true,
-        hasIssuedPrns: true,
+
         wasteBalance: mockWasteBalance
       })
 
