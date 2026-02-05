@@ -7,6 +7,20 @@
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
   "decemberWasteYes": "Yes",
+  "delete": {
+    "prns": {
+      "pageTitle": "Delete PRN",
+      "heading": "Are you sure you want to delete this PRN?",
+      "warningText": "This will permanently delete the PRN. The tonnage will be returned to your available waste balance.",
+      "confirmButton": "Delete PRN"
+    },
+    "perns": {
+      "pageTitle": "Delete PERN",
+      "heading": "Are you sure you want to delete this PERN?",
+      "warningText": "This will permanently delete the PERN. The tonnage will be returned to your available waste balance.",
+      "confirmButton": "Delete PERN"
+    }
+  },
   "discard": {
     "prns": {
       "pageTitle": "Discard PRN",
