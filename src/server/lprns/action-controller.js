@@ -142,6 +142,12 @@ function buildActionViewData({
       title: localise('lprns:errorSummaryTitle'),
       list: [{ text: localise('lprns:insufficientBalanceError') }]
     }
+  } else if (request.query.error === 'issue_failed') {
+    viewData.errors = {}
+    viewData.errorSummary = {
+      title: localise('lprns:errorSummaryTitle'),
+      list: [{ text: localise('lprns:issueFailedError') }]
+    }
   }
 
   return viewData
