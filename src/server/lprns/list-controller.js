@@ -54,10 +54,6 @@ export const listController = {
 
     const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
 
-    const hasIssuedPrns = prns.some(
-      (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
-    )
-
     const prnsAwaitingAuthorisation = prns
       .filter((prn) => prn.status === 'awaiting_authorisation')
       .map((prn) => ({
@@ -88,8 +84,7 @@ export const listController = {
       prns: prnsAwaitingAuthorisation,
       issuedPrns,
       hasCreatedPrns,
-      wasteBalance,
-      hasIssuedPrns
+      wasteBalance
     })
 
     return h.view('lprns/list', viewData)

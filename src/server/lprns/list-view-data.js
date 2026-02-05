@@ -12,7 +12,6 @@ import { formatDateForDisplay } from './helpers/format-date-for-display.js'
  * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.issuedPrns]
  * @param {boolean} options.hasCreatedPrns
  * @param {{availableAmount: number} | null} options.wasteBalance
- * @param {boolean} options.hasIssuedPrns
  * @returns {object}
  */
 export function buildListViewData(
@@ -25,8 +24,7 @@ export function buildListViewData(
     prns,
     issuedPrns = [],
     hasCreatedPrns,
-    wasteBalance,
-    hasIssuedPrns
+    wasteBalance
   }
 ) {
   const { t: localise } = request
@@ -60,7 +58,6 @@ export function buildListViewData(
   return {
     pageTitle: localise(`lprns:list:${noteType}:pageTitle`),
     heading: localise(`lprns:list:${noteType}:pageTitle`),
-    showTabs: hasIssuedPrns === true,
     backUrl,
     createLink: {
       href: createUrl,

@@ -48,7 +48,6 @@
       <h2 class="govuk-heading-m">{{ selectHeading }}</h2>
 
       {% if hasCreatedPrns %}
-        {% if showTabs %}
           <div class="govuk-tabs" data-module="govuk-tabs">
             <h2 class="govuk-tabs__title">
               Contents
@@ -106,27 +105,6 @@
               {% endif %}
             </div>
           </div>
-        {% else %}
-          {{ govukInsetText({
-            text: cancelHint
-          }) }}
-
-          {% if table.rows | length > 0 %}
-            <h2 class="govuk-heading-m">{{ awaitingAuthorisationHeading }}</h2>
-            {{ govukTable({
-              head: [
-                { text: table.headings.recipient },
-                { text: table.headings.createdAt },
-                { text: table.headings.tonnage },
-                { text: table.headings.status },
-                { text: table.headings.action }
-              ],
-              rows: table.rows
-            }) }}
-          {% else %}
-            <p class="govuk-body">{{ noPrnsText }}</p>
-          {% endif %}
-        {% endif %}
       {% else %}
         <p class="govuk-body">{{ noPrnsCreatedText }}</p>
       {% endif %}
