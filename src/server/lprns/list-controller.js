@@ -2,10 +2,40 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
+
+const getPrnsAwaitingAuthorisation = (prns, organisations) =>
+  prns
+    .filter((prn) => prn.status === 'awaiting_authorisation')
+    .map((prn) => ({
+      id: prn.id,
+      recipient: getOrganisationDisplayName(
+        organisations,
+        prn.issuedToOrganisation
+      ),
+      createdAt: prn.createdAt,
+      tonnage: prn.tonnage,
+      status: prn.status
+    }))
+
+const getIssuedPrns = (prns, organisations) =>
+  prns
+    .filter(
+      (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
+    )
+    .map((prn) => ({
+      id: prn.id,
+      prnNumber: prn.prnNumber,
+      recipient: getOrganisationDisplayName(
+        organisations,
+        prn.issuedToOrganisation
+      ),
+      issuedAt: prn.issuedAt,
+      status: prn.status
+    }))
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -57,41 +87,13 @@ export const listController = {
 
     const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
 
-    const prnsAwaitingAuthorisation = prns
-      .filter((prn) => prn.status === 'awaiting_authorisation')
-      .map((prn) => ({
-        id: prn.id,
-        recipient: getOrganisationDisplayName(
-          organisations,
-          prn.issuedToOrganisation
-        ),
-        createdAt: prn.createdAt,
-        tonnage: prn.tonnage,
-        status: prn.status
-      }))
-
-    const issuedPrns = prns
-      .filter(
-        (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
-      )
-      .map((prn) => ({
-        id: prn.id,
-        prnNumber: prn.prnNumber,
-        recipient: getOrganisationDisplayName(
-          organisations,
-          prn.issuedToOrganisation
-        ),
-        issuedAt: prn.issuedAt,
-        status: prn.status
-      }))
-
     const viewData = buildListViewData(request, {
       organisationId,
       registrationId,
       accreditationId,
       registration,
-      prns: prnsAwaitingAuthorisation,
-      issuedPrns,
+      prns: getPrnsAwaitingAuthorisation(prns, organisations),
+      issuedPrns: getIssuedPrns(prns, organisations),
       hasCreatedPrns,
       wasteBalance
     })
