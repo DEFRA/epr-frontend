@@ -113,15 +113,15 @@ function buildAwaitingActionTable(
   const selectText = localise('lprns:list:table:selectText')
 
   const dataRows = prns.map((prn) => {
-    const viewUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prn.id}/view`
+    const actionUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prn.id}`
     )
     return [
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.createdAt) },
       { text: prn.tonnage },
       { html: buildStatusTagHtml(prn.status, localise) },
-      { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
+      { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
     ]
   })
 
@@ -178,7 +178,9 @@ function buildIssuedTable(
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.issuedAt) },
       { html: buildStatusTagHtml(prn.status, localise) },
-      { html: `<a href="${viewUrl}" class="govuk-link">${selectText}</a>` }
+      {
+        html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
+      }
     ]
   })
 

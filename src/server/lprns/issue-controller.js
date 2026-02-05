@@ -35,7 +35,7 @@ export const issueController = {
 
       if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
         return h.redirect(
-          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view?error=insufficient_balance`
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}?error=insufficient_balance`
         )
       }
 

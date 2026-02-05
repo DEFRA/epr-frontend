@@ -1,3 +1,4 @@
+import { actionController } from './action-controller.js'
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
 import {
@@ -35,6 +36,11 @@ export const lprns = {
           ...postController,
           method: 'POST',
           path: `${basePath}/create`
+        },
+        {
+          ...actionController,
+          method: 'GET',
+          path: `${basePath}/{prnId}`
         },
         {
           ...viewController,

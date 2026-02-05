@@ -2,10 +2,14 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { tonnageToWords } from './helpers/tonnage-to-words.js'
-import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
-import { getRecipientDisplayName } from './helpers/stub-recipients.js'
+import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
+import { getStatusConfig } from './helpers/get-status-config.js'
+import {
+  buildStatusRow,
+  buildPrnCoreRows,
+  buildPrnAuthorisationRows
+} from './helpers/build-prn-detail-rows.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -271,7 +275,6 @@ async function handleExistingView(
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
-  const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
@@ -295,7 +298,6 @@ async function handleExistingView(
     isExporter,
     noteType,
     isNotDraft,
-    isAwaitingAuthorisation,
     prnDetailRows,
     accreditationRows,
     backUrl,
@@ -303,18 +305,8 @@ async function handleExistingView(
     request,
     organisationId,
     registrationId,
-    accreditationId,
-    prnId
+    accreditationId
   })
-
-  if (request.query.error === 'insufficient_balance') {
-    const message = localise('lprns:insufficientBalanceError')
-    viewData.errors = {}
-    viewData.errorSummary = {
-      title: localise('lprns:errorSummaryTitle'),
-      list: [{ text: message }]
-    }
-  }
 
   return h.view('lprns/view', viewData)
 }
@@ -326,7 +318,6 @@ async function handleExistingView(
  * @param {boolean} params.isExporter - Whether the registration is for an exporter
  * @param {string} params.noteType - 'prns' or 'perns'
  * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
- * @param {boolean} params.isAwaitingAuthorisation - Whether the PRN is awaiting authorisation
  * @param {Array} params.prnDetailRows - PRN detail summary rows
  * @param {Array} params.accreditationRows - Accreditation summary rows
  * @param {string} params.backUrl - Back link URL
@@ -335,7 +326,6 @@ async function handleExistingView(
  * @param {string} params.organisationId
  * @param {string} params.registrationId
  * @param {string} params.accreditationId
- * @param {string} params.prnId
  * @returns {object} View data object
  */
 function buildExistingPrnViewData({
@@ -343,7 +333,6 @@ function buildExistingPrnViewData({
   isExporter,
   noteType,
   isNotDraft,
-  isAwaitingAuthorisation,
   prnDetailRows,
   accreditationRows,
   backUrl,
@@ -351,10 +340,8 @@ function buildExistingPrnViewData({
   request,
   organisationId,
   registrationId,
-  accreditationId,
-  prnId
+  accreditationId
 }) {
-  const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
   const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
 
   return {
@@ -374,37 +361,11 @@ function buildExistingPrnViewData({
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
-    issueButton: isAwaitingAuthorisation
-      ? {
-          text: localise(`lprns:view:${noteType}:issueButton`),
-          action: request.localiseUrl(issueUrl)
-        }
-      : null,
     returnLink: {
       href: request.localiseUrl(returnUrl),
       text: localise(`lprns:view:${noteType}:returnLink`)
     }
   }
-}
-
-/**
- * Formats an address object into a single line string
- * @param {object} address - Address object with line1, line2, town, postcode etc
- * @returns {string} Formatted address string
- */
-function formatAddress(address) {
-  if (!address) {
-    return ''
-  }
-
-  const parts = [
-    address.line1,
-    address.line2,
-    address.town,
-    address.postcode
-  ].filter(Boolean)
-
-  return parts.join(', ')
 }
 
 /**
@@ -470,14 +431,6 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
 
 /**
  * Builds the PRN/PERN details rows for an existing PRN (from backend)
- * @param {object} params
- * @param {object} params.prn - PRN data from backend
- * @param {object} params.organisationData - Organisation data
- * @param {(key: string) => string} params.localise - Translation function
- * @param {boolean} params.isExporter - Whether the registration is for an exporter
- * @param {{text: string, class: string}} params.statusConfig - Status display config
- * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
- * @returns {Array} Summary list rows
  */
 function buildExistingPrnDetailRows({
   prn,
@@ -493,7 +446,7 @@ function buildExistingPrnDetailRows({
   const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
 
   if (isNotDraft) {
-    rows.push(buildStatusRow(statusConfig, localise))
+    rows.push(buildStatusRow(localise, statusConfig))
   }
 
   rows.push(
@@ -502,168 +455,6 @@ function buildExistingPrnDetailRows({
   )
 
   return rows
-}
-
-/**
- * Build the status row for the PRN details
- * @param {{text: string, class: string}} statusConfig
- * @param {(key: string) => string} localise
- * @returns {object}
- */
-function buildStatusRow(statusConfig, localise) {
-  return {
-    key: { text: localise('lprns:view:status') },
-    value: {
-      html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
-    }
-  }
-}
-
-/**
- * Build core PRN detail rows (buyer, tonnage, process, december waste)
- * @param {object} prn
- * @param {(key: string) => string} localise
- * @returns {Array}
- */
-function buildPrnCoreRows(prn, localise) {
-  const decemberWasteText = prn.isDecemberWaste
-    ? localise('lprns:decemberWasteYes')
-    : localise('lprns:decemberWasteNo')
-
-  const tonnageInWords = prn.tonnageInWords || tonnageToWords(prn.tonnage)
-
-  return [
-    {
-      key: { text: localise('lprns:buyerLabel') },
-      value: { text: getRecipientDisplayName(prn.issuedToOrganisation) }
-    },
-    {
-      key: { text: localise('lprns:tonnageLabel') },
-      value: { text: String(prn.tonnage) }
-    },
-    {
-      key: { text: localise('lprns:tonnageInWordsLabel') },
-      value: { text: tonnageInWords }
-    },
-    {
-      key: { text: localise('lprns:processToBeUsedLabel') },
-      value: { text: prn.processToBeUsed || '' }
-    },
-    {
-      key: { text: localise('lprns:decemberWasteLabel') },
-      value: { text: decemberWasteText }
-    }
-  ]
-}
-
-/**
- * Build authorisation-related PRN detail rows
- * @param {object} prn
- * @param {object} organisationData
- * @param {(key: string) => string} localise
- * @returns {Array}
- */
-function buildPrnAuthorisationRows(prn, organisationData, localise) {
-  const issuedDate = prn.authorisedAt
-    ? formatDateForDisplay(prn.authorisedAt)
-    : ''
-  const issuedBy =
-    organisationData?.companyDetails?.name || localise('lprns:notAvailable')
-  const notesText = prn.notes || localise('lprns:notProvided')
-
-  return [
-    {
-      key: { text: localise('lprns:issuedDateLabel') },
-      value: { text: issuedDate }
-    },
-    {
-      key: { text: localise('lprns:issuedByLabel') },
-      value: { text: issuedBy }
-    },
-    {
-      key: { text: localise('lprns:authorisedByLabel') },
-      value: { text: prn.authorisedBy?.name || '' }
-    },
-    {
-      key: { text: localise('lprns:positionLabel') },
-      value: { text: prn.authorisedBy?.position || '' }
-    },
-    {
-      key: { text: localise('lprns:issuerNotesLabel') },
-      value: { text: notesText }
-    }
-  ]
-}
-
-/**
- * Builds the accreditation details rows for the summary list
- * @param {object} params
- * @param {object} params.registration - Registration data
- * @param {object} params.accreditation - Accreditation data
- * @param {string} params.displayMaterial - Formatted material name
- * @param {(key: string) => string} params.localise - Translation function
- * @param {boolean} params.isExporter - Whether the registration is for an exporter
- * @returns {Array} Summary list rows
- */
-function buildAccreditationRows({
-  registration,
-  accreditation,
-  displayMaterial,
-  localise,
-  isExporter
-}) {
-  const rows = [
-    {
-      key: { text: localise('lprns:materialLabel') },
-      value: { text: displayMaterial }
-    },
-    {
-      key: { text: localise('lprns:accreditationNumberLabel') },
-      value: { text: accreditation?.accreditationNumber || '' }
-    }
-  ]
-
-  if (!isExporter) {
-    rows.push({
-      key: { text: localise('lprns:accreditationAddressLabel') },
-      value: { text: formatAddress(registration.site?.address) }
-    })
-  }
-
-  return rows
-}
-
-/**
- * Get status display configuration
- * @param {string} status
- * @param {(key: string) => string} localise
- * @returns {{text: string, class: string}}
- */
-const TAG_CLASS_BLUE = 'govuk-tag--blue epr-tag--no-max-width'
-const TAG_CLASS_GREY = 'govuk-tag--grey epr-tag--no-max-width'
-const TAG_CLASS_DEFAULT = 'epr-tag--no-max-width'
-
-function getStatusConfig(status, localise) {
-  const statusMap = {
-    awaiting_authorisation: {
-      text: localise('lprns:list:status:awaitingAuthorisation'),
-      class: TAG_CLASS_BLUE
-    },
-    awaiting_acceptance: {
-      text: localise('lprns:list:status:awaitingAcceptance'),
-      class: TAG_CLASS_BLUE
-    },
-    issued: {
-      text: localise('lprns:list:status:issued'),
-      class: TAG_CLASS_BLUE
-    },
-    cancelled: {
-      text: localise('lprns:list:status:cancelled'),
-      class: TAG_CLASS_GREY
-    }
-  }
-
-  return statusMap[status] ?? { text: status, class: TAG_CLASS_DEFAULT }
 }
 
 /**

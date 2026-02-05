@@ -2,6 +2,22 @@
   "accreditationAddressLabel": "Accreditation address",
   "accreditationDetailsHeading": "Accreditation details",
   "accreditationNumberLabel": "Accreditation number",
+  "action": {
+    "prns": {
+      "insetText": "Any information that is not shown here will be automatically populated when the PRN is issued.",
+      "viewLink": "View PRN (opens in a new tab)",
+      "issueButton": "Issue PRN",
+      "deleteLink": "Delete PRN",
+      "returnLink": "Return to PRN list"
+    },
+    "perns": {
+      "insetText": "Any information that is not shown here will be automatically populated when the PERN is issued.",
+      "viewLink": "View PERN (opens in a new tab)",
+      "issueButton": "Issue PERN",
+      "deleteLink": "Delete PERN",
+      "returnLink": "Return to PERN list"
+    }
+  },
   "authorisedByLabel": "Authorised by",
   "buyerLabel": "Buyer",
   "decemberWasteLabel": "December waste",
@@ -179,14 +195,12 @@
     "prns": {
       "heading": "Packaging recycling note",
       "complianceYearText": "This PRN relates to waste accepted for reprocessing in {{year}} and can count towards {{year}} obligations.",
-      "returnLink": "Return to PRN list",
-      "issueButton": "Issue PRN"
+      "returnLink": "Return to PRN list"
     },
     "perns": {
       "heading": "Packaging export recycling note",
       "complianceYearText": "This PERN relates to waste accepted for export in {{year}} and can count towards {{year}} obligations.",
-      "returnLink": "Return to PERN list",
-      "issueButton": "Issue PERN"
+      "returnLink": "Return to PERN list"
     }
   }
 }
