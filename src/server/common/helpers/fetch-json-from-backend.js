@@ -8,8 +8,7 @@ import { fetchJson } from './fetch-json.js'
  * @returns {Promise<object>} The parsed JSON response or throws a Boom error
  */
 export const fetchJsonFromBackend = async (path, options) => {
-  const eprBackendUrl = config.get('eprBackendUrl')
-  const url = path.startsWith('http') ? path : `${eprBackendUrl}${path}`
+  const url = new URL(path, config.get('eprBackendUrl')).href
 
   return fetchJson(url, options)
 }
