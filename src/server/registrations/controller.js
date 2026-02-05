@@ -137,8 +137,8 @@ function getPrnViewData(
   const { t: localise } = request
   const key = isExporter ? 'perns' : 'prns'
 
-  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
-  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes`
+  const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+  const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
     isEnabled: config.get('featureFlags.lprns'),

@@ -8,11 +8,17 @@ export const STUB_RECIPIENTS = [
 ]
 
 /**
- * Look up recipient display name from stub list
- * @param {string} recipientId - The recipient ID stored in the PRN
- * @returns {string} The display name or the original ID if not found
+ * Get recipient display name from either an object or string ID
+ * @param {string | {id: string, name: string, tradingName?: string}} recipient - The recipient (object or ID string)
+ * @returns {string} The display name
  */
-export function getRecipientDisplayName(recipientId) {
-  const recipient = STUB_RECIPIENTS.find((r) => r.value === recipientId)
-  return recipient?.text ?? recipientId
+export function getRecipientDisplayName(recipient) {
+  // Handle new object format from backend
+  if (recipient && typeof recipient === 'object') {
+    return recipient.tradingName || recipient.name || recipient.id
+  }
+
+  // Handle legacy string ID format - look up from stub list
+  const found = STUB_RECIPIENTS.find((r) => r.value === recipient)
+  return found?.text ?? recipient
 }

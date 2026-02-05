@@ -16,7 +16,7 @@ import { postController } from './post-controller.js'
 import { viewController, viewPostController } from './view-controller.js'
 
 const basePath =
-  '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/l-packaging-recycling-notes'
+  '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/packaging-recycling-notes'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}

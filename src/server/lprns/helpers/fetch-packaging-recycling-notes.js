@@ -14,7 +14,7 @@ async function fetchPackagingRecyclingNotes(
   accreditationId,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/l-packaging-recycling-notes`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/accreditations/${encodeURIComponent(accreditationId)}/packaging-recycling-notes`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',
@@ -27,13 +27,23 @@ async function fetchPackagingRecyclingNotes(
 export { fetchPackagingRecyclingNotes }
 
 /**
+ * @typedef {object} IssuedToOrganisation
+ * @property {string} id
+ * @property {string} name
+ * @property {string} [tradingName]
+ */
+
+/**
  * @typedef {object} PackagingRecyclingNote
  * @property {string} id
  * @property {string|null} prnNumber
- * @property {string} issuedToOrganisation
+ * @property {IssuedToOrganisation} issuedToOrganisation
  * @property {number} tonnage
  * @property {string} material
  * @property {string} status
  * @property {string} createdAt
  * @property {string|null} issuedAt
+ * @property {string} wasteProcessingType
+ * @property {string} processToBeUsed
+ * @property {boolean} isDecemberWaste
  */

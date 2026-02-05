@@ -22,7 +22,7 @@ export const discardGetController = {
 
     if (!prnDraft || prnDraft.id !== prnId) {
       return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
       )
     }
 
@@ -35,7 +35,7 @@ export const discardGetController = {
     const isExporter = registration.wasteProcessingType === 'exporter'
     const noteType = isExporter ? 'perns' : 'prns'
 
-    const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
+    const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
 
     return h.view('lprns/discard', {
       pageTitle: localise(`lprns:discard:${noteType}:pageTitle`),
@@ -60,7 +60,7 @@ export const discardPostController = {
       request.params
     const session = request.auth.credentials
 
-    const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/create`
+    const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
 
     const prnDraft = request.yar.get('prnDraft')
 
