@@ -20,6 +20,24 @@
   },
   "authorisedByLabel": "Authorised by",
   "buyerLabel": "Buyer",
+  "created": {
+    "statusLabel": "Status:",
+    "statusValue": "Awaiting authorisation",
+    "wasteBalanceMessage": "Your available waste balance has been updated.",
+    "returnHomeLink": "Return to home",
+    "prns": {
+      "viewButton": "View PRN (opens in a new tab)",
+      "issueTextPrefix": "You can now issue this PRN through your",
+      "prnsPageLink": "PRNs page",
+      "createAnotherLink": "Create another PRN"
+    },
+    "perns": {
+      "viewButton": "View PERN (opens in a new tab)",
+      "issueTextPrefix": "You can now issue this PERN through your",
+      "prnsPageLink": "PERNs page",
+      "createAnotherLink": "Create another PERN"
+    }
+  },
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
   "decemberWasteYes": "Yes",

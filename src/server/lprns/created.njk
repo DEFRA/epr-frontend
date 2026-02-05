@@ -8,19 +8,33 @@
         {{ heading }}
       </h1>
       <div class="govuk-panel__body">
-        {{ tonnageLabel }}<br>
-        <strong>{{ tonnage }} {{ tonnageSuffix }}</strong>
+        {{ statusLabel }}<br>
+        <strong>{{ statusValue }}</strong>
       </div>
     </div>
+
+    <p class="govuk-body">
+      <a href="{{ viewButton.href }}" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button" target="_blank" rel="noopener noreferrer">
+        {{ viewButton.text }}
+      </a>
+    </p>
 
     <h2 class="govuk-heading-m">{{ nextStepsHeading }}</h2>
 
     <p class="govuk-body">
-      {{ nextStepsText }}
+      {{ wasteBalanceMessage }}
     </p>
 
     <p class="govuk-body">
-      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}" class="govuk-link">{{ returnLink }}</a>
+      {{ issueText.prefix }} <a href="{{ issueText.link.href }}" class="govuk-link">{{ issueText.link.text }}</a>{{ issueText.suffix }}
+    </p>
+
+    <p class="govuk-body">
+      <a href="{{ createAnotherLink.href }}" class="govuk-link">{{ createAnotherLink.text }}</a>
+    </p>
+
+    <p class="govuk-body">
+      <a href="{{ returnHomeLink.href }}" class="govuk-link">{{ returnHomeLink.text }}</a>
     </p>
   </div>
 </div>
