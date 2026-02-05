@@ -17,52 +17,22 @@ describe('#createInMemoryWasteOrganisationsService', () => {
     testWasteOrganisationsServiceContract(it)
   })
 
-  describe('test helpers', () => {
-    it('should return default organisations from fixture', async ({
-      wasteOrganisationsService
-    }) => {
-      const { organisations } =
-        await wasteOrganisationsService.getOrganisations()
+  it('should return default organisations from fixture', async ({
+    wasteOrganisationsService
+  }) => {
+    const { organisations } = await wasteOrganisationsService.getOrganisations()
 
-      expect(organisations).toHaveLength(3)
-      expect(organisations[0].id).toBe('9eb099a7-bda0-456c-96ba-e0af3fdb9cde')
-    })
+    expect(organisations).toHaveLength(3)
+    expect(organisations[0].id).toBe('9eb099a7-bda0-456c-96ba-e0af3fdb9cde')
+  })
 
-    it('should return custom initial organisations when provided', async () => {
-      const customOrgs = [{ id: 'custom-1', name: 'Custom Org' }]
+  it('should return custom initial organisations when provided', async () => {
+    const customOrgs = [{ id: 'custom-1', name: 'Custom Org' }]
 
-      const service = createInMemoryWasteOrganisationsService(customOrgs)
-      const { organisations } = await service.getOrganisations()
+    const service = createInMemoryWasteOrganisationsService(customOrgs)
+    const { organisations } = await service.getOrganisations()
 
-      expect(organisations).toHaveLength(1)
-      expect(organisations[0].id).toBe('custom-1')
-    })
-
-    it('should allow setting organisations', async ({
-      wasteOrganisationsService
-    }) => {
-      wasteOrganisationsService.setOrganisations([
-        { id: 'new-1', name: 'New Org' }
-      ])
-
-      const { organisations } =
-        await wasteOrganisationsService.getOrganisations()
-      expect(organisations).toHaveLength(1)
-      expect(organisations[0].id).toBe('new-1')
-    })
-
-    it('should reset to initial organisations', async ({
-      wasteOrganisationsService
-    }) => {
-      wasteOrganisationsService.setOrganisations([
-        { id: 'temp-1', name: 'Temp Org' }
-      ])
-      wasteOrganisationsService.reset()
-
-      const { organisations } =
-        await wasteOrganisationsService.getOrganisations()
-      expect(organisations).toHaveLength(3)
-      expect(organisations[0].id).toBe('9eb099a7-bda0-456c-96ba-e0af3fdb9cde')
-    })
+    expect(organisations).toHaveLength(1)
+    expect(organisations[0].id).toBe('custom-1')
   })
 })

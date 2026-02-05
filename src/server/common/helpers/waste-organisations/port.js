@@ -10,12 +10,4 @@
  * }} WasteOrganisationsService
  */
 
-/**
- * Extended interface for in-memory adapter (includes test helpers)
- * @typedef {WasteOrganisationsService & {
- *   setOrganisations: (orgs: WasteOrganisation[]) => void
- *   reset: () => void
- * }} InMemoryWasteOrganisationsService
- */
-
 export {}
