@@ -7,7 +7,8 @@ import {
   ErrorSummary,
   Header,
   Radios,
-  SkipLink
+  SkipLink,
+  Tabs
 } from 'govuk-frontend'
 
 createAll(Accordion)
@@ -18,6 +19,7 @@ createAll(ErrorSummary)
 createAll(Header)
 createAll(Radios)
 createAll(SkipLink)
+createAll(Tabs)
 
 /**
  * Prevents stale uploadId errors when user navigates back to upload page.
