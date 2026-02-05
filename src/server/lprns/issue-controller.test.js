@@ -26,6 +26,7 @@ const registrationId = 'reg-456'
 const accreditationId = 'acc-001'
 const prnId = 'prn-789'
 const issueUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issue`
+const actionUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}`
 const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/view`
 const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/l-packaging-recycling-notes/${prnId}/issued`
 
@@ -103,7 +104,7 @@ describe('#issueController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    it('redirects to view page with error when backend returns 409 conflict', async ({
+    it('redirects to action page with error when backend returns 409 conflict', async ({
       server
     }) => {
       const Boom = await import('@hapi/boom')
@@ -126,7 +127,7 @@ describe('#issueController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(`${viewUrl}?error=insufficient_balance`)
+      expect(headers.location).toBe(`${actionUrl}?error=insufficient_balance`)
     })
 
     it('re-throws non-conflict Boom errors from updatePrnStatus', async ({

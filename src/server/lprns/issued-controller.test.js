@@ -173,7 +173,7 @@ describe('#issuedController', () => {
         ).toBeDefined()
       })
 
-      it('displays View PRN (PDF) button linking to view page', async ({
+      it('displays View PRN (PDF) button linking to certificate page in new tab', async ({
         server
       }) => {
         const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
@@ -194,6 +194,7 @@ describe('#issuedController', () => {
         const viewButton = getByRole(main, 'button', { name: /View PRN/i })
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('href')).toBe(viewUrl)
+        expect(viewButton.getAttribute('target')).toBe('_blank')
       })
 
       it('displays Issue another PRN link', async ({ server }) => {

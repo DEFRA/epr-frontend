@@ -275,7 +275,7 @@ describe('#buildListViewData', () => {
       expect(result.table.rows[0][3].html).toContain('Awaiting authorisation')
     })
 
-    it('should return select link as HTML', () => {
+    it('should return select link pointing to action page', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -287,8 +287,9 @@ describe('#buildListViewData', () => {
 
       expect(result.table.rows[0][4].html).toContain('govuk-link')
       expect(result.table.rows[0][4].html).toContain(
-        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/prn-001/view'
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/prn-001'
       )
+      expect(result.table.rows[0][4].html).not.toContain('prn-001/view')
     })
 
     it('should return table headings', () => {
@@ -538,7 +539,7 @@ describe('#buildListViewData', () => {
       expect(result.issuedTable.headings.action).toBe('View in new tab')
     })
 
-    it('should return view links for each issued PRN', () => {
+    it('should return view links for each issued PRN with target="_blank"', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -555,6 +556,7 @@ describe('#buildListViewData', () => {
       expect(result.issuedTable.rows[0][4].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/l-packaging-recycling-notes/prn-003/view'
       )
+      expect(result.issuedTable.rows[0][4].html).toContain('target="_blank"')
     })
 
     it('should return empty issued table rows when no issued PRNs', () => {
