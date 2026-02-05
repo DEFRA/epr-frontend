@@ -109,14 +109,6 @@
       "issued": "Issued",
       "cancelled": "Cancelled"
     },
-    "issuedTable": {
-      "prnNumberHeading": "PRN number",
-      "recipientHeading": "Producer or compliance scheme",
-      "dateIssuedHeading": "Date issued",
-      "statusHeading": "Status",
-      "actionHeading": "View in new tab",
-      "selectText": "Select"
-    },
     "perns": {
       "pageTitle": "PERNs",
       "selectHeading": "Select a PERN",
@@ -126,7 +118,15 @@
       "awaitingAuthorisationHeading": "PERNs awaiting authorisation",
       "issuedHeading": "Issued PERNs",
       "noPrnsCreated": "You have not created any PERNs.",
-      "noIssuedPrns": "No PERNs have been issued yet."
+      "noIssuedPrns": "No PERNs have been issued yet.",
+      "issuedTable": {
+        "noteNumberHeading": "PERN number",
+        "recipientHeading": "Producer or compliance scheme",
+        "dateIssuedHeading": "Date issued",
+        "statusHeading": "Status",
+        "actionHeading": "View in new tab",
+        "selectText": "Select"
+      }
     },
     "prns": {
       "pageTitle": "PRNs",
@@ -137,7 +137,15 @@
       "awaitingAuthorisationHeading": "PRNs awaiting authorisation",
       "issuedHeading": "Issued PRNs",
       "noPrnsCreated": "You have not created any PRNs.",
-      "noIssuedPrns": "No PRNs have been issued yet."
+      "noIssuedPrns": "No PRNs have been issued yet.",
+      "issuedTable": {
+        "noteNumberHeading": "PRN number",
+        "recipientHeading": "Producer or compliance scheme",
+        "dateIssuedHeading": "Date issued",
+        "statusHeading": "Status",
+        "actionHeading": "View in new tab",
+        "selectText": "Select"
+      }
     }
   },
   "materialLabel": "Material",
