@@ -39,8 +39,6 @@ export const createdController = {
     return h.view('lprns/created', {
       pageTitle: localise(`lprns:${noteType}:successPageTitle`),
       heading: localise(`lprns:${noteType}:successHeading`),
-      prnNumberLabel: localise(`lprns:created:${noteType}:prnNumberLabel`),
-      prnNumber: prnCreated.prnNumber,
       statusLabel: localise('lprns:created:statusLabel'),
       statusValue: localise('lprns:created:statusValue'),
       viewButton: {
