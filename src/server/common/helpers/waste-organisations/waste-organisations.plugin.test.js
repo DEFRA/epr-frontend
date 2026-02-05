@@ -90,7 +90,9 @@ describe('#createWasteOrganisationsPlugin', () => {
     const mockApiOrganisations = [{ id: 'api-org' }]
 
     const msw = setupServer(
-      http.get(apiUrl, () => HttpResponse.json(mockApiOrganisations))
+      http.get(apiUrl, () =>
+        HttpResponse.json({ organisations: mockApiOrganisations })
+      )
     )
 
     beforeAll(() => {

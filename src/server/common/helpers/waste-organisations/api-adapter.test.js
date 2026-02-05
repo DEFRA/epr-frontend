@@ -30,7 +30,7 @@ const apiUrl = 'http://waste-orgs-test.api'
 
 const server = setupServer(
   http.get(apiUrl, () => {
-    return HttpResponse.json(mockOrganisations)
+    return HttpResponse.json({ organisations: mockOrganisations })
   })
 )
 
@@ -77,7 +77,7 @@ describe('#createApiWasteOrganisationsService', () => {
       server.use(
         http.get(apiUrl, ({ request }) => {
           capturedHeaders = Object.fromEntries(request.headers.entries())
-          return HttpResponse.json(mockOrganisations)
+          return HttpResponse.json({ organisations: mockOrganisations })
         })
       )
 
@@ -96,7 +96,7 @@ describe('#createApiWasteOrganisationsService', () => {
       server.use(
         http.get(apiUrl, ({ request }) => {
           capturedHeaders = Object.fromEntries(request.headers.entries())
-          return HttpResponse.json(mockOrganisations)
+          return HttpResponse.json({ organisations: mockOrganisations })
         })
       )
 
