@@ -2,12 +2,14 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { tonnageToWords } from './helpers/tonnage-to-words.js'
-import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
-import { getRecipientDisplayName } from './helpers/stub-recipients.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
+import {
+  buildStatusRow,
+  buildPrnCoreRows,
+  buildPrnAuthorisationRows
+} from './helpers/build-prn-detail-rows.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -429,14 +431,6 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
 
 /**
  * Builds the PRN/PERN details rows for an existing PRN (from backend)
- * @param {object} params
- * @param {object} params.prn - PRN data from backend
- * @param {object} params.organisationData - Organisation data
- * @param {(key: string) => string} params.localise - Translation function
- * @param {boolean} params.isExporter - Whether the registration is for an exporter
- * @param {{text: string, class: string}} params.statusConfig - Status display config
- * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
- * @returns {Array} Summary list rows
  */
 function buildExistingPrnDetailRows({
   prn,
@@ -452,7 +446,7 @@ function buildExistingPrnDetailRows({
   const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
 
   if (isNotDraft) {
-    rows.push(buildStatusRow(statusConfig, localise))
+    rows.push(buildStatusRow(localise, statusConfig))
   }
 
   rows.push(
@@ -461,97 +455,6 @@ function buildExistingPrnDetailRows({
   )
 
   return rows
-}
-
-/**
- * Build the status row for the PRN details
- * @param {{text: string, class: string}} statusConfig
- * @param {(key: string) => string} localise
- * @returns {object}
- */
-function buildStatusRow(statusConfig, localise) {
-  return {
-    key: { text: localise('lprns:view:status') },
-    value: {
-      html: `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
-    }
-  }
-}
-
-/**
- * Build core PRN detail rows (buyer, tonnage, process, december waste)
- * @param {object} prn
- * @param {(key: string) => string} localise
- * @returns {Array}
- */
-function buildPrnCoreRows(prn, localise) {
-  const decemberWasteText = prn.isDecemberWaste
-    ? localise('lprns:decemberWasteYes')
-    : localise('lprns:decemberWasteNo')
-
-  const tonnageInWords = prn.tonnageInWords || tonnageToWords(prn.tonnage)
-
-  return [
-    {
-      key: { text: localise('lprns:buyerLabel') },
-      value: { text: getRecipientDisplayName(prn.issuedToOrganisation) }
-    },
-    {
-      key: { text: localise('lprns:tonnageLabel') },
-      value: { text: String(prn.tonnage) }
-    },
-    {
-      key: { text: localise('lprns:tonnageInWordsLabel') },
-      value: { text: tonnageInWords }
-    },
-    {
-      key: { text: localise('lprns:processToBeUsedLabel') },
-      value: { text: prn.processToBeUsed || '' }
-    },
-    {
-      key: { text: localise('lprns:decemberWasteLabel') },
-      value: { text: decemberWasteText }
-    }
-  ]
-}
-
-/**
- * Build authorisation-related PRN detail rows
- * @param {object} prn
- * @param {object} organisationData
- * @param {(key: string) => string} localise
- * @returns {Array}
- */
-function buildPrnAuthorisationRows(prn, organisationData, localise) {
-  const issuedDate = prn.authorisedAt
-    ? formatDateForDisplay(prn.authorisedAt)
-    : ''
-  const issuedBy =
-    organisationData?.companyDetails?.name || localise('lprns:notAvailable')
-  const notesText = prn.notes || localise('lprns:notProvided')
-
-  return [
-    {
-      key: { text: localise('lprns:issuedDateLabel') },
-      value: { text: issuedDate }
-    },
-    {
-      key: { text: localise('lprns:issuedByLabel') },
-      value: { text: issuedBy }
-    },
-    {
-      key: { text: localise('lprns:authorisedByLabel') },
-      value: { text: prn.authorisedBy?.name || '' }
-    },
-    {
-      key: { text: localise('lprns:positionLabel') },
-      value: { text: prn.authorisedBy?.position || '' }
-    },
-    {
-      key: { text: localise('lprns:issuerNotesLabel') },
-      value: { text: notesText }
-    }
-  ]
 }
 
 /**
