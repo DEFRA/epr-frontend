@@ -26,12 +26,14 @@
     "wasteBalanceMessage": "Your available waste balance has been updated.",
     "returnHomeLink": "Return to home",
     "prns": {
+      "prnNumberLabel": "PRN number:",
       "viewButton": "View PRN (opens in a new tab)",
       "issueTextPrefix": "You can now issue this PRN through your",
       "prnsPageLink": "PRNs page",
       "createAnotherLink": "Create another PRN"
     },
     "perns": {
+      "prnNumberLabel": "PERN number:",
       "viewButton": "View PERN (opens in a new tab)",
       "issueTextPrefix": "You can now issue this PERN through your",
       "prnsPageLink": "PERNs page",
