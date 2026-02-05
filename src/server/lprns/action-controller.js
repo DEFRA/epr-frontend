@@ -135,7 +135,7 @@ function buildActionViewData({
           action: request.localiseUrl(`${basePath}/${prnId}/issue`)
         }
       : null,
-    deleteLink: isAwaitingAuthorisation
+    deleteButton: isAwaitingAuthorisation
       ? {
           text: localise('lprns:action:deleteLink', { noteType }),
           href: request.localiseUrl(`${basePath}/${prnId}/delete`)
