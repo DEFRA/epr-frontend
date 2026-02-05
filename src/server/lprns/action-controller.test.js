@@ -223,7 +223,7 @@ describe('#actionController', () => {
 
       const deleteButton = getByRole(main, 'button', { name: /Delete PRN/i })
       expect(deleteButton).toBeDefined()
-      expect(deleteButton.classList.contains('govuk-button--secondary')).toBe(
+      expect(deleteButton.classList.contains('govuk-button--warning')).toBe(
         true
       )
     })
