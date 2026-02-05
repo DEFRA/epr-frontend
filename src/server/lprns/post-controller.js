@@ -3,13 +3,13 @@ import Joi from 'joi'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import {
+  getOrganisationDisplayName,
+  mapToSelectOptions
+} from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
-import {
-  STUB_RECIPIENTS,
-  getRecipientDisplayName
-} from './helpers/stub-recipients.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 const MIN_TONNAGE = 1
@@ -131,9 +131,12 @@ export const postController = {
           registration.wasteProcessingType
         )
 
+        const { organisations } =
+          await request.wasteOrganisationsService.getOrganisations()
+
         const viewData = buildCreatePrnViewData(request, {
           registration,
-          recipients: STUB_RECIPIENTS
+          recipients: mapToSelectOptions(organisations)
         })
 
         return h
@@ -156,8 +159,10 @@ export const postController = {
     const session = request.auth.credentials
     const { tonnage, recipient, notes, material } = request.payload
 
-    // Find recipient name from stub list
-    const recipientName = getRecipientDisplayName(recipient)
+    const { organisations } =
+      await request.wasteOrganisationsService.getOrganisations()
+
+    const recipientName = getOrganisationDisplayName(organisations, recipient)
 
     try {
       // Create PRN as draft in backend
@@ -184,7 +189,7 @@ export const postController = {
         tonnageInWords: tonnageToWords(result.tonnage),
         material: result.material,
         status: result.status,
-        recipientName,
+        recipientName: getOrganisationDisplayName(organisations, recipient),
         notes: notes || '',
         wasteProcessingType: result.wasteProcessingType,
         processToBeUsed: result.processToBeUsed,

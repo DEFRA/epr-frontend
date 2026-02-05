@@ -2,6 +2,7 @@
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { test } from 'vitest'
+import { organisations } from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
  * Stub handler for AWS EC2 Instance Metadata Service (IMDS).
@@ -88,7 +89,7 @@ const it = test.extend({
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const { createServer } = await import('#server/index.js')
-      const server = await createServer()
+      const server = await createServer({ wasteOrganisations: organisations })
       await server.initialize()
 
       await use(server)

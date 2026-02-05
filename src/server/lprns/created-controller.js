@@ -31,18 +31,38 @@ export const createdController = {
     const noteType =
       prnCreated.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
 
+    const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+    const viewUrl = `${listUrl}/${prnId}/view`
+    const createUrl = `${listUrl}/create`
+    const homeUrl = `/organisations/${organisationId}`
+
     return h.view('lprns/created', {
       pageTitle: localise(`lprns:${noteType}:successPageTitle`),
       heading: localise(`lprns:${noteType}:successHeading`),
-      tonnageLabel: localise(`lprns:${noteType}:successTonnageLabel`),
-      tonnage: prnCreated.tonnage,
-      tonnageSuffix: localise('lprns:tonnageSuffix'),
+      statusLabel: localise('lprns:created:statusLabel'),
+      statusValue: localise('lprns:created:statusValue'),
+      viewButton: {
+        text: localise(`lprns:created:${noteType}:viewButton`),
+        href: viewUrl
+      },
       nextStepsHeading: localise('lprns:successNextStepsHeading'),
-      nextStepsText: localise(`lprns:${noteType}:successNextStepsText`),
-      returnLink: localise('lprns:successReturnLink'),
-      organisationId,
-      registrationId,
-      accreditationId
+      wasteBalanceMessage: localise('lprns:created:wasteBalanceMessage'),
+      issueText: {
+        prefix: localise(`lprns:created:${noteType}:issueTextPrefix`),
+        link: {
+          text: localise(`lprns:created:${noteType}:prnsPageLink`),
+          href: listUrl
+        },
+        suffix: '.'
+      },
+      createAnotherLink: {
+        text: localise(`lprns:created:${noteType}:createAnotherLink`),
+        href: createUrl
+      },
+      returnHomeLink: {
+        text: localise('lprns:created:returnHomeLink'),
+        href: homeUrl
+      }
     })
   }
 }

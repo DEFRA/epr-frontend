@@ -1,10 +1,41 @@
 import Boom from '@hapi/boom'
+
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
-import { getRecipientDisplayName } from './helpers/stub-recipients.js'
 import { buildListViewData } from './list-view-data.js'
+
+const getPrnsAwaitingAuthorisation = (prns, organisations) =>
+  prns
+    .filter((prn) => prn.status === 'awaiting_authorisation')
+    .map((prn) => ({
+      id: prn.id,
+      recipient: getOrganisationDisplayName(
+        organisations,
+        prn.issuedToOrganisation
+      ),
+      createdAt: prn.createdAt,
+      tonnage: prn.tonnage,
+      status: prn.status
+    }))
+
+const getIssuedPrns = (prns, organisations) =>
+  prns
+    .filter(
+      (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
+    )
+    .map((prn) => ({
+      id: prn.id,
+      prnNumber: prn.prnNumber,
+      recipient: getOrganisationDisplayName(
+        organisations,
+        prn.issuedToOrganisation
+      ),
+      issuedAt: prn.issuedAt,
+      status: prn.status
+    }))
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -38,51 +69,31 @@ export const listController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    const wasteBalance = await getWasteBalance(
-      organisationId,
-      registration.accreditationId,
-      session.idToken,
-      request.logger
-    )
-
-    const prns = await fetchPackagingRecyclingNotes(
-      organisationId,
-      registrationId,
-      accreditationId,
-      session.idToken
-    )
+    const [wasteBalance, prns, { organisations }] = await Promise.all([
+      getWasteBalance(
+        organisationId,
+        registration.accreditationId,
+        session.idToken,
+        request.logger
+      ),
+      fetchPackagingRecyclingNotes(
+        organisationId,
+        registrationId,
+        accreditationId,
+        session.idToken
+      ),
+      request.wasteOrganisationsService.getOrganisations()
+    ])
 
     const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
-
-    const prnsAwaitingAuthorisation = prns
-      .filter((prn) => prn.status === 'awaiting_authorisation')
-      .map((prn) => ({
-        id: prn.id,
-        recipient: getRecipientDisplayName(prn.issuedToOrganisation),
-        createdAt: prn.createdAt,
-        tonnage: prn.tonnage,
-        status: prn.status
-      }))
-
-    const issuedPrns = prns
-      .filter(
-        (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
-      )
-      .map((prn) => ({
-        id: prn.id,
-        prnNumber: prn.prnNumber,
-        recipient: getRecipientDisplayName(prn.issuedToOrganisation),
-        issuedAt: prn.issuedAt,
-        status: prn.status
-      }))
 
     const viewData = buildListViewData(request, {
       organisationId,
       registrationId,
       accreditationId,
       registration,
-      prns: prnsAwaitingAuthorisation,
-      issuedPrns,
+      prns: getPrnsAwaitingAuthorisation(prns, organisations),
+      issuedPrns: getIssuedPrns(prns, organisations),
       hasCreatedPrns,
       wasteBalance
     })

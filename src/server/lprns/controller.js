@@ -1,7 +1,8 @@
 import Boom from '@hapi/boom'
+
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { STUB_RECIPIENTS } from './helpers/stub-recipients.js'
+import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -52,9 +53,12 @@ export const controller = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
+    const { organisations } =
+      await request.wasteOrganisationsService.getOrganisations()
+
     const viewData = buildCreatePrnViewData(request, {
       registration,
-      recipients: STUB_RECIPIENTS
+      recipients: mapToSelectOptions(organisations)
     })
 
     // Check for insufficient balance error from redirect

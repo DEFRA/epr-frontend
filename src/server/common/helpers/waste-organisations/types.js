@@ -1,11 +1,15 @@
 /**
+ * @typedef {'GB-ENG' | 'GB-NIR' | 'GB-SCT' | 'GB-WLS'} BusinessCountry
+ */
+
+/**
  * @typedef {{
- *  addressLine1: ?string
- *  addressLine2: ?string
- *  town: ?string
- *  county: ?string
- *  postcode: ?string
- *  country: ?string
+ *  addressLine1: string | null
+ *  addressLine2: string | null
+ *  town: string | null
+ *  county: string | null
+ *  postcode: string | null
+ *  country: string | null
  * }} WasteOrganisationAddress
  */
 
@@ -29,9 +33,9 @@
  * @typedef {{
  *  id: string
  *  name: string
- *  tradingName: ?string
- *  businessCountry: ?string
- *  companiesHouseNumber: ?string
+ *  tradingName: string | null
+ *  businessCountry: BusinessCountry | null
+ *  companiesHouseNumber: string | null
  *  address: WasteOrganisationAddress
  *  registrations: WasteOrganisationRegistrations[]
  * }} WasteOrganisation

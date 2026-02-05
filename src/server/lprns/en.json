@@ -20,6 +20,24 @@
   },
   "authorisedByLabel": "Authorised by",
   "buyerLabel": "Buyer",
+  "created": {
+    "statusLabel": "Status:",
+    "statusValue": "Awaiting authorisation",
+    "wasteBalanceMessage": "Your available waste balance has been updated.",
+    "returnHomeLink": "Return to home",
+    "prns": {
+      "viewButton": "View PRN (opens in a new tab)",
+      "issueTextPrefix": "You can now issue this PRN through your",
+      "prnsPageLink": "PRNs page",
+      "createAnotherLink": "Create another PRN"
+    },
+    "perns": {
+      "viewButton": "View PERN (opens in a new tab)",
+      "issueTextPrefix": "You can now issue this PERN through your",
+      "prnsPageLink": "PERNs page",
+      "createAnotherLink": "Create another PERN"
+    }
+  },
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
   "decemberWasteYes": "Yes",
@@ -170,9 +188,7 @@
     "recipientLabel": "Enter who this PERN will be issued to",
     "submitButton": "Continue",
     "successHeading": "PERN created",
-    "successNextStepsText": "Your PERN has been created as a draft. You can view and manage it from your registration dashboard.",
     "successPageTitle": "PERN created",
-    "successTonnageLabel": "Tonnage",
     "tonnageLabel": "Enter PERN tonnage"
   },
   "positionLabel": "Position",
@@ -193,9 +209,7 @@
     "recipientLabel": "Enter who this PRN will be issued to",
     "submitButton": "Continue",
     "successHeading": "PRN created",
-    "successNextStepsText": "Your PRN has been created as a draft. You can view and manage it from your registration dashboard.",
     "successPageTitle": "PRN created",
-    "successTonnageLabel": "Tonnage",
     "tonnageLabel": "Enter PRN tonnage"
   },
   "processToBeUsedLabel": "Process to be used",
@@ -203,7 +217,6 @@
   "recipientSummaryLabel": "Issued to",
   "selectOption": "Select an option",
   "successNextStepsHeading": "What happens next",
-  "successReturnLink": "Return to registration dashboard",
   "tonnageHint": "Enter a whole number without decimal places",
   "tonnageInWordsLabel": "Tonnage in words",
   "tonnageLabel": "Tonnage",
