@@ -32,5 +32,32 @@ describe('#stub-recipients', () => {
         'Acme Packaging Ltd'
       )
     })
+
+    it('returns name from object when given new object format', () => {
+      expect(
+        getRecipientDisplayName({
+          id: 'org-123',
+          name: 'Test Organisation'
+        })
+      ).toBe('Test Organisation')
+    })
+
+    it('returns tradingName from object when available', () => {
+      expect(
+        getRecipientDisplayName({
+          id: 'org-123',
+          name: 'Test Organisation Ltd',
+          tradingName: 'Test Trading'
+        })
+      ).toBe('Test Trading')
+    })
+
+    it('falls back to id when name is missing from object', () => {
+      expect(
+        getRecipientDisplayName({
+          id: 'org-123'
+        })
+      ).toBe('org-123')
+    })
   })
 })
