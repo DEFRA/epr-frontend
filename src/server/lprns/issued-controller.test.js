@@ -64,7 +64,7 @@ const fixtureExporter = {
 const mockIssuedPrn = {
   id: 'prn-789',
   prnNumber: 'ER2612345A',
-  issuedToOrganisation: 'ComplyPak Ltd',
+  issuedToOrganisation: { id: 'producer-1', name: 'ComplyPak Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_acceptance'
@@ -73,7 +73,7 @@ const mockIssuedPrn = {
 const mockIssuedPern = {
   id: 'pern-123',
   prnNumber: 'EX2654321B',
-  issuedToOrganisation: 'Export Corp',
+  issuedToOrganisation: { id: 'exporter-1', name: 'Export Corp' },
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_acceptance'

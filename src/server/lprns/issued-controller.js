@@ -2,7 +2,6 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 /**
@@ -19,7 +18,7 @@ export const issuedController = {
     const { t: localise } = request
     const session = request.auth.credentials
 
-    const [{ registration }, prn, { organisations }] = await Promise.all([
+    const [{ registration }, prn] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -31,8 +30,7 @@ export const issuedController = {
         accreditationId,
         prnId,
         session.idToken
-      ),
-      request.wasteOrganisationsService.getOrganisations()
+      )
     ])
 
     // Only show success page if PRN has been issued (status is awaiting_acceptance)
@@ -42,10 +40,7 @@ export const issuedController = {
       )
     }
 
-    const recipientDisplayName = getOrganisationDisplayName(
-      organisations,
-      prn.issuedToOrganisation
-    )
+    const recipientDisplayName = prn.issuedToOrganisation.name
 
     const isExporter = registration.wasteProcessingType === 'exporter'
     const noteType = isExporter ? 'perns' : 'prns'

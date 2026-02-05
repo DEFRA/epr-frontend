@@ -3,25 +3,21 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
 
-const getPrnsAwaitingAuthorisation = (prns, organisations) =>
+const getPrnsAwaitingAuthorisation = (prns) =>
   prns
     .filter((prn) => prn.status === 'awaiting_authorisation')
     .map((prn) => ({
       id: prn.id,
-      recipient: getOrganisationDisplayName(
-        organisations,
-        prn.issuedToOrganisation
-      ),
+      recipient: prn.issuedToOrganisation.name,
       createdAt: prn.createdAt,
       tonnage: prn.tonnage,
       status: prn.status
     }))
 
-const getIssuedPrns = (prns, organisations) =>
+const getIssuedPrns = (prns) =>
   prns
     .filter(
       (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
@@ -29,10 +25,7 @@ const getIssuedPrns = (prns, organisations) =>
     .map((prn) => ({
       id: prn.id,
       prnNumber: prn.prnNumber,
-      recipient: getOrganisationDisplayName(
-        organisations,
-        prn.issuedToOrganisation
-      ),
+      recipient: prn.issuedToOrganisation.name,
       issuedAt: prn.issuedAt,
       status: prn.status
     }))
@@ -69,7 +62,7 @@ export const listController = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    const [wasteBalance, prns, { organisations }] = await Promise.all([
+    const [wasteBalance, prns] = await Promise.all([
       getWasteBalance(
         organisationId,
         registration.accreditationId,
@@ -81,8 +74,7 @@ export const listController = {
         registrationId,
         accreditationId,
         session.idToken
-      ),
-      request.wasteOrganisationsService.getOrganisations()
+      )
     ])
 
     const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
@@ -92,8 +84,8 @@ export const listController = {
       registrationId,
       accreditationId,
       registration,
-      prns: getPrnsAwaitingAuthorisation(prns, organisations),
-      issuedPrns: getIssuedPrns(prns, organisations),
+      prns: getPrnsAwaitingAuthorisation(prns),
+      issuedPrns: getIssuedPrns(prns),
       hasCreatedPrns,
       wasteBalance
     })
