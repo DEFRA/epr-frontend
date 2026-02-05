@@ -1,4 +1,4 @@
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 

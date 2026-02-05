@@ -11,7 +11,7 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -183,8 +183,7 @@ async function handleDraftView(
       session.idToken
     )
 
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const { noteType } = getNoteTypeDisplayNames(registration)
+  const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
 
   const displayMaterial = getLumpyDisplayMaterial(registration)
 
@@ -275,9 +274,8 @@ async function handleExistingView(
     prn.issuedToOrganisation
   )
 
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const { noteType } = getNoteTypeDisplayNames(registration)
-  const wasteAction = isExporter ? 'export' : 'reprocessing'
+  const { isExporter, noteType, wasteAction } =
+    getNoteTypeDisplayNames(registration)
 
   const backUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`

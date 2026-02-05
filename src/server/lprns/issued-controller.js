@@ -3,7 +3,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 /**

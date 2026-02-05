@@ -1,9 +1,11 @@
+import Boom from '@hapi/boom'
+
 import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
-import Boom from '@hapi/boom'
 import { capitalize } from 'lodash-es'
 
 /**
@@ -71,7 +73,7 @@ function buildViewModel({
   wasteBalance
 }) {
   const { t: localise } = request
-  const isExporter = registration.wasteProcessingType === 'exporter'
+  const isExporter = isExporterRegistration(registration)
   const siteName = isExporter
     ? null
     : (registration.site?.address?.line1 ??

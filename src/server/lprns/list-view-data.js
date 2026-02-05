@@ -1,4 +1,4 @@
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 
 /**

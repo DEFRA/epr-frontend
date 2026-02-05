@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}

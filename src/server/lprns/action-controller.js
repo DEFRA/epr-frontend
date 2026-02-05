@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/get-note-type.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
@@ -91,8 +91,7 @@ function buildActionViewData({
   localise,
   recipientDisplayName
 }) {
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const { noteType } = getNoteTypeDisplayNames(registration)
+  const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   const displayMaterial = getLumpyDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'

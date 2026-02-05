@@ -3,6 +3,7 @@ import { capitalize } from 'lodash-es'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 
@@ -118,9 +119,10 @@ function createTableHeaders(localise) {
  * @returns {string | null} Site name or null for exporters
  */
 function getSiteName(registration, localise) {
-  if (registration.wasteProcessingType === 'exporter') {
+  if (isExporterRegistration(registration)) {
     return null
   }
+
   return (
     registration.site?.address?.line1 ??
     localise('organisations:table:site:unknown')
