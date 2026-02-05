@@ -52,7 +52,8 @@ export function buildListViewData(
     registrationId,
     accreditationId,
     issuedPrns,
-    localise
+    localise,
+    noteType
   })
 
   return {
@@ -153,21 +154,31 @@ function buildAwaitingActionTable(
  * @param {string} options.accreditationId
  * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} options.issuedPrns
  * @param {(key: string) => string} options.localise
+ * @param {'prns' | 'perns'} options.noteType
  * @returns {{headings: object, rows: Array<Array<{text?: string, html?: string}>>}}
  */
 function buildIssuedTable(
   request,
-  { organisationId, registrationId, accreditationId, issuedPrns, localise }
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    issuedPrns,
+    localise,
+    noteType
+  }
 ) {
   const headings = {
-    prnNumber: localise('lprns:list:issuedTable:prnNumberHeading'),
-    recipient: localise('lprns:list:issuedTable:recipientHeading'),
-    dateIssued: localise('lprns:list:issuedTable:dateIssuedHeading'),
-    status: localise('lprns:list:issuedTable:statusHeading'),
-    action: localise('lprns:list:issuedTable:actionHeading')
+    prnNumber: localise(`lprns:list:${noteType}:issuedTable:noteNumberHeading`),
+    recipient: localise(`lprns:list:${noteType}:issuedTable:recipientHeading`),
+    dateIssued: localise(
+      `lprns:list:${noteType}:issuedTable:dateIssuedHeading`
+    ),
+    status: localise(`lprns:list:${noteType}:issuedTable:statusHeading`),
+    action: localise(`lprns:list:${noteType}:issuedTable:actionHeading`)
   }
 
-  const selectText = localise('lprns:list:issuedTable:selectText')
+  const selectText = localise(`lprns:list:${noteType}:issuedTable:selectText`)
 
   const rows = issuedPrns.map((prn) => {
     const viewUrl = request.localiseUrl(
