@@ -21,15 +21,3 @@ export const mapToSelectOptions = (organisations) =>
       }
     })
     .toSorted((a, b) => a.text.localeCompare(b.text))
-
-/**
- * Gets the display name for an organisation by ID
- * @param {WasteOrganisation[]} organisations
- * @param {string} organisationId
- * @returns {string} The display name or the original ID if not found
- */
-export function getOrganisationDisplayName(organisations, organisationId) {
-  const options = mapToSelectOptions(organisations)
-  const item = options.find((r) => r.value === organisationId)
-  return item?.text ?? organisationId
-}

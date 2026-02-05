@@ -1,12 +1,10 @@
-import Boom from '@hapi/boom'
-import Joi from 'joi'
+/** @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js' */
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import {
-  getOrganisationDisplayName,
-  mapToSelectOptions
-} from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import Boom from '@hapi/boom'
+import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
@@ -101,6 +99,18 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
       list: errorList
     }
   }
+}
+
+/**
+ * Gets the display name for an organisation by ID
+ * @param {WasteOrganisation[]} organisations
+ * @param {string} organisationId
+ * @returns {string} The display name or the original ID if not found
+ */
+export function getOrganisationDisplayName(organisations, organisationId) {
+  const options = mapToSelectOptions(organisations)
+  const item = options.find((r) => r.value === organisationId)
+  return item?.text ?? organisationId
 }
 
 /**
