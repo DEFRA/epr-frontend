@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import Boom from '@hapi/boom'
 import Joi from 'joi'
@@ -189,7 +190,7 @@ export const postController = {
         tonnageInWords: tonnageToWords(result.tonnage),
         material: result.material,
         status: result.status,
-        recipientName: issuedToOrganisation.name,
+        recipientName: getDisplayName(issuedToOrganisation),
         notes: notes || '',
         wasteProcessingType: result.wasteProcessingType,
         processToBeUsed: result.processToBeUsed,
