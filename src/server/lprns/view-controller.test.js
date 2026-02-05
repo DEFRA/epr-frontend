@@ -1365,7 +1365,7 @@ describe('#viewController', () => {
           registrationId,
           accreditationId,
           prnId,
-          { status: 'cancelled' },
+          { status: 'discarded' },
           mockCredentials.idToken
         )
       })
@@ -1457,7 +1457,7 @@ describe('#viewController', () => {
           registrationId,
           accreditationId,
           prnId,
-          { status: 'cancelled' },
+          { status: 'discarded' },
           mockCredentials.idToken
         )
       })

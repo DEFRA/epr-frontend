@@ -74,7 +74,7 @@ export const discardPostController = {
         registrationId,
         accreditationId,
         prnId,
-        { status: 'cancelled' },
+        { status: 'discarded' },
         session.idToken
       )
 

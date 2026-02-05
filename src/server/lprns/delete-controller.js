@@ -86,7 +86,7 @@ export const deletePostController = {
         registrationId,
         accreditationId,
         prnId,
-        { status: 'cancelled' },
+        { status: 'deleted' },
         session.idToken
       )
 
