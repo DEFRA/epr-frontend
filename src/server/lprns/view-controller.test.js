@@ -213,6 +213,25 @@ describe('#viewController', () => {
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 
+      it('displays PRN number when provided', async ({ server }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          prnNumber: 'ER2625001A'
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, 'ER2625001A')).toBeDefined()
+      })
+
       it('displays recipient name from PRN data', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
@@ -303,7 +322,7 @@ describe('#viewController', () => {
         expect(getByText(main, /One hundred/)).toBeDefined()
       })
 
-      it('displays status tag for awaiting authorisation', async ({
+      it('displays awaiting authorisation status with blue tag', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -316,10 +335,14 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Awaiting authorisation/i)).toBeDefined()
+        const tag = main.querySelector('.govuk-tag--blue')
+        expect(tag).toBeDefined()
+        expect(tag.textContent.trim()).toBe('Awaiting authorisation')
       })
 
-      it('displays status tag for awaiting acceptance', async ({ server }) => {
+      it('displays awaiting acceptance status with purple tag', async ({
+        server
+      }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           status: 'awaiting_acceptance'
@@ -335,7 +358,9 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Awaiting acceptance/i)).toBeDefined()
+        const tag = main.querySelector('.govuk-tag--purple')
+        expect(tag).toBeDefined()
+        expect(tag.textContent.trim()).toBe('Awaiting acceptance')
       })
 
       it('displays back link to list page', async ({ server }) => {
@@ -554,7 +579,7 @@ describe('#viewController', () => {
         expect(tag.textContent.trim()).toBe('Issued')
       })
 
-      it('displays cancelled status with grey tag', async ({ server }) => {
+      it('displays cancelled status with red tag', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           status: 'cancelled'
@@ -570,7 +595,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const tag = main.querySelector('.govuk-tag--grey')
+        const tag = main.querySelector('.govuk-tag--red')
         expect(tag).toBeDefined()
         expect(tag.textContent.trim()).toBe('Cancelled')
       })
