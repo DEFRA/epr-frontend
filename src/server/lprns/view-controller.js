@@ -5,7 +5,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  buildPrnAuthorisationRows,
+  buildPrnIssuerRows,
   buildPrnCoreRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
@@ -457,7 +457,7 @@ function buildExistingPrnDetailRows({
 
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
-    ...buildPrnAuthorisationRows(prn, organisationData, localise)
+    ...buildPrnIssuerRows(prn, organisationData, localise)
   )
 
   return rows

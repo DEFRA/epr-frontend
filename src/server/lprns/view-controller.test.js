@@ -35,7 +35,10 @@ const mockAuth = {
 }
 
 const fixtureReprocessor = {
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Reprocessor Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'reprocessor-input',
@@ -48,7 +51,10 @@ const fixtureReprocessor = {
 }
 
 const fixtureExporter = {
-  organisationData: { id: 'org-123', name: 'Exporter Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Exporter Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'exporter',
@@ -211,6 +217,25 @@ describe('#viewController', () => {
         expect(getByText(main, '100')).toBeDefined()
         // Check material (in accreditation section)
         expect(getByText(main, /Plastic/i)).toBeDefined()
+      })
+
+      it('displays issuer organisation name on certificate page', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /^Issuer$/i)).toBeDefined()
+        expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
       })
 
       it('displays PRN number when provided', async ({ server }) => {
@@ -1080,6 +1105,49 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /Not provided/i)).toBeDefined()
+      })
+
+      it('displays "n/a" for issuer when company details are missing', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          organisationData: { id: 'org-123', companyDetails: null }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const html = body.innerHTML
+
+        expect(html).toContain('n/a')
       })
 
       it('displays PRN details rows in correct order per design', async ({

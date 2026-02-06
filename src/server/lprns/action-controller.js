@@ -5,7 +5,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  buildPrnAuthorisationRows,
+  buildPrnIssuerRows,
   buildPrnCoreRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
@@ -187,9 +187,7 @@ function buildActionPrnDetailRows({
 
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
-    ...buildPrnAuthorisationRows(prn, organisationData, localise, {
-      includeIssuerRow: true
-    })
+    ...buildPrnIssuerRows(prn, organisationData, localise)
   )
 
   return rows
