@@ -63,6 +63,9 @@
         {{ govukSelect({
           id: "recipient",
           name: "recipient",
+          attributes: {
+            "data-autocomplete": ""
+          },
           label: {
             text: recipient.label,
             classes: "govuk-label--m"
