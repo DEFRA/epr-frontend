@@ -69,16 +69,16 @@ export function buildPrnAuthorisationRows(
   { includeIssuerRow = false } = {}
 ) {
   const issuedDate = prn.issuedAt ? formatDateForDisplay(prn.issuedAt) : ''
-  const issuedBy =
-    organisationData?.companyDetails?.name || localise('lprns:notAvailable')
   const notesText = prn.notes || localise('lprns:notProvided')
 
   const rows = []
 
   if (includeIssuerRow) {
+    const issuerName =
+      organisationData?.companyDetails?.name || localise('lprns:notAvailable')
     rows.push({
       key: { text: localise('lprns:issuerLabel') },
-      value: { text: issuedBy }
+      value: { text: issuerName }
     })
   }
 
@@ -86,10 +86,6 @@ export function buildPrnAuthorisationRows(
     {
       key: { text: localise('lprns:issuedDateLabel') },
       value: { text: issuedDate }
-    },
-    {
-      key: { text: localise('lprns:issuedByLabel') },
-      value: { text: issuedBy }
     },
     {
       key: { text: localise('lprns:issuedByLabel') },
