@@ -5,7 +5,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  buildPrnAuthorisationRows,
+  buildPrnIssuerRows,
   buildPrnCoreRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
@@ -50,17 +50,17 @@ export const actionController = {
     const recipientDisplayName = prn.issuedToOrganisation.name
 
     const viewData = buildActionViewData({
-      request,
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      organisationData,
-      registration,
       accreditation,
-      prn,
+      accreditationId,
       localise,
-      recipientDisplayName
+      organisationData,
+      organisationId,
+      prn,
+      prnId,
+      recipientDisplayName,
+      registration,
+      registrationId,
+      request
     })
 
     return h.view('lprns/action', viewData)
@@ -69,19 +69,32 @@ export const actionController = {
 
 /**
  * Builds the complete view data for the action page
+ * @param {{
+ *   accreditation: RegistrationWithAccreditation['accreditation'],
+ *   accreditationId: string,
+ *   localise: (key: string, params?: object) => string,
+ *   organisationData: RegistrationWithAccreditation['organisationData'],
+ *   organisationId: string,
+ *   prn: PackagingRecyclingNote,
+ *   prnId: string,
+ *   recipientDisplayName: string,
+ *   registration: RegistrationWithAccreditation['registration'],
+ *   registrationId: string,
+ *   request: Request
+ * }} params
  */
 function buildActionViewData({
-  request,
-  organisationId,
-  registrationId,
-  accreditationId,
-  prnId,
-  organisationData,
-  registration,
   accreditation,
-  prn,
+  accreditationId,
   localise,
-  recipientDisplayName
+  organisationData,
+  organisationId,
+  prn,
+  prnId,
+  recipientDisplayName,
+  registration,
+  registrationId,
+  request
 }) {
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
@@ -92,12 +105,12 @@ function buildActionViewData({
 
   const prnDetailRows = buildActionPrnDetailRows({
     prn,
-    organisationData,
     localise,
     noteType,
     statusConfig,
     isNotDraft,
-    recipientDisplayName
+    recipientDisplayName,
+    organisationData
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -167,17 +180,17 @@ function addErrorSummaryIfNeeded(viewData, errorType, localise) {
  */
 function buildActionPrnDetailRows({
   prn,
-  organisationData,
   localise,
   noteType,
   statusConfig,
   isNotDraft,
-  recipientDisplayName
+  recipientDisplayName,
+  organisationData
 }) {
   const rows = [
     {
       key: { text: localise('lprns:details:numberLabel', { noteType }) },
-      value: { text: '' }
+      value: { text: prn.prnNumber || '' }
     }
   ]
 
@@ -187,8 +200,8 @@ function buildActionPrnDetailRows({
 
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
-    ...buildPrnAuthorisationRows(prn, organisationData, localise, {
-      includeIssuerRow: true
+    ...buildPrnIssuerRows(prn, localise, {
+      issuerName: organisationData.companyDetails?.name || ''
     })
   )
 
@@ -196,5 +209,7 @@ function buildActionPrnDetailRows({
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
  */

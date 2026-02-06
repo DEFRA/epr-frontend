@@ -34,5 +34,11 @@
 .epr-regulator-logos {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: govuk-spacing(4);
+}
+
+.epr-regulator-logo {
+  height: 25px;
+  width: auto;
 }

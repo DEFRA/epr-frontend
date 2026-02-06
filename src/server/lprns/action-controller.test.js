@@ -90,8 +90,8 @@ const mockPrnAwaitingAuth = {
   createdAt: '2026-01-15T10:00:00.000Z',
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
-  authorisedAt: '2026-01-16T14:30:00.000Z',
-  authorisedBy: { name: 'John Smith', position: 'Director' },
+  issuedAt: '2026-01-16T14:30:00.000Z',
+  issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
 }
 
@@ -110,8 +110,8 @@ const mockPernAwaitingAuth = {
   createdAt: '2026-01-20T14:30:00.000Z',
   notes: null,
   isDecemberWaste: false,
-  authorisedAt: null,
-  authorisedBy: null,
+  issuedAt: null,
+  issuedBy: null,
   wasteProcessingType: 'exporter'
 }
 
@@ -171,6 +171,25 @@ describe('#actionController', () => {
       expect(
         getByText(main, 'Packaging waste producer or compliance scheme')
       ).toBeDefined()
+    })
+
+    it('displays PRN number when provided', async ({ server }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        ...mockPrnAwaitingAuth,
+        prnNumber: 'ER2625001A'
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, 'ER2625001A')).toBeDefined()
     })
 
     it('displays inset text about auto-populated fields', async ({
@@ -408,12 +427,15 @@ describe('#actionController', () => {
       expect(tag).toBeNull()
     })
 
-    it('displays "n/a" when organisation company name is missing', async ({
+    it('should display empty issuer when organisationData.companyDetails is null', async ({
       server
     }) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
         ...fixtureReprocessor,
-        organisationData: { id: 'org-123', companyDetails: null }
+        organisationData: {
+          ...fixtureReprocessor.organisationData,
+          companyDetails: null
+        }
       })
 
       const { result, statusCode } = await server.inject({
@@ -426,9 +448,19 @@ describe('#actionController', () => {
 
       const dom = new JSDOM(result)
       const { body } = dom.window.document
-      const html = body.innerHTML
+      const rows = body.querySelectorAll('.govuk-summary-list__row')
+      const issuerRow = Array.from(rows).find((row) =>
+        row
+          .querySelector('.govuk-summary-list__key')
+          ?.textContent?.includes('Issuer')
+      )
 
-      expect(html).toContain('n/a')
+      expect(issuerRow).toBeDefined()
+      expect(
+        issuerRow
+          .querySelector('.govuk-summary-list__value')
+          ?.textContent?.trim()
+      ).toBe('')
     })
 
     it('displays empty accreditation number when accreditation is null', async ({
