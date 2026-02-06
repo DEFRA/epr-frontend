@@ -155,6 +155,24 @@ describe('#actionController', () => {
       expect(getByText(main, '100')).toBeDefined()
     })
 
+    it('labels recipient row as "Packaging waste producer or compliance scheme"', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByText(main, 'Packaging waste producer or compliance scheme')
+      ).toBeDefined()
+    })
+
     it('displays inset text about auto-populated fields', async ({
       server
     }) => {

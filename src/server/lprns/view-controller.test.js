@@ -239,6 +239,24 @@ describe('#viewController', () => {
         expect(html).not.toContain('>producer-1<')
       })
 
+      it('labels recipient row as "Packaging waste producer or compliance scheme"', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, 'Packaging waste producer or compliance scheme')
+        ).toBeDefined()
+      })
+
       it('displays tonnage in words generated from tonnage value', async ({
         server
       }) => {
