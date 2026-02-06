@@ -26,8 +26,8 @@ const payloadSchema = Joi.object({
     'any.required': 'Enter the tonnage'
   }),
   recipient: Joi.string().min(1).required().messages({
-    'string.empty': 'Select who this will be issued to',
-    'any.required': 'Select who this will be issued to'
+    'string.empty': 'Enter a packaging waste producer or compliance scheme',
+    'any.required': 'Enter a packaging waste producer or compliance scheme'
   }),
   notes: Joi.string()
     .max(NOTES_MAX_LENGTH)

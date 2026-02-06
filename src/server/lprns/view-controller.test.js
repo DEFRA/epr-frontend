@@ -35,7 +35,10 @@ const mockAuth = {
 }
 
 const fixtureReprocessor = {
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Reprocessor Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'reprocessor-input',
@@ -48,7 +51,10 @@ const fixtureReprocessor = {
 }
 
 const fixtureExporter = {
-  organisationData: { id: 'org-123', name: 'Exporter Organisation' },
+  organisationData: {
+    id: 'org-123',
+    companyDetails: { name: 'Exporter Organisation' }
+  },
   registration: {
     id: 'reg-456',
     wasteProcessingType: 'exporter',
@@ -113,7 +119,7 @@ const mockPrnFromBackend = {
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
   issuedAt: '2026-01-16T14:30:00.000Z',
-  authorisedBy: { name: 'John Smith', position: 'Director' },
+  issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
 }
 
@@ -127,7 +133,7 @@ const mockPernFromBackend = {
   notes: null,
   isDecemberWaste: false,
   issuedAt: '2026-01-21T09:00:00.000Z',
-  authorisedBy: { name: 'Jane Doe', position: 'Operations Manager' },
+  issuedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
 }
 
@@ -211,6 +217,58 @@ describe('#viewController', () => {
         expect(getByText(main, '100')).toBeDefined()
         // Check material (in accreditation section)
         expect(getByText(main, /Plastic/i)).toBeDefined()
+      })
+
+      it('displays issuer organisation name on certificate page', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /^Issuer$/i)).toBeDefined()
+        expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
+      })
+
+      it('displays empty issuer when company details are missing on certificate page', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          organisationData: { id: 'org-123', companyDetails: null }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const rows = body.querySelectorAll('.govuk-summary-list__row')
+        const issuerRow = Array.from(rows).find((row) =>
+          row
+            .querySelector('.govuk-summary-list__key')
+            ?.textContent?.includes('Issuer')
+        )
+
+        expect(issuerRow).toBeDefined()
+        expect(
+          issuerRow
+            .querySelector('.govuk-summary-list__value')
+            ?.textContent?.trim()
+        ).toBe('')
       })
 
       it('displays PRN number when provided', async ({ server }) => {
@@ -449,7 +507,7 @@ describe('#viewController', () => {
         expect(getByText(main, /21 January 2026/i)).toBeDefined()
       })
 
-      it('displays authorised by and position for issued PERN', async ({
+      it('displays issued by and position for issued PERN', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -471,7 +529,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check authorised by and position are displayed
+        // Check issued by person and position are displayed
         expect(getByText(main, /Jane Doe/i)).toBeDefined()
         expect(getByText(main, /Operations Manager/i)).toBeDefined()
       })
@@ -743,7 +801,9 @@ describe('#viewController', () => {
         expect(getByText(main, /Not provided/i)).toBeDefined()
       })
 
-      it('displays authorised by details when present', async ({ server }) => {
+      it('displays issued by person details when present', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
@@ -754,13 +814,12 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Authorised by/i)).toBeDefined()
         expect(getByText(main, /John Smith/i)).toBeDefined()
         expect(getByText(main, /Position/i)).toBeDefined()
         expect(getByText(main, /Director/i)).toBeDefined()
       })
 
-      it('displays issued date when authorised', async ({ server }) => {
+      it('displays issued date when present', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
@@ -775,13 +834,13 @@ describe('#viewController', () => {
         expect(getByText(main, /16 January 2026/i)).toBeDefined()
       })
 
-      it('displays empty values when authorisation details not present', async ({
+      it('displays empty values when issue details not present', async ({
         server
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           issuedAt: null,
-          authorisedBy: null
+          issuedBy: null
         })
 
         const { statusCode } = await server.inject({
@@ -1079,6 +1138,59 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /Not provided/i)).toBeDefined()
+      })
+
+      it('displays empty issuer when company details are missing', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          organisationData: { id: 'org-123', companyDetails: null }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const rows = body.querySelectorAll('.govuk-summary-list__row')
+        const issuerRow = Array.from(rows).find((row) =>
+          row
+            .querySelector('.govuk-summary-list__key')
+            ?.textContent?.includes('Issuer')
+        )
+
+        expect(issuerRow).toBeDefined()
+        expect(
+          issuerRow
+            .querySelector('.govuk-summary-list__value')
+            ?.textContent?.trim()
+        ).toBe('')
       })
 
       it('displays PRN details rows in correct order per design', async ({
