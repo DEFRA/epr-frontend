@@ -31,7 +31,7 @@ export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
 
   return [
     {
-      key: { text: localise('lprns:buyerLabel') },
+      key: { text: localise('lprns:issuedToLabel') },
       value: { text: recipientDisplayName }
     },
     {
