@@ -188,8 +188,8 @@ async function handleDraftView(
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
-    organisationData,
-    localise
+    localise,
+    organisationData
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -280,7 +280,6 @@ async function handleExistingView(
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
-    organisationData,
     localise,
     noteType,
     statusConfig,
@@ -375,11 +374,11 @@ function buildExistingPrnViewData({
  * Builds the PRN/PERN details rows for a draft PRN (creation flow)
  * @param {object} params
  * @param {object} params.prnDraft - Draft PRN data from session
- * @param {object} params.organisationData - Organisation data
  * @param {(key: string) => string} params.localise - Translation function
+ * @param {object} params.organisationData - Organisation data
  * @returns {Array} Summary list rows
  */
-function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
+function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
   return [
     {
       key: { text: localise('lprns:issuedToLabel') },
@@ -407,11 +406,7 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
     },
     {
       key: { text: localise('lprns:issuerLabel') },
-      value: {
-        text:
-          organisationData.companyDetails?.name ||
-          localise('lprns:notAvailable')
-      }
+      value: { text: organisationData.companyDetails?.name || '' }
     },
     {
       key: { text: localise('lprns:issuedDateLabel') },
@@ -437,7 +432,6 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
  */
 function buildExistingPrnDetailRows({
   prn,
-  organisationData,
   localise,
   noteType,
   statusConfig,
@@ -457,7 +451,7 @@ function buildExistingPrnDetailRows({
 
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
-    ...buildPrnAuthorisationRows(prn, organisationData, localise)
+    ...buildPrnAuthorisationRows(prn, localise)
   )
 
   return rows

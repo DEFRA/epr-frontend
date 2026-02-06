@@ -50,17 +50,17 @@ export const actionController = {
     const recipientDisplayName = prn.issuedToOrganisation.name
 
     const viewData = buildActionViewData({
-      request,
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      organisationData,
-      registration,
       accreditation,
-      prn,
+      accreditationId,
       localise,
-      recipientDisplayName
+      organisationData,
+      organisationId,
+      prn,
+      prnId,
+      recipientDisplayName,
+      registration,
+      registrationId,
+      request
     })
 
     return h.view('lprns/action', viewData)
@@ -71,17 +71,17 @@ export const actionController = {
  * Builds the complete view data for the action page
  */
 function buildActionViewData({
-  request,
-  organisationId,
-  registrationId,
-  accreditationId,
-  prnId,
-  organisationData,
-  registration,
   accreditation,
-  prn,
+  accreditationId,
   localise,
-  recipientDisplayName
+  organisationData,
+  organisationId,
+  prn,
+  prnId,
+  recipientDisplayName,
+  registration,
+  registrationId,
+  request
 }) {
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
@@ -92,12 +92,12 @@ function buildActionViewData({
 
   const prnDetailRows = buildActionPrnDetailRows({
     prn,
-    organisationData,
     localise,
     noteType,
     statusConfig,
     isNotDraft,
-    recipientDisplayName
+    recipientDisplayName,
+    organisationData
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -167,12 +167,12 @@ function addErrorSummaryIfNeeded(viewData, errorType, localise) {
  */
 function buildActionPrnDetailRows({
   prn,
-  organisationData,
   localise,
   noteType,
   statusConfig,
   isNotDraft,
-  recipientDisplayName
+  recipientDisplayName,
+  organisationData
 }) {
   const rows = [
     {
@@ -187,8 +187,9 @@ function buildActionPrnDetailRows({
 
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
-    ...buildPrnAuthorisationRows(prn, organisationData, localise, {
-      includeIssuerRow: true
+    ...buildPrnAuthorisationRows(prn, localise, {
+      includeIssuerRow: true,
+      issuerName: organisationData.companyDetails?.name || ''
     })
   )
 

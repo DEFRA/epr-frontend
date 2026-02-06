@@ -408,12 +408,15 @@ describe('#actionController', () => {
       expect(tag).toBeNull()
     })
 
-    it('displays "n/a" when organisation company name is missing', async ({
+    it('should display empty issuer when organisationData.companyDetails is null', async ({
       server
     }) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
         ...fixtureReprocessor,
-        organisationData: { id: 'org-123', companyDetails: null }
+        organisationData: {
+          ...fixtureReprocessor.organisationData,
+          companyDetails: null
+        }
       })
 
       const { result, statusCode } = await server.inject({
@@ -426,9 +429,15 @@ describe('#actionController', () => {
 
       const dom = new JSDOM(result)
       const { body } = dom.window.document
-      const html = body.innerHTML
+      const rows = body.querySelectorAll('.govuk-summary-list__row')
+      const issuerRow = Array.from(rows).find((row) =>
+        row.querySelector('.govuk-summary-list__key')?.textContent?.includes('Issuer')
+      )
 
-      expect(html).toContain('n/a')
+      expect(issuerRow).toBeDefined()
+      expect(
+        issuerRow.querySelector('.govuk-summary-list__value')?.textContent?.trim()
+      ).toBe('')
     })
 
     it('displays empty accreditation number when accreditation is null', async ({
