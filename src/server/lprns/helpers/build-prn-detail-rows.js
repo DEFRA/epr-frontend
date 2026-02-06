@@ -54,54 +54,37 @@ export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
 }
 
 /**
- * Builds the authorisation/issuer rows for PRN details
+ * Builds the issuer/issued-by rows for PRN details
  * @param {object} prn
  * @param {(key: string) => string} localise
  * @param {object} [options]
- * @param {boolean} [options.includeIssuerRow] - Include the issuer row (for action page)
  * @param {string} [options.issuerName] - Organisation name for the issuer row
  * @returns {Array}
  */
-export function buildPrnAuthorisationRows(
-  prn,
-  localise,
-  { includeIssuerRow = false, issuerName = '' } = {}
-) {
+export function buildPrnIssuerRows(prn, localise, { issuerName = '' } = {}) {
   const issuedDate = prn.issuedAt ? formatDateForDisplay(prn.issuedAt) : ''
-  const issuedBy = prn.issuedBy?.name || ''
   const notesText = prn.notes || localise('lprns:notProvided')
 
-  const rows = []
-
-  if (includeIssuerRow) {
-    rows.push({
+  return [
+    {
       key: { text: localise('lprns:issuerLabel') },
       value: { text: issuerName }
-    })
-  }
-
-  rows.push(
+    },
     {
       key: { text: localise('lprns:issuedDateLabel') },
       value: { text: issuedDate }
     },
     {
       key: { text: localise('lprns:issuedByLabel') },
-      value: { text: issuedBy }
-    },
-    {
-      key: { text: localise('lprns:authorisedByLabel') },
-      value: { text: prn.authorisedBy?.name || '' }
+      value: { text: prn.issuedBy?.name || '' }
     },
     {
       key: { text: localise('lprns:positionLabel') },
-      value: { text: prn.authorisedBy?.position || '' }
+      value: { text: prn.issuedBy?.position || '' }
     },
     {
       key: { text: localise('lprns:issuerNotesLabel') },
       value: { text: notesText }
     }
-  )
-
-  return rows
+  ]
 }
