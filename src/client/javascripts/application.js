@@ -22,12 +22,14 @@ createAll(Radios)
 createAll(SkipLink)
 createAll(Tabs)
 
-const recipientSelect = document.querySelector('#recipient')
-if (recipientSelect) {
+const autocompleteSelects = document.querySelectorAll(
+  'select[data-autocomplete]'
+)
+for (const select of autocompleteSelects) {
   accessibleAutocomplete.enhanceSelectElement({
     defaultValue: '',
     minLength: 2,
-    selectElement: recipientSelect,
+    selectElement: select,
     showAllValues: false
   })
 }
