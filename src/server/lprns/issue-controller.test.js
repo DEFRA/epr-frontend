@@ -4,8 +4,16 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
+vi.mock(
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+)
+vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
+const { fetchRegistrationAndAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+const { fetchPackagingRecyclingNote } =
+  await import('./helpers/fetch-packaging-recycling-note.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
 const mockCredentials = {
@@ -39,6 +47,29 @@ const mockPrnIssued = {
 describe('#issueController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      organisationData: {
+        id: organisationId,
+        companyDetails: { name: 'Test Org' }
+      },
+      registration: {
+        id: registrationId,
+        wasteProcessingType: 'reprocessor-input',
+        material: 'plastic',
+        nation: 'england',
+        site: { address: { line1: 'Test Site' } },
+        accreditationId
+      },
+      accreditation: { id: accreditationId, status: 'approved' }
+    })
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+      id: prnId,
+      prnNumber: 'ER2625001A',
+      status: 'awaiting_authorisation',
+      issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
+      tonnage: 100,
+      material: 'plastic'
+    })
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnIssued)
   })
 
