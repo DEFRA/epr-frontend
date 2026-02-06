@@ -1,10 +1,20 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
+
+{% block beforeContent %}
+  {% if backUrl %}
+    {{ govukBackLink({
+      text: localise("common:back"),
+      href: backUrl
+    }) }}
+  {% endif %}
+{% endblock %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -66,7 +76,14 @@
 
         {{ govukDetails({
           summaryText: help.summary,
-          html: '<p class="govuk-body">' + help.text + '</p>'
+          html: '
+            <p class="govuk-body">' ~ help.intro ~ '</p>
+            <p class="govuk-body">' ~ help.listIntro ~ '</p>
+            <ul class="govuk-list govuk-list--bullet">
+              <li>' ~ help.listItemOne ~ '</li>
+              <li>' ~ help.listItemTwo ~ '</li>
+            </ul>
+          '
         }) }}
 
         {{ govukCharacterCount({

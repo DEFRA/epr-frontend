@@ -76,7 +76,12 @@
     "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
     "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
   },
-  "helpSummary": "Can't find the producer or compliance scheme?",
+  "help": {
+    "summary": "Can't find the producer or compliance scheme?",
+    "listIntro": "If the buyer you're looking for is not appearing, check that:",
+    "listItemOne": "you have spelled the name correctly",
+    "listItemTwo": "they are registered with a regulator"
+  },
   "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
   "issueCommentsLabel": "Issue comments",
   "issueFailedError": "We could not issue this PRN or PERN. Try again later.",
@@ -182,7 +187,7 @@
     "checkPageTitle": "Check before creating PERN",
     "createButton": "Create PERN",
     "discardLink": "Discard and start again",
-    "helpText": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+    "helpIntro": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
     "notesHint": "These notes will appear on the PERN",
     "pageTitle": "Create a PERN",
     "recipientLabel": "Enter who this PERN will be issued to",
@@ -203,7 +208,7 @@
     "checkPageTitle": "Check before creating PRN",
     "createButton": "Create PRN",
     "discardLink": "Discard and start again",
-    "helpText": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+    "helpIntro": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
     "notesHint": "These notes will appear on the PRN",
     "pageTitle": "Create a PRN",
     "recipientLabel": "Enter who this PRN will be issued to",

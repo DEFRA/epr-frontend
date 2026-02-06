@@ -57,8 +57,10 @@ export const controller = {
       await request.wasteOrganisationsService.getOrganisations()
 
     const viewData = buildCreatePrnViewData(request, {
+      organisationId,
+      recipients: mapToSelectOptions(organisations),
       registration,
-      recipients: mapToSelectOptions(organisations)
+      registrationId
     })
 
     // Check for insufficient balance error from redirect

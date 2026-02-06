@@ -111,7 +111,7 @@ describe('#issuedController', () => {
       it('displays success page with PRN issued heading and recipient', async ({
         server
       }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -133,7 +133,7 @@ describe('#issuedController', () => {
       })
 
       it('displays PRN number', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -153,7 +153,7 @@ describe('#issuedController', () => {
       })
 
       it('displays waste balance updated message', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -176,7 +176,7 @@ describe('#issuedController', () => {
       it('displays View PRN button linking to certificate page in new tab', async ({
         server
       }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -198,7 +198,7 @@ describe('#issuedController', () => {
       })
 
       it('displays Issue another PRN link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -221,7 +221,7 @@ describe('#issuedController', () => {
       })
 
       it('displays Manage PRNs link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -244,7 +244,7 @@ describe('#issuedController', () => {
       })
 
       it('displays Return to home link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -276,7 +276,7 @@ describe('#issuedController', () => {
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -303,7 +303,7 @@ describe('#issuedController', () => {
           status: 'awaiting_authorisation'
         })
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
