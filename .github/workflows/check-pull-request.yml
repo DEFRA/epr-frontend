@@ -84,8 +84,20 @@ jobs:
     needs: pr-validator
     steps:
       - uses: actions/checkout@v6
+
+      - name: Check for matching journey test branch
+        id: journey-branch
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if git ls-remote --heads https://github.com/DEFRA/epr-frontend-journey-tests.git "$BRANCH" | grep -q .; then
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+
       - run: docker build -t defradigital/epr-frontend:${{github.sha}} .
+
       - uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@main
         with:
           epr-frontend: ${{github.sha}}
-          branch: main
+          branch: ${{ steps.journey-branch.outputs.ref }}
