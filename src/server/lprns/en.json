@@ -154,7 +154,7 @@
     "tonnage": "Tonnage",
     "material": "Material",
     "dateCreated": "Date created",
-    "complianceYearText": "This {{noteType}} relates to waste accepted for {{wasteAction}} in {{-year}} and can count towards {{-year}} obligations.",
+    "complianceYearText": "This {{noteType}} relates to waste accepted for {{wasteAction}} in {{- year}} and can count towards {{- year}} obligations.",
     "returnLink": "Return to {{noteType}} list"
   }
 }
