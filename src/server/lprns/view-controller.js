@@ -440,7 +440,7 @@ function buildExistingPrnDetailRows({
   const rows = [
     {
       key: { text: localise('lprns:details:numberLabel', { noteType }) },
-      value: { text: '' }
+      value: { text: prn.prnNumber || '' }
     }
   ]
 

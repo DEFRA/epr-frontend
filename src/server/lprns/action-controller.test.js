@@ -173,6 +173,25 @@ describe('#actionController', () => {
       ).toBeDefined()
     })
 
+    it('displays PRN number when provided', async ({ server }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        ...mockPrnAwaitingAuth,
+        prnNumber: 'ER2625001A'
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, 'ER2625001A')).toBeDefined()
+    })
+
     it('displays inset text about auto-populated fields', async ({
       server
     }) => {

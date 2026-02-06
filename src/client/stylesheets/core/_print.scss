@@ -46,8 +46,7 @@
     display: flex !important;
     break-inside: avoid;
 
-    svg {
-      // Ensure SVGs render in print
+    img {
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
