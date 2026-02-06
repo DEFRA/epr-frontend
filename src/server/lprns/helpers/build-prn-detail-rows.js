@@ -92,12 +92,12 @@ export function buildPrnAuthorisationRows(
       value: { text: issuedBy }
     },
     {
-      key: { text: localise('lprns:authorisedByLabel') },
-      value: { text: prn.authorisedBy?.name || '' }
+      key: { text: localise('lprns:issuedByLabel') },
+      value: { text: prn.issuedBy?.name || '' }
     },
     {
       key: { text: localise('lprns:positionLabel') },
-      value: { text: prn.authorisedBy?.position || '' }
+      value: { text: prn.issuedBy?.position || '' }
     },
     {
       key: { text: localise('lprns:issuerNotesLabel') },

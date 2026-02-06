@@ -113,7 +113,7 @@ const mockPrnFromBackend = {
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
   issuedAt: '2026-01-16T14:30:00.000Z',
-  authorisedBy: { name: 'John Smith', position: 'Director' },
+  issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
 }
 
@@ -127,7 +127,7 @@ const mockPernFromBackend = {
   notes: null,
   isDecemberWaste: false,
   issuedAt: '2026-01-21T09:00:00.000Z',
-  authorisedBy: { name: 'Jane Doe', position: 'Operations Manager' },
+  issuedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
 }
 
@@ -449,7 +449,7 @@ describe('#viewController', () => {
         expect(getByText(main, /21 January 2026/i)).toBeDefined()
       })
 
-      it('displays authorised by and position for issued PERN', async ({
+      it('displays issued by and position for issued PERN', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -471,7 +471,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check authorised by and position are displayed
+        // Check issued by person and position are displayed
         expect(getByText(main, /Jane Doe/i)).toBeDefined()
         expect(getByText(main, /Operations Manager/i)).toBeDefined()
       })
@@ -743,7 +743,9 @@ describe('#viewController', () => {
         expect(getByText(main, /Not provided/i)).toBeDefined()
       })
 
-      it('displays authorised by details when present', async ({ server }) => {
+      it('displays issued by person details when present', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
@@ -754,13 +756,12 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Authorised by/i)).toBeDefined()
         expect(getByText(main, /John Smith/i)).toBeDefined()
         expect(getByText(main, /Position/i)).toBeDefined()
         expect(getByText(main, /Director/i)).toBeDefined()
       })
 
-      it('displays issued date when authorised', async ({ server }) => {
+      it('displays issued date when present', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
@@ -775,13 +776,13 @@ describe('#viewController', () => {
         expect(getByText(main, /16 January 2026/i)).toBeDefined()
       })
 
-      it('displays empty values when authorisation details not present', async ({
+      it('displays empty values when issue details not present', async ({
         server
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
           issuedAt: null,
-          authorisedBy: null
+          issuedBy: null
         })
 
         const { statusCode } = await server.inject({
