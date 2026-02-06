@@ -184,6 +184,10 @@ export default {
         {
           from: path.join(govukFrontendPath, 'dist/govuk/assets'),
           to: 'assets'
+        },
+        {
+          from: path.join(dirname, 'src/client/images'),
+          to: 'assets/images'
         }
       ]
     })
