@@ -25,10 +25,10 @@ createAll(Tabs)
 const recipientSelect = document.querySelector('#recipient')
 if (recipientSelect) {
   accessibleAutocomplete.enhanceSelectElement({
-    selectElement: recipientSelect,
+    defaultValue: '',
     minLength: 2,
-    showAllValues: false,
-    autoselect: false
+    selectElement: recipientSelect,
+    showAllValues: false
   })
 }
 
