@@ -3,7 +3,6 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { getOrganisationDisplayName } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnAuthorisationRows,
@@ -245,34 +244,27 @@ async function handleExistingView(
   { organisationId, registrationId, accreditationId, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
-  const [
-    { organisationData, registration, accreditation },
-    prn,
-    { organisations }
-  ] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    ),
-    fetchPackagingRecyclingNote(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      session.idToken
-    ),
-    request.wasteOrganisationsService.getOrganisations()
-  ])
+  const [{ organisationData, registration, accreditation }, prn] =
+    await Promise.all([
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      ),
+      fetchPackagingRecyclingNote(
+        organisationId,
+        registrationId,
+        accreditationId,
+        prnId,
+        session.idToken
+      )
+    ])
 
   if (!registration) {
     throw Boom.notFound('Registration not found')
   }
 
-  const recipientDisplayName = getOrganisationDisplayName(
-    organisations,
-    prn.issuedToOrganisation
-  )
+  const recipientDisplayName = prn.issuedToOrganisation.name
 
   const { isExporter, noteType, wasteAction } =
     getNoteTypeDisplayNames(registration)

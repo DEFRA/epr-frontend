@@ -20,7 +20,7 @@
     "checkPageTitle": "Check before creating {{noteType}}",
     "createButton": "Create {{noteType}}",
     "discardLink": "Discard and start again",
-    "helpText": "{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators. If the buyer you're looking for is not appearing, check that you have spelled the name correctly and that they are registered with a regulator.",
+    "helpIntro": "{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
     "notesHint": "These notes will appear on the {{noteType}}",
     "pageTitle": "Create a {{noteType}}",
     "recipientLabel": "Enter who this {{noteType}} will be issued to",
@@ -68,7 +68,12 @@
     "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
     "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
   },
-  "helpSummary": "Can't find the producer or compliance scheme?",
+  "help": {
+    "summary": "Can't find the producer or compliance scheme?",
+    "listIntro": "If the buyer you're looking for is not appearing, check that:",
+    "listItemOne": "you have spelled the name correctly",
+    "listItemTwo": "they are registered with a regulator"
+  },
   "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
   "issueCommentsLabel": "Issue comments",
   "issueFailedError": "We could not issue this PRN or PERN. Try again later.",
@@ -78,7 +83,7 @@
     "pageTitle": "{{noteType}} issued",
     "heading": "{{noteType}} issued to {{recipient}}",
     "prnNumberLabel": "{{noteType}} number:",
-    "viewButton": "View {{noteType}} (PDF)",
+    "viewButton": "View {{noteType}}",
     "issueAnotherLink": "Issue another {{noteType}}",
     "managePrnsLink": "Manage {{noteTypePlural}}"
   },
@@ -149,7 +154,7 @@
     "tonnage": "Tonnage",
     "material": "Material",
     "dateCreated": "Date created",
-    "complianceYearText": "This {{noteType}} relates to waste accepted for {{wasteAction}} in {{year}} and can count towards {{year}} obligations.",
+    "complianceYearText": "This {{noteType}} relates to waste accepted for {{wasteAction}} in {{-year}} and can count towards {{-year}} obligations.",
     "returnLink": "Return to {{noteType}} list"
   }
 }

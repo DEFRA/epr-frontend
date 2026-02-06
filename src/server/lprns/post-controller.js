@@ -1,12 +1,9 @@
-import Boom from '@hapi/boom'
-import Joi from 'joi'
-
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import {
-  getOrganisationDisplayName,
-  mapToSelectOptions
-} from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
+import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import Boom from '@hapi/boom'
+import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
@@ -162,7 +159,17 @@ export const postController = {
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
 
-    const recipientName = getOrganisationDisplayName(organisations, recipient)
+    const organisation = organisations.find((org) => org.id === recipient)
+
+    if (!organisation) {
+      throw Boom.badRequest('Selected recipient organisation not found')
+    }
+
+    const issuedToOrganisation = {
+      id: organisation.id,
+      name: organisation.name,
+      tradingName: organisation.tradingName
+    }
 
     try {
       // Create PRN as draft in backend
@@ -171,10 +178,7 @@ export const postController = {
         registrationId,
         accreditationId,
         {
-          issuedToOrganisation: {
-            id: recipient,
-            name: recipientName
-          },
+          issuedToOrganisation,
           tonnage: Number.parseInt(tonnage, 10),
           material,
           notes: notes || undefined
@@ -189,7 +193,7 @@ export const postController = {
         tonnageInWords: tonnageToWords(result.tonnage),
         material: result.material,
         status: result.status,
-        recipientName: getOrganisationDisplayName(organisations, recipient),
+        recipientName: getDisplayName(issuedToOrganisation),
         notes: notes || '',
         wasteProcessingType: result.wasteProcessingType,
         processToBeUsed: result.processToBeUsed,

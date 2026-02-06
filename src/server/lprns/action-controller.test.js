@@ -83,7 +83,7 @@ const viewUrl = `${basePath}/${prnId}/view`
 
 const mockPrnAwaitingAuth = {
   id: 'prn-789',
-  issuedToOrganisation: 'Acme Packaging Ltd',
+  issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation',
@@ -103,7 +103,7 @@ const mockPrnIssued = {
 
 const mockPernAwaitingAuth = {
   id: 'pern-123',
-  issuedToOrganisation: 'Export Solutions Ltd',
+  issuedToOrganisation: { id: 'exporter-1', name: 'Export Solutions Ltd' },
   tonnage: 50,
   material: 'glass',
   status: 'awaiting_authorisation',

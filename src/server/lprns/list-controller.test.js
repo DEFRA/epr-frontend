@@ -62,7 +62,7 @@ const mockPrns = [
   {
     id: 'prn-001',
     prnNumber: null,
-    issuedToOrganisation: 'Acme Packaging Ltd',
+    issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
     createdAt: '2026-01-15T00:00:00.000Z',
     issuedAt: null,
     tonnage: 50,
@@ -72,7 +72,7 @@ const mockPrns = [
   {
     id: 'prn-002',
     prnNumber: null,
-    issuedToOrganisation: 'BigCo Waste Solutions',
+    issuedToOrganisation: { id: 'producer-2', name: 'BigCo Waste Solutions' },
     createdAt: '2026-01-18T00:00:00.000Z',
     issuedAt: null,
     tonnage: 120,
@@ -82,7 +82,7 @@ const mockPrns = [
   {
     id: 'prn-003',
     prnNumber: 'ER2612345',
-    issuedToOrganisation: 'Green Compliance Scheme',
+    issuedToOrganisation: { id: 'producer-3', name: 'Green Compliance Scheme' },
     createdAt: '2026-01-20T00:00:00.000Z',
     issuedAt: '2026-01-22T10:00:00.000Z',
     tonnage: 75,
@@ -626,7 +626,10 @@ describe('#listPrnsController', () => {
           {
             id: 'prn-003',
             prnNumber: 'ER2612345',
-            issuedToOrganisation: 'Green Compliance Scheme',
+            issuedToOrganisation: {
+              id: 'producer-3',
+              name: 'Green Compliance Scheme'
+            },
             createdAt: '2026-01-20T00:00:00.000Z',
             issuedAt: '2026-01-22T10:00:00.000Z',
             tonnage: 75,
@@ -657,7 +660,7 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
             id: 'prn-004',
-            issuedToOrganisation: 'Auth Only Corp',
+            issuedToOrganisation: { id: 'producer-4', name: 'Auth Only Corp' },
             createdAt: '2026-01-20T00:00:00.000Z',
             tonnage: 30,
             material: 'glass',
@@ -687,7 +690,7 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
             id: 'prn-draft',
-            issuedToOrganisation: 'Draft Corp',
+            issuedToOrganisation: { id: 'producer-draft', name: 'Draft Corp' },
             createdAt: '2026-01-20T00:00:00.000Z',
             tonnage: 10,
             material: 'glass',
