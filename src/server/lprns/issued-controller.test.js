@@ -197,6 +197,9 @@ describe('#issuedController', () => {
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('href')).toBe(viewUrl)
         expect(viewButton.getAttribute('target')).toBe('_blank')
+        expect(
+          viewButton.classList.contains('govuk-button--secondary')
+        ).toBe(true)
       })
 
       it('displays Issue another PRN link', async ({ server }) => {
