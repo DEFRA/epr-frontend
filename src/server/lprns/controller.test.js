@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByLabelText,
@@ -99,6 +99,23 @@ describe('#createPrnController', () => {
         )
       })
 
+      it('should render back link to registration page', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink).not.toBeNull()
+        expect(backLink.getAttribute('href')).toBe(
+          '/organisations/org-123/registrations/reg-001'
+        )
+      })
+
       it('should render page with correct title and heading', async ({
         server
       }) => {
@@ -190,7 +207,9 @@ describe('#createPrnController', () => {
         expect(recipientSelect.options.length).toBeGreaterThan(1)
       })
 
-      it('should render help text details component', async ({ server }) => {
+      it('should render help text details component with bullet list', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: reprocessorUrl,
@@ -213,6 +232,10 @@ describe('#createPrnController', () => {
         expect(
           detailsContent.getByText(/PRNs can only be issued to/i)
         ).toBeDefined()
+
+        const bulletList = details.querySelector('.govuk-list--bullet')
+        expect(bulletList).not.toBeNull()
+        expect(bulletList.querySelectorAll('li')).toHaveLength(2)
       })
 
       it('should render notes with character count component', async ({

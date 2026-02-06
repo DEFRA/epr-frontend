@@ -83,7 +83,7 @@ const viewUrl = `${basePath}/${prnId}/view`
 
 const mockPrnAwaitingAuth = {
   id: 'prn-789',
-  issuedToOrganisation: 'Acme Packaging Ltd',
+  issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation',
@@ -103,7 +103,7 @@ const mockPrnIssued = {
 
 const mockPernAwaitingAuth = {
   id: 'pern-123',
-  issuedToOrganisation: 'Export Solutions Ltd',
+  issuedToOrganisation: { id: 'exporter-1', name: 'Export Solutions Ltd' },
   tonnage: 50,
   material: 'glass',
   status: 'awaiting_authorisation',
@@ -221,8 +221,11 @@ describe('#actionController', () => {
       const { body } = dom.window.document
       const main = getByRole(body, 'main')
 
-      const deleteLink = getByText(main, /Delete PRN/i)
-      expect(deleteLink).toBeDefined()
+      const deleteButton = getByRole(main, 'button', { name: /Delete PRN/i })
+      expect(deleteButton).toBeDefined()
+      expect(deleteButton.classList.contains('govuk-button--warning')).toBe(
+        true
+      )
     })
 
     it('does not display regulator logos on the action page', async ({
@@ -257,7 +260,7 @@ describe('#actionController', () => {
       expect(backLink.getAttribute('href')).toBe(basePath)
     })
 
-    it('does not display Issue button when PRN is already issued', async ({
+    it('does not display Issue or Delete buttons when PRN is already issued', async ({
       server
     }) => {
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnIssued)
@@ -273,6 +276,7 @@ describe('#actionController', () => {
       const main = getByRole(body, 'main')
 
       expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      expect(queryByRole(main, 'button', { name: /Delete/i })).toBeNull()
     })
 
     it('displays PERN action page for exporter registration', async ({
@@ -301,6 +305,7 @@ describe('#actionController', () => {
       expect(heading.textContent).toBe('PERN')
 
       expect(getByRole(main, 'button', { name: /Issue PERN/i })).toBeDefined()
+      expect(getByRole(main, 'button', { name: /Delete PERN/i })).toBeDefined()
       expect(getByText(main, /View PERN \(opens in a new tab\)/i)).toBeDefined()
     })
 

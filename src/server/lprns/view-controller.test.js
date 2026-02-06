@@ -1,12 +1,12 @@
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -105,29 +105,29 @@ const mockPrnStatusUpdated = {
 
 const mockPrnFromBackend = {
   id: 'prn-789',
-  issuedToOrganisation: 'producer-1',
+  issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation',
   createdAt: '2026-01-15T10:00:00.000Z',
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
-  authorisedAt: '2026-01-16T14:30:00.000Z',
+  issuedAt: '2026-01-16T14:30:00.000Z',
   authorisedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
 }
 
 const mockPernFromBackend = {
   id: 'pern-123',
-  issuedToOrganisation: 'Export Solutions Ltd',
+  issuedToOrganisation: { id: 'export-1', name: 'Export Solutions Ltd' },
   tonnage: 50,
   material: 'glass',
   status: 'issued',
   createdAt: '2026-01-20T14:30:00.000Z',
   notes: null,
   isDecemberWaste: false,
-  authorisedAt: null,
-  authorisedBy: null,
+  issuedAt: '2026-01-21T09:00:00.000Z',
+  authorisedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
 }
 
@@ -213,12 +213,13 @@ describe('#viewController', () => {
         expect(getByText(main, /Plastic/i)).toBeDefined()
       })
 
-      it('displays buyer name from waste organisations service when backend returns org ID', async ({
-        server
-      }) => {
+      it('displays recipient name from PRN data', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
-          issuedToOrganisation: 'producer-1'
+          issuedToOrganisation: {
+            id: 'producer-1',
+            name: 'Custom Recipient Ltd'
+          }
         })
 
         const { result, statusCode } = await server.inject({
@@ -233,7 +234,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
+        expect(getByText(main, /Custom Recipient Ltd/i)).toBeDefined()
         const html = body.innerHTML
         expect(html).not.toContain('>producer-1<')
       })
@@ -378,6 +379,58 @@ describe('#viewController', () => {
 
         // Check return link text
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
+      })
+
+      it('displays issued date for issued PERN', async ({ server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          mockPernFromBackend
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Check issued date is displayed (from issuedAt: '2026-01-21T09:00:00.000Z')
+        expect(getByText(main, /Issued date/i)).toBeDefined()
+        expect(getByText(main, /21 January 2026/i)).toBeDefined()
+      })
+
+      it('displays authorised by and position for issued PERN', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          mockPernFromBackend
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernViewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Check authorised by and position are displayed
+        expect(getByText(main, /Jane Doe/i)).toBeDefined()
+        expect(getByText(main, /Operations Manager/i)).toBeDefined()
       })
 
       it('shows accreditation address for reprocessors', async ({ server }) => {
@@ -575,7 +628,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Issued date is the authorisedAt date (16 January 2026)
+        // Issued date is the issuedAt date (16 January 2026)
         expect(getByText(main, /16 January 2026/i)).toBeDefined()
       })
 
@@ -684,7 +737,7 @@ describe('#viewController', () => {
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
-          authorisedAt: null,
+          issuedAt: null,
           authorisedBy: null
         })
 
@@ -757,7 +810,7 @@ describe('#viewController', () => {
         expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
       })
 
-      it('displays complianceYearText when accreditationYear is present', async ({
+      it('should display compliance year text with year in strong tags', async ({
         server
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
@@ -777,13 +830,10 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Should show compliance year text with year
-        expect(
-          getByText(
-            main,
-            /This PRN relates to waste accepted for reprocessing/i
-          )
-        ).toBeDefined()
+        const complianceText = main.querySelector('.govuk-body')
+        expect(complianceText.innerHTML).toBe(
+          'This PRN relates to waste accepted for reprocessing in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
+        )
       })
 
       it('does not display error summary on certificate page (errors shown on action page)', async ({
@@ -1313,7 +1363,7 @@ describe('#viewController', () => {
           registrationId,
           accreditationId,
           prnId,
-          { status: 'cancelled' },
+          { status: 'discarded' },
           mockCredentials.idToken
         )
       })
@@ -1405,7 +1455,7 @@ describe('#viewController', () => {
           registrationId,
           accreditationId,
           prnId,
-          { status: 'cancelled' },
+          { status: 'discarded' },
           mockCredentials.idToken
         )
       })

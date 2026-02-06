@@ -3,21 +3,14 @@
   "accreditationNumber": "Accreditation number",
   "chooseTask": "Choose a task",
   "contactRegulator": "contact your regulator",
+  "notes": {
+    "title": "{{noteTypePlural}}",
+    "description": "Create and manage {{noteTypePlural}}.",
+    "notAvailable": "{{noteType}} management is not yet available.",
+    "createNew": "Create new {{noteType}}",
+    "manage": "Manage {{noteTypePlural}}"
+  },
   "pageTitle": "{{ siteName }}: {{ material }}",
-  "perns": {
-    "title": "PERNs",
-    "description": "Create and manage PERNs.",
-    "notAvailable": "PERN management is not yet available.",
-    "createNew": "Create new PERN",
-    "manage": "Manage PERNs"
-  },
-  "prns": {
-    "title": "PRNs",
-    "description": "Create and manage PRNs.",
-    "notAvailable": "PRN management is not yet available.",
-    "createNew": "Create new PRN",
-    "manage": "Manage PRNs"
-  },
   "registration": "Registration",
   "registrationAndAccreditation": "Registration and accreditation",
   "registrationAndAccreditationDescription": "View and manage your applications.",
@@ -35,10 +28,7 @@
     "units": "tonnes",
     "available": {
       "title": "Available waste balance",
-      "description": {
-        "prns": "This is the balance available for creating new PRNs",
-        "perns": "This is the balance available for creating new PERNs"
-      }
+      "description": "This is the balance available for creating new {{noteTypePlural}}"
     }
   }
 }

@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
@@ -40,14 +41,13 @@ export const deleteGetController = {
       return h.redirect(basePath)
     }
 
-    const isExporter = registration.wasteProcessingType === 'exporter'
-    const noteType = isExporter ? 'perns' : 'prns'
+    const { noteType } = getNoteTypeDisplayNames(registration)
 
     return h.view('lprns/delete', {
-      pageTitle: localise(`lprns:delete:${noteType}:pageTitle`),
-      heading: localise(`lprns:delete:${noteType}:heading`),
-      warningText: localise(`lprns:delete:${noteType}:warningText`),
-      confirmButton: localise(`lprns:delete:${noteType}:confirmButton`),
+      pageTitle: localise('lprns:delete:pageTitle', { noteType }),
+      heading: localise('lprns:delete:heading', { noteType }),
+      warningText: localise('lprns:delete:warningText', { noteType }),
+      confirmButton: localise('lprns:delete:confirmButton', { noteType }),
       backUrl: `${basePath}/${prnId}`
     })
   }
@@ -86,7 +86,7 @@ export const deletePostController = {
         registrationId,
         accreditationId,
         prnId,
-        { status: 'cancelled' },
+        { status: 'deleted' },
         session.idToken
       )
 

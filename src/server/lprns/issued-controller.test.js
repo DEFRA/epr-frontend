@@ -64,7 +64,7 @@ const fixtureExporter = {
 const mockIssuedPrn = {
   id: 'prn-789',
   prnNumber: 'ER2612345A',
-  issuedToOrganisation: 'ComplyPak Ltd',
+  issuedToOrganisation: { id: 'producer-1', name: 'ComplyPak Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_acceptance'
@@ -73,7 +73,7 @@ const mockIssuedPrn = {
 const mockIssuedPern = {
   id: 'pern-123',
   prnNumber: 'EX2654321B',
-  issuedToOrganisation: 'Export Corp',
+  issuedToOrganisation: { id: 'exporter-1', name: 'Export Corp' },
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_acceptance'
@@ -111,7 +111,7 @@ describe('#issuedController', () => {
       it('displays success page with PRN issued heading and recipient', async ({
         server
       }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -133,7 +133,7 @@ describe('#issuedController', () => {
       })
 
       it('displays PRN number', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -153,7 +153,7 @@ describe('#issuedController', () => {
       })
 
       it('displays waste balance updated message', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -173,10 +173,10 @@ describe('#issuedController', () => {
         ).toBeDefined()
       })
 
-      it('displays View PRN (PDF) button linking to certificate page in new tab', async ({
+      it('displays View PRN button linking to certificate page in new tab', async ({
         server
       }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -191,14 +191,14 @@ describe('#issuedController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const viewButton = getByRole(main, 'button', { name: /View PRN/i })
+        const viewButton = getByRole(main, 'button', { name: 'View PRN' })
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('href')).toBe(viewUrl)
         expect(viewButton.getAttribute('target')).toBe('_blank')
       })
 
       it('displays Issue another PRN link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -221,7 +221,7 @@ describe('#issuedController', () => {
       })
 
       it('displays Manage PRNs link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -244,7 +244,7 @@ describe('#issuedController', () => {
       })
 
       it('displays Return to home link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -276,7 +276,7 @@ describe('#issuedController', () => {
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
@@ -303,7 +303,7 @@ describe('#issuedController', () => {
           status: 'awaiting_authorisation'
         })
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
         })
 
