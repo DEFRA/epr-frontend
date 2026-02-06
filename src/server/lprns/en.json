@@ -83,7 +83,7 @@
     "pageTitle": "{{noteType}} issued",
     "heading": "{{noteType}} issued to {{recipient}}",
     "prnNumberLabel": "{{noteType}} number:",
-    "viewButton": "View {{noteType}}",
+    "viewButton": "View {{noteType}} (opens in a new tab)",
     "issueAnotherLink": "Issue another {{noteType}}",
     "managePrnsLink": "Manage {{noteTypePlural}}"
   },
