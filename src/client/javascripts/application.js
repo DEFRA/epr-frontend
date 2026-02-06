@@ -1,9 +1,10 @@
+import accessibleAutocomplete from 'accessible-autocomplete'
 import {
-  createAll,
   Accordion,
   Button,
   CharacterCount,
   Checkboxes,
+  createAll,
   ErrorSummary,
   Header,
   Radios,
@@ -20,6 +21,16 @@ createAll(Header)
 createAll(Radios)
 createAll(SkipLink)
 createAll(Tabs)
+
+const recipientSelect = document.querySelector('#recipient')
+if (recipientSelect) {
+  accessibleAutocomplete.enhanceSelectElement({
+    selectElement: recipientSelect,
+    minLength: 2,
+    showAllValues: false,
+    autoselect: false
+  })
+}
 
 /**
  * Prevents stale uploadId errors when user navigates back to upload page.
