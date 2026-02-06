@@ -16,15 +16,15 @@ const createMockRequest = () => ({
       'lprns:recipientHint':
         'Start typing the name of the packaging waste producer or compliance scheme',
       'lprns:selectOption': 'Select an option',
-      'lprns:helpSummary': "Can't find the producer or compliance scheme?",
+      'lprns:help:summary': "Can't find the producer or compliance scheme?",
       'lprns:prns:helpIntro':
         'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
       'lprns:perns:helpIntro':
         'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'lprns:helpListIntro':
+      'lprns:help:listIntro':
         "If the buyer you're looking for is not appearing, check that:",
-      'lprns:helpListItemOne': 'you have spelled the name correctly',
-      'lprns:helpListItemTwo': 'they are registered with a regulator',
+      'lprns:help:listItemOne': 'you have spelled the name correctly',
+      'lprns:help:listItemTwo': 'they are registered with a regulator',
       'lprns:notesLabel': 'Add issuer notes (optional)',
       'lprns:prns:notesHint': 'These notes will appear on the PRN',
       'lprns:perns:notesHint': 'These notes will appear on the PERN',

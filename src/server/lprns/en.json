@@ -76,10 +76,12 @@
     "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
     "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
   },
-  "helpListIntro": "If the buyer you're looking for is not appearing, check that:",
-  "helpListItemOne": "you have spelled the name correctly",
-  "helpListItemTwo": "they are registered with a regulator",
-  "helpSummary": "Can't find the producer or compliance scheme?",
+  "help": {
+    "summary": "Can't find the producer or compliance scheme?",
+    "listIntro": "If the buyer you're looking for is not appearing, check that:",
+    "listItemOne": "you have spelled the name correctly",
+    "listItemTwo": "they are registered with a regulator"
+  },
   "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
   "issueCommentsLabel": "Issue comments",
   "issueFailedError": "We could not issue this PRN or PERN. Try again later.",

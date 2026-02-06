@@ -49,11 +49,11 @@ export function buildCreatePrnViewData(
       ]
     },
     help: {
-      summary: localise('lprns:helpSummary'),
+      summary: localise('lprns:help:summary'),
       intro: localise(`lprns:${noteType}:helpIntro`),
-      listIntro: localise('lprns:helpListIntro'),
-      listItemOne: localise('lprns:helpListItemOne'),
-      listItemTwo: localise('lprns:helpListItemTwo')
+      listIntro: localise('lprns:help:listIntro'),
+      listItemOne: localise('lprns:help:listItemOne'),
+      listItemTwo: localise('lprns:help:listItemTwo')
     },
     notes: {
       label: localise('lprns:notesLabel'),
