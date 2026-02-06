@@ -1,4 +1,19 @@
+@use "accessible-autocomplete/dist/accessible-autocomplete.min";
 @use "govuk-frontend" as *;
+
+.autocomplete__wrapper {
+  font-family: "GDS Transport", arial, sans-serif;
+}
+
+.autocomplete__option--odd {
+  background-color: inherit;
+}
+
+.autocomplete__option--focused,
+.autocomplete__option:hover {
+  background-color: #1d70b8;
+  color: #ffffff;
+}
 
 .epr-heading-with-action {
   display: flex;
