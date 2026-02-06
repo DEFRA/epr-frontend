@@ -1,9 +1,9 @@
-import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
@@ -337,7 +337,7 @@ describe('#postCreatePrnController', () => {
         ).toBeDefined()
       })
 
-      it('shows "Select who this will be issued to" when recipient is missing', async ({
+      it('shows "Enter a packaging waste producer or compliance scheme" when recipient is missing', async ({
         server
       }) => {
         const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -359,7 +359,10 @@ describe('#postCreatePrnController', () => {
         const errorSummary = body.querySelector('.govuk-error-summary')
 
         expect(
-          getByText(errorSummary, 'Select who this will be issued to')
+          getByText(
+            errorSummary,
+            'Enter a packaging waste producer or compliance scheme'
+          )
         ).toBeDefined()
       })
 

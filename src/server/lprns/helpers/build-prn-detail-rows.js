@@ -56,14 +56,13 @@ export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
 /**
  * Builds the issuer/issued-by rows for PRN details
  * @param {object} prn
- * @param {object} organisationData
  * @param {(key: string) => string} localise
+ * @param {object} [options]
+ * @param {string} [options.issuerName] - Organisation name for the issuer row
  * @returns {Array}
  */
-export function buildPrnIssuerRows(prn, organisationData, localise) {
+export function buildPrnIssuerRows(prn, localise, { issuerName = '' } = {}) {
   const issuedDate = prn.issuedAt ? formatDateForDisplay(prn.issuedAt) : ''
-  const issuerName =
-    organisationData?.companyDetails?.name || localise('lprns:notAvailable')
   const notesText = prn.notes || localise('lprns:notProvided')
 
   return [

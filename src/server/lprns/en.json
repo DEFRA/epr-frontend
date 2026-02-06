@@ -63,7 +63,7 @@
   "errorSummaryTitle": "There is a problem",
   "errors": {
     "notesTooLong": "Enter a maximum of 200 characters",
-    "recipientRequired": "Select who this will be issued to",
+    "recipientRequired": "Enter a packaging waste producer or compliance scheme",
     "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
     "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
   },
@@ -135,7 +135,6 @@
     }
   },
   "materialLabel": "Material",
-  "notAvailable": "n/a",
   "notProvided": "Not provided",
   "notesLabel": "Add issuer notes (optional)",
   "positionLabel": "Position",

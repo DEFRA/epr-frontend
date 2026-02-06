@@ -238,6 +238,39 @@ describe('#viewController', () => {
         expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
       })
 
+      it('displays empty issuer when company details are missing on certificate page', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          organisationData: { id: 'org-123', companyDetails: null }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const rows = body.querySelectorAll('.govuk-summary-list__row')
+        const issuerRow = Array.from(rows).find((row) =>
+          row
+            .querySelector('.govuk-summary-list__key')
+            ?.textContent?.includes('Issuer')
+        )
+
+        expect(issuerRow).toBeDefined()
+        expect(
+          issuerRow
+            .querySelector('.govuk-summary-list__value')
+            ?.textContent?.trim()
+        ).toBe('')
+      })
+
       it('displays PRN number when provided', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
@@ -1107,7 +1140,7 @@ describe('#viewController', () => {
         expect(getByText(main, /Not provided/i)).toBeDefined()
       })
 
-      it('displays "n/a" for issuer when company details are missing', async ({
+      it('displays empty issuer when company details are missing', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
@@ -1145,9 +1178,19 @@ describe('#viewController', () => {
 
         const dom = new JSDOM(result)
         const { body } = dom.window.document
-        const html = body.innerHTML
+        const rows = body.querySelectorAll('.govuk-summary-list__row')
+        const issuerRow = Array.from(rows).find((row) =>
+          row
+            .querySelector('.govuk-summary-list__key')
+            ?.textContent?.includes('Issuer')
+        )
 
-        expect(html).toContain('n/a')
+        expect(issuerRow).toBeDefined()
+        expect(
+          issuerRow
+            .querySelector('.govuk-summary-list__value')
+            ?.textContent?.trim()
+        ).toBe('')
       })
 
       it('displays PRN details rows in correct order per design', async ({
