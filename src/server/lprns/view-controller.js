@@ -10,6 +10,7 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -181,8 +182,7 @@ async function handleDraftView(
       session.idToken
     )
 
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
 
   const displayMaterial = getLumpyDisplayMaterial(registration)
 
@@ -201,23 +201,23 @@ async function handleDraftView(
   })
 
   return h.view('lprns/view', {
-    pageTitle: localise(`lprns:${noteType}:checkPageTitle`),
-    caption: localise(`lprns:${noteType}:caption`),
-    heading: localise(`lprns:${noteType}:checkHeading`),
-    introText: localise(`lprns:${noteType}:checkIntroText`),
-    authorisationText: localise(`lprns:${noteType}:checkAuthorisationText`),
-    insetText: localise(`lprns:${noteType}:checkInsetText`),
-    prnDetailsHeading: localise(
-      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
-    ),
+    pageTitle: localise('lprns:create:checkPageTitle', { noteType }),
+    caption: localise('lprns:create:caption', { noteType }),
+    heading: localise('lprns:create:checkHeading', { noteType }),
+    introText: localise('lprns:create:checkIntroText', { noteType }),
+    authorisationText: localise('lprns:create:checkAuthorisationText', {
+      noteType
+    }),
+    insetText: localise('lprns:create:checkInsetText', { noteType }),
+    prnDetailsHeading: localise('lprns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     createButton: {
-      text: localise(`lprns:${noteType}:createButton`)
+      text: localise('lprns:create:createButton', { noteType })
     },
     discardLink: {
-      text: localise(`lprns:${noteType}:discardLink`),
+      text: localise('lprns:create:discardLink'),
       href: `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnDraft.id}/discard`
     },
     organisationId,
@@ -266,8 +266,8 @@ async function handleExistingView(
 
   const recipientDisplayName = prn.issuedToOrganisation.name
 
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { isExporter, noteType, wasteAction } =
+    getNoteTypeDisplayNames(registration)
 
   const backUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
@@ -282,7 +282,7 @@ async function handleExistingView(
     prn,
     organisationData,
     localise,
-    isExporter,
+    noteType,
     statusConfig,
     isNotDraft,
     recipientDisplayName
@@ -298,8 +298,8 @@ async function handleExistingView(
 
   const viewData = buildExistingPrnViewData({
     prn,
-    isExporter,
     noteType,
+    wasteAction,
     isNotDraft,
     prnDetailRows,
     accreditationRows,
@@ -318,8 +318,8 @@ async function handleExistingView(
  * Builds the view data object for an existing PRN
  * @param {object} params
  * @param {object} params.prn - PRN data from backend
- * @param {boolean} params.isExporter - Whether the registration is for an exporter
- * @param {string} params.noteType - 'prns' or 'perns'
+ * @param {string} params.noteType - 'PRN' or 'PERN'
+ * @param {string} params.wasteAction - 'export' or 'reprocessing'
  * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
  * @param {Array} params.prnDetailRows - PRN detail summary rows
  * @param {Array} params.accreditationRows - Accreditation summary rows
@@ -333,8 +333,8 @@ async function handleExistingView(
  */
 function buildExistingPrnViewData({
   prn,
-  isExporter,
   noteType,
+  wasteAction,
   isNotDraft,
   prnDetailRows,
   accreditationRows,
@@ -348,25 +348,25 @@ function buildExistingPrnViewData({
   const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
-    pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
-    heading: isExporter ? 'PERN' : 'PRN',
+    pageTitle: `${noteType} ${prn.id}`,
+    heading: noteType,
     showRegulatorLogos: isNotDraft,
     complianceYearText:
       isNotDraft && prn.accreditationYear != null
-        ? localise(`lprns:view:${noteType}:complianceYearText`, {
+        ? localise('lprns:view:complianceYearText', {
+            noteType,
+            wasteAction,
             year: `<strong>${prn.accreditationYear}</strong>`
           })
         : null,
-    prnDetailsHeading: localise(
-      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
-    ),
+    prnDetailsHeading: localise('lprns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl,
     returnLink: {
       href: request.localiseUrl(returnUrl),
-      text: localise(`lprns:view:${noteType}:returnLink`)
+      text: localise('lprns:view:returnLink', { noteType })
     }
   }
 }
@@ -439,15 +439,17 @@ function buildExistingPrnDetailRows({
   prn,
   organisationData,
   localise,
-  isExporter,
+  noteType,
   statusConfig,
   isNotDraft,
   recipientDisplayName
 }) {
-  const numberLabel = isExporter
-    ? 'lprns:pernNumberLabel'
-    : 'lprns:prnNumberLabel'
-  const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
+  const rows = [
+    {
+      key: { text: localise('lprns:details:numberLabel', { noteType }) },
+      value: { text: '' }
+    }
+  ]
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))
