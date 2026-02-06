@@ -90,8 +90,8 @@ const mockPrnAwaitingAuth = {
   createdAt: '2026-01-15T10:00:00.000Z',
   notes: 'Additional notes for this PRN',
   isDecemberWaste: true,
-  authorisedAt: '2026-01-16T14:30:00.000Z',
-  authorisedBy: { name: 'John Smith', position: 'Director' },
+  issuedAt: '2026-01-16T14:30:00.000Z',
+  issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
 }
 
@@ -110,8 +110,8 @@ const mockPernAwaitingAuth = {
   createdAt: '2026-01-20T14:30:00.000Z',
   notes: null,
   isDecemberWaste: false,
-  authorisedAt: null,
-  authorisedBy: null,
+  issuedAt: null,
+  issuedBy: null,
   wasteProcessingType: 'exporter'
 }
 
