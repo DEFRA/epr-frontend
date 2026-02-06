@@ -34,8 +34,55 @@ async function fetchRegistrationAndAccreditation(
 export { fetchRegistrationAndAccreditation }
 
 /**
- * @typedef {object} RegistrationWithAccreditation
- * @property {object} [organisationData] - The full organisation data
- * @property {object} [registration] - The found registration, if any
- * @property {object} [accreditation] - The linked accreditation, if any
+ * @typedef {{
+ *   id: string,
+ *   orgId: number,
+ *   companyDetails: {
+ *     name: string,
+ *     tradingName?: string,
+ *     companiesHouseNumber?: string,
+ *     registeredAddress?: {
+ *       line1: string,
+ *       town: string,
+ *       postcode: string
+ *     }
+ *   },
+ *   registrations?: Registration[],
+ *   accreditations?: Accreditation[]
+ * }} OrganisationData
+ */
+
+/**
+ * @typedef {{
+ *   id: string,
+ *   wasteProcessingType: string,
+ *   material: string,
+ *   nation: string,
+ *   accreditationId?: string,
+ *   registrationNumber?: string,
+ *   status?: string,
+ *   site?: {
+ *     address: {
+ *       line1: string,
+ *       town: string,
+ *       postcode: string
+ *     }
+ *   }
+ * }} Registration
+ */
+
+/**
+ * @typedef {{
+ *   id: string,
+ *   status: string,
+ *   accreditationNumber?: string
+ * }} Accreditation
+ */
+
+/**
+ * @typedef {{
+ *   organisationData?: OrganisationData,
+ *   registration?: Registration,
+ *   accreditation?: Accreditation
+ * }} RegistrationWithAccreditation
  */
