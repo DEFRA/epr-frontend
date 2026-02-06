@@ -1,12 +1,12 @@
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -828,36 +828,7 @@ describe('#viewController', () => {
         expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
       })
 
-      it('displays complianceYearText when accreditationYear is present', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          accreditationYear: 2026
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: viewUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        // Should show compliance year text with year
-        expect(
-          getByText(
-            main,
-            /This PRN relates to waste accepted for reprocessing/i
-          )
-        ).toBeDefined()
-      })
-
-      it('should render complianceYearText with year in strong tags', async ({
+      it('should display compliance year text with year in strong tags', async ({
         server
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
@@ -878,7 +849,9 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         const complianceText = main.querySelector('.govuk-body')
-        expect(complianceText.innerHTML).toContain('<strong>2026</strong>')
+        expect(complianceText.innerHTML).toBe(
+          'This PRN relates to waste accepted for reprocessing in <strong>2026</strong> and can count towards <strong>2026</strong> obligations.'
+        )
       })
 
       it('does not display error summary on certificate page (errors shown on action page)', async ({

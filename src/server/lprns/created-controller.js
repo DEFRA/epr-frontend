@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -28,8 +29,7 @@ export const createdController = {
     // Clear the session data
     request.yar.clear('prnCreated')
 
-    const noteType =
-      prnCreated.wasteProcessingType === 'exporter' ? 'perns' : 'prns'
+    const { noteType, noteTypePlural } = getNoteTypeDisplayNames(prnCreated)
 
     const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
     const viewUrl = `${listUrl}/${prnId}/view`
@@ -37,26 +37,28 @@ export const createdController = {
     const homeUrl = `/organisations/${organisationId}`
 
     return h.view('lprns/created', {
-      pageTitle: localise(`lprns:${noteType}:successPageTitle`),
-      heading: localise(`lprns:${noteType}:successHeading`),
+      pageTitle: localise('lprns:create:successPageTitle', { noteType }),
+      heading: localise('lprns:create:successHeading', { noteType }),
+      prnNumberLabel: localise('lprns:created:prnNumberLabel', { noteType }),
+      prnNumber: prnCreated.prnNumber,
       statusLabel: localise('lprns:created:statusLabel'),
       statusValue: localise('lprns:created:statusValue'),
       viewButton: {
-        text: localise(`lprns:created:${noteType}:viewButton`),
+        text: localise('lprns:created:viewButton', { noteType }),
         href: viewUrl
       },
       nextStepsHeading: localise('lprns:successNextStepsHeading'),
       wasteBalanceMessage: localise('lprns:created:wasteBalanceMessage'),
       issueText: {
-        prefix: localise(`lprns:created:${noteType}:issueTextPrefix`),
+        prefix: localise('lprns:created:issueTextPrefix', { noteType }),
         link: {
-          text: localise(`lprns:created:${noteType}:prnsPageLink`),
+          text: localise('lprns:created:prnsPageLink', { noteTypePlural }),
           href: listUrl
         },
         suffix: '.'
       },
       createAnotherLink: {
-        text: localise(`lprns:created:${noteType}:createAnotherLink`),
+        text: localise('lprns:created:createAnotherLink', { noteType }),
         href: createUrl
       },
       returnHomeLink: {

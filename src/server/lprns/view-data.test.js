@@ -2,34 +2,26 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildCreatePrnViewData } from './view-data.js'
 
 const createMockRequest = () => ({
-  t: vi.fn((key) => {
+  t: vi.fn((key, params = {}) => {
     const translations = {
-      'lprns:prns:pageTitle': 'Create a PRN',
-      'lprns:perns:pageTitle': 'Create a PERN',
+      'lprns:create:pageTitle': `Create a ${params.noteType}`,
       'lprns:materialLabel': 'Material',
-      'lprns:prns:tonnageLabel': 'Enter PRN tonnage',
-      'lprns:perns:tonnageLabel': 'Enter PERN tonnage',
+      'lprns:create:tonnageLabel': `Enter ${params.noteType} tonnage`,
       'lprns:tonnageHint': 'Enter a whole number without decimal places',
       'lprns:tonnageSuffix': 'tonnes',
-      'lprns:prns:recipientLabel': 'Enter who this PRN will be issued to',
-      'lprns:perns:recipientLabel': 'Enter who this PERN will be issued to',
+      'lprns:create:recipientLabel': `Enter who this ${params.noteType} will be issued to`,
       'lprns:recipientHint':
         'Start typing the name of the packaging waste producer or compliance scheme',
       'lprns:selectOption': 'Select an option',
       'lprns:help:summary': "Can't find the producer or compliance scheme?",
-      'lprns:prns:helpIntro':
-        'PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
-      'lprns:perns:helpIntro':
-        'PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.',
+      'lprns:create:helpIntro': `${params.noteTypePlural} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.`,
       'lprns:help:listIntro':
         "If the buyer you're looking for is not appearing, check that:",
       'lprns:help:listItemOne': 'you have spelled the name correctly',
       'lprns:help:listItemTwo': 'they are registered with a regulator',
       'lprns:notesLabel': 'Add issuer notes (optional)',
-      'lprns:prns:notesHint': 'These notes will appear on the PRN',
-      'lprns:perns:notesHint': 'These notes will appear on the PERN',
-      'lprns:prns:submitButton': 'Create PRN',
-      'lprns:perns:submitButton': 'Create PERN'
+      'lprns:create:notesHint': `These notes will appear on the ${params.noteType}`,
+      'lprns:create:submitButton': 'Continue'
     }
     return translations[key] || key
   })

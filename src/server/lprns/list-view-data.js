@@ -1,3 +1,4 @@
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 
 /**
@@ -28,8 +29,7 @@ export function buildListViewData(
   }
 ) {
   const { t: localise } = request
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   const backUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registrationId}`
@@ -57,33 +57,34 @@ export function buildListViewData(
   })
 
   return {
-    pageTitle: localise(`lprns:list:${noteType}:pageTitle`),
-    heading: localise(`lprns:list:${noteType}:pageTitle`),
+    pageTitle: localise('lprns:list:pageTitle', { noteTypePlural }),
+    heading: localise('lprns:list:pageTitle', { noteTypePlural }),
     backUrl,
     createLink: {
       href: createUrl,
-      text: localise(`lprns:list:${noteType}:createLink`)
+      text: localise('lprns:list:createLink', { noteType })
     },
     wasteBalance: {
       amount: wasteBalance?.availableAmount ?? 0,
       label: localise('lprns:list:availableWasteBalance'),
-      hint: localise(`lprns:list:${noteType}:balanceHint`)
+      hint: localise('lprns:list:balanceHint', { noteTypePlural })
     },
     hasCreatedPrns,
-    selectHeading: localise(`lprns:list:${noteType}:selectHeading`),
-    noPrnsCreatedText: localise(`lprns:list:${noteType}:noPrnsCreated`),
+    selectHeading: localise('lprns:list:selectHeading', { noteType }),
+    noPrnsCreatedText: localise('lprns:list:noPrnsCreated', { noteTypePlural }),
     tabs: {
       awaitingAction: localise('lprns:list:tabs:awaitingAction'),
       issued: localise('lprns:list:tabs:issued')
     },
-    cancelHint: localise(`lprns:list:${noteType}:cancelHint`),
+    cancelHint: localise('lprns:list:cancelHint', { noteType }),
     awaitingAuthorisationHeading: localise(
-      `lprns:list:${noteType}:awaitingAuthorisationHeading`
+      'lprns:list:awaitingAuthorisationHeading',
+      { noteTypePlural }
     ),
     noPrnsText: localise('lprns:list:noPrns'),
-    noIssuedText: localise(`lprns:list:${noteType}:noIssuedPrns`),
+    noIssuedText: localise('lprns:list:noIssuedPrns', { noteTypePlural }),
     table,
-    issuedHeading: localise(`lprns:list:${noteType}:issuedHeading`),
+    issuedHeading: localise('lprns:list:issuedHeading', { noteTypePlural }),
     issuedTable
   }
 }
@@ -153,8 +154,8 @@ function buildAwaitingActionTable(
  * @param {string} options.registrationId
  * @param {string} options.accreditationId
  * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} options.issuedPrns
- * @param {(key: string) => string} options.localise
- * @param {'prns' | 'perns'} options.noteType
+ * @param {(key: string, params?: object) => string} options.localise
+ * @param {string} options.noteType
  * @returns {{headings: object, rows: Array<Array<{text?: string, html?: string}>>}}
  */
 function buildIssuedTable(
@@ -169,16 +170,16 @@ function buildIssuedTable(
   }
 ) {
   const headings = {
-    prnNumber: localise(`lprns:list:${noteType}:issuedTable:noteNumberHeading`),
-    recipient: localise(`lprns:list:${noteType}:issuedTable:recipientHeading`),
-    dateIssued: localise(
-      `lprns:list:${noteType}:issuedTable:dateIssuedHeading`
-    ),
-    status: localise(`lprns:list:${noteType}:issuedTable:statusHeading`),
-    action: localise(`lprns:list:${noteType}:issuedTable:actionHeading`)
+    prnNumber: localise('lprns:list:issuedTable:noteNumberHeading', {
+      noteType
+    }),
+    recipient: localise('lprns:list:issuedTable:recipientHeading'),
+    dateIssued: localise('lprns:list:issuedTable:dateIssuedHeading'),
+    status: localise('lprns:list:issuedTable:statusHeading'),
+    action: localise('lprns:list:issuedTable:actionHeading')
   }
 
-  const selectText = localise(`lprns:list:${noteType}:issuedTable:selectText`)
+  const selectText = localise('lprns:list:issuedTable:selectText')
 
   const rows = issuedPrns.map((prn) => {
     const viewUrl = request.localiseUrl(

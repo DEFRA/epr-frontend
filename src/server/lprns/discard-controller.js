@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
@@ -32,16 +33,15 @@ export const discardGetController = {
       session.idToken
     )
 
-    const isExporter = registration.wasteProcessingType === 'exporter'
-    const noteType = isExporter ? 'perns' : 'prns'
+    const { noteType } = getNoteTypeDisplayNames(registration)
 
     const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
 
     return h.view('lprns/discard', {
-      pageTitle: localise(`lprns:discard:${noteType}:pageTitle`),
-      heading: localise(`lprns:discard:${noteType}:heading`),
-      warningText: localise(`lprns:discard:${noteType}:warningText`),
-      confirmButton: localise(`lprns:discard:${noteType}:confirmButton`),
+      pageTitle: localise('lprns:discard:pageTitle', { noteType }),
+      heading: localise('lprns:discard:heading', { noteType }),
+      warningText: localise('lprns:discard:warningText', { noteType }),
+      confirmButton: localise('lprns:discard:confirmButton'),
       backUrl: viewUrl
     })
   }

@@ -3,71 +3,63 @@
   "accreditationDetailsHeading": "Accreditation details",
   "accreditationNumberLabel": "Accreditation number",
   "action": {
-    "prns": {
-      "insetText": "Any information that is not shown here will be automatically populated when the PRN is issued.",
-      "viewLink": "View PRN (opens in a new tab)",
-      "issueButton": "Issue PRN",
-      "deleteLink": "Delete PRN",
-      "returnLink": "Return to PRN list"
-    },
-    "perns": {
-      "insetText": "Any information that is not shown here will be automatically populated when the PERN is issued.",
-      "viewLink": "View PERN (opens in a new tab)",
-      "issueButton": "Issue PERN",
-      "deleteLink": "Delete PERN",
-      "returnLink": "Return to PERN list"
-    }
+    "insetText": "Any information that is not shown here will be automatically populated when the {{noteType}} is issued.",
+    "viewLink": "View {{noteType}} (opens in a new tab)",
+    "issueButton": "Issue {{noteType}}",
+    "deleteLink": "Delete {{noteType}}",
+    "returnLink": "Return to {{noteType}} list"
   },
   "authorisedByLabel": "Authorised by",
   "buyerLabel": "Buyer",
+  "create": {
+    "caption": "Create {{noteType}}",
+    "checkHeading": "Check before creating {{noteType}}",
+    "checkIntroText": "Check the following information is correct before creating this {{noteType}}.",
+    "checkAuthorisationText": "When created, the {{noteType}} will need to be authorised and issued by a {{noteType}} signatory from your company.",
+    "checkInsetText": "Any information that is not shown here will be automatically populated when the {{noteType}} is issued.",
+    "checkPageTitle": "Check before creating {{noteType}}",
+    "createButton": "Create {{noteType}}",
+    "discardLink": "Discard and start again",
+    "helpIntro": "{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
+    "notesHint": "These notes will appear on the {{noteType}}",
+    "pageTitle": "Create a {{noteType}}",
+    "recipientLabel": "Enter who this {{noteType}} will be issued to",
+    "submitButton": "Continue",
+    "successHeading": "{{noteType}} created",
+    "successNextStepsText": "Your {{noteType}} has been created as a draft. You can view and manage it from your registration dashboard.",
+    "successPageTitle": "{{noteType}} created",
+    "successTonnageLabel": "Tonnage",
+    "tonnageLabel": "Enter {{noteType}} tonnage"
+  },
   "created": {
+    "createAnotherLink": "Create another {{noteType}}",
+    "issueTextPrefix": "You can now issue this {{noteType}} through your",
+    "prnNumberLabel": "{{noteType}} number:",
+    "prnsPageLink": "{{noteTypePlural}} page",
+    "returnHomeLink": "Return to home",
     "statusLabel": "Status:",
     "statusValue": "Awaiting authorisation",
-    "wasteBalanceMessage": "Your available waste balance has been updated.",
-    "returnHomeLink": "Return to home",
-    "prns": {
-      "viewButton": "View PRN (opens in a new tab)",
-      "issueTextPrefix": "You can now issue this PRN through your",
-      "prnsPageLink": "PRNs page",
-      "createAnotherLink": "Create another PRN"
-    },
-    "perns": {
-      "viewButton": "View PERN (opens in a new tab)",
-      "issueTextPrefix": "You can now issue this PERN through your",
-      "prnsPageLink": "PERNs page",
-      "createAnotherLink": "Create another PERN"
-    }
+    "viewButton": "View {{noteType}} (opens in a new tab)",
+    "wasteBalanceMessage": "Your available waste balance has been updated."
   },
   "decemberWasteLabel": "December waste",
   "decemberWasteNo": "No",
   "decemberWasteYes": "Yes",
   "delete": {
-    "prns": {
-      "pageTitle": "Delete PRN",
-      "heading": "Are you sure you want to delete this PRN?",
-      "warningText": "This will permanently delete the PRN. The tonnage will be returned to your available waste balance.",
-      "confirmButton": "Delete PRN"
-    },
-    "perns": {
-      "pageTitle": "Delete PERN",
-      "heading": "Are you sure you want to delete this PERN?",
-      "warningText": "This will permanently delete the PERN. The tonnage will be returned to your available waste balance.",
-      "confirmButton": "Delete PERN"
-    }
+    "pageTitle": "Delete {{noteType}}",
+    "heading": "Are you sure you want to delete this {{noteType}}?",
+    "warningText": "This will permanently delete the {{noteType}}. The tonnage will be returned to your available waste balance.",
+    "confirmButton": "Delete {{noteType}}"
+  },
+  "details": {
+    "heading": "{{noteType}} details",
+    "numberLabel": "{{noteType}} number"
   },
   "discard": {
-    "prns": {
-      "pageTitle": "Discard PRN",
-      "heading": "Are you sure you want to discard this PRN?",
-      "warningText": "This will discard the PRN you are creating. You will need to start again.",
-      "confirmButton": "Discard and start again"
-    },
-    "perns": {
-      "pageTitle": "Discard PERN",
-      "heading": "Are you sure you want to discard this PERN?",
-      "warningText": "This will discard the PERN you are creating. You will need to start again.",
-      "confirmButton": "Discard and start again"
-    }
+    "pageTitle": "Discard {{noteType}}",
+    "heading": "Are you sure you want to discard this {{noteType}}?",
+    "warningText": "This will discard the {{noteType}} you are creating. You will need to start again.",
+    "confirmButton": "Discard and start again"
   },
   "errorSummaryTitle": "There is a problem",
   "errors": {
@@ -88,22 +80,12 @@
   "issued": {
     "wasteBalanceMessage": "Your waste balance has been updated.",
     "returnHomeLink": "Return to home",
-    "prns": {
-      "pageTitle": "PRN issued",
-      "heading": "PRN issued to {{recipient}}",
-      "prnNumberLabel": "PRN number:",
-      "viewButton": "View PRN",
-      "issueAnotherLink": "Issue another PRN",
-      "managePrnsLink": "Manage PRNs"
-    },
-    "perns": {
-      "pageTitle": "PERN issued",
-      "heading": "PERN issued to {{recipient}}",
-      "prnNumberLabel": "PERN number:",
-      "viewButton": "View PERN",
-      "issueAnotherLink": "Issue another PERN",
-      "managePrnsLink": "Manage PERNs"
-    }
+    "pageTitle": "{{noteType}} issued",
+    "heading": "{{noteType}} issued to {{recipient}}",
+    "prnNumberLabel": "{{noteType}} number:",
+    "viewButton": "View {{noteType}}",
+    "issueAnotherLink": "Issue another {{noteType}}",
+    "managePrnsLink": "Manage {{noteTypePlural}}"
   },
   "issuedByLabel": "Issued by",
   "issuedDateLabel": "Issued date",
@@ -133,90 +115,29 @@
       "issued": "Issued",
       "cancelled": "Cancelled"
     },
-    "perns": {
-      "pageTitle": "PERNs",
-      "selectHeading": "Select a PERN",
-      "balanceHint": "This is the balance available for creating new PERNs",
-      "cancelHint": "If you delete or cancel a PERN, its tonnage will be added to your available waste balance.",
-      "createLink": "Create a PERN",
-      "awaitingAuthorisationHeading": "PERNs awaiting authorisation",
-      "issuedHeading": "Issued PERNs",
-      "noPrnsCreated": "You have not created any PERNs.",
-      "noIssuedPrns": "No PERNs have been issued yet.",
-      "issuedTable": {
-        "noteNumberHeading": "PERN number",
-        "recipientHeading": "Producer or compliance scheme",
-        "dateIssuedHeading": "Date issued",
-        "statusHeading": "Status",
-        "actionHeading": "View in new tab",
-        "selectText": "Select"
-      }
-    },
-    "prns": {
-      "pageTitle": "PRNs",
-      "selectHeading": "Select a PRN",
-      "balanceHint": "This is the balance available for creating new PRNs",
-      "cancelHint": "If you delete or cancel a PRN, its tonnage will be added to your available waste balance.",
-      "createLink": "Create a PRN",
-      "awaitingAuthorisationHeading": "PRNs awaiting authorisation",
-      "issuedHeading": "Issued PRNs",
-      "noPrnsCreated": "You have not created any PRNs.",
-      "noIssuedPrns": "No PRNs have been issued yet.",
-      "issuedTable": {
-        "noteNumberHeading": "PRN number",
-        "recipientHeading": "Producer or compliance scheme",
-        "dateIssuedHeading": "Date issued",
-        "statusHeading": "Status",
-        "actionHeading": "View in new tab",
-        "selectText": "Select"
-      }
+    "pageTitle": "{{noteTypePlural}}",
+    "selectHeading": "Select a {{noteType}}",
+    "balanceHint": "This is the balance available for creating new {{noteTypePlural}}",
+    "cancelHint": "If you delete or cancel a {{noteType}}, its tonnage will be added to your available waste balance.",
+    "createLink": "Create a {{noteType}}",
+    "awaitingAuthorisationHeading": "{{noteTypePlural}} awaiting authorisation",
+    "issuedHeading": "Issued {{noteTypePlural}}",
+    "noPrnsCreated": "You have not created any {{noteTypePlural}}.",
+    "noIssuedPrns": "No {{noteTypePlural}} have been issued yet.",
+    "issuedTable": {
+      "noteNumberHeading": "{{noteType}} number",
+      "recipientHeading": "Producer or compliance scheme",
+      "dateIssuedHeading": "Date issued",
+      "statusHeading": "Status",
+      "actionHeading": "View in new tab",
+      "selectText": "Select"
     }
   },
   "materialLabel": "Material",
   "notAvailable": "n/a",
   "notProvided": "Not provided",
   "notesLabel": "Add issuer notes (optional)",
-  "pernDetailsHeading": "PERN details",
-  "pernNumberLabel": "PERN number",
-  "perns": {
-    "caption": "Create PERN",
-    "checkHeading": "Check before creating PERN",
-    "checkIntroText": "Check the following information is correct before creating this PERN.",
-    "checkAuthorisationText": "When created, the PERN will need to be authorised and issued by a PERN signatory from your company.",
-    "checkInsetText": "Any information that is not shown here will be automatically populated when the PERN is issued.",
-    "checkPageTitle": "Check before creating PERN",
-    "createButton": "Create PERN",
-    "discardLink": "Discard and start again",
-    "helpIntro": "PERNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
-    "notesHint": "These notes will appear on the PERN",
-    "pageTitle": "Create a PERN",
-    "recipientLabel": "Enter who this PERN will be issued to",
-    "submitButton": "Continue",
-    "successHeading": "PERN created",
-    "successPageTitle": "PERN created",
-    "tonnageLabel": "Enter PERN tonnage"
-  },
   "positionLabel": "Position",
-  "prnDetailsHeading": "PRN details",
-  "prnNumberLabel": "PRN number",
-  "prns": {
-    "caption": "Create PRN",
-    "checkHeading": "Check before creating PRN",
-    "checkIntroText": "Check the following information is correct before creating this PRN.",
-    "checkAuthorisationText": "When created, the PRN will need to be authorised and issued by a PRN signatory from your company.",
-    "checkInsetText": "Any information that is not shown here will be automatically populated when the PRN is issued.",
-    "checkPageTitle": "Check before creating PRN",
-    "createButton": "Create PRN",
-    "discardLink": "Discard and start again",
-    "helpIntro": "PRNs can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
-    "notesHint": "These notes will appear on the PRN",
-    "pageTitle": "Create a PRN",
-    "recipientLabel": "Enter who this PRN will be issued to",
-    "submitButton": "Continue",
-    "successHeading": "PRN created",
-    "successPageTitle": "PRN created",
-    "tonnageLabel": "Enter PRN tonnage"
-  },
   "processToBeUsedLabel": "Process to be used",
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
   "recipientSummaryLabel": "Issued to",
@@ -233,15 +154,7 @@
     "tonnage": "Tonnage",
     "material": "Material",
     "dateCreated": "Date created",
-    "prns": {
-      "heading": "Packaging recycling note",
-      "complianceYearText": "This PRN relates to waste accepted for reprocessing in {{- year}} and can count towards {{- year}} obligations.",
-      "returnLink": "Return to PRN list"
-    },
-    "perns": {
-      "heading": "Packaging export recycling note",
-      "complianceYearText": "This PERN relates to waste accepted for export in {{- year}} and can count towards {{- year}} obligations.",
-      "returnLink": "Return to PERN list"
-    }
+    "complianceYearText": "This {{noteType}} relates to waste accepted for {{wasteAction}} in {{- year}} and can count towards {{- year}} obligations.",
+    "returnLink": "Return to {{noteType}} list"
   }
 }
