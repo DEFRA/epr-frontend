@@ -431,12 +431,16 @@ describe('#actionController', () => {
       const { body } = dom.window.document
       const rows = body.querySelectorAll('.govuk-summary-list__row')
       const issuerRow = Array.from(rows).find((row) =>
-        row.querySelector('.govuk-summary-list__key')?.textContent?.includes('Issuer')
+        row
+          .querySelector('.govuk-summary-list__key')
+          ?.textContent?.includes('Issuer')
       )
 
       expect(issuerRow).toBeDefined()
       expect(
-        issuerRow.querySelector('.govuk-summary-list__value')?.textContent?.trim()
+        issuerRow
+          .querySelector('.govuk-summary-list__value')
+          ?.textContent?.trim()
       ).toBe('')
     })
 

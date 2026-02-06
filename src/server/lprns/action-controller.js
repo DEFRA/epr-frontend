@@ -69,6 +69,19 @@ export const actionController = {
 
 /**
  * Builds the complete view data for the action page
+ * @param {{
+ *   accreditation: RegistrationWithAccreditation['accreditation'],
+ *   accreditationId: string,
+ *   localise: (key: string, params?: object) => string,
+ *   organisationData: RegistrationWithAccreditation['organisationData'],
+ *   organisationId: string,
+ *   prn: PackagingRecyclingNote,
+ *   prnId: string,
+ *   recipientDisplayName: string,
+ *   registration: RegistrationWithAccreditation['registration'],
+ *   registrationId: string,
+ *   request: Request
+ * }} params
  */
 function buildActionViewData({
   accreditation,
@@ -197,5 +210,7 @@ function buildActionPrnDetailRows({
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
  */

@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
@@ -10,7 +11,6 @@ import {
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -244,21 +244,20 @@ async function handleExistingView(
   { organisationId, registrationId, accreditationId, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
-  const [{ organisationData, registration, accreditation }, prn] =
-    await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        session.idToken
-      )
-    ])
+  const [{ registration, accreditation }, prn] = await Promise.all([
+    fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    ),
+    fetchPackagingRecyclingNote(
+      organisationId,
+      registrationId,
+      accreditationId,
+      prnId,
+      session.idToken
+    )
+  ])
 
   if (!registration) {
     throw Boom.notFound('Registration not found')
