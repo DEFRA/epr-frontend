@@ -265,7 +265,7 @@ describe('#deleteController', () => {
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
-          listUrl,
+          deleteUrl,
           { auth: mockAuth }
         )
 
@@ -362,7 +362,7 @@ describe('#deleteController', () => {
       try {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
-          listUrl,
+          deleteUrl,
           { auth: mockAuth }
         )
 
