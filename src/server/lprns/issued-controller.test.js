@@ -191,7 +191,9 @@ describe('#issuedController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const viewButton = getByRole(main, 'button', { name: 'View PRN' })
+        const viewButton = getByRole(main, 'button', {
+          name: 'View PRN (opens in a new tab)'
+        })
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('href')).toBe(viewUrl)
         expect(viewButton.getAttribute('target')).toBe('_blank')
@@ -293,6 +295,36 @@ describe('#issuedController', () => {
 
         expect(getByText(main, /PERN issued to/i)).toBeDefined()
         expect(getByText(main, /Export Corp/i)).toBeDefined()
+      })
+
+      it('displays View PERN button with opens in a new tab text for exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
+
+        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: pernIssuedUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const viewButton = getByRole(main, 'button', {
+          name: 'View PERN (opens in a new tab)'
+        })
+        expect(viewButton).toBeDefined()
+        expect(viewButton.getAttribute('target')).toBe('_blank')
       })
 
       it('redirects to view page if PRN not in awaiting_acceptance status', async ({
