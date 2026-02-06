@@ -1,5 +1,8 @@
+const TAG_CLASS_YELLOW = 'govuk-tag--yellow epr-tag--no-max-width'
+const TAG_CLASS_PURPLE = 'govuk-tag--purple epr-tag--no-max-width'
 const TAG_CLASS_BLUE = 'govuk-tag--blue epr-tag--no-max-width'
-const TAG_CLASS_GREY = 'govuk-tag--grey epr-tag--no-max-width'
+const TAG_CLASS_GREEN = 'govuk-tag--green epr-tag--no-max-width'
+const TAG_CLASS_RED = 'govuk-tag--red epr-tag--no-max-width'
 const TAG_CLASS_DEFAULT = 'epr-tag--no-max-width'
 
 /**
@@ -16,7 +19,15 @@ function getStatusConfig(status, localise) {
     },
     awaiting_acceptance: {
       text: localise('lprns:list:status:awaitingAcceptance'),
-      class: TAG_CLASS_BLUE
+      class: TAG_CLASS_PURPLE
+    },
+    awaiting_cancellation: {
+      text: localise('lprns:list:status:awaitingCancellation'),
+      class: TAG_CLASS_YELLOW
+    },
+    accepted: {
+      text: localise('lprns:list:status:accepted'),
+      class: TAG_CLASS_GREEN
     },
     issued: {
       text: localise('lprns:list:status:issued'),
@@ -24,7 +35,7 @@ function getStatusConfig(status, localise) {
     },
     cancelled: {
       text: localise('lprns:list:status:cancelled'),
-      class: TAG_CLASS_GREY
+      class: TAG_CLASS_RED
     }
   }
 
