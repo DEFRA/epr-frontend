@@ -6,7 +6,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  buildPrnAuthorisationRows,
+  buildPrnIssuerRows,
   buildPrnCoreRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
@@ -244,20 +244,21 @@ async function handleExistingView(
   { organisationId, registrationId, accreditationId, prnId, localise, session }
 ) {
   // Fetch PRN and registration data from backend
-  const [{ registration, accreditation }, prn] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    ),
-    fetchPackagingRecyclingNote(
-      organisationId,
-      registrationId,
-      accreditationId,
-      prnId,
-      session.idToken
-    )
-  ])
+  const [{ organisationData, registration, accreditation }, prn] =
+    await Promise.all([
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      ),
+      fetchPackagingRecyclingNote(
+        organisationId,
+        registrationId,
+        accreditationId,
+        prnId,
+        session.idToken
+      )
+    ])
 
   if (!registration) {
     throw Boom.notFound('Registration not found')
@@ -283,7 +284,8 @@ async function handleExistingView(
     noteType,
     statusConfig,
     isNotDraft,
-    recipientDisplayName
+    recipientDisplayName,
+    organisationData
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -435,7 +437,8 @@ function buildExistingPrnDetailRows({
   noteType,
   statusConfig,
   isNotDraft,
-  recipientDisplayName
+  recipientDisplayName,
+  organisationData
 }) {
   const rows = [
     {
@@ -450,7 +453,9 @@ function buildExistingPrnDetailRows({
 
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
-    ...buildPrnAuthorisationRows(prn, localise)
+    ...buildPrnIssuerRows(prn, localise, {
+      issuerName: organisationData?.companyDetails?.name || ''
+    })
   )
 
   return rows

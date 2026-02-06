@@ -50,5 +50,5 @@ export { fetchPackagingRecyclingNote }
  * @property {string} processToBeUsed
  * @property {number|null} accreditationYear
  * @property {string|null} issuedAt
- * @property {{id: string, name: string, position: string}|null} authorisedBy
+ * @property {{id: string, name: string, position: string}|null} issuedBy
  */

@@ -9,7 +9,6 @@
     "deleteLink": "Delete {{noteType}}",
     "returnLink": "Return to {{noteType}} list"
   },
-  "authorisedByLabel": "Authorised by",
   "buyerLabel": "Buyer",
   "create": {
     "caption": "Create {{noteType}}",
@@ -136,7 +135,6 @@
     }
   },
   "materialLabel": "Material",
-  "notAvailable": "n/a",
   "notProvided": "Not provided",
   "notesLabel": "Add issuer notes (optional)",
   "positionLabel": "Position",
