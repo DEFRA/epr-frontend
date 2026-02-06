@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnAuthorisationRows,
@@ -82,8 +83,7 @@ function buildActionViewData({
   localise,
   recipientDisplayName
 }) {
-  const isExporter = registration.wasteProcessingType === 'exporter'
-  const noteType = isExporter ? 'perns' : 'prns'
+  const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   const displayMaterial = getLumpyDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'
@@ -94,7 +94,7 @@ function buildActionViewData({
     prn,
     organisationData,
     localise,
-    isExporter,
+    noteType,
     statusConfig,
     isNotDraft,
     recipientDisplayName
@@ -109,35 +109,33 @@ function buildActionViewData({
   })
 
   const viewData = {
-    pageTitle: `${isExporter ? 'PERN' : 'PRN'} ${prn.id}`,
-    heading: isExporter ? 'PERN' : 'PRN',
-    insetText: localise(`lprns:action:${noteType}:insetText`),
+    pageTitle: `${noteType} ${prn.id}`,
+    heading: noteType,
+    insetText: localise('lprns:action:insetText', { noteType }),
     viewLink: {
-      text: localise(`lprns:action:${noteType}:viewLink`),
+      text: localise('lprns:action:viewLink', { noteType }),
       href: request.localiseUrl(`${basePath}/${prnId}/view`)
     },
-    prnDetailsHeading: localise(
-      isExporter ? 'lprns:pernDetailsHeading' : 'lprns:prnDetailsHeading'
-    ),
+    prnDetailsHeading: localise('lprns:details:heading', { noteType }),
     prnDetailRows,
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl: request.localiseUrl(basePath),
     issueButton: isAwaitingAuthorisation
       ? {
-          text: localise(`lprns:action:${noteType}:issueButton`),
+          text: localise('lprns:action:issueButton', { noteType }),
           action: request.localiseUrl(`${basePath}/${prnId}/issue`)
         }
       : null,
     deleteButton: isAwaitingAuthorisation
       ? {
-          text: localise(`lprns:action:${noteType}:deleteLink`),
+          text: localise('lprns:action:deleteLink', { noteType }),
           href: request.localiseUrl(`${basePath}/${prnId}/delete`)
         }
       : null,
     returnLink: {
       href: request.localiseUrl(basePath),
-      text: localise(`lprns:action:${noteType}:returnLink`)
+      text: localise('lprns:action:returnLink', { noteType })
     }
   }
 
@@ -171,15 +169,17 @@ function buildActionPrnDetailRows({
   prn,
   organisationData,
   localise,
-  isExporter,
+  noteType,
   statusConfig,
   isNotDraft,
   recipientDisplayName
 }) {
-  const numberLabel = isExporter
-    ? 'lprns:pernNumberLabel'
-    : 'lprns:prnNumberLabel'
-  const rows = [{ key: { text: localise(numberLabel) }, value: { text: '' } }]
+  const rows = [
+    {
+      key: { text: localise('lprns:details:numberLabel', { noteType }) },
+      value: { text: '' }
+    }
+  ]
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))

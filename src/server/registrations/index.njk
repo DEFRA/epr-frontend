@@ -73,7 +73,7 @@
               </div>
               <div class="govuk-summary-card__content govuk-!-padding-4">
                 <p class="govuk-body govuk-!-margin-bottom-0" data-testid="waste-balance-explanation">
-                  {{ localise("registrations:wasteBalance.available.description." + wasteBalance.noteType) }}
+                  {{ localise("registrations:wasteBalance.available.description", { noteTypePlural: wasteBalance.noteTypePlural }) }}
                 </p>
               </div>
           </div>

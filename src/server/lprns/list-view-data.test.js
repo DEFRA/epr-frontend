@@ -2,32 +2,19 @@ import { describe, expect, it, vi } from 'vitest'
 import { buildListViewData } from './list-view-data.js'
 
 const createMockRequest = () => ({
-  t: vi.fn((key) => {
+  t: vi.fn((key, params = {}) => {
     const translations = {
-      'lprns:list:prns:pageTitle': 'PRNs',
-      'lprns:list:perns:pageTitle': 'PERNs',
-      'lprns:list:prns:balanceHint':
-        'This is the balance available for creating new PRNs',
-      'lprns:list:perns:balanceHint':
-        'This is the balance available for creating new PERNs',
-      'lprns:list:prns:cancelHint':
-        'If you delete or cancel a PRN, its tonnage will be added to your available waste balance.',
-      'lprns:list:perns:cancelHint':
-        'If you delete or cancel a PERN, its tonnage will be added to your available waste balance.',
-      'lprns:list:prns:createLink': 'Create a PRN',
-      'lprns:list:perns:createLink': 'Create a PERN',
-      'lprns:list:prns:awaitingAuthorisationHeading':
-        'PRNs awaiting authorisation',
-      'lprns:list:perns:awaitingAuthorisationHeading':
-        'PERNs awaiting authorisation',
-      'lprns:list:prns:noIssuedPrns': 'No PRNs have been issued yet.',
-      'lprns:list:perns:noIssuedPrns': 'No PERNs have been issued yet.',
+      'lprns:list:pageTitle': params.noteTypePlural,
+      'lprns:list:balanceHint': `This is the balance available for creating new ${params.noteTypePlural}`,
+      'lprns:list:cancelHint': `If you delete or cancel a ${params.noteType}, its tonnage will be added to your available waste balance.`,
+      'lprns:list:createLink': `Create a ${params.noteType}`,
+      'lprns:list:awaitingAuthorisationHeading': `${params.noteTypePlural} awaiting authorisation`,
+      'lprns:list:noIssuedPrns': `No ${params.noteTypePlural} have been issued yet.`,
       'lprns:list:availableWasteBalance': 'Available waste balance',
       'lprns:list:noPrns': 'No PRNs or PERNs have been created yet.',
       'lprns:list:tabs:awaitingAction': 'Awaiting action',
       'lprns:list:tabs:issued': 'Issued',
-      'lprns:list:prns:selectHeading': 'Select a PRN',
-      'lprns:list:perns:selectHeading': 'Select a PERN',
+      'lprns:list:selectHeading': `Select a ${params.noteType}`,
       'lprns:list:table:recipientHeading': 'Producer or compliance scheme',
       'lprns:list:table:dateHeading': 'Date created',
       'lprns:list:table:tonnageHeading': 'Tonnage',
@@ -35,28 +22,19 @@ const createMockRequest = () => ({
       'lprns:list:table:actionHeading': '',
       'lprns:list:table:selectText': 'Select',
       'lprns:list:table:totalLabel': 'Total',
-      'lprns:list:prns:noPrnsCreated': 'You have not created any PRNs.',
-      'lprns:list:perns:noPrnsCreated': 'You have not created any PERNs.',
+      'lprns:list:noPrnsCreated': `You have not created any ${params.noteTypePlural}.`,
       'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
       'lprns:list:status:issued': 'Issued',
       'lprns:list:status:cancelled': 'Cancelled',
-      'lprns:list:prns:issuedHeading': 'Issued PRNs',
-      'lprns:list:perns:issuedHeading': 'Issued PERNs',
-      'lprns:list:prns:issuedTable:noteNumberHeading': 'PRN number',
-      'lprns:list:prns:issuedTable:recipientHeading':
+      'lprns:list:issuedHeading': `Issued ${params.noteTypePlural}`,
+      'lprns:list:issuedTable:noteNumberHeading': `${params.noteType} number`,
+      'lprns:list:issuedTable:recipientHeading':
         'Producer or compliance scheme',
-      'lprns:list:prns:issuedTable:dateIssuedHeading': 'Date issued',
-      'lprns:list:prns:issuedTable:statusHeading': 'Status',
-      'lprns:list:prns:issuedTable:actionHeading': 'View in new tab',
-      'lprns:list:prns:issuedTable:selectText': 'Select',
-      'lprns:list:perns:issuedTable:noteNumberHeading': 'PERN number',
-      'lprns:list:perns:issuedTable:recipientHeading':
-        'Producer or compliance scheme',
-      'lprns:list:perns:issuedTable:dateIssuedHeading': 'Date issued',
-      'lprns:list:perns:issuedTable:statusHeading': 'Status',
-      'lprns:list:perns:issuedTable:actionHeading': 'View in new tab',
-      'lprns:list:perns:issuedTable:selectText': 'Select'
+      'lprns:list:issuedTable:dateIssuedHeading': 'Date issued',
+      'lprns:list:issuedTable:statusHeading': 'Status',
+      'lprns:list:issuedTable:actionHeading': 'View in new tab',
+      'lprns:list:issuedTable:selectText': 'Select'
     }
     return translations[key] || key
   }),
