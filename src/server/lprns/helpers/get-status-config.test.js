@@ -15,9 +15,9 @@ const localise = (key) => {
 
 describe('#getStatusConfig', () => {
   it.each([
-    ['awaiting_authorisation', 'Awaiting authorisation', 'govuk-tag--yellow'],
+    ['awaiting_authorisation', 'Awaiting authorisation', 'govuk-tag--blue'],
     ['awaiting_acceptance', 'Awaiting acceptance', 'govuk-tag--purple'],
-    ['awaiting_cancellation', 'Awaiting cancellation', 'govuk-tag--blue'],
+    ['awaiting_cancellation', 'Awaiting cancellation', 'govuk-tag--yellow'],
     ['accepted', 'Accepted', 'govuk-tag--green'],
     ['cancelled', 'Cancelled', 'govuk-tag--red']
   ])(

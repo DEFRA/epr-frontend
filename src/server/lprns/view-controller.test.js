@@ -322,7 +322,7 @@ describe('#viewController', () => {
         expect(getByText(main, /One hundred/)).toBeDefined()
       })
 
-      it('displays awaiting authorisation status with yellow tag', async ({
+      it('displays awaiting authorisation status with blue tag', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -335,7 +335,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const tag = main.querySelector('.govuk-tag--yellow')
+        const tag = main.querySelector('.govuk-tag--blue')
         expect(tag).toBeDefined()
         expect(tag.textContent.trim()).toBe('Awaiting authorisation')
       })

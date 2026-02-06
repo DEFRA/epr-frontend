@@ -15,7 +15,7 @@ function getStatusConfig(status, localise) {
   const statusMap = {
     awaiting_authorisation: {
       text: localise('lprns:list:status:awaitingAuthorisation'),
-      class: TAG_CLASS_YELLOW
+      class: TAG_CLASS_BLUE
     },
     awaiting_acceptance: {
       text: localise('lprns:list:status:awaitingAcceptance'),
@@ -23,7 +23,7 @@ function getStatusConfig(status, localise) {
     },
     awaiting_cancellation: {
       text: localise('lprns:list:status:awaitingCancellation'),
-      class: TAG_CLASS_BLUE
+      class: TAG_CLASS_YELLOW
     },
     accepted: {
       text: localise('lprns:list:status:accepted'),
