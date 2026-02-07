@@ -8,11 +8,14 @@ export default defineConfig({
     testTimeout: 10000,
     hookTimeout: 60000,
     fileParallelism: !process.env.CI,
+    reporters: process.env.CI
+      ? ['default', ['json', { outputFile: 'coverage/test-results.json' }]]
+      : ['default'],
     setupFiles: ['.vite/setup-auditing.js', '.vite/setup-files.js'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',
-      reporter: ['text', 'lcov'],
+      reporter: ['text', 'lcov', 'json-summary'],
       include: ['src/**', 'scripts/**'],
       exclude: [
         ...configDefaults.exclude,
