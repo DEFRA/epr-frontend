@@ -7,7 +7,7 @@ export default defineConfig({
     clearMocks: true,
     testTimeout: 10000,
     hookTimeout: 60000,
-    fileParallelism: !process.env.CI,
+    fileParallelism: true,
     reporters: process.env.CI
       ? ['default', ['json', { outputFile: 'coverage/test-results.json' }]]
       : ['default'],
