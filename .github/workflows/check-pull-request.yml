@@ -93,7 +93,15 @@ jobs:
         id: build-timer
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - run: docker build -t defradigital/epr-frontend:${{github.sha}} .
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: defradigital/epr-frontend:${{github.sha}}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Record test start time
         id: test-timer
