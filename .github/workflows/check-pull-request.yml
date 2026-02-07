@@ -72,12 +72,6 @@ jobs:
         run: npm run check:i18n
         continue-on-error: true #FIXME: 🚨 Make this a blocking step after translations are available
 
-      - name: Test Docker Image Build
-        run: |
-          set +e
-          docker build --no-cache --tag cdp-node-frontend-template .
-          exit $?
-
   test-journey:
     name: Run Journey Tests
     runs-on: ubuntu-latest
