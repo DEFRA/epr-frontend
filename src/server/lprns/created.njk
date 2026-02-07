@@ -8,10 +8,12 @@
         {{ heading }}
       </h1>
       <div class="govuk-panel__body">
-        {{ statusLabel }}<br>
-        <strong>{{ statusValue }}</strong>
+        {{ prnNumberLabel }}<br>
+        <strong>{{ prnNumber }}</strong>
       </div>
     </div>
+
+    <p class="govuk-body">{{ statusLabel }} <strong>{{ statusValue }}</strong></p>
 
     <p class="govuk-body">
       <a href="{{ viewButton.href }}" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button" target="_blank" rel="noopener noreferrer">

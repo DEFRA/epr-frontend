@@ -130,6 +130,7 @@ export const viewPostController = {
       request.yar.clear('prnDraft')
       request.yar.set('prnCreated', {
         id: result.id,
+        prnNumber: result.prnNumber,
         tonnage: result.tonnage,
         material: result.material,
         status: result.status,
