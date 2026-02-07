@@ -3,7 +3,7 @@ name: Check Pull Request
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
     types:
       - opened
       - reopened
@@ -99,7 +99,8 @@ jobs:
         id: test-timer
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@main
+        # FIXME reset to main before merging
+      - uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@PAE-000-journey-test-branching
         with:
           epr-frontend: ${{github.sha}}
           branch: ${{ steps.journey-branch.outputs.ref }}
