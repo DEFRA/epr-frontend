@@ -101,7 +101,6 @@ const mockPernCreated = {
 
 const mockPrnStatusUpdated = {
   id: 'prn-789',
-  prnNumber: 'ER2625001A',
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation'
@@ -109,7 +108,6 @@ const mockPrnStatusUpdated = {
 
 const mockPernStatusUpdated = {
   id: 'pern-123',
-  prnNumber: 'EX2650001B',
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_authorisation'
@@ -242,25 +240,7 @@ describe('#createdController', () => {
         expect(getByText(main, /PRN created/i)).toBeDefined()
       })
 
-      it('displays PRN number in confirmation panel', async ({ server }) => {
-        const { cookies } = await createPrnAndConfirm(server)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const panel = body.querySelector('.govuk-panel--confirmation')
-
-        expect(panel.textContent).toContain('PRN number:')
-        expect(panel.textContent).toContain('ER2625001A')
-      })
-
-      it('displays status awaiting authorisation below panel', async ({
+      it('displays status awaiting authorisation in panel', async ({
         server
       }) => {
         const { cookies } = await createPrnAndConfirm(server)
@@ -274,10 +254,10 @@ describe('#createdController', () => {
 
         const dom = new JSDOM(result)
         const { body } = dom.window.document
-        const main = getByRole(body, 'main')
+        const panel = body.querySelector('.govuk-panel--confirmation')
 
-        expect(getByText(main, /Status:/)).toBeDefined()
-        expect(getByText(main, /Awaiting authorisation/)).toBeDefined()
+        expect(panel.textContent).toContain('Status:')
+        expect(panel.textContent).toContain('Awaiting authorisation')
       })
 
       it('displays View PRN button that opens in new tab', async ({
@@ -424,10 +404,6 @@ describe('#createdController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /PERN created/i)).toBeDefined()
-
-        const panel = main.querySelector('.govuk-panel--confirmation')
-        expect(panel.textContent).toContain('PERN number:')
-
         expect(
           getByText(main, /View PERN \(opens in a new tab\)/i)
         ).toBeDefined()
