@@ -2,15 +2,15 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  buildPrnAuthorisationRows,
+  buildPrnIssuerRows,
   buildPrnCoreRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -189,8 +189,8 @@ async function handleDraftView(
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
-    organisationData,
-    localise
+    localise,
+    organisationData
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -281,12 +281,12 @@ async function handleExistingView(
 
   const prnDetailRows = buildExistingPrnDetailRows({
     prn,
-    organisationData,
     localise,
     noteType,
     statusConfig,
     isNotDraft,
-    recipientDisplayName
+    recipientDisplayName,
+    organisationData
   })
 
   const accreditationRows = buildAccreditationRows({
@@ -376,11 +376,11 @@ function buildExistingPrnViewData({
  * Builds the PRN/PERN details rows for a draft PRN (creation flow)
  * @param {object} params
  * @param {object} params.prnDraft - Draft PRN data from session
- * @param {object} params.organisationData - Organisation data
  * @param {(key: string) => string} params.localise - Translation function
+ * @param {object} params.organisationData - Organisation data
  * @returns {Array} Summary list rows
  */
-function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
+function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
   return [
     {
       key: { text: localise('lprns:issuedToLabel') },
@@ -408,11 +408,7 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
     },
     {
       key: { text: localise('lprns:issuerLabel') },
-      value: {
-        text:
-          organisationData.companyDetails?.name ||
-          localise('lprns:notAvailable')
-      }
+      value: { text: organisationData.companyDetails?.name || '' }
     },
     {
       key: { text: localise('lprns:issuedDateLabel') },
@@ -438,12 +434,12 @@ function buildDraftPrnDetailRows({ prnDraft, organisationData, localise }) {
  */
 function buildExistingPrnDetailRows({
   prn,
-  organisationData,
   localise,
   noteType,
   statusConfig,
   isNotDraft,
-  recipientDisplayName
+  recipientDisplayName,
+  organisationData
 }) {
   const rows = [
     {
@@ -458,7 +454,9 @@ function buildExistingPrnDetailRows({
 
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
-    ...buildPrnAuthorisationRows(prn, organisationData, localise)
+    ...buildPrnIssuerRows(prn, localise, {
+      issuerName: organisationData?.companyDetails?.name || ''
+    })
   )
 
   return rows
