@@ -19,6 +19,14 @@ export const issuedController = {
     const { t: localise } = request
     const session = request.auth.credentials
 
+    // Read and clear session data stored by issue controller.
+    // This mitigates a MongoDB replication lag race condition where the
+    // freshly-issued prnNumber may not yet be available via the fetch below.
+    const prnIssued = request.yar.get('prnIssued')
+    if (prnIssued) {
+      request.yar.clear('prnIssued')
+    }
+
     const [{ registration }, prn] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
@@ -42,6 +50,8 @@ export const issuedController = {
     }
 
     const recipientDisplayName = prn.issuedToOrganisation.name
+    const prnNumber =
+      prn.prnNumber || (prnIssued?.id === prnId && prnIssued?.prnNumber) || null
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
@@ -56,7 +66,7 @@ export const issuedController = {
         recipient: recipientDisplayName
       }),
       prnNumberLabel: localise('lprns:issued:prnNumberLabel', { noteType }),
-      prnNumber: prn.prnNumber,
+      prnNumber,
       wasteBalanceMessage: localise('lprns:issued:wasteBalanceMessage'),
       viewButton: {
         text: localise('lprns:issued:viewButton', { noteType }),

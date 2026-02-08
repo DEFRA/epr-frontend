@@ -1,7 +1,13 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  extractCookieValues,
+  mergeCookies
+} from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
+import { getByRole, getByText, queryByText } from '@testing-library/dom'
+import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
@@ -186,6 +192,123 @@ describe('#issueController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(`${actionUrl}?error=issue_failed`)
+    })
+
+    describe('PRN number session storage (race condition mitigation)', () => {
+      it('displays PRN number from session when backend fetch returns null due to replication lag', async ({
+        server
+      }) => {
+        // Mock the race condition: updatePrnStatus returns prnNumber,
+        // but subsequent fetch returns null (DB hasn't replicated yet)
+        vi.mocked(updatePrnStatus).mockResolvedValue({
+          ...mockPrnIssued,
+          prnNumber: 'ER2625001A'
+        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          id: prnId,
+          prnNumber: null,
+          issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
+          tonnage: 100,
+          material: 'plastic',
+          status: 'awaiting_acceptance'
+        })
+
+        // Step 1: POST to issue endpoint (stores prnNumber in session)
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          viewUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: issueUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        // Merge cookies from POST response (includes session with prnNumber)
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        // Step 2: GET issued page with session cookies
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: issuedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // PRN number should come from session, not the (null) fetched value
+        expect(getByText(main, /ER2625001A/)).toBeDefined()
+      })
+
+      it('does not use session prnNumber when issued page is for a different PRN', async ({
+        server
+      }) => {
+        // Issue prn-789 (stores session with id: 'prn-789')
+        vi.mocked(updatePrnStatus).mockResolvedValue({
+          ...mockPrnIssued,
+          prnNumber: 'ER2625001A'
+        })
+        // Fetch for a different PRN returns null prnNumber
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          id: 'different-prn',
+          prnNumber: null,
+          issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
+          tonnage: 100,
+          material: 'plastic',
+          status: 'awaiting_acceptance'
+        })
+
+        // POST to issue prn-789
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          viewUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: issueUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        // GET issued page for a DIFFERENT PRN
+        const differentIssuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-prn/issued`
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: differentIssuedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Session prnNumber should NOT be used (ID mismatch)
+        expect(queryByText(main, /ER2625001A/)).toBeNull()
+      })
     })
   })
 
