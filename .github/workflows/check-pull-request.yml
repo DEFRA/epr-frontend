@@ -100,8 +100,7 @@ jobs:
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Run journey tests on ${{ steps.journey-branch.outputs.ref }}
-        # FIXME reset to main before merging
-        uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@PAE-000-journey-test-branching
+        uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@main
         with:
           epr-frontend: ${{github.sha}}
           branch: ${{ steps.journey-branch.outputs.ref }}
