@@ -7,7 +7,7 @@ export default defineConfig({
     clearMocks: true,
     testTimeout: 10000,
     hookTimeout: 60000,
-    fileParallelism: !process.env.CI,
+    fileParallelism: true,
     setupFiles: ['.vite/setup-auditing.js', '.vite/setup-files.js'],
     coverage: {
       provider: 'v8',
