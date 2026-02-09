@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
@@ -11,7 +12,7 @@ const getPrnsAwaitingAuthorisation = (prns) =>
     .filter((prn) => prn.status === 'awaiting_authorisation')
     .map((prn) => ({
       id: prn.id,
-      recipient: prn.issuedToOrganisation.name,
+      recipient: getDisplayName(prn.issuedToOrganisation),
       createdAt: prn.createdAt,
       tonnage: prn.tonnage,
       status: prn.status
@@ -25,7 +26,7 @@ const getIssuedPrns = (prns) =>
     .map((prn) => ({
       id: prn.id,
       prnNumber: prn.prnNumber,
-      recipient: prn.issuedToOrganisation.name,
+      recipient: getDisplayName(prn.issuedToOrganisation),
       issuedAt: prn.issuedAt,
       status: prn.status
     }))

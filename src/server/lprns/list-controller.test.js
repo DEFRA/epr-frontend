@@ -288,6 +288,34 @@ describe('#listPrnsController', () => {
         expect(selectLinks).toHaveLength(2)
       })
 
+      it('displays tradingName in table when organisation has both name and tradingName', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            ...mockPrns[0],
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: 'Legal Name Ltd',
+              tradingName: 'Trading Name Ltd'
+            }
+          }
+        ])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Trading Name Ltd/i)).toBeDefined()
+        expect(body.innerHTML).not.toContain('>Legal Name Ltd<')
+      })
+
       it('should render inset text about cancellation', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
