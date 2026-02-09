@@ -3,7 +3,7 @@
 import { getYear } from 'date-fns'
 
 import { config } from '#config/config.js'
-import { fetchJsonFromBackend } from '../fetch-json-from-backend.js'
+import { fetchJson } from '../fetch-json.js'
 
 /**
  * Creates a waste organisations service that fetches from the real API.
@@ -28,7 +28,7 @@ export function createApiWasteOrganisationsService() {
 
       const auth = Buffer.from(`${username}:${password}`).toString('base64')
 
-      return fetchJsonFromBackend(`${url}?${params.toString()}`, {
+      return fetchJson(`${url}?${params.toString()}`, {
         headers: {
           ...(isDevelopment && { 'x-api-key': key }),
           authorization: `Basic ${auth}`
