@@ -21,7 +21,10 @@ Frontend for: Packaging Extended Producer Responsibilities
   - [Development image](#development-image)
   - [Production image](#production-image)
   - [Docker Compose](#docker-compose)
-  - [Dependabot](#dependabot)
+- [Testing](#testing)
+  - [Unit tests](#unit-tests)
+  - [Journey tests](#journey-tests)
+- [Dependabot](#dependabot)
   - [SonarCloud](#sonarcloud)
 - [Licence](#licence)
   - [About the licence](#about-the-licence)
@@ -225,14 +228,32 @@ docker compose --profile all --profile stub up --build --watch
 docker compose down -v
 ```
 
-### Dependabot
+## Testing
 
-We have added an example dependabot configuration file to the repository. You can enable it by renaming
-the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github/dependabot.yml`
+### Unit tests
 
-### SonarCloud
+Run unit tests with:
 
-Instructions for setting up SonarCloud can be found in [sonar-project.properties](./sonar-project.properties).
+```bash
+npm test
+```
+
+### Journey tests
+
+Journey tests live in [DEFRA/epr-frontend-journey-tests](https://github.com/DEFRA/epr-frontend-journey-tests).
+
+To develop journey tests alongside your work, create a branch in that repo matching your frontend branch name.
+The CI picks up the matching branch automatically, and uses `main` where no match is found.
+
+Merging journey test branches back to main is a separate manual step.
+
+## Dependabot
+
+Dependabot is configured for managing dependency updates, see: [.github/dependabot.yml](.github/dependabot.yml)
+
+## SonarCloud
+
+SonarCloud is configured via [sonar-project.properties](./sonar-project.properties).
 
 ## Licence
 
