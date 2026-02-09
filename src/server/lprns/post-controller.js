@@ -102,6 +102,26 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
+ * @param {object} result - The created PRN draft from the backend
+ * @param {object} issuedToOrganisation - The recipient organisation
+ * @param {string} notes - Issuer notes
+ */
+function buildPrnDraftSession(result, issuedToOrganisation, notes) {
+  return {
+    id: result.id,
+    tonnage: result.tonnage,
+    tonnageInWords: tonnageToWords(result.tonnage),
+    material: result.material,
+    status: result.status,
+    recipientName: getDisplayName(issuedToOrganisation),
+    notes: notes || '',
+    wasteProcessingType: result.wasteProcessingType,
+    processToBeUsed: result.processToBeUsed,
+    isDecemberWaste: result.isDecemberWaste ?? false
+  }
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const postController = {
@@ -218,18 +238,10 @@ export const postController = {
       )
 
       // Store PRN data in session for check/confirm page
-      request.yar.set('prnDraft', {
-        id: result.id,
-        tonnage: result.tonnage,
-        tonnageInWords: tonnageToWords(result.tonnage),
-        material: result.material,
-        status: result.status,
-        recipientName: getDisplayName(issuedToOrganisation),
-        notes: notes || '',
-        wasteProcessingType: result.wasteProcessingType,
-        processToBeUsed: result.processToBeUsed,
-        isDecemberWaste: result.isDecemberWaste ?? false
-      })
+      request.yar.set(
+        'prnDraft',
+        buildPrnDraftSession(result, issuedToOrganisation, notes)
+      )
 
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
