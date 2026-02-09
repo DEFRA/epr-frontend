@@ -326,7 +326,7 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         expect(
-          getByText(main, 'Packaging waste producer or compliance schemez')
+          getByText(main, 'Packaging waste producer or compliance scheme')
         ).toBeDefined()
       })
 
@@ -1232,7 +1232,7 @@ describe('#viewController', () => {
         ].map((el) => el.textContent.trim())
 
         expect(keys).toStrictEqual([
-          'Packaging waste producer or compliance schemez',
+          'Packaging waste producer or compliance scheme',
           'Tonnage',
           'Tonnage in words',
           'Process to be used',
