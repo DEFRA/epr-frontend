@@ -28,7 +28,8 @@
     "successNextStepsText": "Your {{noteType}} has been created as a draft. You can view and manage it from your registration dashboard.",
     "successPageTitle": "{{noteType}} created",
     "successTonnageLabel": "Tonnage",
-    "tonnageLabel": "Enter {{noteType}} tonnage"
+    "tonnageLabel": "Enter {{noteType}} tonnage",
+    "wasteBalanceText": "Your waste balance available for creating {{noteTypePlural}} is {{balance}} tonnes."
   },
   "created": {
     "createAnotherLink": "Create another {{noteType}}",

@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
@@ -30,7 +31,7 @@ export const controller = {
       throw Boom.notFound()
     }
 
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
 
     const { registration, accreditation } =
@@ -53,14 +54,22 @@ export const controller = {
       throw Boom.notFound('Not accredited for this registration')
     }
 
-    const { organisations } =
-      await request.wasteOrganisationsService.getOrganisations()
+    const [{ organisations }, wasteBalance] = await Promise.all([
+      request.wasteOrganisationsService.getOrganisations(),
+      getWasteBalance(
+        organisationId,
+        accreditationId,
+        session.idToken,
+        request.logger
+      )
+    ])
 
     const viewData = buildCreatePrnViewData(request, {
       organisationId,
       recipients: mapToSelectOptions(organisations),
       registration,
-      registrationId
+      registrationId,
+      wasteBalance
     })
 
     // Check for insufficient balance error from redirect

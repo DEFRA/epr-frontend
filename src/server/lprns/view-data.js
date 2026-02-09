@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
@@ -10,11 +11,12 @@ import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js
  * @param {string} options.registrationId
  * @param {{wasteProcessingType: string, material: string, nation?: string, glassRecyclingProcess?: string[]}} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
+ * @param {{availableAmount: number} | null} [options.wasteBalance]
  * @returns {object}
  */
 export function buildCreatePrnViewData(
   request,
-  { organisationId, recipients, registration, registrationId }
+  { organisationId, recipients, registration, registrationId, wasteBalance }
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
@@ -22,9 +24,17 @@ export function buildCreatePrnViewData(
   const pageTitle = localise('lprns:create:pageTitle', { noteType })
   const material = getLumpyDisplayMaterial(registration)
 
+  const wasteBalanceText = wasteBalance
+    ? localise('lprns:create:wasteBalanceText', {
+        noteTypePlural,
+        balance: formatTonnage(wasteBalance.availableAmount)
+      })
+    : null
+
   return {
     pageTitle,
     heading: pageTitle,
+    wasteBalanceText,
     backUrl: `/organisations/${organisationId}/registrations/${registrationId}`,
     material: {
       label: localise('lprns:materialLabel'),
