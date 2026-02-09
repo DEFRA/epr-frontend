@@ -13,6 +13,7 @@ const MIN_TONNAGE = 1
 
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
+  recipientInvalid: 'recipientInvalid',
   recipientRequired: 'recipientRequired',
   tonnageGreaterThanZero: 'tonnageGreaterThanZero',
   tonnageWholeNumber: 'tonnageWholeNumber'
@@ -115,17 +116,17 @@ export const postController = {
         const { organisationId, registrationId } = request.params
         const session = request.auth.credentials
 
-        const { registration } = await fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        )
-
         const { t: localise } = request
         const { errors, errorSummary } = buildValidationErrors(
           error,
           localise,
-          registration.wasteProcessingType
+          request.payload.wasteProcessingType
+        )
+
+        const { registration } = await fetchRegistrationAndAccreditation(
+          organisationId,
+          registrationId,
+          session.idToken
         )
 
         const { organisations } =
@@ -162,7 +163,37 @@ export const postController = {
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      throw Boom.badRequest('Selected recipient organisation not found')
+      const { t: localise } = request
+
+      const noteType = getNoteType(request.payload.wasteProcessingType)
+
+      const message = localise(`lprns:errors:${ERROR_KEYS.recipientInvalid}`, {
+        noteType
+      })
+
+      const errors = { recipient: { text: message } }
+      const errorSummary = {
+        title: localise('lprns:errorSummaryTitle'),
+        list: [{ text: message, href: '#recipient' }]
+      }
+
+      const { registration } = await fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      )
+
+      const viewData = buildCreatePrnViewData(request, {
+        registration,
+        recipients: mapToSelectOptions(organisations)
+      })
+
+      return h.view('lprns/create', {
+        ...viewData,
+        errors,
+        errorSummary,
+        formValues: request.payload
+      })
     }
 
     const issuedToOrganisation = {

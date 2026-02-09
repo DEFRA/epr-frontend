@@ -64,6 +64,7 @@
   "errorSummaryTitle": "There is a problem",
   "errors": {
     "notesTooLong": "Enter a maximum of 200 characters",
+    "recipientInvalid": "Select a valid packaging waste producer or compliance scheme",
     "recipientRequired": "Enter a packaging waste producer or compliance scheme",
     "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
     "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
