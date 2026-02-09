@@ -18,7 +18,7 @@ export const issueController = {
     const session = request.auth.credentials
 
     try {
-      await updatePrnStatus(
+      const updatedPrn = await updatePrnStatus(
         organisationId,
         registrationId,
         accreditationId,
@@ -26,6 +26,14 @@ export const issueController = {
         { status: 'awaiting_acceptance' },
         session.idToken
       )
+
+      // Store prnNumber in session to mitigate MongoDB replication lag.
+      // The issued page fetches the PRN fresh, but the write may not have
+      // replicated yet, so the session value takes priority.
+      request.yar.set('prnIssued', {
+        id: prnId,
+        prnNumber: updatedPrn.prnNumber
+      })
 
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`

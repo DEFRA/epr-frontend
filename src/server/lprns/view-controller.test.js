@@ -1,6 +1,10 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import {
+  extractCookieValues,
+  mergeCookies
+} from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
@@ -135,40 +139,6 @@ const mockPernFromBackend = {
   issuedAt: '2026-01-21T09:00:00.000Z',
   issuedBy: { name: 'Jane Doe', position: 'Operations Manager' },
   wasteProcessingType: 'exporter'
-}
-
-/**
- * Extract cookie key=value pairs from Set-Cookie header(s)
- * @param {string | string[] | undefined} setCookieHeader
- * @returns {string[]}
- */
-function extractCookieValues(setCookieHeader) {
-  if (!setCookieHeader) return []
-  const headers = Array.isArray(setCookieHeader)
-    ? setCookieHeader
-    : [setCookieHeader]
-  return headers.filter(Boolean).map((header) => header.split(';')[0])
-}
-
-/**
- * Merge cookie strings, with later values overriding earlier ones
- * @param {...string} cookieStrings
- * @returns {string}
- */
-function mergeCookies(...cookieStrings) {
-  const cookies = {}
-  for (const str of cookieStrings) {
-    if (!str) continue
-    for (const part of str.split(';')) {
-      const [key, ...valueParts] = part.trim().split('=')
-      if (key && valueParts.length > 0) {
-        cookies[key] = valueParts.join('=')
-      }
-    }
-  }
-  return Object.entries(cookies)
-    .map(([k, v]) => `${k}=${v}`)
-    .join('; ')
 }
 
 describe('#viewController', () => {
