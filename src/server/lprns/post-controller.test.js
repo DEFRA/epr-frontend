@@ -207,7 +207,7 @@ describe('#postCreatePrnController', () => {
         )
       })
 
-      it('should return 400 when recipient not in organisations list', async ({
+      it('should re-render form with inline error when recipient not in organisations list', async ({
         server
       }) => {
         const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -216,7 +216,7 @@ describe('#postCreatePrnController', () => {
 
         const unknownRecipient = 'unknown-recipient-id'
 
-        const { statusCode } = await server.inject({
+        const { result, statusCode } = await server.inject({
           method: 'POST',
           url,
           auth: mockAuth,
@@ -224,8 +224,27 @@ describe('#postCreatePrnController', () => {
           payload: { ...validPayload, recipient: unknownRecipient, crumb }
         })
 
-        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(statusCode).toBe(statusCodes.ok)
         expect(createPrn).not.toHaveBeenCalled()
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Error summary should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(
+            errorSummary,
+            'Select a valid packaging waste producer or compliance scheme'
+          )
+        ).toBeDefined()
+
+        // Inline error against recipient field
+        const inlineError = body.querySelector('#recipient-error')
+        expect(inlineError.textContent).toContain(
+          'Select a valid packaging waste producer or compliance scheme'
+        )
       })
     })
 
@@ -408,7 +427,12 @@ describe('#postCreatePrnController', () => {
           url,
           auth: mockAuth,
           headers: { cookie },
-          payload: { ...validPayload, tonnage: '', crumb }
+          payload: {
+            ...validPayload,
+            tonnage: '',
+            wasteProcessingType: 'exporter',
+            crumb
+          }
         })
 
         expect(statusCode).toBe(statusCodes.ok)
