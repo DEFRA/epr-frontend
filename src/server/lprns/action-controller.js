@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
   buildPrnIssuerRows,
@@ -47,7 +48,7 @@ export const actionController = {
       throw Boom.notFound('Registration not found')
     }
 
-    const recipientDisplayName = prn.issuedToOrganisation.name
+    const recipientDisplayName = getDisplayName(prn.issuedToOrganisation)
 
     const viewData = buildActionViewData({
       accreditation,

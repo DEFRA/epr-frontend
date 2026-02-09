@@ -10,6 +10,7 @@ import {
   buildPrnCoreRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
+import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getLumpyDisplayMaterial } from './helpers/get-lumpy-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
@@ -264,7 +265,7 @@ async function handleExistingView(
     throw Boom.notFound('Registration not found')
   }
 
-  const recipientDisplayName = prn.issuedToOrganisation.name
+  const recipientDisplayName = getDisplayName(prn.issuedToOrganisation)
 
   const { isExporter, noteType, wasteAction } =
     getNoteTypeDisplayNames(registration)

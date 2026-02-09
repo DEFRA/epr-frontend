@@ -286,6 +286,32 @@ describe('#viewController', () => {
         expect(html).not.toContain('>producer-1<')
       })
 
+      it('displays tradingName when organisation has both name and tradingName', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockPrnFromBackend,
+          issuedToOrganisation: {
+            id: 'producer-1',
+            name: 'Legal Name Ltd',
+            tradingName: 'Trading Name Ltd'
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Trading Name Ltd/i)).toBeDefined()
+        expect(body.innerHTML).not.toContain('>Legal Name Ltd<')
+      })
+
       it('labels recipient row as "Packaging waste producer or compliance scheme"', async ({
         server
       }) => {
