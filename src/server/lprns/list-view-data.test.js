@@ -256,7 +256,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.table.rows[0][3].html).toContain('govuk-tag')
+      expect(result.table.rows[0][3].html).toContain('govuk-tag--blue')
       expect(result.table.rows[0][3].html).toContain('Awaiting authorisation')
     })
 
@@ -635,6 +635,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
+      expect(result.table.rows[0][3].html).toContain('govuk-tag--purple')
       expect(result.table.rows[0][3].html).toContain('Awaiting acceptance')
     })
 
