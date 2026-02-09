@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByLabelText,
@@ -14,6 +15,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 
 const mockCredentials = {
   profile: {
@@ -457,6 +459,89 @@ describe('#createPrnController', () => {
             within(details).getByText(/PERNs can only be issued to/i)
           ).toBeDefined()
         })
+      })
+    })
+
+    describe('waste balance display', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+      })
+
+      it('should display available waste balance in inset text', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('500.00')
+        expect(insetText.textContent).toContain('PRNs')
+      })
+
+      it('should display waste balance with PERN text for exporters', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 2000,
+          availableAmount: 800
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('800.00')
+        expect(insetText.textContent).toContain('PERNs')
+      })
+
+      it('should not display waste balance when fetch fails', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue(null)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).toBeNull()
       })
     })
 

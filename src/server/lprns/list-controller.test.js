@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -12,7 +12,7 @@ import { listController } from './list-controller.js'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
-vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-notes.js'))
 
 const mockCredentials = {
@@ -53,10 +53,7 @@ const fixtureExporter = {
   accreditation: { id: 'acc-002', status: 'approved' }
 }
 
-const mockWasteBalance = {
-  'acc-001': { availableAmount: 150.5 },
-  'acc-002': { availableAmount: 200 }
-}
+const mockWasteBalance = { availableAmount: 150.5 }
 
 const mockPrns = [
   {
@@ -99,7 +96,7 @@ const exporterListUrl =
 describe('#listPrnsController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchWasteBalances).mockResolvedValue(mockWasteBalance)
+    vi.mocked(getWasteBalance).mockResolvedValue(mockWasteBalance)
     vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
   })
 
@@ -527,9 +524,7 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchWasteBalances).mockRejectedValue(
-          new Error('API failure')
-        )
+        vi.mocked(getWasteBalance).mockResolvedValue(null)
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -561,7 +556,7 @@ describe('#listPrnsController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(fetchWasteBalances).not.toHaveBeenCalled()
+        expect(getWasteBalance).not.toHaveBeenCalled()
       })
 
       it('should handle waste balance map missing the accreditation key', async ({
@@ -570,7 +565,7 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchWasteBalances).mockResolvedValue({})
+        vi.mocked(getWasteBalance).mockResolvedValue(null)
 
         const { statusCode } = await server.inject({
           method: 'GET',
