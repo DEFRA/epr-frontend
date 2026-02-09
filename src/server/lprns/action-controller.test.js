@@ -195,7 +195,7 @@ describe('#actionController', () => {
       const main = getByRole(body, 'main')
 
       expect(
-        getByText(main, 'Packaging waste producer or compliance scheme')
+        getByText(main, 'Packaging waste producer or compliance schemez')
       ).toBeDefined()
     })
 
