@@ -17,6 +17,9 @@ export const getNoteTypeDisplayNames = (registration) => {
   return {
     isExporter,
     noteType: isExporter ? 'PERN' : 'PRN',
+    noteTypeFull: isExporter
+      ? 'Packaging Waste Export Recycling Note'
+      : 'Packaging Waste Recycling Note',
     noteTypePlural: isExporter ? 'PERNs' : 'PRNs',
     wasteAction: isExporter ? 'export' : 'reprocessing'
   }

@@ -149,7 +149,7 @@ describe('#actionController', () => {
       const main = getByRole(body, 'main')
 
       const heading = main.querySelector('.govuk-heading-xl')
-      expect(heading.textContent).toBe('PRN')
+      expect(heading.textContent).toBe('Packaging Waste Recycling Note')
 
       expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
       expect(getByText(main, '100')).toBeDefined()
@@ -365,7 +365,7 @@ describe('#actionController', () => {
       const main = getByRole(body, 'main')
 
       const heading = main.querySelector('.govuk-heading-xl')
-      expect(heading.textContent).toBe('PERN')
+      expect(heading.textContent).toBe('Packaging Waste Export Recycling Note')
 
       expect(getByRole(main, 'button', { name: /Issue PERN/i })).toBeDefined()
       expect(getByRole(main, 'button', { name: /Delete PERN/i })).toBeDefined()

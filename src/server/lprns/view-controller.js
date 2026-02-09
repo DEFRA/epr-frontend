@@ -267,7 +267,7 @@ async function handleExistingView(
 
   const recipientDisplayName = getDisplayName(prn.issuedToOrganisation)
 
-  const { isExporter, noteType, wasteAction } =
+  const { isExporter, noteType, noteTypeFull, wasteAction } =
     getNoteTypeDisplayNames(registration)
 
   const backUrl = request.localiseUrl(
@@ -300,6 +300,7 @@ async function handleExistingView(
   const viewData = buildExistingPrnViewData({
     prn,
     noteType,
+    noteTypeFull,
     wasteAction,
     isNotDraft,
     prnDetailRows,
@@ -335,6 +336,7 @@ async function handleExistingView(
 function buildExistingPrnViewData({
   prn,
   noteType,
+  noteTypeFull,
   wasteAction,
   isNotDraft,
   prnDetailRows,
@@ -350,7 +352,7 @@ function buildExistingPrnViewData({
 
   return {
     pageTitle: `${noteType} ${prn.id}`,
-    heading: noteType,
+    heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
     complianceYearText:
       isNotDraft && prn.accreditationYear != null
