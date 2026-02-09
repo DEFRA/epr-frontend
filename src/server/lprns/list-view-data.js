@@ -1,5 +1,6 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
+import { getStatusConfig } from '#server/lprns/helpers/get-status-config.js'
 
 /**
  * Build view data for the PRN/PERN list page
@@ -206,26 +207,6 @@ function buildIssuedTable(
  * @returns {string}
  */
 function buildStatusTagHtml(status, localise) {
-  const statusText = formatStatus(status, localise)
-  return `<strong class="govuk-tag govuk-tag--blue epr-tag--no-max-width">${statusText}</strong>`
+  const statusConfig = getStatusConfig(status, localise)
+  return `<strong class="govuk-tag ${statusConfig.class}">${statusConfig.text}</strong>`
 }
-
-/**
- * Format status for display
- * @param {string} status
- * @param {(key: string) => string} localise
- * @returns {string}
- */
-function formatStatus(status, localise) {
-  const statusMap = {
-    awaiting_authorisation: localise('lprns:list:status:awaitingAuthorisation'),
-    awaiting_acceptance: localise('lprns:list:status:awaitingAcceptance'),
-    issued: localise('lprns:list:status:issued'),
-    cancelled: localise('lprns:list:status:cancelled')
-  }
-  return statusMap[status] ?? status
-}
-
-/**
- * @import { Request } from '@hapi/hapi'
- */
