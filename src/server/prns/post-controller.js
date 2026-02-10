@@ -123,6 +123,56 @@ function buildPrnDraftSession(result, issuedToOrganisation, notes) {
 }
 
 /**
+ * Re-render the create form when the selected recipient is not
+ * found in the organisations list.
+ */
+async function handleInvalidRecipient(request, h, organisations) {
+  const { organisationId, registrationId, accreditationId } = request.params
+  const session = request.auth.credentials
+  const { t: localise } = request
+
+  const noteType = getNoteType(request.payload.wasteProcessingType)
+  const message = localise(`prns:errors:${ERROR_KEYS.recipientInvalid}`, {
+    noteType
+  })
+
+  const errors = { recipient: { text: message } }
+  const errorSummary = {
+    title: localise('prns:errorSummaryTitle'),
+    list: [{ text: message, href: '#recipient' }]
+  }
+
+  const [{ registration }, wasteBalance] = await Promise.all([
+    fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    ),
+    getWasteBalance(
+      organisationId,
+      accreditationId,
+      session.idToken,
+      request.logger
+    )
+  ])
+
+  const viewData = buildCreatePrnViewData(request, {
+    organisationId,
+    recipients: mapToSelectOptions(organisations),
+    registration,
+    registrationId,
+    wasteBalance
+  })
+
+  return h.view('prns/create', {
+    ...viewData,
+    errors,
+    errorSummary,
+    formValues: request.payload
+  })
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const postController = {
@@ -195,48 +245,7 @@ export const postController = {
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      const { t: localise } = request
-
-      const noteType = getNoteType(request.payload.wasteProcessingType)
-
-      const message = localise(`prns:errors:${ERROR_KEYS.recipientInvalid}`, {
-        noteType
-      })
-
-      const errors = { recipient: { text: message } }
-      const errorSummary = {
-        title: localise('prns:errorSummaryTitle'),
-        list: [{ text: message, href: '#recipient' }]
-      }
-
-      const [{ registration }, wasteBalance] = await Promise.all([
-        fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        ),
-        getWasteBalance(
-          organisationId,
-          accreditationId,
-          session.idToken,
-          request.logger
-        )
-      ])
-
-      const viewData = buildCreatePrnViewData(request, {
-        organisationId,
-        recipients: mapToSelectOptions(organisations),
-        registration,
-        registrationId,
-        wasteBalance
-      })
-
-      return h.view('prns/create', {
-        ...viewData,
-        errors,
-        errorSummary,
-        formValues: request.payload
-      })
+      return handleInvalidRecipient(request, h, organisations)
     }
 
     const issuedToOrganisation = {
