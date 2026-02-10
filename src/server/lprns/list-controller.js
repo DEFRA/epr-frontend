@@ -21,7 +21,7 @@ const filterPrnsByStatus = (prns, status) =>
 const getIssuedPrns = (prns) =>
   prns
     .filter(
-      (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'issued'
+      (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'accepted'
     )
     .map((prn) => ({
       id: prn.id,
