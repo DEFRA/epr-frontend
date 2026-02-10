@@ -1,9 +1,10 @@
 import Boom from '@hapi/boom'
 
-import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import {
+  fetchPrnContext,
+  fetchPrnForUpdate
+} from './helpers/fetch-prn-context.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
@@ -11,31 +12,9 @@ import { updatePrnStatus } from './helpers/update-prn-status.js'
  */
 export const cancelGetController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.lprns')) {
-      throw Boom.notFound()
-    }
-
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const { registration, prn, basePath, prnId } =
+      await fetchPrnContext(request)
     const { t: localise } = request
-    const session = request.auth.credentials
-
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-
-    const [{ registration }, prn] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        session.idToken
-      )
-    ])
 
     if (prn.status !== 'awaiting_cancellation') {
       return h.redirect(basePath)
@@ -59,23 +38,15 @@ export const cancelGetController = {
  */
 export const cancelPostController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.lprns')) {
-      throw Boom.notFound()
-    }
-
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
-    const session = request.auth.credentials
-
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-
-    const prn = await fetchPackagingRecyclingNote(
+    const {
       organisationId,
       registrationId,
       accreditationId,
       prnId,
-      session.idToken
-    )
+      basePath,
+      prn,
+      idToken
+    } = await fetchPrnForUpdate(request)
 
     if (prn.status !== 'awaiting_cancellation') {
       return h.redirect(basePath)
@@ -88,7 +59,7 @@ export const cancelPostController = {
         accreditationId,
         prnId,
         { status: 'cancelled' },
-        session.idToken
+        idToken
       )
 
       return h.redirect(`${basePath}/${prnId}/cancelled`)

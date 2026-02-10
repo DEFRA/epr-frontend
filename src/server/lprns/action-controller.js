@@ -102,8 +102,6 @@ function buildActionViewData({
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   const displayMaterial = getLumpyDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'
-  const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
-  const isAwaitingCancellation = prn.status === 'awaiting_cancellation'
   const statusConfig = getStatusConfig(prn.status, localise)
 
   const prnDetailRows = buildActionPrnDetailRows({
@@ -137,6 +135,40 @@ function buildActionViewData({
     accreditationDetailsHeading: localise('lprns:accreditationDetailsHeading'),
     accreditationRows,
     backUrl: request.localiseUrl(basePath),
+    ...buildActionButtons({
+      prn,
+      localise,
+      noteType,
+      request,
+      basePath,
+      prnId
+    }),
+    returnLink: {
+      href: request.localiseUrl(basePath),
+      text: localise('lprns:action:returnLink', { noteType })
+    }
+  }
+
+  addErrorSummaryIfNeeded(viewData, request.query.error, localise)
+
+  return viewData
+}
+
+/**
+ * Builds the action buttons based on PRN status
+ */
+function buildActionButtons({
+  prn,
+  localise,
+  noteType,
+  request,
+  basePath,
+  prnId
+}) {
+  const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
+  const isAwaitingCancellation = prn.status === 'awaiting_cancellation'
+
+  return {
     issueButton: isAwaitingAuthorisation
       ? {
           text: localise('lprns:action:issueButton', { noteType }),
@@ -154,16 +186,8 @@ function buildActionViewData({
           text: localise('lprns:action:cancelButton', { noteType }),
           href: request.localiseUrl(`${basePath}/${prnId}/cancel`)
         }
-      : null,
-    returnLink: {
-      href: request.localiseUrl(basePath),
-      text: localise('lprns:action:returnLink', { noteType })
-    }
+      : null
   }
-
-  addErrorSummaryIfNeeded(viewData, request.query.error, localise)
-
-  return viewData
 }
 
 /**

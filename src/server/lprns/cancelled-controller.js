@@ -1,40 +1,14 @@
-import Boom from '@hapi/boom'
-
-import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
  */
 export const cancelledController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.lprns')) {
-      throw Boom.notFound()
-    }
-
-    const { organisationId, registrationId, accreditationId, prnId } =
-      request.params
+    const { organisationId, registrationId, registration, prn, basePath } =
+      await fetchPrnContext(request)
     const { t: localise } = request
-    const session = request.auth.credentials
-
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-
-    const [{ registration }, prn] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchPackagingRecyclingNote(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        session.idToken
-      )
-    ])
 
     if (prn.status !== 'cancelled') {
       return h.redirect(basePath)
