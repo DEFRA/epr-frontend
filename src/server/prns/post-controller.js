@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import Boom from '@hapi/boom'
@@ -133,7 +134,8 @@ export const postController = {
           throw Boom.notFound()
         }
 
-        const { organisationId, registrationId } = request.params
+        const { organisationId, registrationId, accreditationId } =
+          request.params
         const session = request.auth.credentials
 
         const { t: localise } = request
@@ -143,18 +145,28 @@ export const postController = {
           request.payload.wasteProcessingType
         )
 
-        const { registration } = await fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        )
-
-        const { organisations } =
-          await request.wasteOrganisationsService.getOrganisations()
+        const [{ registration }, { organisations }, wasteBalance] =
+          await Promise.all([
+            fetchRegistrationAndAccreditation(
+              organisationId,
+              registrationId,
+              session.idToken
+            ),
+            request.wasteOrganisationsService.getOrganisations(),
+            getWasteBalance(
+              organisationId,
+              accreditationId,
+              session.idToken,
+              request.logger
+            )
+          ])
 
         const viewData = buildCreatePrnViewData(request, {
+          organisationId,
+          recipients: mapToSelectOptions(organisations),
           registration,
-          recipients: mapToSelectOptions(organisations)
+          registrationId,
+          wasteBalance
         })
 
         return h
@@ -197,15 +209,26 @@ export const postController = {
         list: [{ text: message, href: '#recipient' }]
       }
 
-      const { registration } = await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      )
+      const [{ registration }, wasteBalance] = await Promise.all([
+        fetchRegistrationAndAccreditation(
+          organisationId,
+          registrationId,
+          session.idToken
+        ),
+        getWasteBalance(
+          organisationId,
+          accreditationId,
+          session.idToken,
+          request.logger
+        )
+      ])
 
       const viewData = buildCreatePrnViewData(request, {
+        organisationId,
+        recipients: mapToSelectOptions(organisations),
         registration,
-        recipients: mapToSelectOptions(organisations)
+        registrationId,
+        wasteBalance
       })
 
       return h.view('prns/create', {

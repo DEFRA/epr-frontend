@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -11,6 +12,7 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
@@ -488,6 +490,97 @@ describe('#postCreatePrnController', () => {
         const notesField = getByRole(main, 'textbox', { name: /notes/i })
 
         expect(notesField.value).toBe('Test notes')
+      })
+    })
+
+    describe('waste balance on error', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+      })
+
+      it('should display waste balance hint when form fails schema validation', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Validation error should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
+
+        // Waste balance hint should still be visible
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('500.00')
+        expect(insetText.textContent).toContain('PRNs')
+
+        // Back link should have correct URL
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}`
+        )
+      })
+
+      it('should display waste balance hint when recipient not found in organisations list', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, recipient: 'unknown-id', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Recipient error should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(
+            errorSummary,
+            'Select a valid packaging waste producer or compliance scheme'
+          )
+        ).toBeDefined()
+
+        // Waste balance hint should still be visible
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('500.00')
+        expect(insetText.textContent).toContain('PRNs')
+
+        // Back link should have correct URL
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}`
+        )
       })
     })
 
