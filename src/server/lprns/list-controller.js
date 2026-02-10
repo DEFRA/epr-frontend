@@ -7,25 +7,15 @@ import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
 
-const getPrnsAwaitingAuthorisation = (prns) =>
+const filterPrnsByStatus = (prns, status) =>
   prns
-    .filter((prn) => prn.status === 'awaiting_authorisation')
+    .filter((prn) => prn.status === status)
     .map((prn) => ({
       id: prn.id,
       recipient: getDisplayName(prn.issuedToOrganisation),
       createdAt: prn.createdAt,
       tonnage: prn.tonnage,
       status: prn.status
-    }))
-
-const getPrnsAwaitingCancellation = (prns) =>
-  prns
-    .filter((prn) => prn.status === 'awaiting_cancellation')
-    .map((prn) => ({
-      id: prn.id,
-      recipient: getDisplayName(prn.issuedToOrganisation),
-      createdAt: prn.createdAt,
-      tonnage: prn.tonnage
     }))
 
 const getIssuedPrns = (prns) =>
@@ -97,8 +87,8 @@ export const listController = {
       registrationId,
       accreditationId,
       registration,
-      prns: getPrnsAwaitingAuthorisation(prns),
-      cancellationPrns: getPrnsAwaitingCancellation(prns),
+      prns: filterPrnsByStatus(prns, 'awaiting_authorisation'),
+      cancellationPrns: filterPrnsByStatus(prns, 'awaiting_cancellation'),
       issuedPrns: getIssuedPrns(prns),
       hasCreatedPrns,
       wasteBalance
