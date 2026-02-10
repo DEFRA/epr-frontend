@@ -11,6 +11,7 @@ import { getStatusConfig } from '#server/lprns/helpers/get-status-config.js'
  * @param {string} options.accreditationId
  * @param {{wasteProcessingType: string}} options.registration
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
+ * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} [options.cancellationPrns]
  * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.issuedPrns]
  * @param {boolean} options.hasCreatedPrns
  * @param {{availableAmount: number} | null} options.wasteBalance
@@ -24,6 +25,7 @@ export function buildListViewData(
     accreditationId,
     registration,
     prns,
+    cancellationPrns = [],
     issuedPrns = [],
     hasCreatedPrns,
     wasteBalance
@@ -40,12 +42,24 @@ export function buildListViewData(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
   )
 
-  const table = buildAwaitingActionTable(request, {
+  const table = buildAwaitingTable(request, {
     organisationId,
     registrationId,
     accreditationId,
     prns,
-    localise
+    localise,
+    buildStatusCell: (prn, l) => ({
+      html: buildStatusTagHtml(prn.status, l)
+    })
+  })
+
+  const cancellationTable = buildAwaitingTable(request, {
+    organisationId,
+    registrationId,
+    accreditationId,
+    prns: cancellationPrns,
+    localise,
+    buildStatusCell: () => ({ text: '' })
   })
 
   const issuedTable = buildIssuedTable(request, {
@@ -58,8 +72,7 @@ export function buildListViewData(
   })
 
   return {
-    pageTitle: localise('lprns:list:pageTitle', { noteTypePlural }),
-    heading: localise('lprns:list:pageTitle', { noteTypePlural }),
+    ...buildListLabels(localise, { noteType, noteTypePlural }),
     backUrl,
     createLink: {
       href: createUrl,
@@ -71,6 +84,16 @@ export function buildListViewData(
       hint: localise('lprns:list:balanceHint', { noteTypePlural })
     },
     hasCreatedPrns,
+    table,
+    cancellationTable,
+    issuedTable
+  }
+}
+
+function buildListLabels(localise, { noteType, noteTypePlural }) {
+  return {
+    pageTitle: localise('lprns:list:pageTitle', { noteTypePlural }),
+    heading: localise('lprns:list:pageTitle', { noteTypePlural }),
     selectHeading: localise('lprns:list:selectHeading', { noteType }),
     noPrnsCreatedText: localise('lprns:list:noPrnsCreated', { noteTypePlural }),
     tabs: {
@@ -82,28 +105,38 @@ export function buildListViewData(
       'lprns:list:awaitingAuthorisationHeading',
       { noteTypePlural }
     ),
+    awaitingCancellationHeading: localise(
+      'lprns:list:awaitingCancellationHeading',
+      { noteTypePlural }
+    ),
     noPrnsText: localise('lprns:list:noPrns'),
     noIssuedText: localise('lprns:list:noIssuedPrns', { noteTypePlural }),
-    table,
-    issuedHeading: localise('lprns:list:issuedHeading', { noteTypePlural }),
-    issuedTable
+    issuedHeading: localise('lprns:list:issuedHeading', { noteTypePlural })
   }
 }
 
 /**
- * Build awaiting action table with headings and data rows
+ * Build an awaiting-action table with headings, data rows, and a total row.
  * @param {Request} request
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {string} options.accreditationId
- * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
+ * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status?: string}>} options.prns
  * @param {(key: string) => string} options.localise
+ * @param {(prn: object, localise: (key: string) => string) => {text?: string, html?: string}} options.buildStatusCell
  * @returns {{headings: object, rows: Array<Array<{text?: string, html?: string, classes?: string}>>}}
  */
-function buildAwaitingActionTable(
+function buildAwaitingTable(
   request,
-  { organisationId, registrationId, accreditationId, prns, localise }
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    prns,
+    localise,
+    buildStatusCell
+  }
 ) {
   const headings = {
     recipient: localise('lprns:list:table:recipientHeading'),
@@ -123,7 +156,7 @@ function buildAwaitingActionTable(
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.createdAt) },
       { text: prn.tonnage },
-      { html: buildStatusTagHtml(prn.status, localise) },
+      buildStatusCell(prn, localise),
       { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
     ]
   })

@@ -9,6 +9,7 @@ const createMockRequest = () => ({
       'lprns:list:cancelHint': `If you delete or cancel a ${params.noteType}, its tonnage will be added to your available waste balance.`,
       'lprns:list:createLink': `Create a ${params.noteType}`,
       'lprns:list:awaitingAuthorisationHeading': `${params.noteTypePlural} awaiting authorisation`,
+      'lprns:list:awaitingCancellationHeading': `${params.noteTypePlural} awaiting cancellation`,
       'lprns:list:noIssuedPrns': `No ${params.noteTypePlural} have been issued yet.`,
       'lprns:list:availableWasteBalance': 'Available waste balance',
       'lprns:list:noPrns': 'No PRNs or PERNs have been created yet.',
@@ -55,6 +56,21 @@ const stubPrns = [
     createdAt: '2026-01-18',
     tonnage: 120,
     status: 'issued'
+  }
+]
+
+const stubCancellationPrns = [
+  {
+    id: 'prn-cancel-001',
+    recipient: 'TFR Facilities',
+    createdAt: '2025-08-13',
+    tonnage: 5
+  },
+  {
+    id: 'prn-cancel-002',
+    recipient: 'Linton Construction',
+    createdAt: '2025-08-07',
+    tonnage: 25
   }
 ]
 
@@ -582,6 +598,155 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.issuedHeading).toBe('Issued PERNs')
+    })
+  })
+
+  describe('cancellation table', () => {
+    it('should return awaiting cancellation heading for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancellationPrns: stubCancellationPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.awaitingCancellationHeading).toBe(
+        'PRNs awaiting cancellation'
+      )
+    })
+
+    it('should return awaiting cancellation heading for PERNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-456',
+        registrationId: 'reg-002',
+        accreditationId: 'acc-002',
+        registration: exporterRegistration,
+        prns: stubPrns,
+        cancellationPrns: stubCancellationPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.awaitingCancellationHeading).toBe(
+        'PERNs awaiting cancellation'
+      )
+    })
+
+    it('should return cancellation table with correct headings', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancellationPrns: stubCancellationPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancellationTable.headings.recipient).toBe(
+        'Producer or compliance scheme'
+      )
+      expect(result.cancellationTable.headings.createdAt).toBe('Date created')
+      expect(result.cancellationTable.headings.tonnage).toBe('Tonnage')
+      expect(result.cancellationTable.headings.status).toBe('Status')
+    })
+
+    it('should return cancellation table rows with empty status cells', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancellationPrns: stubCancellationPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      // 2 data rows + 1 total row
+      expect(result.cancellationTable.rows).toHaveLength(3)
+
+      // First data row
+      expect(result.cancellationTable.rows[0][0]).toStrictEqual({
+        text: 'TFR Facilities'
+      })
+      expect(result.cancellationTable.rows[0][1]).toStrictEqual({
+        text: '13 August 2025'
+      })
+      expect(result.cancellationTable.rows[0][2]).toStrictEqual({ text: 5 })
+      // Status cell should be empty
+      expect(result.cancellationTable.rows[0][3]).toStrictEqual({ text: '' })
+    })
+
+    it('should return cancellation table with total row', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancellationPrns: stubCancellationPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      const totalRow = result.cancellationTable.rows[2]
+      expect(totalRow[0].text).toBe('Total')
+      expect(totalRow[0].classes).toBe('govuk-!-font-weight-bold')
+      expect(totalRow[2].text).toBe(30) // 5 + 25
+      expect(totalRow[2].classes).toBe('govuk-!-font-weight-bold')
+    })
+
+    it('should return cancellation table with select links', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancellationPrns: stubCancellationPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancellationTable.rows[0][4].html).toContain('govuk-link')
+      expect(result.cancellationTable.rows[0][4].html).toContain(
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-cancel-001'
+      )
+    })
+
+    it('should return empty cancellation table when no cancellation PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancellationPrns: [],
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancellationTable.rows).toHaveLength(0)
+    })
+
+    it('should default to empty cancellation table when cancellationPrns not provided', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancellationTable.rows).toHaveLength(0)
     })
   })
 
