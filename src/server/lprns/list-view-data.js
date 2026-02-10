@@ -72,8 +72,7 @@ export function buildListViewData(
   })
 
   return {
-    pageTitle: localise('lprns:list:pageTitle', { noteTypePlural }),
-    heading: localise('lprns:list:pageTitle', { noteTypePlural }),
+    ...buildListLabels(localise, { noteType, noteTypePlural }),
     backUrl,
     createLink: {
       href: createUrl,
@@ -85,6 +84,16 @@ export function buildListViewData(
       hint: localise('lprns:list:balanceHint', { noteTypePlural })
     },
     hasCreatedPrns,
+    table,
+    cancellationTable,
+    issuedTable
+  }
+}
+
+function buildListLabels(localise, { noteType, noteTypePlural }) {
+  return {
+    pageTitle: localise('lprns:list:pageTitle', { noteTypePlural }),
+    heading: localise('lprns:list:pageTitle', { noteTypePlural }),
     selectHeading: localise('lprns:list:selectHeading', { noteType }),
     noPrnsCreatedText: localise('lprns:list:noPrnsCreated', { noteTypePlural }),
     tabs: {
@@ -102,10 +111,7 @@ export function buildListViewData(
     ),
     noPrnsText: localise('lprns:list:noPrns'),
     noIssuedText: localise('lprns:list:noIssuedPrns', { noteTypePlural }),
-    table,
-    cancellationTable,
-    issuedHeading: localise('lprns:list:issuedHeading', { noteTypePlural }),
-    issuedTable
+    issuedHeading: localise('lprns:list:issuedHeading', { noteTypePlural })
   }
 }
 
