@@ -447,6 +447,45 @@ describe('#listPrnsController', () => {
         expect(getByText(issuedPanel, /22 January 2026/)).toBeDefined()
       })
 
+      it('should render accepted PRNs in issued tab with green tag', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          ...mockPrns,
+          {
+            id: 'prn-004',
+            prnNumber: 'ER2699999',
+            issuedToOrganisation: {
+              id: 'producer-4',
+              name: 'Accepted Corp'
+            },
+            createdAt: '2026-01-20T00:00:00.000Z',
+            issuedAt: '2026-01-25T10:00:00.000Z',
+            tonnage: 40,
+            material: 'glass',
+            status: 'accepted'
+          }
+        ])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const issuedPanel = getByRole(body, 'main').querySelector('#issued')
+        const issuedTable = getByRole(issuedPanel, 'table')
+
+        expect(getByText(issuedTable, /ER2699999/)).toBeDefined()
+        expect(getByText(issuedTable, /Accepted Corp/)).toBeDefined()
+
+        const acceptedTag = issuedTable.querySelector('.govuk-tag--green')
+        expect(acceptedTag).not.toBeNull()
+        expect(acceptedTag?.textContent).toMatch(/Accepted/i)
+      })
+
       it('should show awaiting action content inside tabs when no issued PRNs', async ({
         server
       }) => {
