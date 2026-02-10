@@ -124,6 +124,7 @@
     "cancelHint": "If you delete or cancel a {{noteType}}, its tonnage will be added to your available waste balance.",
     "createLink": "Create a {{noteType}}",
     "awaitingAuthorisationHeading": "{{noteTypePlural}} awaiting authorisation",
+    "awaitingCancellationHeading": "{{noteTypePlural}} awaiting cancellation",
     "issuedHeading": "Issued {{noteTypePlural}}",
     "noPrnsCreated": "You have not created any {{noteTypePlural}}.",
     "noIssuedPrns": "No {{noteTypePlural}} have been issued yet.",

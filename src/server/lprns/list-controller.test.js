@@ -88,6 +88,30 @@ const mockPrns = [
   }
 ]
 
+const mockPrnsWithCancellation = [
+  ...mockPrns,
+  {
+    id: 'prn-cancel-001',
+    prnNumber: 'ER2699001',
+    issuedToOrganisation: { id: 'producer-4', name: 'TFR Facilities' },
+    createdAt: '2025-08-13T00:00:00.000Z',
+    issuedAt: '2025-08-14T00:00:00.000Z',
+    tonnage: 5,
+    material: 'glass',
+    status: 'awaiting_cancellation'
+  },
+  {
+    id: 'prn-cancel-002',
+    prnNumber: 'ER2699002',
+    issuedToOrganisation: { id: 'producer-5', name: 'Linton Construction' },
+    createdAt: '2025-08-07T00:00:00.000Z',
+    issuedAt: '2025-08-08T00:00:00.000Z',
+    tonnage: 25,
+    material: 'plastic',
+    status: 'awaiting_cancellation'
+  }
+]
+
 const reprocessorListUrl =
   '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes'
 const exporterListUrl =
@@ -353,6 +377,150 @@ describe('#listPrnsController', () => {
 
         // Should not show 'Issued' status PRNs in the awaiting action tab
         expect(queryByText(table, /^Issued$/)).toBeNull()
+      })
+    })
+
+    describe('awaiting cancellation section', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          mockPrnsWithCancellation
+        )
+      })
+
+      it('should render awaiting cancellation heading in awaiting action tab', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+
+        expect(
+          getByText(awaitingPanel, /PRNs awaiting cancellation/i)
+        ).toBeDefined()
+      })
+
+      it('should render cancellation PRN data in a separate table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+
+        expect(getByText(awaitingPanel, /TFR Facilities/)).toBeDefined()
+        expect(getByText(awaitingPanel, /Linton Construction/)).toBeDefined()
+      })
+
+      it('should render select links for cancellation PRN rows', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+        const tables = awaitingPanel.querySelectorAll('table')
+
+        // Should have two tables: authorisation and cancellation
+        expect(tables).toHaveLength(2)
+
+        // Cancellation table should have 2 data rows + 1 total row
+        const cancellationTable = tables[1]
+        const cancellationRows = cancellationTable.querySelectorAll('tbody tr')
+        expect(cancellationRows).toHaveLength(3)
+      })
+
+      it('should not render cancellation section when no awaiting_cancellation PRNs', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+
+        expect(queryByText(awaitingPanel, /awaiting cancellation/i)).toBeNull()
+      })
+
+      it('should not show awaiting_cancellation PRNs in the authorisation table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+        const tables = awaitingPanel.querySelectorAll('table')
+
+        // First table is the authorisation table — should still have 2 data rows + 1 total
+        const authorisationTable = tables[0]
+        const authRows = authorisationTable.querySelectorAll('tbody tr')
+        expect(authRows).toHaveLength(3)
+      })
+
+      it('should render tabs when only awaiting_cancellation PRNs exist', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
+          {
+            id: 'prn-cancel-only',
+            prnNumber: 'ER2699099',
+            issuedToOrganisation: {
+              id: 'producer-x',
+              name: 'Cancel Only Corp'
+            },
+            createdAt: '2025-09-01T00:00:00.000Z',
+            issuedAt: '2025-09-02T00:00:00.000Z',
+            tonnage: 10,
+            material: 'glass',
+            status: 'awaiting_cancellation'
+          }
+        ])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(main.querySelector('.govuk-tabs')).not.toBeNull()
       })
     })
 

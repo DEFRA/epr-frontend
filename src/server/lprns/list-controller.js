@@ -18,6 +18,16 @@ const getPrnsAwaitingAuthorisation = (prns) =>
       status: prn.status
     }))
 
+const getPrnsAwaitingCancellation = (prns) =>
+  prns
+    .filter((prn) => prn.status === 'awaiting_cancellation')
+    .map((prn) => ({
+      id: prn.id,
+      recipient: getDisplayName(prn.issuedToOrganisation),
+      createdAt: prn.createdAt,
+      tonnage: prn.tonnage
+    }))
+
 const getIssuedPrns = (prns) =>
   prns
     .filter(
@@ -88,6 +98,7 @@ export const listController = {
       accreditationId,
       registration,
       prns: getPrnsAwaitingAuthorisation(prns),
+      cancellationPrns: getPrnsAwaitingCancellation(prns),
       issuedPrns: getIssuedPrns(prns),
       hasCreatedPrns,
       wasteBalance

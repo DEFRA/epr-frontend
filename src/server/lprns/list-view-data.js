@@ -11,6 +11,7 @@ import { getStatusConfig } from '#server/lprns/helpers/get-status-config.js'
  * @param {string} options.accreditationId
  * @param {{wasteProcessingType: string}} options.registration
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
+ * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number}>} [options.cancellationPrns]
  * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.issuedPrns]
  * @param {boolean} options.hasCreatedPrns
  * @param {{availableAmount: number} | null} options.wasteBalance
@@ -24,6 +25,7 @@ export function buildListViewData(
     accreditationId,
     registration,
     prns,
+    cancellationPrns = [],
     issuedPrns = [],
     hasCreatedPrns,
     wasteBalance
@@ -45,6 +47,14 @@ export function buildListViewData(
     registrationId,
     accreditationId,
     prns,
+    localise
+  })
+
+  const cancellationTable = buildAwaitingCancellationTable(request, {
+    organisationId,
+    registrationId,
+    accreditationId,
+    cancellationPrns,
     localise
   })
 
@@ -82,9 +92,14 @@ export function buildListViewData(
       'lprns:list:awaitingAuthorisationHeading',
       { noteTypePlural }
     ),
+    awaitingCancellationHeading: localise(
+      'lprns:list:awaitingCancellationHeading',
+      { noteTypePlural }
+    ),
     noPrnsText: localise('lprns:list:noPrns'),
     noIssuedText: localise('lprns:list:noIssuedPrns', { noteTypePlural }),
     table,
+    cancellationTable,
     issuedHeading: localise('lprns:list:issuedHeading', { noteTypePlural }),
     issuedTable
   }
@@ -133,6 +148,72 @@ function buildAwaitingActionTable(
   }
 
   const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalRow = [
+    {
+      text: localise('lprns:list:table:totalLabel'),
+      classes: 'govuk-!-font-weight-bold'
+    },
+    { text: '' },
+    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: '' },
+    { text: '' }
+  ]
+
+  return { headings, rows: [...dataRows, totalRow] }
+}
+
+/**
+ * Build awaiting cancellation table with headings and data rows
+ * @param {Request} request
+ * @param {object} options
+ * @param {string} options.organisationId
+ * @param {string} options.registrationId
+ * @param {string} options.accreditationId
+ * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number}>} options.cancellationPrns
+ * @param {(key: string) => string} options.localise
+ * @returns {{headings: object, rows: Array<Array<{text?: string, html?: string, classes?: string}>>}}
+ */
+function buildAwaitingCancellationTable(
+  request,
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    cancellationPrns,
+    localise
+  }
+) {
+  const headings = {
+    recipient: localise('lprns:list:table:recipientHeading'),
+    createdAt: localise('lprns:list:table:dateHeading'),
+    tonnage: localise('lprns:list:table:tonnageHeading'),
+    status: localise('lprns:list:table:statusHeading'),
+    action: localise('lprns:list:table:actionHeading')
+  }
+
+  const selectText = localise('lprns:list:table:selectText')
+
+  const dataRows = cancellationPrns.map((prn) => {
+    const actionUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}`
+    )
+    return [
+      { text: prn.recipient },
+      { text: formatDateForDisplay(prn.createdAt) },
+      { text: prn.tonnage },
+      { text: '' },
+      { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
+    ]
+  })
+
+  if (dataRows.length === 0) {
+    return { headings, rows: [] }
+  }
+
+  const totalTonnage = cancellationPrns.reduce(
+    (sum, prn) => sum + prn.tonnage,
+    0
+  )
   const totalRow = [
     {
       text: localise('lprns:list:table:totalLabel'),
