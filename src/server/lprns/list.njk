@@ -82,7 +82,23 @@
                   ],
                   rows: table.rows
                 }) }}
-              {% else %}
+              {% endif %}
+
+              {% if cancellationTable.rows | length > 0 %}
+                <h2 class="govuk-heading-m">{{ awaitingCancellationHeading }}</h2>
+                {{ govukTable({
+                  head: [
+                    { text: cancellationTable.headings.recipient },
+                    { text: cancellationTable.headings.createdAt },
+                    { text: cancellationTable.headings.tonnage },
+                    { text: cancellationTable.headings.status },
+                    { text: cancellationTable.headings.action }
+                  ],
+                  rows: cancellationTable.rows
+                }) }}
+              {% endif %}
+
+              {% if table.rows | length === 0 and cancellationTable.rows | length === 0 %}
                 <p class="govuk-body">{{ noPrnsText }}</p>
               {% endif %}
             </div>
