@@ -70,6 +70,14 @@
       </form>
     {% endif %}
 
+    {% if cancelButton %}
+      {{ govukButton({
+        text: cancelButton.text,
+        href: cancelButton.href,
+        classes: "govuk-button--warning"
+      }) }}
+    {% endif %}
+
     {% if returnLink %}
       <p class="govuk-body">
         <a href="{{ returnLink.href }}" class="govuk-link">{{ returnLink.text }}</a>

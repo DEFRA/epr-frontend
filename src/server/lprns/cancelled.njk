@@ -1,0 +1,31 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-panel govuk-panel--confirmation">
+      <h1 class="govuk-panel__title">
+        {{ heading }}
+      </h1>
+      <div class="govuk-panel__body">
+        {{ statusLabel }}<br>
+        <strong>{{ statusValue }}</strong>
+      </div>
+    </div>
+
+    <h2 class="govuk-heading-m">{{ whatHappensNextHeading }}</h2>
+
+    <p class="govuk-body">
+      {{ wasteBalanceMessage }}
+    </p>
+
+    <p class="govuk-body">
+      <a href="{{ prnsPageLink.href }}" class="govuk-link">{{ prnsPageLink.text }}</a>
+    </p>
+
+    <p class="govuk-body">
+      <a href="{{ returnHomeLink.href }}" class="govuk-link">{{ returnHomeLink.text }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
