@@ -1,8 +1,17 @@
 // Print-specific styles for PRN/PERN view pages
-// Hides navigation elements and ensures clean PDF output
+// Hides navigation elements and ensures clean single-page PDF output
+//
+// Typography approach: GOV.UK headings mapped down one tier of the
+// desktop scale (XL→L, M→S). Body text uses GOV.UK mobile size (16px)
+// since print is a constrained medium similar to mobile viewports.
+//
 // stylelint-disable declaration-no-important -- print overrides require !important
 
 @media print {
+  @page {
+    margin: 10mm;
+  }
+
   // Hide header, navigation, and footer
   .govuk-header,
   .app-header,
@@ -15,17 +24,15 @@
     display: none !important;
   }
 
-  // Remove skip link from print
   .govuk-skip-link {
     display: none !important;
   }
 
-  // Generic class for hiding elements in print
   .epr-print-hide {
     display: none !important;
   }
 
-  // Ensure main content fills the page
+  // Layout: full page width, no container constraints
   .govuk-width-container {
     max-width: none;
     margin: 0;
@@ -36,12 +43,37 @@
     padding-top: 0;
   }
 
-  // Remove margins from headings for tighter layout
+  .govuk-grid-column-two-thirds {
+    width: 100% !important;
+    max-width: none;
+  }
+
+  // Headings: map down one GOV.UK desktop tier
   .govuk-heading-xl {
+    font-size: 36px !important; // GOV.UK heading-l
     margin-top: 0;
   }
 
-  // Ensure regulator logos print correctly
+  .govuk-heading-m {
+    font-size: 19px !important; // GOV.UK heading-s
+  }
+
+  // Body text: GOV.UK mobile size for constrained print medium
+  // Summary list keys/values need explicit override as GOV.UK
+  // sets font-size directly on these elements
+  .govuk-body,
+  .govuk-summary-list__key,
+  .govuk-summary-list__value {
+    font-size: 16px !important;
+  }
+
+  // Allow summary lists to flow across pages;
+  // keep individual rows together
+  .govuk-summary-list__row {
+    break-inside: avoid;
+  }
+
+  // Ensure regulator logos and status tags print with colours
   .epr-regulator-logos {
     display: flex !important;
     break-inside: avoid;
@@ -52,22 +84,16 @@
     }
   }
 
-  // Ensure summary lists don't break across pages
-  .govuk-summary-list {
-    break-inside: avoid;
+  .govuk-tag {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
-  // Remove interactive elements from print
+  // Remove interactive elements
   .govuk-button,
   .govuk-button-group,
   form {
     display: none !important;
-  }
-
-  // Ensure tags print with their colours
-  .govuk-tag {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
   }
 }
 
