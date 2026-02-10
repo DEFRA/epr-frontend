@@ -91,11 +91,6 @@ export const cancelPostController = {
         session.idToken
       )
 
-      request.yar.set('prnCancelled', {
-        id: prnId,
-        prnNumber: prn.prnNumber
-      })
-
       return h.redirect(`${basePath}/${prnId}/cancelled`)
     } catch (error) {
       request.logger.error({ error }, 'Failed to cancel PRN')
