@@ -4,6 +4,7 @@
 {% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
 
@@ -28,6 +29,12 @@
       {% endif %}
 
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+      {% if wasteBalanceText %}
+        {{ govukInsetText({
+          text: wasteBalanceText
+        }) }}
+      {% endif %}
 
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />

@@ -180,7 +180,7 @@ describe('#viewController', () => {
 
         // Check PRN ID is displayed (appears in caption and PRN number field)
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toBe('PRN')
+        expect(heading.textContent).toBe('Packaging Waste Recycling Note')
         // Check issued to
         expect(getByText(main, /Acme Packaging Ltd/i)).toBeDefined()
         // Check tonnage
@@ -470,9 +470,11 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        // Check heading shows PERN
+        // Check heading shows PERN long form
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toBe('PERN')
+        expect(heading.textContent).toBe(
+          'Packaging Waste Export Recycling Note'
+        )
 
         // Check return link text
         expect(getByText(main, /Return to PERN list/i)).toBeDefined()
@@ -678,9 +680,9 @@ describe('#viewController', () => {
         const logos = main.querySelector('.epr-regulator-logos')
         expect(logos).toBeNull()
 
-        // Heading shows PRN for draft
+        // Heading shows long form for draft
         const heading = main.querySelector('.govuk-heading-xl')
-        expect(heading.textContent).toBe('PRN')
+        expect(heading.textContent).toBe('Packaging Waste Recycling Note')
       })
 
       it('returns 404 when registration not found', async ({ server }) => {

@@ -97,7 +97,8 @@ function buildActionViewData({
   registrationId,
   request
 }) {
-  const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
+  const { isExporter, noteType, noteTypeFull } =
+    getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   const displayMaterial = getLumpyDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'
@@ -124,7 +125,7 @@ function buildActionViewData({
 
   const viewData = {
     pageTitle: `${noteType} ${prn.id}`,
-    heading: noteType,
+    heading: noteTypeFull,
     insetText: localise('lprns:action:insetText', { noteType }),
     viewLink: {
       text: localise('lprns:action:viewLink', { noteType }),

@@ -13,6 +13,7 @@ const MIN_TONNAGE = 1
 
 const ERROR_KEYS = Object.freeze({
   notesTooLong: 'notesTooLong',
+  recipientInvalid: 'recipientInvalid',
   recipientRequired: 'recipientRequired',
   tonnageGreaterThanZero: 'tonnageGreaterThanZero',
   tonnageWholeNumber: 'tonnageWholeNumber'
@@ -101,6 +102,26 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
+ * @param {object} result - The created PRN draft from the backend
+ * @param {object} issuedToOrganisation - The recipient organisation
+ * @param {string} notes - Issuer notes
+ */
+function buildPrnDraftSession(result, issuedToOrganisation, notes) {
+  return {
+    id: result.id,
+    tonnage: result.tonnage,
+    tonnageInWords: tonnageToWords(result.tonnage),
+    material: result.material,
+    status: result.status,
+    recipientName: getDisplayName(issuedToOrganisation),
+    notes: notes || '',
+    wasteProcessingType: result.wasteProcessingType,
+    processToBeUsed: result.processToBeUsed,
+    isDecemberWaste: result.isDecemberWaste ?? false
+  }
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const postController = {
@@ -115,17 +136,17 @@ export const postController = {
         const { organisationId, registrationId } = request.params
         const session = request.auth.credentials
 
-        const { registration } = await fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        )
-
         const { t: localise } = request
         const { errors, errorSummary } = buildValidationErrors(
           error,
           localise,
-          registration.wasteProcessingType
+          request.payload.wasteProcessingType
+        )
+
+        const { registration } = await fetchRegistrationAndAccreditation(
+          organisationId,
+          registrationId,
+          session.idToken
         )
 
         const { organisations } =
@@ -162,7 +183,37 @@ export const postController = {
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      throw Boom.badRequest('Selected recipient organisation not found')
+      const { t: localise } = request
+
+      const noteType = getNoteType(request.payload.wasteProcessingType)
+
+      const message = localise(`lprns:errors:${ERROR_KEYS.recipientInvalid}`, {
+        noteType
+      })
+
+      const errors = { recipient: { text: message } }
+      const errorSummary = {
+        title: localise('lprns:errorSummaryTitle'),
+        list: [{ text: message, href: '#recipient' }]
+      }
+
+      const { registration } = await fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      )
+
+      const viewData = buildCreatePrnViewData(request, {
+        registration,
+        recipients: mapToSelectOptions(organisations)
+      })
+
+      return h.view('lprns/create', {
+        ...viewData,
+        errors,
+        errorSummary,
+        formValues: request.payload
+      })
     }
 
     const issuedToOrganisation = {
@@ -187,18 +238,10 @@ export const postController = {
       )
 
       // Store PRN data in session for check/confirm page
-      request.yar.set('prnDraft', {
-        id: result.id,
-        tonnage: result.tonnage,
-        tonnageInWords: tonnageToWords(result.tonnage),
-        material: result.material,
-        status: result.status,
-        recipientName: getDisplayName(issuedToOrganisation),
-        notes: notes || '',
-        wasteProcessingType: result.wasteProcessingType,
-        processToBeUsed: result.processToBeUsed,
-        isDecemberWaste: result.isDecemberWaste ?? false
-      })
+      request.yar.set(
+        'prnDraft',
+        buildPrnDraftSession(result, issuedToOrganisation, notes)
+      )
 
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`

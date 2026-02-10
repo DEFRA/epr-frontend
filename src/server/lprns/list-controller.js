@@ -3,7 +3,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
 
@@ -64,12 +64,14 @@ export const listController = {
     }
 
     const [wasteBalance, prns] = await Promise.all([
-      getWasteBalance(
-        organisationId,
-        registration.accreditationId,
-        session.idToken,
-        request.logger
-      ),
+      registration.accreditationId
+        ? getWasteBalance(
+            organisationId,
+            registration.accreditationId,
+            session.idToken,
+            request.logger
+          )
+        : null,
       fetchPackagingRecyclingNotes(
         organisationId,
         registrationId,
@@ -92,29 +94,6 @@ export const listController = {
     })
 
     return h.view('lprns/list', viewData)
-  }
-}
-
-async function getWasteBalance(
-  organisationId,
-  accreditationId,
-  idToken,
-  logger
-) {
-  if (!accreditationId) {
-    return null
-  }
-
-  try {
-    const wasteBalanceMap = await fetchWasteBalances(
-      organisationId,
-      [accreditationId],
-      idToken
-    )
-    return wasteBalanceMap[accreditationId] ?? null
-  } catch (error) {
-    logger.error({ error }, 'Failed to fetch waste balance')
-    return null
   }
 }
 
