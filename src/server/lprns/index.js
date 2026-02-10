@@ -1,4 +1,8 @@
 import { actionController } from './action-controller.js'
+import {
+  cancelGetController,
+  cancelPostController
+} from './cancel-controller.js'
 import { controller } from './controller.js'
 import { createdController } from './created-controller.js'
 import {
@@ -80,6 +84,16 @@ export const lprns = {
           ...discardPostController,
           method: 'POST',
           path: `${basePath}/{prnId}/discard`
+        },
+        {
+          ...cancelGetController,
+          method: 'GET',
+          path: `${basePath}/{prnId}/cancel`
+        },
+        {
+          ...cancelPostController,
+          method: 'POST',
+          path: `${basePath}/{prnId}/cancel`
         },
         {
           ...issueController,
