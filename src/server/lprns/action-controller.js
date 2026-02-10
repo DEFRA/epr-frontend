@@ -103,6 +103,7 @@ function buildActionViewData({
   const displayMaterial = getLumpyDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'
   const isAwaitingAuthorisation = prn.status === 'awaiting_authorisation'
+  const isAwaitingCancellation = prn.status === 'awaiting_cancellation'
   const statusConfig = getStatusConfig(prn.status, localise)
 
   const prnDetailRows = buildActionPrnDetailRows({
@@ -146,6 +147,12 @@ function buildActionViewData({
       ? {
           text: localise('lprns:action:deleteLink', { noteType }),
           href: request.localiseUrl(`${basePath}/${prnId}/delete`)
+        }
+      : null,
+    cancelButton: isAwaitingCancellation
+      ? {
+          text: localise('lprns:action:cancelButton', { noteType }),
+          href: request.localiseUrl(`${basePath}/${prnId}/cancel`)
         }
       : null,
     returnLink: {

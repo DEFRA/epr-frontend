@@ -579,6 +579,82 @@ describe('#actionController', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
+    it('displays Cancel PRN button when status is awaiting_cancellation', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        ...mockPrnAwaitingAuth,
+        status: 'awaiting_cancellation'
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      const cancelButton = getByRole(main, 'button', {
+        name: /Cancel PRN/i
+      })
+      expect(cancelButton).toBeDefined()
+      expect(cancelButton.classList.contains('govuk-button--warning')).toBe(
+        true
+      )
+      expect(cancelButton.getAttribute('href')).toBe(
+        `${basePath}/${prnId}/cancel`
+      )
+    })
+
+    it('does not display Issue or Delete buttons when status is awaiting_cancellation', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        ...mockPrnAwaitingAuth,
+        status: 'awaiting_cancellation'
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(queryByRole(main, 'button', { name: /Issue/i })).toBeNull()
+      expect(queryByRole(main, 'button', { name: /Delete/i })).toBeNull()
+    })
+
+    it('displays Cancel PERN button for exporter with awaiting_cancellation status', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        fixtureExporter
+      )
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        ...mockPernAwaitingAuth,
+        status: 'awaiting_cancellation'
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: pernActionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByRole(main, 'button', { name: /Cancel PERN/i })).toBeDefined()
+    })
+
     it('displays return link to PRN list', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
