@@ -7,9 +7,27 @@
     "viewLink": "View {{noteType}} (opens in a new tab)",
     "issueButton": "Issue {{noteType}}",
     "deleteLink": "Delete {{noteType}}",
+    "cancelButton": "Cancel {{noteType}}",
     "returnLink": "Return to {{noteType}} list"
   },
   "buyerLabel": "Buyer",
+  "cancel": {
+    "pageTitle": "Cancel {{noteType}}",
+    "heading": "Confirm cancellation of this {{noteType}}",
+    "bodyText": "The {{noteType}}'s tonnage will be added to your available waste balance.",
+    "warningText": "This action cannot be undone.",
+    "confirmButton": "Confirm cancellation"
+  },
+  "cancelled": {
+    "pageTitle": "{{noteType}} cancelled",
+    "heading": "{{noteType}} cancelled",
+    "statusLabel": "Status:",
+    "statusValue": "Cancelled",
+    "whatHappensNextHeading": "What happens next",
+    "wasteBalanceMessage": "Your available waste balance has been updated.",
+    "prnsPageLink": "{{noteTypePlural}} page",
+    "returnHomeLink": "Return to home"
+  },
   "create": {
     "caption": "Create {{noteType}}",
     "checkHeading": "Check before creating {{noteType}}",
