@@ -11,7 +11,6 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @typedef {object} CreatePrnPayload
  * @property {IssuedToOrganisation} issuedToOrganisation - The recipient organisation
  * @property {number} tonnage - Tonnage amount (whole number)
- * @property {string} material - Material type (e.g. 'glass', 'plastic')
  * @property {string} [notes] - Optional notes from issuer
  */
 
