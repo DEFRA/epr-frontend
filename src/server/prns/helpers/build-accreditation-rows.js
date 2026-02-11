@@ -30,7 +30,7 @@ function buildAccreditationRows({
 
   if (!isExporter) {
     rows.push({
-      key: { text: localise('prns:accreditationAddressLabel') },
+      key: { text: localise('prns:reprocessingSiteAddressLabel') },
       value: { text: formatAddress(registration.site?.address) }
     })
   }
