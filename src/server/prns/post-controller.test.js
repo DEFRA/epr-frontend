@@ -511,6 +511,23 @@ describe('#postCreatePrnController', () => {
 
         expect(selectedOption.value).toBe(validPayload.recipient)
       })
+
+      it('should reject a tampered material value', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, material: 'unobtainium', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(createPrn).not.toHaveBeenCalled()
+      })
     })
 
     describe('when API call fails', () => {

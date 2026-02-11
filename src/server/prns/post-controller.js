@@ -4,7 +4,7 @@ import { getDisplayName } from '#server/common/helpers/waste-organisations/get-d
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import Boom from '@hapi/boom'
 import Joi from 'joi'
-import { NOTES_MAX_LENGTH } from './constants.js'
+import { MATERIALS, NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
@@ -37,7 +37,9 @@ const payloadSchema = Joi.object({
     .messages({
       'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
-  material: Joi.string().required(),
+  material: Joi.string()
+    .valid(...MATERIALS)
+    .required(),
   nation: Joi.string().required(),
   wasteProcessingType: Joi.string().required()
 })
