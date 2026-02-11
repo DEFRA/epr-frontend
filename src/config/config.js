@@ -307,7 +307,7 @@ export const config = convict({
       doc: 'Feature Flag: PRNs',
       format: Boolean,
       default: false,
-      env: 'FEATURE_FLAG_PRNS'
+      env: 'FEATURE_FLAG_PACKAGING_RECYCLING_NOTES'
     }
   }
 })
