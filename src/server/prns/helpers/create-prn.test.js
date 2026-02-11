@@ -21,7 +21,6 @@ describe(createPrn, () => {
       name: 'Acme Packaging Ltd'
     },
     tonnage: 100,
-    material: 'plastic',
     notes: 'Test notes'
   }
 
