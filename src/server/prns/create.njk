@@ -81,6 +81,7 @@
             text: recipient.hint
           },
           items: recipient.items,
+          value: formValues.recipient if formValues else "",
           errorMessage: errors.recipient if errors else null
         }) }}
 
