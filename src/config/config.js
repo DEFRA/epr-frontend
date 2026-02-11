@@ -303,11 +303,11 @@ export const config = convict({
     }
   },
   featureFlags: {
-    lprns: {
+    prns: {
       doc: 'Feature Flag: PRNs',
       format: Boolean,
       default: false,
-      env: 'FEATURE_FLAG_LPRNS'
+      env: 'FEATURE_FLAG_PRNS'
     }
   }
 })

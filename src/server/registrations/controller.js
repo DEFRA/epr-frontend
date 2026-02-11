@@ -143,7 +143,7 @@ function getPrnViewData(
   const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
-    isEnabled: config.get('featureFlags.lprns'),
+    isEnabled: config.get('featureFlags.prns'),
     description: localise('registrations:notes.description', {
       noteTypePlural
     }),
