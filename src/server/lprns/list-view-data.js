@@ -59,7 +59,9 @@ export function buildListViewData(
     accreditationId,
     prns: cancellationPrns,
     localise,
-    buildStatusCell: () => ({ text: '' })
+    buildStatusCell: (prn, l) => ({
+      html: buildStatusTagHtml(prn.status, l)
+    })
   })
 
   const issuedTable = buildIssuedTable(request, {

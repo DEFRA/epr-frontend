@@ -133,7 +133,6 @@
       "awaitingAcceptance": "Awaiting acceptance",
       "awaitingCancellation": "Awaiting cancellation",
       "accepted": "Accepted",
-      "issued": "Issued",
       "cancelled": "Cancelled"
     },
     "pageTitle": "{{noteTypePlural}}",

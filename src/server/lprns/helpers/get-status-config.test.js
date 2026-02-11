@@ -7,7 +7,6 @@ const localise = (key) => {
     'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
     'lprns:list:status:awaitingCancellation': 'Awaiting cancellation',
     'lprns:list:status:accepted': 'Accepted',
-    'lprns:list:status:issued': 'Issued',
     'lprns:list:status:cancelled': 'Cancelled'
   }
   return translations[key] ?? key
