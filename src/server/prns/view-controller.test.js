@@ -85,7 +85,6 @@ const validPayload = {
   tonnage: '100',
   recipient: 'producer-1',
   notes: 'Test notes',
-  material: 'plastic',
   nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
