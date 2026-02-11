@@ -17,7 +17,7 @@ export const submitSummaryLogController = {
 
     const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
 
-    if (summaryLogsSession.freshData) {
+    if (summaryLogsSession.freshDataMap?.[summaryLogId]) {
       return h.redirect(redirectUrl)
     }
 
@@ -33,7 +33,10 @@ export const submitSummaryLogController = {
 
       request.yar.set(sessionNames.summaryLogs, {
         ...summaryLogsSession,
-        freshData: responseData
+        freshDataMap: {
+          ...summaryLogsSession.freshDataMap,
+          [summaryLogId]: responseData
+        }
       })
 
       return h.redirect(redirectUrl)
