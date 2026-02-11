@@ -187,7 +187,8 @@ describe('#submitSummaryLogController', () => {
       payload: { crumb }
     })
 
-    const sessionCookie = firstResponse.headers['set-cookie']
+    const cookies = [firstResponse.headers['set-cookie']].flat()
+    const sessionCookie = cookies
       .map((c) => c.split(';')[0])
       .find((c) => c.startsWith('session='))
 
