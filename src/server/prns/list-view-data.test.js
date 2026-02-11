@@ -31,8 +31,7 @@ const createMockRequest = () => ({
       'prns:list:status:cancelled': 'Cancelled',
       'prns:list:issuedHeading': `Issued ${params.noteTypePlural}`,
       'prns:list:issuedTable:noteNumberHeading': `${params.noteType} number`,
-      'prns:list:issuedTable:recipientHeading':
-        'Producer or compliance scheme',
+      'prns:list:issuedTable:recipientHeading': 'Producer or compliance scheme',
       'prns:list:issuedTable:dateIssuedHeading': 'Date issued',
       'prns:list:issuedTable:statusHeading': 'Status',
       'prns:list:issuedTable:actionHeading': 'View in new tab',
