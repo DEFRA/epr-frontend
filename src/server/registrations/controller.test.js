@@ -750,11 +750,11 @@ describe('#accreditationDashboardController', () => {
 
     describe('when feature flag is disabled', () => {
       beforeAll(() => {
-        config.set('featureFlags.lprns', false)
+        config.set('featureFlags.prns', false)
       })
 
       afterAll(() => {
-        config.reset('featureFlags.lprns')
+        config.reset('featureFlags.prns')
       })
 
       it('should display prn card with not available text', async ({
@@ -795,11 +795,11 @@ describe('#accreditationDashboardController', () => {
 
     describe('when feature flag is enabled', () => {
       beforeAll(() => {
-        config.set('featureFlags.lprns', true)
+        config.set('featureFlags.prns', true)
       })
 
       afterAll(() => {
-        config.reset('featureFlags.lprns')
+        config.reset('featureFlags.prns')
       })
 
       it.for([
