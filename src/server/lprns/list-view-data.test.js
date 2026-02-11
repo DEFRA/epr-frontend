@@ -27,6 +27,7 @@ const createMockRequest = () => ({
       'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
       'lprns:list:status:issued': 'Issued',
+      'lprns:list:status:awaitingCancellation': 'Awaiting cancellation',
       'lprns:list:status:cancelled': 'Cancelled',
       'lprns:list:issuedHeading': `Issued ${params.noteTypePlural}`,
       'lprns:list:issuedTable:noteNumberHeading': `${params.noteType} number`,
@@ -64,13 +65,15 @@ const stubCancellationPrns = [
     id: 'prn-cancel-001',
     recipient: 'TFR Facilities',
     createdAt: '2025-08-13',
-    tonnage: 5
+    tonnage: 5,
+    status: 'awaiting_cancellation'
   },
   {
     id: 'prn-cancel-002',
     recipient: 'Linton Construction',
     createdAt: '2025-08-07',
-    tonnage: 25
+    tonnage: 25,
+    status: 'awaiting_cancellation'
   }
 ]
 
@@ -656,7 +659,7 @@ describe('#buildListViewData', () => {
       expect(result.cancellationTable.headings.status).toBe('Status')
     })
 
-    it('should return cancellation table rows with empty status cells', () => {
+    it('should return cancellation table rows with status tags', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
         registrationId: 'reg-001',
@@ -679,8 +682,9 @@ describe('#buildListViewData', () => {
         text: '13 August 2025'
       })
       expect(result.cancellationTable.rows[0][2]).toStrictEqual({ text: 5 })
-      // Status cell should be empty
-      expect(result.cancellationTable.rows[0][3]).toStrictEqual({ text: '' })
+      expect(result.cancellationTable.rows[0][3]).toStrictEqual({
+        html: '<strong class="govuk-tag govuk-tag--yellow epr-tag--no-max-width">Awaiting cancellation</strong>'
+      })
     })
 
     it('should return cancellation table with total row', () => {

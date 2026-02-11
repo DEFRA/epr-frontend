@@ -451,6 +451,29 @@ describe('#listPrnsController', () => {
         expect(cancellationRows).toHaveLength(3)
       })
 
+      it('should render awaiting cancellation status tag in cancellation table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const awaitingPanel = main.querySelector('#awaiting-action')
+        const tables = awaitingPanel.querySelectorAll('table')
+        const cancellationTable = tables[1]
+
+        const statusTags =
+          cancellationTable.querySelectorAll('.govuk-tag--yellow')
+        expect(statusTags).toHaveLength(2)
+        expect(statusTags[0].textContent).toMatch(/Awaiting cancellation/i)
+        expect(statusTags[1].textContent).toMatch(/Awaiting cancellation/i)
+      })
+
       it('should not render cancellation section when no awaiting_cancellation PRNs', async ({
         server
       }) => {
