@@ -491,6 +491,45 @@ describe('#postCreatePrnController', () => {
 
         expect(notesField.value).toBe('Test notes')
       })
+
+      it('should preserve recipient selection on validation error', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const selectedOption = body.querySelector('#recipient option[selected]')
+
+        expect(selectedOption.value).toBe(validPayload.recipient)
+      })
+
+      it('should reject a tampered material value', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, material: 'unobtainium', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(createPrn).not.toHaveBeenCalled()
+      })
     })
 
     describe('waste balance on error', () => {
