@@ -1,4 +1,16 @@
 {
+  "error": {
+    "pageTitle": "Something has gone wrong",
+    "heading": "Something has gone wrong",
+    "introText": "Something went wrong while you were using the service.",
+    "causesIntro": "It could be because",
+    "causesConcurrentUse": "someone else from your business is using the service at the same time as you",
+    "causesTechnicalProblem": "there's a technical problem with our service",
+    "whatNextHeading": "What you can do next",
+    "homePagePrefix": "You can try to complete your task again by returning to your",
+    "homePageLink": "home page",
+    "reportText": "If you have received this message more than once today, you can report the problem to us."
+  },
   "pageTitle": "Home: {{name}}",
   "table": {
     "titleReprocessor": "Select site and material",

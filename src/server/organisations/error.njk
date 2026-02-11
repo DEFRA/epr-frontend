@@ -1,0 +1,35 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    <p class="govuk-body">{{ introText }}</p>
+
+    <p class="govuk-body">{{ causesIntro }}:</p>
+    <ul class="govuk-list govuk-list--bullet">
+      <li>{{ causesConcurrentUse }}</li>
+      <li>{{ causesTechnicalProblem }}</li>
+    </ul>
+
+    <h2 class="govuk-heading-m">{{ whatNextHeading }}</h2>
+
+    <p class="govuk-body">
+      {{ homePageText.prefix }} <a href="{{ homePageText.link.href }}" class="govuk-link">{{ homePageText.link.text }}</a>.
+    </p>
+
+    <p class="govuk-body">{{ reportText }}</p>
+
+    <p class="govuk-body">
+      {{ emailLabel }} <a href="mailto:{{ email }}" class="govuk-link">{{ email }}</a>
+    </p>
+
+    <p class="govuk-body">
+      {{ phoneLabel }} {{ phone }}
+    </p>
+
+    <p class="govuk-body">{{ hours }}</p>
+  </div>
+</div>
+{% endblock %}

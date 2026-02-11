@@ -43,6 +43,7 @@ const issueUrl = `/organisations/${organisationId}/registrations/${registrationI
 const actionUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
 const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
 const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
+const errorUrl = `/organisations/${organisationId}/error`
 
 const mockPrnIssued = {
   id: 'prn-789',
@@ -142,7 +143,7 @@ describe('#issueController', () => {
       expect(headers.location).toBe(`${actionUrl}?error=issue_failed`)
     })
 
-    it('redirects to action page with error when backend returns 409 conflict', async ({
+    it('redirects to error page when backend returns 409 conflict', async ({
       server
     }) => {
       const Boom = await import('@hapi/boom')
@@ -165,7 +166,7 @@ describe('#issueController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(`${actionUrl}?error=insufficient_balance`)
+      expect(headers.location).toBe(errorUrl)
     })
 
     it('redirects to action page with issue_failed error for non-conflict Boom errors', async ({
