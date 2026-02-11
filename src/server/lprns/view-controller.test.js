@@ -132,7 +132,7 @@ const mockPernFromBackend = {
   issuedToOrganisation: { id: 'export-1', name: 'Export Solutions Ltd' },
   tonnage: 50,
   material: 'glass',
-  status: 'issued',
+  status: 'awaiting_acceptance',
   createdAt: '2026-01-20T14:30:00.000Z',
   notes: null,
   isDecemberWaste: false,
@@ -614,10 +614,10 @@ describe('#viewController', () => {
         expect(html).not.toContain('Accreditation address')
       })
 
-      it('displays issued status with blue tag', async ({ server }) => {
+      it('displays accepted status with green tag', async ({ server }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockPrnFromBackend,
-          status: 'issued'
+          status: 'accepted'
         })
 
         const { result } = await server.inject({
@@ -630,9 +630,9 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        const tag = main.querySelector('.govuk-tag--blue')
+        const tag = main.querySelector('.govuk-tag--green')
         expect(tag).toBeDefined()
-        expect(tag.textContent.trim()).toBe('Issued')
+        expect(tag.textContent.trim()).toBe('Accepted')
       })
 
       it('displays cancelled status with red tag', async ({ server }) => {

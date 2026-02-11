@@ -26,7 +26,7 @@ const createMockRequest = () => ({
       'lprns:list:noPrnsCreated': `You have not created any ${params.noteTypePlural}.`,
       'lprns:list:status:awaitingAuthorisation': 'Awaiting authorisation',
       'lprns:list:status:awaitingAcceptance': 'Awaiting acceptance',
-      'lprns:list:status:issued': 'Issued',
+      'lprns:list:status:accepted': 'Accepted',
       'lprns:list:status:awaitingCancellation': 'Awaiting cancellation',
       'lprns:list:status:cancelled': 'Cancelled',
       'lprns:list:issuedHeading': `Issued ${params.noteTypePlural}`,
@@ -56,7 +56,7 @@ const stubPrns = [
     recipient: 'BigCo Waste Solutions',
     createdAt: '2026-01-18',
     tonnage: 120,
-    status: 'issued'
+    status: 'awaiting_authorisation'
   }
 ]
 

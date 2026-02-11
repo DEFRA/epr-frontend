@@ -29,10 +29,6 @@ function getStatusConfig(status, localise) {
       text: localise('lprns:list:status:accepted'),
       class: TAG_CLASS_GREEN
     },
-    issued: {
-      text: localise('lprns:list:status:issued'),
-      class: TAG_CLASS_BLUE
-    },
     cancelled: {
       text: localise('lprns:list:status:cancelled'),
       class: TAG_CLASS_RED
