@@ -43,9 +43,7 @@
     "recipientLabel": "Enter who this {{noteType}} will be issued to",
     "submitButton": "Continue",
     "successHeading": "{{noteType}} created",
-    "successNextStepsText": "Your {{noteType}} has been created as a draft. You can view and manage it from your registration dashboard.",
     "successPageTitle": "{{noteType}} created",
-    "successTonnageLabel": "Tonnage",
     "tonnageLabel": "Enter {{noteType}} tonnage",
     "wasteBalanceText": "Your waste balance available for creating {{noteTypePlural}} is {{balance}} tonnes."
   },
