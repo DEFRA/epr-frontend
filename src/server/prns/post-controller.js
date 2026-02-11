@@ -1,10 +1,11 @@
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import Boom from '@hapi/boom'
 import Joi from 'joi'
-import { NOTES_MAX_LENGTH } from './constants.js'
+import { MATERIALS, NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
@@ -37,7 +38,9 @@ const payloadSchema = Joi.object({
     .messages({
       'string.max': `Notes must be ${NOTES_MAX_LENGTH} characters or fewer`
     }),
-  material: Joi.string().required(),
+  material: Joi.string()
+    .valid(...MATERIALS)
+    .required(),
   nation: Joi.string().required(),
   wasteProcessingType: Joi.string().required()
 })
@@ -122,6 +125,56 @@ function buildPrnDraftSession(result, issuedToOrganisation, notes) {
 }
 
 /**
+ * Re-render the create form when the selected recipient is not
+ * found in the organisations list.
+ */
+async function handleInvalidRecipient(request, h, organisations) {
+  const { organisationId, registrationId, accreditationId } = request.params
+  const session = request.auth.credentials
+  const { t: localise } = request
+
+  const noteType = getNoteType(request.payload.wasteProcessingType)
+  const message = localise(`prns:errors:${ERROR_KEYS.recipientInvalid}`, {
+    noteType
+  })
+
+  const errors = { recipient: { text: message } }
+  const errorSummary = {
+    title: localise('prns:errorSummaryTitle'),
+    list: [{ text: message, href: '#recipient' }]
+  }
+
+  const [{ registration }, wasteBalance] = await Promise.all([
+    fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    ),
+    getWasteBalance(
+      organisationId,
+      accreditationId,
+      session.idToken,
+      request.logger
+    )
+  ])
+
+  const viewData = buildCreatePrnViewData(request, {
+    organisationId,
+    recipients: mapToSelectOptions(organisations),
+    registration,
+    registrationId,
+    wasteBalance
+  })
+
+  return h.view('prns/create', {
+    ...viewData,
+    errors,
+    errorSummary,
+    formValues: request.payload
+  })
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const postController = {
@@ -133,7 +186,8 @@ export const postController = {
           throw Boom.notFound()
         }
 
-        const { organisationId, registrationId } = request.params
+        const { organisationId, registrationId, accreditationId } =
+          request.params
         const session = request.auth.credentials
 
         const { t: localise } = request
@@ -143,18 +197,28 @@ export const postController = {
           request.payload.wasteProcessingType
         )
 
-        const { registration } = await fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        )
-
-        const { organisations } =
-          await request.wasteOrganisationsService.getOrganisations()
+        const [{ registration }, { organisations }, wasteBalance] =
+          await Promise.all([
+            fetchRegistrationAndAccreditation(
+              organisationId,
+              registrationId,
+              session.idToken
+            ),
+            request.wasteOrganisationsService.getOrganisations(),
+            getWasteBalance(
+              organisationId,
+              accreditationId,
+              session.idToken,
+              request.logger
+            )
+          ])
 
         const viewData = buildCreatePrnViewData(request, {
+          organisationId,
+          recipients: mapToSelectOptions(organisations),
           registration,
-          recipients: mapToSelectOptions(organisations)
+          registrationId,
+          wasteBalance
         })
 
         return h
@@ -183,37 +247,7 @@ export const postController = {
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      const { t: localise } = request
-
-      const noteType = getNoteType(request.payload.wasteProcessingType)
-
-      const message = localise(`prns:errors:${ERROR_KEYS.recipientInvalid}`, {
-        noteType
-      })
-
-      const errors = { recipient: { text: message } }
-      const errorSummary = {
-        title: localise('prns:errorSummaryTitle'),
-        list: [{ text: message, href: '#recipient' }]
-      }
-
-      const { registration } = await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      )
-
-      const viewData = buildCreatePrnViewData(request, {
-        registration,
-        recipients: mapToSelectOptions(organisations)
-      })
-
-      return h.view('prns/create', {
-        ...viewData,
-        errors,
-        errorSummary,
-        formValues: request.payload
-      })
+      return handleInvalidRecipient(request, h, organisations)
     }
 
     const issuedToOrganisation = {
