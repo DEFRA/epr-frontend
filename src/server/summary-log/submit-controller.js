@@ -13,10 +13,17 @@ export const submitSummaryLogController = {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
+    const redirectUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+
+    const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
+
+    if (summaryLogsSession.freshData) {
+      return h.redirect(redirectUrl)
+    }
+
     const session = request.auth.credentials
 
     try {
-      // Submit the summary log to the backend
       const responseData = await submitSummaryLog(
         organisationId,
         registrationId,
@@ -24,17 +31,12 @@ export const submitSummaryLogController = {
         session.idToken
       )
 
-      // Store response data in session to prevent race condition
-      const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
       request.yar.set(sessionNames.summaryLogs, {
         ...summaryLogsSession,
         freshData: responseData
       })
 
-      // Redirect to GET route
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-      )
+      return h.redirect(redirectUrl)
     } catch (err) {
       if (err.output?.statusCode === statusCodes.conflict) {
         return h.view(UPLOAD_CONFLICT_VIEW, {

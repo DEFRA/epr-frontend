@@ -114,9 +114,10 @@
 
     <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
       <input type="hidden" name="crumb" value="{{ crumb }}" />
-      <button type="submit" class="govuk-button" data-module="govuk-button">
-        {{ localise('summary-log:confirmButton') }}
-      </button>
+      {{ govukButton({
+        text: localise('summary-log:confirmButton'),
+        preventDoubleClick: true
+      }) }}
     </form>
   </div>
 </div>
