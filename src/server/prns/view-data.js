@@ -41,7 +41,6 @@ export function buildCreatePrnViewData(
       value: material
     },
     hiddenFields: {
-      material: registration.material,
       nation: registration.nation || 'england',
       wasteProcessingType: registration.wasteProcessingType
     },

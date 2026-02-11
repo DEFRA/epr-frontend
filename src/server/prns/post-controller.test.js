@@ -65,7 +65,6 @@ const validPayload = {
   tonnage: '100',
   recipient: 'dd793573-b218-47a7-be85-1c777ca0d0d8',
   notes: 'Test notes',
-  material: 'plastic',
   nation: 'england',
   wasteProcessingType: 'reprocessor-input'
 }
@@ -168,7 +167,6 @@ describe('#postCreatePrnController', () => {
               tradingName: undefined
             },
             tonnage: 100,
-            material: 'plastic',
             notes: 'Test notes'
           },
           'mock-id-token'
@@ -512,23 +510,6 @@ describe('#postCreatePrnController', () => {
         const selectedOption = body.querySelector('#recipient option[selected]')
 
         expect(selectedOption.value).toBe(validPayload.recipient)
-      })
-
-      it('should reject a tampered material value', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
-
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...validPayload, material: 'unobtainium', crumb }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(createPrn).not.toHaveBeenCalled()
       })
     })
 
