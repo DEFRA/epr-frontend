@@ -489,6 +489,28 @@ describe('#postCreatePrnController', () => {
 
         expect(notesField.value).toBe('Test notes')
       })
+
+      it('should preserve recipient selection on validation error', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const selectedOption = body.querySelector('#recipient option[selected]')
+
+        expect(selectedOption.value).toBe(validPayload.recipient)
+      })
     })
 
     describe('when API call fails', () => {
