@@ -486,7 +486,7 @@ describe('#actionController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('displays empty accreditation address when site is null', async ({
+    it('displays empty reprocessing site address when site is null', async ({
       server
     }) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({

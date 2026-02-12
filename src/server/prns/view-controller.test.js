@@ -531,7 +531,9 @@ describe('#viewController', () => {
         expect(getByText(main, /Operations Manager/i)).toBeDefined()
       })
 
-      it('shows accreditation address for reprocessors', async ({ server }) => {
+      it('shows reprocessing site address for reprocessors', async ({
+        server
+      }) => {
         const reprocessorWithAddress = {
           ...fixtureReprocessor,
           registration: {
@@ -561,13 +563,13 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Accreditation address/i)).toBeDefined()
+        expect(getByText(main, /Reprocessing site/i)).toBeDefined()
         expect(
           getByText(main, /123 Reprocessing Lane, Manchester, M1 1AA/i)
         ).toBeDefined()
       })
 
-      it('shows empty accreditation address when site address is null', async ({
+      it('shows empty reprocessing site address when site address is null', async ({
         server
       }) => {
         const reprocessorWithoutAddress = {
@@ -590,7 +592,9 @@ describe('#viewController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      it('hides accreditation address for exporters', async ({ server }) => {
+      it('hides reprocessing site address for exporters', async ({
+        server
+      }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureExporter
         )
@@ -610,7 +614,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const html = body.innerHTML
 
-        expect(html).not.toContain('Accreditation address')
+        expect(html).not.toContain('Reprocessing site')
       })
 
       it('displays accepted status with green tag', async ({ server }) => {
