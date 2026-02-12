@@ -1,5 +1,4 @@
 {
-  "accreditationAddressLabel": "Accreditation address",
   "accreditationDetailsHeading": "Accreditation details",
   "accreditationNumberLabel": "Accreditation number",
   "action": {
@@ -159,6 +158,7 @@
   "processToBeUsedLabel": "Process to be used",
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
   "recipientSummaryLabel": "Issued to",
+  "reprocessingSiteAddressLabel": "Reprocessing site",
   "selectOption": "Select an option",
   "successNextStepsHeading": "What happens next",
   "tonnageHint": "Enter a whole number without decimal places",
