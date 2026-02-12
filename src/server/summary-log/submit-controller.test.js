@@ -164,6 +164,49 @@ describe('#submitSummaryLogController', () => {
     expect(response.statusCode).toBe(statusCodes.internalServerError)
   })
 
+  it('should redirect without calling backend when freshData already exists in session', async ({
+    server
+  }) => {
+    const mockResponse = {
+      status: 'submitted',
+      accreditationNumber: '493021'
+    }
+
+    submitSummaryLog.mockResolvedValueOnce(mockResponse)
+
+    const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+    const { cookie, crumb } = await getCsrfToken(server, getUrl, {
+      auth: mockAuth
+    })
+
+    const firstResponse = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    const cookies = [firstResponse.headers['set-cookie']].flat()
+    const sessionCookie = cookies
+      .map((c) => c.split(';')[0])
+      .find((c) => c.startsWith('session='))
+
+    const crumbCookie = cookie.split('; ').find((c) => c.startsWith('crumb='))
+
+    const secondResponse = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie: `${crumbCookie}; ${sessionCookie}` },
+      payload: { crumb }
+    })
+
+    expect(submitSummaryLog).toHaveBeenCalledTimes(1)
+    expect(secondResponse.statusCode).toBe(statusCodes.found)
+    expect(secondResponse.headers.location).toBe(getUrl)
+  })
+
   it('should reject POST request without CSRF token', async ({ server }) => {
     const response = await server.inject({
       method: 'POST',
