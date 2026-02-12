@@ -50,7 +50,8 @@ export async function initI18n() {
         lookupCookie: 'i18next',
         caches: false
       },
-      debug: false
+      debug: false,
+      showSupportNotice: false
     })
 
   return i18next
