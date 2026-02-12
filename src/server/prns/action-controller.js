@@ -195,7 +195,6 @@ function buildActionButtons({
  */
 function addErrorSummaryIfNeeded(viewData, errorType, localise) {
   const errorMessageKey = {
-    insufficient_balance: 'prns:insufficientBalanceError',
     issue_failed: 'prns:issueFailedError'
   }[errorType]
 
