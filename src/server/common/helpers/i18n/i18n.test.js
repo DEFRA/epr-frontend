@@ -33,7 +33,8 @@ describe(initI18n, function () {
           'summary-log'
         ]),
         defaultNS: 'common',
-        debug: false
+        debug: false,
+        showSupportNotice: false
       })
     )
   })
