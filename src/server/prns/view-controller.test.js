@@ -563,7 +563,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
 
-        expect(getByText(main, /Reprocessing site address/i)).toBeDefined()
+        expect(getByText(main, /Reprocessing site/i)).toBeDefined()
         expect(
           getByText(main, /123 Reprocessing Lane, Manchester, M1 1AA/i)
         ).toBeDefined()
@@ -614,7 +614,7 @@ describe('#viewController', () => {
         const { body } = dom.window.document
         const html = body.innerHTML
 
-        expect(html).not.toContain('Reprocessing site address')
+        expect(html).not.toContain('Reprocessing site')
       })
 
       it('displays accepted status with green tag', async ({ server }) => {
