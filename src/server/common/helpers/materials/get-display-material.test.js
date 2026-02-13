@@ -22,7 +22,7 @@ describe(getDisplayMaterial, () => {
   describe('non-glass materials', () => {
     it.each([
       ['aluminium', 'Aluminium'],
-      ['fibre', 'Fibre'],
+      ['fibre', 'Fibre-based composite'],
       ['paper', 'Paper and board'],
       ['plastic', 'Plastic'],
       ['steel', 'Steel'],

@@ -1,7 +1,7 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { NOTES_MAX_LENGTH } from './constants.js'
-import { getPrnDisplayMaterial } from './helpers/get-display-material.js'
+import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
 /**
  * Build view data for the create PRN/PERN page
@@ -22,7 +22,7 @@ export function buildCreatePrnViewData(
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
 
   const pageTitle = localise('prns:create:pageTitle', { noteType })
-  const material = getPrnDisplayMaterial(registration)
+  const material = getDisplayMaterial(registration)
 
   const wasteBalanceText = wasteBalance
     ? localise('prns:create:wasteBalanceText', {
