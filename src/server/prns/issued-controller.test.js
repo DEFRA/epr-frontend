@@ -132,6 +132,36 @@ describe('#issuedController', () => {
         expect(getByText(main, /ComplyPak Ltd/i)).toBeDefined()
       })
 
+      it('displays special characters in organisation name without HTML entity encoding', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockIssuedPrn,
+          issuedToOrganisation: {
+            id: 'producer-1',
+            name: "Mackie's Limited"
+          }
+        })
+
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: issuedUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Mackie's Limited/)).toBeDefined()
+        expect(body.innerHTML).not.toContain('&#39;')
+      })
+
       it('displays tradingName in heading when organisation has both name and tradingName', async ({
         server
       }) => {
