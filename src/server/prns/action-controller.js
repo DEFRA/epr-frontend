@@ -6,13 +6,13 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  buildPrnIssuerRows,
   buildPrnCoreRows,
+  buildPrnIssuerRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { getPrnDisplayMaterial } from './helpers/get-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
+import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -100,7 +100,7 @@ function buildActionViewData({
   const { isExporter, noteType, noteTypeFull } =
     getNoteTypeDisplayNames(registration)
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-  const displayMaterial = getPrnDisplayMaterial(registration)
+  const displayMaterial = getDisplayMaterial(registration)
   const isNotDraft = prn.status !== 'draft'
   const statusConfig = getStatusConfig(prn.status, localise)
 
