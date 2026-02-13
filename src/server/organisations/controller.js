@@ -343,11 +343,15 @@ export const controller = {
       localise
     })
 
+    const organisationName =
+      organisationData.companyDetails.tradingName ||
+      organisationData.companyDetails.name
+
     return h.view('organisations/index', {
       pageTitle: localise('organisations:pageTitle', {
-        name: organisationData.companyDetails.tradingName
+        name: organisationName
       }),
-      organisationName: organisationData.companyDetails.tradingName,
+      organisationName,
       organisationId,
       activeTab,
       reprocessorUrl: request.localiseUrl(`/organisations/${organisationId}`),
