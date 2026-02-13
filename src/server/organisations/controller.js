@@ -344,7 +344,7 @@ export const controller = {
     })
 
     const organisationName =
-      organisationData.companyDetails.tradingName ||
+      organisationData.companyDetails.tradingName?.trim() ||
       organisationData.companyDetails.name
 
     return h.view('organisations/index', {

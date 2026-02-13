@@ -78,6 +78,33 @@ describe('#organisationController', () => {
       expect($('h1').text()).toMatch(/ACME ltd/)
     })
 
+    it('should fall back to companyDetails.name when tradingName is whitespace', async ({
+      server
+    }) => {
+      const fixtureWithWhitespaceTradingName = {
+        ...fixtureData,
+        companyDetails: {
+          ...fixtureData.companyDetails,
+          tradingName: '   '
+        }
+      }
+
+      vi.mocked(
+        fetchOrganisationModule.fetchOrganisationById
+      ).mockResolvedValue(fixtureWithWhitespaceTradingName)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901',
+        auth: mockAuth
+      })
+
+      const $ = load(result)
+
+      expect($('title').text()).toMatch(/^Home: ACME ltd/)
+      expect($('h1').text()).toMatch(/ACME ltd/)
+    })
+
     it('should display organisation page with reprocessing sites on default route', async ({
       server
     }) => {
