@@ -15,7 +15,8 @@ export const serveStaticFiles = {
             cache: {
               expiresIn: config.get('staticCacheTimeout'),
               privacy: 'private'
-            }
+            },
+            tags: ['static']
           },
           method: 'GET',
           path: '/favicon.ico',
@@ -29,7 +30,8 @@ export const serveStaticFiles = {
             cache: {
               expiresIn: config.get('staticCacheTimeout'),
               privacy: 'private'
-            }
+            },
+            tags: ['static']
           },
           method: 'GET',
           path: `${config.get('assetPath')}/{param*}`,
