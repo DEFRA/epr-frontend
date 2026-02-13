@@ -7,7 +7,9 @@
       {{ tableTitle }}
     </h2>
     {% for site in sites %}
-      <h3 class="govuk-heading-m">{{ site.name }}</h3>
+      {% if site.name %}
+        <h3 class="govuk-heading-m">{{ site.name }}</h3>
+      {% endif %}
       {{ govukTable(site) }}
     {% endfor %}
   {% else %}

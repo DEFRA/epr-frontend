@@ -139,8 +139,7 @@ function getSiteName(registration, localise) {
  */
 function addRowToSites(sites, registration, row, localise) {
   const siteName = getSiteName(registration, localise)
-  const existingSite =
-    siteName !== null ? sites.find(({ name }) => name === siteName) : undefined
+  const existingSite = sites.find(({ name }) => name === siteName)
 
   if (existingSite) {
     return sites.map((site) =>
