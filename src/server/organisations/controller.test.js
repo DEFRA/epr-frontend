@@ -109,12 +109,16 @@ describe('#organisationController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect($('h1').text()).toMatch(/Global Exports Ltd/)
 
-      // Check that exporting sites are displayed
+      // Exporters have no site headings (no site grouping)
       const siteHeadings = $('h3.govuk-heading-m')
-        .map((_, el) => $(el).text())
-        .get()
+      expect(siteHeadings).toHaveLength(0)
 
-      expect(siteHeadings.length).toBeGreaterThan(0)
+      // All exporter materials should be in a single table
+      const tables = $('table')
+      expect(tables).toHaveLength(1)
+
+      const tableRows = $('tbody tr')
+      expect(tableRows.length).toBeGreaterThan(1)
     })
 
     it('should switch between tabs correctly using URL navigation', async ({
@@ -657,7 +661,9 @@ describe('#organisationController', () => {
 
       const $exporting = load(exportingResponse.result)
 
-      expect($exporting('h3.govuk-heading-m').length).toBeGreaterThan(0)
+      // Exporters have no site headings but should have a single table with materials
+      expect($exporting('h3.govuk-heading-m')).toHaveLength(0)
+      expect($exporting('tbody tr').length).toBeGreaterThan(0)
     })
 
     it('should handle organisation with single site and material', async ({
