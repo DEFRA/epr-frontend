@@ -351,7 +351,7 @@ function buildExistingPrnViewData({
   const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
-    pageTitle: `${noteType} ${prn.id}`,
+    pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
     complianceYearText:
