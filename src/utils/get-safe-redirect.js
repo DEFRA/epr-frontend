@@ -1,15 +1,9 @@
 const SAFE_REDIRECT_FALLBACK = '/'
 const SAFE_REDIRECT_ORIGIN = 'http://localhost'
+const UNSAFE_REDIRECT_CHARACTERS = /[\p{Cc}\\]/u
 
 const hasUnsafeRedirectCharacters = (value) => {
-  for (const character of value) {
-    const code = character.charCodeAt(0)
-    if (code <= 0x1f || code === 0x7f || character === '\\') {
-      return true
-    }
-  }
-
-  return false
+  return UNSAFE_REDIRECT_CHARACTERS.test(value)
 }
 
 const getSafeRedirect = (redirect) => {
