@@ -39,4 +39,26 @@ describe(getSafeRedirect, () => {
       expect(getSafeRedirect(redirect)).toBe(expected)
     }
   )
+
+  it.each([
+    {
+      redirect: '/path/with\\backslash',
+      expected: '/',
+      description: 'backslash characters'
+    },
+    {
+      redirect: '/path\u0000with-null',
+      expected: '/',
+      description: 'control characters'
+    }
+  ])(
+    'should return "/" when redirect contains $description',
+    ({ redirect, expected }) => {
+      expect(getSafeRedirect(redirect)).toBe(expected)
+    }
+  )
+
+  it('should trim surrounding whitespace in valid redirects', () => {
+    expect(getSafeRedirect('   /dashboard   ')).toBe('/dashboard')
+  })
 })

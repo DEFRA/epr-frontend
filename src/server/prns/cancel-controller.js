@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import {
   fetchPrnContext,
   fetchPrnForUpdate
@@ -17,7 +18,7 @@ export const cancelGetController = {
     const { t: localise } = request
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(basePath)
+      return h.redirect(getSafeRedirect(basePath))
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -49,7 +50,7 @@ export const cancelPostController = {
     } = await fetchPrnForUpdate(request)
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(basePath)
+      return h.redirect(getSafeRedirect(basePath))
     }
 
     try {
@@ -62,7 +63,7 @@ export const cancelPostController = {
         idToken
       )
 
-      return h.redirect(`${basePath}/${prnId}/cancelled`)
+      return h.redirect(getSafeRedirect(`${basePath}/${prnId}/cancelled`))
     } catch (error) {
       request.logger.error({ error }, 'Failed to cancel PRN')
 
