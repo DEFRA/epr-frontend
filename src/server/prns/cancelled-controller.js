@@ -1,4 +1,5 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 
 /**
@@ -11,7 +12,7 @@ export const cancelledController = {
     const { t: localise } = request
 
     if (prn.status !== 'cancelled') {
-      return h.redirect(basePath)
+      return h.redirect(getSafeRedirect(basePath))
     }
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
