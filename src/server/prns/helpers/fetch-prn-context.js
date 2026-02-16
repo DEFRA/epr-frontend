@@ -4,12 +4,33 @@ import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
 
+const SAFE_PATH_SEGMENT_PATTERN = /^[A-Za-z0-9._~-]+$/
+
+/**
+ * Validates and returns a safe path segment
+ * @param {string} value
+ * @param {string} fieldName
+ */
+function getSafePathSegment(value, fieldName) {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    !SAFE_PATH_SEGMENT_PATTERN.test(value)
+  ) {
+    throw Boom.badRequest(`Invalid ${fieldName}`)
+  }
+  return value
+}
+
 /**
  * Builds the base path for PRN routes from request params
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
  */
 function buildPrnBasePath({ organisationId, registrationId, accreditationId }) {
-  return `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+  const safeOrgId = getSafePathSegment(organisationId, 'organisationId')
+  const safeRegId = getSafePathSegment(registrationId, 'registrationId')
+  const safeAccId = getSafePathSegment(accreditationId, 'accreditationId')
+  return `/organisations/${safeOrgId}/registrations/${safeRegId}/accreditations/${safeAccId}/packaging-recycling-notes`
 }
 
 /**
@@ -30,6 +51,7 @@ async function fetchPrnContext(request) {
     registrationId,
     accreditationId
   })
+  const safePrnId = getSafePathSegment(prnId, 'prnId')
 
   const [registrationData, prn] = await Promise.all([
     fetchRegistrationAndAccreditation(
@@ -53,7 +75,7 @@ async function fetchPrnContext(request) {
     ...registrationData,
     prn,
     basePath,
-    prnId
+    prnId: safePrnId
   }
 }
 
@@ -75,6 +97,7 @@ async function fetchPrnForUpdate(request) {
     registrationId,
     accreditationId
   })
+  const safePrnId = getSafePathSegment(prnId, 'prnId')
 
   const prn = await fetchPackagingRecyclingNote(
     organisationId,
@@ -88,14 +111,19 @@ async function fetchPrnForUpdate(request) {
     organisationId,
     registrationId,
     accreditationId,
-    prnId,
+    prnId: safePrnId,
     basePath,
     prn,
     idToken: session.idToken
   }
 }
 
-export { buildPrnBasePath, fetchPrnContext, fetchPrnForUpdate }
+export {
+  buildPrnBasePath,
+  fetchPrnContext,
+  fetchPrnForUpdate,
+  getSafePathSegment
+}
 
 /**
  * @import { Request } from '@hapi/hapi'
