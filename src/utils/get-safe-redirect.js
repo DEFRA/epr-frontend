@@ -1,6 +1,16 @@
 const SAFE_REDIRECT_FALLBACK = '/'
 const SAFE_REDIRECT_ORIGIN = 'http://localhost'
-const UNSAFE_REDIRECT_CHARACTERS = /[\u0000-\u001F\u007F\\]/
+
+const hasUnsafeRedirectCharacters = (value) => {
+  for (const character of value) {
+    const code = character.charCodeAt(0)
+    if (code <= 0x1f || code === 0x7f || character === '\\') {
+      return true
+    }
+  }
+
+  return false
+}
 
 const getSafeRedirect = (redirect) => {
   if (typeof redirect !== 'string') {
@@ -14,7 +24,7 @@ const getSafeRedirect = (redirect) => {
     !candidate.startsWith('/') ||
     candidate.startsWith('//') ||
     candidate.includes('://') ||
-    UNSAFE_REDIRECT_CHARACTERS.test(candidate)
+    hasUnsafeRedirectCharacters(candidate)
   ) {
     return SAFE_REDIRECT_FALLBACK
   }
