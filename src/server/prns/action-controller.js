@@ -123,7 +123,7 @@ function buildActionViewData({
   })
 
   const viewData = {
-    pageTitle: `${noteType} ${prn.id}`,
+    pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
     insetText: localise('prns:action:insetText', { noteType }),
     viewLink: {
