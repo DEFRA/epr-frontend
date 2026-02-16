@@ -14,9 +14,9 @@ const createMockRequest = () => ({
         'Start typing the name of the packaging waste producer or compliance scheme',
       'prns:selectOption': 'Select an option',
       'prns:help:summary': "Can't find the producer or compliance scheme?",
-      'prns:create:helpIntro': `${params.noteTypePlural} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.`,
+      'prns:create:helpIntro': `${params.noteTypePlural} can only be issued to packaging producers and compliance schemes who have registered with regulators.`,
       'prns:help:listIntro':
-        "If the buyer you're looking for is not appearing, check that:",
+        "If the producer or compliance scheme you're looking for is not appearing, check that:",
       'prns:help:listItemOne': 'you have spelled the name correctly',
       'prns:help:listItemTwo': 'they are registered with a regulator',
       'prns:notesLabel': 'Add issuer notes (optional)',
