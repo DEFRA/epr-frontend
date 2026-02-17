@@ -16,9 +16,16 @@ export const cancelGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
+    const { organisationId, registrationId, accreditationId } = request.params
 
     if (prn.status !== 'awaiting_cancellation') {
+<<<<<<< Updated upstream
       return h.redirect(getSafeRedirect(basePath))
+=======
+      return h.redirect(
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+      )
+>>>>>>> Stashed changes
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -44,13 +51,25 @@ export const cancelPostController = {
       registrationId,
       accreditationId,
       prnId,
-      basePath,
       prn,
       idToken
     } = await fetchPrnForUpdate(request)
 
+    const {
+      organisationId: orgId,
+      registrationId: regId,
+      accreditationId: accId,
+      prnId: noteId
+    } = request.params
+
     if (prn.status !== 'awaiting_cancellation') {
+<<<<<<< Updated upstream
       return h.redirect(getSafeRedirect(basePath))
+=======
+      return h.redirect(
+        `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes`
+      )
+>>>>>>> Stashed changes
     }
 
     try {
@@ -63,7 +82,13 @@ export const cancelPostController = {
         idToken
       )
 
+<<<<<<< Updated upstream
       return h.redirect(getSafeRedirect(`${basePath}/${prnId}/cancelled`))
+=======
+      return h.redirect(
+        `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
+      )
+>>>>>>> Stashed changes
     } catch (error) {
       request.logger.error({ error }, 'Failed to cancel PRN')
 

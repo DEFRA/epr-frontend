@@ -16,9 +16,16 @@ export const deleteGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
+    const { organisationId, registrationId, accreditationId } = request.params
 
     if (prn.status !== 'awaiting_authorisation') {
+<<<<<<< Updated upstream
       return h.redirect(getSafeRedirect(basePath))
+=======
+      return h.redirect(
+        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+      )
+>>>>>>> Stashed changes
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -43,13 +50,24 @@ export const deletePostController = {
       registrationId,
       accreditationId,
       prnId,
-      basePath,
       prn,
       idToken
     } = await fetchPrnForUpdate(request)
 
+    const {
+      organisationId: orgId,
+      registrationId: regId,
+      accreditationId: accId
+    } = request.params
+
+    const prnBasePath = `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes`
+
     if (prn.status !== 'awaiting_authorisation') {
+<<<<<<< Updated upstream
       return h.redirect(getSafeRedirect(basePath))
+=======
+      return h.redirect(prnBasePath)
+>>>>>>> Stashed changes
     }
 
     try {
@@ -62,7 +80,11 @@ export const deletePostController = {
         idToken
       )
 
+<<<<<<< Updated upstream
       return h.redirect(getSafeRedirect(basePath))
+=======
+      return h.redirect(prnBasePath)
+>>>>>>> Stashed changes
     } catch (error) {
       request.logger.error({ error }, 'Failed to delete PRN')
 

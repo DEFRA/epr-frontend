@@ -10,9 +10,20 @@ export const cancelledController = {
     const { organisationId, registrationId, registration, prn, basePath } =
       await fetchPrnContext(request)
     const { t: localise } = request
+    const {
+      organisationId: orgId,
+      registrationId: regId,
+      accreditationId: accId
+    } = request.params
 
     if (prn.status !== 'cancelled') {
+<<<<<<< Updated upstream
       return h.redirect(getSafeRedirect(basePath))
+=======
+      return h.redirect(
+        `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes`
+      )
+>>>>>>> Stashed changes
     }
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
