@@ -390,26 +390,6 @@ describe('#actionController', () => {
       expect(getByText(main, /Accreditation details/i)).toBeDefined()
     })
 
-    it('displays error summary when redirected with insufficient_balance error', async ({
-      server
-    }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: `${actionUrl}?error=insufficient_balance`,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      const errorSummary = main.querySelector('.govuk-error-summary')
-      expect(errorSummary).not.toBeNull()
-      expect(getByText(main, /There is a problem/i)).toBeDefined()
-    })
-
     it('displays error summary when redirected with issue_failed error', async ({
       server
     }) => {
@@ -506,7 +486,7 @@ describe('#actionController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('displays empty accreditation address when site is null', async ({
+    it('displays empty reprocessing site address when site is null', async ({
       server
     }) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({

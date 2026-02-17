@@ -1,4 +1,5 @@
 import { controller } from './controller.js'
+import { errorController } from './error-controller.js'
 
 /**
  * Sets up the routes used in the organisations page.
@@ -22,6 +23,11 @@ export const organisations = {
           ...controller,
           method: 'GET',
           path: '/organisations/{organisationId}/exporting'
+        },
+        {
+          ...errorController,
+          method: 'GET',
+          path: '/organisations/{organisationId}/error'
         }
       ])
     }

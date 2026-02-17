@@ -1,5 +1,4 @@
 {
-  "accreditationAddressLabel": "Accreditation address",
   "accreditationDetailsHeading": "Accreditation details",
   "accreditationNumberLabel": "Accreditation number",
   "action": {
@@ -37,7 +36,7 @@
     "checkPageTitle": "Check before creating {{noteType}}",
     "createButton": "Create {{noteType}}",
     "discardLink": "Discard and start again",
-    "helpIntro": "{{noteTypePlural}} can only be issued to packaging waste producers and compliance schemes who have registered with regulators.",
+    "helpIntro": "{{noteTypePlural}} can only be issued to packaging producers and compliance schemes who have registered with regulators.",
     "notesHint": "These notes will appear on the {{noteType}}",
     "pageTitle": "Create a {{noteType}}",
     "recipientLabel": "Enter who this {{noteType}} will be issued to",
@@ -87,7 +86,7 @@
   },
   "help": {
     "summary": "Can't find the producer or compliance scheme?",
-    "listIntro": "If the buyer you're looking for is not appearing, check that:",
+    "listIntro": "If the producer or compliance scheme you're looking for is not appearing, check that:",
     "listItemOne": "you have spelled the name correctly",
     "listItemTwo": "they are registered with a regulator"
   },
@@ -159,6 +158,7 @@
   "processToBeUsedLabel": "Process to be used",
   "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
   "recipientSummaryLabel": "Issued to",
+  "reprocessingSiteAddressLabel": "Reprocessing site",
   "selectOption": "Select an option",
   "successNextStepsHeading": "What happens next",
   "tonnageHint": "Enter a whole number without decimal places",

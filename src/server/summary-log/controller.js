@@ -131,9 +131,8 @@ const getStatusData = async (
   summaryLogId,
   idToken
 ) => {
-  // Check session for fresh data first (prevents race condition after POST submit)
   const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
-  const { freshData } = summaryLogsSession
+  const freshData = summaryLogsSession.freshDataMap?.[summaryLogId]
 
   const data =
     freshData ??
@@ -143,8 +142,12 @@ const getStatusData = async (
 
   if (freshData) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { freshData: _, ...remainingSession } = summaryLogsSession
-    request.yar.set(sessionNames.summaryLogs, remainingSession)
+    const { [summaryLogId]: _, ...remainingMap } =
+      summaryLogsSession.freshDataMap
+    request.yar.set(sessionNames.summaryLogs, {
+      ...summaryLogsSession,
+      freshDataMap: remainingMap
+    })
   }
 
   const { status, validation, accreditationNumber, loads, processingType } =

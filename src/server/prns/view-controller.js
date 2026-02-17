@@ -6,15 +6,15 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
 import {
-  buildPrnIssuerRows,
   buildPrnCoreRows,
+  buildPrnIssuerRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
 import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
-import { getPrnDisplayMaterial } from './helpers/get-display-material.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
+import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -185,7 +185,7 @@ async function handleDraftView(
 
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
 
-  const displayMaterial = getPrnDisplayMaterial(registration)
+  const displayMaterial = getDisplayMaterial(registration)
 
   const prnDetailRows = buildDraftPrnDetailRows({
     prnDraft,
@@ -274,7 +274,7 @@ async function handleExistingView(
     `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
   )
 
-  const displayMaterial = getPrnDisplayMaterial(registration)
+  const displayMaterial = getDisplayMaterial(registration)
 
   const statusConfig = getStatusConfig(prn.status, localise)
   const isNotDraft = prn.status !== 'draft'
@@ -351,7 +351,7 @@ function buildExistingPrnViewData({
   const returnUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
-    pageTitle: `${noteType} ${prn.id}`,
+    pageTitle: `${noteType} ${prn.prnNumber ?? prn.id}`,
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
     complianceYearText:

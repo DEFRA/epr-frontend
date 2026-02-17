@@ -231,6 +231,9 @@ describe('#summaryLogUploadProgressController', () => {
         )
       )
       expect(result).toStrictEqual(expect.stringContaining('method="POST"'))
+      expect(result).toStrictEqual(
+        expect.stringContaining('data-prevent-double-click="true"')
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toStrictEqual(enablesClientSidePolling())

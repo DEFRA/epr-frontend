@@ -46,7 +46,8 @@
 
     <div class="govuk-button-group">
       {{ govukButton({
-        text: params.buttonText
+        text: params.buttonText,
+        preventDoubleClick: true
       }) }}
 
       {% if params.cancelUrl and params.cancelButtonText %}

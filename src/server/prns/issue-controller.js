@@ -44,7 +44,7 @@ export const issueController = {
       const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
 
       if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
-        return h.redirect(`${basePath}?error=insufficient_balance`)
+        return h.redirect(`/organisations/${organisationId}/error`)
       }
 
       // All other errors (including WB calculation failures) redirect to action page

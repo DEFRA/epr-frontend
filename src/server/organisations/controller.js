@@ -139,8 +139,7 @@ function getSiteName(registration, localise) {
  */
 function addRowToSites(sites, registration, row, localise) {
   const siteName = getSiteName(registration, localise)
-  const existingSite =
-    siteName !== null ? sites.find(({ name }) => name === siteName) : undefined
+  const existingSite = sites.find(({ name }) => name === siteName)
 
   if (existingSite) {
     return sites.map((site) =>
@@ -344,11 +343,15 @@ export const controller = {
       localise
     })
 
+    const organisationName =
+      organisationData.companyDetails.tradingName?.trim() ||
+      organisationData.companyDetails.name
+
     return h.view('organisations/index', {
       pageTitle: localise('organisations:pageTitle', {
-        name: organisationData.companyDetails.tradingName
+        name: organisationName
       }),
-      organisationName: organisationData.companyDetails.tradingName,
+      organisationName,
       organisationId,
       activeTab,
       reprocessorUrl: request.localiseUrl(`/organisations/${organisationId}`),
