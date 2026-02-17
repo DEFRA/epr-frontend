@@ -11,7 +11,7 @@ const createMockRequest = () => ({
       'prns:tonnageSuffix': 'tonnes',
       'prns:create:recipientLabel': `Enter who this ${params.noteType} will be issued to`,
       'prns:recipientHint':
-        'Start typing the name of the packaging waste producer or compliance scheme',
+        'Start typing the name of the packaging producer or compliance scheme',
       'prns:selectOption': 'Select an option',
       'prns:help:summary': "Can't find the producer or compliance scheme?",
       'prns:create:helpIntro': `${params.noteTypePlural} can only be issued to packaging producers and compliance schemes who have registered with regulators.`,

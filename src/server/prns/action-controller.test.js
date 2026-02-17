@@ -181,7 +181,7 @@ describe('#actionController', () => {
       expect(body.innerHTML).not.toContain('>Legal Name Ltd<')
     })
 
-    it('labels recipient row as "Packaging waste producer or compliance scheme"', async ({
+    it('labels recipient row as "Packaging producer or compliance scheme"', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -195,7 +195,7 @@ describe('#actionController', () => {
       const main = getByRole(body, 'main')
 
       expect(
-        getByText(main, 'Packaging waste producer or compliance scheme')
+        getByText(main, 'Packaging producer or compliance scheme')
       ).toBeDefined()
     })
 
