@@ -198,7 +198,7 @@ describe('#createPrnController', () => {
         expect(
           getByText(
             main,
-            /Start typing the name of the packaging waste producer or compliance scheme/i
+            /Start typing the name of the packaging producer or compliance scheme/i
           )
         ).toBeDefined()
 
