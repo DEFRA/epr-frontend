@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import {
+  buildPrnBasePath,
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
@@ -15,12 +16,10 @@ export const cancelGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
-    const { organisationId, registrationId, accreditationId } = request.params
+    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-      )
+      return h.redirect(redirectBasePath)
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -49,18 +48,16 @@ export const cancelPostController = {
       prn,
       idToken
     } = await fetchPrnForUpdate(request)
-
     const {
       organisationId: orgId,
       registrationId: regId,
       accreditationId: accId,
       prnId: noteId
     } = request.params
+    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(
-        `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes`
-      )
+      return h.redirect(redirectBasePath)
     }
 
     try {
