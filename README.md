@@ -5,29 +5,31 @@
 
 Frontend for: Packaging Extended Producer Responsibilities
 
-- [Requirements](#requirements)
-  - [Node.js](#nodejs)
-- [Server-side Caching](#server-side-caching)
-- [Redis](#redis)
-- [Local Development](#local-development)
-  - [Setup](#setup)
-  - [Development](#development)
-  - [Production](#production)
-  - [Npm scripts](#npm-scripts)
-  - [Update dependencies](#update-dependencies)
-  - [Formatting](#formatting)
-    - [Windows prettier issue](#windows-prettier-issue)
-- [Docker](#docker)
-  - [Development image](#development-image)
-  - [Production image](#production-image)
-  - [Docker Compose](#docker-compose)
-- [Testing](#testing)
-  - [Unit tests](#unit-tests)
-  - [Journey tests](#journey-tests)
-- [Dependabot](#dependabot)
+- [epr-frontend](#epr-frontend)
+  - [Requirements](#requirements)
+    - [Node.js](#nodejs)
+  - [Server-side Caching](#server-side-caching)
+  - [Redis](#redis)
+  - [Proxy](#proxy)
+  - [Local Development](#local-development)
+    - [Setup](#setup)
+    - [Development](#development)
+    - [Production](#production)
+    - [Npm scripts](#npm-scripts)
+    - [Update dependencies](#update-dependencies)
+    - [Formatting](#formatting)
+      - [Windows prettier issue](#windows-prettier-issue)
+  - [Docker](#docker)
+    - [Development image](#development-image)
+    - [Production image](#production-image)
+    - [Docker Compose](#docker-compose)
+  - [Testing](#testing)
+    - [Unit tests](#unit-tests)
+    - [Journey tests](#journey-tests)
+  - [Dependabot](#dependabot)
   - [SonarCloud](#sonarcloud)
-- [Licence](#licence)
-  - [About the licence](#about-the-licence)
+  - [Licence](#licence)
+    - [About the licence](#about-the-licence)
 
 ## Requirements
 
@@ -172,61 +174,7 @@ docker run -p 3000:3000 epr-frontend
 
 ### Docker Compose
 
-> [!IMPORTANT]
->
-> Please ensure you have at least version 2.22.0 of Docker Compose installed.
-
-The project uses a shared compose file (`compose.shared.yml`) for all supporting services.
-
-**Run supporting services only:**
-
-```bash
-docker compose -f compose.shared.yml up
-```
-
-Then run the frontend locally with `npm run dev` in a separate terminal.
-
-**Run frontend in Docker + supporting services (backend on host):**
-
-```bash
-EPR_BACKEND_URL=http://localhost:3001 docker compose --profile all up --build --watch
-```
-
-Then run the backend locally with `npm run dev` in a separate terminal in the backend repo.
-
-**Run frontend + backend + supporting services:**
-
-```sh
-docker compose --profile all up --build --watch
-```
-
-**Run with specific backend version:**
-
-```sh
-BACKEND_VERSION=1.2.3 docker compose --profile all up --build --watch
-```
-
-**Include Defra ID stub (for authentication):**
-
-```sh
-docker compose --profile all --profile stub up --build --watch
-```
-
-**Supporting services included:**
-
-- LocalStack (AWS services: S3, SQS, SNS, Firehose)
-- MongoDB (for backend)
-- nginx-proxy (reverse proxy)
-- Redis (session cache)
-- cdp-defra-id-stub ([Defra ID stub](https://github.com/DEFRA/cdp-defra-id-stub), `--profile stub`)
-- cdp-uploader (file upload service)
-- epr-backend (`--profile all`, requires `GOVUK_NOTIFY_API_KEY` environment variable)
-
-**Delete volumes:**
-
-```sh
-docker compose down -v
-```
+Use the compose setup in our [service repo](https://github.com/DEFRA/epr-re-ex-service/blob/main/CONTRIBUTING.md#docker-compose)
 
 ## Testing
 
