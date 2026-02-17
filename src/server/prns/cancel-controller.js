@@ -1,7 +1,6 @@
 import Boom from '@hapi/boom'
 
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import {
   fetchPrnContext,
   fetchPrnForUpdate
@@ -19,13 +18,9 @@ export const cancelGetController = {
     const { organisationId, registrationId, accreditationId } = request.params
 
     if (prn.status !== 'awaiting_cancellation') {
-<<<<<<< Updated upstream
-      return h.redirect(getSafeRedirect(basePath))
-=======
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
       )
->>>>>>> Stashed changes
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -63,13 +58,9 @@ export const cancelPostController = {
     } = request.params
 
     if (prn.status !== 'awaiting_cancellation') {
-<<<<<<< Updated upstream
-      return h.redirect(getSafeRedirect(basePath))
-=======
       return h.redirect(
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes`
       )
->>>>>>> Stashed changes
     }
 
     try {
@@ -82,13 +73,9 @@ export const cancelPostController = {
         idToken
       )
 
-<<<<<<< Updated upstream
-      return h.redirect(getSafeRedirect(`${basePath}/${prnId}/cancelled`))
-=======
       return h.redirect(
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
       )
->>>>>>> Stashed changes
     } catch (error) {
       request.logger.error({ error }, 'Failed to cancel PRN')
 

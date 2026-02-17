@@ -23,25 +23,6 @@ function getSafePathSegment(value, fieldName) {
 }
 
 /**
- * Strict pattern for safe path segments (alphanumeric, hyphens, underscores).
- */
-const safeSegmentPattern = /^[\w-]+$/
-
-/**
- * Validates a path segment contains only safe characters.
- * Throws a 400 Bad Request if the value is invalid.
- * @param {string} value
- * @param {string} name - parameter name for error reporting
- * @returns {string}
- */
-function getSafePathSegment(value, name) {
-  if (typeof value !== 'string' || !safeSegmentPattern.test(value)) {
-    throw Boom.badRequest(`Invalid path segment for ${name}`)
-  }
-  return value
-}
-
-/**
  * Builds the base path for PRN routes from request params.
  * Validates segments with getSafePathSegment to prevent path traversal/injection.
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
@@ -65,7 +46,6 @@ async function fetchPrnContext(request) {
 
   const { organisationId, registrationId, accreditationId, prnId } =
     request.params
-  const safePrnId = getSafePathSegment(prnId, 'prnId')
   const session = request.auth.credentials
   const basePath = buildPrnBasePath({
     organisationId,
@@ -112,7 +92,6 @@ async function fetchPrnForUpdate(request) {
 
   const { organisationId, registrationId, accreditationId, prnId } =
     request.params
-  const safePrnId = getSafePathSegment(prnId, 'prnId')
   const session = request.auth.credentials
   const basePath = buildPrnBasePath({
     organisationId,

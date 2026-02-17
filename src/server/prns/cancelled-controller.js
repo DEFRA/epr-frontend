@@ -1,5 +1,4 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { fetchPrnContext } from './helpers/fetch-prn-context.js'
 
 /**
@@ -17,13 +16,9 @@ export const cancelledController = {
     } = request.params
 
     if (prn.status !== 'cancelled') {
-<<<<<<< Updated upstream
-      return h.redirect(getSafeRedirect(basePath))
-=======
       return h.redirect(
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes`
       )
->>>>>>> Stashed changes
     }
 
     const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
