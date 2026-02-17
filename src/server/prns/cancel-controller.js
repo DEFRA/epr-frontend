@@ -1,8 +1,8 @@
 import Boom from '@hapi/boom'
 
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import {
+  buildPrnBasePath,
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
@@ -16,9 +16,10 @@ export const cancelGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
+    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(getSafeRedirect(basePath))
+      return h.redirect(redirectBasePath)
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -44,13 +45,19 @@ export const cancelPostController = {
       registrationId,
       accreditationId,
       prnId,
-      basePath,
       prn,
       idToken
     } = await fetchPrnForUpdate(request)
+    const {
+      organisationId: orgId,
+      registrationId: regId,
+      accreditationId: accId,
+      prnId: noteId
+    } = request.params
+    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_cancellation') {
-      return h.redirect(getSafeRedirect(basePath))
+      return h.redirect(redirectBasePath)
     }
 
     try {
@@ -63,7 +70,9 @@ export const cancelPostController = {
         idToken
       )
 
-      return h.redirect(getSafeRedirect(`${basePath}/${prnId}/cancelled`))
+      return h.redirect(
+        `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
+      )
     } catch (error) {
       request.logger.error({ error }, 'Failed to cancel PRN')
 

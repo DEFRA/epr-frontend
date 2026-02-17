@@ -1,8 +1,8 @@
 import Boom from '@hapi/boom'
 
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import {
+  buildPrnBasePath,
   fetchPrnContext,
   fetchPrnForUpdate
 } from './helpers/fetch-prn-context.js'
@@ -16,9 +16,10 @@ export const deleteGetController = {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
     const { t: localise } = request
+    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_authorisation') {
-      return h.redirect(getSafeRedirect(basePath))
+      return h.redirect(redirectBasePath)
     }
 
     const { noteType } = getNoteTypeDisplayNames(registration)
@@ -43,13 +44,13 @@ export const deletePostController = {
       registrationId,
       accreditationId,
       prnId,
-      basePath,
       prn,
       idToken
     } = await fetchPrnForUpdate(request)
+    const redirectBasePath = buildPrnBasePath(request.params)
 
     if (prn.status !== 'awaiting_authorisation') {
-      return h.redirect(getSafeRedirect(basePath))
+      return h.redirect(redirectBasePath)
     }
 
     try {
@@ -62,7 +63,7 @@ export const deletePostController = {
         idToken
       )
 
-      return h.redirect(getSafeRedirect(basePath))
+      return h.redirect(redirectBasePath)
     } catch (error) {
       request.logger.error({ error }, 'Failed to delete PRN')
 
