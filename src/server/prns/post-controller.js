@@ -1,11 +1,8 @@
-import { getYear } from 'date-fns'
-
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
-import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
+import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
-import { warnOnMissingRegistrations } from '#server/common/helpers/waste-organisations/warn-on-missing-registrations.js'
 import Boom from '@hapi/boom'
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
@@ -128,7 +125,7 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
  * Re-render the create form when the selected recipient is not
  * found in the organisations list.
  */
-async function handleInvalidRecipient(request, h, organisations, year) {
+async function handleInvalidRecipient(request, h, organisations) {
   const { organisationId, registrationId, accreditationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
@@ -160,7 +157,7 @@ async function handleInvalidRecipient(request, h, organisations, year) {
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
-    recipients: mapToSelectOptions(organisations, year),
+    recipients: mapToSelectOptions(organisations),
     registration,
     registrationId,
     wasteBalance
@@ -213,13 +210,9 @@ export const postController = {
             )
           ])
 
-        // TODO: should this use the accreditation year instead of current year?
-        const currentYear = getYear(new Date())
-        warnOnMissingRegistrations(organisations, request.logger)
-
         const viewData = buildCreatePrnViewData(request, {
           organisationId,
-          recipients: mapToSelectOptions(organisations, currentYear),
+          recipients: mapToSelectOptions(organisations),
           registration,
           registrationId,
           wasteBalance
@@ -248,22 +241,21 @@ export const postController = {
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
 
-    // TODO: should this use the accreditation year instead of current year?
-    const currentYear = getYear(new Date())
-    warnOnMissingRegistrations(organisations, request.logger)
-
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      return handleInvalidRecipient(request, h, organisations, currentYear)
+      return handleInvalidRecipient(request, h, organisations)
     }
 
     const issuedToOrganisation = {
       id: organisation.id,
       name: organisation.name,
-      tradingName: organisation.tradingName
+      tradingName: organisation.tradingName,
+      ...(organisation.registrationType && {
+        registrationType: organisation.registrationType
+      })
     }
-    const recipientDisplayName = getDisplayName(organisation, currentYear)
+    const recipientDisplayName = getIssuedToOrgDisplayName(organisation)
 
     try {
       // Create PRN as draft in backend

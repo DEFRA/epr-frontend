@@ -9,7 +9,8 @@
         "town": "Ashfield",
         "county": "Chicago",
         "postcode": "W1 L3Y"
-      }
+      },
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "dd793573-b218-47a7-be85-1c777ca0d0d8",
@@ -19,7 +20,8 @@
         "addressLine2": "Box Hill",
         "town": "Tadworth",
         "postcode": "KT20 7LB"
-      }
+      },
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "b7b158e1-c72f-45d4-8868-5c6e14bc10af",
@@ -29,7 +31,8 @@
         "town": "Green St Green",
         "postcode": "BR6 6AG",
         "country": "England"
-      }
+      },
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "producer-1",
@@ -38,7 +41,8 @@
         "addressLine1": "123 Industrial Estate",
         "town": "Manchester",
         "postcode": "M1 1AA"
-      }
+      },
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "producer-2",
@@ -47,7 +51,8 @@
         "addressLine1": "456 Recycling Road",
         "town": "Birmingham",
         "postcode": "B1 1BB"
-      }
+      },
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "producer-3",
@@ -56,7 +61,8 @@
         "addressLine1": "789 Green Lane",
         "town": "Leeds",
         "postcode": "LS1 1CC"
-      }
+      },
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "scheme-1",
@@ -65,7 +71,8 @@
         "addressLine1": "10 Compliance Way",
         "town": "London",
         "postcode": "EC1 1DD"
-      }
+      },
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "scheme-2",
@@ -74,7 +81,8 @@
         "addressLine1": "20 Packaging Plaza",
         "town": "Bristol",
         "postcode": "BS1 1EE"
-      }
+      },
+      "registrationType": "COMPLIANCE_SCHEME"
     }
   ]
 }
