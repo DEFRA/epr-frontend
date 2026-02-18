@@ -204,29 +204,11 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBeNull()
   })
 
-  test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_AT_MOST_100_CHARS with RECYCLABLE_PROPORTION_PERCENTAGE header', () => {
-    expect(
-      getDisplayCodeFromErrorCode(
-        'MUST_BE_AT_MOST_100_CHARS',
-        'RECYCLABLE_PROPORTION_PERCENTAGE'
-      )
-    ).toBe('PERCENTAGE_FORMAT_INVALID')
-  })
-
   test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with UK_PACKAGING_WEIGHT_PERCENTAGE header', () => {
     expect(
       getDisplayCodeFromErrorCode(
         'MUST_BE_AT_LEAST_ZERO',
         'UK_PACKAGING_WEIGHT_PERCENTAGE'
-      )
-    ).toBe('PERCENTAGE_FORMAT_INVALID')
-  })
-
-  test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_LESS_THAN_1 with RECYCLABLE_PROPORTION_PERCENTAGE header', () => {
-    expect(
-      getDisplayCodeFromErrorCode(
-        'MUST_BE_LESS_THAN_1',
-        'RECYCLABLE_PROPORTION_PERCENTAGE'
       )
     ).toBe('PERCENTAGE_FORMAT_INVALID')
   })

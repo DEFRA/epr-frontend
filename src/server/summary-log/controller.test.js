@@ -1854,7 +1854,7 @@ describe('#summaryLogUploadProgressController', () => {
           failures: [
             {
               code: validationFailureCodes.INVALID_TYPE,
-              errorCode: 'MUST_BE_AT_MOST_100_CHARS',
+              errorCode: 'MUST_BE_AT_LEAST_ZERO',
               location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
             }
           ]

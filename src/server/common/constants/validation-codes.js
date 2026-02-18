@@ -186,9 +186,8 @@ export const PERCENTAGE_HEADERS = new Set([
 ])
 
 export const PERCENTAGE_ERROR_CODES = new Set([
-  'MUST_BE_AT_MOST_100_CHARS',
+  'MUST_BE_A_NUMBER',
   'MUST_BE_AT_LEAST_ZERO',
-  'MUST_BE_LESS_THAN_1',
   'MUST_BE_AT_MOST_1'
 ])
 
