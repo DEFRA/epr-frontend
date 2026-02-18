@@ -164,7 +164,8 @@ describe('#postCreatePrnController', () => {
             issuedToOrganisation: {
               id: validPayload.recipient,
               name: 'Bigco Packaging Ltd',
-              tradingName: undefined
+              tradingName: undefined,
+              registrationType: 'LARGE_PRODUCER'
             },
             tonnage: 100,
             notes: 'Test notes'
@@ -236,14 +237,14 @@ describe('#postCreatePrnController', () => {
         expect(
           getByText(
             errorSummary,
-            'Select a valid packaging waste producer or compliance scheme'
+            'Select a valid packaging producer or compliance scheme'
           )
         ).toBeDefined()
 
         // Inline error against recipient field
         const inlineError = body.querySelector('#recipient-error')
         expect(inlineError.textContent).toContain(
-          'Select a valid packaging waste producer or compliance scheme'
+          'Select a valid packaging producer or compliance scheme'
         )
       })
     })
@@ -356,7 +357,7 @@ describe('#postCreatePrnController', () => {
         ).toBeDefined()
       })
 
-      it('shows "Enter a packaging waste producer or compliance scheme" when recipient is missing', async ({
+      it('shows "Enter a packaging producer or compliance scheme" when recipient is missing', async ({
         server
       }) => {
         const { cookie, crumb } = await getCsrfToken(server, url, {
@@ -380,7 +381,7 @@ describe('#postCreatePrnController', () => {
         expect(
           getByText(
             errorSummary,
-            'Enter a packaging waste producer or compliance scheme'
+            'Enter a packaging producer or compliance scheme'
           )
         ).toBeDefined()
       })
@@ -586,7 +587,7 @@ describe('#postCreatePrnController', () => {
         expect(
           getByText(
             errorSummary,
-            'Select a valid packaging waste producer or compliance scheme'
+            'Select a valid packaging producer or compliance scheme'
           )
         ).toBeDefined()
 

@@ -181,7 +181,7 @@ describe('#actionController', () => {
       expect(body.innerHTML).not.toContain('>Legal Name Ltd<')
     })
 
-    it('labels recipient row as "Packaging waste producer or compliance scheme"', async ({
+    it('labels recipient row as "Packaging producer or compliance scheme"', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -195,7 +195,7 @@ describe('#actionController', () => {
       const main = getByRole(body, 'main')
 
       expect(
-        getByText(main, 'Packaging waste producer or compliance scheme')
+        getByText(main, 'Packaging producer or compliance scheme')
       ).toBeDefined()
     })
 
@@ -431,6 +431,46 @@ describe('#actionController', () => {
 
       const tag = main.querySelector('.govuk-tag')
       expect(tag).toBeNull()
+    })
+
+    it('displays issuer tradingName when present on action page', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+        ...fixtureReprocessor,
+        organisationData: {
+          id: 'org-123',
+          companyDetails: {
+            name: 'Legal Reprocessor Ltd',
+            tradingName: 'Reprocessor Trading'
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const rows = body.querySelectorAll('.govuk-summary-list__row')
+      const issuerRow = Array.from(rows).find((row) =>
+        row
+          .querySelector('.govuk-summary-list__key')
+          ?.textContent?.includes('Issuer')
+      )
+
+      expect(issuerRow).toBeDefined()
+      expect(
+        issuerRow
+          .querySelector('.govuk-summary-list__value')
+          ?.textContent?.trim()
+      ).toBe('Reprocessor Trading')
+      expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
     })
 
     it('should display empty issuer when organisationData.companyDetails is null', async ({

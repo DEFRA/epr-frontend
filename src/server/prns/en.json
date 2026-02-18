@@ -79,8 +79,8 @@
   "errorSummaryTitle": "There is a problem",
   "errors": {
     "notesTooLong": "Enter a maximum of 200 characters",
-    "recipientInvalid": "Select a valid packaging waste producer or compliance scheme",
-    "recipientRequired": "Enter a packaging waste producer or compliance scheme",
+    "recipientInvalid": "Select a valid packaging producer or compliance scheme",
+    "recipientRequired": "Enter a packaging producer or compliance scheme",
     "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
     "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
   },
@@ -105,7 +105,7 @@
   },
   "issuedByLabel": "Issued by",
   "issuedDateLabel": "Issued date",
-  "issuedToLabel": "Packaging waste producer or compliance scheme",
+  "issuedToLabel": "Packaging producer or compliance scheme",
   "issuerLabel": "Issuer",
   "issuerNotesLabel": "Issuer notes",
   "list": {
@@ -157,7 +157,7 @@
   "notesLabel": "Add issuer notes (optional)",
   "positionLabel": "Position",
   "processToBeUsedLabel": "Process to be used",
-  "recipientHint": "Start typing the name of the packaging waste producer or compliance scheme",
+  "recipientHint": "Start typing the name of the packaging producer or compliance scheme",
   "recipientSummaryLabel": "Issued to",
   "reprocessingSiteAddressLabel": "Reprocessing site",
   "selectOption": "Select an option",

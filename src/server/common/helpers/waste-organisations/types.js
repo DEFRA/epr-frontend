@@ -22,14 +22,10 @@
  */
 
 /**
- * @typedef {{
- *  status: WasteOrganisationStatus
- *  type: WasteOrganisationType
- *  registrationYear: number | string
- * }} WasteOrganisationRegistrations
- */
-
-/**
+ * Simplified waste organisation with extracted registrationType.
+ * The API adapter extracts registrationType from the raw registrations
+ * array and removes it. registrationType is absent when the organisation
+ * has no current-year producer registration.
  * @typedef {{
  *  id: string
  *  name: string
@@ -37,7 +33,7 @@
  *  businessCountry: BusinessCountry | null
  *  companiesHouseNumber: string | null
  *  address: WasteOrganisationAddress
- *  registrations: WasteOrganisationRegistrations[]
+ *  registrationType?: WasteOrganisationType
  * }} WasteOrganisation
  */
 

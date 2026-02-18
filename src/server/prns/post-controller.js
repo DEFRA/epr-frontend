@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
-import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
+import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import Boom from '@hapi/boom'
 import Joi from 'joi'
@@ -28,8 +28,8 @@ const payloadSchema = Joi.object({
     'any.required': 'Enter the tonnage'
   }),
   recipient: Joi.string().min(1).required().messages({
-    'string.empty': 'Enter a packaging waste producer or compliance scheme',
-    'any.required': 'Enter a packaging waste producer or compliance scheme'
+    'string.empty': 'Enter a packaging producer or compliance scheme',
+    'any.required': 'Enter a packaging producer or compliance scheme'
   }),
   notes: Joi.string()
     .max(NOTES_MAX_LENGTH)
@@ -103,17 +103,17 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 
 /**
  * @param {object} result - The created PRN draft from the backend
- * @param {object} issuedToOrganisation - The recipient organisation
+ * @param {string} recipientDisplayName - The resolved display name for the recipient
  * @param {string} notes - Issuer notes
  */
-function buildPrnDraftSession(result, issuedToOrganisation, notes) {
+function buildPrnDraftSession(result, recipientDisplayName, notes) {
   return {
     id: result.id,
     tonnage: result.tonnage,
     tonnageInWords: tonnageToWords(result.tonnage),
     material: result.material,
     status: result.status,
-    recipientName: getDisplayName(issuedToOrganisation),
+    recipientName: recipientDisplayName,
     notes: notes || '',
     wasteProcessingType: result.wasteProcessingType,
     processToBeUsed: result.processToBeUsed,
@@ -250,8 +250,12 @@ export const postController = {
     const issuedToOrganisation = {
       id: organisation.id,
       name: organisation.name,
-      tradingName: organisation.tradingName
+      tradingName: organisation.tradingName,
+      ...(organisation.registrationType && {
+        registrationType: organisation.registrationType
+      })
     }
+    const recipientDisplayName = getIssuedToOrgDisplayName(organisation)
 
     try {
       // Create PRN as draft in backend
@@ -270,7 +274,7 @@ export const postController = {
       // Store PRN data in session for check/confirm page
       request.yar.set(
         'prnDraft',
-        buildPrnDraftSession(result, issuedToOrganisation, notes)
+        buildPrnDraftSession(result, recipientDisplayName, notes)
       )
 
       return h.redirect(

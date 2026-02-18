@@ -1,6 +1,6 @@
 /** @import {WasteOrganisation} from './types.js' */
 
-import { getDisplayName } from './get-display-name.js'
+import { getIssuedToOrgDisplayName } from './get-issued-to-org-display-name.js'
 
 /**
  * @typedef {{value: string, text: string}} SelectOption
@@ -14,7 +14,7 @@ import { getDisplayName } from './get-display-name.js'
 export const mapToSelectOptions = (organisations) =>
   organisations
     .map((org) => {
-      const name = getDisplayName(org)
+      const name = getIssuedToOrgDisplayName(org)
       const address = Object.values(org.address).filter(Boolean).join(', ')
 
       return {

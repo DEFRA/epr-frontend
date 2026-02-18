@@ -23,7 +23,8 @@ function getSafePathSegment(value, fieldName) {
 }
 
 /**
- * Builds the base path for PRN routes from request params
+ * Builds the base path for PRN routes from request params.
+ * Validates segments with getSafePathSegment to prevent path traversal/injection.
  * @param {{ organisationId: string, registrationId: string, accreditationId: string }} params
  */
 function buildPrnBasePath({ organisationId, registrationId, accreditationId }) {
@@ -63,7 +64,7 @@ async function fetchPrnContext(request) {
       organisationId,
       registrationId,
       accreditationId,
-      prnId,
+      safePrnId,
       session.idToken
     )
   ])
@@ -103,7 +104,7 @@ async function fetchPrnForUpdate(request) {
     organisationId,
     registrationId,
     accreditationId,
-    prnId,
+    safePrnId,
     session.idToken
   )
 
