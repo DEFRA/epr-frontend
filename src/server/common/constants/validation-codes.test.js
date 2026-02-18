@@ -222,9 +222,54 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('PERCENTAGE_FORMAT_INVALID')
   })
 
+  test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_LESS_THAN_1 with RECYCLABLE_PROPORTION_PERCENTAGE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_LESS_THAN_1',
+        'RECYCLABLE_PROPORTION_PERCENTAGE'
+      )
+    ).toBe('PERCENTAGE_FORMAT_INVALID')
+  })
+
+  test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_AT_MOST_1 with UK_PACKAGING_WEIGHT_PERCENTAGE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_MOST_1',
+        'UK_PACKAGING_WEIGHT_PERCENTAGE'
+      )
+    ).toBe('PERCENTAGE_FORMAT_INVALID')
+  })
+
   test('returns null for MUST_BE_AT_MOST_100_CHARS with non-percentage header', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_AT_MOST_100_CHARS', 'GROSS_WEIGHT')
+    ).toBeNull()
+  })
+
+  test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_VALID_EXPORT_CONTROL with EXPORT_CONTROLS header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_VALID_EXPORT_CONTROL',
+        'EXPORT_CONTROLS'
+      )
+    ).toBe('DROPDOWN_FORMAT_INVALID')
+  })
+
+  test('returns YES_NO_FORMAT_INVALID for MUST_BE_A_STRING with yes/no header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_A_STRING', 'ADD_PRODUCT_WEIGHT')
+    ).toBe('YES_NO_FORMAT_INVALID')
+  })
+
+  test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_A_STRING with dropdown header', () => {
+    expect(getDisplayCodeFromErrorCode('MUST_BE_A_STRING', 'EWC_CODE')).toBe(
+      'DROPDOWN_FORMAT_INVALID'
+    )
+  })
+
+  test('returns null for MUST_BE_A_STRING with unrecognised header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_A_STRING', 'GROSS_WEIGHT')
     ).toBeNull()
   })
 

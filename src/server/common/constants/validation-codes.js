@@ -159,14 +159,16 @@ export const DROPDOWN_HEADERS = new Set([
   'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION',
   'DESCRIPTION_WASTE',
   'EWC_CODE',
-  'BASEL_EXPORT_CODE'
+  'BASEL_EXPORT_CODE',
+  'EXPORT_CONTROLS'
 ])
 
 export const DROPDOWN_ERROR_CODES = new Set([
   'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
   'MUST_BE_VALID_EWC_CODE',
   'MUST_BE_VALID_BASEL_CODE',
-  'MUST_BE_VALID_WASTE_DESCRIPTION'
+  'MUST_BE_VALID_WASTE_DESCRIPTION',
+  'MUST_BE_VALID_EXPORT_CONTROL'
 ])
 
 export const FREE_TEXT_HEADERS = new Set(['CONTAINER_NUMBER', 'CUSTOMS_CODES'])
@@ -185,7 +187,9 @@ export const PERCENTAGE_HEADERS = new Set([
 
 export const PERCENTAGE_ERROR_CODES = new Set([
   'MUST_BE_AT_MOST_100_CHARS',
-  'MUST_BE_AT_LEAST_ZERO'
+  'MUST_BE_AT_LEAST_ZERO',
+  'MUST_BE_LESS_THAN_1',
+  'MUST_BE_AT_MOST_1'
 ])
 
 export const CALCULATED_HEADERS = new Set([
@@ -232,6 +236,11 @@ export const getDisplayCodeFromErrorCode = (errorCode, header) => {
 
   if (DROPDOWN_ERROR_CODES.has(errorCode) && DROPDOWN_HEADERS.has(header)) {
     return DROPDOWN_FORMAT_INVALID
+  }
+
+  if (errorCode === 'MUST_BE_A_STRING') {
+    if (YES_NO_HEADERS.has(header)) return YES_NO_FORMAT_INVALID
+    if (DROPDOWN_HEADERS.has(header)) return DROPDOWN_FORMAT_INVALID
   }
 
   if (FREE_TEXT_ERROR_CODES.has(errorCode) && FREE_TEXT_HEADERS.has(header)) {
