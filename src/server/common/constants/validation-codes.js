@@ -155,11 +155,19 @@ export const DROPDOWN_HEADERS = new Set([
   'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
 ])
 
+export const FREE_TEXT_HEADERS = new Set(['CONTAINER_NUMBER', 'CUSTOMS_CODES'])
+
+export const FREE_TEXT_ERROR_CODES = new Set([
+  'MUST_BE_ALPHANUMERIC',
+  'MUST_BE_AT_MOST_100_CHARS'
+])
+
 export const CALCULATED_FIELD_MISMATCH = 'CALCULATED_FIELD_MISMATCH'
 export const WEIGHT_FORMAT_INVALID = 'WEIGHT_FORMAT_INVALID'
 export const DATE_FORMAT_INVALID = 'DATE_FORMAT_INVALID'
 export const YES_NO_FORMAT_INVALID = 'YES_NO_FORMAT_INVALID'
 export const DROPDOWN_FORMAT_INVALID = 'DROPDOWN_FORMAT_INVALID'
+export const FREE_TEXT_INVALID = 'FREE_TEXT_INVALID'
 
 export const getDisplayCodeFromErrorCode = (errorCode, header) => {
   if (errorCode === 'NET_WEIGHT_CALCULATION_MISMATCH') {
@@ -183,6 +191,10 @@ export const getDisplayCodeFromErrorCode = (errorCode, header) => {
     DROPDOWN_HEADERS.has(header)
   ) {
     return DROPDOWN_FORMAT_INVALID
+  }
+
+  if (FREE_TEXT_ERROR_CODES.has(errorCode) && FREE_TEXT_HEADERS.has(header)) {
+    return FREE_TEXT_INVALID
   }
 
   return null

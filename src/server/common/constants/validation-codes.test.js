@@ -108,6 +108,24 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBeNull()
   })
 
+  test('returns FREE_TEXT_INVALID for MUST_BE_ALPHANUMERIC with CONTAINER_NUMBER header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_ALPHANUMERIC', 'CONTAINER_NUMBER')
+    ).toBe('FREE_TEXT_INVALID')
+  })
+
+  test('returns FREE_TEXT_INVALID for MUST_BE_AT_MOST_100_CHARS with CUSTOMS_CODES header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_AT_MOST_100_CHARS', 'CUSTOMS_CODES')
+    ).toBe('FREE_TEXT_INVALID')
+  })
+
+  test('returns null for MUST_BE_ALPHANUMERIC with non-free-text header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_ALPHANUMERIC', 'GROSS_WEIGHT')
+    ).toBeNull()
+  })
+
   test('returns null for undefined errorCode', () => {
     expect(getDisplayCodeFromErrorCode(undefined, 'NET_WEIGHT')).toBeNull()
   })
