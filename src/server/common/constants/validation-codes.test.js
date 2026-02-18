@@ -90,6 +90,24 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBeNull()
   })
 
+  test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD with dropdown header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
+        'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+      )
+    ).toBe('DROPDOWN_FORMAT_INVALID')
+  })
+
+  test('returns null for MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD with non-dropdown header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
+        'GROSS_WEIGHT'
+      )
+    ).toBeNull()
+  })
+
   test('returns null for undefined errorCode', () => {
     expect(getDisplayCodeFromErrorCode(undefined, 'NET_WEIGHT')).toBeNull()
   })

@@ -38,6 +38,7 @@
     "CALCULATED_FIELD_MISMATCH": "The selected file contains values within the automatically calculated fields that differ from the correctly calculated values.",
     "DATA_ENTRY_INVALID": "The selected file contains data that's been entered incorrectly - check that the data you've entered matches the examples provided in the summary log",
     "DATE_FORMAT_INVALID": "The selected file contains date formats that do not match the examples provided in the summary log.",
+    "DROPDOWN_FORMAT_INVALID": "The selected file contains values in some fields that have not been selected from within the drop-down provided.",
     "FILE_EMPTY": "The selected file is empty",
     "FILE_TOO_LARGE": "The selected file must be smaller than {{maxSize}}MB",
     "FILE_VIRUS_DETECTED": "The selected file contains a virus",

@@ -1759,6 +1759,36 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    it('status: invalid with dropdown errorCode on dropdown header - should show dropdown format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.INVALID_TYPE,
+              errorCode: 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
+              location: {
+                header: 'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+              }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values in some fields that have not been selected from within the drop-down provided.'
+      )
+    })
+
     it('status: invalid with unrecognised errorCode - should fall back to code-based display', async ({
       server
     }) => {
