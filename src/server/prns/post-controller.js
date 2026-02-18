@@ -213,6 +213,7 @@ export const postController = {
             )
           ])
 
+        // TODO: should this use the accreditation year instead of current year?
         const currentYear = getYear(new Date())
         warnOnMissingRegistrations(organisations, request.logger)
 
@@ -247,6 +248,7 @@ export const postController = {
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
 
+    // TODO: should this use the accreditation year instead of current year?
     const currentYear = getYear(new Date())
     warnOnMissingRegistrations(organisations, request.logger)
 

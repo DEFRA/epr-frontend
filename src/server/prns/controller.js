@@ -66,6 +66,7 @@ export const controller = {
       )
     ])
 
+    // TODO: should this use the accreditation year instead of current year?
     const currentYear = getYear(new Date())
     warnOnMissingRegistrations(organisations, request.logger)
 
