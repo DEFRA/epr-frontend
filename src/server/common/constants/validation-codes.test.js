@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { getDisplayCodeFromErrorCode } from './validation-codes.js'
 
 describe('#getDisplayCodeFromErrorCode', () => {
-  test('returns CALCULATED_FIELD_MISMATCH for NET_WEIGHT_CALCULATION_MISMATCH with any header', () => {
+  test('returns CALCULATED_FIELD_MISMATCH for NET_WEIGHT_CALCULATION_MISMATCH with NET_WEIGHT header', () => {
     expect(
       getDisplayCodeFromErrorCode(
         'NET_WEIGHT_CALCULATION_MISMATCH',
@@ -12,10 +12,31 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('CALCULATED_FIELD_MISMATCH')
   })
 
-  test('returns CALCULATED_FIELD_MISMATCH for NET_WEIGHT_CALCULATION_MISMATCH without header', () => {
+  test('returns CALCULATED_FIELD_MISMATCH for TONNAGE_CALCULATION_MISMATCH with TONNAGE_RECEIVED_FOR_RECYCLING header', () => {
     expect(
-      getDisplayCodeFromErrorCode('NET_WEIGHT_CALCULATION_MISMATCH', undefined)
+      getDisplayCodeFromErrorCode(
+        'TONNAGE_CALCULATION_MISMATCH',
+        'TONNAGE_RECEIVED_FOR_RECYCLING'
+      )
     ).toBe('CALCULATED_FIELD_MISMATCH')
+  })
+
+  test('returns CALCULATED_FIELD_MISMATCH for UK_PACKAGING_PROPORTION_CALCULATION_MISMATCH with PRODUCT_UK_PACKAGING_WEIGHT_PROPORTION header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'UK_PACKAGING_PROPORTION_CALCULATION_MISMATCH',
+        'PRODUCT_UK_PACKAGING_WEIGHT_PROPORTION'
+      )
+    ).toBe('CALCULATED_FIELD_MISMATCH')
+  })
+
+  test('returns null for NET_WEIGHT_CALCULATION_MISMATCH with non-calculated header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'NET_WEIGHT_CALCULATION_MISMATCH',
+        'GROSS_WEIGHT'
+      )
+    ).toBeNull()
   })
 
   test('returns WEIGHT_FORMAT_INVALID for MUST_BE_A_NUMBER with GROSS_WEIGHT header', () => {
