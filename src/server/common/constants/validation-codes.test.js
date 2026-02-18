@@ -66,6 +66,21 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('WEIGHT_FORMAT_INVALID')
   })
 
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with PRODUCT_TONNAGE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_AT_LEAST_ZERO', 'PRODUCT_TONNAGE')
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_MOST_1000 with TONNAGE_OF_UK_PACKAGING_WASTE_EXPORTED header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_MOST_1000',
+        'TONNAGE_OF_UK_PACKAGING_WASTE_EXPORTED'
+      )
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
   test('returns null for numeric error code with non-weight header', () => {
     expect(
       getDisplayCodeFromErrorCode(
