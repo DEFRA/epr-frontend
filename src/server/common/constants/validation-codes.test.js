@@ -72,6 +72,24 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBeNull()
   })
 
+  test('returns YES_NO_FORMAT_INVALID for MUST_BE_YES_OR_NO with ADD_PRODUCT_WEIGHT header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_YES_OR_NO', 'ADD_PRODUCT_WEIGHT')
+    ).toBe('YES_NO_FORMAT_INVALID')
+  })
+
+  test('returns YES_NO_FORMAT_INVALID for MUST_BE_YES_OR_NO with BAILING_WIRE_PROTOCOL header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_YES_OR_NO', 'BAILING_WIRE_PROTOCOL')
+    ).toBe('YES_NO_FORMAT_INVALID')
+  })
+
+  test('returns null for MUST_BE_YES_OR_NO with non-yes-no header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_YES_OR_NO', 'GROSS_WEIGHT')
+    ).toBeNull()
+  })
+
   test('returns null for undefined errorCode', () => {
     expect(getDisplayCodeFromErrorCode(undefined, 'NET_WEIGHT')).toBeNull()
   })

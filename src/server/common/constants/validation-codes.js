@@ -144,9 +144,17 @@ export const DATE_HEADERS = new Set([
   'DATE_OF_EXPORT'
 ])
 
+export const YES_NO_HEADERS = new Set([
+  'ADD_PRODUCT_WEIGHT',
+  'WERE_PRN_OR_PERN_ISSUED_ON_THIS_WASTE',
+  'BAILING_WIRE_PROTOCOL',
+  'DID_WASTE_PASS_THROUGH_AN_INTERIM_SITE'
+])
+
 export const CALCULATED_FIELD_MISMATCH = 'CALCULATED_FIELD_MISMATCH'
 export const WEIGHT_FORMAT_INVALID = 'WEIGHT_FORMAT_INVALID'
 export const DATE_FORMAT_INVALID = 'DATE_FORMAT_INVALID'
+export const YES_NO_FORMAT_INVALID = 'YES_NO_FORMAT_INVALID'
 
 export const getDisplayCodeFromErrorCode = (errorCode, header) => {
   if (errorCode === 'NET_WEIGHT_CALCULATION_MISMATCH') {
@@ -159,6 +167,10 @@ export const getDisplayCodeFromErrorCode = (errorCode, header) => {
 
   if (errorCode === 'MUST_BE_A_VALID_DATE' && DATE_HEADERS.has(header)) {
     return DATE_FORMAT_INVALID
+  }
+
+  if (errorCode === 'MUST_BE_YES_OR_NO' && YES_NO_HEADERS.has(header)) {
+    return YES_NO_FORMAT_INVALID
   }
 
   return null

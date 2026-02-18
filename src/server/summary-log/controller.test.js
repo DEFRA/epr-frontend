@@ -1731,6 +1731,34 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    it('status: invalid with yes/no errorCode on yes/no header - should show yes/no format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.INVALID_TYPE,
+              errorCode: 'MUST_BE_YES_OR_NO',
+              location: { header: 'BAILING_WIRE_PROTOCOL' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains answers to Yes / No questions with formats that do not match the examples provided in the summary log.'
+      )
+    })
+
     it('status: invalid with unrecognised errorCode - should fall back to code-based display', async ({
       server
     }) => {
