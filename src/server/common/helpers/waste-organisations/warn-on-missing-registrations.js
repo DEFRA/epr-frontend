@@ -10,6 +10,7 @@ const PRODUCER_TYPES = new Set(['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'])
  * @param {{ warn: (data: object, message: string) => void }} logger
  */
 export const warnOnMissingRegistrations = (organisations, logger) => {
+  // TODO: should this use the accreditation year instead of current year?
   const currentYear = getYear(new Date())
 
   for (const org of organisations) {

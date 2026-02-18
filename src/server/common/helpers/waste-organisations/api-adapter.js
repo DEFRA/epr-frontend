@@ -17,6 +17,7 @@ export function createApiWasteOrganisationsService() {
       )
       const isDevelopment = config.get('isDevelopment')
 
+      // TODO: should this use the accreditation year instead of current year?
       const now = new Date()
       const thisYear = getYear(now)
 
