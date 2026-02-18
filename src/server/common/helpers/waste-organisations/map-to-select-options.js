@@ -9,12 +9,13 @@ import { getDisplayName } from './get-display-name.js'
 /**
  * Maps waste organisations to sorted select options
  * @param {WasteOrganisation[]} organisations
+ * @param {number} year
  * @returns {SelectOption[]}
  */
-export const mapToSelectOptions = (organisations) =>
+export const mapToSelectOptions = (organisations, year) =>
   organisations
     .map((org) => {
-      const name = getDisplayName(org)
+      const name = getDisplayName(org, year)
       const address = Object.values(org.address).filter(Boolean).join(', ')
 
       return {

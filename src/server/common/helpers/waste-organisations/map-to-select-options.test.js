@@ -56,11 +56,11 @@ describe('#mapToSelectOptions', () => {
           town: 'London',
           postcode: 'W1 1AA'
         },
-        registrations: [{ type: 'COMPLIANCE_SCHEME' }]
+        registrations: [{ type: 'COMPLIANCE_SCHEME', registrationYear: 2026 }]
       }
     ]
 
-    const result = mapToSelectOptions(organisations)
+    const result = mapToSelectOptions(organisations, 2026)
 
     expect(result[0].text).toBe('Trading As Name, 1 High St, London, W1 1AA')
   })
@@ -76,11 +76,11 @@ describe('#mapToSelectOptions', () => {
           town: 'London',
           postcode: 'W1 1AA'
         },
-        registrations: [{ type: 'LARGE_PRODUCER' }]
+        registrations: [{ type: 'LARGE_PRODUCER', registrationYear: 2026 }]
       }
     ]
 
-    const result = mapToSelectOptions(organisations)
+    const result = mapToSelectOptions(organisations, 2026)
 
     expect(result[0].text).toBe('Legal Producer Ltd, 1 High St, London, W1 1AA')
   })

@@ -1,3 +1,5 @@
+import { getYear } from 'date-fns'
+
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
@@ -104,17 +106,17 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 
 /**
  * @param {object} result - The created PRN draft from the backend
- * @param {object} issuedToOrganisation - The recipient organisation
+ * @param {string} recipientDisplayName - The resolved display name for the recipient
  * @param {string} notes - Issuer notes
  */
-function buildPrnDraftSession(result, issuedToOrganisation, notes) {
+function buildPrnDraftSession(result, recipientDisplayName, notes) {
   return {
     id: result.id,
     tonnage: result.tonnage,
     tonnageInWords: tonnageToWords(result.tonnage),
     material: result.material,
     status: result.status,
-    recipientName: getDisplayName(issuedToOrganisation),
+    recipientName: recipientDisplayName,
     notes: notes || '',
     wasteProcessingType: result.wasteProcessingType,
     processToBeUsed: result.processToBeUsed,
@@ -126,7 +128,7 @@ function buildPrnDraftSession(result, issuedToOrganisation, notes) {
  * Re-render the create form when the selected recipient is not
  * found in the organisations list.
  */
-async function handleInvalidRecipient(request, h, organisations) {
+async function handleInvalidRecipient(request, h, organisations, year) {
   const { organisationId, registrationId, accreditationId } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
@@ -158,7 +160,7 @@ async function handleInvalidRecipient(request, h, organisations) {
 
   const viewData = buildCreatePrnViewData(request, {
     organisationId,
-    recipients: mapToSelectOptions(organisations),
+    recipients: mapToSelectOptions(organisations, year),
     registration,
     registrationId,
     wasteBalance
@@ -211,11 +213,12 @@ export const postController = {
             )
           ])
 
+        const currentYear = getYear(new Date())
         warnOnMissingRegistrations(organisations, request.logger)
 
         const viewData = buildCreatePrnViewData(request, {
           organisationId,
-          recipients: mapToSelectOptions(organisations),
+          recipients: mapToSelectOptions(organisations, currentYear),
           registration,
           registrationId,
           wasteBalance
@@ -244,12 +247,13 @@ export const postController = {
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
 
+    const currentYear = getYear(new Date())
     warnOnMissingRegistrations(organisations, request.logger)
 
     const organisation = organisations.find((org) => org.id === recipient)
 
     if (!organisation) {
-      return handleInvalidRecipient(request, h, organisations)
+      return handleInvalidRecipient(request, h, organisations, currentYear)
     }
 
     const issuedToOrganisation = {
@@ -257,6 +261,7 @@ export const postController = {
       name: organisation.name,
       tradingName: organisation.tradingName
     }
+    const recipientDisplayName = getDisplayName(organisation, currentYear)
 
     try {
       // Create PRN as draft in backend
@@ -275,7 +280,7 @@ export const postController = {
       // Store PRN data in session for check/confirm page
       request.yar.set(
         'prnDraft',
-        buildPrnDraftSession(result, issuedToOrganisation, notes)
+        buildPrnDraftSession(result, recipientDisplayName, notes)
       )
 
       return h.redirect(

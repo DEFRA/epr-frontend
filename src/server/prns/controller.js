@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { getYear } from 'date-fns'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -65,11 +66,12 @@ export const controller = {
       )
     ])
 
+    const currentYear = getYear(new Date())
     warnOnMissingRegistrations(organisations, request.logger)
 
     const viewData = buildCreatePrnViewData(request, {
       organisationId,
-      recipients: mapToSelectOptions(organisations),
+      recipients: mapToSelectOptions(organisations, currentYear),
       registration,
       registrationId,
       wasteBalance

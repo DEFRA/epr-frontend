@@ -3,17 +3,25 @@
 /**
  * Gets the display name for an organisation.
  *
- * When the organisation has registrations (full WasteOrganisation from the API),
- * uses type-aware logic: compliance schemes show tradingName, producers show name.
+ * When year is provided and the organisation has registrations, only
+ * registrations for that year are considered for type-aware logic:
+ * compliance schemes show tradingName, producers show name.
  *
- * When registrations are absent (e.g. PRN data or companyDetails), falls back to
- * preferring tradingName over name for backward compatibility.
+ * When registrations are absent or none match the year, falls back to
+ * preferring tradingName over name.
  * @param {Pick<WasteOrganisation, 'name' | 'tradingName'> & { registrations?: WasteOrganisation['registrations'] }} organisation
+ * @param {number} [year]
  * @returns {string}
  */
-export const getDisplayName = (organisation) => {
-  if (organisation.registrations?.length) {
-    const isComplianceScheme = organisation.registrations.some(
+export const getDisplayName = (organisation, year) => {
+  const registrations = year
+    ? organisation.registrations?.filter(
+        (r) => Number(r.registrationYear) === year
+      )
+    : organisation.registrations
+
+  if (registrations?.length) {
+    const isComplianceScheme = registrations.some(
       (r) => r.type === 'COMPLIANCE_SCHEME'
     )
     return isComplianceScheme
