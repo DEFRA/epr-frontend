@@ -5,6 +5,7 @@ import {
   ACCREDITATION_DISPLAY_CODE,
   DATA_ENTRY_CODES,
   DATA_ENTRY_DISPLAY_CODE,
+  getDisplayCodeFromErrorCode,
   MATERIAL_CODES,
   MATERIAL_DISPLAY_CODE,
   PROCESSING_TYPE_CODES,
@@ -309,8 +310,12 @@ const renderValidationFailuresView = (
     failures.length > 0
       ? [
           ...new Set(
-            failures.map(({ code }) => {
-              const displayCode = getDisplayCode(code)
+            failures.map(({ code, errorCode, location }) => {
+              const header = location?.header
+              const displayCode = errorCode
+                ? (getDisplayCodeFromErrorCode(errorCode, header) ??
+                  getDisplayCode(code))
+                : getDisplayCode(code)
               return localise(`summary-log:failure.${displayCode}`, {
                 defaultValue: fallbackMessage,
                 maxSize: MAX_FILE_SIZE_MB

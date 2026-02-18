@@ -121,3 +121,33 @@ export const TECHNICAL_ERROR_DISPLAY_CODE = 'TECHNICAL_ERROR'
 
 export const SPREADSHEET_CODES = new Set(Object.values(spreadsheetCodes))
 export const SPREADSHEET_DISPLAY_CODE = 'TEMPLATE_INVALID'
+
+export const WEIGHT_HEADERS = new Set([
+  'GROSS_WEIGHT',
+  'TARE_WEIGHT',
+  'PALLET_WEIGHT',
+  'NET_WEIGHT',
+  'WEIGHT_OF_NON_TARGET_MATERIALS'
+])
+
+export const WEIGHT_NUMERIC_ERROR_CODES = new Set([
+  'MUST_BE_A_NUMBER',
+  'MUST_BE_GREATER_THAN_ZERO',
+  'MUST_BE_AT_LEAST_ZERO',
+  'MUST_BE_AT_MOST_1000'
+])
+
+export const CALCULATED_FIELD_MISMATCH = 'CALCULATED_FIELD_MISMATCH'
+export const WEIGHT_FORMAT_INVALID = 'WEIGHT_FORMAT_INVALID'
+
+export const getDisplayCodeFromErrorCode = (errorCode, header) => {
+  if (errorCode === 'NET_WEIGHT_CALCULATION_MISMATCH') {
+    return CALCULATED_FIELD_MISMATCH
+  }
+
+  if (WEIGHT_NUMERIC_ERROR_CODES.has(errorCode) && WEIGHT_HEADERS.has(header)) {
+    return WEIGHT_FORMAT_INVALID
+  }
+
+  return null
+}

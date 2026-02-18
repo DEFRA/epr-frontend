@@ -1647,6 +1647,130 @@ describe('#summaryLogUploadProgressController', () => {
       expect(matches).toHaveLength(1)
     })
 
+    it('status: invalid with NET_WEIGHT_CALCULATION_MISMATCH errorCode - should show calculated field mismatch message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.CALCULATED_VALUE_MISMATCH,
+              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+              location: { header: 'NET_WEIGHT' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values.'
+      )
+    })
+
+    it('status: invalid with weight numeric errorCode - should show weight format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.INVALID_TYPE,
+              errorCode: 'MUST_BE_A_NUMBER',
+              location: { header: 'GROSS_WEIGHT' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log.'
+      )
+    })
+
+    it('status: invalid with unrecognised errorCode - should fall back to code-based display', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.INVALID_TYPE,
+              errorCode: 'MUST_BE_A_VALID_DATE',
+              location: { header: 'SOME_DATE_FIELD' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains data that&#39;s been entered incorrectly'
+      )
+    })
+
+    it('status: invalid with mixed errorCode and code-only failures - should show correct deduplicated messages', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.CALCULATED_VALUE_MISMATCH,
+              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+              location: { header: 'NET_WEIGHT' }
+            },
+            {
+              code: validationFailureCodes.INVALID_TYPE,
+              errorCode: 'MUST_BE_A_NUMBER',
+              location: { header: 'GROSS_WEIGHT' }
+            },
+            { code: validationFailureCodes.REGISTRATION_MISMATCH }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values.'
+      )
+      expect(result).toContain(
+        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log.'
+      )
+      expect(result).toContain(
+        'Summary log registration is missing or incorrect'
+      )
+    })
+
     it('status: invalid with empty validation failures - should show technical error message', async ({
       server
     }) => {
