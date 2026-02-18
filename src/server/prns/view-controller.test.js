@@ -1228,6 +1228,7 @@ describe('#viewController', () => {
             .querySelector('.govuk-summary-list__value')
             ?.textContent?.trim()
         ).toBe('Reprocessor Trading')
+        expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
       })
 
       it('displays empty issuer when company details are missing', async ({
