@@ -34,6 +34,7 @@ const createMockRequest = () => ({
       'prns:list:issuedTable:recipientHeading': 'Producer or compliance scheme',
       'prns:list:issuedTable:dateIssuedHeading': 'Date issued',
       'prns:list:issuedTable:statusHeading': 'Status',
+      'prns:list:issuedTable:tonnageHeading': 'Tonnage',
       'prns:list:issuedTable:actionHeading': 'View in new tab',
       'prns:list:issuedTable:selectText': 'Select'
     }
@@ -459,7 +460,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows).toHaveLength(2)
+      expect(result.issuedTable.rows).toHaveLength(3)
       expect(result.issuedTable.rows[0][0]).toStrictEqual({
         text: 'ER2612345'
       })
@@ -484,10 +485,10 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][3].html).toContain(
+      expect(result.issuedTable.rows[0][4].html).toContain(
         'Awaiting acceptance'
       )
-      expect(result.issuedTable.rows[0][3].html).toContain('govuk-tag')
+      expect(result.issuedTable.rows[0][4].html).toContain('govuk-tag')
     })
 
     it('should return issued table headings for PRNs', () => {
@@ -503,13 +504,14 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.headings.prnNumber).toBe('PRN number')
-      expect(result.issuedTable.headings.recipient).toBe(
-        'Producer or compliance scheme'
-      )
-      expect(result.issuedTable.headings.dateIssued).toBe('Date issued')
-      expect(result.issuedTable.headings.status).toBe('Status')
-      expect(result.issuedTable.headings.action).toBe('View in new tab')
+      expect(result.issuedTable.headings).toStrictEqual({
+        prnNumber: 'PRN number',
+        recipient: 'Producer or compliance scheme',
+        dateIssued: 'Date issued',
+        tonnage: 'Tonnage',
+        status: 'Status',
+        action: 'View in new tab'
+      })
     })
 
     it('should return issued table headings for PERNs', () => {
@@ -525,13 +527,14 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.headings.prnNumber).toBe('PERN number')
-      expect(result.issuedTable.headings.recipient).toBe(
-        'Producer or compliance scheme'
-      )
-      expect(result.issuedTable.headings.dateIssued).toBe('Date issued')
-      expect(result.issuedTable.headings.status).toBe('Status')
-      expect(result.issuedTable.headings.action).toBe('View in new tab')
+      expect(result.issuedTable.headings).toStrictEqual({
+        prnNumber: 'PERN number',
+        recipient: 'Producer or compliance scheme',
+        dateIssued: 'Date issued',
+        tonnage: 'Tonnage',
+        status: 'Status',
+        action: 'View in new tab'
+      })
     })
 
     it('should return view links for each issued PRN with target="_blank"', () => {
@@ -547,11 +550,11 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][4].html).toContain('govuk-link')
-      expect(result.issuedTable.rows[0][4].html).toContain(
+      expect(result.issuedTable.rows[0][5].html).toContain('govuk-link')
+      expect(result.issuedTable.rows[0][5].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-003/view'
       )
-      expect(result.issuedTable.rows[0][4].html).toContain('target="_blank"')
+      expect(result.issuedTable.rows[0][5].html).toContain('target="_blank"')
     })
 
     it('should return empty issued table rows when no issued PRNs', () => {

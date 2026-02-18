@@ -211,6 +211,7 @@ function buildIssuedTable(
     }),
     recipient: localise('prns:list:issuedTable:recipientHeading'),
     dateIssued: localise('prns:list:issuedTable:dateIssuedHeading'),
+    tonnage: localise('prns:list:issuedTable:tonnageHeading'),
     status: localise('prns:list:issuedTable:statusHeading'),
     action: localise('prns:list:issuedTable:actionHeading')
   }
@@ -225,6 +226,7 @@ function buildIssuedTable(
       { text: prn.prnNumber },
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.issuedAt) },
+      { text: prn.tonnage ?? 0 },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
         html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
@@ -232,7 +234,24 @@ function buildIssuedTable(
     ]
   })
 
-  return { headings, rows }
+  if (rows.length === 0) {
+    return { headings, rows: [] }
+  }
+
+  const totalTonnage = issuedPrns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalRow = [
+    {
+      text: localise('prns:list:table:totalLabel'),
+      classes: 'govuk-!-font-weight-bold'
+    },
+    { text: '' },
+    { text: '' },
+    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: '' },
+    { text: '' }
+  ]
+
+  return { headings, rows: [...rows, totalRow] }
 }
 
 /**
