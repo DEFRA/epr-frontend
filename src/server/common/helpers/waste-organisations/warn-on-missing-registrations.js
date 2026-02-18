@@ -13,15 +13,24 @@ export const warnOnMissingRegistrations = (organisations, logger) => {
   const currentYear = getYear(new Date())
 
   for (const org of organisations) {
-    const hasCurrentYearProducerReg = org.registrations?.some(
+    const currentYearProducerRegs = org.registrations?.filter(
       (r) =>
         PRODUCER_TYPES.has(r.type) && Number(r.registrationYear) === currentYear
     )
 
-    if (!hasCurrentYearProducerReg) {
+    if (!currentYearProducerRegs?.length) {
       logger.warn(
         { organisationId: org.id, organisationName: org.name },
         'Waste organisation has no current-year registration as LARGE_PRODUCER or COMPLIANCE_SCHEME — display name will fall back to tradingName preference'
+      )
+      continue
+    }
+
+    const types = new Set(currentYearProducerRegs.map((r) => r.type))
+    if (types.size > 1) {
+      logger.warn(
+        { organisationId: org.id, organisationName: org.name },
+        'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the current year — likely bad data from RPD'
       )
     }
   }

@@ -113,4 +113,43 @@ describe('#warnOnMissingRegistrations', () => {
 
     expect(logger.warn).toHaveBeenCalledTimes(2)
   })
+
+  it('warns when an organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME for the same year', () => {
+    const logger = { warn: vi.fn() }
+    const organisations = [
+      {
+        id: 'org-1',
+        name: 'Dual Type',
+        registrations: [
+          { type: 'LARGE_PRODUCER', registrationYear: currentYear },
+          { type: 'COMPLIANCE_SCHEME', registrationYear: currentYear }
+        ]
+      }
+    ]
+
+    warnOnMissingRegistrations(organisations, logger)
+
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      { organisationId: 'org-1', organisationName: 'Dual Type' },
+      expect.stringContaining('both LARGE_PRODUCER and COMPLIANCE_SCHEME')
+    )
+  })
+
+  it('does not warn about duplicate types when they are for different years', () => {
+    const logger = { warn: vi.fn() }
+    const organisations = [
+      {
+        id: 'org-1',
+        name: 'Different Years',
+        registrations: [
+          { type: 'LARGE_PRODUCER', registrationYear: currentYear },
+          { type: 'COMPLIANCE_SCHEME', registrationYear: currentYear - 1 }
+        ]
+      }
+    ]
+
+    warnOnMissingRegistrations(organisations, logger)
+
+    expect(logger.warn).not.toHaveBeenCalled()
+  })
 })
