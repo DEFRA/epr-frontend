@@ -10,7 +10,8 @@ import {
   buildPrnIssuerRows,
   buildStatusRow
 } from './helpers/build-prn-detail-rows.js'
-import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
+import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
+import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -265,7 +266,9 @@ async function handleExistingView(
     throw Boom.notFound('Registration not found')
   }
 
-  const recipientDisplayName = getDisplayName(prn.issuedToOrganisation)
+  const recipientDisplayName = getIssuedToOrgDisplayName(
+    prn.issuedToOrganisation
+  )
 
   const { isExporter, noteType, noteTypeFull, wasteAction } =
     getNoteTypeDisplayNames(registration)
@@ -412,7 +415,7 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
       key: { text: localise('prns:issuerLabel') },
       value: {
         text: organisationData.companyDetails
-          ? getDisplayName(organisationData.companyDetails)
+          ? getIssuingOrgDisplayName(organisationData.companyDetails)
           : ''
       }
     },
@@ -462,7 +465,7 @@ function buildExistingPrnDetailRows({
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
       issuerName: organisationData?.companyDetails
-        ? getDisplayName(organisationData.companyDetails)
+        ? getIssuingOrgDisplayName(organisationData.companyDetails)
         : ''
     })
   )
