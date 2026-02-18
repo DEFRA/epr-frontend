@@ -1,3 +1,4 @@
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
@@ -157,7 +158,7 @@ function buildAwaitingTable(
     return [
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.createdAt) },
-      { text: prn.tonnage },
+      { text: formatTonnage(prn.tonnage) },
       buildStatusCell(prn, localise),
       { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
     ]
@@ -171,10 +172,10 @@ function buildAwaitingTable(
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
-      classes: 'govuk-!-font-weight-bold'
+      classes: cssClasses.fontWeightBold
     },
     { text: '' },
-    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: formatTonnage(totalTonnage), classes: cssClasses.fontWeightBold },
     { text: '' },
     { text: '' }
   ]
@@ -211,6 +212,7 @@ function buildIssuedTable(
     }),
     recipient: localise('prns:list:issuedTable:recipientHeading'),
     dateIssued: localise('prns:list:issuedTable:dateIssuedHeading'),
+    tonnage: localise('prns:list:issuedTable:tonnageHeading'),
     status: localise('prns:list:issuedTable:statusHeading'),
     action: localise('prns:list:issuedTable:actionHeading')
   }
@@ -225,6 +227,7 @@ function buildIssuedTable(
       { text: prn.prnNumber },
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.issuedAt) },
+      { text: formatTonnage(prn.tonnage ?? 0) },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
         html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
@@ -232,7 +235,33 @@ function buildIssuedTable(
     ]
   })
 
-  return { headings, rows }
+  if (rows.length === 0) {
+    return { headings, rows: [] }
+  }
+
+  const totalTonnage = issuedPrns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalRow = [
+    {
+      text: localise('prns:list:table:totalLabel'),
+      classes: cssClasses.fontWeightBold
+    },
+    { text: '' },
+    { text: '' },
+    { text: formatTonnage(totalTonnage), classes: cssClasses.fontWeightBold },
+    { text: '' },
+    { text: '' }
+  ]
+
+  return { headings, rows: [...rows, totalRow] }
+}
+
+/**
+ * Format tonnage to 2 decimal places
+ * @param {number} tonnage
+ * @returns {string}
+ */
+function formatTonnage(tonnage) {
+  return Number(tonnage).toFixed(2)
 }
 
 /**
