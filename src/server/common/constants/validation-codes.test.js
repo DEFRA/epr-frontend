@@ -99,6 +99,30 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('DROPDOWN_FORMAT_INVALID')
   })
 
+  test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_VALID_EWC_CODE with EWC_CODE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_VALID_EWC_CODE', 'EWC_CODE')
+    ).toBe('DROPDOWN_FORMAT_INVALID')
+  })
+
+  test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_VALID_BASEL_CODE with BASEL_EXPORT_CODE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_VALID_BASEL_CODE',
+        'BASEL_EXPORT_CODE'
+      )
+    ).toBe('DROPDOWN_FORMAT_INVALID')
+  })
+
+  test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_VALID_WASTE_DESCRIPTION with DESCRIPTION_WASTE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_VALID_WASTE_DESCRIPTION',
+        'DESCRIPTION_WASTE'
+      )
+    ).toBe('DROPDOWN_FORMAT_INVALID')
+  })
+
   test('returns null for MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD with non-dropdown header', () => {
     expect(
       getDisplayCodeFromErrorCode(

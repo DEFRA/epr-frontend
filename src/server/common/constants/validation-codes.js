@@ -152,7 +152,17 @@ export const YES_NO_HEADERS = new Set([
 ])
 
 export const DROPDOWN_HEADERS = new Set([
-  'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+  'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION',
+  'DESCRIPTION_WASTE',
+  'EWC_CODE',
+  'BASEL_EXPORT_CODE'
+])
+
+export const DROPDOWN_ERROR_CODES = new Set([
+  'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
+  'MUST_BE_VALID_EWC_CODE',
+  'MUST_BE_VALID_BASEL_CODE',
+  'MUST_BE_VALID_WASTE_DESCRIPTION'
 ])
 
 export const FREE_TEXT_HEADERS = new Set(['CONTAINER_NUMBER', 'CUSTOMS_CODES'])
@@ -189,10 +199,7 @@ export const getDisplayCodeFromErrorCode = (errorCode, header) => {
     return YES_NO_FORMAT_INVALID
   }
 
-  if (
-    errorCode === 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD' &&
-    DROPDOWN_HEADERS.has(header)
-  ) {
+  if (DROPDOWN_ERROR_CODES.has(errorCode) && DROPDOWN_HEADERS.has(header)) {
     return DROPDOWN_FORMAT_INVALID
   }
 
