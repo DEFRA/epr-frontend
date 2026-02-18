@@ -126,6 +126,24 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBeNull()
   })
 
+  test('returns ID_FORMAT_INVALID for MUST_BE_3_DIGIT_NUMBER with OSR_ID header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_NUMBER', 'OSR_ID')
+    ).toBe('ID_FORMAT_INVALID')
+  })
+
+  test('returns ID_FORMAT_INVALID for MUST_BE_3_DIGIT_NUMBER with INTERIM_SITE_ID header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_NUMBER', 'INTERIM_SITE_ID')
+    ).toBe('ID_FORMAT_INVALID')
+  })
+
+  test('returns null for MUST_BE_3_DIGIT_NUMBER with non-ID header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_NUMBER', 'GROSS_WEIGHT')
+    ).toBeNull()
+  })
+
   test('returns null for undefined errorCode', () => {
     expect(getDisplayCodeFromErrorCode(undefined, 'NET_WEIGHT')).toBeNull()
   })

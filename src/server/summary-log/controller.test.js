@@ -1817,6 +1817,34 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    it('status: invalid with ID errorCode on ID header - should show ID format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.INVALID_TYPE,
+              errorCode: 'MUST_BE_3_DIGIT_NUMBER',
+              location: { header: 'OSR_ID' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values in ID fields with formats that do not match the 3 digit format of the examples provided in the summary log.'
+      )
+    })
+
     it('status: invalid with unrecognised errorCode - should fall back to code-based display', async ({
       server
     }) => {
