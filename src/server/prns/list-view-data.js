@@ -1,3 +1,4 @@
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
@@ -171,10 +172,10 @@ function buildAwaitingTable(
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
-      classes: 'govuk-!-font-weight-bold'
+      classes: cssClasses.fontWeightBold
     },
     { text: '' },
-    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: totalTonnage, classes: cssClasses.fontWeightBold },
     { text: '' },
     { text: '' }
   ]
@@ -242,11 +243,11 @@ function buildIssuedTable(
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
-      classes: 'govuk-!-font-weight-bold'
+      classes: cssClasses.fontWeightBold
     },
     { text: '' },
     { text: '' },
-    { text: totalTonnage, classes: 'govuk-!-font-weight-bold' },
+    { text: totalTonnage, classes: cssClasses.fontWeightBold },
     { text: '' },
     { text: '' }
   ]
