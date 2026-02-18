@@ -246,7 +246,7 @@ describe('#buildListViewData', () => {
         text: 'Acme Packaging Ltd'
       })
       expect(result.table.rows[0][1]).toStrictEqual({ text: '15 January 2026' })
-      expect(result.table.rows[0][2]).toStrictEqual({ text: 50 })
+      expect(result.table.rows[0][2]).toStrictEqual({ text: '50.00' })
     })
 
     it('should return total row with sum of tonnage', () => {
@@ -262,7 +262,7 @@ describe('#buildListViewData', () => {
       const totalRow = result.table.rows[2]
       expect(totalRow[0].text).toBe('Total')
       expect(totalRow[0].classes).toBe(cssClasses.fontWeightBold)
-      expect(totalRow[2].text).toBe(170) // 50 + 120
+      expect(totalRow[2].text).toBe('170.00') // 50 + 120
       expect(totalRow[2].classes).toBe(cssClasses.fontWeightBold)
     })
 
@@ -684,7 +684,9 @@ describe('#buildListViewData', () => {
       expect(result.cancellationTable.rows[0][1]).toStrictEqual({
         text: '13 August 2025'
       })
-      expect(result.cancellationTable.rows[0][2]).toStrictEqual({ text: 5 })
+      expect(result.cancellationTable.rows[0][2]).toStrictEqual({
+        text: '5.00'
+      })
       expect(result.cancellationTable.rows[0][3]).toStrictEqual({
         html: '<strong class="govuk-tag govuk-tag--yellow epr-tag--no-max-width">Awaiting cancellation</strong>'
       })
@@ -705,7 +707,7 @@ describe('#buildListViewData', () => {
       const totalRow = result.cancellationTable.rows[2]
       expect(totalRow[0].text).toBe('Total')
       expect(totalRow[0].classes).toBe(cssClasses.fontWeightBold)
-      expect(totalRow[2].text).toBe(30) // 5 + 25
+      expect(totalRow[2].text).toBe('30.00') // 5 + 25
       expect(totalRow[2].classes).toBe(cssClasses.fontWeightBold)
     })
 
