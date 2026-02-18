@@ -54,7 +54,19 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBeNull()
   })
 
-  test('returns null for unhandled error code', () => {
+  test('returns DATE_FORMAT_INVALID for MUST_BE_A_VALID_DATE with DATE_LOAD_LEFT_SITE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_A_VALID_DATE', 'DATE_LOAD_LEFT_SITE')
+    ).toBe('DATE_FORMAT_INVALID')
+  })
+
+  test('returns DATE_FORMAT_INVALID for MUST_BE_A_VALID_DATE with DATE_OF_EXPORT header', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_A_VALID_DATE', 'DATE_OF_EXPORT')
+    ).toBe('DATE_FORMAT_INVALID')
+  })
+
+  test('returns null for MUST_BE_A_VALID_DATE with non-date header', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_A_VALID_DATE', 'NET_WEIGHT')
     ).toBeNull()

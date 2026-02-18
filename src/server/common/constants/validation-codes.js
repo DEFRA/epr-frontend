@@ -137,8 +137,16 @@ export const WEIGHT_NUMERIC_ERROR_CODES = new Set([
   'MUST_BE_AT_MOST_1000'
 ])
 
+export const DATE_HEADERS = new Set([
+  'DATE_LOAD_LEFT_SITE',
+  'DATE_RECEIVED_FOR_REPROCESSING',
+  'DATE_RECEIVED_FOR_EXPORT',
+  'DATE_OF_EXPORT'
+])
+
 export const CALCULATED_FIELD_MISMATCH = 'CALCULATED_FIELD_MISMATCH'
 export const WEIGHT_FORMAT_INVALID = 'WEIGHT_FORMAT_INVALID'
+export const DATE_FORMAT_INVALID = 'DATE_FORMAT_INVALID'
 
 export const getDisplayCodeFromErrorCode = (errorCode, header) => {
   if (errorCode === 'NET_WEIGHT_CALCULATION_MISMATCH') {
@@ -147,6 +155,10 @@ export const getDisplayCodeFromErrorCode = (errorCode, header) => {
 
   if (WEIGHT_NUMERIC_ERROR_CODES.has(errorCode) && WEIGHT_HEADERS.has(header)) {
     return WEIGHT_FORMAT_INVALID
+  }
+
+  if (errorCode === 'MUST_BE_A_VALID_DATE' && DATE_HEADERS.has(header)) {
+    return DATE_FORMAT_INVALID
   }
 
   return null

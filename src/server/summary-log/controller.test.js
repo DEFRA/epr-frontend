@@ -1703,6 +1703,34 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    it('status: invalid with date errorCode on date header - should show date format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.INVALID_DATE,
+              errorCode: 'MUST_BE_A_VALID_DATE',
+              location: { header: 'DATE_LOAD_LEFT_SITE' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains date formats that do not match the examples provided in the summary log.'
+      )
+    })
+
     it('status: invalid with unrecognised errorCode - should fall back to code-based display', async ({
       server
     }) => {
