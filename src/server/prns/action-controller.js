@@ -233,7 +233,9 @@ function buildActionPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationData.companyDetails?.name || ''
+      issuerName: organisationData.companyDetails
+        ? getDisplayName(organisationData.companyDetails)
+        : ''
     })
   )
 

@@ -207,6 +207,36 @@ describe('#viewController', () => {
         expect(getByText(main, /Reprocessor Organisation/i)).toBeDefined()
       })
 
+      it('displays issuer tradingName when present on certificate page', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          organisationData: {
+            id: 'org-123',
+            companyDetails: {
+              name: 'Legal Reprocessor Ltd',
+              tradingName: 'Reprocessor Trading'
+            }
+          }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Reprocessor Trading/i)).toBeDefined()
+        expect(body.innerHTML).not.toContain('>Legal Reprocessor Ltd<')
+      })
+
       it('displays empty issuer when company details are missing on certificate page', async ({
         server
       }) => {
@@ -1139,6 +1169,65 @@ describe('#viewController', () => {
         const main = getByRole(body, 'main')
 
         expect(getByText(main, /Not provided/i)).toBeDefined()
+      })
+
+      it('displays issuer tradingName when present on check page', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...fixtureReprocessor,
+          organisationData: {
+            id: 'org-123',
+            companyDetails: {
+              name: 'Legal Reprocessor Ltd',
+              tradingName: 'Reprocessor Trading'
+            }
+          }
+        })
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const rows = body.querySelectorAll('.govuk-summary-list__row')
+        const issuerRow = Array.from(rows).find((row) =>
+          row
+            .querySelector('.govuk-summary-list__key')
+            ?.textContent?.includes('Issuer')
+        )
+
+        expect(issuerRow).toBeDefined()
+        expect(
+          issuerRow
+            .querySelector('.govuk-summary-list__value')
+            ?.textContent?.trim()
+        ).toBe('Reprocessor Trading')
       })
 
       it('displays empty issuer when company details are missing', async ({

@@ -410,7 +410,11 @@ function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
     },
     {
       key: { text: localise('prns:issuerLabel') },
-      value: { text: organisationData.companyDetails?.name || '' }
+      value: {
+        text: organisationData.companyDetails
+          ? getDisplayName(organisationData.companyDetails)
+          : ''
+      }
     },
     {
       key: { text: localise('prns:issuedDateLabel') },
@@ -457,7 +461,9 @@ function buildExistingPrnDetailRows({
   rows.push(
     ...buildPrnCoreRows(prn, localise, recipientDisplayName),
     ...buildPrnIssuerRows(prn, localise, {
-      issuerName: organisationData?.companyDetails?.name || ''
+      issuerName: organisationData?.companyDetails
+        ? getDisplayName(organisationData.companyDetails)
+        : ''
     })
   )
 
