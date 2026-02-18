@@ -4,6 +4,7 @@ import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { warnOnMissingRegistrations } from '#server/common/helpers/waste-organisations/warn-on-missing-registrations.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -63,6 +64,8 @@ export const controller = {
         request.logger
       )
     ])
+
+    warnOnMissingRegistrations(organisations, request.logger)
 
     const viewData = buildCreatePrnViewData(request, {
       organisationId,

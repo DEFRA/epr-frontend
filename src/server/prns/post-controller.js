@@ -3,6 +3,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
+import { warnOnMissingRegistrations } from '#server/common/helpers/waste-organisations/warn-on-missing-registrations.js'
 import Boom from '@hapi/boom'
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
@@ -210,6 +211,8 @@ export const postController = {
             )
           ])
 
+        warnOnMissingRegistrations(organisations, request.logger)
+
         const viewData = buildCreatePrnViewData(request, {
           organisationId,
           recipients: mapToSelectOptions(organisations),
@@ -240,6 +243,8 @@ export const postController = {
 
     const { organisations } =
       await request.wasteOrganisationsService.getOrganisations()
+
+    warnOnMissingRegistrations(organisations, request.logger)
 
     const organisation = organisations.find((org) => org.id === recipient)
 
