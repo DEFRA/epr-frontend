@@ -1845,6 +1845,34 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    it('status: invalid with percentage errorCode on percentage header - should show percentage format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              code: validationFailureCodes.INVALID_TYPE,
+              errorCode: 'MUST_BE_AT_MOST_100_CHARS',
+              location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains percentage values with formats that do not match the examples provided in the summary log.'
+      )
+    })
+
     it('status: invalid with unrecognised errorCode - should fall back to code-based display', async ({
       server
     }) => {

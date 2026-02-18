@@ -46,6 +46,7 @@
     "FILE_VIRUS_DETECTED": "The selected file contains a virus",
     "FILE_WRONG_TYPE": "The selected file must be a .XLSX",
     "MATERIAL_INVALID": "Summary log material is missing or incorrect",
+    "PERCENTAGE_FORMAT_INVALID": "The selected file contains percentage values with formats that do not match the examples provided in the summary log.",
     "PROCESSING_TYPE_DATA_INVALID": "There is a problem with your registration - please contact support",
     "TEMPLATE_INVALID": "The summary log template you're uploading is incorrect - make sure you download the correct template for your registration or accreditation",
     "REGISTRATION_INVALID": "Summary log registration is missing or incorrect",

@@ -178,6 +178,16 @@ export const FREE_TEXT_ERROR_CODES = new Set([
 
 export const ID_HEADERS = new Set(['OSR_ID', 'INTERIM_SITE_ID'])
 
+export const PERCENTAGE_HEADERS = new Set([
+  'RECYCLABLE_PROPORTION_PERCENTAGE',
+  'UK_PACKAGING_WEIGHT_PERCENTAGE'
+])
+
+export const PERCENTAGE_ERROR_CODES = new Set([
+  'MUST_BE_AT_MOST_100_CHARS',
+  'MUST_BE_AT_LEAST_ZERO'
+])
+
 export const CALCULATED_HEADERS = new Set([
   'NET_WEIGHT',
   'TONNAGE_RECEIVED_FOR_RECYCLING',
@@ -197,10 +207,15 @@ export const YES_NO_FORMAT_INVALID = 'YES_NO_FORMAT_INVALID'
 export const DROPDOWN_FORMAT_INVALID = 'DROPDOWN_FORMAT_INVALID'
 export const FREE_TEXT_INVALID = 'FREE_TEXT_INVALID'
 export const ID_FORMAT_INVALID = 'ID_FORMAT_INVALID'
+export const PERCENTAGE_FORMAT_INVALID = 'PERCENTAGE_FORMAT_INVALID'
 
 export const getDisplayCodeFromErrorCode = (errorCode, header) => {
   if (CALCULATED_ERROR_CODES.has(errorCode) && CALCULATED_HEADERS.has(header)) {
     return CALCULATED_FIELD_MISMATCH
+  }
+
+  if (PERCENTAGE_ERROR_CODES.has(errorCode) && PERCENTAGE_HEADERS.has(header)) {
+    return PERCENTAGE_FORMAT_INVALID
   }
 
   if (WEIGHT_NUMERIC_ERROR_CODES.has(errorCode) && WEIGHT_HEADERS.has(header)) {
