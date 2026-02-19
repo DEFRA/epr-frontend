@@ -136,6 +136,23 @@ const GROUP_DISPLAY_CODES = new Map([
   ['SPREADSHEET_MALFORMED_MARKERS', 'TEMPLATE_INVALID']
 ])
 
+/**
+ * Maps a backend validation errorCode (and optional column header) to a
+ * display code used as an i18next key in `summary-log:failure.<displayCode>`.
+ *
+ * Resolution order:
+ *  1. Field-level rules — matched when both errorCode AND header belong to a
+ *     known pair (e.g. weight errors on weight columns). Checked in FIELD_RULES
+ *     order; percentage is checked before weight because they share error codes.
+ *  2. Group-level map — matched on errorCode alone for codes that share a
+ *     single user-facing message (e.g. all technical errors → TECHNICAL_ERROR).
+ *  3. Fallback — returns the raw errorCode, which either matches a direct
+ *     en.json key (e.g. FILE_VIRUS_DETECTED) or triggers the i18next
+ *     defaultValue (technical error message).
+ * @param {string} errorCode - Backend validation error code
+ * @param {string} [header] - Column header from `failure.location.header`
+ * @returns {string} Display code for translation lookup
+ */
 export const getDisplayCodeFromErrorCode = (errorCode, header) => {
   const fieldMatch = FIELD_RULES.find(
     ([errorCodes, headers]) => errorCodes.has(errorCode) && headers.has(header)
