@@ -87,7 +87,7 @@ jobs:
         id: journey-branch
         run: |
           BRANCH="${{ github.head_ref }}"
-          if git ls-remote --heads https://github.com/DEFRA/epr-frontend-journey-tests.git "$BRANCH" | grep -q .; then
+          if git -c credential.helper= ls-remote --heads https://github.com/DEFRA/epr-frontend-journey-tests.git "$BRANCH" | grep -q .; then
             echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
           else
             echo "ref=main" >> "$GITHUB_OUTPUT"
