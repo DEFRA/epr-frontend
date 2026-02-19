@@ -141,7 +141,9 @@ export const getDisplayCodeFromErrorCode = (errorCode, header) => {
     ([errorCodes, headers]) => errorCodes.has(errorCode) && headers.has(header)
   )
 
-  if (fieldMatch) return fieldMatch[2]
+  if (fieldMatch) {
+    return fieldMatch[2]
+  }
 
   return GROUP_DISPLAY_CODES.get(errorCode) ?? errorCode
 }
