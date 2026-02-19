@@ -155,7 +155,7 @@ describe('#actionController', () => {
       expect(getByText(main, '100')).toBeDefined()
     })
 
-    it('displays tradingName when organisation has both name and tradingName', async ({
+    it('displays tradingName when organisation has no registrationType', async ({
       server
     }) => {
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
@@ -179,6 +179,60 @@ describe('#actionController', () => {
 
       expect(getByText(main, /Trading Name Ltd/i)).toBeDefined()
       expect(body.innerHTML).not.toContain('>Legal Name Ltd<')
+    })
+
+    it('displays legal name for large producers with registrationType', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        ...mockPrnAwaitingAuth,
+        issuedToOrganisation: {
+          id: 'producer-1',
+          name: 'Legal Name Ltd',
+          tradingName: 'Trading Name Ltd',
+          registrationType: 'LARGE_PRODUCER'
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, /Legal Name Ltd/i)).toBeDefined()
+      expect(body.innerHTML).not.toContain('>Trading Name Ltd<')
+    })
+
+    it('displays tradingName for compliance schemes with registrationType', async ({
+      server
+    }) => {
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        ...mockPrnAwaitingAuth,
+        issuedToOrganisation: {
+          id: 'scheme-1',
+          name: 'Scheme Legal Ltd',
+          tradingName: 'Scheme Trading Name',
+          registrationType: 'COMPLIANCE_SCHEME'
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: actionUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, /Scheme Trading Name/i)).toBeDefined()
+      expect(body.innerHTML).not.toContain('>Scheme Legal Ltd<')
     })
 
     it('labels recipient row as "Packaging producer or compliance scheme"', async ({
