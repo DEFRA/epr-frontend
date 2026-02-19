@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { buildListViewData } from './list-view-data.js'
 
 const createMockRequest = () => ({
@@ -34,6 +35,7 @@ const createMockRequest = () => ({
       'prns:list:issuedTable:recipientHeading': 'Producer or compliance scheme',
       'prns:list:issuedTable:dateIssuedHeading': 'Date issued',
       'prns:list:issuedTable:statusHeading': 'Status',
+      'prns:list:issuedTable:tonnageHeading': 'Tonnage',
       'prns:list:issuedTable:actionHeading': 'View in new tab',
       'prns:list:issuedTable:selectText': 'Select'
     }
@@ -244,7 +246,7 @@ describe('#buildListViewData', () => {
         text: 'Acme Packaging Ltd'
       })
       expect(result.table.rows[0][1]).toStrictEqual({ text: '15 January 2026' })
-      expect(result.table.rows[0][2]).toStrictEqual({ text: 50 })
+      expect(result.table.rows[0][2]).toStrictEqual({ text: '50.00' })
     })
 
     it('should return total row with sum of tonnage', () => {
@@ -259,9 +261,9 @@ describe('#buildListViewData', () => {
 
       const totalRow = result.table.rows[2]
       expect(totalRow[0].text).toBe('Total')
-      expect(totalRow[0].classes).toBe('govuk-!-font-weight-bold')
-      expect(totalRow[2].text).toBe(170) // 50 + 120
-      expect(totalRow[2].classes).toBe('govuk-!-font-weight-bold')
+      expect(totalRow[0].classes).toBe(cssClasses.fontWeightBold)
+      expect(totalRow[2].text).toBe('170.00') // 50 + 120
+      expect(totalRow[2].classes).toBe(cssClasses.fontWeightBold)
     })
 
     it('should return status as govukTag HTML', () => {
@@ -459,7 +461,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows).toHaveLength(2)
+      expect(result.issuedTable.rows).toHaveLength(3)
       expect(result.issuedTable.rows[0][0]).toStrictEqual({
         text: 'ER2612345'
       })
@@ -484,10 +486,10 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][3].html).toContain(
+      expect(result.issuedTable.rows[0][4].html).toContain(
         'Awaiting acceptance'
       )
-      expect(result.issuedTable.rows[0][3].html).toContain('govuk-tag')
+      expect(result.issuedTable.rows[0][4].html).toContain('govuk-tag')
     })
 
     it('should return issued table headings for PRNs', () => {
@@ -503,13 +505,14 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.headings.prnNumber).toBe('PRN number')
-      expect(result.issuedTable.headings.recipient).toBe(
-        'Producer or compliance scheme'
-      )
-      expect(result.issuedTable.headings.dateIssued).toBe('Date issued')
-      expect(result.issuedTable.headings.status).toBe('Status')
-      expect(result.issuedTable.headings.action).toBe('View in new tab')
+      expect(result.issuedTable.headings).toStrictEqual({
+        prnNumber: 'PRN number',
+        recipient: 'Producer or compliance scheme',
+        dateIssued: 'Date issued',
+        tonnage: 'Tonnage',
+        status: 'Status',
+        action: 'View in new tab'
+      })
     })
 
     it('should return issued table headings for PERNs', () => {
@@ -525,13 +528,14 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.headings.prnNumber).toBe('PERN number')
-      expect(result.issuedTable.headings.recipient).toBe(
-        'Producer or compliance scheme'
-      )
-      expect(result.issuedTable.headings.dateIssued).toBe('Date issued')
-      expect(result.issuedTable.headings.status).toBe('Status')
-      expect(result.issuedTable.headings.action).toBe('View in new tab')
+      expect(result.issuedTable.headings).toStrictEqual({
+        prnNumber: 'PERN number',
+        recipient: 'Producer or compliance scheme',
+        dateIssued: 'Date issued',
+        tonnage: 'Tonnage',
+        status: 'Status',
+        action: 'View in new tab'
+      })
     })
 
     it('should return view links for each issued PRN with target="_blank"', () => {
@@ -547,11 +551,11 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.issuedTable.rows[0][4].html).toContain('govuk-link')
-      expect(result.issuedTable.rows[0][4].html).toContain(
+      expect(result.issuedTable.rows[0][5].html).toContain('govuk-link')
+      expect(result.issuedTable.rows[0][5].html).toContain(
         '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-003/view'
       )
-      expect(result.issuedTable.rows[0][4].html).toContain('target="_blank"')
+      expect(result.issuedTable.rows[0][5].html).toContain('target="_blank"')
     })
 
     it('should return empty issued table rows when no issued PRNs', () => {
@@ -680,7 +684,9 @@ describe('#buildListViewData', () => {
       expect(result.cancellationTable.rows[0][1]).toStrictEqual({
         text: '13 August 2025'
       })
-      expect(result.cancellationTable.rows[0][2]).toStrictEqual({ text: 5 })
+      expect(result.cancellationTable.rows[0][2]).toStrictEqual({
+        text: '5.00'
+      })
       expect(result.cancellationTable.rows[0][3]).toStrictEqual({
         html: '<strong class="govuk-tag govuk-tag--yellow epr-tag--no-max-width">Awaiting cancellation</strong>'
       })
@@ -700,9 +706,9 @@ describe('#buildListViewData', () => {
 
       const totalRow = result.cancellationTable.rows[2]
       expect(totalRow[0].text).toBe('Total')
-      expect(totalRow[0].classes).toBe('govuk-!-font-weight-bold')
-      expect(totalRow[2].text).toBe(30) // 5 + 25
-      expect(totalRow[2].classes).toBe('govuk-!-font-weight-bold')
+      expect(totalRow[0].classes).toBe(cssClasses.fontWeightBold)
+      expect(totalRow[2].text).toBe('30.00') // 5 + 25
+      expect(totalRow[2].classes).toBe(cssClasses.fontWeightBold)
     })
 
     it('should return cancellation table with select links', () => {

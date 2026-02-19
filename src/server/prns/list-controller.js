@@ -28,6 +28,7 @@ const getIssuedPrns = (prns) =>
       prnNumber: prn.prnNumber,
       recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
       issuedAt: prn.issuedAt,
+      tonnage: prn.tonnage,
       status: prn.status
     }))
 
