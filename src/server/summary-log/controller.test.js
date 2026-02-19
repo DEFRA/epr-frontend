@@ -1664,7 +1664,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values.'
+        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values'
       )
     })
 
@@ -1691,7 +1691,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log.'
+        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log'
       )
     })
 
@@ -1718,7 +1718,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains date formats that do not match the examples provided in the summary log.'
+        'The selected file contains date formats that do not match the examples provided in the summary log'
       )
     })
 
@@ -1745,7 +1745,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains answers to Yes / No questions with formats that do not match the examples provided in the summary log.'
+        'The selected file contains answers to Yes / No questions with formats that do not match the examples provided in the summary log'
       )
     })
 
@@ -1774,7 +1774,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains values in some fields that have not been selected from within the drop-down provided.'
+        'The selected file contains values in some fields that have not been selected from within the drop-down provided'
       )
     })
 
@@ -1801,7 +1801,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains unacceptable content within the fields that accept free text.'
+        'The selected file contains unacceptable content within the fields that accept free text'
       )
     })
 
@@ -1828,7 +1828,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains values in ID fields with formats that do not match the 3 digit format of the examples provided in the summary log.'
+        'The selected file contains values in ID fields with formats that do not match the 3 digit format of the examples provided in the summary log'
       )
     })
 
@@ -1855,7 +1855,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains percentage values with formats that do not match the examples provided in the summary log.'
+        'The selected file contains percentage values with formats that do not match the examples provided in the summary log'
       )
     })
 
@@ -1914,10 +1914,10 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values.'
+        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values'
       )
       expect(result).toContain(
-        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log.'
+        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log'
       )
       expect(result).toContain(
         'Summary log registration is missing or incorrect'
