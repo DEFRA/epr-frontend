@@ -1,5 +1,4 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
@@ -1172,7 +1171,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
-          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
+          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
         }
       })
 
@@ -1193,7 +1192,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
-          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
+          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
         }
       })
 
@@ -1238,7 +1237,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1265,7 +1264,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1289,7 +1288,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1311,7 +1310,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1337,8 +1336,8 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.SEQUENTIAL_ROW_REMOVED },
-            { code: validationFailureCodes.HEADER_REQUIRED }
+            { errorCode: 'SEQUENTIAL_ROW_REMOVED' },
+            { errorCode: 'HEADER_REQUIRED' }
           ]
         }
       })
@@ -1365,7 +1364,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'SOME_UNKNOWN_CODE' }]
+          failures: [{ errorCode: 'SOME_UNKNOWN_CODE' }]
         }
       })
 
@@ -1389,9 +1388,9 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
-            { code: validationFailureCodes.INVALID_TYPE },
-            { code: validationFailureCodes.VALUE_OUT_OF_RANGE }
+            { errorCode: 'VALUE_OUT_OF_RANGE' },
+            { errorCode: 'INVALID_TYPE' },
+            { errorCode: 'VALUE_OUT_OF_RANGE' }
           ]
         }
       })
@@ -1422,9 +1421,9 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
-            { code: validationFailureCodes.REGISTRATION_MISMATCH },
-            { code: validationFailureCodes.INVALID_TYPE }
+            { errorCode: 'VALUE_OUT_OF_RANGE' },
+            { errorCode: 'REGISTRATION_MISMATCH' },
+            { errorCode: 'INVALID_TYPE' }
           ]
         }
       })
@@ -1450,7 +1449,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.MATERIAL_MISMATCH }]
+          failures: [{ errorCode: 'MATERIAL_MISMATCH' }]
         }
       })
 
@@ -1470,7 +1469,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.ACCREDITATION_MISMATCH }]
+          failures: [{ errorCode: 'ACCREDITATION_MISMATCH' }]
         }
       })
 
@@ -1492,7 +1491,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.PROCESSING_TYPE_MISMATCH }]
+          failures: [{ errorCode: 'PROCESSING_TYPE_MISMATCH' }]
         }
       })
 
@@ -1514,9 +1513,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [
-            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS }
-          ]
+          failures: [{ errorCode: 'SPREADSHEET_MALFORMED_MARKERS' }]
         }
       })
 
@@ -1538,7 +1535,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }]
+          failures: [{ errorCode: 'SPREADSHEET_INVALID_ERROR' }]
         }
       })
 
@@ -1561,8 +1558,8 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS },
-            { code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }
+            { errorCode: 'SPREADSHEET_MALFORMED_MARKERS' },
+            { errorCode: 'SPREADSHEET_INVALID_ERROR' }
           ]
         }
       })
@@ -1592,28 +1589,25 @@ describe('#summaryLogUploadProgressController', () => {
       'FILE_REJECTED',
       'VALIDATION_SYSTEM_ERROR',
       'UNKNOWN'
-    ])(
-      '%s - should show technical error message',
-      async (errorCode, { server }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [{ code: validationFailureCodes[errorCode] }]
-          }
-        })
+    ])('%s - should show technical error message', async (code, { server }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ errorCode: code }]
+        }
+      })
 
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
 
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain(
-          'Sorry, there is a problem with the service - try again later'
-        )
-      }
-    )
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+    })
 
     it('status: invalid with multiple technical errors - should show single deduplicated message', async ({
       server
@@ -1622,9 +1616,9 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.FILE_UPLOAD_FAILED },
-            { code: validationFailureCodes.FILE_DOWNLOAD_FAILED },
-            { code: validationFailureCodes.VALIDATION_SYSTEM_ERROR }
+            { errorCode: 'FILE_UPLOAD_FAILED' },
+            { errorCode: 'FILE_DOWNLOAD_FAILED' },
+            { errorCode: 'VALIDATION_SYSTEM_ERROR' }
           ]
         }
       })
@@ -1655,7 +1649,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.CALCULATED_VALUE_MISMATCH,
               errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
               location: { header: 'NET_WEIGHT' }
             }
@@ -1683,7 +1676,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_A_NUMBER',
               location: { header: 'GROSS_WEIGHT' }
             }
@@ -1711,7 +1703,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_DATE,
               errorCode: 'MUST_BE_A_VALID_DATE',
               location: { header: 'DATE_LOAD_LEFT_SITE' }
             }
@@ -1739,7 +1730,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_YES_OR_NO',
               location: { header: 'BAILING_WIRE_PROTOCOL' }
             }
@@ -1767,7 +1757,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
               location: {
                 header: 'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
@@ -1797,7 +1786,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_ALPHANUMERIC',
               location: { header: 'CONTAINER_NUMBER' }
             }
@@ -1825,7 +1813,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_3_DIGIT_NUMBER',
               location: { header: 'OSR_ID' }
             }
@@ -1853,7 +1840,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_AT_LEAST_ZERO',
               location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
             }
@@ -1873,7 +1859,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    it('status: invalid with unrecognised errorCode - should fall back to code-based display', async ({
+    it('status: invalid with unrecognised errorCode - should show technical error as fallback', async ({
       server
     }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1881,7 +1867,6 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_A_VALID_DATE',
               location: { header: 'SOME_DATE_FIELD' }
             }
@@ -1897,11 +1882,11 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'The selected file contains data that&#39;s been entered incorrectly'
+        'Sorry, there is a problem with the service - try again later'
       )
     })
 
-    it('status: invalid with mixed errorCode and code-only failures - should show correct deduplicated messages', async ({
+    it('status: invalid with mixed errorCode failures - should show correct deduplicated messages', async ({
       server
     }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1909,16 +1894,14 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              code: validationFailureCodes.CALCULATED_VALUE_MISMATCH,
               errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
               location: { header: 'NET_WEIGHT' }
             },
             {
-              code: validationFailureCodes.INVALID_TYPE,
               errorCode: 'MUST_BE_A_NUMBER',
               location: { header: 'GROSS_WEIGHT' }
             },
-            { code: validationFailureCodes.REGISTRATION_MISMATCH }
+            { errorCode: 'REGISTRATION_MISMATCH' }
           ]
         }
       })
@@ -1991,7 +1974,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed,
         validation: {
-          failures: [{ code: 'PROCESSING_FAILED' }]
+          failures: [{ errorCode: 'PROCESSING_FAILED' }]
         }
       })
 
