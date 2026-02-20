@@ -114,7 +114,8 @@
     "tabs": {
       "title": "Contents",
       "awaitingAction": "Awaiting action",
-      "issued": "Issued"
+      "issued": "Issued",
+      "cancelled": "Cancelled"
     },
     "table": {
       "recipientHeading": "Producer or compliance scheme",
@@ -142,12 +143,23 @@
     "issuedHeading": "Issued {{noteTypePlural}}",
     "noPrnsCreated": "You have not created any {{noteTypePlural}}.",
     "noIssuedPrns": "No {{noteTypePlural}} have been issued yet.",
+    "cancelledHeading": "Cancelled {{noteTypePlural}}",
+    "noCancelledPrns": "No {{noteTypePlural}} have been cancelled.",
     "issuedTable": {
       "noteNumberHeading": "{{noteType}} number",
       "recipientHeading": "Producer or compliance scheme",
       "dateIssuedHeading": "Date issued",
       "statusHeading": "Status",
       "tonnageHeading": "Tonnage",
+      "actionHeading": "View in new tab",
+      "selectText": "Select"
+    },
+    "cancelledTable": {
+      "noteNumberHeading": "{{noteType}} number",
+      "recipientHeading": "Producer or compliance scheme",
+      "dateIssuedHeading": "Date issued",
+      "tonnageHeading": "Tonnage",
+      "statusHeading": "Status",
       "actionHeading": "View in new tab",
       "selectText": "Select"
     }

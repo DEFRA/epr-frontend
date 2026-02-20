@@ -16,6 +16,7 @@ const createMockRequest = () => ({
       'prns:list:noPrns': 'No PRNs or PERNs have been created yet.',
       'prns:list:tabs:awaitingAction': 'Awaiting action',
       'prns:list:tabs:issued': 'Issued',
+      'prns:list:tabs:cancelled': 'Cancelled',
       'prns:list:selectHeading': `Select a ${params.noteType}`,
       'prns:list:table:recipientHeading': 'Producer or compliance scheme',
       'prns:list:table:dateHeading': 'Date created',
@@ -31,13 +32,23 @@ const createMockRequest = () => ({
       'prns:list:status:awaitingCancellation': 'Awaiting cancellation',
       'prns:list:status:cancelled': 'Cancelled',
       'prns:list:issuedHeading': `Issued ${params.noteTypePlural}`,
+      'prns:list:cancelledHeading': `Cancelled ${params.noteTypePlural}`,
+      'prns:list:noCancelledPrns': `No ${params.noteTypePlural} have been cancelled.`,
       'prns:list:issuedTable:noteNumberHeading': `${params.noteType} number`,
       'prns:list:issuedTable:recipientHeading': 'Producer or compliance scheme',
       'prns:list:issuedTable:dateIssuedHeading': 'Date issued',
       'prns:list:issuedTable:statusHeading': 'Status',
       'prns:list:issuedTable:tonnageHeading': 'Tonnage',
       'prns:list:issuedTable:actionHeading': 'View in new tab',
-      'prns:list:issuedTable:selectText': 'Select'
+      'prns:list:issuedTable:selectText': 'Select',
+      'prns:list:cancelledTable:noteNumberHeading': `${params.noteType} number`,
+      'prns:list:cancelledTable:recipientHeading':
+        'Producer or compliance scheme',
+      'prns:list:cancelledTable:dateIssuedHeading': 'Date issued',
+      'prns:list:cancelledTable:tonnageHeading': 'Tonnage',
+      'prns:list:cancelledTable:statusHeading': 'Status',
+      'prns:list:cancelledTable:actionHeading': 'View in new tab',
+      'prns:list:cancelledTable:selectText': 'Select'
     }
     return translations[key] || key
   }),
@@ -92,6 +103,25 @@ const stubIssuedPrns = [
     recipient: 'Renewable Products',
     issuedAt: '2026-01-26',
     status: 'awaiting_acceptance'
+  }
+]
+
+const stubCancelledPrns = [
+  {
+    id: 'prn-005',
+    prnNumber: 'ER2611111',
+    recipient: 'Cancelled Corp',
+    issuedAt: '2026-01-10',
+    tonnage: 40,
+    status: 'cancelled'
+  },
+  {
+    id: 'prn-006',
+    prnNumber: 'ER2622222',
+    recipient: 'Revoked Ltd',
+    issuedAt: '2026-01-12',
+    tonnage: 20,
+    status: 'cancelled'
   }
 ]
 
@@ -756,6 +786,192 @@ describe('#buildListViewData', () => {
       })
 
       expect(result.cancellationTable.rows).toHaveLength(0)
+    })
+  })
+
+  describe('cancelled table', () => {
+    it('should return cancelled table rows with PRN number, recipient and date issued', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancelledPrns: stubCancelledPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledTable.rows).toHaveLength(3)
+      expect(result.cancelledTable.rows[0][0]).toStrictEqual({
+        text: 'ER2611111'
+      })
+      expect(result.cancelledTable.rows[0][1]).toStrictEqual({
+        text: 'Cancelled Corp'
+      })
+      expect(result.cancelledTable.rows[0][2]).toStrictEqual({
+        text: '10 January 2026'
+      })
+      expect(result.cancelledTable.rows[0][3]).toStrictEqual({
+        text: 40
+      })
+    })
+
+    it('should return cancelled table status as govuk-tag with red colour', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancelledPrns: stubCancelledPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledTable.rows[0][4].html).toContain('Cancelled')
+      expect(result.cancelledTable.rows[0][4].html).toContain('govuk-tag--red')
+    })
+
+    it('should return cancelled table headings for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancelledPrns: stubCancelledPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledTable.headings).toStrictEqual({
+        prnNumber: 'PRN number',
+        recipient: 'Producer or compliance scheme',
+        dateIssued: 'Date issued',
+        tonnage: 'Tonnage',
+        status: 'Status',
+        action: 'View in new tab'
+      })
+    })
+
+    it('should return cancelled table headings for PERNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: exporterRegistration,
+        prns: stubPrns,
+        cancelledPrns: stubCancelledPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledTable.headings.prnNumber).toBe('PERN number')
+    })
+
+    it('should return view links for each cancelled PRN with target="_blank"', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancelledPrns: stubCancelledPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledTable.rows[0][5].html).toContain('govuk-link')
+      expect(result.cancelledTable.rows[0][5].html).toContain(
+        '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/prn-005/view'
+      )
+      expect(result.cancelledTable.rows[0][5].html).toContain('target="_blank"')
+    })
+
+    it('should return empty cancelled table rows when no cancelled PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancelledPrns: [],
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledTable.rows).toHaveLength(0)
+    })
+
+    it('should default to empty cancelled table when cancelledPrns not provided', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledTable.rows).toHaveLength(0)
+    })
+
+    it('should return cancelled heading for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        cancelledPrns: stubCancelledPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledHeading).toBe('Cancelled PRNs')
+    })
+
+    it('should return cancelled heading for PERNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-456',
+        registrationId: 'reg-002',
+        accreditationId: 'acc-002',
+        registration: exporterRegistration,
+        prns: stubPrns,
+        cancelledPrns: stubCancelledPrns,
+        hasCreatedPrns: true,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.cancelledHeading).toBe('Cancelled PERNs')
+    })
+
+    it('should return no cancelled text for PRNs', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.noCancelledText).toBe('No PRNs have been cancelled.')
+    })
+
+    it('should return cancelled tab label', () => {
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: stubPrns,
+        wasteBalance: mockWasteBalance
+      })
+
+      expect(result.tabs.cancelled).toBe('Cancelled')
     })
   })
 

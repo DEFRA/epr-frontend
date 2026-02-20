@@ -63,6 +63,11 @@
                   {{ tabs.issued }}
                 </a>
               </li>
+              <li class="govuk-tabs__list-item">
+                <a class="govuk-tabs__tab" href="#cancelled">
+                  {{ tabs.cancelled }}
+                </a>
+              </li>
             </ul>
 
             <div class="govuk-tabs__panel" id="awaiting-action">
@@ -119,6 +124,25 @@
                 }) }}
               {% else %}
                 <p class="govuk-body">{{ noIssuedText }}</p>
+              {% endif %}
+            </div>
+
+            <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="cancelled">
+              {% if cancelledTable.rows | length > 0 %}
+                <h2 class="govuk-heading-m">{{ cancelledHeading }}</h2>
+                {{ govukTable({
+                  head: [
+                    { text: cancelledTable.headings.prnNumber },
+                    { text: cancelledTable.headings.recipient },
+                    { text: cancelledTable.headings.dateIssued },
+                    { text: cancelledTable.headings.tonnage },
+                    { text: cancelledTable.headings.status },
+                    { text: cancelledTable.headings.action }
+                  ],
+                  rows: cancelledTable.rows
+                }) }}
+              {% else %}
+                <p class="govuk-body">{{ noCancelledText }}</p>
               {% endif %}
             </div>
           </div>

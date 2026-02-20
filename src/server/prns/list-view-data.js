@@ -14,6 +14,7 @@ import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
  * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} [options.cancellationPrns]
  * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.issuedPrns]
+ * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.cancelledPrns]
  * @param {boolean} options.hasCreatedPrns
  * @param {{availableAmount: number} | null} options.wasteBalance
  * @returns {object}
@@ -28,6 +29,7 @@ export function buildListViewData(
     prns,
     cancellationPrns = [],
     issuedPrns = [],
+    cancelledPrns = [],
     hasCreatedPrns,
     wasteBalance
   }
@@ -74,6 +76,15 @@ export function buildListViewData(
     noteType
   })
 
+  const cancelledTable = buildCancelledTable(request, {
+    organisationId,
+    registrationId,
+    accreditationId,
+    cancelledPrns,
+    localise,
+    noteType
+  })
+
   return {
     ...buildListLabels(localise, { noteType, noteTypePlural }),
     backUrl,
@@ -89,7 +100,8 @@ export function buildListViewData(
     hasCreatedPrns,
     table,
     cancellationTable,
-    issuedTable
+    issuedTable,
+    cancelledTable
   }
 }
 
@@ -101,7 +113,8 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
     noPrnsCreatedText: localise('prns:list:noPrnsCreated', { noteTypePlural }),
     tabs: {
       awaitingAction: localise('prns:list:tabs:awaitingAction'),
-      issued: localise('prns:list:tabs:issued')
+      issued: localise('prns:list:tabs:issued'),
+      cancelled: localise('prns:list:tabs:cancelled')
     },
     cancelHint: localise('prns:list:cancelHint', { noteType }),
     awaitingAuthorisationHeading: localise(
@@ -114,7 +127,11 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
     ),
     noPrnsText: localise('prns:list:noPrns'),
     noIssuedText: localise('prns:list:noIssuedPrns', { noteTypePlural }),
-    issuedHeading: localise('prns:list:issuedHeading', { noteTypePlural })
+    issuedHeading: localise('prns:list:issuedHeading', { noteTypePlural }),
+    cancelledHeading: localise('prns:list:cancelledHeading', {
+      noteTypePlural
+    }),
+    noCancelledText: localise('prns:list:noCancelledPrns', { noteTypePlural })
   }
 }
 
@@ -240,6 +257,66 @@ function buildIssuedTable(
   }
 
   const totalTonnage = issuedPrns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalRow = [
+    {
+      text: localise('prns:list:table:totalLabel'),
+      classes: cssClasses.fontWeightBold
+    },
+    { text: '' },
+    { text: '' },
+    { text: totalTonnage, classes: cssClasses.fontWeightBold },
+    { text: '' },
+    { text: '' }
+  ]
+
+  return { headings, rows: [...rows, totalRow] }
+}
+
+function buildCancelledTable(
+  request,
+  {
+    organisationId,
+    registrationId,
+    accreditationId,
+    cancelledPrns,
+    localise,
+    noteType
+  }
+) {
+  const headings = {
+    prnNumber: localise('prns:list:cancelledTable:noteNumberHeading', {
+      noteType
+    }),
+    recipient: localise('prns:list:cancelledTable:recipientHeading'),
+    dateIssued: localise('prns:list:cancelledTable:dateIssuedHeading'),
+    tonnage: localise('prns:list:cancelledTable:tonnageHeading'),
+    status: localise('prns:list:cancelledTable:statusHeading'),
+    action: localise('prns:list:cancelledTable:actionHeading')
+  }
+
+  const selectText = localise('prns:list:cancelledTable:selectText')
+
+  const rows = cancelledPrns.map((prn) => {
+    const viewUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}/view`
+    )
+    return [
+      { text: prn.prnNumber },
+      { text: prn.recipient },
+      { text: formatDateForDisplay(prn.issuedAt) },
+      { text: prn.tonnage },
+      { html: buildStatusTagHtml(prn.status, localise) },
+      {
+        html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
+      }
+    ]
+  })
+
+  if (rows.length === 0) {
+    return { headings, rows: [] }
+  }
+
+  const totalTonnage = cancelledPrns.reduce((sum, prn) => sum + prn.tonnage, 0)
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),

@@ -32,6 +32,18 @@ const getIssuedPrns = (prns) =>
       status: prn.status
     }))
 
+const getCancelledPrns = (prns) =>
+  prns
+    .filter((prn) => prn.status === 'cancelled')
+    .map((prn) => ({
+      id: prn.id,
+      prnNumber: prn.prnNumber,
+      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
+      issuedAt: prn.issuedAt,
+      tonnage: prn.tonnage,
+      status: prn.status
+    }))
+
 /**
  * @satisfies {Partial<ServerRoute>}
  */
@@ -91,6 +103,7 @@ export const listController = {
       prns: filterPrnsByStatus(prns, 'awaiting_authorisation'),
       cancellationPrns: filterPrnsByStatus(prns, 'awaiting_cancellation'),
       issuedPrns: getIssuedPrns(prns),
+      cancelledPrns: getCancelledPrns(prns),
       hasCreatedPrns,
       wasteBalance
     })
