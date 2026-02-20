@@ -5,7 +5,7 @@ $navigation-height: 60px;
 $border-bottom-width: 4px;
 
 .app-navigation {
-  border-bottom: 1px solid govuk-colour("mid-grey");
+  border-bottom: 1px solid govuk-colour("black", $variant: "tint-80");
   background-color: $app-light-grey;
 }
 
