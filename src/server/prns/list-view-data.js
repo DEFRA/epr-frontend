@@ -3,22 +3,6 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { formatDateForDisplay } from './helpers/format-date-for-display.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
 
-/**
- * Build view data for the PRN/PERN list page
- * @param {Request} request
- * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {string} options.accreditationId
- * @param {{wasteProcessingType: string}} options.registration
- * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} options.prns
- * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status: string}>} [options.cancellationPrns]
- * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.issuedPrns]
- * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} [options.cancelledPrns]
- * @param {boolean} options.hasCreatedPrns
- * @param {{availableAmount: number} | null} options.wasteBalance
- * @returns {object}
- */
 export function buildListViewData(
   request,
   {
@@ -36,62 +20,35 @@ export function buildListViewData(
 ) {
   const { t: localise } = request
   const { noteType, noteTypePlural } = getNoteTypeDisplayNames(registration)
+  const routeBase = `/organisations/${organisationId}/registrations/${registrationId}`
 
-  const backUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}`
-  )
-
-  const createUrl = request.localiseUrl(
-    `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-  )
-
-  const table = buildAwaitingTable(request, {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prns,
-    localise,
-    buildStatusCell: (prn, l) => ({
-      html: buildStatusTagHtml(prn.status, l)
+  const buildAwaiting = (prnList) =>
+    buildAwaitingTable(request, {
+      organisationId,
+      registrationId,
+      accreditationId,
+      prns: prnList,
+      localise
     })
-  })
 
-  const cancellationTable = buildAwaitingTable(request, {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prns: cancellationPrns,
-    localise,
-    buildStatusCell: (prn, l) => ({
-      html: buildStatusTagHtml(prn.status, l)
+  const buildDetail = (prnList, i18nPrefix) =>
+    buildDetailTable(request, {
+      organisationId,
+      registrationId,
+      accreditationId,
+      prns: prnList,
+      localise,
+      noteType,
+      i18nPrefix
     })
-  })
-
-  const issuedTable = buildDetailTable(request, {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prns: issuedPrns,
-    localise,
-    noteType,
-    i18nPrefix: 'issuedTable'
-  })
-
-  const cancelledTable = buildDetailTable(request, {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prns: cancelledPrns,
-    localise,
-    noteType,
-    i18nPrefix: 'cancelledTable'
-  })
 
   return {
     ...buildListLabels(localise, { noteType, noteTypePlural }),
-    backUrl,
+    backUrl: request.localiseUrl(routeBase),
     createLink: {
-      href: createUrl,
+      href: request.localiseUrl(
+        `${routeBase}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+      ),
       text: localise('prns:list:createLink', { noteType })
     },
     wasteBalance: {
@@ -100,10 +57,10 @@ export function buildListViewData(
       hint: localise('prns:list:balanceHint', { noteTypePlural })
     },
     hasCreatedPrns,
-    table,
-    cancellationTable,
-    issuedTable,
-    cancelledTable
+    table: buildAwaiting(prns),
+    cancellationTable: buildAwaiting(cancellationPrns),
+    issuedTable: buildDetail(issuedPrns, 'issuedTable'),
+    cancelledTable: buildDetail(cancelledPrns, 'cancelledTable')
   }
 }
 
@@ -137,28 +94,9 @@ function buildListLabels(localise, { noteType, noteTypePlural }) {
   }
 }
 
-/**
- * Build an awaiting-action table with headings, data rows, and a total row.
- * @param {Request} request
- * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {string} options.accreditationId
- * @param {Array<{id: string, recipient: string, createdAt: string, tonnage: number, status?: string}>} options.prns
- * @param {(key: string) => string} options.localise
- * @param {(prn: object, localise: (key: string) => string) => {text?: string, html?: string}} options.buildStatusCell
- * @returns {{headings: object, rows: Array<Array<{text?: string, html?: string, classes?: string}>>}}
- */
 function buildAwaitingTable(
   request,
-  {
-    organisationId,
-    registrationId,
-    accreditationId,
-    prns,
-    localise,
-    buildStatusCell
-  }
+  { organisationId, registrationId, accreditationId, prns, localise }
 ) {
   const headings = {
     recipient: localise('prns:list:table:recipientHeading'),
@@ -178,7 +116,7 @@ function buildAwaitingTable(
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.createdAt) },
       { text: prn.tonnage },
-      buildStatusCell(prn, localise),
+      { html: buildStatusTagHtml(prn.status, localise) },
       { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
     ]
   })
