@@ -187,7 +187,7 @@ function buildAwaitingTable(
     return { headings, rows: [] }
   }
 
-  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalTonnage = prns.reduce((sum, prn) => sum + (prn.tonnage ?? 0), 0)
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
@@ -247,7 +247,7 @@ function buildDetailTable(
     return { headings, rows: [] }
   }
 
-  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalTonnage = prns.reduce((sum, prn) => sum + (prn.tonnage ?? 0), 0)
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),

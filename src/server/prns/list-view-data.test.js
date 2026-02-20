@@ -296,6 +296,25 @@ describe('#buildListViewData', () => {
       expect(totalRow[2].classes).toBe(cssClasses.fontWeightBold)
     })
 
+    it('should treat undefined tonnage as zero in total row', () => {
+      const prnsWithMissingTonnage = [
+        { ...stubPrns[0], tonnage: undefined },
+        stubPrns[1]
+      ]
+
+      const result = buildListViewData(createMockRequest(), {
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        accreditationId: 'acc-001',
+        registration: reprocessorRegistration,
+        prns: prnsWithMissingTonnage,
+        wasteBalance: mockWasteBalance
+      })
+
+      const totalRow = result.table.rows[2]
+      expect(totalRow[2].text).toBe(120)
+    })
+
     it('should return status as govukTag HTML', () => {
       const result = buildListViewData(createMockRequest(), {
         organisationId: 'org-123',
