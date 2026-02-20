@@ -67,22 +67,24 @@ export function buildListViewData(
     })
   })
 
-  const issuedTable = buildIssuedTable(request, {
+  const issuedTable = buildDetailTable(request, {
     organisationId,
     registrationId,
     accreditationId,
-    issuedPrns,
+    prns: issuedPrns,
     localise,
-    noteType
+    noteType,
+    i18nPrefix: 'issuedTable'
   })
 
-  const cancelledTable = buildCancelledTable(request, {
+  const cancelledTable = buildDetailTable(request, {
     organisationId,
     registrationId,
     accreditationId,
-    cancelledPrns,
+    prns: cancelledPrns,
     localise,
-    noteType
+    noteType,
+    i18nPrefix: 'cancelledTable'
   })
 
   return {
@@ -200,43 +202,32 @@ function buildAwaitingTable(
   return { headings, rows: [...dataRows, totalRow] }
 }
 
-/**
- * Build issued table with headings and data rows
- * @param {Request} request
- * @param {object} options
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {string} options.accreditationId
- * @param {Array<{id: string, prnNumber: string, recipient: string, issuedAt: string, status: string}>} options.issuedPrns
- * @param {(key: string, params?: object) => string} options.localise
- * @param {string} options.noteType
- * @returns {{headings: object, rows: Array<Array<{text?: string, html?: string}>>}}
- */
-function buildIssuedTable(
+function buildDetailTable(
   request,
   {
     organisationId,
     registrationId,
     accreditationId,
-    issuedPrns,
+    prns,
     localise,
-    noteType
+    noteType,
+    i18nPrefix
   }
 ) {
   const headings = {
-    prnNumber: localise('prns:list:issuedTable:noteNumberHeading', {
+    prnNumber: localise(`prns:list:${i18nPrefix}:noteNumberHeading`, {
       noteType
     }),
-    recipient: localise('prns:list:issuedTable:recipientHeading'),
-    dateIssued: localise('prns:list:issuedTable:dateIssuedHeading'),
-    tonnage: localise('prns:list:issuedTable:tonnageHeading'),
-    status: localise('prns:list:issuedTable:statusHeading'),
-    action: localise('prns:list:issuedTable:actionHeading')
+    recipient: localise(`prns:list:${i18nPrefix}:recipientHeading`),
+    dateIssued: localise(`prns:list:${i18nPrefix}:dateIssuedHeading`),
+    tonnage: localise(`prns:list:${i18nPrefix}:tonnageHeading`),
+    status: localise(`prns:list:${i18nPrefix}:statusHeading`),
+    action: localise(`prns:list:${i18nPrefix}:actionHeading`)
   }
 
-  const selectText = localise('prns:list:issuedTable:selectText')
+  const selectText = localise(`prns:list:${i18nPrefix}:selectText`)
 
-  const rows = issuedPrns.map((prn) => {
+  const rows = prns.map((prn) => {
     const viewUrl = request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}/view`
     )
@@ -256,67 +247,7 @@ function buildIssuedTable(
     return { headings, rows: [] }
   }
 
-  const totalTonnage = issuedPrns.reduce((sum, prn) => sum + prn.tonnage, 0)
-  const totalRow = [
-    {
-      text: localise('prns:list:table:totalLabel'),
-      classes: cssClasses.fontWeightBold
-    },
-    { text: '' },
-    { text: '' },
-    { text: totalTonnage, classes: cssClasses.fontWeightBold },
-    { text: '' },
-    { text: '' }
-  ]
-
-  return { headings, rows: [...rows, totalRow] }
-}
-
-function buildCancelledTable(
-  request,
-  {
-    organisationId,
-    registrationId,
-    accreditationId,
-    cancelledPrns,
-    localise,
-    noteType
-  }
-) {
-  const headings = {
-    prnNumber: localise('prns:list:cancelledTable:noteNumberHeading', {
-      noteType
-    }),
-    recipient: localise('prns:list:cancelledTable:recipientHeading'),
-    dateIssued: localise('prns:list:cancelledTable:dateIssuedHeading'),
-    tonnage: localise('prns:list:cancelledTable:tonnageHeading'),
-    status: localise('prns:list:cancelledTable:statusHeading'),
-    action: localise('prns:list:cancelledTable:actionHeading')
-  }
-
-  const selectText = localise('prns:list:cancelledTable:selectText')
-
-  const rows = cancelledPrns.map((prn) => {
-    const viewUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prn.id}/view`
-    )
-    return [
-      { text: prn.prnNumber },
-      { text: prn.recipient },
-      { text: formatDateForDisplay(prn.issuedAt) },
-      { text: prn.tonnage },
-      { html: buildStatusTagHtml(prn.status, localise) },
-      {
-        html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
-      }
-    ]
-  })
-
-  if (rows.length === 0) {
-    return { headings, rows: [] }
-  }
-
-  const totalTonnage = cancelledPrns.reduce((sum, prn) => sum + prn.tonnage, 0)
+  const totalTonnage = prns.reduce((sum, prn) => sum + prn.tonnage, 0)
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),

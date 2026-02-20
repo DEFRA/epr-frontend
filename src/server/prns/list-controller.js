@@ -18,23 +18,9 @@ const filterPrnsByStatus = (prns, status) =>
       status: prn.status
     }))
 
-const getIssuedPrns = (prns) =>
+const filterPrnsByStatuses = (prns, statuses) =>
   prns
-    .filter(
-      (prn) => prn.status === 'awaiting_acceptance' || prn.status === 'accepted'
-    )
-    .map((prn) => ({
-      id: prn.id,
-      prnNumber: prn.prnNumber,
-      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
-      issuedAt: prn.issuedAt,
-      tonnage: prn.tonnage,
-      status: prn.status
-    }))
-
-const getCancelledPrns = (prns) =>
-  prns
-    .filter((prn) => prn.status === 'cancelled')
+    .filter((prn) => statuses.includes(prn.status))
     .map((prn) => ({
       id: prn.id,
       prnNumber: prn.prnNumber,
@@ -102,8 +88,11 @@ export const listController = {
       registration,
       prns: filterPrnsByStatus(prns, 'awaiting_authorisation'),
       cancellationPrns: filterPrnsByStatus(prns, 'awaiting_cancellation'),
-      issuedPrns: getIssuedPrns(prns),
-      cancelledPrns: getCancelledPrns(prns),
+      issuedPrns: filterPrnsByStatuses(prns, [
+        'awaiting_acceptance',
+        'accepted'
+      ]),
+      cancelledPrns: filterPrnsByStatuses(prns, ['cancelled']),
       hasCreatedPrns,
       wasteBalance
     })

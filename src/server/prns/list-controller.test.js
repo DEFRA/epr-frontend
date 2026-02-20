@@ -773,6 +773,81 @@ describe('#listPrnsController', () => {
         expect(queryByText(issuedPanel, /Cancelled Corp/)).toBeNull()
         expect(queryByText(issuedPanel, /Revoked Ltd/)).toBeNull()
       })
+
+      it('should render "Cancelled PERNs" heading for exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          mockPrnsWithCancelled
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(getByText(cancelledPanel, /Cancelled PERNs/i)).toBeDefined()
+      })
+
+      it('should render "PERN number" column heading for exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          mockPrnsWithCancelled
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(getByText(cancelledPanel, /PERN number/i)).toBeDefined()
+      })
+
+      it('should show "No PERNs have been cancelled" empty message for exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(
+          getByText(cancelledPanel, /No PERNs have been cancelled/i)
+        ).toBeDefined()
+      })
     })
 
     describe('conditional tabs', () => {
