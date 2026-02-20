@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
+import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { buildListViewData } from './list-view-data.js'
@@ -12,7 +12,7 @@ const filterPrnsByStatus = (prns, status) =>
     .filter((prn) => prn.status === status)
     .map((prn) => ({
       id: prn.id,
-      recipient: getDisplayName(prn.issuedToOrganisation),
+      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
       createdAt: prn.createdAt,
       tonnage: prn.tonnage,
       status: prn.status
@@ -26,8 +26,9 @@ const getIssuedPrns = (prns) =>
     .map((prn) => ({
       id: prn.id,
       prnNumber: prn.prnNumber,
-      recipient: getDisplayName(prn.issuedToOrganisation),
+      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
       issuedAt: prn.issuedAt,
+      tonnage: prn.tonnage,
       status: prn.status
     }))
 

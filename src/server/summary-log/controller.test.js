@@ -1,5 +1,4 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { validationFailureCodes } from '#server/common/constants/validation-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
@@ -1172,7 +1171,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
-          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
+          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
         }
       })
 
@@ -1193,7 +1192,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
-          failures: [{ code: validationFailureCodes.FILE_VIRUS_DETECTED }]
+          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
         }
       })
 
@@ -1238,7 +1237,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1265,7 +1264,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1289,7 +1288,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1311,7 +1310,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.REGISTRATION_MISMATCH }]
+          failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
         }
       })
 
@@ -1337,8 +1336,8 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.SEQUENTIAL_ROW_REMOVED },
-            { code: validationFailureCodes.HEADER_REQUIRED }
+            { errorCode: 'SEQUENTIAL_ROW_REMOVED' },
+            { errorCode: 'HEADER_REQUIRED' }
           ]
         }
       })
@@ -1365,7 +1364,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: 'SOME_UNKNOWN_CODE' }]
+          failures: [{ errorCode: 'SOME_UNKNOWN_CODE' }]
         }
       })
 
@@ -1389,9 +1388,9 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
-            { code: validationFailureCodes.INVALID_TYPE },
-            { code: validationFailureCodes.VALUE_OUT_OF_RANGE }
+            { errorCode: 'VALUE_OUT_OF_RANGE' },
+            { errorCode: 'INVALID_TYPE' },
+            { errorCode: 'VALUE_OUT_OF_RANGE' }
           ]
         }
       })
@@ -1422,9 +1421,9 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.VALUE_OUT_OF_RANGE },
-            { code: validationFailureCodes.REGISTRATION_MISMATCH },
-            { code: validationFailureCodes.INVALID_TYPE }
+            { errorCode: 'VALUE_OUT_OF_RANGE' },
+            { errorCode: 'REGISTRATION_MISMATCH' },
+            { errorCode: 'INVALID_TYPE' }
           ]
         }
       })
@@ -1450,7 +1449,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.MATERIAL_MISMATCH }]
+          failures: [{ errorCode: 'MATERIAL_MISMATCH' }]
         }
       })
 
@@ -1470,7 +1469,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.ACCREDITATION_MISMATCH }]
+          failures: [{ errorCode: 'ACCREDITATION_MISMATCH' }]
         }
       })
 
@@ -1492,7 +1491,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.PROCESSING_TYPE_MISMATCH }]
+          failures: [{ errorCode: 'PROCESSING_TYPE_MISMATCH' }]
         }
       })
 
@@ -1514,9 +1513,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [
-            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS }
-          ]
+          failures: [{ errorCode: 'SPREADSHEET_MALFORMED_MARKERS' }]
         }
       })
 
@@ -1538,7 +1535,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
-          failures: [{ code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }]
+          failures: [{ errorCode: 'SPREADSHEET_INVALID_ERROR' }]
         }
       })
 
@@ -1561,8 +1558,8 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.SPREADSHEET_MALFORMED_MARKERS },
-            { code: validationFailureCodes.SPREADSHEET_INVALID_ERROR }
+            { errorCode: 'SPREADSHEET_MALFORMED_MARKERS' },
+            { errorCode: 'SPREADSHEET_INVALID_ERROR' }
           ]
         }
       })
@@ -1592,28 +1589,25 @@ describe('#summaryLogUploadProgressController', () => {
       'FILE_REJECTED',
       'VALIDATION_SYSTEM_ERROR',
       'UNKNOWN'
-    ])(
-      '%s - should show technical error message',
-      async (errorCode, { server }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [{ code: validationFailureCodes[errorCode] }]
-          }
-        })
+    ])('%s - should show technical error message', async (code, { server }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ errorCode: code }]
+        }
+      })
 
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
 
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain(
-          'Sorry, there is a problem with the service - try again later'
-        )
-      }
-    )
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+    })
 
     it('status: invalid with multiple technical errors - should show single deduplicated message', async ({
       server
@@ -1622,9 +1616,9 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { code: validationFailureCodes.FILE_UPLOAD_FAILED },
-            { code: validationFailureCodes.FILE_DOWNLOAD_FAILED },
-            { code: validationFailureCodes.VALIDATION_SYSTEM_ERROR }
+            { errorCode: 'FILE_UPLOAD_FAILED' },
+            { errorCode: 'FILE_DOWNLOAD_FAILED' },
+            { errorCode: 'VALIDATION_SYSTEM_ERROR' }
           ]
         }
       })
@@ -1645,6 +1639,289 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       expect(matches).toHaveLength(1)
+    })
+
+    it('status: invalid with NET_WEIGHT_CALCULATION_MISMATCH errorCode - should show calculated field mismatch message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+              location: { header: 'NET_WEIGHT' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values'
+      )
+    })
+
+    it('status: invalid with weight numeric errorCode - should show weight format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_A_NUMBER',
+              location: { header: 'GROSS_WEIGHT' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log'
+      )
+    })
+
+    it('status: invalid with date errorCode on date header - should show date format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_A_VALID_DATE',
+              location: { header: 'DATE_LOAD_LEFT_SITE' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains date formats that do not match the examples provided in the summary log'
+      )
+    })
+
+    it('status: invalid with yes/no errorCode on yes/no header - should show yes/no format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_YES_OR_NO',
+              location: { header: 'BAILING_WIRE_PROTOCOL' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains answers to Yes / No questions with formats that do not match the examples provided in the summary log'
+      )
+    })
+
+    it('status: invalid with dropdown errorCode on dropdown header - should show dropdown format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
+              location: {
+                header: 'HOW_DID_YOU_CALCULATE_RECYCLABLE_PROPORTION'
+              }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values in some fields that have not been selected from within the drop-down provided'
+      )
+    })
+
+    it('status: invalid with free-text errorCode on free-text header - should show free-text message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_ALPHANUMERIC',
+              location: { header: 'CONTAINER_NUMBER' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains unacceptable content within the fields that accept free text'
+      )
+    })
+
+    it('status: invalid with ID errorCode on ID header - should show ID format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_3_DIGIT_NUMBER',
+              location: { header: 'OSR_ID' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values in ID fields with formats that do not match the 3 digit format of the examples provided in the summary log'
+      )
+    })
+
+    it('status: invalid with percentage errorCode on percentage header - should show percentage format message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_AT_LEAST_ZERO',
+              location: { header: 'RECYCLABLE_PROPORTION_PERCENTAGE' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains percentage values with formats that do not match the examples provided in the summary log'
+      )
+    })
+
+    it('status: invalid with unrecognised errorCode - should show technical error as fallback', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_A_VALID_DATE',
+              location: { header: 'SOME_DATE_FIELD' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+    })
+
+    it('status: invalid with mixed errorCode failures - should show correct deduplicated messages', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'NET_WEIGHT_CALCULATION_MISMATCH',
+              location: { header: 'NET_WEIGHT' }
+            },
+            {
+              errorCode: 'MUST_BE_A_NUMBER',
+              location: { header: 'GROSS_WEIGHT' }
+            },
+            { errorCode: 'REGISTRATION_MISMATCH' }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains values within the automatically calculated fields that differ from the correctly calculated values'
+      )
+      expect(result).toContain(
+        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log'
+      )
+      expect(result).toContain(
+        'Summary log registration is missing or incorrect'
+      )
     })
 
     it('status: invalid with empty validation failures - should show technical error message', async ({
@@ -1697,7 +1974,7 @@ describe('#summaryLogUploadProgressController', () => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed,
         validation: {
-          failures: [{ code: 'PROCESSING_FAILED' }]
+          failures: [{ errorCode: 'PROCESSING_FAILED' }]
         }
       })
 

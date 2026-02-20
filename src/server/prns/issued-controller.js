@@ -3,7 +3,7 @@ import Boom from '@hapi/boom'
 import { config } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { getDisplayName } from '#server/common/helpers/waste-organisations/get-display-name.js'
+import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
 /**
@@ -50,7 +50,9 @@ export const issuedController = {
       )
     }
 
-    const recipientDisplayName = getDisplayName(prn.issuedToOrganisation)
+    const recipientDisplayName = getIssuedToOrgDisplayName(
+      prn.issuedToOrganisation
+    )
     const prnNumber =
       prn.prnNumber || (prnIssued?.id === prnId && prnIssued?.prnNumber) || null
 

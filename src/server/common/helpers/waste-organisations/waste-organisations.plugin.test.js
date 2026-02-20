@@ -17,11 +17,26 @@ import fixture from '../../../../../fixtures/waste-organisations/organisations.j
 
 import { createWasteOrganisationsPlugin } from './waste-organisations.plugin.js'
 
+/**
+ * Registers a minimal logger on each request so the API adapter
+ * can call request.logger.warn().
+ */
+const loggerPlugin = {
+  name: 'test-logger',
+  register: (server) => {
+    server.ext('onRequest', (request, h) => {
+      request.logger = { warn: () => {}, error: () => {}, info: () => {} }
+      return h.continue
+    })
+  }
+}
+
 describe('#createWasteOrganisationsPlugin', () => {
   let server
 
   beforeEach(async () => {
     server = hapi.server({ port: 0 })
+    await server.register(loggerPlugin)
   })
 
   afterEach(async () => {
@@ -87,7 +102,15 @@ describe('#createWasteOrganisationsPlugin', () => {
 
   describe('api', () => {
     const apiUrl = 'http://waste-orgs-test.api'
-    const mockApiOrganisations = [{ id: 'api-org' }]
+    const mockApiOrganisations = [
+      {
+        id: 'api-org',
+        name: 'API Org',
+        registrations: [
+          { type: 'LARGE_PRODUCER', registrationYear: new Date().getFullYear() }
+        ]
+      }
+    ]
 
     const msw = setupServer(
       http.get(apiUrl, () =>
@@ -122,7 +145,7 @@ describe('#createWasteOrganisationsPlugin', () => {
       msw.close()
     })
 
-    it('should return organisations from API', async () => {
+    it('should return organisations from API with registrationType extracted', async () => {
       await server.register(createWasteOrganisationsPlugin())
       server.route({
         method: 'GET',
@@ -139,7 +162,9 @@ describe('#createWasteOrganisationsPlugin', () => {
       const response = await server.inject({ method: 'GET', url: '/test' })
       const result = JSON.parse(response.payload)
 
-      expect(result.organisations).toStrictEqual(mockApiOrganisations)
+      expect(result.organisations).toStrictEqual([
+        { id: 'api-org', name: 'API Org', registrationType: 'LARGE_PRODUCER' }
+      ])
     })
   })
 })

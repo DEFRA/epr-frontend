@@ -164,7 +164,8 @@ describe('#postCreatePrnController', () => {
             issuedToOrganisation: {
               id: validPayload.recipient,
               name: 'Bigco Packaging Ltd',
-              tradingName: undefined
+              tradingName: undefined,
+              registrationType: 'LARGE_PRODUCER'
             },
             tonnage: 100,
             notes: 'Test notes'
