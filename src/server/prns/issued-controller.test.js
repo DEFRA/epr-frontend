@@ -83,9 +83,7 @@ const organisationId = 'org-123'
 const registrationId = 'reg-456'
 const accreditationId = 'acc-001'
 const prnId = 'prn-789'
-const pernId = 'pern-123'
 const issuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
-const pernIssuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/issued`
 const viewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
 const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
@@ -398,6 +396,34 @@ describe('#issuedController', () => {
         )
       })
 
+      it('redirects to view page if PRN not in awaiting_acceptance status', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+          ...mockIssuedPrn,
+          status: 'awaiting_authorisation'
+        })
+
+        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: issuedUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(viewUrl)
+      })
+    })
+
+    describe('exporter (pern)', () => {
+      const pernId = 'pern-123'
+      const pernIssuedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/issued`
+
       it('displays PERN text for exporter wasteProcessingType', async ({
         server
       }) => {
@@ -406,9 +432,13 @@ describe('#issuedController', () => {
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          server,
+          pernIssuedUrl,
+          {
+            auth: mockAuth
+          }
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -433,9 +463,13 @@ describe('#issuedController', () => {
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, listUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          server,
+          pernIssuedUrl,
+          {
+            auth: mockAuth
+          }
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -453,29 +487,6 @@ describe('#issuedController', () => {
         })
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('target')).toBe('_blank')
-      })
-
-      it('redirects to view page if PRN not in awaiting_acceptance status', async ({
-        server
-      }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockIssuedPrn,
-          status: 'awaiting_authorisation'
-        })
-
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
-
-        const { statusCode, headers } = await server.inject({
-          method: 'GET',
-          url: issuedUrl,
-          auth: mockAuth,
-          headers: { cookie: csrfCookie }
-        })
-
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(viewUrl)
       })
     })
   })

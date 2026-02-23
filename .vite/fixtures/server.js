@@ -76,7 +76,7 @@ const it = test.extend({
         awsEc2MetadataHandler,
         ...createOidcHandlers('http://defra-id.auth')
       )
-      server.listen({ onUnhandledRequest: 'warn' })
+      server.listen({ onUnhandledRequest: 'error' })
 
       await use(server)
 
