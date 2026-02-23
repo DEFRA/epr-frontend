@@ -5,7 +5,7 @@ $navigation-height: 60px;
 $border-bottom-width: 4px;
 
 .app-navigation {
-  border-bottom: 1px solid govuk-colour("mid-grey");
+  border-bottom: 1px solid govuk-colour("black", $variant: "tint-80");
   background-color: $app-light-grey;
 }
 
@@ -60,7 +60,7 @@ $border-bottom-width: 4px;
   border-bottom: $border-bottom-width solid govuk-colour("blue");
 
   &:hover {
-    color: govuk-colour("dark-blue");
-    border-bottom: $border-bottom-width solid govuk-colour("dark-blue");
+    color: govuk-colour("blue", $variant: "shade-50");
+    border-bottom: $border-bottom-width solid govuk-colour("blue", $variant: "shade-50");
   }
 }

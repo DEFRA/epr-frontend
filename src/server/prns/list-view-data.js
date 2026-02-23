@@ -158,7 +158,7 @@ function buildAwaitingTable(
     return [
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.createdAt) },
-      { text: formatTonnage(prn.tonnage) },
+      { text: prn.tonnage },
       buildStatusCell(prn, localise),
       { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
     ]
@@ -175,7 +175,7 @@ function buildAwaitingTable(
       classes: cssClasses.fontWeightBold
     },
     { text: '' },
-    { text: formatTonnage(totalTonnage), classes: cssClasses.fontWeightBold },
+    { text: totalTonnage, classes: cssClasses.fontWeightBold },
     { text: '' },
     { text: '' }
   ]
@@ -227,7 +227,7 @@ function buildIssuedTable(
       { text: prn.prnNumber },
       { text: prn.recipient },
       { text: formatDateForDisplay(prn.issuedAt) },
-      { text: formatTonnage(prn.tonnage ?? 0) },
+      { text: prn.tonnage ?? 0 },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
         html: `<a href="${viewUrl}" class="govuk-link" target="_blank" rel="noopener noreferrer">${selectText}</a>`
@@ -247,21 +247,12 @@ function buildIssuedTable(
     },
     { text: '' },
     { text: '' },
-    { text: formatTonnage(totalTonnage), classes: cssClasses.fontWeightBold },
+    { text: totalTonnage, classes: cssClasses.fontWeightBold },
     { text: '' },
     { text: '' }
   ]
 
   return { headings, rows: [...rows, totalRow] }
-}
-
-/**
- * Format tonnage to 2 decimal places
- * @param {number} tonnage
- * @returns {string}
- */
-function formatTonnage(tonnage) {
-  return Number(tonnage).toFixed(2)
 }
 
 /**

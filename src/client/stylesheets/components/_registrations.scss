@@ -38,6 +38,6 @@
   }
 
   .govuk-summary-card__content {
-    background: govuk-colour("light-grey");
+    background: govuk-colour("black", $variant: "tint-95");
   }
 }
