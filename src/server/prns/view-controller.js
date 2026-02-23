@@ -34,7 +34,7 @@ export const viewController = {
     // Check for draft PRN data in session (creation flow)
     const prnDraft = request.yar.get('prnDraft')
 
-    if (prnDraft && prnDraft.id === prnId) {
+    if (prnDraft?.id === prnId) {
       // Creation flow - show check page with draft data
       return handleDraftView(request, h, {
         organisationId,
@@ -74,7 +74,7 @@ export const viewPostController = {
     // Retrieve draft PRN data from session
     const prnDraft = request.yar.get('prnDraft')
 
-    if (!prnDraft || prnDraft.id !== prnId) {
+    if (prnDraft?.id !== prnId) {
       // No draft in session or ID mismatch - redirect to create page
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`

@@ -21,7 +21,7 @@ export const discardGetController = {
 
     const prnDraft = request.yar.get('prnDraft')
 
-    if (!prnDraft || prnDraft.id !== prnId) {
+    if (prnDraft?.id !== prnId) {
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
       )
@@ -66,7 +66,7 @@ export const discardPostController = {
 
     const prnDraft = request.yar.get('prnDraft')
 
-    if (!prnDraft || prnDraft.id !== prnId) {
+    if (prnDraft?.id !== prnId) {
       return h.redirect(createUrl)
     }
 
