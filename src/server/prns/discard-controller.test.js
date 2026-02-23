@@ -14,9 +14,12 @@ import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
+vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
 
+const { getWasteBalance } =
+  await import('#server/common/helpers/waste-balance/get-waste-balance.js')
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
@@ -99,6 +102,7 @@ describe('#discardController', () => {
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
+    vi.mocked(getWasteBalance).mockResolvedValue(null)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue({
       ...mockPrnCreated,
