@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getIssuingOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issuing-org-display-name.js'
@@ -31,10 +31,11 @@ export const actionController = {
 
     const [{ organisationData, registration, accreditation }, prn] =
       await Promise.all([
-        fetchRegistrationAndAccreditation(
+        getRequiredRegistrationWithAccreditation(
           organisationId,
           registrationId,
-          session.idToken
+          session.idToken,
+          request.logger
         ),
         fetchPackagingRecyclingNote(
           organisationId,
@@ -44,10 +45,6 @@ export const actionController = {
           session.idToken
         )
       ])
-
-    if (!registration) {
-      throw Boom.notFound('Registration not found')
-    }
 
     const recipientDisplayName = getIssuedToOrgDisplayName(
       prn.issuedToOrganisation

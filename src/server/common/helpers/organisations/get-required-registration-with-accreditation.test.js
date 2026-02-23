@@ -35,7 +35,11 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       mockLogger
     )
 
-    expect(result).toStrictEqual({ registration, accreditation })
+    expect(result).toStrictEqual({
+      registration,
+      accreditation,
+      organisationData: { id: 'org-123' }
+    })
   })
 
   it('should throw 404 when registration is not found', async () => {

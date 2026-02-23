@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
@@ -29,10 +29,11 @@ export const issuedController = {
     }
 
     const [{ registration }, prn] = await Promise.all([
-      fetchRegistrationAndAccreditation(
+      getRequiredRegistrationWithAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.idToken,
+        request.logger
       ),
       fetchPackagingRecyclingNote(
         organisationId,

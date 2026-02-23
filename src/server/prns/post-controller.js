@@ -1,5 +1,5 @@
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
@@ -142,10 +142,11 @@ async function handleInvalidRecipient(request, h, organisations) {
   }
 
   const [{ registration }, wasteBalance] = await Promise.all([
-    fetchRegistrationAndAccreditation(
+    getRequiredRegistrationWithAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.idToken,
+      request.logger
     ),
     getWasteBalance(
       organisationId,
@@ -196,10 +197,11 @@ export const postController = {
 
         const [{ registration }, { organisations }, wasteBalance] =
           await Promise.all([
-            fetchRegistrationAndAccreditation(
+            getRequiredRegistrationWithAccreditation(
               organisationId,
               registrationId,
-              session.idToken
+              session.idToken,
+              request.logger
             ),
             request.wasteOrganisationsService.getOrganisations(),
             getWasteBalance(

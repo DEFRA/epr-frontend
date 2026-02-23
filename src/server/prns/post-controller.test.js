@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -10,7 +10,7 @@ import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
@@ -72,7 +72,7 @@ const validPayload = {
 describe('#postCreatePrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
   })
@@ -415,7 +415,7 @@ describe('#postCreatePrnController', () => {
       it('shows PERN-specific tonnage error for exporter registrations', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
 
@@ -516,7 +516,7 @@ describe('#postCreatePrnController', () => {
 
     describe('waste balance on error', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
         vi.mocked(getWasteBalance).mockResolvedValue({

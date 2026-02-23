@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
 import { buildCreatePrnViewData } from './view-data.js'
@@ -34,25 +34,12 @@ export const controller = {
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
 
-    const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      )
-
-    if (!registration) {
-      request.logger.warn({ registrationId }, 'Registration not found')
-      throw Boom.notFound('Registration not found')
-    }
-
-    if (!accreditation) {
-      request.logger.warn(
-        { registrationId },
-        'Not accredited for this registration'
-      )
-      throw Boom.notFound('Not accredited for this registration')
-    }
+    const { registration } = await getRequiredRegistrationWithAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken,
+      request.logger
+    )
 
     const [{ organisations }, wasteBalance] = await Promise.all([
       request.wasteOrganisationsService.getOrganisations(),

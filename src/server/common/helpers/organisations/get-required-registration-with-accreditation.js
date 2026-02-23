@@ -7,7 +7,7 @@ import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accr
  * @param {string} registrationId - The registration ID to find
  * @param {string} idToken - JWT ID token for authorization
  * @param {object} logger - Request logger
- * @returns {Promise<{registration: object, accreditation: object}>}
+ * @returns {Promise<{registration: object, accreditation: object, organisationData: object}>}
  * @throws {Boom.notFound} When registration or accreditation is not found
  */
 export async function getRequiredRegistrationWithAccreditation(
@@ -16,7 +16,7 @@ export async function getRequiredRegistrationWithAccreditation(
   idToken,
   logger
 ) {
-  const { registration, accreditation } =
+  const { registration, accreditation, organisationData } =
     await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
@@ -33,5 +33,5 @@ export async function getRequiredRegistrationWithAccreditation(
     throw Boom.notFound('Not accredited for this registration')
   }
 
-  return { registration, accreditation }
+  return { registration, accreditation, organisationData }
 }

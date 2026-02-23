@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildAccreditationRows } from './helpers/build-accreditation-rows.js'
@@ -155,7 +155,7 @@ export const viewPostController = {
 
 /**
  * Handle viewing a draft PRN (creation flow)
- * @param {object} _request
+ * @param {object} request
  * @param {object} h
  * @param {object} params
  * @param {string} params.organisationId
@@ -166,7 +166,7 @@ export const viewPostController = {
  * @param {object} params.session
  */
 async function handleDraftView(
-  _request,
+  request,
   h,
   {
     organisationId,
@@ -178,10 +178,11 @@ async function handleDraftView(
   }
 ) {
   const { organisationData, registration, accreditation } =
-    await fetchRegistrationAndAccreditation(
+    await getRequiredRegistrationWithAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.idToken,
+      request.logger
     )
 
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
@@ -248,10 +249,11 @@ async function handleExistingView(
   // Fetch PRN and registration data from backend
   const [{ organisationData, registration, accreditation }, prn] =
     await Promise.all([
-      fetchRegistrationAndAccreditation(
+      getRequiredRegistrationWithAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.idToken,
+        request.logger
       ),
       fetchPackagingRecyclingNote(
         organisationId,
@@ -261,10 +263,6 @@ async function handleExistingView(
         session.idToken
       )
     ])
-
-  if (!registration) {
-    throw Boom.notFound('Registration not found')
-  }
 
   const recipientDisplayName = getIssuedToOrgDisplayName(
     prn.issuedToOrganisation
