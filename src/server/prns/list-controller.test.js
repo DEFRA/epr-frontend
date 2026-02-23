@@ -632,7 +632,7 @@ describe('#listPrnsController', () => {
 
     describe('cancelled tab', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
@@ -778,7 +778,7 @@ describe('#listPrnsController', () => {
       it('should render "Cancelled PERNs" heading for exporter', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
@@ -803,7 +803,7 @@ describe('#listPrnsController', () => {
       it('should render "PERN number" column heading for exporter', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
@@ -828,7 +828,7 @@ describe('#listPrnsController', () => {
       it('should show "You have not cancelled any PERNs" empty message for exporter', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
