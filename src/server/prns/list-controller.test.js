@@ -113,6 +113,30 @@ const mockPrnsWithCancellation = [
   }
 ]
 
+const mockPrnsWithCancelled = [
+  ...mockPrns,
+  {
+    id: 'prn-cancelled-001',
+    prnNumber: 'ER2688001',
+    issuedToOrganisation: { id: 'producer-6', name: 'Cancelled Corp' },
+    createdAt: '2026-01-05T00:00:00.000Z',
+    issuedAt: '2026-01-06T00:00:00.000Z',
+    tonnage: 30,
+    material: 'glass',
+    status: 'cancelled'
+  },
+  {
+    id: 'prn-cancelled-002',
+    prnNumber: 'ER2688002',
+    issuedToOrganisation: { id: 'producer-7', name: 'Revoked Ltd' },
+    createdAt: '2026-01-08T00:00:00.000Z',
+    issuedAt: '2026-01-09T00:00:00.000Z',
+    tonnage: 15,
+    material: 'plastic',
+    status: 'cancelled'
+  }
+]
+
 const reprocessorListUrl =
   '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes'
 const exporterListUrl =
@@ -603,6 +627,227 @@ describe('#listPrnsController', () => {
         const main = getByRole(body, 'main')
 
         expect(main.querySelector('.govuk-tabs')).not.toBeNull()
+      })
+    })
+
+    describe('cancelled tab', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          mockPrnsWithCancelled
+        )
+      })
+
+      it('should render cancelled tab in the tabs list', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const tabsList = main.querySelector('.govuk-tabs__list')
+
+        expect(getByText(tabsList, /Cancelled/)).toBeDefined()
+      })
+
+      it('should render cancelled PRN data in cancelled panel', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(getByText(cancelledPanel, /Cancelled Corp/)).toBeDefined()
+        expect(getByText(cancelledPanel, /Revoked Ltd/)).toBeDefined()
+        expect(getByText(cancelledPanel, /ER2688001/)).toBeDefined()
+        expect(getByText(cancelledPanel, /ER2688002/)).toBeDefined()
+      })
+
+      it('should render cancelled heading in cancelled panel', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(getByText(cancelledPanel, /Cancelled PRNs/i)).toBeDefined()
+      })
+
+      it('should render cancelled status tags with red colour', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+        const cancelledTable = getByRole(cancelledPanel, 'table')
+
+        const statusTags = cancelledTable.querySelectorAll('.govuk-tag--red')
+        expect(statusTags).toHaveLength(2)
+        expect(statusTags[0].textContent).toMatch(/Cancelled/i)
+      })
+
+      it('should render view links with target="_blank" for cancelled PRNs', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+        const cancelledTable = getByRole(cancelledPanel, 'table')
+        const viewLinks = cancelledTable.querySelectorAll('a[target="_blank"]')
+
+        expect(viewLinks).toHaveLength(2)
+        expect(viewLinks[0].getAttribute('href')).toContain(
+          'prn-cancelled-001/view'
+        )
+      })
+
+      it('should show empty state message when no cancelled PRNs', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(
+          getByText(cancelledPanel, /You have not cancelled any PRNs/i)
+        ).toBeDefined()
+      })
+
+      it('should not show cancelled PRNs in issued tab', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const issuedPanel = getByRole(body, 'main').querySelector('#issued')
+
+        expect(queryByText(issuedPanel, /Cancelled Corp/)).toBeNull()
+        expect(queryByText(issuedPanel, /Revoked Ltd/)).toBeNull()
+      })
+
+      it('should render "Cancelled PERNs" heading for exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          mockPrnsWithCancelled
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(getByText(cancelledPanel, /Cancelled PERNs/i)).toBeDefined()
+      })
+
+      it('should render "PERN number" column heading for exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          mockPrnsWithCancelled
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(getByText(cancelledPanel, /PERN number/i)).toBeDefined()
+      })
+
+      it('should show "You have not cancelled any PERNs" empty message for exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterListUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result, { url: 'http://localhost' })
+        const { body } = dom.window.document
+        const cancelledPanel = getByRole(body, 'main').querySelector(
+          '#cancelled'
+        )
+
+        expect(
+          getByText(cancelledPanel, /You have not cancelled any PERNs/i)
+        ).toBeDefined()
       })
     })
 
