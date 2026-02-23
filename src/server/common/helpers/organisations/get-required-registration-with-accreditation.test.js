@@ -92,6 +92,57 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     )
   })
 
+  it('should return when accreditationId is provided and matches', async () => {
+    const registration = { id: 'reg-001' }
+    const accreditation = { id: 'acc-001', status: 'approved' }
+
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      organisationData: { id: 'org-123' },
+      registration,
+      accreditation
+    })
+
+    const result = await getRequiredRegistrationWithAccreditation(
+      'org-123',
+      'reg-001',
+      'mock-token',
+      mockLogger,
+      'acc-001'
+    )
+
+    expect(result).toStrictEqual({
+      registration,
+      accreditation,
+      organisationData: { id: 'org-123' }
+    })
+  })
+
+  it('should throw 404 when accreditationId does not match', async () => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      organisationData: { id: 'org-123' },
+      registration: { id: 'reg-001' },
+      accreditation: { id: 'acc-001', status: 'approved' }
+    })
+
+    await expect(
+      getRequiredRegistrationWithAccreditation(
+        'org-123',
+        'reg-001',
+        'mock-token',
+        mockLogger,
+        'acc-wrong'
+      )
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 404 }
+    })
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      { registrationId: 'reg-001', accreditationId: 'acc-wrong' },
+      'Accreditation ID mismatch'
+    )
+  })
+
   it('should pass correct parameters to fetchRegistrationAndAccreditation', async () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
       organisationData: { id: 'org-123' },

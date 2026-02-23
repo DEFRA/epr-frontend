@@ -38,7 +38,8 @@ export const controller = {
       organisationId,
       registrationId,
       session.idToken,
-      request.logger
+      request.logger,
+      accreditationId
     )
 
     const [{ organisations }, wasteBalance] = await Promise.all([

@@ -31,7 +31,8 @@ export const discardGetController = {
       organisationId,
       registrationId,
       session.idToken,
-      request.logger
+      request.logger,
+      accreditationId
     )
 
     const { noteType } = getNoteTypeDisplayNames(registration)

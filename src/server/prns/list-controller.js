@@ -48,7 +48,8 @@ export const listController = {
       organisationId,
       registrationId,
       session.idToken,
-      request.logger
+      request.logger,
+      accreditationId
     )
 
     const [wasteBalance, prns] = await Promise.all([

@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
 
 const SAFE_PATH_SEGMENT_PATTERN = /^[A-Za-z0-9._~-]+$/
@@ -55,10 +55,12 @@ async function fetchPrnContext(request) {
   const safePrnId = getSafePathSegment(prnId, 'prnId')
 
   const [registrationData, prn] = await Promise.all([
-    fetchRegistrationAndAccreditation(
+    getRequiredRegistrationWithAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.idToken,
+      request.logger,
+      accreditationId
     ),
     fetchPackagingRecyclingNote(
       organisationId,

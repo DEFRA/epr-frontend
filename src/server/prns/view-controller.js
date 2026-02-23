@@ -182,7 +182,8 @@ async function handleDraftView(
       organisationId,
       registrationId,
       session.idToken,
-      request.logger
+      request.logger,
+      accreditationId
     )
 
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
@@ -253,7 +254,8 @@ async function handleExistingView(
         organisationId,
         registrationId,
         session.idToken,
-        request.logger
+        request.logger,
+        accreditationId
       ),
       fetchPackagingRecyclingNote(
         organisationId,

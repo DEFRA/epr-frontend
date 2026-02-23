@@ -146,7 +146,8 @@ async function handleInvalidRecipient(request, h, organisations) {
       organisationId,
       registrationId,
       session.idToken,
-      request.logger
+      request.logger,
+      accreditationId
     ),
     getWasteBalance(
       organisationId,
@@ -201,7 +202,8 @@ export const postController = {
               organisationId,
               registrationId,
               session.idToken,
-              request.logger
+              request.logger,
+              accreditationId
             ),
             request.wasteOrganisationsService.getOrganisations(),
             getWasteBalance(

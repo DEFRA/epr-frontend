@@ -33,7 +33,8 @@ export const issuedController = {
         organisationId,
         registrationId,
         session.idToken,
-        request.logger
+        request.logger,
+        accreditationId
       ),
       fetchPackagingRecyclingNote(
         organisationId,
