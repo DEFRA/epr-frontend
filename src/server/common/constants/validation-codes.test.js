@@ -30,6 +30,15 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('CALCULATED_FIELD_MISMATCH')
   })
 
+  test('returns CALCULATED_FIELD_MISMATCH for TONNAGE_CALCULATION_MISMATCH with TONNAGE_RECEIVED_FOR_EXPORT header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'TONNAGE_CALCULATION_MISMATCH',
+        'TONNAGE_RECEIVED_FOR_EXPORT'
+      )
+    ).toBe('CALCULATED_FIELD_MISMATCH')
+  })
+
   test('returns errorCode for NET_WEIGHT_CALCULATION_MISMATCH with non-calculated header', () => {
     expect(
       getDisplayCodeFromErrorCode(
@@ -81,13 +90,40 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('WEIGHT_FORMAT_INVALID')
   })
 
-  test('returns errorCode for numeric error code with non-weight non-percentage header', () => {
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with TONNAGE_RECEIVED_FOR_RECYCLING header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_LEAST_ZERO',
+        'TONNAGE_RECEIVED_FOR_RECYCLING'
+      )
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with TONNAGE_RECEIVED_FOR_EXPORT header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_LEAST_ZERO',
+        'TONNAGE_RECEIVED_FOR_EXPORT'
+      )
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_MOST_1000 with PRODUCT_UK_PACKAGING_WEIGHT_PROPORTION header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_MOST_1000',
+        'PRODUCT_UK_PACKAGING_WEIGHT_PROPORTION'
+      )
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_A_NUMBER with TONNAGE_RECEIVED_FOR_RECYCLING header', () => {
     expect(
       getDisplayCodeFromErrorCode(
         'MUST_BE_A_NUMBER',
         'TONNAGE_RECEIVED_FOR_RECYCLING'
       )
-    ).toBe('MUST_BE_A_NUMBER')
+    ).toBe('WEIGHT_FORMAT_INVALID')
   })
 
   test('returns DATE_FORMAT_INVALID for MUST_BE_A_VALID_DATE with DATE_LOAD_LEFT_SITE header', () => {
