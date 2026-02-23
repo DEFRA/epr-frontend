@@ -28,12 +28,12 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       accreditation
     })
 
-    const result = await getRequiredRegistrationWithAccreditation(
-      'org-123',
-      'reg-001',
-      'mock-token',
-      mockLogger
-    )
+    const result = await getRequiredRegistrationWithAccreditation({
+      organisationId: 'org-123',
+      registrationId: 'reg-001',
+      idToken: 'mock-token',
+      logger: mockLogger
+    })
 
     expect(result).toStrictEqual({
       registration,
@@ -50,12 +50,12 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     })
 
     await expect(
-      getRequiredRegistrationWithAccreditation(
-        'org-123',
-        'reg-nonexistent',
-        'mock-token',
-        mockLogger
-      )
+      getRequiredRegistrationWithAccreditation({
+        organisationId: 'org-123',
+        registrationId: 'reg-nonexistent',
+        idToken: 'mock-token',
+        logger: mockLogger
+      })
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -75,12 +75,12 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     })
 
     await expect(
-      getRequiredRegistrationWithAccreditation(
-        'org-123',
-        'reg-001',
-        'mock-token',
-        mockLogger
-      )
+      getRequiredRegistrationWithAccreditation({
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        idToken: 'mock-token',
+        logger: mockLogger
+      })
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -102,13 +102,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       accreditation
     })
 
-    const result = await getRequiredRegistrationWithAccreditation(
-      'org-123',
-      'reg-001',
-      'mock-token',
-      mockLogger,
-      'acc-001'
-    )
+    const result = await getRequiredRegistrationWithAccreditation({
+      organisationId: 'org-123',
+      registrationId: 'reg-001',
+      idToken: 'mock-token',
+      logger: mockLogger,
+      accreditationId: 'acc-001'
+    })
 
     expect(result).toStrictEqual({
       registration,
@@ -125,13 +125,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     })
 
     await expect(
-      getRequiredRegistrationWithAccreditation(
-        'org-123',
-        'reg-001',
-        'mock-token',
-        mockLogger,
-        'acc-wrong'
-      )
+      getRequiredRegistrationWithAccreditation({
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        idToken: 'mock-token',
+        logger: mockLogger,
+        accreditationId: 'acc-wrong'
+      })
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -150,12 +150,12 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       accreditation: { id: 'acc-001' }
     })
 
-    await getRequiredRegistrationWithAccreditation(
-      'org-123',
-      'reg-001',
-      'mock-token',
-      mockLogger
-    )
+    await getRequiredRegistrationWithAccreditation({
+      organisationId: 'org-123',
+      registrationId: 'reg-001',
+      idToken: 'mock-token',
+      logger: mockLogger
+    })
 
     expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
       'org-123',

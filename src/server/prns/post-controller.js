@@ -142,13 +142,13 @@ async function handleInvalidRecipient(request, h, organisations) {
   }
 
   const [{ registration }, wasteBalance] = await Promise.all([
-    getRequiredRegistrationWithAccreditation(
+    getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      session.idToken,
-      request.logger,
+      idToken: session.idToken,
+      logger: request.logger,
       accreditationId
-    ),
+    }),
     getWasteBalance(
       organisationId,
       accreditationId,
@@ -198,13 +198,13 @@ export const postController = {
 
         const [{ registration }, { organisations }, wasteBalance] =
           await Promise.all([
-            getRequiredRegistrationWithAccreditation(
+            getRequiredRegistrationWithAccreditation({
               organisationId,
               registrationId,
-              session.idToken,
-              request.logger,
+              idToken: session.idToken,
+              logger: request.logger,
               accreditationId
-            ),
+            }),
             request.wasteOrganisationsService.getOrganisations(),
             getWasteBalance(
               organisationId,

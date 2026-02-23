@@ -279,13 +279,13 @@ describe('#createPrnController', () => {
           auth: mockAuth
         })
 
-        expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith(
-          'org-123',
-          'reg-001',
-          'mock-id-token',
-          expect.objectContaining({}),
-          'acc-001'
-        )
+        expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith({
+          organisationId: 'org-123',
+          registrationId: 'reg-001',
+          idToken: 'mock-id-token',
+          logger: expect.objectContaining({}),
+          accreditationId: 'acc-001'
+        })
       })
     })
 

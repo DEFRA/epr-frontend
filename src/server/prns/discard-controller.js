@@ -27,13 +27,13 @@ export const discardGetController = {
       )
     }
 
-    const { registration } = await getRequiredRegistrationWithAccreditation(
+    const { registration } = await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      session.idToken,
-      request.logger,
+      idToken: session.idToken,
+      logger: request.logger,
       accreditationId
-    )
+    })
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 

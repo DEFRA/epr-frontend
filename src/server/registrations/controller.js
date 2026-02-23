@@ -16,12 +16,12 @@ export const controller = {
     const session = request.auth.credentials
 
     const { registration, accreditation } =
-      await getRequiredRegistrationWithAccreditation(
+      await getRequiredRegistrationWithAccreditation({
         organisationId,
         registrationId,
-        session.idToken,
-        request.logger
-      )
+        idToken: session.idToken,
+        logger: request.logger
+      })
 
     const wasteBalance = await getWasteBalance(
       organisationId,

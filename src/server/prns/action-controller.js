@@ -31,13 +31,13 @@ export const actionController = {
 
     const [{ organisationData, registration, accreditation }, prn] =
       await Promise.all([
-        getRequiredRegistrationWithAccreditation(
+        getRequiredRegistrationWithAccreditation({
           organisationId,
           registrationId,
-          session.idToken,
-          request.logger,
+          idToken: session.idToken,
+          logger: request.logger,
           accreditationId
-        ),
+        }),
         fetchPackagingRecyclingNote(
           organisationId,
           registrationId,

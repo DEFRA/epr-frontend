@@ -42,13 +42,13 @@ export const listController = {
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
 
-    const { registration } = await getRequiredRegistrationWithAccreditation(
+    const { registration } = await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      session.idToken,
-      request.logger,
+      idToken: session.idToken,
+      logger: request.logger,
       accreditationId
-    )
+    })
 
     const [wasteBalance, prns] = await Promise.all([
       registration.accreditationId

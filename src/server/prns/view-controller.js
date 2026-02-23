@@ -178,13 +178,13 @@ async function handleDraftView(
   }
 ) {
   const { organisationData, registration, accreditation } =
-    await getRequiredRegistrationWithAccreditation(
+    await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      session.idToken,
-      request.logger,
+      idToken: session.idToken,
+      logger: request.logger,
       accreditationId
-    )
+    })
 
   const { isExporter, noteType } = getNoteTypeDisplayNames(registration)
 
@@ -250,13 +250,13 @@ async function handleExistingView(
   // Fetch PRN and registration data from backend
   const [{ organisationData, registration, accreditation }, prn] =
     await Promise.all([
-      getRequiredRegistrationWithAccreditation(
+      getRequiredRegistrationWithAccreditation({
         organisationId,
         registrationId,
-        session.idToken,
-        request.logger,
+        idToken: session.idToken,
+        logger: request.logger,
         accreditationId
-      ),
+      }),
       fetchPackagingRecyclingNote(
         organisationId,
         registrationId,
