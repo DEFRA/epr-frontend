@@ -1859,7 +1859,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    it('status: invalid with unrecognised errorCode - should show technical error as fallback', async ({
+    it('status: invalid with known errorCode but unrecognised header - should show safety net fallback', async ({
       server
     }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1869,6 +1869,33 @@ describe('#summaryLogUploadProgressController', () => {
             {
               errorCode: 'MUST_BE_A_VALID_DATE',
               location: { header: 'SOME_DATE_FIELD' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains data that&#39;s been entered incorrectly'
+      )
+    })
+
+    it('status: invalid with completely unrecognised errorCode - should show technical error as fallback', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
+              location: { header: 'WHATEVER' }
             }
           ]
         }
