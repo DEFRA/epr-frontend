@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { config } from '#config/config.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
@@ -27,11 +27,13 @@ export const discardGetController = {
       )
     }
 
-    const { registration } = await fetchRegistrationAndAccreditation(
+    const { registration } = await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      session.idToken
-    )
+      idToken: session.idToken,
+      logger: request.logger,
+      accreditationId
+    })
 
     const { noteType } = getNoteTypeDisplayNames(registration)
 

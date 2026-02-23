@@ -1,12 +1,10 @@
-import Boom from '@hapi/boom'
-
 import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -17,24 +15,13 @@ export const controller = {
 
     const session = request.auth.credentials
 
-    const organisationData = await fetchOrganisationById(
-      organisationId,
-      session.idToken
-    )
-
-    const registration = organisationData.registrations?.find(
-      ({ id }) => id === registrationId
-    )
-
-    if (!registration) {
-      const message = 'Registration not found'
-      request.logger.warn({ registrationId }, message)
-      throw Boom.notFound(message)
-    }
-
-    const accreditation = organisationData.accreditations?.find(
-      ({ id }) => id === registration.accreditationId
-    )
+    const { registration, accreditation } =
+      await getRequiredRegistrationWithAccreditation({
+        organisationId,
+        registrationId,
+        idToken: session.idToken,
+        logger: request.logger
+      })
 
     const wasteBalance = await getWasteBalance(
       organisationId,
@@ -42,7 +29,6 @@ export const controller = {
       session.idToken,
       request.logger
     )
-
     const viewModel = buildViewModel({
       request,
       organisationId,

@@ -28,14 +28,18 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       accreditation
     })
 
-    const result = await getRequiredRegistrationWithAccreditation(
-      'org-123',
-      'reg-001',
-      'mock-token',
-      mockLogger
-    )
+    const result = await getRequiredRegistrationWithAccreditation({
+      organisationId: 'org-123',
+      registrationId: 'reg-001',
+      idToken: 'mock-token',
+      logger: mockLogger
+    })
 
-    expect(result).toStrictEqual({ registration, accreditation })
+    expect(result).toStrictEqual({
+      registration,
+      accreditation,
+      organisationData: { id: 'org-123' }
+    })
   })
 
   it('should throw 404 when registration is not found', async () => {
@@ -46,12 +50,12 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     })
 
     await expect(
-      getRequiredRegistrationWithAccreditation(
-        'org-123',
-        'reg-nonexistent',
-        'mock-token',
-        mockLogger
-      )
+      getRequiredRegistrationWithAccreditation({
+        organisationId: 'org-123',
+        registrationId: 'reg-nonexistent',
+        idToken: 'mock-token',
+        logger: mockLogger
+      })
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -71,12 +75,12 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     })
 
     await expect(
-      getRequiredRegistrationWithAccreditation(
-        'org-123',
-        'reg-001',
-        'mock-token',
-        mockLogger
-      )
+      getRequiredRegistrationWithAccreditation({
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        idToken: 'mock-token',
+        logger: mockLogger
+      })
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -88,6 +92,57 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     )
   })
 
+  it('should return when accreditationId is provided and matches', async () => {
+    const registration = { id: 'reg-001' }
+    const accreditation = { id: 'acc-001', status: 'approved' }
+
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      organisationData: { id: 'org-123' },
+      registration,
+      accreditation
+    })
+
+    const result = await getRequiredRegistrationWithAccreditation({
+      organisationId: 'org-123',
+      registrationId: 'reg-001',
+      idToken: 'mock-token',
+      logger: mockLogger,
+      accreditationId: 'acc-001'
+    })
+
+    expect(result).toStrictEqual({
+      registration,
+      accreditation,
+      organisationData: { id: 'org-123' }
+    })
+  })
+
+  it('should throw 404 when accreditationId does not match', async () => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      organisationData: { id: 'org-123' },
+      registration: { id: 'reg-001' },
+      accreditation: { id: 'acc-001', status: 'approved' }
+    })
+
+    await expect(
+      getRequiredRegistrationWithAccreditation({
+        organisationId: 'org-123',
+        registrationId: 'reg-001',
+        idToken: 'mock-token',
+        logger: mockLogger,
+        accreditationId: 'acc-wrong'
+      })
+    ).rejects.toMatchObject({
+      isBoom: true,
+      output: { statusCode: 404 }
+    })
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      { registrationId: 'reg-001', accreditationId: 'acc-wrong' },
+      'Accreditation ID mismatch'
+    )
+  })
+
   it('should pass correct parameters to fetchRegistrationAndAccreditation', async () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
       organisationData: { id: 'org-123' },
@@ -95,12 +150,12 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       accreditation: { id: 'acc-001' }
     })
 
-    await getRequiredRegistrationWithAccreditation(
-      'org-123',
-      'reg-001',
-      'mock-token',
-      mockLogger
-    )
+    await getRequiredRegistrationWithAccreditation({
+      organisationId: 'org-123',
+      registrationId: 'reg-001',
+      idToken: 'mock-token',
+      logger: mockLogger
+    })
 
     expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
       'org-123',

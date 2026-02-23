@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
@@ -9,11 +9,12 @@ import {
   getByText,
   within
 } from '@testing-library/dom'
+import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 
@@ -96,7 +97,7 @@ describe('#createPrnController', () => {
 
     describe('page rendering', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
       })
@@ -278,11 +279,13 @@ describe('#createPrnController', () => {
           auth: mockAuth
         })
 
-        expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
-          'org-123',
-          'reg-001',
-          'mock-id-token'
-        )
+        expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith({
+          organisationId: 'org-123',
+          registrationId: 'reg-001',
+          idToken: 'mock-id-token',
+          logger: expect.objectContaining({}),
+          accreditationId: 'acc-001'
+        })
       })
     })
 
@@ -310,11 +313,9 @@ describe('#createPrnController', () => {
       it('should return 404 when registration not found', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          organisationData: fixtureReprocessor.organisationData,
-          registration: undefined,
-          accreditation: undefined
-        })
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+          Boom.notFound('Registration not found')
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -328,11 +329,9 @@ describe('#createPrnController', () => {
       it('should return 404 when registration has no accreditation', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          organisationData: fixtureReprocessor.organisationData,
-          registration: fixtureReprocessor.registration,
-          accreditation: undefined
-        })
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+          Boom.notFound('Not accredited for this registration')
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -361,7 +360,7 @@ describe('#createPrnController', () => {
     describe('dynamic PRN/PERN text', () => {
       describe('for reprocessor (PRN)', () => {
         beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
             fixtureReprocessor
           )
         })
@@ -412,7 +411,7 @@ describe('#createPrnController', () => {
 
       describe('for exporter (PERN)', () => {
         beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
             fixtureExporter
           )
         })
@@ -464,7 +463,7 @@ describe('#createPrnController', () => {
 
     describe('waste balance display', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
         vi.mocked(getWasteBalance).mockResolvedValue({
@@ -497,7 +496,7 @@ describe('#createPrnController', () => {
       it('should display waste balance with PERN text for exporters', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(getWasteBalance).mockResolvedValue({
@@ -547,7 +546,7 @@ describe('#createPrnController', () => {
 
     describe('insufficient balance error', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
       })

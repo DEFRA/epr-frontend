@@ -7,12 +7,12 @@ import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 
-const { fetchRegistrationAndAccreditation } =
-  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+const { getRequiredRegistrationWithAccreditation } =
+  await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 
@@ -92,7 +92,7 @@ const listUrl = `/organisations/${organisationId}/registrations/${registrationId
 describe('#issuedController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPrn)
@@ -401,7 +401,7 @@ describe('#issuedController', () => {
       it('displays PERN text for exporter wasteProcessingType', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
@@ -428,7 +428,7 @@ describe('#issuedController', () => {
       it('displays View PERN button with opens in a new tab text for exporter', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureExporter
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
