@@ -257,7 +257,7 @@ const renderValidationFailuresView = (
   )
 
   // Related codes are grouped into single user-friendly messages
-  const issues =
+  const dedupedMessages =
     failures.length > 0
       ? [
           ...new Set(
@@ -274,6 +274,12 @@ const renderValidationFailuresView = (
           )
         ]
       : [fallbackMessage]
+
+  // The fallback message must be a single entry...
+  const issues =
+    dedupedMessages.length > 1
+      ? dedupedMessages.filter((message) => message !== fallbackMessage)
+      : dedupedMessages
 
   const issueCount = issues.length
 

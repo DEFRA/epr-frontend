@@ -118,10 +118,8 @@ const GROUP_DISPLAY_CODES = new Map([
   ['INVALID_DATE', 'DATA_ENTRY_INVALID'],
   ['CALCULATED_VALUE_MISMATCH', 'DATA_ENTRY_INVALID'],
 
-  // Safety net — specific errorCodes that normally resolve via FIELD_RULES
-  // when paired with a known header. These fallbacks ensure a sensible message
-  // is shown even if a new header is added to the backend without updating
-  // FIELD_RULES above...
+  // These fallbacks ensure a sensible message is shown even if a new header is
+  // added to the backend without updating FIELD_RULES above...
   ['NET_WEIGHT_CALCULATION_MISMATCH', 'CALCULATED_FIELD_MISMATCH'],
   ['TONNAGE_CALCULATION_MISMATCH', 'CALCULATED_FIELD_MISMATCH'],
   ['UK_PACKAGING_PROPORTION_CALCULATION_MISMATCH', 'CALCULATED_FIELD_MISMATCH'],
