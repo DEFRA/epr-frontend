@@ -258,6 +258,15 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('PERCENTAGE_FORMAT_INVALID')
   })
 
+  test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_LESS_THAN_1 with RECYCLABLE_PROPORTION_PERCENTAGE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_LESS_THAN_1',
+        'RECYCLABLE_PROPORTION_PERCENTAGE'
+      )
+    ).toBe('PERCENTAGE_FORMAT_INVALID')
+  })
+
   test('returns DATA_ENTRY_INVALID for MUST_BE_AT_MOST_100_CHARS with non-free-text header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_AT_MOST_100_CHARS', 'GROSS_WEIGHT')
