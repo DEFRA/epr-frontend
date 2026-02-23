@@ -30,13 +30,22 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('CALCULATED_FIELD_MISMATCH')
   })
 
-  test('returns errorCode for NET_WEIGHT_CALCULATION_MISMATCH with non-calculated header', () => {
+  test('returns CALCULATED_FIELD_MISMATCH for TONNAGE_CALCULATION_MISMATCH with TONNAGE_RECEIVED_FOR_EXPORT header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'TONNAGE_CALCULATION_MISMATCH',
+        'TONNAGE_RECEIVED_FOR_EXPORT'
+      )
+    ).toBe('CALCULATED_FIELD_MISMATCH')
+  })
+
+  test('returns CALCULATED_FIELD_MISMATCH for NET_WEIGHT_CALCULATION_MISMATCH with non-calculated header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode(
         'NET_WEIGHT_CALCULATION_MISMATCH',
         'GROSS_WEIGHT'
       )
-    ).toBe('NET_WEIGHT_CALCULATION_MISMATCH')
+    ).toBe('CALCULATED_FIELD_MISMATCH')
   })
 
   test('returns WEIGHT_FORMAT_INVALID for MUST_BE_A_NUMBER with GROSS_WEIGHT header', () => {
@@ -81,13 +90,40 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('WEIGHT_FORMAT_INVALID')
   })
 
-  test('returns errorCode for numeric error code with non-weight non-percentage header', () => {
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with TONNAGE_RECEIVED_FOR_RECYCLING header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_LEAST_ZERO',
+        'TONNAGE_RECEIVED_FOR_RECYCLING'
+      )
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with TONNAGE_RECEIVED_FOR_EXPORT header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_LEAST_ZERO',
+        'TONNAGE_RECEIVED_FOR_EXPORT'
+      )
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_AT_MOST_1000 with PRODUCT_UK_PACKAGING_WEIGHT_PROPORTION header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_AT_MOST_1000',
+        'PRODUCT_UK_PACKAGING_WEIGHT_PROPORTION'
+      )
+    ).toBe('WEIGHT_FORMAT_INVALID')
+  })
+
+  test('returns WEIGHT_FORMAT_INVALID for MUST_BE_A_NUMBER with TONNAGE_RECEIVED_FOR_RECYCLING header', () => {
     expect(
       getDisplayCodeFromErrorCode(
         'MUST_BE_A_NUMBER',
         'TONNAGE_RECEIVED_FOR_RECYCLING'
       )
-    ).toBe('MUST_BE_A_NUMBER')
+    ).toBe('WEIGHT_FORMAT_INVALID')
   })
 
   test('returns DATE_FORMAT_INVALID for MUST_BE_A_VALID_DATE with DATE_LOAD_LEFT_SITE header', () => {
@@ -102,10 +138,10 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('DATE_FORMAT_INVALID')
   })
 
-  test('returns errorCode for MUST_BE_A_VALID_DATE with non-date header', () => {
+  test('returns DATA_ENTRY_INVALID for MUST_BE_A_VALID_DATE with non-date header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_A_VALID_DATE', 'NET_WEIGHT')
-    ).toBe('MUST_BE_A_VALID_DATE')
+    ).toBe('DATA_ENTRY_INVALID')
   })
 
   test('returns YES_NO_FORMAT_INVALID for MUST_BE_YES_OR_NO with ADD_PRODUCT_WEIGHT header', () => {
@@ -120,10 +156,10 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('YES_NO_FORMAT_INVALID')
   })
 
-  test('returns errorCode for MUST_BE_YES_OR_NO with non-yes-no header', () => {
+  test('returns DATA_ENTRY_INVALID for MUST_BE_YES_OR_NO with non-yes-no header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_YES_OR_NO', 'GROSS_WEIGHT')
-    ).toBe('MUST_BE_YES_OR_NO')
+    ).toBe('DATA_ENTRY_INVALID')
   })
 
   test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD with dropdown header', () => {
@@ -159,13 +195,13 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('DROPDOWN_FORMAT_INVALID')
   })
 
-  test('returns errorCode for MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD with non-dropdown header', () => {
+  test('returns DATA_ENTRY_INVALID for MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD with non-dropdown header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode(
         'MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD',
         'GROSS_WEIGHT'
       )
-    ).toBe('MUST_BE_VALID_RECYCLABLE_PROPORTION_METHOD')
+    ).toBe('DATA_ENTRY_INVALID')
   })
 
   test('returns FREE_TEXT_INVALID for MUST_BE_ALPHANUMERIC with CONTAINER_NUMBER header', () => {
@@ -180,10 +216,10 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('FREE_TEXT_INVALID')
   })
 
-  test('returns errorCode for MUST_BE_ALPHANUMERIC with non-free-text header', () => {
+  test('returns DATA_ENTRY_INVALID for MUST_BE_ALPHANUMERIC with non-free-text header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_ALPHANUMERIC', 'GROSS_WEIGHT')
-    ).toBe('MUST_BE_ALPHANUMERIC')
+    ).toBe('DATA_ENTRY_INVALID')
   })
 
   test('returns ID_FORMAT_INVALID for MUST_BE_3_DIGIT_NUMBER with OSR_ID header', () => {
@@ -198,10 +234,10 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('ID_FORMAT_INVALID')
   })
 
-  test('returns errorCode for MUST_BE_3_DIGIT_NUMBER with non-ID header', () => {
+  test('returns DATA_ENTRY_INVALID for MUST_BE_3_DIGIT_NUMBER with non-ID header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_NUMBER', 'GROSS_WEIGHT')
-    ).toBe('MUST_BE_3_DIGIT_NUMBER')
+    ).toBe('DATA_ENTRY_INVALID')
   })
 
   test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_AT_LEAST_ZERO with UK_PACKAGING_WEIGHT_PERCENTAGE header', () => {
@@ -222,10 +258,19 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('PERCENTAGE_FORMAT_INVALID')
   })
 
-  test('returns errorCode for MUST_BE_AT_MOST_100_CHARS with non-percentage header', () => {
+  test('returns PERCENTAGE_FORMAT_INVALID for MUST_BE_LESS_THAN_1 with RECYCLABLE_PROPORTION_PERCENTAGE header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_BE_LESS_THAN_1',
+        'RECYCLABLE_PROPORTION_PERCENTAGE'
+      )
+    ).toBe('PERCENTAGE_FORMAT_INVALID')
+  })
+
+  test('returns DATA_ENTRY_INVALID for MUST_BE_AT_MOST_100_CHARS with non-free-text header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_AT_MOST_100_CHARS', 'GROSS_WEIGHT')
-    ).toBe('MUST_BE_AT_MOST_100_CHARS')
+    ).toBe('DATA_ENTRY_INVALID')
   })
 
   test('returns DROPDOWN_FORMAT_INVALID for MUST_BE_VALID_EXPORT_CONTROL with EXPORT_CONTROLS header', () => {
@@ -249,10 +294,40 @@ describe('#getDisplayCodeFromErrorCode', () => {
     )
   })
 
-  test('returns errorCode for MUST_BE_A_STRING with unrecognised header', () => {
+  test('returns DATA_ENTRY_INVALID for MUST_BE_A_STRING with unrecognised header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_A_STRING', 'GROSS_WEIGHT')
-    ).toBe('MUST_BE_A_STRING')
+    ).toBe('DATA_ENTRY_INVALID')
+  })
+
+  test('returns CALCULATED_FIELD_MISMATCH for TONNAGE_CALCULATION_MISMATCH with unrecognised header (safety net)', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'TONNAGE_CALCULATION_MISMATCH',
+        'SOME_UNKNOWN_HEADER'
+      )
+    ).toBe('CALCULATED_FIELD_MISMATCH')
+  })
+
+  test('returns CALCULATED_FIELD_MISMATCH for UK_PACKAGING_PROPORTION_CALCULATION_MISMATCH with unrecognised header (safety net)', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'UK_PACKAGING_PROPORTION_CALCULATION_MISMATCH',
+        'SOME_UNKNOWN_HEADER'
+      )
+    ).toBe('CALCULATED_FIELD_MISMATCH')
+  })
+
+  test('returns DATA_ENTRY_INVALID for MUST_BE_LESS_THAN_1 with unrecognised header (safety net)', () => {
+    expect(
+      getDisplayCodeFromErrorCode('MUST_BE_LESS_THAN_1', 'SOME_UNKNOWN_HEADER')
+    ).toBe('DATA_ENTRY_INVALID')
+  })
+
+  test('returns TECHNICAL_ERROR for VALIDATION_FALLBACK_ERROR', () => {
+    expect(
+      getDisplayCodeFromErrorCode('VALIDATION_FALLBACK_ERROR', undefined)
+    ).toBe('TECHNICAL_ERROR')
   })
 
   test('returns TECHNICAL_ERROR for VALIDATION_SYSTEM_ERROR', () => {

@@ -1859,7 +1859,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    it('status: invalid with unrecognised errorCode - should show technical error as fallback', async ({
+    it('status: invalid with known errorCode but unrecognised header - should show safety net fallback', async ({
       server
     }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1882,6 +1882,67 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
+        'The selected file contains data that&#39;s been entered incorrectly'
+      )
+    })
+
+    it('status: invalid with completely unrecognised errorCode - should show technical error as fallback', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
+              location: { header: 'WHATEVER' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service - try again later'
+      )
+    })
+
+    it('status: invalid with unknown errorCode alongside real failures - should strip technical error', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_BE_A_NUMBER',
+              location: { header: 'GROSS_WEIGHT' }
+            },
+            {
+              errorCode: 'SOMETHING_TOTALLY_UNKNOWN',
+              location: { header: 'WHATEVER' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log'
+      )
+      expect(result).not.toContain(
         'Sorry, there is a problem with the service - try again later'
       )
     })
