@@ -19,7 +19,7 @@ export const createdController = {
     // Check for success session data
     const prnCreated = request.yar.get('prnCreated')
 
-    if (!prnCreated || prnCreated.id !== prnId) {
+    if (prnCreated?.id !== prnId) {
       // No session data or ID mismatch - redirect to view page
       return h.redirect(
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
