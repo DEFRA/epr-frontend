@@ -33,7 +33,7 @@ const createMockRequest = () => ({
       'prns:list:status:cancelled': 'Cancelled',
       'prns:list:issuedHeading': `Issued ${params.noteTypePlural}`,
       'prns:list:cancelledHeading': `Cancelled ${params.noteTypePlural}`,
-      'prns:list:noCancelledPrns': `No ${params.noteTypePlural} have been cancelled.`,
+      'prns:list:noCancelledPrns': `You have not cancelled any ${params.noteTypePlural}.`,
       'prns:list:issuedTable:noteNumberHeading': `${params.noteType} number`,
       'prns:list:issuedTable:recipientHeading': 'Producer or compliance scheme',
       'prns:list:issuedTable:dateIssuedHeading': 'Date issued',
@@ -977,7 +977,7 @@ describe('#buildListViewData', () => {
         wasteBalance: mockWasteBalance
       })
 
-      expect(result.noCancelledText).toBe('No PRNs have been cancelled.')
+      expect(result.noCancelledText).toBe('You have not cancelled any PRNs.')
     })
 
     it('should return cancelled tab label', () => {

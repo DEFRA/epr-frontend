@@ -144,7 +144,7 @@
     "noPrnsCreated": "You have not created any {{noteTypePlural}}.",
     "noIssuedPrns": "No {{noteTypePlural}} have been issued yet.",
     "cancelledHeading": "Cancelled {{noteTypePlural}}",
-    "noCancelledPrns": "No {{noteTypePlural}} have been cancelled.",
+    "noCancelledPrns": "You have not cancelled any {{noteTypePlural}}.",
     "issuedTable": {
       "noteNumberHeading": "{{noteType}} number",
       "recipientHeading": "Producer or compliance scheme",

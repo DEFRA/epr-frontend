@@ -755,7 +755,7 @@ describe('#listPrnsController', () => {
         )
 
         expect(
-          getByText(cancelledPanel, /No PRNs have been cancelled/i)
+          getByText(cancelledPanel, /You have not cancelled any PRNs/i)
         ).toBeDefined()
       })
 
@@ -824,7 +824,7 @@ describe('#listPrnsController', () => {
         expect(getByText(cancelledPanel, /PERN number/i)).toBeDefined()
       })
 
-      it('should show "No PERNs have been cancelled" empty message for exporter', async ({
+      it('should show "You have not cancelled any PERNs" empty message for exporter', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -845,7 +845,7 @@ describe('#listPrnsController', () => {
         )
 
         expect(
-          getByText(cancelledPanel, /No PERNs have been cancelled/i)
+          getByText(cancelledPanel, /You have not cancelled any PERNs/i)
         ).toBeDefined()
       })
     })
