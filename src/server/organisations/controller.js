@@ -226,7 +226,7 @@ function getDisplayableRegistrations(organisationData) {
  * @param {string} organisationId - Organisation ID
  * @param {Array<{registration: object}>} displayableRegistrations - Filtered registrations
  * @param {string} idToken - JWT token
- * @param {object} logger - Request logger
+ * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
  */
 async function getWasteBalanceMap(

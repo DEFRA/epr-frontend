@@ -395,7 +395,7 @@ const getUploadUrl = async (
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} idToken - JWT ID token for authorization
- * @param {object} logger - Request logger
+ * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Request logger
  * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
  */
 const getWasteBalanceData = async (
