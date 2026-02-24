@@ -434,7 +434,7 @@ const getWasteBalanceData = async (
 
     return { wasteBalance: balance.availableAmount }
   } catch (error) {
-    logger.error({ error }, 'Failed to fetch waste balance data')
+    logger.error({ err: error }, 'Failed to fetch waste balance data')
     return {}
   }
 }

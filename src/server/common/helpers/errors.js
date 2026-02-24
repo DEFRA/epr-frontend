@@ -57,7 +57,7 @@ export async function catchAll(request, h) {
   const errorMessage = statusCodeMessage(statusCode, request.t)
 
   if (statusCode >= statusCodes.internalServerError) {
-    request.logger.error(response?.stack)
+    request.logger.error({ err: response })
   }
 
   return h

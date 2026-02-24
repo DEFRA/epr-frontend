@@ -39,7 +39,7 @@ export const issueController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/issued`
       )
     } catch (error) {
-      request.logger.error({ error }, 'Failed to issue PRN')
+      request.logger.error({ err: error }, 'Failed to issue PRN')
 
       const basePath = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}`
 

@@ -63,12 +63,15 @@ describe('#index', () => {
       expect(mockCreateLogger).toHaveBeenCalledWith()
     })
 
-    test('should log unhandled rejection info message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Unhandled rejection')
+    test('should log error with message', () => {
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        { err: mockError },
+        'Unhandled rejection'
+      )
     })
 
-    test('should log error', () => {
-      expect(mockLoggerError).toHaveBeenCalledWith(mockError)
+    test('should not log separate info message', () => {
+      expect(mockLoggerInfo).not.toHaveBeenCalled()
     })
 
     test('should set process exitCode to 1', () => {

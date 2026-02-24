@@ -52,7 +52,7 @@ export const summaryLogUploadController = {
           event: {
             category: 'upload',
             action: 'summary-log-upload-failed',
-            reference: { organisationId, registrationId }
+            reference: `organisationId=${organisationId}, registrationId=${registrationId}`
           }
         },
         'Failed to initiate summary log upload'

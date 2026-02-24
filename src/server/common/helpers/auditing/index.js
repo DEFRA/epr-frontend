@@ -12,7 +12,6 @@ function auditSSO(action, userId, userEmail) {
   const payload = {
     event: {
       category: 'access',
-      subCategory: 'sso',
       action
     },
     context: {},

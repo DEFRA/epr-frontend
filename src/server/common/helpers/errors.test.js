@@ -74,7 +74,7 @@ describe(catchAll, () => {
     const req = makeRequest(statusCodes.internalServerError)
     await catchAll(req, mockToolkit)
 
-    expect(mockErrorLogger).toHaveBeenCalledWith('mock-stack')
+    expect(mockErrorLogger).toHaveBeenCalledWith({ err: req.response })
   })
 
   it('should use fallback message when localise function not available', async () => {

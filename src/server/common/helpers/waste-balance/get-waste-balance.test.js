@@ -70,7 +70,7 @@ describe(getWasteBalance, () => {
 
     expect(result).toBeNull()
     expect(mockLogger.error).toHaveBeenCalledWith(
-      { error },
+      { err: error },
       'Failed to fetch waste balance'
     )
   })
