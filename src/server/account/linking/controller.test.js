@@ -29,7 +29,27 @@ const mockAuth = {
 }
 
 describe('#accountLinkingController', () => {
+  const backendUrl = 'http://test-backend'
+
+  beforeAll(() => {
+    config.set('eprBackendUrl', backendUrl)
+  })
+
+  afterAll(() => {
+    config.reset('eprBackendUrl')
+  })
+
   describe('csrf protection', () => {
+    beforeEach(({ msw }) => {
+      msw.use(
+        http.get(`${backendUrl}/v1/me/organisations`, () =>
+          HttpResponse.json({
+            organisations: { current: null, linked: null, unlinked: [] }
+          })
+        )
+      )
+    })
+
     it('should reject POST request without CSRF token', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'POST',
@@ -66,21 +86,11 @@ describe('#accountLinkingController', () => {
   })
 
   describe('get /account/linking', () => {
-    const backendUrl = 'http://test-backend'
-
-    beforeAll(() => {
-      config.set('eprBackendUrl', backendUrl)
-    })
-
     beforeEach(() => {
       vi.mocked(getUserSessionModule.getUserSession).mockResolvedValue({
         ok: true,
         value: { idToken: 'mock-id-token' }
       })
-    })
-
-    afterAll(() => {
-      config.reset('eprBackendUrl')
     })
 
     describe('when user has no unlinked organisations', () => {

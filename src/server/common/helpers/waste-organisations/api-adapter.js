@@ -3,13 +3,55 @@
 import { getYear } from 'date-fns'
 
 import { config } from '#config/config.js'
-import { fetchJsonFromBackend } from '../fetch-json-from-backend.js'
+import { fetchJson } from '../fetch-json.js'
+
+const PRODUCER_TYPES = new Set(['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'])
+
+/**
+ * Extracts registrationType from the raw registrations array and warns
+ * on missing or ambiguous producer registrations.
+ * @param {Array<{ id: string, name: string, registrations?: Array<{ type: string, registrationYear: number | string }>, [key: string]: unknown }>} organisations
+ * @param {{ warn: (data: object, message: string) => void }} logger
+ * @returns {Array<{ registrationType?: string, [key: string]: unknown }>}
+ */
+function extractRegistrationTypes(organisations, logger) {
+  // TODO: should this use the accreditation year instead of current year?
+  const currentYear = getYear(new Date())
+
+  return organisations.map((org) => {
+    const { registrations, ...rest } = org
+
+    const producerRegs = registrations?.filter(
+      (r) =>
+        PRODUCER_TYPES.has(r.type) && Number(r.registrationYear) === currentYear
+    )
+
+    if (!producerRegs?.length) {
+      logger.warn(
+        { organisationId: org.id, organisationName: org.name },
+        'Waste organisation has no producer registration for the current year — display name will fall back to tradingName preference'
+      )
+      return rest
+    }
+
+    const types = new Set(producerRegs.map((r) => r.type))
+    if (types.size > 1) {
+      logger.warn(
+        { organisationId: org.id, organisationName: org.name },
+        'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the current year — likely bad data from RPD'
+      )
+    }
+
+    return { ...rest, registrationType: producerRegs[0].type }
+  })
+}
 
 /**
  * Creates a waste organisations service that fetches from the real API.
+ * @param {{ warn: (data: object, message: string) => void }} logger
  * @returns {WasteOrganisationsService}
  */
-export function createApiWasteOrganisationsService() {
+export function createApiWasteOrganisationsService(logger) {
   return {
     async getOrganisations() {
       const { url, username, password, key } = config.get(
@@ -17,6 +59,7 @@ export function createApiWasteOrganisationsService() {
       )
       const isDevelopment = config.get('isDevelopment')
 
+      // TODO: should this use the accreditation year instead of current year?
       const now = new Date()
       const thisYear = getYear(now)
 
@@ -28,12 +71,16 @@ export function createApiWasteOrganisationsService() {
 
       const auth = Buffer.from(`${username}:${password}`).toString('base64')
 
-      return fetchJsonFromBackend(`${url}?${params.toString()}`, {
+      const response = await fetchJson(`${url}?${params.toString()}`, {
         headers: {
           ...(isDevelopment && { 'x-api-key': key }),
           authorization: `Basic ${auth}`
         }
       })
+
+      return {
+        organisations: extractRegistrationTypes(response.organisations, logger)
+      }
     }
   }
 }

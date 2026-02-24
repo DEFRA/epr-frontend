@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 
 const MATERIAL_DISPLAY_NAMES = Object.freeze({
   aluminium: 'Aluminium',
-  fibre: 'Fibre',
+  fibre: 'Fibre-based composite',
   paper: 'Paper and board',
   plastic: 'Plastic',
   steel: 'Steel',

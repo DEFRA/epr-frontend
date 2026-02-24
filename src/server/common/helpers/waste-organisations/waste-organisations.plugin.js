@@ -23,11 +23,14 @@ export function createWasteOrganisationsPlugin(options = {}) {
     name: 'wasteOrganisationsService',
     register: (server) => {
       const useInMemory = config.get('wasteOrganisationsApi.useInMemory')
-      const service = useInMemory
-        ? createInMemoryWasteOrganisationsService(options.initialOrganisations)
-        : createApiWasteOrganisationsService()
 
-      registerService(server, 'wasteOrganisationsService', () => service)
+      registerService(server, 'wasteOrganisationsService', (request) =>
+        useInMemory
+          ? createInMemoryWasteOrganisationsService(
+              options.initialOrganisations
+            )
+          : createApiWasteOrganisationsService(request.logger)
+      )
     }
   }
 }

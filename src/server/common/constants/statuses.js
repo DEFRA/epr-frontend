@@ -3,7 +3,6 @@ export const prnStatuses = {
   awaitingAuthorisation: 'awaiting_authorisation',
   awaitingAcceptance: 'awaiting_acceptance',
   accepted: 'accepted',
-  rejected: 'rejected',
   cancelled: 'cancelled',
   awaitingCancellation: 'awaiting_cancellation'
 }

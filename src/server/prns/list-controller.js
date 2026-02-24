@@ -1,0 +1,94 @@
+import Boom from '@hapi/boom'
+
+import { config } from '#config/config.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
+import { buildListViewData } from './list-view-data.js'
+
+const filterPrnsByStatus = (prns, status) =>
+  prns
+    .filter((prn) => prn.status === status)
+    .map((prn) => ({
+      id: prn.id,
+      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
+      createdAt: prn.createdAt,
+      tonnage: prn.tonnage,
+      status: prn.status
+    }))
+
+const filterPrnsByStatuses = (prns, statuses) =>
+  prns
+    .filter((prn) => statuses.includes(prn.status))
+    .map((prn) => ({
+      id: prn.id,
+      prnNumber: prn.prnNumber,
+      recipient: getIssuedToOrgDisplayName(prn.issuedToOrganisation),
+      issuedAt: prn.issuedAt,
+      tonnage: prn.tonnage,
+      status: prn.status
+    }))
+
+/**
+ * @satisfies {Partial<ServerRoute>}
+ */
+export const listController = {
+  async handler(request, h) {
+    if (!config.get('featureFlags.prns')) {
+      throw Boom.notFound()
+    }
+
+    const { organisationId, registrationId, accreditationId } = request.params
+    const session = request.auth.credentials
+
+    const { registration } = await getRequiredRegistrationWithAccreditation({
+      organisationId,
+      registrationId,
+      idToken: session.idToken,
+      logger: request.logger,
+      accreditationId
+    })
+
+    const [wasteBalance, prns] = await Promise.all([
+      registration.accreditationId
+        ? getWasteBalance(
+            organisationId,
+            registration.accreditationId,
+            session.idToken,
+            request.logger
+          )
+        : null,
+      fetchPackagingRecyclingNotes(
+        organisationId,
+        registrationId,
+        accreditationId,
+        session.idToken
+      )
+    ])
+
+    const hasCreatedPrns = prns.some((prn) => prn.status !== 'draft')
+
+    const viewData = buildListViewData(request, {
+      organisationId,
+      registrationId,
+      accreditationId,
+      registration,
+      prns: filterPrnsByStatus(prns, 'awaiting_authorisation'),
+      cancellationPrns: filterPrnsByStatus(prns, 'awaiting_cancellation'),
+      issuedPrns: filterPrnsByStatuses(prns, [
+        'awaiting_acceptance',
+        'accepted'
+      ]),
+      cancelledPrns: filterPrnsByStatuses(prns, ['cancelled']),
+      hasCreatedPrns,
+      wasteBalance
+    })
+
+    return h.view('prns/list', viewData)
+  }
+}
+
+/**
+ * @import { ServerRoute } from '@hapi/hapi'
+ */

@@ -9,6 +9,7 @@ Frontend for: Packaging Extended Producer Responsibilities
   - [Node.js](#nodejs)
 - [Server-side Caching](#server-side-caching)
 - [Redis](#redis)
+- [Proxy](#proxy)
 - [Local Development](#local-development)
   - [Setup](#setup)
   - [Development](#development)
@@ -21,8 +22,11 @@ Frontend for: Packaging Extended Producer Responsibilities
   - [Development image](#development-image)
   - [Production image](#production-image)
   - [Docker Compose](#docker-compose)
-  - [Dependabot](#dependabot)
-  - [SonarCloud](#sonarcloud)
+- [Testing](#testing)
+  - [Unit tests](#unit-tests)
+  - [Journey tests](#journey-tests)
+- [Dependabot](#dependabot)
+- [SonarCloud](#sonarcloud)
 - [Licence](#licence)
   - [About the licence](#about-the-licence)
 
@@ -169,70 +173,34 @@ docker run -p 3000:3000 epr-frontend
 
 ### Docker Compose
 
-> [!IMPORTANT]
->
-> Please ensure you have at least version 2.22.0 of Docker Compose installed.
+Use the compose setup in our [service repo](https://github.com/DEFRA/epr-re-ex-service/blob/main/CONTRIBUTING.md#docker-compose)
 
-The project uses a shared compose file (`compose.shared.yml`) for all supporting services.
+## Testing
 
-**Run supporting services only:**
+### Unit tests
 
-```bash
-docker compose -f compose.shared.yml up
-```
-
-Then run the frontend locally with `npm run dev` in a separate terminal.
-
-**Run frontend in Docker + supporting services (backend on host):**
+Run unit tests with:
 
 ```bash
-EPR_BACKEND_URL=http://localhost:3001 docker compose --profile all up --build --watch
+npm test
 ```
 
-Then run the backend locally with `npm run dev` in a separate terminal in the backend repo.
+### Journey tests
 
-**Run frontend + backend + supporting services:**
+Journey tests live in [DEFRA/epr-frontend-journey-tests](https://github.com/DEFRA/epr-frontend-journey-tests).
 
-```sh
-docker compose --profile all up --build --watch
-```
+To develop journey tests alongside your work, create a branch in that repo matching your frontend branch name.
+The CI picks up the matching branch automatically, and uses `main` where no match is found.
 
-**Run with specific backend version:**
+Merging journey test branches back to main is a separate manual step.
 
-```sh
-BACKEND_VERSION=1.2.3 docker compose --profile all up --build --watch
-```
+## Dependabot
 
-**Include Defra ID stub (for authentication):**
+Dependabot is configured for managing dependency updates, see: [.github/dependabot.yml](.github/dependabot.yml)
 
-```sh
-docker compose --profile all --profile stub up --build --watch
-```
+## SonarCloud
 
-**Supporting services included:**
-
-- LocalStack (AWS services: S3, SQS, SNS, Firehose)
-- MongoDB (for backend)
-- nginx-proxy (reverse proxy)
-- Redis (session cache)
-- cdp-defra-id-stub ([Defra ID stub](https://github.com/DEFRA/cdp-defra-id-stub), `--profile stub`)
-- cdp-uploader (file upload service)
-- epr-backend (`--profile all`, requires `GOVUK_NOTIFY_API_KEY` environment variable)
-
-**Delete volumes:**
-
-```sh
-docker compose down -v
-```
-
-### Dependabot
-
-We have added an example dependabot configuration file to the repository. You can enable it by renaming
-the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github/dependabot.yml`
-
-### SonarCloud
-
-Instructions for setting up SonarCloud can be found in [sonar-project.properties](./sonar-project.properties).
+SonarCloud is configured via [sonar-project.properties](./sonar-project.properties).
 
 ## Licence
 

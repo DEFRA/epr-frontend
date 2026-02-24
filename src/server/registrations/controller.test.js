@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import * as getRequiredRegistrationModule from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -13,10 +13,37 @@ import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporti
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
 
 vi.mock(
-  import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
+  import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+
+function findRegistrationAndAccreditation(fixture, registrationId) {
+  const registration = fixture.registrations.find(
+    ({ id }) => id === registrationId
+  )
+  const accreditation = fixture.accreditations?.find(
+    ({ id }) => id === registration?.accreditationId
+  )
+  return { registration, accreditation }
+}
+
+const glassApproved = findRegistrationAndAccreditation(
+  fixtureData,
+  'reg-001-glass-approved'
+)
+const glassOtherApproved = findRegistrationAndAccreditation(
+  fixtureData,
+  'reg-001b-glass-other-approved'
+)
+const plasticSuspended = findRegistrationAndAccreditation(
+  fixtureData,
+  'reg-002-plastic-suspended'
+)
+const exporterPlasticApproved = findRegistrationAndAccreditation(
+  fixtureExportingOnly,
+  'reg-export-001-plastic-approved'
+)
 
 const mockAuth = {
   strategy: 'session',
@@ -40,8 +67,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -60,8 +87,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -82,8 +109,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -99,8 +126,8 @@ describe('#accreditationDashboardController', () => {
 
     it('should display PRNs tile for reprocessor', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -117,8 +144,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -134,8 +161,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -155,8 +182,8 @@ describe('#accreditationDashboardController', () => {
 
     it('should display contact regulator link', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -173,8 +200,8 @@ describe('#accreditationDashboardController', () => {
 
     it('should display back link to reprocessing tab', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -193,8 +220,8 @@ describe('#accreditationDashboardController', () => {
 
     it('should display all four task tiles', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -212,8 +239,8 @@ describe('#accreditationDashboardController', () => {
   describe('happy path - exporter', () => {
     it('should display PERNs tile for exporter', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureExportingOnly)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(exporterPlasticApproved)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -230,8 +257,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureExportingOnly)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(exporterPlasticApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -254,7 +281,7 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
       ).mockRejectedValue(Boom.forbidden())
 
       const { statusCode } = await server.inject({
@@ -268,8 +295,8 @@ describe('#accreditationDashboardController', () => {
 
     it('should return 404 when registration not found', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockRejectedValue(Boom.notFound('Registration not found'))
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -298,8 +325,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -316,8 +343,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -334,8 +361,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassOtherApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -352,8 +379,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassOtherApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -371,22 +398,17 @@ describe('#accreditationDashboardController', () => {
     it('should display Unknown site when site address is missing', async ({
       server
     }) => {
-      const dataWithMissingSite = {
-        ...fixtureData,
-        accreditations: [],
-        registrations: [
-          {
-            id: 'reg-no-site',
-            wasteProcessingType: 'reprocessor',
-            material: 'plastic',
-            status: 'approved'
-          }
-        ]
-      }
-
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithMissingSite)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue({
+        registration: {
+          id: 'reg-no-site',
+          wasteProcessingType: 'reprocessor',
+          material: 'plastic',
+          status: 'approved'
+        },
+        accreditation: undefined
+      })
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -400,8 +422,8 @@ describe('#accreditationDashboardController', () => {
 
     it('should capitalise material name', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -418,8 +440,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(plasticSuspended)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -439,8 +461,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -460,8 +482,8 @@ describe('#accreditationDashboardController', () => {
       server
     }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -478,8 +500,8 @@ describe('#accreditationDashboardController', () => {
 
     it('should use govuk-summary-card for task cards', async ({ server }) => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -500,8 +522,8 @@ describe('#accreditationDashboardController', () => {
         server
       }) => {
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureData)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({
@@ -536,17 +558,9 @@ describe('#accreditationDashboardController', () => {
       it('should display PERNs text for exporter with waste balance', async ({
         server
       }) => {
-        const exporterWithAccreditationId = {
-          ...fixtureExportingOnly,
-          registrations: fixtureExportingOnly.registrations.map((reg) =>
-            reg.id === 'reg-export-001-plastic-approved'
-              ? { ...reg, accreditationId: 'acc-export-001-plastic-approved' }
-              : reg
-          )
-        }
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(exporterWithAccreditationId)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue(exporterPlasticApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({
@@ -576,8 +590,8 @@ describe('#accreditationDashboardController', () => {
         server
       }) => {
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureData)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockRejectedValue(new Error('Service unavailable'))
@@ -604,8 +618,8 @@ describe('#accreditationDashboardController', () => {
         server
       }) => {
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureData)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({})
@@ -628,21 +642,18 @@ describe('#accreditationDashboardController', () => {
       it('should not call fetchWasteBalances when registration has no accreditationId', async ({
         server
       }) => {
-        const dataWithNoAccreditationId = {
-          ...fixtureData,
-          registrations: [
-            {
-              id: 'reg-no-accreditation',
-              wasteProcessingType: 'reprocessor',
-              material: 'plastic',
-              status: 'approved',
-              site: { address: { line1: 'Test Site' } }
-            }
-          ]
-        }
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(dataWithNoAccreditationId)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue({
+          registration: {
+            id: 'reg-no-accreditation',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'approved',
+            site: { address: { line1: 'Test Site' } }
+          },
+          accreditation: { id: 'some-acc', status: 'approved' }
+        })
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -664,8 +675,8 @@ describe('#accreditationDashboardController', () => {
 
       it('should display zero balance correctly', async ({ server }) => {
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureData)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({
@@ -692,8 +703,8 @@ describe('#accreditationDashboardController', () => {
         server
       }) => {
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureData)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({
@@ -717,8 +728,8 @@ describe('#accreditationDashboardController', () => {
         server
       }) => {
         vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureData)
+          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+        ).mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({})
@@ -744,17 +755,17 @@ describe('#accreditationDashboardController', () => {
   describe('packaging-recycling-notes', () => {
     beforeEach(() => {
       vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+        getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+      ).mockResolvedValue(glassApproved)
     })
 
     describe('when feature flag is disabled', () => {
       beforeAll(() => {
-        config.set('featureFlags.lprns', false)
+        config.set('featureFlags.prns', false)
       })
 
       afterAll(() => {
-        config.reset('featureFlags.lprns')
+        config.reset('featureFlags.prns')
       })
 
       it('should display prn card with not available text', async ({
@@ -795,17 +806,17 @@ describe('#accreditationDashboardController', () => {
 
     describe('when feature flag is enabled', () => {
       beforeAll(() => {
-        config.set('featureFlags.lprns', true)
+        config.set('featureFlags.prns', true)
       })
 
       afterAll(() => {
-        config.reset('featureFlags.lprns')
+        config.reset('featureFlags.prns')
       })
 
       it.for([
         {
           name: 'PRN (reprocessor)',
-          fixture: fixtureData,
+          mockData: glassApproved,
           url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
           title: 'PRNs',
           description: 'Create and manage PRNs.',
@@ -818,7 +829,7 @@ describe('#accreditationDashboardController', () => {
         },
         {
           name: 'PERN (exporter)',
-          fixture: fixtureExportingOnly,
+          mockData: exporterPlasticApproved,
           url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
           title: 'PERNs',
           description: 'Create and manage PERNs.',
@@ -833,7 +844,7 @@ describe('#accreditationDashboardController', () => {
         'should display $name card with create and manage links',
         async (
           {
-            fixture,
+            mockData,
             url,
             title,
             description,
@@ -845,8 +856,8 @@ describe('#accreditationDashboardController', () => {
           { server }
         ) => {
           vi.mocked(
-            fetchOrganisationModule.fetchOrganisationById
-          ).mockResolvedValue(fixture)
+            getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+          ).mockResolvedValue(mockData)
 
           const { result } = await server.inject({
             method: 'GET',

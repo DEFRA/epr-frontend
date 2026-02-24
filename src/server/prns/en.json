@@ -1,0 +1,191 @@
+{
+  "accreditationDetailsHeading": "Accreditation details",
+  "accreditationNumberLabel": "Accreditation number",
+  "action": {
+    "insetText": "Any information that is not shown here will be automatically populated when the {{noteType}} is issued.",
+    "viewLink": "View {{noteType}} (opens in a new tab)",
+    "issueButton": "Issue {{noteType}}",
+    "deleteLink": "Delete {{noteType}}",
+    "cancelButton": "Cancel {{noteType}}",
+    "returnLink": "Return to {{noteType}} list"
+  },
+  "buyerLabel": "Buyer",
+  "cancel": {
+    "pageTitle": "Cancel {{noteType}}",
+    "heading": "Confirm cancellation of this {{noteType}}",
+    "bodyText": "The {{noteType}}'s tonnage will be added to your available waste balance.",
+    "warningText": "This action cannot be undone.",
+    "confirmButton": "Confirm cancellation"
+  },
+  "cancelled": {
+    "pageTitle": "{{noteType}} cancelled",
+    "heading": "{{noteType}} cancelled",
+    "statusLabel": "Status:",
+    "statusValue": "Cancelled",
+    "whatHappensNextHeading": "What happens next",
+    "wasteBalanceMessage": "Your available waste balance has been updated.",
+    "prnsPageLink": "{{noteTypePlural}} page",
+    "returnHomeLink": "Return to home"
+  },
+  "create": {
+    "caption": "Create {{noteType}}",
+    "checkHeading": "Check before creating {{noteType}}",
+    "checkIntroText": "Check the following information is correct before creating this {{noteType}}.",
+    "checkAuthorisationText": "When created, the {{noteType}} will need to be authorised and issued by a {{noteType}} signatory from your company.",
+    "checkInsetText": "Any information that is not shown here will be automatically populated when the {{noteType}} is issued.",
+    "checkPageTitle": "Check before creating {{noteType}}",
+    "createButton": "Create {{noteType}}",
+    "discardLink": "Discard and start again",
+    "helpIntro": "{{noteTypePlural}} can only be issued to packaging producers and compliance schemes who have registered with regulators.",
+    "notesHint": "These notes will appear on the {{noteType}}",
+    "pageTitle": "Create a {{noteType}}",
+    "recipientLabel": "Enter who this {{noteType}} will be issued to",
+    "submitButton": "Continue",
+    "successHeading": "{{noteType}} created",
+    "successPageTitle": "{{noteType}} created",
+    "tonnageLabel": "Enter {{noteType}} tonnage",
+    "wasteBalanceText": "Your waste balance available for creating {{noteTypePlural}} is {{balance}} tonnes."
+  },
+  "created": {
+    "createAnotherLink": "Create another {{noteType}}",
+    "issueTextPrefix": "You can now issue this {{noteType}} through your",
+    "prnNumberLabel": "{{noteType}} number:",
+    "prnsPageLink": "{{noteTypePlural}} page",
+    "returnHomeLink": "Return to home",
+    "statusLabel": "Status:",
+    "statusValue": "Awaiting authorisation",
+    "viewButton": "View {{noteType}} (opens in a new tab)",
+    "wasteBalanceMessage": "Your available waste balance has been updated."
+  },
+  "decemberWasteLabel": "December waste",
+  "decemberWasteNo": "No",
+  "decemberWasteYes": "Yes",
+  "delete": {
+    "pageTitle": "Delete {{noteType}}",
+    "heading": "Are you sure you want to delete this {{noteType}}?",
+    "warningText": "This will permanently delete the {{noteType}}. The tonnage will be returned to your available waste balance.",
+    "confirmButton": "Delete {{noteType}}"
+  },
+  "details": {
+    "heading": "{{noteType}} details",
+    "numberLabel": "{{noteType}} number"
+  },
+  "discard": {
+    "pageTitle": "Discard {{noteType}}",
+    "heading": "Are you sure you want to discard this {{noteType}}?",
+    "warningText": "This will discard the {{noteType}} you are creating. You will need to start again.",
+    "confirmButton": "Discard and start again"
+  },
+  "errorSummaryTitle": "There is a problem",
+  "errors": {
+    "notesTooLong": "Enter a maximum of 200 characters",
+    "recipientInvalid": "Select a valid packaging producer or compliance scheme",
+    "recipientRequired": "Enter a packaging producer or compliance scheme",
+    "tonnageWholeNumber": "Enter {{noteType}} tonnage as a whole number",
+    "tonnageGreaterThanZero": "Enter {{noteType}} tonnage as a whole number greater than zero"
+  },
+  "help": {
+    "summary": "Can't find the producer or compliance scheme?",
+    "listIntro": "If the producer or compliance scheme you're looking for is not appearing, check that:",
+    "listItemOne": "you have spelled the name correctly",
+    "listItemTwo": "they are registered with a regulator"
+  },
+  "insufficientBalanceError": "The tonnage you entered exceeds your available waste balance",
+  "issueCommentsLabel": "Issue comments",
+  "issueFailedError": "We could not issue this PRN or PERN. Try again later.",
+  "issued": {
+    "wasteBalanceMessage": "Your waste balance has been updated.",
+    "returnHomeLink": "Return to home",
+    "pageTitle": "{{noteType}} issued",
+    "heading": "{{noteType}} issued to {{recipient}}",
+    "prnNumberLabel": "{{noteType}} number:",
+    "viewButton": "View {{noteType}} (opens in a new tab)",
+    "issueAnotherLink": "Issue another {{noteType}}",
+    "managePrnsLink": "Manage {{noteTypePlural}}"
+  },
+  "issuedByLabel": "Issued by",
+  "issuedDateLabel": "Issued date",
+  "issuedToLabel": "Packaging producer or compliance scheme",
+  "issuerLabel": "Issuer",
+  "issuerNotesLabel": "Issuer notes",
+  "list": {
+    "availableWasteBalance": "Available waste balance",
+    "noPrns": "No PRNs or PERNs have been created yet.",
+    "tabs": {
+      "title": "Contents",
+      "awaitingAction": "Awaiting action",
+      "issued": "Issued",
+      "cancelled": "Cancelled"
+    },
+    "table": {
+      "recipientHeading": "Producer or compliance scheme",
+      "dateHeading": "Date created",
+      "tonnageHeading": "Tonnage",
+      "statusHeading": "Status",
+      "actionHeading": "",
+      "selectText": "Select",
+      "totalLabel": "Total"
+    },
+    "status": {
+      "awaitingAuthorisation": "Awaiting authorisation",
+      "awaitingAcceptance": "Awaiting acceptance",
+      "awaitingCancellation": "Awaiting cancellation",
+      "accepted": "Accepted",
+      "cancelled": "Cancelled"
+    },
+    "pageTitle": "{{noteTypePlural}}",
+    "selectHeading": "Select a {{noteType}}",
+    "balanceHint": "This is the balance available for creating new {{noteTypePlural}}",
+    "cancelHint": "If you delete or cancel a {{noteType}}, its tonnage will be added to your available waste balance.",
+    "createLink": "Create a {{noteType}}",
+    "awaitingAuthorisationHeading": "{{noteTypePlural}} awaiting authorisation",
+    "awaitingCancellationHeading": "{{noteTypePlural}} awaiting cancellation",
+    "issuedHeading": "Issued {{noteTypePlural}}",
+    "noPrnsCreated": "You have not created any {{noteTypePlural}}.",
+    "noIssuedPrns": "No {{noteTypePlural}} have been issued yet.",
+    "cancelledHeading": "Cancelled {{noteTypePlural}}",
+    "noCancelledPrns": "You have not cancelled any {{noteTypePlural}}.",
+    "issuedTable": {
+      "noteNumberHeading": "{{noteType}} number",
+      "recipientHeading": "Producer or compliance scheme",
+      "dateIssuedHeading": "Date issued",
+      "statusHeading": "Status",
+      "tonnageHeading": "Tonnage",
+      "actionHeading": "View in new tab",
+      "selectText": "Select"
+    },
+    "cancelledTable": {
+      "noteNumberHeading": "{{noteType}} number",
+      "recipientHeading": "Producer or compliance scheme",
+      "dateIssuedHeading": "Date issued",
+      "tonnageHeading": "Tonnage",
+      "statusHeading": "Status",
+      "actionHeading": "View in new tab",
+      "selectText": "Select"
+    }
+  },
+  "materialLabel": "Material",
+  "notProvided": "Not provided",
+  "notesLabel": "Add issuer notes (optional)",
+  "positionLabel": "Position",
+  "processToBeUsedLabel": "Process to be used",
+  "recipientHint": "Start typing the name of the packaging producer or compliance scheme",
+  "recipientSummaryLabel": "Issued to",
+  "reprocessingSiteAddressLabel": "Reprocessing site",
+  "selectOption": "Select an option",
+  "successNextStepsHeading": "What happens next",
+  "tonnageHint": "Enter a whole number without decimal places",
+  "tonnageInWordsLabel": "Tonnage in words",
+  "tonnageLabel": "Tonnage",
+  "tonnageSuffix": "tonnes",
+  "view": {
+    "status": "Status",
+    "detailsHeading": "Details",
+    "issuedTo": "Issued to",
+    "tonnage": "Tonnage",
+    "material": "Material",
+    "dateCreated": "Date created",
+    "complianceYearText": "This {{noteType}} relates to waste accepted for {{wasteAction}} in {{- year}} and can count towards {{- year}} obligations.",
+    "returnLink": "Return to {{noteType}} list"
+  }
+}

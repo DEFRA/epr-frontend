@@ -45,7 +45,7 @@ describe('#mapToSelectOptions', () => {
     ])
   })
 
-  it('should use tradingName when available', () => {
+  it('should use tradingName for compliance schemes', () => {
     const organisations = [
       {
         id: 'org-1',
@@ -55,13 +55,34 @@ describe('#mapToSelectOptions', () => {
           addressLine1: '1 High St',
           town: 'London',
           postcode: 'W1 1AA'
-        }
+        },
+        registrationType: 'COMPLIANCE_SCHEME'
       }
     ]
 
     const result = mapToSelectOptions(organisations)
 
     expect(result[0].text).toBe('Trading As Name, 1 High St, London, W1 1AA')
+  })
+
+  it('should use name for large producers even when tradingName is set', () => {
+    const organisations = [
+      {
+        id: 'org-1',
+        name: 'Legal Producer Ltd',
+        tradingName: 'Producer Trading Name',
+        address: {
+          addressLine1: '1 High St',
+          town: 'London',
+          postcode: 'W1 1AA'
+        },
+        registrationType: 'LARGE_PRODUCER'
+      }
+    ]
+
+    const result = mapToSelectOptions(organisations)
+
+    expect(result[0].text).toBe('Legal Producer Ltd, 1 High St, London, W1 1AA')
   })
 
   it('should filter out empty address fields', () => {
