@@ -4,7 +4,6 @@ import importPlugin from 'eslint-plugin-import'
 import jsdoc from 'eslint-plugin-jsdoc'
 import nPlugin from 'eslint-plugin-n'
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
-import promisePlugin from 'eslint-plugin-promise'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
@@ -15,7 +14,6 @@ export default [
   importPlugin.flatConfigs.recommended,
   jsdoc.configs['flat/recommended'],
   nPlugin.configs['flat/recommended-script'],
-  promisePlugin.configs['flat/recommended'],
 
   // Global ignores
   {
@@ -41,8 +39,6 @@ export default [
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
       'no-console': 'error',
       'object-shorthand': ['error', 'properties'],
-      'promise/prefer-await-to-then': ['error', { strict: true }],
-
       // Turn off strict type checking rules
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
