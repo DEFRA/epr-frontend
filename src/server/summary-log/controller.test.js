@@ -1253,7 +1253,7 @@ describe('#summaryLogUploadProgressController', () => {
         'We&#39;ve found the following issue with the file you selected'
       )
       expect(result).toContain(
-        'Summary log registration is missing or incorrect'
+        'Registration number on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
       )
       expect(result).not.toStrictEqual(enablesClientSidePolling())
     })
@@ -1439,7 +1439,7 @@ describe('#summaryLogUploadProgressController', () => {
         'The selected file contains data that&#39;s been entered incorrectly'
       )
       expect(result).toContain(
-        'Summary log registration is missing or incorrect'
+        'Registration number on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
       )
     })
 
@@ -1460,7 +1460,9 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Summary log material is missing or incorrect')
+      expect(result).toContain(
+        'Material on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
+      )
     })
 
     it('status: invalid with accreditation failure - should show accreditation invalid message', async ({
@@ -1481,7 +1483,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'Summary log accreditation is missing or incorrect'
+        'Accreditation number on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
       )
     })
 
@@ -2008,7 +2010,7 @@ describe('#summaryLogUploadProgressController', () => {
         'The selected file contains tonnage and weight values with formats that do not match the examples provided in the summary log'
       )
       expect(result).toContain(
-        'Summary log registration is missing or incorrect'
+        'Registration number on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
       )
     })
 
