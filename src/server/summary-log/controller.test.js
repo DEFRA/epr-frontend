@@ -1807,6 +1807,33 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
+    it('status: invalid with MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS errorCode on free-text header - should show free-text message', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
+              location: { header: 'CONTAINER_NUMBER' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'The selected file contains unacceptable content within the fields that accept free text'
+      )
+    })
+
     it('status: invalid with ID errorCode on ID header - should show ID format message', async ({
       server
     }) => {
