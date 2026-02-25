@@ -74,7 +74,7 @@ export const cancelPostController = {
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
       )
     } catch (error) {
-      request.logger.error({ error }, 'Failed to cancel PRN')
+      request.logger.error({ err: error }, 'Failed to cancel PRN')
 
       if (error.isBoom) {
         throw error

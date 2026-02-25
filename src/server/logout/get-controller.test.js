@@ -73,7 +73,6 @@ describe('#logoutController - integration', () => {
       expect(mockCdpAuditing).toHaveBeenCalledWith({
         event: {
           category: 'access',
-          subCategory: 'sso',
           action: 'sign-out'
         },
         context: {},

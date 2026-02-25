@@ -134,7 +134,6 @@ describe('/auth/callback - GET integration', async () => {
       expect(mock.cdpAuditing).toHaveBeenCalledWith({
         event: {
           category: 'access',
-          subCategory: 'sso',
           action: 'sign-in'
         },
         context: {},

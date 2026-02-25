@@ -5,7 +5,7 @@ import { fetchWasteBalances } from './fetch-waste-balances.js'
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
  * @param {string} idToken - JWT ID token for authorization
- * @param {object} logger - Logger instance for error reporting
+ * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Logger instance for error reporting
  * @returns {Promise<WasteBalance|null>} Balance data or null if unavailable
  */
 async function getWasteBalance(
@@ -23,7 +23,7 @@ async function getWasteBalance(
 
     return wasteBalanceMap[accreditationId] ?? null
   } catch (error) {
-    logger.error({ error }, 'Failed to fetch waste balance')
+    logger.error({ err: error }, 'Failed to fetch waste balance')
     return null
   }
 }
