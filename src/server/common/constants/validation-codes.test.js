@@ -210,6 +210,15 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('FREE_TEXT_INVALID')
   })
 
+  test('returns FREE_TEXT_INVALID for MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS with CONTAINER_NUMBER header', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
+        'CONTAINER_NUMBER'
+      )
+    ).toBe('FREE_TEXT_INVALID')
+  })
+
   test('returns FREE_TEXT_INVALID for MUST_BE_AT_MOST_100_CHARS with CUSTOMS_CODES header', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_AT_MOST_100_CHARS', 'CUSTOMS_CODES')
@@ -219,6 +228,15 @@ describe('#getDisplayCodeFromErrorCode', () => {
   test('returns DATA_ENTRY_INVALID for MUST_BE_ALPHANUMERIC with non-free-text header (safety net)', () => {
     expect(
       getDisplayCodeFromErrorCode('MUST_BE_ALPHANUMERIC', 'GROSS_WEIGHT')
+    ).toBe('DATA_ENTRY_INVALID')
+  })
+
+  test('returns DATA_ENTRY_INVALID for MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS with non-free-text header (safety net)', () => {
+    expect(
+      getDisplayCodeFromErrorCode(
+        'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
+        'GROSS_WEIGHT'
+      )
     ).toBe('DATA_ENTRY_INVALID')
   })
 
