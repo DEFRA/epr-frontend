@@ -91,15 +91,15 @@ describe('#context', () => {
       )
     })
 
-    it('should not include i18n properties when i18n is not available on request', async () => {
+    it('should provide fallback localise and localiseUrl when i18n is not available', async () => {
       const mockNoI18nRequest = mockRequest()
 
       contextResult = await contextImport.context(mockNoI18nRequest)
 
       expect(contextResult).not.toHaveProperty('htmlLang')
       expect(contextResult).not.toHaveProperty('language')
-      expect(contextResult).not.toHaveProperty('localise')
-      expect(contextResult).not.toHaveProperty('localiseUrl')
+      expect(contextResult.localise('some:key')).toBe('some:key')
+      expect(contextResult.localiseUrl('/some-path')).toBe('/some-path')
     })
   })
 
@@ -130,6 +130,8 @@ describe('#context', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        localise: expect.any(Function),
+        localiseUrl: expect.any(Function),
         navigation: [],
         serviceUrl: '/start'
       })
@@ -211,6 +213,8 @@ describe('#context cache', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        localise: expect.any(Function),
+        localiseUrl: expect.any(Function),
         navigation: [],
         serviceUrl: '/start'
       })
