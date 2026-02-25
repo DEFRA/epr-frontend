@@ -226,7 +226,7 @@ function getDisplayableRegistrations(organisationData) {
  * @param {string} organisationId - Organisation ID
  * @param {Array<{registration: object}>} displayableRegistrations - Filtered registrations
  * @param {string} idToken - JWT token
- * @param {object} logger - Request logger
+ * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
  */
 async function getWasteBalanceMap(
@@ -246,7 +246,7 @@ async function getWasteBalanceMap(
   try {
     return await fetchWasteBalances(organisationId, accreditationIds, idToken)
   } catch (error) {
-    logger.error({ error }, 'Failed to fetch waste balances')
+    logger.error({ err: error }, 'Failed to fetch waste balances')
     return {}
   }
 }

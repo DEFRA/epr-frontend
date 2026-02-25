@@ -84,11 +84,9 @@ describe('#startServer', () => {
     it('should log failed startup message', async () => {
       await startServer()
 
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
-        'Server failed to start :('
-      )
       expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith(
-        Error('Server failed to start')
+        { err: Error('Server failed to start') },
+        'Server failed to start :('
       )
     })
   })

@@ -26,7 +26,7 @@ async function metricsCounter(metricName, value = 1) {
     )
     await metricsLogger.flush()
   } catch (error) {
-    createLogger().error(error, error.message)
+    createLogger().error({ err: error }, error.message)
   }
 }
 

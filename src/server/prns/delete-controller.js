@@ -65,7 +65,7 @@ export const deletePostController = {
 
       return h.redirect(redirectBasePath)
     } catch (error) {
-      request.logger.error({ error }, 'Failed to delete PRN')
+      request.logger.error({ err: error }, 'Failed to delete PRN')
 
       if (error.isBoom) {
         throw error

@@ -11,7 +11,7 @@ const PRODUCER_TYPES = new Set(['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'])
  * Extracts registrationType from the raw registrations array and warns
  * on missing or ambiguous producer registrations.
  * @param {Array<{ id: string, name: string, registrations?: Array<{ type: string, registrationYear: number | string }>, [key: string]: unknown }>} organisations
- * @param {{ warn: (data: object, message: string) => void }} logger
+ * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger
  * @returns {Array<{ registrationType?: string, [key: string]: unknown }>}
  */
 function extractRegistrationTypes(organisations, logger) {
@@ -48,7 +48,7 @@ function extractRegistrationTypes(organisations, logger) {
 
 /**
  * Creates a waste organisations service that fetches from the real API.
- * @param {{ warn: (data: object, message: string) => void }} logger
+ * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger
  * @returns {WasteOrganisationsService}
  */
 export function createApiWasteOrganisationsService(logger) {
