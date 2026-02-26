@@ -1,9 +1,12 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { config } from '#config/config.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { test } from '#vite/fixtures/server.js'
 
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
+const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchRegistrationAndAccreditation, () => {
   const organisationId = 'org-123'
@@ -11,11 +14,9 @@ describe(fetchRegistrationAndAccreditation, () => {
   const accreditationId = 'acc-789'
   const idToken = 'test-id-token'
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test('returns organisation data, registration and accreditation when all exist', async () => {
+  test('returns organisation data, registration and accreditation when all exist', async ({
+    msw
+  }) => {
     const mockOrganisationData = {
       id: organisationId,
       registrations: [{ id: registrationId, accreditationId }],
@@ -24,10 +25,11 @@ describe(fetchRegistrationAndAccreditation, () => {
       ]
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockOrganisationData)
-    })
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
+        HttpResponse.json(mockOrganisationData)
+      )
+    )
 
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
@@ -45,7 +47,9 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('returns undefined registration when registration not found', async () => {
+  test('returns undefined registration when registration not found', async ({
+    msw
+  }) => {
     const mockOrganisationData = {
       id: organisationId,
       registrations: [{ id: 'other-reg', accreditationId }],
@@ -54,10 +58,11 @@ describe(fetchRegistrationAndAccreditation, () => {
       ]
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockOrganisationData)
-    })
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
+        HttpResponse.json(mockOrganisationData)
+      )
+    )
 
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
@@ -72,7 +77,9 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('returns undefined accreditation when registration has no accreditationId', async () => {
+  test('returns undefined accreditation when registration has no accreditationId', async ({
+    msw
+  }) => {
     const mockOrganisationData = {
       id: organisationId,
       registrations: [{ id: registrationId }],
@@ -81,10 +88,11 @@ describe(fetchRegistrationAndAccreditation, () => {
       ]
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockOrganisationData)
-    })
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
+        HttpResponse.json(mockOrganisationData)
+      )
+    )
 
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
@@ -99,7 +107,9 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('returns undefined accreditation when accreditation not found', async () => {
+  test('returns undefined accreditation when accreditation not found', async ({
+    msw
+  }) => {
     const mockOrganisationData = {
       id: organisationId,
       registrations: [
@@ -110,10 +120,11 @@ describe(fetchRegistrationAndAccreditation, () => {
       ]
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockOrganisationData)
-    })
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
+        HttpResponse.json(mockOrganisationData)
+      )
+    )
 
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
@@ -128,17 +139,20 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('handles organisation with empty registrations array', async () => {
+  test('handles organisation with empty registrations array', async ({
+    msw
+  }) => {
     const mockOrganisationData = {
       id: organisationId,
       registrations: [],
       accreditations: []
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockOrganisationData)
-    })
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
+        HttpResponse.json(mockOrganisationData)
+      )
+    )
 
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
@@ -153,15 +167,18 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('handles organisation with missing registrations property', async () => {
+  test('handles organisation with missing registrations property', async ({
+    msw
+  }) => {
     const mockOrganisationData = {
       id: organisationId
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockOrganisationData)
-    })
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
+        HttpResponse.json(mockOrganisationData)
+      )
+    )
 
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
@@ -176,11 +193,16 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('passes correct parameters to fetchOrganisationById', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({ id: organisationId })
-    })
+  test('passes correct parameters to fetchOrganisationById', async ({
+    msw
+  }) => {
+    let capturedRequest
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, ({ request }) => {
+        capturedRequest = request
+        return HttpResponse.json({ id: organisationId })
+      })
+    )
 
     await fetchRegistrationAndAccreditation(
       organisationId,
@@ -188,24 +210,18 @@ describe(fetchRegistrationAndAccreditation, () => {
       idToken
     )
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/\/v1\/organisations\/org-123$/),
-      expect.objectContaining({
-        method: 'GET',
-        headers: expect.objectContaining({
-          Authorization: 'Bearer test-id-token'
-        })
-      })
+    expect(capturedRequest.headers.get('authorization')).toBe(
+      'Bearer test-id-token'
     )
   })
 
-  test('propagates errors from fetchOrganisationById', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      statusText: 'Not Found',
-      headers: new Map()
-    })
+  test('propagates errors from fetchOrganisationById', async ({ msw }) => {
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123`,
+        () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
+      )
+    )
 
     await expect(
       fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)

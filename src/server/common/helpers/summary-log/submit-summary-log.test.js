@@ -1,29 +1,34 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { config } from '#config/config.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { test } from '#vite/fixtures/server.js'
 
 import { submitSummaryLog } from './submit-summary-log.js'
 
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
+const backendUrl = config.get('eprBackendUrl')
 
 describe(submitSummaryLog, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test('submits summary log and returns response data', async () => {
+  test('submits summary log and returns response data', async ({ msw }) => {
     const mockResponse = {
       status: 'submitted',
       accreditationNumber: '493021'
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockResponse)
-    })
+    let capturedRequest
+    msw.use(
+      http.post(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789/submit`,
+        ({ request }) => {
+          capturedRequest = request
+          return HttpResponse.json(mockResponse)
+        }
+      )
+    )
 
     const result = await submitSummaryLog(
       organisationId,
@@ -32,26 +37,26 @@ describe(submitSummaryLog, () => {
       'test-id-token'
     )
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/\/summary-logs\/log-789\/submit$/),
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer test-id-token'
-        }
-      })
+    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
+    expect(capturedRequest.headers.get('authorization')).toBe(
+      'Bearer test-id-token'
     )
     expect(result).toStrictEqual(mockResponse)
   })
 
-  test('throws Boom error when backend returns non-ok response', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: new Map()
-    })
+  test('throws Boom error when backend returns non-ok response', async ({
+    msw
+  }) => {
+    msw.use(
+      http.post(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789/submit`,
+        () =>
+          new HttpResponse(null, {
+            status: 500,
+            statusText: 'Internal Server Error'
+          })
+      )
+    )
 
     await expect(
       submitSummaryLog(
