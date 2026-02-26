@@ -3,7 +3,7 @@ import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accr
 
 /**
  * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, idToken: string, logger: object, accreditationId?: string }} params
+ * @param {{ organisationId: string, registrationId: string, idToken: string, logger: import('#server/common/helpers/logging/logger.js').TypedLogger, accreditationId?: string }} params
  * @returns {Promise<{registration: object, accreditation: object, organisationData: object}>}
  * @throws {Boom.notFound} When registration or accreditation is not found, or accreditation ID mismatches
  */

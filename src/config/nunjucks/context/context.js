@@ -21,7 +21,15 @@ let webpackManifest
  */
 const getI18nContext = (request) => {
   if (!request?.i18n) {
-    return {}
+    // Provide passthrough fallbacks so that page.njk layout calls like
+    // localise('common:serviceName') don't throw when i18n is unavailable.
+    // This happens for routes in the i18n ignoreRoutes list (e.g. /public,
+    // /health) — if those requests hit an error, the catchAll handler renders
+    // an HTML error page whose layout calls localise() and localiseUrl().
+    return {
+      localise: (key) => key,
+      localiseUrl: (url) => url
+    }
   }
 
   return {
@@ -39,8 +47,11 @@ export function context(request) {
   if (!webpackManifest) {
     try {
       webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
-    } catch {
-      logger.error(`Webpack ${path.basename(manifestPath)} not found`)
+    } catch (error) {
+      logger.error(
+        { err: error },
+        `Webpack ${path.basename(manifestPath)} not found`
+      )
     }
   }
 

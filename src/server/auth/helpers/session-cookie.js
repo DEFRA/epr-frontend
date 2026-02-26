@@ -104,7 +104,7 @@ const createSessionCookie = (verifyToken) => {
             )
 
             if (!refreshOk) {
-              request.logger.error(error, error.message)
+              request.logger.error({ err: error }, error.message)
               await removeUserSession(request)
 
               return { isValid: false }
