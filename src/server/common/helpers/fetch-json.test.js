@@ -158,7 +158,8 @@ describe(fetchJson, () => {
       fetchJson('https://api.example.com/test')
     ).rejects.toMatchObject({
       isBoom: true,
-      output: { statusCode: 400 }
+      output: { statusCode: 400 },
+      message: expect.stringContaining('400')
     })
   })
 })
