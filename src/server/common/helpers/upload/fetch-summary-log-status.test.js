@@ -1,29 +1,36 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { config } from '#config/config.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { test } from '#vite/fixtures/server.js'
 
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
+const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchSummaryLogStatus, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test('returns summary log status when backend responds successfully', async () => {
+  test('returns summary log status when backend responds successfully', async ({
+    msw
+  }) => {
     const mockResponse = {
       status: 'validated',
       validation: null
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockResponse)
-    })
+    let capturedRequest
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        ({ request }) => {
+          capturedRequest = request
+          return HttpResponse.json(mockResponse)
+        }
+      )
+    )
 
     const result = await fetchSummaryLogStatus(
       organisationId,
@@ -32,26 +39,22 @@ describe(fetchSummaryLogStatus, () => {
       { idToken: 'test-id-token' }
     )
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringMatching(/\/summary-logs\/log-789$/),
-      expect.objectContaining({
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer test-id-token'
-        }
-      })
+    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
+    expect(capturedRequest.headers.get('authorization')).toBe(
+      'Bearer test-id-token'
     )
     expect(result).toStrictEqual(mockResponse)
   })
 
-  test('throws Boom notFound error when backend returns 404', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      statusText: 'Not Found',
-      headers: new Map()
-    })
+  test('throws Boom notFound error when backend returns 404', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
+      )
+    )
 
     await expect(
       fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
@@ -63,13 +66,19 @@ describe(fetchSummaryLogStatus, () => {
     })
   })
 
-  test('throws Boom error when backend returns other error status', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: new Map()
-    })
+  test('throws Boom error when backend returns other error status', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        () =>
+          new HttpResponse(null, {
+            status: 500,
+            statusText: 'Internal Server Error'
+          })
+      )
+    )
 
     await expect(
       fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {

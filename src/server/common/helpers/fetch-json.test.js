@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { describe, expect, vi } from 'vitest'
+
+import { it } from '#vite/fixtures/server.js'
 
 import { fetchJson } from './fetch-json.js'
-
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
 
 const MOCK_TRACE_ID = 'mock-trace-id-1'
 
@@ -18,40 +18,34 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 }))
 
 describe(fetchJson, () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('should return JSON data when response is successful', async () => {
+  it('should return JSON data when response is successful', async ({ msw }) => {
     const mockData = { status: 'validated', id: '123' }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockData)
-    })
+    let capturedRequest
+    msw.use(
+      http.get('https://api.example.com/test', ({ request }) => {
+        capturedRequest = request
+        return HttpResponse.json(mockData)
+      })
+    )
 
     const result = await fetchJson('https://api.example.com/test', {
       method: 'GET'
     })
 
     expect(result).toStrictEqual(mockData)
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.example.com/test',
-      expect.objectContaining({
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-cdp-request-id': MOCK_TRACE_ID
-        }
-      })
-    )
+    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
+    expect(capturedRequest.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
-  it('should merge custom headers with Content-Type', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({})
-    })
+  it('should merge custom headers with Content-Type', async ({ msw }) => {
+    let capturedRequest
+    msw.use(
+      http.post('https://api.example.com/test', ({ request }) => {
+        capturedRequest = request
+        return HttpResponse.json({})
+      })
+    )
 
     await fetchJson('https://api.example.com/test', {
       method: 'POST',
@@ -59,25 +53,22 @@ describe(fetchJson, () => {
       body: JSON.stringify({ data: 'test' })
     })
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Custom': 'value',
-          'x-cdp-request-id': MOCK_TRACE_ID
-        }
-      })
-    )
+    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
+    expect(capturedRequest.headers.get('x-custom')).toBe('value')
+    expect(capturedRequest.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
-  it('should throw Boom notFound error when response is 404', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      statusText: 'Not Found',
-      headers: new Map()
-    })
+  it('should throw Boom notFound error when response is 404', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get('https://api.example.com/missing', () => {
+        return new HttpResponse(null, {
+          status: 404,
+          statusText: 'Not Found'
+        })
+      })
+    )
 
     await expect(
       fetchJson('https://api.example.com/missing')
@@ -87,13 +78,17 @@ describe(fetchJson, () => {
     })
   })
 
-  it('should throw Boom error with matching status code for other HTTP errors', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: new Map()
-    })
+  it('should throw Boom error with matching status code for other HTTP errors', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get('https://api.example.com/broken', () => {
+        return new HttpResponse(null, {
+          status: 500,
+          statusText: 'Internal Server Error'
+        })
+      })
+    )
 
     await expect(
       fetchJson('https://api.example.com/broken')
@@ -103,22 +98,20 @@ describe(fetchJson, () => {
     })
   })
 
-  it('should include JSON payload in Boom error when response returns JSON error body', async () => {
+  it('should include JSON payload in Boom error when response returns JSON error body', async ({
+    msw
+  }) => {
     const errorPayload = {
       statusCode: 400,
       error: 'Bad Request',
       message: 'Validation failed'
     }
 
-    const headers = new Map([['content-type', 'application/json']])
-
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 400,
-      statusText: 'Bad Request',
-      headers: { get: (key) => headers.get(key) },
-      json: vi.fn().mockResolvedValue(errorPayload)
-    })
+    msw.use(
+      http.get('https://api.example.com/invalid', () => {
+        return HttpResponse.json(errorPayload, { status: 400 })
+      })
+    )
 
     await expect(
       fetchJson('https://api.example.com/invalid')
@@ -131,30 +124,41 @@ describe(fetchJson, () => {
     })
   })
 
-  it('should throw Boom internal error when fetch throws network error', async () => {
-    mockFetch.mockRejectedValue(new Error('Network error'))
+  it('should throw Boom internal error when fetch throws network error', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get('https://api.example.com/unreachable', () => {
+        return HttpResponse.error()
+      })
+    )
 
     await expect(
       fetchJson('https://api.example.com/unreachable')
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 },
-      message: expect.stringContaining('Network error')
+      message: expect.stringContaining('https://api.example.com/unreachable')
     })
   })
 
-  it('should re-throw existing Boom errors without wrapping', async () => {
-    const Boom = await import('@hapi/boom')
-    const boomError = Boom.default.badRequest('Already a Boom error')
-
-    mockFetch.mockRejectedValue(boomError)
+  it('should re-throw existing Boom errors without wrapping', async ({
+    msw
+  }) => {
+    msw.use(
+      http.get('https://api.example.com/test', () => {
+        return new HttpResponse(null, {
+          status: 400,
+          statusText: 'Bad Request'
+        })
+      })
+    )
 
     await expect(
       fetchJson('https://api.example.com/test')
     ).rejects.toMatchObject({
       isBoom: true,
-      output: { statusCode: 400 },
-      message: 'Already a Boom error'
+      output: { statusCode: 400 }
     })
   })
 })

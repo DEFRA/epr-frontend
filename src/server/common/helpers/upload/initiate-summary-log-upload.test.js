@@ -1,25 +1,32 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest'
+import { config } from '#config/config.js'
+import { http, HttpResponse } from 'msw'
+import { describe, expect } from 'vitest'
+
+import { test } from '#vite/fixtures/server.js'
 
 import { initiateSummaryLogUpload } from './initiate-summary-log-upload.js'
 
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
+const backendUrl = config.get('eprBackendUrl')
 
 describe(initiateSummaryLogUpload, () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  test('calls backend summary-logs endpoint with redirectUrl', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        summaryLogId: 'sl-123',
-        uploadId: 'up-456',
-        uploadUrl: 'http://cdp/upload',
-        statusUrl: 'http://cdp/status'
-      })
-    })
+  test('calls backend summary-logs endpoint with redirectUrl', async ({
+    msw
+  }) => {
+    let capturedRequest
+    msw.use(
+      http.post(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
+        async ({ request }) => {
+          capturedRequest = request
+          return HttpResponse.json({
+            summaryLogId: 'sl-123',
+            uploadId: 'up-456',
+            uploadUrl: 'http://cdp/upload',
+            statusUrl: 'http://cdp/status'
+          })
+        }
+      )
+    )
 
     await initiateSummaryLogUpload({
       organisationId: 'org-123',
@@ -28,22 +35,18 @@ describe(initiateSummaryLogUpload, () => {
       idToken: 'test-id-token'
     })
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining(
-        '/v1/organisations/org-123/registrations/reg-456/summary-logs'
-      ),
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer test-id-token'
-        },
-        body: JSON.stringify({ redirectUrl: '/redirect/path' })
-      })
+    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
+    expect(capturedRequest.headers.get('authorization')).toBe(
+      'Bearer test-id-token'
     )
+    await expect(capturedRequest.json()).resolves.toStrictEqual({
+      redirectUrl: '/redirect/path'
+    })
   })
 
-  test('returns summaryLogId, uploadId, uploadUrl, and statusUrl from response', async () => {
+  test('returns summaryLogId, uploadId, uploadUrl, and statusUrl from response', async ({
+    msw
+  }) => {
     const mockResponse = {
       summaryLogId: 'sl-789',
       uploadId: 'up-101',
@@ -51,10 +54,12 @@ describe(initiateSummaryLogUpload, () => {
       statusUrl: 'http://cdp/status/up-101'
     }
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(mockResponse)
-    })
+    msw.use(
+      http.post(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
+        () => HttpResponse.json(mockResponse)
+      )
+    )
 
     const result = await initiateSummaryLogUpload({
       organisationId: 'org-123',
@@ -66,13 +71,19 @@ describe(initiateSummaryLogUpload, () => {
     expect(result).toStrictEqual(mockResponse)
   })
 
-  test('throws Boom error when backend returns non-ok response', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: new Map()
-    })
+  test('throws Boom error when backend returns non-ok response', async ({
+    msw
+  }) => {
+    msw.use(
+      http.post(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,
+        () =>
+          new HttpResponse(null, {
+            status: 500,
+            statusText: 'Internal Server Error'
+          })
+      )
+    )
 
     await expect(
       initiateSummaryLogUpload({
