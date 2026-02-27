@@ -54,6 +54,18 @@ describe('#i18nPlugin - integration', () => {
         expect(response.request.path).toBe(expectedPath)
       }
     )
+
+    it('should not treat paths starting with /cy as Welsh when not followed by / or end of path', async ({
+      server
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/cyrus.index.php'
+      })
+
+      expect(response.statusCode).toBe(statusCodes.notFound)
+      expect(response.request.path).toBe('/cyrus.index.php')
+    })
   })
 
   describe('response variety handling', () => {
