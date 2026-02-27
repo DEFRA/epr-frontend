@@ -28,9 +28,9 @@ export const i18nPlugin = {
       if (request.i18n) {
         const { path } = request
 
-        if (path.startsWith(pathPrefix.cy)) {
+        if (path === pathPrefix.cy || path.startsWith(`${pathPrefix.cy}/`)) {
           await request.i18n.changeLanguage(languages.WELSH)
-          request.setUrl(path.replace(/^\/cy/, '') || '/')
+          request.setUrl(path.slice(pathPrefix.cy.length) || '/')
         } else {
           await request.i18n.changeLanguage(languages.ENGLISH)
         }
