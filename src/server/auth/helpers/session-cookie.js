@@ -41,12 +41,12 @@ const scheduleTokenRefresh = (verifyToken, request, userSession) => {
             .then((errorBody) => Promise.reject(new Error(errorBody)))
     )
     .then((refreshedTokens) =>
-      getUserSession(request).then(({ ok: sessionStillExists }) => {
-        if (!sessionStillExists) {
-          return // early exit if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
-        }
-        return updateUserSession(verifyToken, request, refreshedTokens)
-      })
+      getUserSession(request).then(
+        ({ ok: sessionStillExists }) =>
+          sessionStillExists
+            ? updateUserSession(verifyToken, request, refreshedTokens)
+            : Promise.resolve() // exit without error if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
+      )
     )
     .catch((error) => {
       request.logger.error({ err: error }, 'Failed to refresh session')
