@@ -36,9 +36,9 @@ const scheduleTokenRefresh = (verifyToken, request, userSession) => {
     .then((response) =>
       response.ok
         ? response.json()
-        : response
-            .text()
-            .then((errorBody) => Promise.reject(new Error(errorBody)))
+        : response.text().then((errorBody) => {
+            throw new Error(errorBody)
+          })
     )
     .then((refreshedTokens) =>
       getUserSession(request).then(
