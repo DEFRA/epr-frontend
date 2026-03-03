@@ -16,13 +16,16 @@ import { refreshIdToken } from './refresh-token.js'
  */
 
 /**
- * Schedules a background id token refresh if the token is expiring soon.
- * Returns immediately; the refresh updates the user session asynchronously.
+ * Refreshes id token if it is nearly expired
  * @param {VerifyToken} verifyToken
  * @param {Request} request
  * @param {UserSession} userSession
  */
-const scheduleTokenRefresh = (verifyToken, request, userSession) => {
+const refreshIdTokenIfNearlyExpired = async (
+  verifyToken,
+  request,
+  userSession
+) => {
   const tokenWillExpireSoon = isPast(
     subMinutes(parseISO(userSession.expiresAt), 1)
   )
@@ -31,27 +34,25 @@ const scheduleTokenRefresh = (verifyToken, request, userSession) => {
     return
   }
 
-  markSessionAsIdTokenRefreshInProgress(request, userSession)
-    .then(() => refreshIdToken(request))
-    .then((response) =>
-      response.ok
-        ? response.json()
-        : response.text().then((errorBody) => {
-            throw new Error(errorBody)
-          })
-    )
-    .then((refreshedTokens) =>
-      getUserSession(request).then(
-        ({ ok: sessionStillExists }) =>
-          sessionStillExists
-            ? updateUserSession(verifyToken, request, refreshedTokens)
-            : Promise.resolve() // exit without error if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
-      )
-    )
-    .catch((error) => {
-      request.logger.error({ err: error }, 'Failed to refresh session')
-      return removeUserSession(request)
-    })
+  try {
+    await markSessionAsIdTokenRefreshInProgress(request, userSession)
+    const response = await refreshIdToken(request)
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      throw new Error(errorBody)
+    }
+
+    const refreshedTokens = await response.json()
+    const { ok: sessionStillExists } = await getUserSession(request)
+    if (!sessionStillExists) {
+      return // exit without error if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
+    }
+    await updateUserSession(verifyToken, request, refreshedTokens)
+  } catch (error) {
+    request.logger.error({ err: error }, 'Failed to refresh session')
+    await removeUserSession(request)
+  }
 }
 
 /**
@@ -90,7 +91,13 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            scheduleTokenRefresh(verifyToken, request, userSession)
+            // void (do not await) to refresh token in the background
+            // this allows immediate return of the existing session (so the current request can be serviced)
+            void refreshIdTokenIfNearlyExpired(
+              verifyToken,
+              request,
+              userSession
+            )
 
             return {
               isValid: true,
