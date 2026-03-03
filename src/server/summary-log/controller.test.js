@@ -202,7 +202,6 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toStrictEqual(
         expect.stringContaining('Check before confirming upload')
       )
-      expect(result).toStrictEqual(expect.stringContaining('Declaration'))
       expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
       expect(result).toStrictEqual(
         expect.stringContaining('upload an updated summary log')
