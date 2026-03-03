@@ -47,7 +47,7 @@ const scheduleTokenRefresh = (verifyToken, request, userSession) => {
       const refreshedTokens = await response.json()
       const { ok: sessionStillExists } = await getUserSession(request)
       if (!sessionStillExists) {
-        return
+        return // early exit if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
       }
       await updateUserSession(verifyToken, request, refreshedTokens)
     })

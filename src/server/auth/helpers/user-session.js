@@ -62,7 +62,8 @@ async function updateUserSession(verifyToken, request, refreshedTokens) {
     profile,
     expiresAt,
     idToken: refreshedTokens.id_token,
-    refreshToken: refreshedTokens.refresh_token
+    refreshToken: refreshedTokens.refresh_token,
+    idTokenRefreshInProgress: false
   }
 
   await request.server.app.cache.set(
@@ -73,4 +74,8 @@ async function updateUserSession(verifyToken, request, refreshedTokens) {
   return session
 }
 
-export { markSessionAsIdTokenRefreshInProgress, removeUserSession, updateUserSession }
+export {
+  markSessionAsIdTokenRefreshInProgress,
+  removeUserSession,
+  updateUserSession
+}
