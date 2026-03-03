@@ -33,27 +33,24 @@ const scheduleTokenRefresh = (verifyToken, request, userSession) => {
 
   markSessionAsIdTokenRefreshInProgress(request, userSession)
     .then(() => refreshIdToken(request))
-    .then(async (response) => {
-      if (!response.ok) {
-        const errorBody = await response.text()
-        request.logger.error(
-          { err: new Error(errorBody) },
-          'Failed to refresh session'
-        )
-        await removeUserSession(request)
-        return
-      }
-
-      const refreshedTokens = await response.json()
-      const { ok: sessionStillExists } = await getUserSession(request)
-      if (!sessionStillExists) {
-        return // early exit if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
-      }
-      await updateUserSession(verifyToken, request, refreshedTokens)
-    })
-    .catch(async (error) => {
+    .then((response) =>
+      response.ok
+        ? response.json()
+        : response
+            .text()
+            .then((errorBody) => Promise.reject(new Error(errorBody)))
+    )
+    .then((refreshedTokens) =>
+      getUserSession(request).then(({ ok: sessionStillExists }) => {
+        if (!sessionStillExists) {
+          return // early exit if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
+        }
+        return updateUserSession(verifyToken, request, refreshedTokens)
+      })
+    )
+    .catch((error) => {
       request.logger.error({ err: error }, 'Failed to refresh session')
-      await removeUserSession(request)
+      return removeUserSession(request)
     })
 }
 
