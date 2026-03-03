@@ -103,15 +103,6 @@
       {% endif %}
     </section>
 
-    <section class="govuk-!-margin-top-8">
-      <h2 class="govuk-heading-l">{{ localise('summary-log:declarationHeading') }}</h2>
-      <p class="govuk-body">{{ localise('summary-log:declarationIntro') }}:</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>{{ localise('summary-log:declarationBullet1') }}</li>
-        <li>{{ localise('summary-log:declarationBullet2') }}</li>
-      </ul>
-    </section>
-
     <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
       <input type="hidden" name="crumb" value="{{ crumb }}" />
       {{ govukButton({
