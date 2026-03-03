@@ -89,7 +89,7 @@ describe('#sessionCookie - integration', () => {
       })
     })
 
-    it('should refresh token and continue when token is expired', async ({
+    it('should refresh token in background and continue when token is expired', async ({
       server,
       msw
     }) => {
@@ -132,32 +132,27 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
+      // Request succeeds immediately with the existing session
       expect(response.statusCode).toBe(200)
 
       const payload = JSON.parse(response.payload)
-
       expect(payload.userId).toBe('user-123')
 
-      const token = jose.decodeJwt(payload.idToken)
-
-      expect(token).toStrictEqual(
-        expect.objectContaining({
-          sub: 'user-123',
-          email: 'test@example.com',
-          serviceId: 'test-service-id'
-        })
-      )
+      // Background refresh updates the cache with the new tokens
+      await vi.waitFor(async () => {
+        const updatedSession = await server.app.cache.get(sessionId)
+        expect(updatedSession.refreshToken).toBe('new-refresh-token')
+      })
 
       const updatedSession = await server.app.cache.get(sessionId)
-
-      expect(updatedSession.refreshToken).toBe('new-refresh-token')
-
       const newExpiresAt = new Date(updatedSession.expiresAt)
-
       expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
     })
 
-    it('should remove session when refresh fails', async ({ server, msw }) => {
+    it('should drop session from cache when background refresh fails', async ({
+      server,
+      msw
+    }) => {
       msw.use(
         http.post('http://defra-id.auth/token', () => {
           return HttpResponse.json(
@@ -193,12 +188,14 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers.location).toBe(loggedOutUrl)
+      // Request succeeds immediately; failed refresh is handled in the background
+      expect(response.statusCode).toBe(statusCodes.ok)
 
-      const removedSession = await server.app.cache.get(sessionId)
-
-      expect(removedSession).toBeNull()
+      // Background refresh fails and drops the cache entry
+      await vi.waitFor(async () => {
+        const removedSession = await server.app.cache.get(sessionId)
+        expect(removedSession).toBeNull()
+      })
     })
 
     it('should not refresh when token is still valid', async ({ server }) => {
@@ -272,7 +269,59 @@ describe('#sessionCookie - integration', () => {
       expect(response.headers.location).toBe(loggedOutUrl)
     })
 
-    it('should return invalid and log error when token refresh throws exception', async ({
+    it('should skip session update with refreshed id token when session is removed during background refresh', async ({
+      server,
+      msw
+    }) => {
+      const expiredAt = subMinutes(new Date(), 2).toISOString()
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-concurrent-logout',
+        expiredAt
+      )
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      msw.use(
+        http.post('http://defra-id.auth/token', async () => {
+          // Simulate the session being removed concurrently (e.g. logout) while
+          // the token refresh HTTP call is in-flight
+          await server.app.cache.drop(sessionId)
+          return HttpResponse.json({
+            expires_in: 3600,
+            id_token: createFakeJwt(defaultJwtPayload),
+            refresh_token: 'concurrent-logout-token',
+            token_type: 'Bearer'
+          })
+        })
+      )
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      // Initial request succeeds with the existing session
+      expect(response.statusCode).toBe(statusCodes.ok)
+
+      // Background refresh finds the session gone and returns early without
+      // calling updateUserSession; the cache entry should remain absent
+      await vi.waitFor(async () => {
+        const session = await server.app.cache.get(sessionId)
+        expect(session).toBeNull()
+      })
+    })
+
+    it('should drop session from cache when background token refresh throws exception', async ({
       server,
       msw
     }) => {
@@ -316,12 +365,14 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
-      expect(response.statusCode).toBe(statusCodes.found)
-      expect(response.headers.location).toBe(loggedOutUrl)
+      // Request succeeds immediately; the exception is handled in the background
+      expect(response.statusCode).toBe(statusCodes.ok)
 
-      const cachedSession = await server.app.cache.get(sessionId)
-
-      expect(cachedSession).toBeNull()
+      // Background refresh throws and drops the user session
+      await vi.waitFor(async () => {
+        const cachedSession = await server.app.cache.get(sessionId)
+        expect(cachedSession).toBeNull()
+      })
     })
   })
 })

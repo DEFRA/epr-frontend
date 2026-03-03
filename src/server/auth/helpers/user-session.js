@@ -21,6 +21,19 @@ async function removeUserSession(request) {
 }
 
 /**
+ * Update user session to flag that an id token refresh is in progress
+ * @param {Request} request - Hapi request object
+ * @param {UserSession} userSession - Current user session
+ * @returns {Promise<void>}
+ */
+async function markSessionAsIdTokenRefreshInProgress(request, userSession) {
+  await request.server.app.cache.set(request.state.userSession.sessionId, {
+    ...userSession,
+    idTokenRefreshInProgress: true
+  })
+}
+
+/**
  * Update user session with refreshed tokens
  * @param {VerifyToken} verifyToken - Token verification function
  * @param {Request} request - Hapi request object
@@ -60,4 +73,4 @@ async function updateUserSession(verifyToken, request, refreshedTokens) {
   return session
 }
 
-export { removeUserSession, updateUserSession }
+export { markSessionAsIdTokenRefreshInProgress, removeUserSession, updateUserSession }

@@ -1,9 +1,9 @@
 import { config } from '#config/config.js'
 import {
-  updateUserSession,
-  removeUserSession
+  markSessionAsIdTokenRefreshInProgress,
+  removeUserSession,
+  updateUserSession
 } from '#server/auth/helpers/user-session.js'
-import { err, ok } from '#server/common/helpers/result.js'
 import authCookie from '@hapi/cookie'
 import { isPast, parseISO, subMinutes } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
@@ -12,49 +12,49 @@ import { refreshIdToken } from './refresh-token.js'
 /**
  * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { UserSession } from '../types/session.js'
- * @import { Result } from '#server/common/helpers/result.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
 /**
- * Handler that checks if token is expired and refreshes it if needed
+ * Schedules a background id token refresh if the token is expiring soon.
+ * Returns immediately; the refresh updates the user session asynchronously.
  * @param {VerifyToken} verifyToken
  * @param {Request} request
  * @param {UserSession} userSession
- * @returns {Promise<Result<UserSession>>}
  */
-const handleExpiredTokenRefresh = async (verifyToken, request, userSession) => {
+const scheduleTokenRefresh = (verifyToken, request, userSession) => {
   const tokenWillExpireSoon = isPast(
     subMinutes(parseISO(userSession.expiresAt), 1)
   )
 
-  if (!tokenWillExpireSoon) {
-    return ok(userSession)
+  if (!tokenWillExpireSoon || userSession.idTokenRefreshInProgress) {
+    return
   }
 
-  try {
-    const response = await refreshIdToken(request)
+  markSessionAsIdTokenRefreshInProgress(request, userSession)
+    .then(() => refreshIdToken(request))
+    .then(async (response) => {
+      if (!response.ok) {
+        const errorBody = await response.text()
+        request.logger.error(
+          { err: new Error(errorBody) },
+          'Failed to refresh session'
+        )
+        await removeUserSession(request)
+        return
+      }
 
-    if (!response.ok) {
-      const errorBody = await response.text()
-      return err({
-        message: 'Failed to refresh session',
-        status: response.status,
-        body: errorBody
-      })
-    }
-
-    const refreshIdTokenJson = await response.json()
-    const refreshedSession = await updateUserSession(
-      verifyToken,
-      request,
-      refreshIdTokenJson
-    )
-
-    return ok(refreshedSession)
-  } catch (error) {
-    return err({ message: 'Failed to refresh session', cause: error })
-  }
+      const refreshedTokens = await response.json()
+      const { ok: sessionStillExists } = await getUserSession(request)
+      if (!sessionStillExists) {
+        return
+      }
+      await updateUserSession(verifyToken, request, refreshedTokens)
+    })
+    .catch(async (error) => {
+      request.logger.error({ err: error }, 'Failed to refresh session')
+      await removeUserSession(request)
+    })
 }
 
 /**
@@ -93,26 +93,11 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            const {
-              ok: refreshOk,
-              value: refreshedSession,
-              error
-            } = await handleExpiredTokenRefresh(
-              verifyToken,
-              request,
-              userSession
-            )
-
-            if (!refreshOk) {
-              request.logger.error({ err: error }, error.message)
-              await removeUserSession(request)
-
-              return { isValid: false }
-            }
+            scheduleTokenRefresh(verifyToken, request, userSession)
 
             return {
               isValid: true,
-              credentials: refreshedSession
+              credentials: userSession
             }
           }
         })
