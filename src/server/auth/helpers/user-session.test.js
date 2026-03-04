@@ -1,52 +1,46 @@
-import { getUserSession } from '#server/auth/helpers/get-user-session.js'
 import { updateUserSession } from '#server/auth/helpers/user-session.js'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock(import('#server/auth/helpers/get-user-session.js'))
+const makeRequest = () => ({
+  state: { userSession: { sessionId: 'sess-123' } },
+  server: { app: { cache: { set: vi.fn() } } }
+})
+
+const existingSession = {
+  profile: { id: 'user-123', email: 'test@example.com' },
+  expiresAt: new Date().toISOString(),
+  idToken: 'old-id-token',
+  refreshToken: 'old-refresh-token',
+  idTokenRefreshInProgress: true,
+  urls: { token: 'http://auth/token', logout: 'http://auth/logout' }
+}
+
+const refreshedTokens = {
+  id_token: 'new-id-token',
+  refresh_token: 'new-refresh-token',
+  expires_in: 3600
+}
 
 describe(updateUserSession, () => {
-  it('should throw error when session is deleted during token refresh', async () => {
+  it('should reset idTokenRefreshInProgress to false after updating session', async () => {
     const mockVerifyToken = vi.fn().mockResolvedValue({
       sub: 'user-123',
       email: 'test@example.com',
-      correlationId: 'corr-123',
-      sessionId: 'sess-123',
-      contactId: 'contact-123',
-      serviceId: 'test-service-id',
-      firstName: 'Test',
-      lastName: 'User',
-      uniqueReference: 'ref-123',
-      loa: '2',
-      aal: '1',
-      enrolmentCount: 1,
-      enrolmentRequestCount: 0,
-      currentRelationshipId: 'rel-123',
-      relationships: ['rel-123'],
-      roles: ['role1']
+      exp: Math.floor(Date.now() / 1000) + 3600
     })
 
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: null
-    })
+    const request = makeRequest()
 
-    const mockRequest = {
-      state: { userSession: { sessionId: 'sess-123' } },
-      server: { app: { cache: { set: vi.fn() } } }
-    }
-
-    const refreshedSession = {
-      id_token: 'new-id-token',
-      refresh_token: 'new-refresh-token',
-      expires_in: 3600
-    }
-
-    await expect(
-      updateUserSession(mockVerifyToken, mockRequest, refreshedSession)
-    ).rejects.toThrowError(
-      'Cannot update session: session was deleted during token refresh'
+    await updateUserSession(
+      mockVerifyToken,
+      request,
+      existingSession,
+      refreshedTokens
     )
 
-    expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
+    const savedSession = request.server.app.cache.set.mock.calls[0][1]
+
+    // This ensures that id token refresh can run multiple times within the same session if needed
+    expect(savedSession.idTokenRefreshInProgress).toBe(false)
   })
 })

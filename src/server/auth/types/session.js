@@ -22,6 +22,7 @@
  *   idToken: string
  *   refreshToken: string
  *   urls: { token: string, logout: string }
+ *   idTokenRefreshInProgress?: boolean
  * }} UserSession
  */
 
