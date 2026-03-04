@@ -44,11 +44,17 @@ const refreshIdTokenIfNearlyExpired = async (
     }
 
     const refreshedTokens = await response.json()
-    const { ok: sessionStillExists } = await getUserSession(request)
+    const { ok: sessionStillExists, value: latestSession } =
+      await getUserSession(request)
     if (!sessionStillExists) {
       return // exit without error if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
     }
-    await updateUserSession(verifyToken, request, refreshedTokens)
+    await updateUserSession(
+      verifyToken,
+      request,
+      latestSession,
+      refreshedTokens
+    )
   } catch (error) {
     request.logger.error({ err: error }, 'Failed to refresh session')
     await removeUserSession(request)

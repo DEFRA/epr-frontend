@@ -1,6 +1,5 @@
 import { buildUserProfile, getTokenExpiresAt } from './build-session.js'
 import { dropUserSession } from './drop-user-session.js'
-import { getUserSession } from './get-user-session.js'
 
 /**
  * @import { RefreshedTokens } from '../types/tokens.js'
@@ -37,21 +36,17 @@ async function markSessionAsIdTokenRefreshInProgress(request, userSession) {
  * Update user session with refreshed tokens
  * @param {VerifyToken} verifyToken - Token verification function
  * @param {Request} request - Hapi request object
+ * @param {UserSession} existingSession - Current user session
  * @param {RefreshedTokens} refreshedTokens - Refreshed tokens from OIDC provider
  * @returns {Promise<UserSession>}
  */
-async function updateUserSession(verifyToken, request, refreshedTokens) {
+async function updateUserSession(
+  verifyToken,
+  request,
+  existingSession,
+  refreshedTokens
+) {
   const payload = await verifyToken(refreshedTokens.id_token)
-
-  const { value: existingSession } = /** @type {{ value?: UserSession }} */ (
-    await getUserSession(request)
-  )
-
-  if (!existingSession) {
-    throw new Error(
-      'Cannot update session: session was deleted during token refresh'
-    )
-  }
 
   const profile = buildUserProfile(payload)
   const expiresAt = getTokenExpiresAt(payload)
