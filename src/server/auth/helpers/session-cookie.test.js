@@ -2,7 +2,7 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import Iron from '@hapi/iron'
-import { subMinutes } from 'date-fns'
+import { addSeconds, subMinutes } from 'date-fns'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
@@ -89,7 +89,7 @@ describe('#sessionCookie - integration', () => {
       })
     })
 
-    it('should refresh token in background and continue when token is expired', async ({
+    it('should refresh token in background when token expires within 5 minutes', async ({
       server,
       msw
     }) => {
@@ -105,7 +105,9 @@ describe('#sessionCookie - integration', () => {
           ))(defaultJwtPayload)
       )
 
-      const expiredAt = subMinutes(new Date(), 30).toISOString()
+      // Expires in 2 minutes: within the 5-minute background-refresh window but
+      // outside the 10-second awaited-refresh window
+      const expiredAt = new Date(Date.now() + 2 * 60 * 1000).toISOString()
       const { sessionId, sessionData } = createExpiredRefreshSessionData(
         'user-123',
         expiredAt
@@ -165,7 +167,8 @@ describe('#sessionCookie - integration', () => {
         })
       )
 
-      const expiredAt = subMinutes(new Date(), 2).toISOString()
+      // Expires in 2 minutes: background-refresh window
+      const expiredAt = new Date(Date.now() + 2 * 60 * 1000).toISOString()
       const { sessionId, sessionData } = createExpiredRefreshSessionData(
         'user-456',
         expiredAt
@@ -198,7 +201,9 @@ describe('#sessionCookie - integration', () => {
       })
     })
 
-    it('should not refresh when token is still valid', async ({ server }) => {
+    it('should not refresh when token is still valid (expires beyond 5 minutes)', async ({
+      server
+    }) => {
       const sessionId = 'test-session-789'
       const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
@@ -273,7 +278,8 @@ describe('#sessionCookie - integration', () => {
       server,
       msw
     }) => {
-      const expiredAt = subMinutes(new Date(), 2).toISOString()
+      // Expires in 2 minutes: background-refresh window
+      const expiredAt = new Date(Date.now() + 2 * 60 * 1000).toISOString()
       const { sessionId, sessionData } = createExpiredRefreshSessionData(
         'user-concurrent-logout',
         expiredAt
@@ -332,7 +338,8 @@ describe('#sessionCookie - integration', () => {
       )
 
       const sessionId = 'test-session-exception'
-      const expiredAt = subMinutes(new Date(), 2).toISOString()
+      // Expires in 2 minutes: background-refresh window
+      const expiredAt = new Date(Date.now() + 2 * 60 * 1000).toISOString()
 
       const sessionData = {
         profile: {
@@ -373,6 +380,153 @@ describe('#sessionCookie - integration', () => {
         const cachedSession = await server.app.cache.get(sessionId)
         expect(cachedSession).toBeNull()
       })
+    })
+
+    it('should await refresh and update session before response when token expires within 10 seconds', async ({
+      server,
+      msw
+    }) => {
+      msw.use(
+        ((jwtPayload) =>
+          http.post('http://defra-id.auth/token', async () =>
+            HttpResponse.json({
+              expires_in: 3600,
+              id_token: createFakeJwt(jwtPayload),
+              refresh_token: 'awaited-new-refresh-token',
+              token_type: 'Bearer'
+            })
+          ))(defaultJwtPayload)
+      )
+
+      // Expires in 5 seconds: within the 10-second awaited-refresh window
+      const expiresAt = addSeconds(new Date(), 5).toISOString()
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-awaited',
+        expiresAt
+      )
+
+      sessionData.profile.enrolmentCount = 1
+      sessionData.profile.relationships = ['rel-123']
+      sessionData.profile.roles = ['role1']
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+
+      // Session must be updated synchronously (no vi.waitFor needed)
+      const updatedSession = await server.app.cache.get(sessionId)
+      expect(updatedSession.refreshToken).toBe('awaited-new-refresh-token')
+      const newExpiresAt = new Date(updatedSession.expiresAt)
+      expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
+    })
+
+    it('should drop session synchronously when awaited refresh fails for token expiring within 10 seconds', async ({
+      server,
+      msw
+    }) => {
+      msw.use(
+        http.post('http://defra-id.auth/token', () =>
+          HttpResponse.json(
+            {
+              error: 'invalid_grant',
+              error_description: 'Refresh token expired'
+            },
+            { status: 400 }
+          )
+        )
+      )
+
+      // Expires in 5 seconds: within the 10-second awaited-refresh window
+      const expiresAt = addSeconds(new Date(), 5).toISOString()
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-awaited-fail',
+        expiresAt
+      )
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      // Request still succeeds with the existing (nearly-expired) session
+      expect(response.statusCode).toBe(statusCodes.ok)
+
+      // Session must be removed synchronously (no vi.waitFor needed)
+      const removedSession = await server.app.cache.get(sessionId)
+      expect(removedSession).toBeNull()
+    })
+
+    it('should skip refresh when idTokenRefreshInProgress is already set', async ({
+      server
+    }) => {
+      // Expires in 5 seconds: would normally trigger an awaited refresh
+      const expiresAt = addSeconds(new Date(), 5).toISOString()
+      const sessionId = 'test-session-in-progress'
+
+      const sessionData = {
+        profile: { id: 'user-in-progress', email: 'inprogress@example.com' },
+        expiresAt,
+        idToken: 'old-id-token-in-progress',
+        refreshToken: 'old-refresh-token-in-progress',
+        idTokenRefreshInProgress: true,
+        urls: {
+          token: 'http://defra-id.auth/token',
+          logout: 'http://defra-id.auth/logout'
+        }
+      }
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.ok)
+
+      // Session must be unchanged: refresh was skipped because it was already in progress
+      const unchangedSession = await server.app.cache.get(sessionId)
+      expect(unchangedSession.idToken).toBe('old-id-token-in-progress')
+      expect(unchangedSession.refreshToken).toBe(
+        'old-refresh-token-in-progress'
+      )
     })
   })
 })

@@ -5,7 +5,7 @@ import {
   updateUserSession
 } from '#server/auth/helpers/user-session.js'
 import authCookie from '@hapi/cookie'
-import { isPast, parseISO, subMinutes } from 'date-fns'
+import { isPast, parseISO, subMinutes, subSeconds } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
 import { refreshIdToken } from './refresh-token.js'
 
@@ -26,11 +26,7 @@ const refreshIdTokenIfNearlyExpired = async (
   request,
   userSession
 ) => {
-  const tokenWillExpireSoon = isPast(
-    subMinutes(parseISO(userSession.expiresAt), 1)
-  )
-
-  if (!tokenWillExpireSoon || userSession.idTokenRefreshInProgress) {
+  if (userSession.idTokenRefreshInProgress) {
     return
   }
 
@@ -97,13 +93,29 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            // void (do not await) to refresh token in the background
-            // this allows immediate return of the existing session (so the current request can be serviced)
-            void refreshIdTokenIfNearlyExpired(
-              verifyToken,
-              request,
-              userSession
+            const tokenExpiresWithin10Seconds = isPast(
+              subSeconds(parseISO(userSession.expiresAt), 10)
             )
+
+            const tokenExpiresWithin5Minutes = isPast(
+              subMinutes(parseISO(userSession.expiresAt), 5)
+            )
+
+            if (tokenExpiresWithin10Seconds) {
+              // Await refresh so the session is updated before this request completes
+              await refreshIdTokenIfNearlyExpired(
+                verifyToken,
+                request,
+                userSession
+              )
+            } else if (tokenExpiresWithin5Minutes) {
+              // Run as background task so the current request is not delayed
+              void refreshIdTokenIfNearlyExpired(
+                verifyToken,
+                request,
+                userSession
+              )
+            }
 
             return {
               isValid: true,
