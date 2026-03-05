@@ -30,6 +30,7 @@ const formatters = {
  */
 export const loggerOptions = {
   enabled: logConfig.enabled,
+  logRequestStart: true,
   ignorePaths: ['/health'],
   ignoreTags: ['static'],
   redact: {
