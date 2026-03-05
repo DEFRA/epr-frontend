@@ -93,28 +93,22 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            const tokenExpiresWithin10Seconds = isPast(
-              subSeconds(parseISO(userSession.expiresAt), 10)
-            )
-
-            const tokenExpiresWithin5Minutes = isPast(
-              subMinutes(parseISO(userSession.expiresAt), 5)
-            )
-
-            if (tokenExpiresWithin10Seconds) {
+            if (isWithin10Seconds(parseISO(userSession.expiresAt))) {
               // Await refresh so the session is updated before this request completes
               await refreshIdTokenIfNearlyExpired(
                 verifyToken,
                 request,
                 userSession
               )
-            } else if (tokenExpiresWithin5Minutes) {
+            } else if (isWithin5Minutes(parseISO(userSession.expiresAt))) {
               // Run as background task so the current request is not delayed
               void refreshIdTokenIfNearlyExpired(
                 verifyToken,
                 request,
                 userSession
               )
+            } else {
+              // Session is valid and not close to expiring, no action needed
             }
 
             return {
@@ -128,6 +122,14 @@ const createSessionCookie = (verifyToken) => {
       }
     }
   }
+}
+
+function isWithin10Seconds(date) {
+  return isPast(subSeconds(date, 10))
+}
+
+function isWithin5Minutes(date) {
+  return isPast(subMinutes(date, 5))
 }
 
 export { createSessionCookie }
