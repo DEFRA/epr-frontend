@@ -96,7 +96,7 @@ const createSessionCookie = (verifyToken) => {
             }
 
             // Note this first check also catches an expired session
-            if (userSessionExpires(userSession, within10Seconds)) {
+            if (userSessionExpires(userSession, inNext10Seconds)) {
               // Await refresh so updated session is used in this request
               const refreshedSession = await refreshIdTokenIfNearlyExpired(
                 verifyToken,
@@ -106,7 +106,7 @@ const createSessionCookie = (verifyToken) => {
               return refreshedSession
                 ? { isValid: true, credentials: refreshedSession }
                 : { isValid: false }
-            } else if (userSessionExpires(userSession, within5Minutes)) {
+            } else if (userSessionExpires(userSession, inNext5Minutes)) {
               // Run as background task so the current request is not delayed
               void refreshIdTokenIfNearlyExpired(
                 verifyToken,
@@ -130,15 +130,15 @@ const createSessionCookie = (verifyToken) => {
   }
 }
 
-function userSessionExpires(userSession, testFn) {
-  return testFn(parseISO(userSession.expiresAt))
+function userSessionExpires(userSession, isInTimeframe) {
+  return isInTimeframe(parseISO(userSession.expiresAt))
 }
 
-function within10Seconds(date) {
+function inNext10Seconds(date) {
   return isPast(subSeconds(date, 10))
 }
 
-function within5Minutes(date) {
+function inNext5Minutes(date) {
   return isPast(subMinutes(date, 5)) // NOSONAR: 5 is not a magic number in this context, it is a specific time threshold for refreshing the token
 }
 
