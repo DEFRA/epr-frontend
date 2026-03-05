@@ -1,6 +1,8 @@
-import { config } from '#config/config.js'
+import { config as appConfig } from '#config/config.js'
+import { it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 import { createDefraId } from './defra-id.js'
 
 vi.mock(import('@hapi/bell'), () => ({
@@ -8,10 +10,6 @@ vi.mock(import('@hapi/bell'), () => ({
     name: 'bell',
     register: vi.fn()
   }
-}))
-
-vi.mock(import('node-fetch'), () => ({
-  default: vi.fn()
 }))
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
@@ -22,7 +20,6 @@ vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
 
 describe('#defraId', () => {
   let mockServer
-  let mockFetch
   let mockBell
   let mockVerifyToken
   let defraId
@@ -30,64 +27,23 @@ describe('#defraId', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
 
-    // Set config values for tests
-    config.set('defraId.clientId', 'test-client-id')
-    config.set('defraId.clientSecret', 'test-client-secret')
-    config.set(
+    appConfig.set('defraId.clientId', 'test-client-id')
+    appConfig.set('defraId.clientSecret', 'test-client-secret')
+    appConfig.set(
       'defraId.oidcConfigurationUrl',
-      'http://test.auth/.well-known/openid-configuration'
+      'http://defra-id.auth/.well-known/openid-configuration'
     )
-    config.set('defraId.serviceId', 'test-service-id')
-    config.set(
+    appConfig.set('defraId.serviceId', 'test-service-id')
+    appConfig.set(
       'session.cookie.password',
       'test-password-at-least-32-characters-long'
     )
-    config.set('session.cookie.secure', true)
-
-    // Import mocked modules
-    const fetch = await import('node-fetch')
-    mockFetch = fetch.default
+    appConfig.set('session.cookie.secure', true)
 
     const bell = await import('@hapi/bell')
     mockBell = bell.default
 
-    // Create mock verifyToken function that returns just the payload
     mockVerifyToken = vi.fn((token) => jose.decodeJwt(token))
-
-    mockFetch.mockImplementation((url) => {
-      // Mock OIDC discovery endpoint
-      if (url.includes('openid-configuration')) {
-        return Promise.resolve({
-          ok: true,
-          json: vi.fn().mockResolvedValue({
-            issuer: 'http://test.auth',
-            authorization_endpoint: 'http://test.auth/authorize',
-            token_endpoint: 'http://test.auth/token',
-            userinfo_endpoint: 'http://test.auth/userinfo',
-            end_session_endpoint: 'http://test.auth/logout',
-            jwks_uri: 'http://test.auth/.well-known/jwks.json'
-          })
-        })
-      }
-      // Mock JWKS endpoint
-      if (url.includes('jwks.json')) {
-        return Promise.resolve({
-          ok: true,
-          json: vi.fn().mockResolvedValue({
-            keys: [
-              {
-                kty: 'RSA',
-                use: 'sig',
-                kid: 'test-key-id',
-                n: 'test-modulus',
-                e: 'AQAB'
-              }
-            ]
-          })
-        })
-      }
-      return Promise.reject(new Error('Unmocked URL: ' + url))
-    })
 
     mockServer = {
       register: vi.fn().mockResolvedValue(undefined),
@@ -97,18 +53,17 @@ describe('#defraId', () => {
       app: {}
     }
 
-    // Create defraId plugin with mock verifyToken
     defraId = createDefraId(mockVerifyToken)
   })
 
   afterEach(() => {
     vi.resetAllMocks()
-    config.reset('defraId.clientId')
-    config.reset('defraId.clientSecret')
-    config.reset('defraId.oidcConfigurationUrl')
-    config.reset('defraId.serviceId')
-    config.reset('session.cookie.password')
-    config.reset('session.cookie.secure')
+    appConfig.reset('defraId.clientId')
+    appConfig.reset('defraId.clientSecret')
+    appConfig.reset('defraId.oidcConfigurationUrl')
+    appConfig.reset('defraId.serviceId')
+    appConfig.reset('session.cookie.password')
+    appConfig.reset('session.cookie.secure')
   })
 
   describe('plugin metadata', () => {
@@ -118,42 +73,34 @@ describe('#defraId', () => {
   })
 
   describe('getOidcConfiguration', () => {
-    it('should fetch OIDC configuration successfully', async () => {
-      await defraId.plugin.register(mockServer)
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        'http://test.auth/.well-known/openid-configuration'
+    it('should throw error when OIDC configuration fetch fails', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get(
+          'http://defra-id.auth/.well-known/openid-configuration',
+          () => new HttpResponse(null, { status: 404, statusText: 'Not Found' })
+        )
       )
-    })
-
-    it('should throw error when OIDC configuration fetch fails', async () => {
-      mockFetch.mockImplementation((url) => {
-        if (url.includes('openid-configuration')) {
-          return Promise.resolve({
-            ok: false,
-            status: 404,
-            statusText: 'Not Found'
-          })
-        }
-        return Promise.reject(new Error('Unmocked URL: ' + url))
-      })
 
       await expect(defraId.plugin.register(mockServer)).rejects.toThrowError(
         'OIDC config fetch failed: 404 Not Found'
       )
     })
 
-    it('should throw error when OIDC configuration fetch returns 500', async () => {
-      mockFetch.mockImplementation((url) => {
-        if (url.includes('openid-configuration')) {
-          return Promise.resolve({
-            ok: false,
-            status: 500,
-            statusText: 'Internal Server Error'
-          })
-        }
-        return Promise.reject(new Error('Unmocked URL: ' + url))
-      })
+    it('should throw error when OIDC configuration fetch returns 500', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get(
+          'http://defra-id.auth/.well-known/openid-configuration',
+          () =>
+            new HttpResponse(null, {
+              status: 500,
+              statusText: 'Internal Server Error'
+            })
+        )
+      )
 
       await expect(defraId.plugin.register(mockServer)).rejects.toThrowError(
         'OIDC config fetch failed: 500 Internal Server Error'
@@ -190,8 +137,8 @@ describe('#defraId', () => {
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
       const config = strategyCall[2]
 
-      expect(config.provider.auth).toBe('http://test.auth/authorize')
-      expect(config.provider.token).toBe('http://test.auth/token')
+      expect(config.provider.auth).toBe('http://defra-id.auth/authorize')
+      expect(config.provider.token).toBe('http://defra-id.auth/token')
     })
 
     it('should configure provider with correct settings', async () => {
@@ -212,57 +159,35 @@ describe('#defraId', () => {
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
       const config = strategyCall[2]
 
-      // providerParams is a function, call it with a mock request
       const params = config.providerParams({ path: '/auth/login' })
 
       expect(params.serviceId).toBe('test-service-id')
     })
 
-    it('should extract query parameters from authorization endpoint and add to providerParams', async () => {
-      // Mock OIDC config with Azure AD B2C style query parameters
-      mockFetch.mockImplementation((url) => {
-        if (url.includes('openid-configuration')) {
-          return Promise.resolve({
-            ok: true,
-            json: vi.fn().mockResolvedValue({
-              issuer: 'http://test.auth',
-              authorization_endpoint:
-                'http://test.auth/authorize?p=b2c_1a_signupsignin',
-              token_endpoint: 'http://test.auth/token',
-              userinfo_endpoint: 'http://test.auth/userinfo',
-              end_session_endpoint: 'http://test.auth/logout',
-              jwks_uri: 'http://test.auth/.well-known/jwks.json'
-            })
+    it('should extract query parameters from authorization endpoint and add to providerParams', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get('http://defra-id.auth/.well-known/openid-configuration', () =>
+          HttpResponse.json({
+            issuer: 'http://defra-id.auth',
+            authorization_endpoint:
+              'http://defra-id.auth/authorize?p=b2c_1a_signupsignin',
+            token_endpoint: 'http://defra-id.auth/token',
+            userinfo_endpoint: 'http://defra-id.auth/userinfo',
+            end_session_endpoint: 'http://defra-id.auth/logout',
+            jwks_uri: 'http://defra-id.auth/.well-known/jwks.json'
           })
-        }
-        if (url.includes('jwks.json')) {
-          return Promise.resolve({
-            ok: true,
-            json: vi.fn().mockResolvedValue({
-              keys: [
-                {
-                  kty: 'RSA',
-                  use: 'sig',
-                  kid: 'test-key-id',
-                  n: 'test-modulus',
-                  e: 'AQAB'
-                }
-              ]
-            })
-          })
-        }
-        return Promise.reject(new Error('Unmocked URL: ' + url))
-      })
+        )
+      )
 
       await defraId.plugin.register(mockServer)
 
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
       const config = strategyCall[2]
 
-      // Base URL should not have query parameters
-      expect(config.provider.auth).toBe('http://test.auth/authorize')
+      expect(config.provider.auth).toBe('http://defra-id.auth/authorize')
 
-      // Query parameters should be in providerParams
       const params = config.providerParams({ path: '/auth/login' })
 
       expect(params).toStrictEqual({
@@ -272,47 +197,29 @@ describe('#defraId', () => {
       })
     })
 
-    it('should handle multiple query parameters in authorization endpoint', async () => {
-      mockFetch.mockImplementation((url) => {
-        if (url.includes('openid-configuration')) {
-          return Promise.resolve({
-            ok: true,
-            json: vi.fn().mockResolvedValue({
-              issuer: 'http://test.auth',
-              authorization_endpoint:
-                'http://test.auth/authorize?p=b2c_1a_signupsignin&custom=value',
-              token_endpoint: 'http://test.auth/token',
-              userinfo_endpoint: 'http://test.auth/userinfo',
-              end_session_endpoint: 'http://test.auth/logout',
-              jwks_uri: 'http://test.auth/.well-known/jwks.json'
-            })
+    it('should handle multiple query parameters in authorization endpoint', async ({
+      msw
+    }) => {
+      msw.use(
+        http.get('http://defra-id.auth/.well-known/openid-configuration', () =>
+          HttpResponse.json({
+            issuer: 'http://defra-id.auth',
+            authorization_endpoint:
+              'http://defra-id.auth/authorize?p=b2c_1a_signupsignin&custom=value',
+            token_endpoint: 'http://defra-id.auth/token',
+            userinfo_endpoint: 'http://defra-id.auth/userinfo',
+            end_session_endpoint: 'http://defra-id.auth/logout',
+            jwks_uri: 'http://defra-id.auth/.well-known/jwks.json'
           })
-        }
-        if (url.includes('jwks.json')) {
-          return Promise.resolve({
-            ok: true,
-            json: vi.fn().mockResolvedValue({
-              keys: [
-                {
-                  kty: 'RSA',
-                  use: 'sig',
-                  kid: 'test-key-id',
-                  n: 'test-modulus',
-                  e: 'AQAB'
-                }
-              ]
-            })
-          })
-        }
-        return Promise.reject(new Error('Unmocked URL: ' + url))
-      })
+        )
+      )
 
       await defraId.plugin.register(mockServer)
 
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
       const config = strategyCall[2]
 
-      expect(config.provider.auth).toBe('http://test.auth/authorize')
+      expect(config.provider.auth).toBe('http://defra-id.auth/authorize')
 
       const params = config.providerParams({ path: '/auth/login' })
 
@@ -448,8 +355,8 @@ describe('#defraId', () => {
       expect(mockCredentials.expiresAt).toBe('2025-01-01T00:00:00.000Z')
       expect(mockCredentials.idToken).toBe('mock-id-token')
       expect(mockCredentials.urls).toStrictEqual({
-        token: 'http://test.auth/token',
-        logout: 'http://test.auth/logout'
+        token: 'http://defra-id.auth/token',
+        logout: 'http://defra-id.auth/logout'
       })
     })
 
@@ -489,8 +396,8 @@ describe('#defraId', () => {
 
       expect(mockCredentials.idToken).toBe('id-token-456')
       expect(mockCredentials.urls).toStrictEqual({
-        token: 'http://test.auth/token',
-        logout: 'http://test.auth/logout'
+        token: 'http://defra-id.auth/token',
+        logout: 'http://defra-id.auth/logout'
       })
     })
   })

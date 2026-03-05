@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import fetch from 'node-fetch'
 import { getUserSession } from './get-user-session.js'
 
 /**
@@ -48,5 +47,4 @@ export { refreshIdToken }
 
 /**
  * @import { Request } from '@hapi/hapi'
- * @import { Response } from 'node-fetch'
  */
