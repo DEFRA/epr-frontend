@@ -65,7 +65,7 @@ describe('#createPrnController', () => {
     vi.clearAllMocks()
   })
 
-  describe('when feature is enabled', () => {
+  describe('request handling', () => {
     describe('page rendering', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(

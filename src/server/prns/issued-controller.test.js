@@ -95,7 +95,7 @@ describe('#issuedController', () => {
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPrn)
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     describe('success page (after issuing PRN)', () => {
       it('displays success page with PRN issued heading and recipient', async ({
         server

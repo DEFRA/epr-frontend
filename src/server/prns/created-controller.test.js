@@ -177,7 +177,7 @@ describe('#createdController', () => {
     })
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     describe('success page (after creating PRN)', () => {
       it('displays success page with PRN created heading', async ({
         server

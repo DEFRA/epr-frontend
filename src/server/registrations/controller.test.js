@@ -758,7 +758,7 @@ describe('#accreditationDashboardController', () => {
       ).mockResolvedValue(glassApproved)
     })
 
-    describe('when feature flag is enabled', () => {
+    describe('request handling', () => {
       it.for([
         {
           name: 'PRN (reprocessor)',

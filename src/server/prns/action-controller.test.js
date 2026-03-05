@@ -126,7 +126,7 @@ describe('#actionController', () => {
     )
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     it('displays PRN details on the action page', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',

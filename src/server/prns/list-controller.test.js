@@ -147,7 +147,7 @@ describe('#listPrnsController', () => {
     vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
   })
 
-  describe('when feature is enabled', () => {
+  describe('request handling', () => {
     describe('page rendering', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(

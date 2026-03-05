@@ -97,7 +97,7 @@ describe('#cancelledController', () => {
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockCancelledPrn)
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     it('displays green panel with PRN cancelled heading', async ({
       server
     }) => {

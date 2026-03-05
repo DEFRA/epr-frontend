@@ -76,7 +76,7 @@ describe('#postCreatePrnController', () => {
     )
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     describe('csrf protection', () => {
       it('should reject POST request without CSRF token', async ({
         server

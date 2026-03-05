@@ -109,7 +109,7 @@ describe('#discardController', () => {
     })
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     describe('GET /discard (confirmation page)', () => {
       it('displays confirmation heading for PRN', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(

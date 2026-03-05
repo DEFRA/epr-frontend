@@ -92,7 +92,7 @@ describe('#deleteController', () => {
     })
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     describe('GET /delete (confirmation page)', () => {
       it('displays confirmation heading for PRN', async ({ server }) => {
         const { result, statusCode } = await server.inject({

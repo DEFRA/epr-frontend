@@ -93,7 +93,7 @@ describe('#cancelController', () => {
     })
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     describe('GET /cancel (confirmation page)', () => {
       it('displays confirmation heading', async ({ server }) => {
         const { result, statusCode } = await server.inject({

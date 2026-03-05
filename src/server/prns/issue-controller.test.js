@@ -79,7 +79,7 @@ describe('#issueController', () => {
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnIssued)
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     it('updates PRN status to awaiting_acceptance and redirects to issued page', async ({
       server
     }) => {

@@ -153,7 +153,7 @@ describe('#viewController', () => {
     })
   })
 
-  describe('when feature flag is enabled', () => {
+  describe('request handling', () => {
     describe('view existing PRN (from list page)', () => {
       it('displays PRN details from backend', async ({ server }) => {
         const { result, statusCode } = await server.inject({
