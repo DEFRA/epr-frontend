@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
@@ -181,10 +180,6 @@ export const postController = {
     validate: {
       payload: payloadSchema,
       failAction: async (request, h, error) => {
-        if (!config.get('featureFlags.prns')) {
-          throw Boom.notFound()
-        }
-
         const { organisationId, registrationId, accreditationId } =
           request.params
         const session = request.auth.credentials
@@ -234,10 +229,6 @@ export const postController = {
     }
   },
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
     const { tonnage, recipient, notes } = request.payload
