@@ -129,7 +129,7 @@ function isWithin10Seconds(date) {
 }
 
 function isWithin5Minutes(date) {
-  return isPast(subMinutes(date, 5))
+  return isPast(subMinutes(date, 5)) // NOSONAR: 5 is not a magic number in this context, it is a specific time threshold for refreshing the token
 }
 
 export { createSessionCookie }
