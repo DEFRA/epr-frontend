@@ -177,225 +177,233 @@ describe('#createdController', () => {
     })
   })
 
-  describe('success page (after creating PRN)', () => {
-    it('displays success page with PRN created heading', async ({ server }) => {
-      const { cookies } = await createPrnAndConfirm(server)
+  describe('when feature flag is enabled', () => {
+    describe('success page (after creating PRN)', () => {
+      it('displays success page with PRN created heading', async ({
+        server
+      }) => {
+        const { cookies } = await createPrnAndConfirm(server)
 
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /PRN created/i)).toBeDefined()
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('displays status awaiting authorisation in panel', async ({
+        server
+      }) => {
+        const { cookies } = await createPrnAndConfirm(server)
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
 
-      expect(getByText(main, /PRN created/i)).toBeDefined()
-    })
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const panel = body.querySelector('.govuk-panel--confirmation')
 
-    it('displays status awaiting authorisation in panel', async ({
-      server
-    }) => {
-      const { cookies } = await createPrnAndConfirm(server)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        expect(panel.textContent).toContain('Status:')
+        expect(panel.textContent).toContain('Awaiting authorisation')
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const panel = body.querySelector('.govuk-panel--confirmation')
+      it('displays View PRN button that opens in new tab', async ({
+        server
+      }) => {
+        const { cookies } = await createPrnAndConfirm(server)
 
-      expect(panel.textContent).toContain('Status:')
-      expect(panel.textContent).toContain('Awaiting authorisation')
-    })
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
 
-    it('displays View PRN button that opens in new tab', async ({ server }) => {
-      const { cookies } = await createPrnAndConfirm(server)
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const viewButton = getByText(main, /View PRN \(opens in a new tab\)/i)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        expect(viewButton).toBeDefined()
+        expect(viewButton.getAttribute('target')).toBe('_blank')
+        expect(viewButton.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
+        )
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-      const viewButton = getByText(main, /View PRN \(opens in a new tab\)/i)
+      it('displays what happens next section with waste balance message', async ({
+        server
+      }) => {
+        const { cookies } = await createPrnAndConfirm(server)
 
-      expect(viewButton).toBeDefined()
-      expect(viewButton.getAttribute('target')).toBe('_blank')
-      expect(viewButton.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/view`
-      )
-    })
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
 
-    it('displays what happens next section with waste balance message', async ({
-      server
-    }) => {
-      const { cookies } = await createPrnAndConfirm(server)
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        expect(getByText(main, /What happens next/i)).toBeDefined()
+        expect(
+          getByText(main, /Your available waste balance has been updated/i)
+        ).toBeDefined()
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('displays PRNs page link within issue text', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
 
-      expect(getByText(main, /What happens next/i)).toBeDefined()
-      expect(
-        getByText(main, /Your available waste balance has been updated/i)
-      ).toBeDefined()
-    })
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
 
-    it('displays PRNs page link within issue text', async ({ server }) => {
-      const { cookies } = await createPrnAndConfirm(server)
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const prnsPageLink = getByText(main, /PRNs page/i)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        expect(prnsPageLink).toBeDefined()
+        expect(prnsPageLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
+        )
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-      const prnsPageLink = getByText(main, /PRNs page/i)
+      it('displays Create another PRN link', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
 
-      expect(prnsPageLink).toBeDefined()
-      expect(prnsPageLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
-      )
-    })
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
 
-    it('displays Create another PRN link', async ({ server }) => {
-      const { cookies } = await createPrnAndConfirm(server)
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const createAnotherLink = getByText(main, /Create another PRN/i)
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        expect(createAnotherLink).toBeDefined()
+        expect(createAnotherLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
+        )
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-      const createAnotherLink = getByText(main, /Create another PRN/i)
+      it('displays return to home link', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
 
-      expect(createAnotherLink).toBeDefined()
-      expect(createAnotherLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
-      )
-    })
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
 
-    it('displays return to home link', async ({ server }) => {
-      const { cookies } = await createPrnAndConfirm(server)
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        const returnLink = getByText(main, /Return to home/i)
+
+        expect(returnLink).toBeDefined()
+        expect(returnLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}`
+        )
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('displays PERN text for exporter wasteProcessingType', async ({
+        server
+      }) => {
+        // Set up exporter fixture for PERN
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+        vi.mocked(updatePrnStatus).mockResolvedValue(mockPernStatusUpdated)
 
-      const returnLink = getByText(main, /Return to home/i)
+        const exporterPayload = {
+          ...validPayload,
+          wasteProcessingType: 'exporter'
+        }
 
-      expect(returnLink).toBeDefined()
-      expect(returnLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}`
-      )
-    })
+        const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/view`
+        const { cookies } = await createPrnAndConfirm(
+          server,
+          exporterPayload,
+          pernViewUrl
+        )
 
-    it('displays PERN text for exporter wasteProcessingType', async ({
-      server
-    }) => {
-      // Set up exporter fixture for PERN
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
-      vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
-      vi.mocked(updatePrnStatus).mockResolvedValue(mockPernStatusUpdated)
+        const { result } = await server.inject({
+          method: 'GET',
+          url: pernCreatedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
 
-      const exporterPayload = {
-        ...validPayload,
-        wasteProcessingType: 'exporter'
-      }
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
 
-      const pernViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${pernId}/view`
-      const { cookies } = await createPrnAndConfirm(
-        server,
-        exporterPayload,
-        pernViewUrl
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: pernCreatedUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        expect(getByText(main, /PERN created/i)).toBeDefined()
+        expect(
+          getByText(main, /View PERN \(opens in a new tab\)/i)
+        ).toBeDefined()
+        expect(getByText(main, /PERNs page/i)).toBeDefined()
+        expect(getByText(main, /Create another PERN/i)).toBeDefined()
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('redirects to view when no session data', async ({ server }) => {
+        const { cookie: csrfCookie } = await getCsrfToken(server, createUrl, {
+          auth: mockAuth
+        })
 
-      expect(getByText(main, /PERN created/i)).toBeDefined()
-      expect(getByText(main, /View PERN \(opens in a new tab\)/i)).toBeDefined()
-      expect(getByText(main, /PERNs page/i)).toBeDefined()
-      expect(getByText(main, /Create another PERN/i)).toBeDefined()
-    })
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie }
+        })
 
-    it('redirects to view when no session data', async ({ server }) => {
-      const { cookie: csrfCookie } = await getCsrfToken(server, createUrl, {
-        auth: mockAuth
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(viewUrl)
       })
 
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: createdUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie }
+      it('redirects to view when session ID mismatch', async ({ server }) => {
+        const { cookies } = await createPrnAndConfirm(server)
+
+        // Try to access created page with different prnId
+        const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-id/created`
+        const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-id/view`
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: differentCreatedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(differentViewUrl)
       })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(viewUrl)
-    })
-
-    it('redirects to view when session ID mismatch', async ({ server }) => {
-      const { cookies } = await createPrnAndConfirm(server)
-
-      // Try to access created page with different prnId
-      const differentCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-id/created`
-      const differentViewUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/different-id/view`
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: differentCreatedUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(differentViewUrl)
     })
   })
 })

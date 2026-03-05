@@ -76,556 +76,562 @@ describe('#postCreatePrnController', () => {
     )
   })
 
-  describe('csrf protection', () => {
-    it('should reject POST request without CSRF token', async ({ server }) => {
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        payload: validPayload
+  describe('when feature flag is enabled', () => {
+    describe('csrf protection', () => {
+      it('should reject POST request without CSRF token', async ({
+        server
+      }) => {
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          payload: validPayload
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
       })
-
-      expect(statusCode).toBe(statusCodes.forbidden)
-    })
-  })
-
-  describe('with valid payload', () => {
-    it('creates PRN draft and redirects to check page', async ({ server }) => {
-      vi.mocked(createPrn).mockResolvedValue({
-        id: 'prn-789',
-        tonnage: 100,
-        material: 'plastic',
-        status: 'draft',
-        wasteProcessingType: 'reprocessor',
-        processToBeUsed: 'R3',
-        isDecemberWaste: false
-      })
-
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-789/view`
-      )
     })
 
-    it('calls createPrn with correct parameters', async ({ server }) => {
-      vi.mocked(createPrn).mockResolvedValue({
-        id: 'prn-789',
-        tonnage: 100,
-        material: 'plastic',
-        status: 'draft',
-        wasteProcessingType: 'reprocessor',
-        processToBeUsed: 'R3',
-        isDecemberWaste: false
-      })
-
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      expect(createPrn).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        accreditationId,
-        {
-          issuedToOrganisation: {
-            id: validPayload.recipient,
-            name: 'Bigco Packaging Ltd',
-            tradingName: undefined,
-            registrationType: 'LARGE_PRODUCER'
-          },
+    describe('with valid payload', () => {
+      it('creates PRN draft and redirects to check page', async ({
+        server
+      }) => {
+        vi.mocked(createPrn).mockResolvedValue({
+          id: 'prn-789',
           tonnage: 100,
-          notes: 'Test notes'
-        },
-        'mock-id-token'
-      )
-    })
+          material: 'plastic',
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
+        })
 
-    it('omits notes when notes is empty', async ({ server }) => {
-      vi.mocked(createPrn).mockResolvedValue({
-        id: 'prn-789',
-        tonnage: 100,
-        material: 'plastic',
-        status: 'draft',
-        wasteProcessingType: 'reprocessor',
-        processToBeUsed: 'R3',
-        isDecemberWaste: false
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/prn-789/view`
+        )
       })
 
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
+      it('calls createPrn with correct parameters', async ({ server }) => {
+        vi.mocked(createPrn).mockResolvedValue({
+          id: 'prn-789',
+          tonnage: 100,
+          material: 'plastic',
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
+        })
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        expect(createPrn).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          {
+            issuedToOrganisation: {
+              id: validPayload.recipient,
+              name: 'Bigco Packaging Ltd',
+              tradingName: undefined,
+              registrationType: 'LARGE_PRODUCER'
+            },
+            tonnage: 100,
+            notes: 'Test notes'
+          },
+          'mock-id-token'
+        )
       })
 
-      await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, notes: '', crumb }
+      it('omits notes when notes is empty', async ({ server }) => {
+        vi.mocked(createPrn).mockResolvedValue({
+          id: 'prn-789',
+          tonnage: 100,
+          material: 'plastic',
+          status: 'draft',
+          wasteProcessingType: 'reprocessor',
+          processToBeUsed: 'R3',
+          isDecemberWaste: false
+        })
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, notes: '', crumb }
+        })
+
+        expect(createPrn).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          expect.objectContaining({
+            notes: undefined
+          }),
+          'mock-id-token'
+        )
       })
 
-      expect(createPrn).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        accreditationId,
-        expect.objectContaining({
-          notes: undefined
-        }),
-        'mock-id-token'
-      )
-    })
+      it('should re-render form with inline error when recipient not in organisations list', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
 
-    it('should re-render form with inline error when recipient not in organisations list', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
+        const unknownRecipient = 'unknown-recipient-id'
 
-      const unknownRecipient = 'unknown-recipient-id'
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, recipient: unknownRecipient, crumb }
+        })
 
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, recipient: unknownRecipient, crumb }
-      })
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(createPrn).not.toHaveBeenCalled()
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(createPrn).not.toHaveBeenCalled()
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+        // Error summary should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(
+            errorSummary,
+            'Select a valid packaging producer or compliance scheme'
+          )
+        ).toBeDefined()
 
-      // Error summary should be displayed
-      const errorSummary = main.querySelector('.govuk-error-summary')
-      expect(
-        getByText(
-          errorSummary,
+        // Inline error against recipient field
+        const inlineError = body.querySelector('#recipient-error')
+        expect(inlineError.textContent).toContain(
           'Select a valid packaging producer or compliance scheme'
         )
-      ).toBeDefined()
-
-      // Inline error against recipient field
-      const inlineError = body.querySelector('#recipient-error')
-      expect(inlineError.textContent).toContain(
-        'Select a valid packaging producer or compliance scheme'
-      )
-    })
-  })
-
-  describe('with invalid payload', () => {
-    it('shows "Enter PRN tonnage as a whole number" when tonnage is empty', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
       })
-
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: '', crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const errorSummary = body.querySelector('.govuk-error-summary')
-
-      expect(
-        getByText(errorSummary, 'Enter PRN tonnage as a whole number')
-      ).toBeDefined()
     })
 
-    it('shows "Enter PRN tonnage as a whole number" when tonnage is not a number', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
+    describe('with invalid payload', () => {
+      it('shows "Enter PRN tonnage as a whole number" when tonnage is empty', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
       })
 
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: 'abc', crumb }
+      it('shows "Enter PRN tonnage as a whole number" when tonnage is not a number', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: 'abc', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('shows "Enter PRN tonnage as a whole number" when tonnage is a decimal', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const errorSummary = body.querySelector('.govuk-error-summary')
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '1.5', crumb }
+        })
 
-      expect(
-        getByText(errorSummary, 'Enter PRN tonnage as a whole number')
-      ).toBeDefined()
-    })
+        expect(statusCode).toBe(statusCodes.ok)
 
-    it('shows "Enter PRN tonnage as a whole number" when tonnage is a decimal', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
       })
 
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: '1.5', crumb }
+      it('shows "Enter PRN tonnage as a whole number greater than zero" when tonnage is zero', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '0', crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(
+            errorSummary,
+            'Enter PRN tonnage as a whole number greater than zero'
+          )
+        ).toBeDefined()
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('shows "Enter a packaging producer or compliance scheme" when recipient is missing', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const errorSummary = body.querySelector('.govuk-error-summary')
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, recipient: '', crumb }
+        })
 
-      expect(
-        getByText(errorSummary, 'Enter PRN tonnage as a whole number')
-      ).toBeDefined()
-    })
+        expect(statusCode).toBe(statusCodes.ok)
 
-    it('shows "Enter PRN tonnage as a whole number greater than zero" when tonnage is zero', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(
+            errorSummary,
+            'Enter a packaging producer or compliance scheme'
+          )
+        ).toBeDefined()
       })
 
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: '0', crumb }
+      it('shows "Enter a maximum of 200 characters" when notes are too long', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, notes: 'x'.repeat(201), crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(errorSummary, 'Enter a maximum of 200 characters')
+        ).toBeDefined()
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const errorSummary = body.querySelector('.govuk-error-summary')
-
-      expect(
-        getByText(
-          errorSummary,
-          'Enter PRN tonnage as a whole number greater than zero'
+      it('shows PERN-specific tonnage error for exporter registrations', async ({
+        server
+      }) => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
         )
-      ).toBeDefined()
-    })
 
-    it('shows "Enter a packaging producer or compliance scheme" when recipient is missing', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            ...validPayload,
+            tonnage: '',
+            wasteProcessingType: 'exporter',
+            crumb
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const errorSummary = body.querySelector('.govuk-error-summary')
+
+        expect(
+          getByText(errorSummary, 'Enter PERN tonnage as a whole number')
+        ).toBeDefined()
       })
 
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, recipient: '', crumb }
-      })
+      it('shows tonnage error inline next to the field', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
 
-      expect(statusCode).toBe(statusCodes.ok)
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const errorSummary = body.querySelector('.govuk-error-summary')
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const inlineError = body.querySelector('#tonnage-error')
 
-      expect(
-        getByText(
-          errorSummary,
-          'Enter a packaging producer or compliance scheme'
+        expect(inlineError.textContent).toContain(
+          'Enter PRN tonnage as a whole number'
         )
-      ).toBeDefined()
-    })
-
-    it('shows "Enter a maximum of 200 characters" when notes are too long', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
       })
 
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, notes: 'x'.repeat(201), crumb }
+      it('preserves form values on validation error', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const notesField = getByRole(main, 'textbox', { name: /notes/i })
+
+        expect(notesField.value).toBe('Test notes')
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('should preserve recipient selection on validation error', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const errorSummary = body.querySelector('.govuk-error-summary')
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
 
-      expect(
-        getByText(errorSummary, 'Enter a maximum of 200 characters')
-      ).toBeDefined()
-    })
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const selectedOption = body.querySelector('#recipient option[selected]')
 
-    it('shows PERN-specific tonnage error for exporter registrations', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
-
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: {
-          ...validPayload,
-          tonnage: '',
-          wasteProcessingType: 'exporter',
-          crumb
-        }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const errorSummary = body.querySelector('.govuk-error-summary')
-
-      expect(
-        getByText(errorSummary, 'Enter PERN tonnage as a whole number')
-      ).toBeDefined()
-    })
-
-    it('shows tonnage error inline next to the field', async ({ server }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: '', crumb }
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const inlineError = body.querySelector('#tonnage-error')
-
-      expect(inlineError.textContent).toContain(
-        'Enter PRN tonnage as a whole number'
-      )
-    })
-
-    it('preserves form values on validation error', async ({ server }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: '', crumb }
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      const notesField = getByRole(main, 'textbox', { name: /notes/i })
-
-      expect(notesField.value).toBe('Test notes')
-    })
-
-    it('should preserve recipient selection on validation error', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: '', crumb }
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const selectedOption = body.querySelector('#recipient option[selected]')
-
-      expect(selectedOption.value).toBe(validPayload.recipient)
-    })
-  })
-
-  describe('waste balance on error', () => {
-    beforeEach(() => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureReprocessor
-      )
-      vi.mocked(getWasteBalance).mockResolvedValue({
-        amount: 1000,
-        availableAmount: 500
+        expect(selectedOption.value).toBe(validPayload.recipient)
       })
     })
 
-    it('should display waste balance hint when form fails schema validation', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, tonnage: '', crumb }
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      // Validation error should be displayed
-      const errorSummary = main.querySelector('.govuk-error-summary')
-      expect(
-        getByText(errorSummary, 'Enter PRN tonnage as a whole number')
-      ).toBeDefined()
-
-      // Waste balance hint should still be visible
-      const insetText = main.querySelector('.govuk-inset-text')
-      expect(insetText).not.toBeNull()
-      expect(insetText.textContent).toContain('500.00')
-      expect(insetText.textContent).toContain('PRNs')
-
-      // Back link should have correct URL
-      const backLink = body.querySelector('.govuk-back-link')
-      expect(backLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}`
-      )
-    })
-
-    it('should display waste balance hint when recipient not found in organisations list', async ({
-      server
-    }) => {
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, recipient: 'unknown-id', crumb }
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      // Recipient error should be displayed
-      const errorSummary = main.querySelector('.govuk-error-summary')
-      expect(
-        getByText(
-          errorSummary,
-          'Select a valid packaging producer or compliance scheme'
+    describe('waste balance on error', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
         )
-      ).toBeDefined()
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+      })
 
-      // Waste balance hint should still be visible
-      const insetText = main.querySelector('.govuk-inset-text')
-      expect(insetText).not.toBeNull()
-      expect(insetText.textContent).toContain('500.00')
-      expect(insetText.textContent).toContain('PRNs')
+      it('should display waste balance hint when form fails schema validation', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
 
-      // Back link should have correct URL
-      const backLink = body.querySelector('.govuk-back-link')
-      expect(backLink.getAttribute('href')).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}`
-      )
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, tonnage: '', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Validation error should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(errorSummary, 'Enter PRN tonnage as a whole number')
+        ).toBeDefined()
+
+        // Waste balance hint should still be visible
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('500.00')
+        expect(insetText.textContent).toContain('PRNs')
+
+        // Back link should have correct URL
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}`
+        )
+      })
+
+      it('should display waste balance hint when recipient not found in organisations list', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, recipient: 'unknown-id', crumb }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Recipient error should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(
+          getByText(
+            errorSummary,
+            'Select a valid packaging producer or compliance scheme'
+          )
+        ).toBeDefined()
+
+        // Waste balance hint should still be visible
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('500.00')
+        expect(insetText.textContent).toContain('PRNs')
+
+        // Back link should have correct URL
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}`
+        )
+      })
     })
-  })
 
-  describe('when API call fails', () => {
-    it('throws error when createPrn fails', async ({ server }) => {
-      vi.mocked(createPrn).mockRejectedValue(new Error('API error'))
+    describe('when API call fails', () => {
+      it('throws error when createPrn fails', async ({ server }) => {
+        vi.mocked(createPrn).mockRejectedValue(new Error('API error'))
 
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
       })
 
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, crumb }
+      it('rethrows Boom errors from createPrn', async ({ server }) => {
+        vi.mocked(createPrn).mockRejectedValue(Boom.badRequest('Invalid'))
+
+        const { cookie, crumb } = await getCsrfToken(server, url, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.badRequest)
       })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
-    it('rethrows Boom errors from createPrn', async ({ server }) => {
-      vi.mocked(createPrn).mockRejectedValue(Boom.badRequest('Invalid'))
-
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url,
-        auth: mockAuth,
-        headers: { cookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
     })
   })
 })

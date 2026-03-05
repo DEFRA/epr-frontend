@@ -65,253 +65,15 @@ describe('#createPrnController', () => {
     vi.clearAllMocks()
   })
 
-  describe('page rendering', () => {
-    beforeEach(() => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureReprocessor
-      )
-    })
-
-    it('should render back link to registration page', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const backLink = body.querySelector('.govuk-back-link')
-      expect(backLink).not.toBeNull()
-      expect(backLink.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001'
-      )
-    })
-
-    it('should render page with correct title and heading', async ({
-      server
-    }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body, title } = dom.window.document
-
-      expect(title).toMatch(/Create a PRN/i)
-
-      const main = getByRole(body, 'main')
-      const heading = getByRole(main, 'heading', { level: 1 })
-
-      expect(heading.textContent).toContain('Create a PRN')
-    })
-
-    it('should render material type display', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      expect(getByText(main, /Material:/i)).toBeDefined()
-      expect(getByText(main, 'Glass remelt')).toBeDefined()
-    })
-
-    it('should render tonnage input field with suffix', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      const tonnageInput = getByLabelText(main, /Enter PRN tonnage/i)
-
-      expect(tonnageInput).toBeDefined()
-      expect(tonnageInput.getAttribute('type')).toBe('text')
-      expect(
-        getByText(main, /Enter a whole number without decimal places/i)
-      ).toBeDefined()
-      expect(getByText(main, 'tonnes')).toBeDefined()
-    })
-
-    it('should render recipient select field with options', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      expect(
-        getByText(main, /Enter who this PRN will be issued to/i)
-      ).toBeDefined()
-
-      expect(
-        getByText(
-          main,
-          /Start typing the name of the packaging producer or compliance scheme/i
-        )
-      ).toBeDefined()
-
-      const recipientSelect = getByRole(main, 'combobox', {
-        name: /Enter who this PRN will be issued to/i
-      })
-
-      expect(recipientSelect.options.length).toBeGreaterThan(1)
-    })
-
-    it('should render help text details component with bullet list', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const main = getByRole(body, 'main')
-      const details = main.querySelector('details')
-
-      expect(details).not.toBeNull()
-      expect(
-        getByText(details, "Can't find the producer or compliance scheme?")
-      ).toBeDefined()
-
-      const detailsContent = within(details)
-
-      expect(
-        detailsContent.getByText(/PRNs can only be issued to/i)
-      ).toBeDefined()
-
-      const bulletList = details.querySelector('.govuk-list--bullet')
-      expect(bulletList).not.toBeNull()
-      expect(bulletList.querySelectorAll('li')).toHaveLength(2)
-    })
-
-    it('should render notes with character count component', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      expect(getByText(main, /Add issuer notes \(optional\)/i)).toBeDefined()
-
-      expect(
-        getByText(main, /These notes will appear on the PRN/i)
-      ).toBeDefined()
-
-      const notesTextarea = getByRole(main, 'textbox', {
-        name: /Add issuer notes/i
-      })
-
-      expect(notesTextarea).toBeDefined()
-      expect(
-        getByText(main, /You can enter up to 200 characters/i)
-      ).toBeDefined()
-    })
-
-    it('should fetch registration data with correct parameters', async ({
-      server
-    }) => {
-      await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith({
-        organisationId: 'org-123',
-        registrationId: 'reg-001',
-        idToken: 'mock-id-token',
-        logger: expect.objectContaining({}),
-        accreditationId: 'acc-001'
-      })
-    })
-  })
-
-  describe('error handling', () => {
-    it('should return 404 when registration not found', async ({ server }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
-        Boom.notFound('Registration not found')
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/org-123/registrations/reg-nonexistent/accreditations/acc-001/packaging-recycling-notes/create',
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-
-    it('should return 404 when registration has no accreditation', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
-        Boom.notFound('Not accredited for this registration')
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-  })
-
-  describe('authentication', () => {
-    it('should redirect to login when not authenticated', async ({
-      server
-    }) => {
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe('/logged-out')
-    })
-  })
-
-  describe('dynamic PRN/PERN text', () => {
-    describe('for reprocessor (PRN)', () => {
+  describe('when feature is enabled', () => {
+    describe('page rendering', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
       })
 
-      it('should display PRN in title and heading', async ({ server }) => {
+      it('should render back link to registration page', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: reprocessorUrl,
@@ -319,16 +81,53 @@ describe('#createPrnController', () => {
         })
 
         const dom = new JSDOM(result)
-        const { body, title } = dom.window.document
-        const main = getByRole(body, 'main')
+        const { body } = dom.window.document
 
-        expect(title).toContain('Create a PRN')
-        expect(getByRole(main, 'heading', { level: 1 }).textContent).toContain(
-          'Create a PRN'
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink).not.toBeNull()
+        expect(backLink.getAttribute('href')).toBe(
+          '/organisations/org-123/registrations/reg-001'
         )
       })
 
-      it('should display PRN in form labels and help text', async ({
+      it('should render page with correct title and heading', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body, title } = dom.window.document
+
+        expect(title).toMatch(/Create a PRN/i)
+
+        const main = getByRole(body, 'main')
+        const heading = getByRole(main, 'heading', { level: 1 })
+
+        expect(heading.textContent).toContain('Create a PRN')
+      })
+
+      it('should render material type display', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /Material:/i)).toBeDefined()
+        expect(getByText(main, 'Glass remelt')).toBeDefined()
+      })
+
+      it('should render tonnage input field with suffix', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -340,212 +139,419 @@ describe('#createPrnController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
-        const details = main.querySelector('details')
 
-        expect(getByText(main, /Enter PRN tonnage/i)).toBeDefined()
+        const tonnageInput = getByLabelText(main, /Enter PRN tonnage/i)
+
+        expect(tonnageInput).toBeDefined()
+        expect(tonnageInput.getAttribute('type')).toBe('text')
+        expect(
+          getByText(main, /Enter a whole number without decimal places/i)
+        ).toBeDefined()
+        expect(getByText(main, 'tonnes')).toBeDefined()
+      })
+
+      it('should render recipient select field with options', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
         expect(
           getByText(main, /Enter who this PRN will be issued to/i)
         ).toBeDefined()
-        expect(
-          getByText(main, /These notes will appear on the PRN/i)
-        ).toBeDefined()
-        expect(
-          within(details).getByText(/PRNs can only be issued to/i)
-        ).toBeDefined()
-      })
-    })
 
-    describe('for exporter (PERN)', () => {
-      beforeEach(() => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
-        )
-      })
+        expect(
+          getByText(
+            main,
+            /Start typing the name of the packaging producer or compliance scheme/i
+          )
+        ).toBeDefined()
 
-      it('should display PERN in title and heading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
+        const recipientSelect = getByRole(main, 'combobox', {
+          name: /Enter who this PRN will be issued to/i
         })
 
-        const dom = new JSDOM(result)
-        const { body, title } = dom.window.document
-        const main = getByRole(body, 'main')
-
-        expect(title).toContain('Create a PERN')
-        expect(getByRole(main, 'heading', { level: 1 }).textContent).toContain(
-          'Create a PERN'
-        )
+        expect(recipientSelect.options.length).toBeGreaterThan(1)
       })
 
-      it('should display PERN in form labels and help text', async ({
+      it('should render help text details component with bullet list', async ({
         server
       }) => {
         const { result } = await server.inject({
           method: 'GET',
-          url: exporterUrl,
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const main = getByRole(body, 'main')
+        const details = main.querySelector('details')
+
+        expect(details).not.toBeNull()
+        expect(
+          getByText(details, "Can't find the producer or compliance scheme?")
+        ).toBeDefined()
+
+        const detailsContent = within(details)
+
+        expect(
+          detailsContent.getByText(/PRNs can only be issued to/i)
+        ).toBeDefined()
+
+        const bulletList = details.querySelector('.govuk-list--bullet')
+        expect(bulletList).not.toBeNull()
+        expect(bulletList.querySelectorAll('li')).toHaveLength(2)
+      })
+
+      it('should render notes with character count component', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
           auth: mockAuth
         })
 
         const dom = new JSDOM(result)
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
-        const details = main.querySelector('details')
 
-        expect(getByText(main, /Enter PERN tonnage/i)).toBeDefined()
+        expect(getByText(main, /Add issuer notes \(optional\)/i)).toBeDefined()
+
         expect(
-          getByText(main, /Enter who this PERN will be issued to/i)
+          getByText(main, /These notes will appear on the PRN/i)
         ).toBeDefined()
+
+        const notesTextarea = getByRole(main, 'textbox', {
+          name: /Add issuer notes/i
+        })
+
+        expect(notesTextarea).toBeDefined()
         expect(
-          getByText(main, /These notes will appear on the PERN/i)
-        ).toBeDefined()
-        expect(
-          within(details).getByText(/PERNs can only be issued to/i)
+          getByText(main, /You can enter up to 200 characters/i)
         ).toBeDefined()
       })
-    })
-  })
 
-  describe('waste balance display', () => {
-    beforeEach(() => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureReprocessor
-      )
-      vi.mocked(getWasteBalance).mockResolvedValue({
-        amount: 1000,
-        availableAmount: 500
+      it('should fetch registration data with correct parameters', async ({
+        server
+      }) => {
+        await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith({
+          organisationId: 'org-123',
+          registrationId: 'reg-001',
+          idToken: 'mock-id-token',
+          logger: expect.objectContaining({}),
+          accreditationId: 'acc-001'
+        })
       })
     })
 
-    it('should display available waste balance in inset text', async ({
-      server
-    }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      const insetText = main.querySelector('.govuk-inset-text')
-      expect(insetText).not.toBeNull()
-      expect(insetText.textContent).toContain('500.00')
-      expect(insetText.textContent).toContain('PRNs')
-    })
-
-    it('should display waste balance with PERN text for exporters', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
-      vi.mocked(getWasteBalance).mockResolvedValue({
-        amount: 2000,
-        availableAmount: 800
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      const insetText = main.querySelector('.govuk-inset-text')
-      expect(insetText).not.toBeNull()
-      expect(insetText.textContent).toContain('800.00')
-      expect(insetText.textContent).toContain('PERNs')
-    })
-
-    it('should not display waste balance when fetch fails', async ({
-      server
-    }) => {
-      vi.mocked(getWasteBalance).mockResolvedValue(null)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      const insetText = main.querySelector('.govuk-inset-text')
-      expect(insetText).toBeNull()
-    })
-  })
-
-  describe('insufficient balance error', () => {
-    beforeEach(() => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureReprocessor
-      )
-    })
-
-    it('should display error summary when error=insufficient_balance query param is present', async ({
-      server
-    }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: `${reprocessorUrl}?error=insufficient_balance`,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      // Error summary should be displayed
-      const errorSummary = main.querySelector('.govuk-error-summary')
-      expect(errorSummary).not.toBeNull()
-
-      // Error summary should have correct title
-      expect(getByText(errorSummary, /There is a problem/i)).toBeDefined()
-
-      // Error summary should explain the issue
-      expect(
-        getByText(
-          errorSummary,
-          /The tonnage you entered exceeds your available waste balance/i
+    describe('error handling', () => {
+      it('should return 404 when registration not found', async ({
+        server
+      }) => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+          Boom.notFound('Registration not found')
         )
-      ).toBeDefined()
-    })
 
-    it('should not display error summary when no error query param', async ({
-      server
-    }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/org-123/registrations/reg-nonexistent/accreditations/acc-001/packaging-recycling-notes/create',
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('should return 404 when registration has no accreditation', async ({
+        server
+      }) => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockRejectedValue(
+          Boom.notFound('Not accredited for this registration')
+        )
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
 
-      // Error summary should NOT be displayed
-      const errorSummary = main.querySelector('.govuk-error-summary')
-      expect(errorSummary).toBeNull()
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
+    describe('authentication', () => {
+      it('should redirect to login when not authenticated', async ({
+        server
+      }) => {
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe('/logged-out')
+      })
+    })
+
+    describe('dynamic PRN/PERN text', () => {
+      describe('for reprocessor (PRN)', () => {
+        beforeEach(() => {
+          vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+            fixtureReprocessor
+          )
+        })
+
+        it('should display PRN in title and heading', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: reprocessorUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body, title } = dom.window.document
+          const main = getByRole(body, 'main')
+
+          expect(title).toContain('Create a PRN')
+          expect(
+            getByRole(main, 'heading', { level: 1 }).textContent
+          ).toContain('Create a PRN')
+        })
+
+        it('should display PRN in form labels and help text', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: reprocessorUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const main = getByRole(body, 'main')
+          const details = main.querySelector('details')
+
+          expect(getByText(main, /Enter PRN tonnage/i)).toBeDefined()
+          expect(
+            getByText(main, /Enter who this PRN will be issued to/i)
+          ).toBeDefined()
+          expect(
+            getByText(main, /These notes will appear on the PRN/i)
+          ).toBeDefined()
+          expect(
+            within(details).getByText(/PRNs can only be issued to/i)
+          ).toBeDefined()
+        })
+      })
+
+      describe('for exporter (PERN)', () => {
+        beforeEach(() => {
+          vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+            fixtureExporter
+          )
+        })
+
+        it('should display PERN in title and heading', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: exporterUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body, title } = dom.window.document
+          const main = getByRole(body, 'main')
+
+          expect(title).toContain('Create a PERN')
+          expect(
+            getByRole(main, 'heading', { level: 1 }).textContent
+          ).toContain('Create a PERN')
+        })
+
+        it('should display PERN in form labels and help text', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: exporterUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const main = getByRole(body, 'main')
+          const details = main.querySelector('details')
+
+          expect(getByText(main, /Enter PERN tonnage/i)).toBeDefined()
+          expect(
+            getByText(main, /Enter who this PERN will be issued to/i)
+          ).toBeDefined()
+          expect(
+            getByText(main, /These notes will appear on the PERN/i)
+          ).toBeDefined()
+          expect(
+            within(details).getByText(/PERNs can only be issued to/i)
+          ).toBeDefined()
+        })
+      })
+    })
+
+    describe('waste balance display', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 1000,
+          availableAmount: 500
+        })
+      })
+
+      it('should display available waste balance in inset text', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('500.00')
+        expect(insetText.textContent).toContain('PRNs')
+      })
+
+      it('should display waste balance with PERN text for exporters', async ({
+        server
+      }) => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(getWasteBalance).mockResolvedValue({
+          amount: 2000,
+          availableAmount: 800
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain('800.00')
+        expect(insetText.textContent).toContain('PERNs')
+      })
+
+      it('should not display waste balance when fetch fails', async ({
+        server
+      }) => {
+        vi.mocked(getWasteBalance).mockResolvedValue(null)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const insetText = main.querySelector('.govuk-inset-text')
+        expect(insetText).toBeNull()
+      })
+    })
+
+    describe('insufficient balance error', () => {
+      beforeEach(() => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureReprocessor
+        )
+      })
+
+      it('should display error summary when error=insufficient_balance query param is present', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: `${reprocessorUrl}?error=insufficient_balance`,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Error summary should be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).not.toBeNull()
+
+        // Error summary should have correct title
+        expect(getByText(errorSummary, /There is a problem/i)).toBeDefined()
+
+        // Error summary should explain the issue
+        expect(
+          getByText(
+            errorSummary,
+            /The tonnage you entered exceeds your available waste balance/i
+          )
+        ).toBeDefined()
+      })
+
+      it('should not display error summary when no error query param', async ({
+        server
+      }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        // Error summary should NOT be displayed
+        const errorSummary = main.querySelector('.govuk-error-summary')
+        expect(errorSummary).toBeNull()
+      })
     })
   })
 })

@@ -135,7 +135,7 @@ describe('#accreditationDashboardController', () => {
       })
 
       expect(result).toContain('PRNs')
-      expect(result).toContain('Create new PRN')
+      expect(result).toContain('Create and manage PRNs.')
       expect(result).not.toContain('PERNs')
     })
 
@@ -249,7 +249,7 @@ describe('#accreditationDashboardController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('PERNs')
-      expect(result).toContain('Create new PERN')
+      expect(result).toContain('Create and manage PERNs.')
     })
 
     it('should display back link to exporting tab for exporter', async ({
@@ -758,78 +758,84 @@ describe('#accreditationDashboardController', () => {
       ).mockResolvedValue(glassApproved)
     })
 
-    it.for([
-      {
-        name: 'PRN (reprocessor)',
-        mockData: glassApproved,
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-        title: 'PRNs',
-        description: 'Create and manage PRNs.',
-        createLinkText: 'Create new PRN',
-        manageLinkText: 'Manage PRNs',
-        expectedCreateUrl:
-          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/packaging-recycling-notes/create',
-        expectedManageUrl:
-          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/packaging-recycling-notes'
-      },
-      {
-        name: 'PERN (exporter)',
-        mockData: exporterPlasticApproved,
-        url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
-        title: 'PERNs',
-        description: 'Create and manage PERNs.',
-        createLinkText: 'Create new PERN',
-        manageLinkText: 'Manage PERNs',
-        expectedCreateUrl:
-          '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/accreditations/acc-export-001-plastic-approved/packaging-recycling-notes/create',
-        expectedManageUrl:
-          '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/accreditations/acc-export-001-plastic-approved/packaging-recycling-notes'
-      }
-    ])(
-      'should display $name card with create and manage links',
-      async (
+    describe('when feature flag is enabled', () => {
+      it.for([
         {
-          mockData,
-          url,
-          title,
-          description,
-          createLinkText,
-          manageLinkText,
-          expectedCreateUrl,
-          expectedManageUrl
+          name: 'PRN (reprocessor)',
+          mockData: glassApproved,
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          title: 'PRNs',
+          description: 'Create and manage PRNs.',
+          createLinkText: 'Create new PRN',
+          manageLinkText: 'Manage PRNs',
+          expectedCreateUrl:
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/packaging-recycling-notes/create',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/accreditations/acc-001-glass-approved/packaging-recycling-notes'
         },
-        { server }
-      ) => {
-        vi.mocked(
-          getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
-        ).mockResolvedValue(mockData)
+        {
+          name: 'PERN (exporter)',
+          mockData: exporterPlasticApproved,
+          url: '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved',
+          title: 'PERNs',
+          description: 'Create and manage PERNs.',
+          createLinkText: 'Create new PERN',
+          manageLinkText: 'Manage PERNs',
+          expectedCreateUrl:
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/accreditations/acc-export-001-plastic-approved/packaging-recycling-notes/create',
+          expectedManageUrl:
+            '/organisations/6507f1f77bcf86cd79943902/registrations/reg-export-001-plastic-approved/accreditations/acc-export-001-plastic-approved/packaging-recycling-notes'
+        }
+      ])(
+        'should display $name card with create and manage links',
+        async (
+          {
+            mockData,
+            url,
+            title,
+            description,
+            createLinkText,
+            manageLinkText,
+            expectedCreateUrl,
+            expectedManageUrl
+          },
+          { server }
+        ) => {
+          vi.mocked(
+            getRequiredRegistrationModule.getRequiredRegistrationWithAccreditation
+          ).mockResolvedValue(mockData)
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
 
-        const prnCard = getByRole(body, 'heading', {
-          name: title,
-          level: 3
-        }).closest('.govuk-summary-card')
+          const prnCard = getByRole(body, 'heading', {
+            name: title,
+            level: 3
+          }).closest('.govuk-summary-card')
 
-        const card = within(prnCard)
+          const card = within(prnCard)
 
-        card.getByText(description)
+          card.getByText(description)
 
-        expect(
-          card.getByRole('link', { name: createLinkText }).getAttribute('href')
-        ).toBe(expectedCreateUrl)
+          expect(
+            card
+              .getByRole('link', { name: createLinkText })
+              .getAttribute('href')
+          ).toBe(expectedCreateUrl)
 
-        expect(
-          card.getByRole('link', { name: manageLinkText }).getAttribute('href')
-        ).toBe(expectedManageUrl)
-      }
-    )
+          expect(
+            card
+              .getByRole('link', { name: manageLinkText })
+              .getAttribute('href')
+          ).toBe(expectedManageUrl)
+        }
+      )
+    })
   })
 })

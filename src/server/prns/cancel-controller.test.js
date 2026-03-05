@@ -93,247 +93,251 @@ describe('#cancelController', () => {
     })
   })
 
-  describe('GET /cancel (confirmation page)', () => {
-    it('displays confirmation heading', async ({ server }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
+  describe('when feature flag is enabled', () => {
+    describe('GET /cancel (confirmation page)', () => {
+      it('displays confirmation heading', async ({ server }) => {
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /Confirm cancellation of this PRN/i)
+        ).toBeDefined()
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('displays body text about tonnage being restored', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
 
-      expect(getByText(main, /Confirm cancellation of this PRN/i)).toBeDefined()
-    })
-
-    it('displays body text about tonnage being restored', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
+        expect(
+          getByText(
+            main,
+            /tonnage will be added to your available waste balance/i
+          )
+        ).toBeDefined()
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('displays warning text that action cannot be undone', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
 
-      expect(
-        getByText(
-          main,
-          /tonnage will be added to your available waste balance/i
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(getByText(main, /This action cannot be undone/i)).toBeDefined()
+      })
+
+      it('displays confirm cancellation button with warning style', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const button = getByRole(main, 'button', {
+          name: /Confirm cancellation/i
+        })
+        expect(button).toBeDefined()
+        expect(button.classList.contains('govuk-button--warning')).toBe(true)
+      })
+
+      it('displays back link to action page', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink).toBeDefined()
+        expect(backLink.getAttribute('href')).toBe(`${basePath}/${prnId}`)
+      })
+
+      it('displays PERN wording for exporter registration', async ({
+        server
+      }) => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
         )
-      ).toBeDefined()
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /Confirm cancellation of this PERN/i)
+        ).toBeDefined()
+      })
+
+      it('redirects to list when PRN is not in awaiting_cancellation status', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnIssued)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(listUrl)
+      })
+
+      it('returns 404 when PRN not found', async ({ server }) => {
+        const Boom = await import('@hapi/boom')
+        vi.mocked(fetchPackagingRecyclingNote).mockRejectedValue(
+          Boom.default.notFound('PRN not found')
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: cancelUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
     })
 
-    it('displays warning text that action cannot be undone', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
+    describe('POST /cancel (confirm cancellation)', () => {
+      it('cancels PRN and redirects to success page', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          cancelUrl,
+          { auth: mockAuth }
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: cancelUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(`${basePath}/${prnId}/cancelled`)
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'cancelled' },
+          mockCredentials.idToken
+        )
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('redirects to list when PRN is not in awaiting_cancellation status', async ({
+        server
+      }) => {
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnIssued)
 
-      expect(getByText(main, /This action cannot be undone/i)).toBeDefined()
-    })
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          cancelUrl,
+          { auth: mockAuth }
+        )
 
-    it('displays confirm cancellation button with warning style', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: cancelUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(listUrl)
+        expect(updatePrnStatus).not.toHaveBeenCalled()
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('returns 500 when updatePrnStatus fails with non-Boom error', async ({
+        server
+      }) => {
+        vi.mocked(updatePrnStatus).mockRejectedValueOnce(
+          new Error('Backend error')
+        )
 
-      const button = getByRole(main, 'button', {
-        name: /Confirm cancellation/i
-      })
-      expect(button).toBeDefined()
-      expect(button.classList.contains('govuk-button--warning')).toBe(true)
-    })
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          cancelUrl,
+          { auth: mockAuth }
+        )
 
-    it('displays back link to action page', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
-      })
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: cancelUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const backLink = body.querySelector('.govuk-back-link')
-      expect(backLink).toBeDefined()
-      expect(backLink.getAttribute('href')).toBe(`${basePath}/${prnId}`)
-    })
-
-    it('displays PERN wording for exporter registration', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
+        expect(statusCode).toBe(statusCodes.internalServerError)
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
+        const Boom = await import('@hapi/boom')
+        vi.mocked(updatePrnStatus).mockRejectedValueOnce(
+          Boom.default.forbidden('Not authorised')
+        )
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          cancelUrl,
+          { auth: mockAuth }
+        )
 
-      expect(
-        getByText(main, /Confirm cancellation of this PERN/i)
-      ).toBeDefined()
-    })
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: cancelUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
 
-    it('redirects to list when PRN is not in awaiting_cancellation status', async ({
-      server
-    }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnIssued)
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
+        expect(statusCode).toBe(statusCodes.forbidden)
       })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(listUrl)
-    })
-
-    it('returns 404 when PRN not found', async ({ server }) => {
-      const Boom = await import('@hapi/boom')
-      vi.mocked(fetchPackagingRecyclingNote).mockRejectedValue(
-        Boom.default.notFound('PRN not found')
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: cancelUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-  })
-
-  describe('POST /cancel (confirm cancellation)', () => {
-    it('cancels PRN and redirects to success page', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        cancelUrl,
-        { auth: mockAuth }
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: cancelUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(`${basePath}/${prnId}/cancelled`)
-      expect(updatePrnStatus).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        { status: 'cancelled' },
-        mockCredentials.idToken
-      )
-    })
-
-    it('redirects to list when PRN is not in awaiting_cancellation status', async ({
-      server
-    }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnIssued)
-
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        cancelUrl,
-        { auth: mockAuth }
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: cancelUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(listUrl)
-      expect(updatePrnStatus).not.toHaveBeenCalled()
-    })
-
-    it('returns 500 when updatePrnStatus fails with non-Boom error', async ({
-      server
-    }) => {
-      vi.mocked(updatePrnStatus).mockRejectedValueOnce(
-        new Error('Backend error')
-      )
-
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        cancelUrl,
-        { auth: mockAuth }
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: cancelUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
-    it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
-      const Boom = await import('@hapi/boom')
-      vi.mocked(updatePrnStatus).mockRejectedValueOnce(
-        Boom.default.forbidden('Not authorised')
-      )
-
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        cancelUrl,
-        { auth: mockAuth }
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: cancelUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.forbidden)
     })
   })
 })

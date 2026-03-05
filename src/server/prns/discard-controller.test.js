@@ -109,429 +109,436 @@ describe('#discardController', () => {
     })
   })
 
-  describe('GET /discard (confirmation page)', () => {
-    it('displays confirmation heading for PRN', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
+  describe('when feature flag is enabled', () => {
+    describe('GET /discard (confirmation page)', () => {
+      it('displays confirmation heading for PRN', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
 
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /Are you sure you want to discard this PRN/i)
+        ).toBeDefined()
       })
 
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+      it('displays warning text about discarding', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
 
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /This will discard the PRN you are creating/i)
+        ).toBeDefined()
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      it('displays confirm discard button', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
 
-      expect(
-        getByText(main, /Are you sure you want to discard this PRN/i)
-      ).toBeDefined()
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const button = getByRole(main, 'button', {
+          name: /Discard and start again/i
+        })
+        expect(button).toBeDefined()
+        expect(button.classList.contains('govuk-button--warning')).toBe(true)
+      })
+
+      it('displays back link to check page', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink).toBeDefined()
+        expect(backLink.getAttribute('href')).toBe(viewUrl)
+      })
+
+      it('displays PERN wording for exporter registration', async ({
+        server
+      }) => {
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          fixtureExporter
+        )
+        vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+
+        const exporterPayload = {
+          ...validPayload,
+          wasteProcessingType: 'exporter'
+        }
+
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...exporterPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: pernDiscardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(
+          getByText(main, /Are you sure you want to discard this PERN/i)
+        ).toBeDefined()
+      })
+
+      it('redirects to create when no draft in session', async ({ server }) => {
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: discardUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createUrl)
+      })
+
+      it('redirects to create when draft ID does not match URL', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        // Visit discard URL with a different PRN ID
+        const wrongPrnDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/wrong-prn-id/discard`
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: wrongPrnDiscardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createUrl)
+      })
     })
 
-    it('displays warning text about discarding', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
+    describe('POST /discard (confirm discard)', () => {
+      it('cancels draft PRN and redirects to create page', async ({
+        server
+      }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
 
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createUrl)
+        expect(updatePrnStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          accreditationId,
+          prnId,
+          { status: 'discarded' },
+          mockCredentials.idToken
+        )
       })
 
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+      it('clears draft from session after discard', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const discardResponse = await server.inject({
+          method: 'POST',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        const discardCookieValues = extractCookieValues(
+          discardResponse.headers['set-cookie']
+        )
+        const afterDiscardCookies = mergeCookies(
+          cookies,
+          ...discardCookieValues
+        )
+
+        // After discarding, the discard GET should redirect to create (no draft)
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: afterDiscardCookies }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createUrl)
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('redirects to create when no draft in session', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
 
-      expect(
-        getByText(main, /This will discard the PRN you are creating/i)
-      ).toBeDefined()
-    })
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { crumb }
+        })
 
-    it('displays confirm discard button', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(createUrl)
+        expect(updatePrnStatus).not.toHaveBeenCalled()
       })
 
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+      it('returns 500 when updatePrnStatus fails with non-Boom error', async ({
+        server
+      }) => {
+        vi.mocked(updatePrnStatus).mockRejectedValueOnce(
+          new Error('Backend error')
+        )
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
       })
 
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
+      it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
+        const Boom = await import('@hapi/boom')
+        vi.mocked(updatePrnStatus).mockRejectedValueOnce(
+          Boom.default.forbidden('Not authorised')
+        )
 
-      const button = getByRole(main, 'button', {
-        name: /Discard and start again/i
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: discardUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
       })
-      expect(button).toBeDefined()
-      expect(button.classList.contains('govuk-button--warning')).toBe(true)
-    })
-
-    it('displays back link to check page', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const backLink = body.querySelector('.govuk-back-link')
-      expect(backLink).toBeDefined()
-      expect(backLink.getAttribute('href')).toBe(viewUrl)
-    })
-
-    it('displays PERN wording for exporter registration', async ({
-      server
-    }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
-      )
-      vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
-
-      const exporterPayload = {
-        ...validPayload,
-        wasteProcessingType: 'exporter'
-      }
-
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...exporterPayload, crumb }
-      })
-
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: pernDiscardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      expect(
-        getByText(main, /Are you sure you want to discard this PERN/i)
-      ).toBeDefined()
-    })
-
-    it('redirects to create when no draft in session', async ({ server }) => {
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: discardUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(createUrl)
-    })
-
-    it('redirects to create when draft ID does not match URL', async ({
-      server
-    }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-      // Visit discard URL with a different PRN ID
-      const wrongPrnDiscardUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/wrong-prn-id/discard`
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: wrongPrnDiscardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(createUrl)
-    })
-  })
-
-  describe('POST /discard (confirm discard)', () => {
-    it('cancels draft PRN and redirects to create page', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(createUrl)
-      expect(updatePrnStatus).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        accreditationId,
-        prnId,
-        { status: 'discarded' },
-        mockCredentials.idToken
-      )
-    })
-
-    it('clears draft from session after discard', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-      const discardResponse = await server.inject({
-        method: 'POST',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies },
-        payload: { crumb }
-      })
-
-      const discardCookieValues = extractCookieValues(
-        discardResponse.headers['set-cookie']
-      )
-      const afterDiscardCookies = mergeCookies(cookies, ...discardCookieValues)
-
-      // After discarding, the discard GET should redirect to create (no draft)
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: afterDiscardCookies }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(createUrl)
-    })
-
-    it('redirects to create when no draft in session', async ({ server }) => {
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(createUrl)
-      expect(updatePrnStatus).not.toHaveBeenCalled()
-    })
-
-    it('returns 500 when updatePrnStatus fails with non-Boom error', async ({
-      server
-    }) => {
-      vi.mocked(updatePrnStatus).mockRejectedValueOnce(
-        new Error('Backend error')
-      )
-
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
-    it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
-      const Boom = await import('@hapi/boom')
-      vi.mocked(updatePrnStatus).mockRejectedValueOnce(
-        Boom.default.forbidden('Not authorised')
-      )
-
-      const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
-        createUrl,
-        { auth: mockAuth }
-      )
-
-      const postResponse = await server.inject({
-        method: 'POST',
-        url: createUrl,
-        auth: mockAuth,
-        headers: { cookie: csrfCookie },
-        payload: { ...validPayload, crumb }
-      })
-
-      const postCookieValues = extractCookieValues(
-        postResponse.headers['set-cookie']
-      )
-      const cookies = mergeCookies(csrfCookie, ...postCookieValues)
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: discardUrl,
-        auth: mockAuth,
-        headers: { cookie: cookies },
-        payload: { crumb }
-      })
-
-      expect(statusCode).toBe(statusCodes.forbidden)
     })
   })
 })
