@@ -1,5 +1,3 @@
-import fetch from 'node-fetch'
-
 /**
  * @typedef {object} OidcConfig
  * @property {string} authorization_endpoint
