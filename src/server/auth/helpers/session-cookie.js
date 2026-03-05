@@ -5,7 +5,7 @@ import {
   updateUserSession
 } from '#server/auth/helpers/user-session.js'
 import authCookie from '@hapi/cookie'
-import { isPast, parseISO, subMinutes } from 'date-fns'
+import { isPast, parseISO, subMinutes, subSeconds } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
 import { refreshIdToken } from './refresh-token.js'
 
@@ -26,11 +26,7 @@ const refreshIdTokenIfNearlyExpired = async (
   request,
   userSession
 ) => {
-  const tokenWillExpireSoon = isPast(
-    subMinutes(parseISO(userSession.expiresAt), 1)
-  )
-
-  if (!tokenWillExpireSoon || userSession.idTokenRefreshInProgress) {
+  if (userSession.idTokenRefreshInProgress) {
     return
   }
 
@@ -97,13 +93,23 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            // void (do not await) to refresh token in the background
-            // this allows immediate return of the existing session (so the current request can be serviced)
-            void refreshIdTokenIfNearlyExpired(
-              verifyToken,
-              request,
-              userSession
-            )
+            if (isWithin10Seconds(parseISO(userSession.expiresAt))) {
+              // Await refresh so the session is updated before this request completes
+              await refreshIdTokenIfNearlyExpired(
+                verifyToken,
+                request,
+                userSession
+              )
+            } else if (isWithin5Minutes(parseISO(userSession.expiresAt))) {
+              // Run as background task so the current request is not delayed
+              void refreshIdTokenIfNearlyExpired(
+                verifyToken,
+                request,
+                userSession
+              )
+            } else {
+              // Session is valid and not close to expiring, no action needed
+            }
 
             return {
               isValid: true,
@@ -116,6 +122,14 @@ const createSessionCookie = (verifyToken) => {
       }
     }
   }
+}
+
+function isWithin10Seconds(date) {
+  return isPast(subSeconds(date, 10))
+}
+
+function isWithin5Minutes(date) {
+  return isPast(subMinutes(date, 5)) // NOSONAR: 5 is not a magic number in this context, it is a specific time threshold for refreshing the token
 }
 
 export { createSessionCookie }
