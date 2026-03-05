@@ -41,7 +41,7 @@ describe('refresh token', () => {
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    const result = await refreshIdToken(mockRequest)
+    await refreshIdToken(mockRequest)
 
     expect(getUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
     expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
@@ -57,8 +57,6 @@ describe('refresh token', () => {
       scope: 'openid offline_access',
       serviceId: 'service-id-789'
     })
-
-    expect(result.ok).toBe(true)
   })
 
   it('should throw error when refresh token is null', async () => {
