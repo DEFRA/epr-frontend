@@ -1,7 +1,4 @@
-import Boom from '@hapi/boom'
-
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { config } from '#config/config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
 /**
@@ -9,10 +6,6 @@ import { updatePrnStatus } from './helpers/update-prn-status.js'
  */
 export const issueController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const session = request.auth.credentials

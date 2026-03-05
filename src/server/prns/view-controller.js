@@ -1,6 +1,5 @@
 import Boom from '@hapi/boom'
 
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -22,10 +21,6 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
  */
 export const viewController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const { t: localise } = request
@@ -63,10 +58,6 @@ export const viewController = {
  */
 export const viewPostController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const session = request.auth.credentials
