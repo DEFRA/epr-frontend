@@ -428,11 +428,13 @@ describe('#sessionCookie - integration', () => {
 
       expect(response.statusCode).toBe(statusCodes.ok)
 
-      // Session must be updated synchronously (no vi.waitFor needed)
       const updatedSession = await server.app.cache.get(sessionId)
       expect(updatedSession.refreshToken).toBe('awaited-new-refresh-token')
       const newExpiresAt = new Date(updatedSession.expiresAt)
       expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
+
+      const payload = JSON.parse(response.payload)
+      expect(updatedSession.idToken).toBe(payload.idToken)
     })
 
     it('should drop session synchronously when awaited refresh fails for token expiring within 10 seconds', async ({
@@ -475,10 +477,9 @@ describe('#sessionCookie - integration', () => {
         }
       })
 
-      // Request still succeeds with the existing (nearly-expired) session
-      expect(response.statusCode).toBe(statusCodes.ok)
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
 
-      // Session must be removed synchronously (no vi.waitFor needed)
       const removedSession = await server.app.cache.get(sessionId)
       expect(removedSession).toBeNull()
     })
