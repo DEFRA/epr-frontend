@@ -97,13 +97,15 @@ const createSessionCookie = (verifyToken) => {
 
             // Note this first check also catches an expired session
             if (userSessionExpires(userSession, inNext10Seconds)) {
+              const spanId = crypto.randomUUID()
               request.logger.info(
                 {
                   event: {
                     action: 'token-refresh',
                     type: 'blocking',
                     kind: 'event'
-                  }
+                  },
+                  span: { id: spanId }
                 },
                 'Token refresh start (blocking)'
               )
@@ -121,7 +123,8 @@ const createSessionCookie = (verifyToken) => {
                     outcome: refreshedSession ? 'success' : 'failure',
                     duration: performance.now() - t0,
                     kind: 'event'
-                  }
+                  },
+                  span: { id: spanId }
                 },
                 'Token refresh complete (blocking)'
               )
@@ -129,13 +132,15 @@ const createSessionCookie = (verifyToken) => {
                 ? { isValid: true, credentials: refreshedSession }
                 : { isValid: false }
             } else if (userSessionExpires(userSession, inNext5Minutes)) {
+              const spanId = crypto.randomUUID()
               request.logger.info(
                 {
                   event: {
                     action: 'token-refresh',
                     type: 'background',
                     kind: 'event'
-                  }
+                  },
+                  span: { id: spanId }
                 },
                 'Token refresh start (background)'
               )
@@ -154,7 +159,8 @@ const createSessionCookie = (verifyToken) => {
                       outcome: refreshedSession ? 'success' : 'failure',
                       duration: performance.now() - t0,
                       kind: 'event'
-                    }
+                    },
+                    span: { id: spanId }
                   },
                   'Token refresh complete (background)'
                 )
