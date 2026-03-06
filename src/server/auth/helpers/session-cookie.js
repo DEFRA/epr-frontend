@@ -137,13 +137,16 @@ const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
     },
     'Token refresh start (background)'
   )
-  void (async () => {
+
+  const run = async () => {
     const t0 = performance.now()
+
     const refreshedSession = await refreshIdTokenAndUpdateSession(
       verifyToken,
       request,
       userSession
     )
+
     request.logger.info(
       {
         event: tokenRefreshEvent('background', {
@@ -154,7 +157,10 @@ const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
       },
       'Token refresh complete (background)'
     )
-  })()
+  }
+
+  // fire-and-forget: deliberately not awaited so the current request is not delayed
+  void run()
 }
 
 /**
