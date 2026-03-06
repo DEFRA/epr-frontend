@@ -1,6 +1,5 @@
 import Boom from '@hapi/boom'
 
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
@@ -10,10 +9,6 @@ import { updatePrnStatus } from './helpers/update-prn-status.js'
  */
 export const discardGetController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const { t: localise } = request
@@ -54,10 +49,6 @@ export const discardGetController = {
  */
 export const discardPostController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const session = request.auth.credentials

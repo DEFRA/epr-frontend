@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
@@ -7,7 +6,7 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -77,15 +76,7 @@ describe('#postCreatePrnController', () => {
     )
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
+  describe('request handling', () => {
     describe('csrf protection', () => {
       it('should reject POST request without CSRF token', async ({
         server
@@ -641,66 +632,6 @@ describe('#postCreatePrnController', () => {
 
         expect(statusCode).toBe(statusCodes.badRequest)
       })
-    })
-  })
-
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
-    it('returns 404 for valid payload (handler check)', async ({ server }) => {
-      // Get CSRF token while feature is enabled
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      // Disable feature flag before POST
-      config.set('featureFlags.prns', false)
-
-      try {
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...validPayload, crumb }
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      } finally {
-        config.set('featureFlags.prns', true)
-      }
-    })
-
-    it('returns 404 for invalid payload (failAction check)', async ({
-      server
-    }) => {
-      // Get CSRF token while feature is enabled
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
-
-      // Disable feature flag before POST with invalid payload
-      config.set('featureFlags.prns', false)
-
-      try {
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { ...validPayload, tonnage: '', crumb }
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      } finally {
-        config.set('featureFlags.prns', true)
-      }
     })
   })
 })

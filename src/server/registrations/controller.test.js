@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as getRequiredRegistrationModule from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -7,7 +6,7 @@ import Boom from '@hapi/boom'
 import { getByRole, within } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -136,7 +135,7 @@ describe('#accreditationDashboardController', () => {
       })
 
       expect(result).toContain('PRNs')
-      expect(result).toContain('PRN management is not yet available')
+      expect(result).toContain('Create and manage PRNs.')
       expect(result).not.toContain('PERNs')
     })
 
@@ -250,7 +249,7 @@ describe('#accreditationDashboardController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('PERNs')
-      expect(result).toContain('PERN management is not yet available')
+      expect(result).toContain('Create and manage PERNs.')
     })
 
     it('should display back link to exporting tab for exporter', async ({
@@ -759,60 +758,7 @@ describe('#accreditationDashboardController', () => {
       ).mockResolvedValue(glassApproved)
     })
 
-    describe('when feature flag is disabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.prns', false)
-      })
-
-      afterAll(() => {
-        config.reset('featureFlags.prns')
-      })
-
-      it('should display prn card with not available text', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const prnCard = getByRole(body, 'heading', {
-          name: 'PRNs',
-          level: 3
-        }).closest('.govuk-summary-card')
-
-        const card = within(prnCard)
-        card.getByText('Create and manage PRNs.')
-
-        expect(
-          card.queryByText('PRN management is not yet available.')
-        ).not.toBeNull()
-      })
-
-      it('should not display PRN links', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        expect(result).not.toContain('/packaging-recycling-notes')
-      })
-    })
-
-    describe('when feature flag is enabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.prns', true)
-      })
-
-      afterAll(() => {
-        config.reset('featureFlags.prns')
-      })
-
+    describe('request handling', () => {
       it.for([
         {
           name: 'PRN (reprocessor)',
