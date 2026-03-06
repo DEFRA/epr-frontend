@@ -97,22 +97,68 @@ const createSessionCookie = (verifyToken) => {
 
             // Note this first check also catches an expired session
             if (userSessionExpires(userSession, inNext10Seconds)) {
-              // Await refresh so updated session is used in this request
+              request.logger.info(
+                {
+                  event: {
+                    action: 'token-refresh',
+                    type: 'blocking',
+                    kind: 'event'
+                  }
+                },
+                'Token expired, blocking refresh required'
+              )
+              const t0 = performance.now()
               const refreshedSession = await refreshIdTokenAndUpdateSession(
                 verifyToken,
                 request,
                 userSession
               )
+              request.logger.info(
+                {
+                  event: {
+                    action: 'token-refresh',
+                    type: 'blocking',
+                    outcome: refreshedSession ? 'success' : 'failure',
+                    duration: performance.now() - t0,
+                    kind: 'event'
+                  }
+                },
+                'Blocking token refresh complete'
+              )
               return refreshedSession
                 ? { isValid: true, credentials: refreshedSession }
                 : { isValid: false }
             } else if (userSessionExpires(userSession, inNext5Minutes)) {
-              // Run as background task so the current request is not delayed
-              void refreshIdTokenAndUpdateSession(
-                verifyToken,
-                request,
-                userSession
+              request.logger.info(
+                {
+                  event: {
+                    action: 'token-refresh',
+                    type: 'background',
+                    kind: 'event'
+                  }
+                },
+                'Token nearing expiry, scheduling background refresh'
               )
+              void (async () => {
+                const t0 = performance.now()
+                const refreshedSession = await refreshIdTokenAndUpdateSession(
+                  verifyToken,
+                  request,
+                  userSession
+                )
+                request.logger.info(
+                  {
+                    event: {
+                      action: 'token-refresh',
+                      type: 'background',
+                      outcome: refreshedSession ? 'success' : 'failure',
+                      duration: performance.now() - t0,
+                      kind: 'event'
+                    }
+                  },
+                  'Background token refresh complete'
+                )
+              })()
             } else {
               // Session is valid and not close to expiring, no action needed
             }
