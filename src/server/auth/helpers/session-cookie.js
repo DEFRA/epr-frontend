@@ -88,11 +88,9 @@ const refreshIdTokenAndUpdateSession = async (
 
 /**
  * @param {VerifyToken} verifyToken
- * @param {Request} request
- * @param {UserSession} userSession
- * @returns {Promise<{isValid: boolean, credentials?: UserSession}>}
+ * @returns {(request: Request, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
  */
-const blockingRefresh = async (verifyToken, request, userSession) => {
+const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
   const spanId = crypto.randomUUID()
   request.logger.info(
     {
@@ -128,10 +126,9 @@ const blockingRefresh = async (verifyToken, request, userSession) => {
 
 /**
  * @param {VerifyToken} verifyToken
- * @param {Request} request
- * @param {UserSession} userSession
+ * @returns {(request: Request, userSession: UserSession) => void}
  */
-const backgroundRefresh = (verifyToken, request, userSession) => {
+const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
   const spanId = crypto.randomUUID()
   request.logger.info(
     {
@@ -167,6 +164,9 @@ const backgroundRefresh = (verifyToken, request, userSession) => {
  * @returns {ServerRegisterPluginObject<void>}
  */
 const createSessionCookie = (verifyToken) => {
+  const blockingRefresh = createBlockingRefresh(verifyToken)
+  const backgroundRefresh = createBackgroundRefresh(verifyToken)
+
   return {
     plugin: {
       name: 'user-session',
@@ -198,9 +198,9 @@ const createSessionCookie = (verifyToken) => {
 
             // Note this first check also catches an expired session
             if (userSessionExpires(userSession, inNext10Seconds)) {
-              return blockingRefresh(verifyToken, request, userSession)
+              return blockingRefresh(request, userSession)
             } else if (userSessionExpires(userSession, inNext5Minutes)) {
-              backgroundRefresh(verifyToken, request, userSession)
+              backgroundRefresh(request, userSession)
             } else {
               // Session is valid and not close to expiring, no action needed
             }
