@@ -16,6 +16,30 @@ import { refreshIdToken } from './refresh-token.js'
  */
 
 /**
+ * @param {'blocking' | 'background'} type
+ * @param {{ outcome?: 'success' | 'failure', duration?: number }} [extras]
+ * @returns {{ action: string, type: string, kind: string, outcome?: string, duration?: number }}
+ */
+const tokenRefreshEvent = (type, extras = {}) => ({
+  action: 'token-refresh',
+  type,
+  kind: 'event',
+  ...extras
+})
+
+function userSessionExpires(userSession, isInTimeframe) {
+  return isInTimeframe(parseISO(userSession.expiresAt))
+}
+
+function inNext10Seconds(date) {
+  return isPast(subSeconds(date, 10)) // NOSONAR: 10 is not a magic number in this context, it is a specific time threshold for refreshing the token
+}
+
+function inNext5Minutes(date) {
+  return isPast(subMinutes(date, 5)) // NOSONAR: 5 is not a magic number in this context, it is a specific time threshold for refreshing the token
+}
+
+/**
  * Refreshes id token and updates session with refreshed tokens. If the refresh fails, the session is removed.
  * @param {VerifyToken} verifyToken
  * @param {Request} request
@@ -33,6 +57,7 @@ const refreshIdTokenAndUpdateSession = async (
 
   try {
     await markSessionAsIdTokenRefreshInProgress(request, userSession)
+
     const response = await refreshIdToken(request)
 
     if (!response.ok) {
@@ -43,9 +68,11 @@ const refreshIdTokenAndUpdateSession = async (
     const refreshedTokens = await response.json()
     const { ok: sessionStillExists, value: latestSession } =
       await getUserSession(request)
+
     if (!sessionStillExists) {
       return null // exit without error if session was deleted while refresh was in progress (eg during background refresh triggered from /logout page)
     }
+
     return await updateUserSession(
       verifyToken,
       request,
@@ -60,12 +87,92 @@ const refreshIdTokenAndUpdateSession = async (
 }
 
 /**
+ * @param {VerifyToken} verifyToken
+ * @returns {(request: Request, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
+ */
+const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
+  const spanId = crypto.randomUUID()
+  request.logger.info(
+    {
+      event: tokenRefreshEvent('blocking'),
+      span: { id: spanId }
+    },
+    'Token refresh start (blocking)'
+  )
+
+  const t0 = performance.now()
+
+  const refreshedSession = await refreshIdTokenAndUpdateSession(
+    verifyToken,
+    request,
+    userSession
+  )
+
+  request.logger.info(
+    {
+      event: tokenRefreshEvent('blocking', {
+        outcome: refreshedSession ? 'success' : 'failure',
+        duration: performance.now() - t0
+      }),
+      span: { id: spanId }
+    },
+    'Token refresh complete (blocking)'
+  )
+
+  return refreshedSession
+    ? { isValid: true, credentials: refreshedSession }
+    : { isValid: false }
+}
+
+/**
+ * @param {VerifyToken} verifyToken
+ * @returns {(request: Request, userSession: UserSession) => void}
+ */
+const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
+  const spanId = crypto.randomUUID()
+  request.logger.info(
+    {
+      event: tokenRefreshEvent('background'),
+      span: { id: spanId }
+    },
+    'Token refresh start (background)'
+  )
+
+  const run = async () => {
+    const t0 = performance.now()
+
+    const refreshedSession = await refreshIdTokenAndUpdateSession(
+      verifyToken,
+      request,
+      userSession
+    )
+
+    request.logger.info(
+      {
+        event: tokenRefreshEvent('background', {
+          outcome: refreshedSession ? 'success' : 'failure',
+          duration: performance.now() - t0
+        }),
+        span: { id: spanId }
+      },
+      'Token refresh complete (background)'
+    )
+  }
+
+  // fire-and-forget: deliberately not awaited so the current request is not delayed
+  void run()
+}
+
+/**
  * Create session cookie authentication plugin
  * Factory function that creates a plugin with verifyToken closure
  * @param {VerifyToken} verifyToken - Token verification function
  * @returns {ServerRegisterPluginObject<void>}
  */
 const createSessionCookie = (verifyToken) => {
+  const blockingRefresh = createBlockingRefresh(verifyToken)
+  const backgroundRefresh = createBackgroundRefresh(verifyToken)
+
   return {
     plugin: {
       name: 'user-session',
@@ -97,22 +204,9 @@ const createSessionCookie = (verifyToken) => {
 
             // Note this first check also catches an expired session
             if (userSessionExpires(userSession, inNext10Seconds)) {
-              // Await refresh so updated session is used in this request
-              const refreshedSession = await refreshIdTokenAndUpdateSession(
-                verifyToken,
-                request,
-                userSession
-              )
-              return refreshedSession
-                ? { isValid: true, credentials: refreshedSession }
-                : { isValid: false }
+              return blockingRefresh(request, userSession)
             } else if (userSessionExpires(userSession, inNext5Minutes)) {
-              // Run as background task so the current request is not delayed
-              void refreshIdTokenAndUpdateSession(
-                verifyToken,
-                request,
-                userSession
-              )
+              backgroundRefresh(request, userSession)
             } else {
               // Session is valid and not close to expiring, no action needed
             }
@@ -128,18 +222,6 @@ const createSessionCookie = (verifyToken) => {
       }
     }
   }
-}
-
-function userSessionExpires(userSession, isInTimeframe) {
-  return isInTimeframe(parseISO(userSession.expiresAt))
-}
-
-function inNext10Seconds(date) {
-  return isPast(subSeconds(date, 10))
-}
-
-function inNext5Minutes(date) {
-  return isPast(subMinutes(date, 5)) // NOSONAR: 5 is not a magic number in this context, it is a specific time threshold for refreshing the token
 }
 
 export { createSessionCookie }

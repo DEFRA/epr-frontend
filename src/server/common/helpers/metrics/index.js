@@ -45,5 +45,11 @@ export const metrics = {
   },
   async signOutSuccess() {
     return metricsCounter('signOutSuccess')
+  },
+  async tokenRefreshSuccess() {
+    return metricsCounter('tokenRefreshSuccess')
+  },
+  async tokenRefreshFailure() {
+    return metricsCounter('tokenRefreshFailure')
   }
 }
