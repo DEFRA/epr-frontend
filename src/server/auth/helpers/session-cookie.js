@@ -16,13 +16,13 @@ import { refreshIdToken } from './refresh-token.js'
  */
 
 /**
- * Refreshes id token if it is nearly expired
+ * Refreshes id token and updates session with refreshed tokens. If the refresh fails, the session is removed.
  * @param {VerifyToken} verifyToken
  * @param {Request} request
  * @param {UserSession} userSession
  * @returns {Promise<UserSession | null>}
  */
-const refreshIdTokenIfNearlyExpired = async (
+const refreshIdTokenAndUpdateSession = async (
   verifyToken,
   request,
   userSession
@@ -98,7 +98,7 @@ const createSessionCookie = (verifyToken) => {
             // Note this first check also catches an expired session
             if (userSessionExpires(userSession, inNext10Seconds)) {
               // Await refresh so updated session is used in this request
-              const refreshedSession = await refreshIdTokenIfNearlyExpired(
+              const refreshedSession = await refreshIdTokenAndUpdateSession(
                 verifyToken,
                 request,
                 userSession
@@ -108,7 +108,7 @@ const createSessionCookie = (verifyToken) => {
                 : { isValid: false }
             } else if (userSessionExpires(userSession, inNext5Minutes)) {
               // Run as background task so the current request is not delayed
-              void refreshIdTokenIfNearlyExpired(
+              void refreshIdTokenAndUpdateSession(
                 verifyToken,
                 request,
                 userSession
