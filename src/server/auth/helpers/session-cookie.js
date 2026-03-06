@@ -105,7 +105,7 @@ const createSessionCookie = (verifyToken) => {
                     kind: 'event'
                   }
                 },
-                'Token expired, blocking refresh required'
+                'Token refresh start (blocking)'
               )
               const t0 = performance.now()
               const refreshedSession = await refreshIdTokenAndUpdateSession(
@@ -123,7 +123,7 @@ const createSessionCookie = (verifyToken) => {
                     kind: 'event'
                   }
                 },
-                'Blocking token refresh complete'
+                'Token refresh complete (blocking)'
               )
               return refreshedSession
                 ? { isValid: true, credentials: refreshedSession }
@@ -137,7 +137,7 @@ const createSessionCookie = (verifyToken) => {
                     kind: 'event'
                   }
                 },
-                'Token nearing expiry, scheduling background refresh'
+                'Token refresh start (background)'
               )
               void (async () => {
                 const t0 = performance.now()
@@ -156,7 +156,7 @@ const createSessionCookie = (verifyToken) => {
                       kind: 'event'
                     }
                   },
-                  'Background token refresh complete'
+                  'Token refresh complete (background)'
                 )
               })()
             } else {
