@@ -44,7 +44,7 @@ const refreshIdTokenAndUpdateSession = async (
     const { ok: sessionStillExists, value: latestSession } =
       await getUserSession(request)
     if (!sessionStillExists) {
-      return null // exit without error if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
+      return null // exit without error if session was deleted while refresh was in progress (eg during background refresh triggered from /logout page)
     }
     return await updateUserSession(
       verifyToken,
