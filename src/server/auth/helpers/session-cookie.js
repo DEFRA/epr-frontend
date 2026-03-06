@@ -15,10 +15,17 @@ import { refreshIdToken } from './refresh-token.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
-const TOKEN_REFRESH_ACTION = 'token-refresh'
-const TOKEN_REFRESH_TYPE_BLOCKING = 'blocking'
-const TOKEN_REFRESH_TYPE_BACKGROUND = 'background'
-const EVENT_KIND = 'event'
+/**
+ * @param {'blocking' | 'background'} type
+ * @param {{ outcome?: 'success' | 'failure', duration?: number }} [extras]
+ * @returns {{ action: string, type: string, kind: string, outcome?: string, duration?: number }}
+ */
+const tokenRefreshEvent = (type, extras = {}) => ({
+  action: 'token-refresh',
+  type,
+  kind: 'event',
+  ...extras
+})
 
 function userSessionExpires(userSession, isInTimeframe) {
   return isInTimeframe(parseISO(userSession.expiresAt))
@@ -89,11 +96,7 @@ const blockingRefresh = async (verifyToken, request, userSession) => {
   const spanId = crypto.randomUUID()
   request.logger.info(
     {
-      event: {
-        action: TOKEN_REFRESH_ACTION,
-        type: TOKEN_REFRESH_TYPE_BLOCKING,
-        kind: EVENT_KIND
-      },
+      event: tokenRefreshEvent('blocking'),
       span: { id: spanId }
     },
     'Token refresh start (blocking)'
@@ -109,13 +112,10 @@ const blockingRefresh = async (verifyToken, request, userSession) => {
 
   request.logger.info(
     {
-      event: {
-        action: TOKEN_REFRESH_ACTION,
-        type: TOKEN_REFRESH_TYPE_BLOCKING,
+      event: tokenRefreshEvent('blocking', {
         outcome: refreshedSession ? 'success' : 'failure',
-        duration: performance.now() - t0,
-        kind: EVENT_KIND
-      },
+        duration: performance.now() - t0
+      }),
       span: { id: spanId }
     },
     'Token refresh complete (blocking)'
@@ -135,11 +135,7 @@ const backgroundRefresh = (verifyToken, request, userSession) => {
   const spanId = crypto.randomUUID()
   request.logger.info(
     {
-      event: {
-        action: TOKEN_REFRESH_ACTION,
-        type: TOKEN_REFRESH_TYPE_BACKGROUND,
-        kind: EVENT_KIND
-      },
+      event: tokenRefreshEvent('background'),
       span: { id: spanId }
     },
     'Token refresh start (background)'
@@ -153,13 +149,10 @@ const backgroundRefresh = (verifyToken, request, userSession) => {
     )
     request.logger.info(
       {
-        event: {
-          action: TOKEN_REFRESH_ACTION,
-          type: TOKEN_REFRESH_TYPE_BACKGROUND,
+        event: tokenRefreshEvent('background', {
           outcome: refreshedSession ? 'success' : 'failure',
-          duration: performance.now() - t0,
-          kind: EVENT_KIND
-        },
+          duration: performance.now() - t0
+        }),
         span: { id: spanId }
       },
       'Token refresh complete (background)'
