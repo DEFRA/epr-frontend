@@ -45,6 +45,7 @@ function inNext5Minutes(date) {
  * @returns {(request: Request, userSession: UserSession) => Promise<UserSession | null>}
  */
 const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
+  /** @type {ReturnType<typeof createRefreshIdTokenAndUpdateSession>} */
   const refreshIdTokenAndUpdateSession = async (request, userSession) => {
     if (userSession.idTokenRefreshInProgress) {
       return userSession
@@ -92,6 +93,7 @@ const createBlockingRefresh = (verifyToken) => {
   const refreshIdTokenAndUpdateSession =
     createRefreshIdTokenAndUpdateSession(verifyToken)
 
+  /** @type {ReturnType<typeof createBlockingRefresh>} */
   const blockingRefresh = async (request, userSession) => {
     const refreshedSession = await request
       .metrics()
@@ -126,6 +128,7 @@ const createBackgroundRefresh = (verifyToken) => {
   const refreshIdTokenAndUpdateSession =
     createRefreshIdTokenAndUpdateSession(verifyToken)
 
+  /** @type {ReturnType<typeof createBackgroundRefresh>} */
   const backgroundRefresh = (request, userSession) => {
     const run = async () => {
       const refreshedSession = await request
