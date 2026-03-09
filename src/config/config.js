@@ -316,6 +316,14 @@ export const config = convict({
       default: isProduction,
       env: 'AUDIT_ENABLED'
     }
+  },
+  featureFlags: {
+    reports: {
+      doc: 'Feature Flag: Enable reports',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_REPORTS'
+    }
   }
 })
 
