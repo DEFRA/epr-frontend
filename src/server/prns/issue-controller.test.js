@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   extractCookieValues,
@@ -8,7 +7,7 @@ import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -80,15 +79,7 @@ describe('#issueController', () => {
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnIssued)
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
+  describe('request handling', () => {
     it('updates PRN status to awaiting_acceptance and redirects to issued page', async ({
       server
     }) => {
@@ -310,40 +301,6 @@ describe('#issueController', () => {
         // Session prnNumber should NOT be used (ID mismatch)
         expect(queryByText(main, /ER2625001A/)).toBeNull()
       })
-    })
-  })
-
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
-    it('returns 404', async ({ server }) => {
-      config.set('featureFlags.prns', false)
-
-      try {
-        const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
-          viewUrl,
-          { auth: mockAuth }
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url: issueUrl,
-          auth: mockAuth,
-          headers: { cookie: csrfCookie },
-          payload: { crumb }
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      } finally {
-        config.set('featureFlags.prns', true)
-      }
     })
   })
 })

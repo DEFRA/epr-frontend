@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -6,7 +5,7 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -127,15 +126,7 @@ describe('#actionController', () => {
     )
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
+  describe('request handling', () => {
     it('displays PRN details on the action page', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -620,22 +611,6 @@ describe('#actionController', () => {
       const main = getByRole(body, 'main')
 
       expect(getByText(main, /some_unknown_status/i)).toBeDefined()
-    })
-
-    it('returns 404 when feature flag is disabled', async ({ server }) => {
-      config.set('featureFlags.prns', false)
-
-      try {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: actionUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      } finally {
-        config.set('featureFlags.prns', true)
-      }
     })
 
     it('returns 404 when registration not found', async ({ server }) => {

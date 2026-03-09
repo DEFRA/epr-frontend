@@ -1,6 +1,5 @@
 import Boom from '@hapi/boom'
 
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
 
@@ -36,14 +35,10 @@ function buildPrnBasePath({ organisationId, registrationId, accreditationId }) {
 
 /**
  * Fetches PRN with registration data for GET handlers.
- * Guards the feature flag, extracts request params, and fetches data in parallel.
+ * Extracts request params and fetches data in parallel.
  * @param {Request} request
  */
 async function fetchPrnContext(request) {
-  if (!config.get('featureFlags.prns')) {
-    throw Boom.notFound()
-  }
-
   const { organisationId, registrationId, accreditationId, prnId } =
     request.params
   const session = request.auth.credentials
@@ -84,14 +79,10 @@ async function fetchPrnContext(request) {
 
 /**
  * Fetches PRN data for POST handlers that update status.
- * Guards the feature flag, extracts request params, and fetches the PRN.
+ * Extracts request params and fetches the PRN.
  * @param {Request} request
  */
 async function fetchPrnForUpdate(request) {
-  if (!config.get('featureFlags.prns')) {
-    throw Boom.notFound()
-  }
-
   const { organisationId, registrationId, accreditationId, prnId } =
     request.params
   const session = request.auth.credentials

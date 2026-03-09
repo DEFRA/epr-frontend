@@ -1,6 +1,3 @@
-import Boom from '@hapi/boom'
-
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
@@ -35,10 +32,6 @@ const filterPrnsByStatuses = (prns, statuses) =>
  */
 export const listController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
 
