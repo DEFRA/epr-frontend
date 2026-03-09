@@ -1,11 +1,10 @@
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -94,15 +93,7 @@ describe('#cancelController', () => {
     })
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
+  describe('request handling', () => {
     describe('GET /cancel (confirmation page)', () => {
       it('displays confirmation heading', async ({ server }) => {
         const { result, statusCode } = await server.inject({
@@ -347,56 +338,6 @@ describe('#cancelController', () => {
 
         expect(statusCode).toBe(statusCodes.forbidden)
       })
-    })
-  })
-
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
-    it('returns 404 for GET', async ({ server }) => {
-      config.set('featureFlags.prns', false)
-
-      try {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: cancelUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      } finally {
-        config.set('featureFlags.prns', true)
-      }
-    })
-
-    it('returns 404 for POST', async ({ server }) => {
-      config.set('featureFlags.prns', false)
-
-      try {
-        const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
-          cancelUrl,
-          { auth: mockAuth }
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url: cancelUrl,
-          auth: mockAuth,
-          headers: { cookie: csrfCookie },
-          payload: { crumb }
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      } finally {
-        config.set('featureFlags.prns', true)
-      }
     })
   })
 })
