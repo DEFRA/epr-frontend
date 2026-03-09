@@ -38,7 +38,7 @@ async function refreshIdToken(request) {
   params.append('scope', 'openid offline_access')
   params.append('serviceId', serviceId)
 
-  const t0 = performance.now()
+  const start = performance.now()
 
   const response = await fetch(session.urls.token, {
     method: 'post',
@@ -54,7 +54,7 @@ async function refreshIdToken(request) {
       event: {
         action: 'token-refresh-oidc-call',
         outcome: response.ok ? 'success' : 'failure',
-        duration: performance.now() - t0,
+        duration: performance.now() - start,
         kind: 'event'
       },
       http: {
