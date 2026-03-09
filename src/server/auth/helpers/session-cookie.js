@@ -91,16 +91,12 @@ const refreshIdTokenAndUpdateSession = async (
  * @returns {(request: Request, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
  */
 const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
-  const spanId = crypto.randomUUID()
   request.logger.info(
-    {
-      event: tokenRefreshEvent('blocking'),
-      span: { id: spanId }
-    },
+    { event: tokenRefreshEvent('blocking') },
     'Token refresh start (blocking)'
   )
 
-  const t0 = performance.now()
+  const start = performance.now()
 
   const refreshedSession = await refreshIdTokenAndUpdateSession(
     verifyToken,
@@ -112,9 +108,8 @@ const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
     {
       event: tokenRefreshEvent('blocking', {
         outcome: refreshedSession ? 'success' : 'failure',
-        duration: performance.now() - t0
-      }),
-      span: { id: spanId }
+        duration: performance.now() - start
+      })
     },
     'Token refresh complete (blocking)'
   )
@@ -129,17 +124,13 @@ const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
  * @returns {(request: Request, userSession: UserSession) => void}
  */
 const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
-  const spanId = crypto.randomUUID()
   request.logger.info(
-    {
-      event: tokenRefreshEvent('background'),
-      span: { id: spanId }
-    },
+    { event: tokenRefreshEvent('background') },
     'Token refresh start (background)'
   )
 
   const run = async () => {
-    const t0 = performance.now()
+    const start = performance.now()
 
     const refreshedSession = await refreshIdTokenAndUpdateSession(
       verifyToken,
@@ -151,9 +142,8 @@ const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
       {
         event: tokenRefreshEvent('background', {
           outcome: refreshedSession ? 'success' : 'failure',
-          duration: performance.now() - t0
-        }),
-        span: { id: spanId }
+          duration: performance.now() - start
+        })
       },
       'Token refresh complete (background)'
     )
