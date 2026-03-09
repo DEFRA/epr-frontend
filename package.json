@@ -21,8 +21,8 @@
     "build:server": "NODE_ENV=production babel --delete-dir-on-start --ignore \"**/*.test.js\" --ignore \"**/test-helpers\" --copy-files --no-copy-ignored --out-dir ./.server ./src",
     "dc:all:up": "docker compose --profile all up --build --watch",
     "dc:all:down": "docker compose --profile all down",
-    "dev": "run-p frontend:watch server:watch",
-    "dev:debug": "run-p frontend:watch server:debug",
+    "dev": "AWS_EMF_ENVIRONMENT=Local run-p frontend:watch server:watch",
+    "dev:debug": "AWS_EMF_ENVIRONMENT=Local run-p frontend:watch server:debug",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "frontend:watch": "NODE_ENV=development webpack --watch",
@@ -51,6 +51,7 @@
   "license": "OGL-UK-3.0",
   "dependencies": {
     "@defra/cdp-auditing": "0.6.0",
+    "@defra/cdp-metrics": "0.5.0",
     "@defra/hapi-tracing": "1.30.0",
     "@elastic/ecs-pino-format": "1.5.0",
     "@hapi/bell": "13.1.0",

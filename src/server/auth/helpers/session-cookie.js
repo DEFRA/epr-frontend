@@ -17,8 +17,8 @@ import { refreshIdToken } from './refresh-token.js'
 
 /**
  * @param {'blocking' | 'background'} type
- * @param {{ outcome?: 'success' | 'failure', duration?: number }} [extras]
- * @returns {{ action: string, type: string, kind: string, outcome?: string, duration?: number }}
+ * @param {{ outcome?: 'success' | 'failure' }} [extras]
+ * @returns {{ action: string, type: string, kind: string, outcome?: string }}
  */
 const tokenRefreshEvent = (type, extras = {}) => ({
   action: 'token-refresh',
@@ -91,24 +91,18 @@ const refreshIdTokenAndUpdateSession = async (
  * @returns {(request: Request, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
  */
 const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
-  request.logger.info(
-    { event: tokenRefreshEvent('blocking') },
-    'Token refresh start (blocking)'
-  )
-
-  const start = performance.now()
-
-  const refreshedSession = await refreshIdTokenAndUpdateSession(
-    verifyToken,
-    request,
-    userSession
-  )
+  const refreshedSession = await request
+    .metrics()
+    .timer(
+      'tokenRefreshDuration',
+      () => refreshIdTokenAndUpdateSession(verifyToken, request, userSession),
+      { type: 'blocking' }
+    )
 
   request.logger.info(
     {
       event: tokenRefreshEvent('blocking', {
-        outcome: refreshedSession ? 'success' : 'failure',
-        duration: performance.now() - start
+        outcome: refreshedSession ? 'success' : 'failure'
       })
     },
     'Token refresh complete (blocking)'
@@ -124,25 +118,19 @@ const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
  * @returns {(request: Request, userSession: UserSession) => void}
  */
 const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
-  request.logger.info(
-    { event: tokenRefreshEvent('background') },
-    'Token refresh start (background)'
-  )
-
   const run = async () => {
-    const start = performance.now()
-
-    const refreshedSession = await refreshIdTokenAndUpdateSession(
-      verifyToken,
-      request,
-      userSession
-    )
+    const refreshedSession = await request
+      .metrics()
+      .timer(
+        'tokenRefreshDuration',
+        () => refreshIdTokenAndUpdateSession(verifyToken, request, userSession),
+        { type: 'background' }
+      )
 
     request.logger.info(
       {
         event: tokenRefreshEvent('background', {
-          outcome: refreshedSession ? 'success' : 'failure',
-          duration: performance.now() - start
+          outcome: refreshedSession ? 'success' : 'failure'
         })
       },
       'Token refresh complete (background)'

@@ -11,6 +11,7 @@ import * as matchers from '@testing-library/jest-dom/matchers'
 expect.extend(matchers)
 
 // Set env vars before any imports to ensure config picks them up
+process.env.AWS_EMF_ENVIRONMENT = 'Local'
 process.env.DEFRA_ID_OIDC_CONFIGURATION_URL =
   'http://defra-id.auth/.well-known/openid-configuration'
 process.env.DEFRA_ID_CLIENT_ID = 'test-client-id'
