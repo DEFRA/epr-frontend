@@ -6,7 +6,6 @@
   "notes": {
     "title": "{{noteTypePlural}}",
     "description": "Create and manage {{noteTypePlural}}.",
-    "notAvailable": "{{noteType}} management is not yet available.",
     "createNew": "Create new {{noteType}}",
     "manage": "Manage {{noteTypePlural}}"
   },

@@ -1,6 +1,3 @@
-import Boom from '@hapi/boom'
-
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
@@ -20,10 +17,6 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
  */
 export const actionController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const { t: localise } = request
