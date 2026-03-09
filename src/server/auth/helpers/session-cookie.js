@@ -16,18 +16,19 @@ import { refreshIdToken } from './refresh-token.js'
  */
 
 /**
- * Refreshes id token if it is nearly expired
+ * Refreshes id token and updates session with refreshed tokens. If the refresh fails, the session is removed.
  * @param {VerifyToken} verifyToken
  * @param {Request} request
  * @param {UserSession} userSession
+ * @returns {Promise<UserSession | null>}
  */
-const refreshIdTokenIfNearlyExpired = async (
+const refreshIdTokenAndUpdateSession = async (
   verifyToken,
   request,
   userSession
 ) => {
   if (userSession.idTokenRefreshInProgress) {
-    return
+    return userSession
   }
 
   try {
@@ -43,9 +44,9 @@ const refreshIdTokenIfNearlyExpired = async (
     const { ok: sessionStillExists, value: latestSession } =
       await getUserSession(request)
     if (!sessionStillExists) {
-      return // exit without error if session was deleted while refresh was in progress (eg during refresh triggered from /logout page)
+      return null // exit without error if session was deleted while refresh was in progress (eg during background refresh triggered from /logout page)
     }
-    await updateUserSession(
+    return await updateUserSession(
       verifyToken,
       request,
       latestSession,
@@ -54,6 +55,7 @@ const refreshIdTokenIfNearlyExpired = async (
   } catch (error) {
     request.logger.error({ err: error }, 'Failed to refresh session')
     await removeUserSession(request)
+    return null
   }
 }
 
@@ -93,16 +95,20 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
-            if (isWithin10Seconds(parseISO(userSession.expiresAt))) {
-              // Await refresh so the session is updated before this request completes
-              await refreshIdTokenIfNearlyExpired(
+            // Note this first check also catches an expired session
+            if (userSessionExpires(userSession, inNext10Seconds)) {
+              // Await refresh so updated session is used in this request
+              const refreshedSession = await refreshIdTokenAndUpdateSession(
                 verifyToken,
                 request,
                 userSession
               )
-            } else if (isWithin5Minutes(parseISO(userSession.expiresAt))) {
+              return refreshedSession
+                ? { isValid: true, credentials: refreshedSession }
+                : { isValid: false }
+            } else if (userSessionExpires(userSession, inNext5Minutes)) {
               // Run as background task so the current request is not delayed
-              void refreshIdTokenIfNearlyExpired(
+              void refreshIdTokenAndUpdateSession(
                 verifyToken,
                 request,
                 userSession
@@ -124,11 +130,15 @@ const createSessionCookie = (verifyToken) => {
   }
 }
 
-function isWithin10Seconds(date) {
+function userSessionExpires(userSession, isInTimeframe) {
+  return isInTimeframe(parseISO(userSession.expiresAt))
+}
+
+function inNext10Seconds(date) {
   return isPast(subSeconds(date, 10))
 }
 
-function isWithin5Minutes(date) {
+function inNext5Minutes(date) {
   return isPast(subMinutes(date, 5)) // NOSONAR: 5 is not a magic number in this context, it is a specific time threshold for refreshing the token
 }
 
