@@ -42,103 +42,108 @@ function inNext5Minutes(date) {
 /**
  * Refreshes id token and updates session with refreshed tokens. If the refresh fails, the session is removed.
  * @param {VerifyToken} verifyToken
- * @param {Request} request
- * @param {UserSession} userSession
- * @returns {Promise<UserSession | null>}
+ * @returns {(request: Request, userSession: UserSession) => Promise<UserSession | null>}
  */
-const refreshIdTokenAndUpdateSession = async (
-  verifyToken,
-  request,
-  userSession
-) => {
-  if (userSession.idTokenRefreshInProgress) {
-    return userSession
-  }
-
-  try {
-    await markSessionAsIdTokenRefreshInProgress(request, userSession)
-
-    const response = await refreshIdToken(request)
-
-    if (!response.ok) {
-      const errorBody = await response.text()
-      throw new Error(errorBody)
+const createRefreshIdTokenAndUpdateSession =
+  (verifyToken) => async (request, userSession) => {
+    if (userSession.idTokenRefreshInProgress) {
+      return userSession
     }
 
-    const refreshedTokens = await response.json()
-    const { ok: sessionStillExists, value: latestSession } =
-      await getUserSession(request)
+    try {
+      await markSessionAsIdTokenRefreshInProgress(request, userSession)
 
-    if (!sessionStillExists) {
-      return null // exit without error if session was deleted while refresh was in progress (eg during background refresh triggered from /logout page)
+      const response = await refreshIdToken(request)
+
+      if (!response.ok) {
+        const errorBody = await response.text()
+        throw new Error(errorBody)
+      }
+
+      const refreshedTokens = await response.json()
+      const { ok: sessionStillExists, value: latestSession } =
+        await getUserSession(request)
+
+      if (!sessionStillExists) {
+        return null // exit without error if session was deleted while refresh was in progress (eg during background refresh triggered from /logout page)
+      }
+
+      return await updateUserSession(
+        verifyToken,
+        request,
+        latestSession,
+        refreshedTokens
+      )
+    } catch (error) {
+      request.logger.error({ err: error }, 'Failed to refresh session')
+      await removeUserSession(request)
+      return null
     }
-
-    return await updateUserSession(
-      verifyToken,
-      request,
-      latestSession,
-      refreshedTokens
-    )
-  } catch (error) {
-    request.logger.error({ err: error }, 'Failed to refresh session')
-    await removeUserSession(request)
-    return null
   }
-}
 
 /**
  * @param {VerifyToken} verifyToken
  * @returns {(request: Request, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
  */
-const createBlockingRefresh = (verifyToken) => async (request, userSession) => {
-  const refreshedSession = await request
-    .metrics()
-    .timer(
-      'tokenRefreshDuration',
-      () => refreshIdTokenAndUpdateSession(verifyToken, request, userSession),
-      { type: 'blocking' }
+const createBlockingRefresh = (verifyToken) => {
+  const refreshIdTokenAndUpdateSession =
+    createRefreshIdTokenAndUpdateSession(verifyToken)
+
+  return async (request, userSession) => {
+    const refreshedSession = await request
+      .metrics()
+      .timer(
+        'tokenRefreshDuration',
+        () => refreshIdTokenAndUpdateSession(request, userSession),
+        { type: 'blocking' }
+      )
+
+    request.logger.info(
+      {
+        event: tokenRefreshEvent('blocking', {
+          outcome: refreshedSession ? 'success' : 'failure'
+        })
+      },
+      'Token refresh complete (blocking)'
     )
 
-  request.logger.info(
-    {
-      event: tokenRefreshEvent('blocking', {
-        outcome: refreshedSession ? 'success' : 'failure'
-      })
-    },
-    'Token refresh complete (blocking)'
-  )
-
-  return refreshedSession
-    ? { isValid: true, credentials: refreshedSession }
-    : { isValid: false }
+    return refreshedSession
+      ? { isValid: true, credentials: refreshedSession }
+      : { isValid: false }
+  }
 }
 
 /**
  * @param {VerifyToken} verifyToken
  * @returns {(request: Request, userSession: UserSession) => void}
  */
-const createBackgroundRefresh = (verifyToken) => (request, userSession) => {
-  const run = async () => {
-    const refreshedSession = await request
-      .metrics()
-      .timer(
-        'tokenRefreshDuration',
-        () => refreshIdTokenAndUpdateSession(verifyToken, request, userSession),
-        { type: 'background' }
+const createBackgroundRefresh = (verifyToken) => {
+  const refreshIdTokenAndUpdateSession =
+    createRefreshIdTokenAndUpdateSession(verifyToken)
+
+  return (request, userSession) => {
+    const run = async () => {
+      const refreshedSession = await request
+        .metrics()
+        .timer(
+          'tokenRefreshDuration',
+          () => refreshIdTokenAndUpdateSession(request, userSession),
+          { type: 'background' }
+        )
+
+      request.logger.info(
+        {
+          event: tokenRefreshEvent('background', {
+            outcome: refreshedSession ? 'success' : 'failure'
+          })
+        },
+        'Token refresh complete (background)'
       )
+    }
 
-    request.logger.info(
-      {
-        event: tokenRefreshEvent('background', {
-          outcome: refreshedSession ? 'success' : 'failure'
-        })
-      },
-      'Token refresh complete (background)'
-    )
+    // fire-and-forget: deliberately not awaited so the current request is not delayed
+    void run()
   }
-
-  // fire-and-forget: deliberately not awaited so the current request is not delayed
-  void run()
 }
 
 /**
