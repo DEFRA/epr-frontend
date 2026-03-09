@@ -53,7 +53,6 @@ describe('refresh token', () => {
         event: {
           action: 'token-refresh-oidc-call',
           outcome: 'success',
-          duration: expect.any(Number),
           kind: 'event'
         },
         http: { response: { status_code: 200 } }
