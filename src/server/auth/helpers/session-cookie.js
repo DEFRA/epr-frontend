@@ -44,8 +44,8 @@ function inNext5Minutes(date) {
  * @param {VerifyToken} verifyToken
  * @returns {(request: Request, userSession: UserSession) => Promise<UserSession | null>}
  */
-const createRefreshIdTokenAndUpdateSession =
-  (verifyToken) => async (request, userSession) => {
+const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
+  const refreshIdTokenAndUpdateSession = async (request, userSession) => {
     if (userSession.idTokenRefreshInProgress) {
       return userSession
     }
@@ -81,6 +81,9 @@ const createRefreshIdTokenAndUpdateSession =
     }
   }
 
+  return refreshIdTokenAndUpdateSession
+}
+
 /**
  * @param {VerifyToken} verifyToken
  * @returns {(request: Request, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
@@ -89,7 +92,7 @@ const createBlockingRefresh = (verifyToken) => {
   const refreshIdTokenAndUpdateSession =
     createRefreshIdTokenAndUpdateSession(verifyToken)
 
-  return async (request, userSession) => {
+  const blockingRefresh = async (request, userSession) => {
     const refreshedSession = await request
       .metrics()
       .timer(
@@ -111,6 +114,8 @@ const createBlockingRefresh = (verifyToken) => {
       ? { isValid: true, credentials: refreshedSession }
       : { isValid: false }
   }
+
+  return blockingRefresh
 }
 
 /**
@@ -121,7 +126,7 @@ const createBackgroundRefresh = (verifyToken) => {
   const refreshIdTokenAndUpdateSession =
     createRefreshIdTokenAndUpdateSession(verifyToken)
 
-  return (request, userSession) => {
+  const backgroundRefresh = (request, userSession) => {
     const run = async () => {
       const refreshedSession = await request
         .metrics()
@@ -144,6 +149,8 @@ const createBackgroundRefresh = (verifyToken) => {
     // fire-and-forget: deliberately not awaited so the current request is not delayed
     void run()
   }
+
+  return backgroundRefresh
 }
 
 /**
