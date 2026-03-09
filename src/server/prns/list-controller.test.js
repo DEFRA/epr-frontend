@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
@@ -7,8 +6,7 @@ import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, describe, expect, it as unitIt, vi } from 'vitest'
-import { listController } from './list-controller.js'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -149,47 +147,7 @@ describe('#listPrnsController', () => {
     vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
   })
 
-  describe('when feature is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', false)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
-    it('should return 404', async ({ server }) => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorListUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-
-    unitIt(
-      'should throw notFound when feature flag is disabled (unit test)',
-      async () => {
-        const mockRequest = { params: {}, auth: { credentials: {} } }
-        const mockH = {}
-
-        await expect(
-          listController.handler(mockRequest, mockH)
-        ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
-      }
-    )
-  })
-
-  describe('when feature is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
+  describe('request handling', () => {
     describe('page rendering', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(

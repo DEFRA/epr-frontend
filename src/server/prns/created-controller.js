@@ -1,6 +1,3 @@
-import Boom from '@hapi/boom'
-
-import { config } from '#config/config.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 /**
@@ -8,10 +5,6 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
  */
 export const createdController = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const { t: localise } = request

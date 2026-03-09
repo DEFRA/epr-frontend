@@ -1,10 +1,9 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -96,15 +95,7 @@ describe('#issuedController', () => {
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPrn)
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
+  describe('request handling', () => {
     describe('success page (after issuing PRN)', () => {
       it('displays success page with PRN issued heading and recipient', async ({
         server
@@ -488,32 +479,6 @@ describe('#issuedController', () => {
         expect(viewButton).toBeDefined()
         expect(viewButton.getAttribute('target')).toBe('_blank')
       })
-    })
-  })
-
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
-    it('returns 404', async ({ server }) => {
-      config.set('featureFlags.prns', false)
-
-      try {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: issuedUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      } finally {
-        config.set('featureFlags.prns', true)
-      }
     })
   })
 })

@@ -1,6 +1,3 @@
-import Boom from '@hapi/boom'
-
-import { config } from '#config/config.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
@@ -27,10 +24,6 @@ function buildInsufficientBalanceError(localise) {
  */
 export const controller = {
   async handler(request, h) {
-    if (!config.get('featureFlags.prns')) {
-      throw Boom.notFound()
-    }
-
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
 
