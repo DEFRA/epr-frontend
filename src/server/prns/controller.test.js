@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
@@ -11,7 +10,7 @@ import {
 } from '@testing-library/dom'
 import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -66,35 +65,7 @@ describe('#createPrnController', () => {
     vi.clearAllMocks()
   })
 
-  describe('when feature is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', false)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
-    it('should return 404', async ({ server }) => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: reprocessorUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-  })
-
-  describe('when feature is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.prns', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.prns')
-    })
-
+  describe('request handling', () => {
     describe('page rendering', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
@@ -290,26 +261,6 @@ describe('#createPrnController', () => {
     })
 
     describe('error handling', () => {
-      it('should return 404 for PRN when feature flag is disabled', async ({
-        server
-      }) => {
-        // Server created with flag ON (routes registered)
-        // Disable flag to test controller-level check
-        config.set('featureFlags.prns', false)
-
-        try {
-          const { statusCode } = await server.inject({
-            method: 'GET',
-            url: reprocessorUrl,
-            auth: mockAuth
-          })
-
-          expect(statusCode).toBe(statusCodes.notFound)
-        } finally {
-          config.set('featureFlags.prns', true)
-        }
-      })
-
       it('should return 404 when registration not found', async ({
         server
       }) => {

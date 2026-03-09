@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -109,7 +108,7 @@ function buildViewModel({
 }
 
 /**
- * Get PRN/PERN view data based on registration type and feature flag
+ * Get PRN/PERN view data based on registration type
  * @param {Request} request
  * @param {{noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs'}} noteTypes
  * @param {string} organisationId
@@ -129,7 +128,6 @@ function getPrnViewData(
   const manageUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes`
 
   return {
-    isEnabled: config.get('featureFlags.prns'),
     description: localise('registrations:notes.description', {
       noteTypePlural
     }),
@@ -141,7 +139,6 @@ function getPrnViewData(
       href: request.localiseUrl(manageUrl),
       text: localise('registrations:notes.manage', { noteTypePlural })
     },
-    notAvailable: localise('registrations:notes.notAvailable', { noteType }),
     title: localise('registrations:notes.title', { noteTypePlural })
   }
 }
