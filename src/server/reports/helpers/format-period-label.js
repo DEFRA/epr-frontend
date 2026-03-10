@@ -1,5 +1,7 @@
 import { CADENCE_MONTHLY } from '../constants.js'
 
+const MONTHS_PER_QUARTER = 3
+
 const MONTH_NAMES = [
   'January',
   'February',
@@ -27,6 +29,7 @@ export function formatPeriodLabel(period, cadence) {
     return `${MONTH_NAMES[period.period - 1]} ${period.year}`
   }
 
-  const index = (period.period - 1) * 3
-  return `${MONTH_NAMES[index]} to ${MONTH_NAMES[index + 2]} ${period.year}`
+  const index = (period.period - 1) * MONTHS_PER_QUARTER
+  const lastMonthIndex = index + MONTHS_PER_QUARTER - 1
+  return `${MONTH_NAMES[index]} to ${MONTH_NAMES[lastMonthIndex]} ${period.year}`
 }
