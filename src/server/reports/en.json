@@ -1,0 +1,7 @@
+{
+  "emptyState": "There are no reporting periods with data.",
+  "heading": "Reports",
+  "monthlyHeading": "Monthly",
+  "pageTitle": "Reports — {{ material }}",
+  "quarterlyHeading": "Quarterly"
+}

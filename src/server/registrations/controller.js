@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -101,10 +102,31 @@ function buildViewModel({
       registration.id,
       registration.accreditationId
     ),
+    reports: getReportsViewData(request, organisationId, registration.id),
     wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural)
   }
 
   return viewModel
+}
+
+/**
+ * Get reports view data for the dashboard tile
+ * @param {Request} request
+ * @param {string} organisationId
+ * @param {string} registrationId
+ */
+function getReportsViewData(request, organisationId, registrationId) {
+  const { t: localise } = request
+  const isEnabled = config.get('featureFlags.reports')
+  const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+
+  return {
+    isEnabled,
+    link: {
+      href: request.localiseUrl(reportsUrl),
+      text: localise('registrations:manageReports')
+    }
+  }
 }
 
 /**
