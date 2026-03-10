@@ -1,11 +1,12 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
+import { Metrics } from '@defra/cdp-metrics'
 import Iron from '@hapi/iron'
 import { addSeconds } from 'date-fns'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
   getVerifyToken: vi.fn(async () => (token) => jose.decodeJwt(token))
@@ -50,6 +51,8 @@ const defaultJwtPayload = {
 }
 
 describe('#sessionCookie - integration', () => {
+  afterEach(() => vi.restoreAllMocks())
+
   describe('token refresh on expired session', () => {
     /**
      * Helper function to create expired session data for refresh tests
@@ -93,6 +96,8 @@ describe('#sessionCookie - integration', () => {
       server,
       msw
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
+
       msw.use(
         ((jwtPayload) =>
           http.post('http://defra-id.auth/token', async () =>
@@ -149,12 +154,20 @@ describe('#sessionCookie - integration', () => {
       const updatedSession = await server.app.cache.get(sessionId)
       const newExpiresAt = new Date(updatedSession.expiresAt)
       expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
+
+      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
+        'tokenRefreshDuration',
+        expect.any(Function),
+        { type: 'background' }
+      )
     })
 
     it('should drop session from cache when background refresh fails', async ({
       server,
       msw
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
+
       msw.use(
         http.post('http://defra-id.auth/token', () => {
           return HttpResponse.json(
@@ -199,11 +212,18 @@ describe('#sessionCookie - integration', () => {
         const removedSession = await server.app.cache.get(sessionId)
         expect(removedSession).toBeNull()
       })
+
+      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
+        'tokenRefreshDuration',
+        expect.any(Function),
+        { type: 'background' }
+      )
     })
 
     it('should not refresh when token is still valid (expires beyond 5 minutes)', async ({
       server
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
       const sessionId = 'test-session-789'
       const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
@@ -248,6 +268,7 @@ describe('#sessionCookie - integration', () => {
 
       expect(unchangedSession.idToken).toBe('valid-id-token')
       expect(unchangedSession.refreshToken).toBe('valid-refresh-token')
+      expect(timerSpy).not.toHaveBeenCalled()
     })
 
     it('should return invalid when session not found in cache', async ({
@@ -278,6 +299,8 @@ describe('#sessionCookie - integration', () => {
       server,
       msw
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
+
       // Expires in 2 minutes: background-refresh window
       const expiredAt = new Date(Date.now() + 2 * 60 * 1000).toISOString()
       const { sessionId, sessionData } = createExpiredRefreshSessionData(
@@ -325,12 +348,20 @@ describe('#sessionCookie - integration', () => {
         const session = await server.app.cache.get(sessionId)
         expect(session).toBeNull()
       })
+
+      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
+        'tokenRefreshDuration',
+        expect.any(Function),
+        { type: 'background' }
+      )
     })
 
     it('should drop session from cache when background token refresh throws exception', async ({
       server,
       msw
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
+
       msw.use(
         http.post('http://defra-id.auth/token', () => {
           return HttpResponse.error()
@@ -380,12 +411,20 @@ describe('#sessionCookie - integration', () => {
         const cachedSession = await server.app.cache.get(sessionId)
         expect(cachedSession).toBeNull()
       })
+
+      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
+        'tokenRefreshDuration',
+        expect.any(Function),
+        { type: 'background' }
+      )
     })
 
     it('should await refresh and update session before response when token expires within 10 seconds', async ({
       server,
       msw
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
+
       msw.use(
         ((jwtPayload) =>
           http.post('http://defra-id.auth/token', async () =>
@@ -435,12 +474,20 @@ describe('#sessionCookie - integration', () => {
 
       const payload = JSON.parse(response.payload)
       expect(updatedSession.idToken).toBe(payload.idToken)
+
+      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
+        'tokenRefreshDuration',
+        expect.any(Function),
+        { type: 'blocking' }
+      )
     })
 
     it('should drop session synchronously when awaited refresh fails for token expiring within 10 seconds', async ({
       server,
       msw
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
+
       msw.use(
         http.post('http://defra-id.auth/token', () =>
           HttpResponse.json(
@@ -482,11 +529,18 @@ describe('#sessionCookie - integration', () => {
 
       const removedSession = await server.app.cache.get(sessionId)
       expect(removedSession).toBeNull()
+
+      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
+        'tokenRefreshDuration',
+        expect.any(Function),
+        { type: 'blocking' }
+      )
     })
 
     it('should skip refresh when idTokenRefreshInProgress is already set', async ({
       server
     }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
       // Expires in 5 seconds: would normally trigger an awaited refresh
       const expiresAt = addSeconds(new Date(), 5).toISOString()
       const sessionId = 'test-session-in-progress'
@@ -527,6 +581,12 @@ describe('#sessionCookie - integration', () => {
       expect(unchangedSession.idToken).toBe('old-id-token-in-progress')
       expect(unchangedSession.refreshToken).toBe(
         'old-refresh-token-in-progress'
+      )
+
+      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
+        'tokenRefreshDuration',
+        expect.any(Function),
+        { type: 'blocking' }
       )
     })
   })
