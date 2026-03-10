@@ -1,5 +1,12 @@
 import { config } from '#config/config.js'
+import { getTracingHeaderName } from '#server/common/helpers/request-tracing.js'
+import { withTraceId } from '@defra/hapi-tracing'
+
 import { getUserSession } from './get-user-session.js'
+
+/**
+ * @import { Request } from '@hapi/hapi'
+ */
 
 /**
  * Refresh id token using refresh token
@@ -31,20 +38,30 @@ async function refreshIdToken(request) {
   params.append('scope', 'openid offline_access')
   params.append('serviceId', serviceId)
 
-  request.logger.info('ID token expired, refreshing...')
-
-  return fetch(session.urls.token, {
+  const response = await fetch(session.urls.token, {
     method: 'post',
-    headers: {
+    headers: withTraceId(getTracingHeaderName(), {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Cache-Control': 'no-cache'
-    },
+    }),
     body: params
   })
+
+  request.logger.info(
+    {
+      event: {
+        action: 'token-refresh-oidc-call',
+        outcome: response.ok ? 'success' : 'failure',
+        kind: 'event'
+      },
+      http: {
+        response: { status_code: response.status }
+      }
+    },
+    'OIDC token endpoint call complete'
+  )
+
+  return response
 }
 
 export { refreshIdToken }
-
-/**
- * @import { Request } from '@hapi/hapi'
- */
