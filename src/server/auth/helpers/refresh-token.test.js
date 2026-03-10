@@ -7,6 +7,10 @@ import { describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#config/config.js'))
+vi.mock(import('@defra/hapi-tracing'), () => ({
+  withTraceId: vi.fn((headerName, headers = {}) => headers),
+  tracing: { plugin: {} }
+}))
 
 describe('refresh token', () => {
   it('should refresh id token with correct parameters', async ({ msw }) => {
@@ -45,7 +49,15 @@ describe('refresh token', () => {
 
     expect(getUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
     expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
-      'ID token expired, refreshing...'
+      {
+        event: {
+          action: 'token-refresh-oidc-call',
+          outcome: 'success',
+          kind: 'event'
+        },
+        http: { response: { status_code: 200 } }
+      },
+      'OIDC token endpoint call complete'
     )
 
     const params = new URLSearchParams(await capturedRequest.text())

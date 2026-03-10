@@ -16,6 +16,7 @@ import { sessionCache } from '#server/common/helpers/session-cache/session-cache
 import { userAgentProtection } from '#server/common/helpers/useragent-protection.js'
 import wasteOrganisationsFixture from '#server/common/helpers/waste-organisations/fixtures/in-memory.json' with { type: 'json' }
 import { createWasteOrganisationsPlugin } from '#server/common/helpers/waste-organisations/waste-organisations.plugin.js'
+import { metrics } from '@defra/cdp-metrics'
 import Crumb from '@hapi/crumb'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
@@ -80,6 +81,7 @@ export async function createServer(options = {}) {
   const i18next = await initI18n()
 
   const plugins = [
+    metrics,
     requestLogger,
     requestTracing,
     secureContext,
