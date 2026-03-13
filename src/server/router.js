@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { account } from '#server/account/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
@@ -11,6 +12,7 @@ import { logout } from '#server/logout/index.js'
 import { organisations } from '#server/organisations/index.js'
 import { prns } from '#server/prns/index.js'
 import { registrations } from '#server/registrations/index.js'
+import { reports } from '#server/reports/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
 import inert from '@hapi/inert'
@@ -40,6 +42,7 @@ export const router = {
         organisations,
         prns,
         registrations,
+        ...(config.get('featureFlags.reports') ? [reports] : []),
         summaryLog,
         summaryLogUpload
       ])
