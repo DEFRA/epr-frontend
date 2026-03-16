@@ -15,29 +15,25 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
+    const [{ registration }, { cadence, periods }] = await Promise.all([
+      fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
         session.idToken
-      )
+      ),
+      fetchReportingPeriods(organisationId, registrationId, session.idToken)
+    ])
 
     if (!registration) {
       throw Boom.notFound('Registration not found')
     }
-
-    const { cadence, periods } = await fetchReportingPeriods(
-      organisationId,
-      registrationId,
-      session.idToken
-    )
 
     const material = getDisplayMaterial(registration)
     const isMonthly = cadence === CADENCE_MONTHLY
     const isQuarterly = cadence === CADENCE_QUARTERLY
 
     const formattedPeriods = periods.map((period) => ({
-      label: formatPeriodLabel(period, cadence)
+      label: formatPeriodLabel(period, cadence, localise)
     }))
 
     const viewData = {
@@ -47,7 +43,6 @@ export const listController = {
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
-      isAccredited: !!accreditation,
       hasMonthlyPeriods: isMonthly && periods.length > 0,
       hasQuarterlyPeriods: isQuarterly && periods.length > 0,
       monthlyPeriods: isMonthly ? formattedPeriods : [],

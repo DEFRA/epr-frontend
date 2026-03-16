@@ -2,6 +2,35 @@ import { describe, expect, it } from 'vitest'
 
 import { formatPeriodLabel } from './format-period-label.js'
 
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+]
+
+function localise(key) {
+  const monthMatch = key.match(/^reports:months\.(\d+)$/)
+
+  if (monthMatch) {
+    return MONTH_NAMES[Number(monthMatch[1]) - 1]
+  }
+
+  if (key === 'reports:quarterlyTo') {
+    return 'to'
+  }
+
+  return key
+}
+
 describe(formatPeriodLabel, () => {
   it.each([
     {
@@ -57,7 +86,7 @@ describe(formatPeriodLabel, () => {
   ])(
     'should return "$expected" for $cadence period $period.period',
     ({ period, cadence, expected }) => {
-      expect(formatPeriodLabel(period, cadence)).toBe(expected)
+      expect(formatPeriodLabel(period, cadence, localise)).toBe(expected)
     }
   )
 })
