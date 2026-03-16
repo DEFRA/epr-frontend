@@ -7,7 +7,7 @@ const MONTHS_PER_QUARTER = 3
  * Monthly: "January 2026", Quarterly: "January to March 2026"
  * @param {import('./fetch-reporting-periods.js').ReportingPeriod} period
  * @param {string} cadence
- * @param {Function} localise
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise
  * @returns {string}
  */
 export function formatPeriodLabel(period, cadence, localise) {
