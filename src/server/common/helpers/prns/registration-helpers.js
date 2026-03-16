@@ -7,6 +7,14 @@ export const isExporterRegistration = (registration) =>
   registration.wasteProcessingType === 'exporter'
 
 /**
+ * Check if a registration is for a reprocessor
+ * @param {{wasteProcessingType: string}} registration
+ * @returns {boolean}
+ */
+export const isReprocessorRegistration = (registration) =>
+  registration.wasteProcessingType === 'reprocessor'
+
+/**
  * Get display names for PRN/PERN based on waste processing type
  * @param {{wasteProcessingType: string}} registration
  * @returns {{isExporter: boolean, noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs', wasteAction: 'export' | 'reprocessing'}}

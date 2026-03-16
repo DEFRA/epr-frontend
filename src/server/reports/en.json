@@ -1,6 +1,16 @@
 {
+  "actionColumn": "Action",
+  "correctionLink": "upload an updated summary log",
+  "correctionPrefix": "If anything is missing or incorrect,",
+  "correctionSuffix": "before creating your report.",
+  "destinationHeading": "Final destination of waste sent on",
+  "detailHeading": "Your summary log data for {{ periodLabel }}",
+  "detailPageTitle": "Report: {{ material }}: {{ periodLabel }}",
+  "detailsHeading": "Details",
   "emptyState": "There are no reporting periods with data.",
   "heading": "Reports",
+  "lastUploadedAt": "Your most recent summary log was uploaded at {{ time }} on {{ date }}.",
+  "materialLabel": "Material:",
   "monthlyHeading": "Monthly",
   "months": {
     "1": "January",
@@ -16,7 +26,25 @@
     "11": "November",
     "12": "December"
   },
+  "overviewIntro": "The following is an overview of your summary log data for {{ periodLabel }}. Only the data that will appear in your report is shown here.",
   "pageTitle": "Reports: {{ material }}",
+  "periodColumn": "Period",
   "quarterlyHeading": "Quarterly",
-  "quarterlyPeriod": "Quarter {{number}}, {{year}}"
+  "quarterlyPeriod": "Quarter {{number}}, {{year}}",
+  "recipientColumn": "Recipient",
+  "roleColumn": "Role",
+  "siteLabel": "Site:",
+  "supplierColumn": "Supplier",
+  "supplierDetailsHeading": "Supplier details",
+  "tonnageReceivedColumn": "Tonnage received",
+  "tonnageSentOnColumn": "Tonnage sent on",
+  "tonnageSentOnToExporters": "Total tonnage sent on to exporters",
+  "tonnageSentOnToOtherSites": "Total tonnage sent on to other sites or facilities",
+  "tonnageSentOnToReprocessors": "Total tonnage sent on to reprocessors",
+  "totalTonnageReceived": "Total tonnage received",
+  "totalTonnageSentOn": "Total tonnage sent on",
+  "wasteReceivedHeading": "Packaging waste received for reprocessing",
+  "wasteReceivedIntro": "The data for waste received comes from sections 1 and 2 of your summary log. Your report will be accurate if all the necessary data has been added to these sections.",
+  "wasteSentOnHeading": "Packaging waste sent on",
+  "wasteSentOnIntro": "This information is based on the data in sections 5, 6 and 7 of your summary log. Your report will be accurate if all the necessary data has been added to these sections."
 }
