@@ -17,15 +17,15 @@ const MONTH_NAMES = [
   'December'
 ]
 
-function localise(key) {
+function localise(key, params = {}) {
   const monthMatch = key.match(/^reports:months\.(\d+)$/)
 
   if (monthMatch) {
     return MONTH_NAMES[Number(monthMatch[1]) - 1]
   }
 
-  if (key === 'reports:quarterlyTo') {
-    return 'to'
+  if (key === 'reports:quarterlyPeriod') {
+    return `Quarter ${params.number}, ${params.year}`
   }
 
   return key
@@ -71,7 +71,7 @@ describe(formatPeriodLabel, () => {
         startDate: '2026-01-01',
         endDate: '2026-03-31'
       },
-      expected: 'January to March 2026'
+      expected: 'Quarter 1, 2026'
     },
     {
       cadence: 'quarterly',
@@ -81,7 +81,7 @@ describe(formatPeriodLabel, () => {
         startDate: '2026-10-01',
         endDate: '2026-12-31'
       },
-      expected: 'October to December 2026'
+      expected: 'Quarter 4, 2026'
     }
   ])(
     'should return "$expected" for $cadence period $period.period',

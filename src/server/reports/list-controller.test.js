@@ -254,7 +254,7 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        expect(body.textContent).toContain('January to March 2026')
+        expect(body.textContent).toContain('Quarter 1, 2026')
       })
 
       it('should not display Monthly subheading', async ({ server }) => {

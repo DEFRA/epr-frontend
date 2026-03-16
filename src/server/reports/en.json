@@ -18,5 +18,5 @@
   },
   "pageTitle": "Reports: {{ material }}",
   "quarterlyHeading": "Quarterly",
-  "quarterlyTo": "to"
+  "quarterlyPeriod": "Quarter {{number}}, {{year}}"
 }
