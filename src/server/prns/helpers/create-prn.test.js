@@ -103,6 +103,6 @@ describe(createPrn, () => {
         payload,
         idToken
       )
-    ).rejects.toThrowError('Network error')
+    ).rejects.toThrow('Network error')
   })
 })
