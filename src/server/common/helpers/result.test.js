@@ -14,11 +14,11 @@ describe('result type', () => {
     })
 
     test('should throw AssertionError when value is null', () => {
-      expect(() => ok(null)).toThrowError(assert.AssertionError)
+      expect(() => ok(null)).toThrow(assert.AssertionError)
     })
 
     test('should throw AssertionError when value is undefined', () => {
-      expect(() => ok(undefined)).toThrowError(assert.AssertionError)
+      expect(() => ok(undefined)).toThrow(assert.AssertionError)
     })
   })
 

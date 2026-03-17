@@ -33,7 +33,7 @@ describe('#buildPrnBasePath', () => {
       accreditationId: 'acc-1\\unsafe'
     }
   ])('throws for invalid path segment set %#', (params) => {
-    expect(() => buildPrnBasePath(params)).toThrowError('Invalid')
+    expect(() => buildPrnBasePath(params)).toThrow('Invalid')
   })
 })
 
@@ -53,6 +53,6 @@ describe('#getSafePathSegment', () => {
     ['path\\with\\backslash', 'prnId'],
     ['path with spaces', 'organisationId']
   ])('throws for invalid segment: %s', (value, fieldName) => {
-    expect(() => getSafePathSegment(value, fieldName)).toThrowError('Invalid')
+    expect(() => getSafePathSegment(value, fieldName)).toThrow('Invalid')
   })
 })
