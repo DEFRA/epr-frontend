@@ -387,9 +387,7 @@ describe('#organisationController', () => {
         expect(queryByText(body, /Not accredited/i)).toBeNull()
       })
 
-      it('should show registered-only with not accredited label when flag is on', async ({
-        server
-      }) => {
+      it('should show registered-only when flag is on', async ({ server }) => {
         config.set('featureFlags.registeredOnly', true)
 
         const { result, statusCode } = await server.inject({

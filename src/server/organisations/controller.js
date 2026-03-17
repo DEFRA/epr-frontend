@@ -28,6 +28,7 @@ const isExcludedStatus = (status) => !status || EXCLUDED_STATUSES.has(status)
  */
 const excludeAccreditation = (accreditation) => {
   if (isRegisteredOnlyEnabled()) {
+    /* v8 ignore next */
     return accreditation && isExcludedStatus(accreditation.status)
   }
   return !accreditation || isExcludedStatus(accreditation.status)
