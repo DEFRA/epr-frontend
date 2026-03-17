@@ -1,10 +1,11 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
@@ -323,6 +324,95 @@ describe('#organisationController', () => {
       ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
     })
 
+    describe('registered-only', () => {
+      afterEach(() => {
+        config.reset('featureFlags.registeredOnly')
+      })
+
+      it('should hide registered-only when flag is off', async ({ server }) => {
+        config.set('featureFlags.registeredOnly', false)
+
+        const dataWithNoAccreditations = {
+          ...fixtureData,
+          accreditations: [],
+          registrations: [
+            {
+              id: 'reg-no-acc-001',
+              status: 'approved',
+              wasteProcessingType: 'reprocessor',
+              material: 'plastic',
+              site: { address: { line1: 'Test Site' } }
+            },
+            {
+              id: 'reg-no-acc-002',
+              status: 'approved',
+              wasteProcessingType: 'exporter',
+              material: 'wood'
+            }
+          ]
+        }
+
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue(dataWithNoAccreditations)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901',
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('No sites found.')
+
+        const tableRows = $('tbody tr')
+
+        expect(tableRows).toHaveLength(0)
+      })
+
+      it('should show registered-only with not accredited label when flag is on', async ({
+        server
+      }) => {
+        config.set('featureFlags.registeredOnly', true)
+
+        const dataWithUnaccreditedRegistration = {
+          ...fixtureData,
+          accreditations: [],
+          registrations: [
+            {
+              id: 'reg-no-acc-001',
+              status: 'approved',
+              wasteProcessingType: 'reprocessor',
+              material: 'plastic',
+              site: { address: { line1: 'Test Site' } }
+            }
+          ]
+        }
+
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue(dataWithUnaccreditedRegistration)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901',
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const accreditationCells = $('tbody td:nth-child(3)')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(accreditationCells).toContain('Not accredited')
+      })
+    })
+
     describe('waste balance', () => {
       it('should not fetch waste balances when no displayable registrations', async ({
         server
@@ -619,77 +709,6 @@ describe('#organisationController', () => {
 
       expect(siteHeadings).toContain('Unknown site')
       expect(siteHeadings).toContain('Site With Address')
-    })
-
-    it('should handle accreditation without matching registration', async ({
-      server
-    }) => {
-      const dataWithUnmatchedAccreditation = {
-        ...fixtureData,
-        registrations: [] // No registrations
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithUnmatchedAccreditation)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901',
-        auth: mockAuth
-      })
-
-      const $ = load(result)
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      // Should use accreditation status history as fallback
-      const statusTags = $('.govuk-tag')
-
-      expect(statusTags.length).toBeGreaterThan(0)
-    })
-
-    it('should hide registrations without accreditations', async ({
-      server
-    }) => {
-      const dataWithNoAccreditations = {
-        ...fixtureData,
-        accreditations: [],
-        registrations: [
-          {
-            id: 'reg-no-acc-001',
-            status: 'approved',
-            wasteProcessingType: 'reprocessor',
-            material: 'plastic',
-            site: { address: { line1: 'Test Site' } }
-          },
-          {
-            id: 'reg-no-acc-002',
-            status: 'approved',
-            wasteProcessingType: 'exporter',
-            material: 'wood'
-          }
-        ]
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithNoAccreditations)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901',
-        auth: mockAuth
-      })
-
-      const $ = load(result)
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('No sites found.')
-
-      const tableRows = $('tbody tr')
-
-      expect(tableRows).toHaveLength(0)
     })
 
     it('should display only exporting sites when no reprocessing sites exist', async ({
