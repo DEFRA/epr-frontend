@@ -78,9 +78,9 @@ describe(provideUserOrganisations, () => {
       }
     }
 
-    await expect(
-      provideUserOrganisations.method(mockRequest)
-    ).rejects.toThrowError('401 Unauthorized')
+    await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
+      '401 Unauthorized'
+    )
   })
 
   it('should throw error when backend returns 500 server error', async () => {
@@ -99,9 +99,9 @@ describe(provideUserOrganisations, () => {
       }
     }
 
-    await expect(
-      provideUserOrganisations.method(mockRequest)
-    ).rejects.toThrowError('500 Internal Server Error')
+    await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
+      '500 Internal Server Error'
+    )
   })
 
   it('should have userOrganisations as assign property', () => {

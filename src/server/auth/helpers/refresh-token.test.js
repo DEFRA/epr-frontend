@@ -80,9 +80,9 @@ describe('refresh token', () => {
       }
     })
 
-    await expect(
-      refreshIdToken({ logger: { info: vi.fn() } })
-    ).rejects.toThrowError('Cannot refresh token: no refresh token found')
+    await expect(refreshIdToken({ logger: { info: vi.fn() } })).rejects.toThrow(
+      'Cannot refresh token: no refresh token found'
+    )
   })
 
   it('should throw error when refresh token is missing', async () => {
@@ -91,9 +91,9 @@ describe('refresh token', () => {
       value: { urls: { token: 'http://defra-id.auth/token' } }
     })
 
-    await expect(
-      refreshIdToken({ logger: { info: vi.fn() } })
-    ).rejects.toThrowError('Cannot refresh token: no refresh token found')
+    await expect(refreshIdToken({ logger: { info: vi.fn() } })).rejects.toThrow(
+      'Cannot refresh token: no refresh token found'
+    )
   })
 
   it('should throw error when getUserSession returns no session', async () => {
@@ -101,7 +101,7 @@ describe('refresh token', () => {
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    await expect(refreshIdToken(mockRequest)).rejects.toThrowError(
+    await expect(refreshIdToken(mockRequest)).rejects.toThrow(
       'Cannot refresh token: no user session found'
     )
 

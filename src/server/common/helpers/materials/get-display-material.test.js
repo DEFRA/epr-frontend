@@ -38,7 +38,7 @@ describe(getDisplayMaterial, () => {
     it('should throw for unknown material', () => {
       const registration = { material: 'unknown' }
 
-      expect(() => getDisplayMaterial(registration)).toThrowError(
+      expect(() => getDisplayMaterial(registration)).toThrow(
         expect.objectContaining({
           isBoom: true,
           message: 'Unknown material: unknown'
