@@ -66,6 +66,17 @@ function createTag(status) {
 
 /**
  * @param {Accreditation} [accreditation]
+ * @param {object} [wasteBalance]
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+const formatWasteBalance = (accreditation, wasteBalance, localise) =>
+  isRegisteredOnlyEnabled() && !accreditation
+    ? localise('organisations:table:notApplicable')
+    : formatTonnage(wasteBalance?.availableAmount)
+
+/**
+ * @param {Accreditation} [accreditation]
  * @param {(key: string) => string} localise
  * @returns {string}
  */
@@ -108,7 +119,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
 
   cells.push(
     {
-      text: formatTonnage(wasteBalance?.availableAmount),
+      text: formatWasteBalance(accreditation, wasteBalance, localise),
       format: 'numeric'
     },
     {

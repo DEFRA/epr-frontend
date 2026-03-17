@@ -28,16 +28,17 @@ vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
 /**
  * @param {HTMLElement} table
- * @returns {(columnName: string) => HTMLElement}
+ * @returns {(columnName: string | RegExp) => HTMLElement}
  */
 const cellInColumn = (table) => {
   const headers = getAllByRole(table, 'columnheader')
   const [, dataRow] = getAllByRole(table, 'row')
 
   return (columnName) => {
-    const colIndex = headers.findIndex((h) =>
-      new RegExp(columnName, 'i').test(h.textContent)
-    )
+    const pattern =
+      columnName instanceof RegExp ? columnName : new RegExp(columnName, 'i')
+    const colIndex = headers.findIndex((h) => pattern.test(h.textContent))
+
     return getAllByRole(dataRow, 'cell')[colIndex]
   }
 }
@@ -403,6 +404,7 @@ describe('#organisationController', () => {
         expect(statusCode).toBe(statusCodes.ok)
         expect(cell('Material')).toHaveTextContent(/Plastic/i)
         expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
+        expect(cell(/Available waste balance/)).toHaveTextContent('N/A')
       })
     })
 
