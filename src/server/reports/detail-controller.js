@@ -35,6 +35,10 @@ function buildDestinationRows(destinations) {
   ])
 }
 
+const MIN_YEAR = 2024
+const MAX_YEAR = 2100
+const MAX_PERIOD = 12
+
 /**
  * @satisfies {Partial<ServerRoute>}
  */
@@ -44,8 +48,8 @@ export const detailController = {
       params: Joi.object({
         organisationId: Joi.string().required(),
         registrationId: Joi.string().required(),
-        year: Joi.number().integer().min(2024).max(2100).required(),
-        period: Joi.number().integer().min(1).max(12).required()
+        year: Joi.number().integer().min(MIN_YEAR).max(MAX_YEAR).required(),
+        period: Joi.number().integer().min(1).max(MAX_PERIOD).required()
       })
     }
   },

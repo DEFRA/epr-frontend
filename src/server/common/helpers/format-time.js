@@ -4,13 +4,15 @@
  * @param {string} isoString
  * @returns {string}
  */
+const NOON = 12
+
 export function formatTime(isoString) {
   const date = new Date(isoString)
 
   const hours = date.getUTCHours()
   const minutes = date.getUTCMinutes()
-  const suffix = hours >= 12 ? 'pm' : 'am'
-  const displayHour = hours % 12 || 12
+  const suffix = hours >= NOON ? 'pm' : 'am'
+  const displayHour = hours % NOON || NOON
 
   return `${displayHour}:${minutes.toString().padStart(2, '0')}${suffix}`
 }
