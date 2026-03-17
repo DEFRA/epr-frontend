@@ -4,7 +4,9 @@ import * as fetchOrganisationModule from '#server/common/helpers/organisations/f
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
+import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { load } from 'cheerio'
+import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
@@ -325,6 +327,24 @@ describe('#organisationController', () => {
     })
 
     describe('registered-only', () => {
+      beforeEach(() => {
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue({
+          ...fixtureData,
+          accreditations: [],
+          registrations: [
+            {
+              id: 'reg-no-acc-001',
+              status: 'approved',
+              wasteProcessingType: 'reprocessor',
+              material: 'plastic',
+              site: { address: { line1: 'Test Site' } }
+            }
+          ]
+        })
+      })
+
       afterEach(() => {
         config.reset('featureFlags.registeredOnly')
       })
@@ -332,44 +352,17 @@ describe('#organisationController', () => {
       it('should hide registered-only when flag is off', async ({ server }) => {
         config.set('featureFlags.registeredOnly', false)
 
-        const dataWithNoAccreditations = {
-          ...fixtureData,
-          accreditations: [],
-          registrations: [
-            {
-              id: 'reg-no-acc-001',
-              status: 'approved',
-              wasteProcessingType: 'reprocessor',
-              material: 'plastic',
-              site: { address: { line1: 'Test Site' } }
-            },
-            {
-              id: 'reg-no-acc-002',
-              status: 'approved',
-              wasteProcessingType: 'exporter',
-              material: 'wood'
-            }
-          ]
-        }
-
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(dataWithNoAccreditations)
-
         const { result, statusCode } = await server.inject({
           method: 'GET',
           url: '/organisations/6507f1f77bcf86cd79943901',
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const { body } = new JSDOM(result).window.document
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain('No sites found.')
-
-        const tableRows = $('tbody tr')
-
-        expect(tableRows).toHaveLength(0)
+        expect(getByText(body, /No sites found/i)).toBeDefined()
+        expect(queryByText(body, /Not accredited/i)).toBeNull()
       })
 
       it('should show registered-only with not accredited label when flag is on', async ({
@@ -377,39 +370,17 @@ describe('#organisationController', () => {
       }) => {
         config.set('featureFlags.registeredOnly', true)
 
-        const dataWithUnaccreditedRegistration = {
-          ...fixtureData,
-          accreditations: [],
-          registrations: [
-            {
-              id: 'reg-no-acc-001',
-              status: 'approved',
-              wasteProcessingType: 'reprocessor',
-              material: 'plastic',
-              site: { address: { line1: 'Test Site' } }
-            }
-          ]
-        }
-
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(dataWithUnaccreditedRegistration)
-
         const { result, statusCode } = await server.inject({
           method: 'GET',
           url: '/organisations/6507f1f77bcf86cd79943901',
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const { body } = new JSDOM(result).window.document
+        const table = getByRole(body, 'table')
 
         expect(statusCode).toBe(statusCodes.ok)
-
-        const accreditationCells = $('tbody td:nth-child(3)')
-          .map((_, el) => $(el).text().trim())
-          .get()
-
-        expect(accreditationCells).toContain('Not accredited')
+        expect(getByText(table, /Not accredited/i)).toBeDefined()
       })
     })
 
