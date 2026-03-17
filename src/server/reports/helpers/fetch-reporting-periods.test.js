@@ -75,6 +75,6 @@ describe(fetchReportingPeriods, () => {
 
     await expect(
       fetchReportingPeriods(organisationId, registrationId, idToken)
-    ).rejects.toThrowError('Network error')
+    ).rejects.toThrow('Network error')
   })
 })

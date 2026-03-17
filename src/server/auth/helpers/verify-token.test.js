@@ -64,7 +64,7 @@ describe(getVerifyToken, () => {
       jwks_uri: 'https://test.auth/.well-known/jwks.json'
     })
 
-    await expect(verifyToken('invalid.jwt.token')).rejects.toThrowError(
+    await expect(verifyToken('invalid.jwt.token')).rejects.toThrow(
       'Invalid signature'
     )
   })
@@ -79,7 +79,7 @@ describe(getVerifyToken, () => {
       getVerifyToken({
         jwks_uri: 'https://test.auth/.well-known/jwks.json'
       })
-    ).rejects.toThrowError('Invalid URL')
+    ).rejects.toThrow('Invalid URL')
   })
 
   it('should handle kid matching automatically via jose', async () => {

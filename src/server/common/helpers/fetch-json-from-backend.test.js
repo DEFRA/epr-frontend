@@ -50,7 +50,7 @@ describe(fetchJsonFromBackend, () => {
     const mockError = new Error('fetch failed')
     vi.mocked(fetchJson).mockRejectedValue(mockError)
 
-    await expect(fetchJsonFromBackend('/v1/test')).rejects.toThrowError(
+    await expect(fetchJsonFromBackend('/v1/test')).rejects.toThrow(
       'fetch failed'
     )
   })
