@@ -4,7 +4,12 @@ import * as fetchOrganisationModule from '#server/common/helpers/organisations/f
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, getByText, queryByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByText
+} from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
@@ -20,6 +25,22 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+
+/**
+ * @param {HTMLElement} table
+ * @returns {(columnName: string) => HTMLElement}
+ */
+const cellInColumn = (table) => {
+  const headers = getAllByRole(table, 'columnheader')
+  const [, dataRow] = getAllByRole(table, 'row')
+
+  return (columnName) => {
+    const colIndex = headers.findIndex((h) =>
+      new RegExp(columnName, 'i').test(h.textContent)
+    )
+    return getAllByRole(dataRow, 'cell')[colIndex]
+  }
+}
 
 const mockAuth = {
   strategy: 'session',
@@ -377,10 +398,11 @@ describe('#organisationController', () => {
         })
 
         const { body } = new JSDOM(result).window.document
-        const table = getByRole(body, 'table')
+        const cell = cellInColumn(getByRole(body, 'table'))
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(getByText(table, /Not accredited/i)).toBeDefined()
+        expect(cell('Material')).toHaveTextContent(/Plastic/i)
+        expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
       })
     })
 
