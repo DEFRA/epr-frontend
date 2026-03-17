@@ -140,9 +140,15 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
-                <p class="govuk-body">
-                  {{ localise("registrations:reportsNotAvailable") }}
-                </p>
+                {% if reports.isEnabled %}
+                  <p class="govuk-body">
+                    <a href="{{ reports.link.href }}" class="govuk-link">{{ reports.link.text }}</a>
+                  </p>
+                {% else %}
+                  <p class="govuk-body">
+                    {{ localise("registrations:reportsNotAvailable") }}
+                  </p>
+                {% endif %}
               </div>
             </div>
           </div>
