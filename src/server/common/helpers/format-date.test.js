@@ -24,4 +24,16 @@ describe(formatDate, () => {
       '15 February'
     )
   })
+
+  it('should return empty string for null input', () => {
+    expect(formatDate(null)).toBe('')
+  })
+
+  it('should return empty string for undefined input', () => {
+    expect(formatDate(undefined)).toBe('')
+  })
+
+  it('should return empty string for invalid date string', () => {
+    expect(formatDate('not-a-date')).toBe('')
+  })
 })

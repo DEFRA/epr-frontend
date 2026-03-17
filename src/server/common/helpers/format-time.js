@@ -1,18 +1,20 @@
 /**
- * Format an ISO timestamp to a 12-hour time string.
+ * Format an ISO timestamp to a 12-hour time string in UK local time.
  * e.g. "2026-02-15T15:09:00.000Z" → "3:09pm"
  * @param {string} isoString
  * @returns {string}
  */
-const NOON = 12
-
 export function formatTime(isoString) {
-  const date = new Date(isoString)
+  if (!isoString || Number.isNaN(new Date(isoString).getTime())) {
+    return ''
+  }
 
-  const hours = date.getUTCHours()
-  const minutes = date.getUTCMinutes()
-  const suffix = hours >= NOON ? 'pm' : 'am'
-  const displayHour = hours % NOON || NOON
+  const formatted = new Date(isoString).toLocaleTimeString('en-GB', {
+    timeZone: 'Europe/London',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 
-  return `${displayHour}:${minutes.toString().padStart(2, '0')}${suffix}`
+  return formatted.replace(/\s/g, '')
 }

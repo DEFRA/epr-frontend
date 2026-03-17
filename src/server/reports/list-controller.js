@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { CADENCE_MONTHLY, CADENCE_QUARTERLY } from './constants.js'
@@ -40,7 +41,7 @@ function buildTableRows({
       )
 
       row.push({
-        html: `<a href="${url}" class="govuk-link">View<span class="govuk-visually-hidden">${label}</span></a>`
+        html: `<a href="${url}" class="govuk-link">View<span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
       })
     }
 

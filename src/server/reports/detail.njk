@@ -23,9 +23,7 @@
         {{ govukInsetText({
           text: localise("reports:lastUploadedAt", { time: lastUploadedAt.time, date: lastUploadedAt.date })
         }) }}
-      {% endif %}
 
-      {% if lastUploadedAt %}
         <p class="govuk-body">
           {{ localise("reports:correctionPrefix") }}
           <a href="{{ uploadUrl }}" class="govuk-link">{{ localise("reports:correctionLink") }}</a>

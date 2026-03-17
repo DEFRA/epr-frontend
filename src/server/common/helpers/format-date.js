@@ -7,6 +7,10 @@
  * @returns {string}
  */
 export function formatDate(isoString, { includeYear = true } = {}) {
+  if (!isoString || Number.isNaN(new Date(isoString).getTime())) {
+    return ''
+  }
+
   /** @type {Intl.DateTimeFormatOptions} */
   const dateOptions = { day: 'numeric', month: 'long', timeZone: 'UTC' }
 

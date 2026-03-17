@@ -22,4 +22,16 @@ describe(formatTime, () => {
   it('should pad single-digit minutes', () => {
     expect(formatTime('2026-02-15T14:03:00.000Z')).toBe('2:03pm')
   })
+
+  it('should adjust for BST during summer', () => {
+    expect(formatTime('2026-06-15T14:09:00.000Z')).toBe('3:09pm')
+  })
+
+  it('should return empty string for null', () => {
+    expect(formatTime(null)).toBe('')
+  })
+
+  it('should return empty string for undefined', () => {
+    expect(formatTime(undefined)).toBe('')
+  })
 })
