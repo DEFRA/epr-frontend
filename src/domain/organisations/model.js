@@ -1,3 +1,5 @@
+// copied from matching file in epr-backend - keep in sync (as much as we need)
+
 /** @import {Accreditation} from '#domain/organisations/accreditation.js' */
 /** @import {Registration} from '#domain/organisations/registration.js' */
 
@@ -73,6 +75,9 @@ export const BUSINESS_TYPE = Object.freeze({
   PARTNERSHIP: 'partnership'
 })
 
+/**
+ * @typedef {typeof PARTNER_TYPE[keyof typeof PARTNER_TYPE]} PartnerType
+ */
 export const PARTNER_TYPE = Object.freeze({
   COMPANY: 'company',
   INDIVIDUAL: 'individual',
@@ -214,7 +219,7 @@ export const USER_ROLES = Object.freeze({
 /**
  * @typedef {{
  *   name: string;
- *   type: 'company'|'individual';
+ *   type: Pick<PartnerType, 'company'|'individual'>;
  * }} Partner
  */
 
