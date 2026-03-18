@@ -1,3 +1,4 @@
+import { detailController } from './detail-controller.js'
 import { listController } from './list-controller.js'
 
 const basePath =
@@ -15,6 +16,11 @@ export const reports = {
           ...listController,
           method: 'GET',
           path: basePath
+        },
+        {
+          ...detailController,
+          method: 'GET',
+          path: `${basePath}/{year}/{period}`
         }
       ])
     }

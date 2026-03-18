@@ -48,18 +48,29 @@ const accreditedRegistration = {
   }
 }
 
-const registeredOnlyRegistration = {
+const registeredOnlyExporter = {
   organisationData: { id: 'org-456' },
   registration: {
     id: 'reg-002',
     material: 'plastic',
     wasteProcessingType: 'exporter',
-    registrationNumber: 'REG002345',
+    registrationNumber: 'REG002345'
+  },
+  accreditation: undefined
+}
+
+const registeredOnlyReprocessor = {
+  organisationData: { id: 'org-789' },
+  registration: {
+    id: 'reg-003',
+    material: 'plastic',
+    wasteProcessingType: 'reprocessor',
+    registrationNumber: 'REG003456',
     site: {
       address: {
-        line1: 'Liverpool Export Centre',
-        town: 'Liverpool',
-        postcode: 'L1 1AA'
+        line1: 'North Road',
+        town: 'Manchester',
+        postcode: 'M1 1AA'
       }
     }
   },
@@ -87,7 +98,8 @@ const emptyResponse = {
 }
 
 const accreditedUrl = '/organisations/org-123/registrations/reg-001/reports'
-const registeredOnlyUrl = '/organisations/org-456/registrations/reg-002/reports'
+const exporterUrl = '/organisations/org-456/registrations/reg-002/reports'
+const reprocessorUrl = '/organisations/org-789/registrations/reg-003/reports'
 
 describe('#listReportsController', () => {
   beforeEach(() => {
@@ -175,7 +187,7 @@ describe('#listReportsController', () => {
         expect(heading).toBeDefined()
       })
 
-      it('should display month period entries', async ({ server }) => {
+      it('should render monthly periods in a table', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -185,8 +197,28 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        expect(body.textContent).toContain('January 2026')
-        expect(body.textContent).toContain('February 2026')
+        const table = body.querySelector('.govuk-table')
+
+        expect(table).not.toBeNull()
+        expect(table?.textContent).toContain('January 2026')
+        expect(table?.textContent).toContain('February 2026')
+      })
+
+      it('should not display View links for accredited periods', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const viewLinks = body.querySelectorAll('.govuk-table a.govuk-link')
+
+        expect(viewLinks).toHaveLength(0)
       })
 
       it('should not display Quarterly subheading', async ({ server }) => {
@@ -208,10 +240,10 @@ describe('#listReportsController', () => {
       })
     })
 
-    describe('for registered-only operator (quarterly)', () => {
+    describe('for registered-only exporter (quarterly)', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyRegistration
+          registeredOnlyExporter
         )
         vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
       })
@@ -219,7 +251,7 @@ describe('#listReportsController', () => {
       it('should return 200', async ({ server }) => {
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: registeredOnlyUrl,
+          url: exporterUrl,
           auth: mockAuth
         })
 
@@ -229,7 +261,7 @@ describe('#listReportsController', () => {
       it('should display Quarterly subheading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
-          url: registeredOnlyUrl,
+          url: exporterUrl,
           auth: mockAuth
         })
 
@@ -244,23 +276,41 @@ describe('#listReportsController', () => {
         expect(heading).toBeDefined()
       })
 
-      it('should display quarter period entries', async ({ server }) => {
+      it('should render quarterly periods in a table', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
-          url: registeredOnlyUrl,
+          url: exporterUrl,
           auth: mockAuth
         })
 
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        expect(body.textContent).toContain('Quarter 1, 2026')
+        const table = body.querySelector('.govuk-table')
+
+        expect(table).not.toBeNull()
+        expect(table?.textContent).toContain('Quarter 1, 2026')
+      })
+
+      it('should not display View links for exporter', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const viewLinks = body.querySelectorAll('.govuk-table a.govuk-link')
+
+        expect(viewLinks).toHaveLength(0)
       })
 
       it('should not display Monthly subheading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
-          url: registeredOnlyUrl,
+          url: exporterUrl,
           auth: mockAuth
         })
 
@@ -273,6 +323,39 @@ describe('#listReportsController', () => {
             level: 2
           })
         ).toBeNull()
+      })
+    })
+
+    describe('for registered-only reprocessor (quarterly)', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          registeredOnlyReprocessor
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
+      })
+
+      it('should display View links for reprocessor periods', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = body.querySelector('.govuk-table a.govuk-link')
+
+        expect(link).not.toBeNull()
+        expect(link?.getAttribute('href')).toBe(
+          '/organisations/org-789/registrations/reg-003/reports/2026/1'
+        )
+        expect(link?.textContent).toContain('View')
+
+        const hidden = link?.querySelector('.govuk-visually-hidden')
+        expect(hidden?.textContent).toBe('Quarter 1, 2026')
       })
     })
 

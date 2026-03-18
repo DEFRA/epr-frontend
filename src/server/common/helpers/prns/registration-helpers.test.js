@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   getNoteTypeDisplayNames,
-  isExporterRegistration
+  isExporterRegistration,
+  isReprocessorRegistration
 } from './registration-helpers.js'
 
 describe('#isExporterRegistration', () => {
@@ -14,6 +15,24 @@ describe('#isExporterRegistration', () => {
   it('should return false for reprocessor', () => {
     const result = isExporterRegistration({
       wasteProcessingType: 'reprocessor'
+    })
+
+    expect(result).toBe(false)
+  })
+})
+
+describe('#isReprocessorRegistration', () => {
+  it('should return true for reprocessor', () => {
+    const result = isReprocessorRegistration({
+      wasteProcessingType: 'reprocessor'
+    })
+
+    expect(result).toBe(true)
+  })
+
+  it('should return false for exporter', () => {
+    const result = isReprocessorRegistration({
+      wasteProcessingType: 'exporter'
     })
 
     expect(result).toBe(false)
