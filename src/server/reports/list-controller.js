@@ -4,7 +4,7 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
 import { CADENCE_MONTHLY, CADENCE_QUARTERLY } from './constants.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
-import { hasDetailView } from './helpers/has-detail-view.js'
+import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 
 /**
  * Build table rows for the govukTable macro.
@@ -39,7 +39,7 @@ function buildTableRows({
       )
 
       row.push({
-        html: `<a href="${url}" class="govuk-link">View<span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
+        html: `<a href="${url}" class="govuk-link">${localise('reports:actionSelect')} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
       })
     }
 
@@ -56,21 +56,20 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, { cadence, periods }] =
-      await Promise.all([
-        fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        ),
-        fetchReportingPeriods(organisationId, registrationId, session.idToken)
-      ])
+    const [{ registration }, { cadence, periods }] = await Promise.all([
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      ),
+      fetchReportingPeriods(organisationId, registrationId, session.idToken)
+    ])
 
     const material = getDisplayMaterial(registration)
 
     const isMonthly = cadence === CADENCE_MONTHLY
     const isQuarterly = cadence === CADENCE_QUARTERLY
-    const showViewLink = hasDetailView(registration, accreditation)
+    const showViewLink = isReprocessorRegistration(registration)
 
     const tableHead = [{ text: localise('reports:periodColumn') }]
     if (showViewLink) {

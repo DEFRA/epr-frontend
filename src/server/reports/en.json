@@ -1,5 +1,7 @@
 {
+  "accreditationLabel": "Accreditation",
   "actionColumn": "Action",
+  "actionSelect": "Select",
   "correctionLink": "upload an updated summary log",
   "correctionPrefix": "If anything is missing or incorrect,",
   "correctionSuffix": "before creating your report.",
@@ -10,7 +12,7 @@
   "emptyState": "There are no reporting periods with data.",
   "heading": "Reports",
   "lastUploadedAt": "Your most recent summary log was uploaded at {{ time }} on {{ date }}.",
-  "materialLabel": "Material:",
+  "materialLabel": "Material",
   "monthlyHeading": "Monthly",
   "months": {
     "1": "January",
@@ -33,7 +35,7 @@
   "quarterlyPeriod": "Quarter {{number}}, {{year}}",
   "recipientColumn": "Recipient",
   "roleColumn": "Role",
-  "siteLabel": "Site:",
+  "siteLabel": "Site",
   "supplierColumn": "Supplier",
   "supplierDetailsHeading": "Supplier details",
   "tonnageReceivedColumn": "Tonnage received",
