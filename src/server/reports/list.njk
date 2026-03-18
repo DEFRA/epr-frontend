@@ -1,5 +1,6 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -23,20 +24,18 @@
 
         {% if hasMonthlyPeriods %}
           <h2 class="govuk-heading-m">{{ localise("reports:monthlyHeading") }}</h2>
-          <ul class="govuk-list">
-            {% for period in monthlyPeriods %}
-              <li>{{ period.label }}</li>
-            {% endfor %}
-          </ul>
+          {{ govukTable({
+            head: monthlyTableHead,
+            rows: monthlyTableRows
+          }) }}
         {% endif %}
 
         {% if hasQuarterlyPeriods %}
           <h2 class="govuk-heading-m">{{ localise("reports:quarterlyHeading") }}</h2>
-          <ul class="govuk-list">
-            {% for period in quarterlyPeriods %}
-              <li>{{ period.label }}</li>
-            {% endfor %}
-          </ul>
+          {{ govukTable({
+            head: quarterlyTableHead,
+            rows: quarterlyTableRows
+          }) }}
         {% endif %}
 
       {% endif %}

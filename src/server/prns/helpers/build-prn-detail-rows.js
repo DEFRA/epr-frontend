@@ -1,5 +1,5 @@
 import { tonnageToWords } from './tonnage-to-words.js'
-import { formatDateForDisplay } from './format-date-for-display.js'
+import { formatDate } from '#server/common/helpers/format-date.js'
 
 /**
  * Builds the status row for PRN details
@@ -62,7 +62,7 @@ export function buildPrnCoreRows(prn, localise, recipientDisplayName) {
  * @returns {Array}
  */
 export function buildPrnIssuerRows(prn, localise, { issuerName = '' } = {}) {
-  const issuedDate = prn.issuedAt ? formatDateForDisplay(prn.issuedAt) : ''
+  const issuedDate = prn.issuedAt ? formatDate(prn.issuedAt) : ''
   const notesText = prn.notes || localise('prns:notProvided')
 
   return [

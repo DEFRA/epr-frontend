@@ -1,6 +1,6 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { formatDateForDisplay } from './helpers/format-date-for-display.js'
+import { formatDate } from '#server/common/helpers/format-date.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
 
 export function buildListViewData(
@@ -114,7 +114,7 @@ function buildAwaitingTable(
     )
     return [
       { text: prn.recipient },
-      { text: formatDateForDisplay(prn.createdAt) },
+      { text: formatDate(prn.createdAt) },
       { text: prn.tonnage },
       { html: buildStatusTagHtml(prn.status, localise) },
       { html: `<a href="${actionUrl}" class="govuk-link">${selectText}</a>` }
@@ -172,7 +172,7 @@ function buildDetailTable(
     return [
       { text: prn.prnNumber },
       { text: prn.recipient },
-      { text: formatDateForDisplay(prn.issuedAt) },
+      { text: formatDate(prn.issuedAt) },
       { text: prn.tonnage ?? 0 },
       { html: buildStatusTagHtml(prn.status, localise) },
       {
