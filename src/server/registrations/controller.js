@@ -1,10 +1,10 @@
 import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -29,6 +29,7 @@ export const controller = {
       session.idToken,
       request.logger
     )
+
     const viewModel = buildViewModel({
       request,
       organisationId,

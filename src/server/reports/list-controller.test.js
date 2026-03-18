@@ -3,6 +3,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
+import Boom from '@hapi/boom'
 import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -387,11 +388,9 @@ describe('#listReportsController', () => {
       it('should return 404 when registration not found', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          organisationData: { id: 'org-123' },
-          registration: undefined,
-          accreditation: undefined
-        })
+        vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
+          Boom.notFound('Registration not found')
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',

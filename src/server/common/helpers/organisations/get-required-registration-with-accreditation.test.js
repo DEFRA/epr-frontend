@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getRequiredRegistrationWithAccreditation } from './get-required-registration-with-accreditation.js'
+import Boom from '@hapi/boom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
+import { getRequiredRegistrationWithAccreditation } from './get-required-registration-with-accreditation.js'
 
 vi.mock(import('./fetch-registration-and-accreditation.js'))
 
@@ -43,11 +44,9 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
   })
 
   it('should throw 404 when registration is not found', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: { id: 'org-123' },
-      registration: undefined,
-      accreditation: undefined
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
+      Boom.notFound('Registration not found')
+    )
 
     await expect(
       getRequiredRegistrationWithAccreditation({
@@ -60,11 +59,6 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       isBoom: true,
       output: { statusCode: 404 }
     })
-
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      { registrationId: 'reg-nonexistent' },
-      'Registration not found'
-    )
   })
 
   it('should throw 404 when accreditation is not found', async () => {

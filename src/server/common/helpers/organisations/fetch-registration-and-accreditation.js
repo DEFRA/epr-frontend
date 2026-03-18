@@ -1,4 +1,19 @@
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
+import Boom from '@hapi/boom'
+
+/**
+ * @import {Accreditation} from '#domain/organisations/accreditation.js'
+ * @import {Organisation} from '#domain/organisations/model.js'
+ * @import {Registration} from '#domain/organisations/registration.js'
+ */
+
+/**
+ * @typedef {{
+ *   organisationData: Organisation,
+ *   registration: Registration,
+ *   accreditation?: Accreditation
+ * }} RegistrationWithAccreditation
+ */
 
 /**
  * Fetches organisation data and extracts the registration and its linked accreditation
@@ -14,15 +29,17 @@ async function fetchRegistrationAndAccreditation(
 ) {
   const organisationData = await fetchOrganisationById(organisationId, idToken)
 
-  const registration = organisationData?.registrations?.find(
+  const registration = organisationData.registrations.find(
     ({ id }) => id === registrationId
   )
 
-  const accreditation = registration?.accreditationId
-    ? organisationData?.accreditations?.find(
-        ({ id }) => id === registration.accreditationId
-      )
-    : undefined
+  if (!registration) {
+    throw Boom.notFound('Registration not found')
+  }
+
+  const accreditation = organisationData.accreditations.find(
+    ({ id }) => id === registration.accreditationId
+  )
 
   return {
     organisationData,
@@ -32,57 +49,3 @@ async function fetchRegistrationAndAccreditation(
 }
 
 export { fetchRegistrationAndAccreditation }
-
-/**
- * @typedef {{
- *   id: string,
- *   orgId: number,
- *   companyDetails: {
- *     name: string,
- *     tradingName?: string,
- *     companiesHouseNumber?: string,
- *     registeredAddress?: {
- *       line1: string,
- *       town: string,
- *       postcode: string
- *     }
- *   },
- *   registrations?: Registration[],
- *   accreditations?: Accreditation[]
- * }} OrganisationData
- */
-
-/**
- * @typedef {{
- *   id: string,
- *   wasteProcessingType: string,
- *   material: string,
- *   nation: string,
- *   accreditationId?: string,
- *   registrationNumber?: string,
- *   status?: string,
- *   site?: {
- *     address: {
- *       line1: string,
- *       town: string,
- *       postcode: string
- *     }
- *   }
- * }} Registration
- */
-
-/**
- * @typedef {{
- *   id: string,
- *   status: string,
- *   accreditationNumber?: string
- * }} Accreditation
- */
-
-/**
- * @typedef {{
- *   organisationData?: OrganisationData,
- *   registration?: Registration,
- *   accreditation?: Accreditation
- * }} RegistrationWithAccreditation
- */

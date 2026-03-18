@@ -8,6 +8,7 @@
   "imports": {
     "#client/*": "./src/client/*",
     "#config/*": "./src/config/*",
+    "#domain/*": "./src/domain/*",
     "#server/*": "./src/server/*",
     "#utils/*": "./src/utils/*",
     "#vite/*": "./.vite/*"
