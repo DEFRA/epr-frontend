@@ -1,9 +1,10 @@
-import { config } from '#config/config.js'
+import { config, isRegisteredOnlyEnabled } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import Boom from '@hapi/boom'
 import { capitalize } from 'lodash-es'
 
 /**
@@ -16,12 +17,15 @@ export const controller = {
     const session = request.auth.credentials
 
     const { registration, accreditation } =
-      await getRequiredRegistrationWithAccreditation({
+      await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        idToken: session.idToken,
-        logger: request.logger
-      })
+        session.idToken
+      )
+
+    if (!isRegisteredOnlyEnabled() && !accreditation) {
+      throw Boom.notFound('Registered-only not enabled')
+    }
 
     const wasteBalance = await getWasteBalance(
       organisationId,
@@ -166,12 +170,7 @@ function getPrnViewData(
   }
 }
 
-async function getWasteBalance(
-  organisationId,
-  accreditationId,
-  idToken,
-  logger
-) {
+async function getWasteBalance(organisationId, accreditationId, idToken) {
   if (!accreditationId) {
     return null
   }
@@ -184,7 +183,6 @@ async function getWasteBalance(
     )
     return wasteBalanceMap[accreditationId] ?? null
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch waste balance')
     return null
   }
 }
