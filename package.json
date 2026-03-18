@@ -141,7 +141,7 @@
     "vitest": "4.1.0",
     "webpack": "5.105.4",
     "webpack-assets-manifest": "6.5.1",
-    "webpack-cli": "6.0.1"
+    "webpack-cli": "7.0.0"
   },
   "overrides": {
     "@isaacs/brace-expansion": "5.0.1",
