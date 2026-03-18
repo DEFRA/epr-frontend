@@ -47,34 +47,22 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('returns undefined registration when registration not found', async ({
-    msw
-  }) => {
-    const mockOrganisationData = {
-      id: organisationId,
-      registrations: [{ id: 'other-reg', accreditationId }],
-      accreditations: [
-        { id: accreditationId, accreditationNumber: 'ACC-2025-001' }
-      ]
-    }
-
+  test('should throw 404 when registration not found', async ({ msw }) => {
     msw.use(
       http.get(`${backendUrl}/v1/organisations/org-123`, () =>
-        HttpResponse.json(mockOrganisationData)
+        HttpResponse.json({
+          id: organisationId,
+          registrations: [{ id: 'other-reg', accreditationId }],
+          accreditations: [
+            { id: accreditationId, accreditationNumber: 'ACC-2025-001' }
+          ]
+        })
       )
     )
 
-    const result = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      idToken
-    )
-
-    expect(result).toStrictEqual({
-      organisationData: mockOrganisationData,
-      registration: undefined,
-      accreditation: undefined
-    })
+    await expect(
+      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+    ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
   })
 
   test('returns undefined accreditation when registration has no accreditationId', async ({
@@ -139,58 +127,22 @@ describe(fetchRegistrationAndAccreditation, () => {
     })
   })
 
-  test('handles organisation with empty registrations array', async ({
+  test('should throw 404 when registrations array is empty', async ({
     msw
   }) => {
-    const mockOrganisationData = {
-      id: organisationId,
-      registrations: [],
-      accreditations: []
-    }
-
     msw.use(
       http.get(`${backendUrl}/v1/organisations/org-123`, () =>
-        HttpResponse.json(mockOrganisationData)
+        HttpResponse.json({
+          id: organisationId,
+          registrations: [],
+          accreditations: []
+        })
       )
     )
 
-    const result = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      idToken
-    )
-
-    expect(result).toStrictEqual({
-      organisationData: mockOrganisationData,
-      registration: undefined,
-      accreditation: undefined
-    })
-  })
-
-  test('handles organisation with missing registrations property', async ({
-    msw
-  }) => {
-    const mockOrganisationData = {
-      id: organisationId
-    }
-
-    msw.use(
-      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
-        HttpResponse.json(mockOrganisationData)
-      )
-    )
-
-    const result = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      idToken
-    )
-
-    expect(result).toStrictEqual({
-      organisationData: mockOrganisationData,
-      registration: undefined,
-      accreditation: undefined
-    })
+    await expect(
+      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+    ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
   })
 
   test('passes correct parameters to fetchOrganisationById', async ({
@@ -200,7 +152,11 @@ describe(fetchRegistrationAndAccreditation, () => {
     msw.use(
       http.get(`${backendUrl}/v1/organisations/org-123`, ({ request }) => {
         capturedRequest = request
-        return HttpResponse.json({ id: organisationId })
+        return HttpResponse.json({
+          id: organisationId,
+          registrations: [{ id: registrationId }],
+          accreditations: []
+        })
       })
     )
 
