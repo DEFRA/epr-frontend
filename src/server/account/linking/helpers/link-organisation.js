@@ -1,10 +1,6 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
- * @import { Organisation } from '#types/organisation.d.ts'
- */
-
-/**
  * @param {string} idToken
  * @param {string} organisationId
  * @returns {Promise<void>}
