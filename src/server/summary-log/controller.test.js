@@ -1115,6 +1115,27 @@ describe('#summaryLogUploadProgressController', () => {
         expect(panelBody.text()).toContain('0.00')
         expect(panelBody.text()).toContain('tonnes')
       })
+
+      it('status: submitted - should propagate 404 when registration not found', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          accreditationNumber: 'ACC-2025-001'
+        })
+
+        vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValueOnce(
+          Boom.notFound('Registration not found')
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
     })
 
     it('status: submitted with freshData from POST - should use freshData and not call backend', async ({

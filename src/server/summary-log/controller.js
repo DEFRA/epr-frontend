@@ -416,7 +416,7 @@ const getWasteBalanceData = async (
       idToken
     )
 
-    if (!registration?.accreditationId) {
+    if (!registration.accreditationId) {
       return {}
     }
 
@@ -434,6 +434,7 @@ const getWasteBalanceData = async (
 
     return { wasteBalance: balance.availableAmount }
   } catch (error) {
+    if (error.isBoom) throw error
     logger.error({ err: error }, 'Failed to fetch waste balance data')
     return {}
   }
