@@ -8,16 +8,22 @@ import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accr
 
 /**
  * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, idToken: string, logger: TypedLogger, accreditationId?: string }} params
+ * @param {{
+ *   organisationId: string;
+ *   registrationId: string;
+ *   accreditationId: string;
+ *   idToken: string;
+ *   logger: TypedLogger;
+ * }} params
  * @returns {Promise<Required<RegistrationWithAccreditation>>}
  * @throws {Boom.notFound} When registration or accreditation is not found, or accreditation ID mismatches
  */
 export async function getRequiredRegistrationWithAccreditation({
   organisationId,
   registrationId,
+  accreditationId,
   idToken,
-  logger,
-  accreditationId
+  logger
 }) {
   const { registration, accreditation, organisationData } =
     await fetchRegistrationAndAccreditation(
@@ -31,7 +37,7 @@ export async function getRequiredRegistrationWithAccreditation({
     throw Boom.notFound('Not accredited for this registration')
   }
 
-  if (accreditationId && accreditation.id !== accreditationId) {
+  if (accreditation.id !== accreditationId) {
     logger.warn(
       { registrationId, accreditationId },
       'Accreditation ID mismatch'

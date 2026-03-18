@@ -182,7 +182,7 @@ async function getWasteBalance(organisationId, accreditationId, idToken) {
       idToken
     )
     return wasteBalanceMap[accreditationId] ?? null
-  } catch (error) {
+  } catch {
     return null
   }
 }
