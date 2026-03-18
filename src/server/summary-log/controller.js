@@ -4,9 +4,9 @@ import {
   getDisplayCodeFromErrorCode,
   TECHNICAL_ERROR_DISPLAY_CODE
 } from '#server/common/constants/validation-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 
 /** Waste record section number to display in UI copy, mapped by processing type */
@@ -434,7 +434,9 @@ const getWasteBalanceData = async (
 
     return { wasteBalance: balance.availableAmount }
   } catch (error) {
-    if (error.isBoom) throw error
+    if (error.isBoom) {
+      throw error
+    }
     logger.error({ err: error }, 'Failed to fetch waste balance data')
     return {}
   }
