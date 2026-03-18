@@ -2,9 +2,14 @@ import Boom from '@hapi/boom'
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 
 /**
+ * @import {RegistrationWithAccreditation} from './fetch-registration-and-accreditation.js'
+ * @import {TypedLogger} from '#server/common/helpers/logging/logger.js'
+ */
+
+/**
  * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, idToken: string, logger: import('#server/common/helpers/logging/logger.js').TypedLogger, accreditationId?: string }} params
- * @returns {Promise<{registration: object, accreditation: object, organisationData: object}>}
+ * @param {{ organisationId: string, registrationId: string, idToken: string, logger: TypedLogger, accreditationId?: string }} params
+ * @returns {Promise<Required<RegistrationWithAccreditation>>}
  * @throws {Boom.notFound} When registration or accreditation is not found, or accreditation ID mismatches
  */
 export async function getRequiredRegistrationWithAccreditation({
@@ -20,11 +25,6 @@ export async function getRequiredRegistrationWithAccreditation({
       registrationId,
       idToken
     )
-
-  if (!registration) {
-    logger.warn({ registrationId }, 'Registration not found')
-    throw Boom.notFound('Registration not found')
-  }
 
   if (!accreditation) {
     logger.warn({ registrationId }, 'Not accredited for this registration')

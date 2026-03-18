@@ -1,5 +1,3 @@
-import Boom from '@hapi/boom'
-
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
@@ -67,10 +65,6 @@ export const listController = {
         ),
         fetchReportingPeriods(organisationId, registrationId, session.idToken)
       ])
-
-    if (!registration) {
-      throw Boom.notFound('Registration not found')
-    }
 
     const material = getDisplayMaterial(registration)
 
