@@ -46,15 +46,45 @@ export const controller = {
   }
 }
 
+/** @typedef {{ href: string; text: string }} Link */
+
+/**
+ * @typedef {{
+ *   accreditationNumber: string | undefined;
+ *   accreditationStatus: string | undefined;
+ *   accreditationStatusClass: string | undefined;
+ *   backUrl: string;
+ *   contactRegulatorUrl: string;
+ *   hasAccreditationNumber: boolean;
+ *   hasAccreditationStatus: boolean;
+ *   hasRegistrationNumber: boolean;
+ *   hasRegistrationStatus: boolean;
+ *   hasSiteName: boolean;
+ *   isExporter: boolean;
+ *   isRegisteredOnly: boolean;
+ *   material: string;
+ *   pageTitle: string;
+ *   prns: { description: string; link: Link; manageLink: Link; title: string };
+ *   registrationNumber: string | undefined;
+ *   registrationStatus: string;
+ *   registrationStatusClass: string;
+ *   reports: { isEnabled: boolean; link: Link };
+ *   siteName: string | null;
+ *   uploadSummaryLogUrl: string;
+ *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
+ * }} RegistrationViewModel
+ */
+
 /**
  * Build view model for accreditation dashboard
- * @param {object} params - Function parameters
- * @param {object} params.request - Hapi request object
- * @param {string} params.organisationId - Organisation ID
- * @param {object | undefined} params.accreditation - Accreditation data
- * @param {object} params.registration - Registration data
- * @param {WasteBalance | null} params.wasteBalance - Waste balance data
- * @returns {object} View model
+ * @param {{
+ *   request: Request;
+ *   organisationId: string;
+ *   registration: Registration;
+ *   accreditation?: Accreditation;
+ *   wasteBalance: WasteBalance | null;
+ * }} params
+ * @returns {RegistrationViewModel}
  */
 function buildViewModel({
   request,
@@ -64,6 +94,7 @@ function buildViewModel({
   wasteBalance
 }) {
   const { t: localise } = request
+
   const { isExporter, noteType, noteTypePlural } =
     getNoteTypeDisplayNames(registration)
   const siteName = isExporter
@@ -84,6 +115,7 @@ function buildViewModel({
     siteName,
     material,
     isExporter,
+    isRegisteredOnly: !accreditation,
     registrationStatus,
     registrationStatusClass: getStatusClass(registrationStatus),
     accreditationStatus,
@@ -201,5 +233,7 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
 
 /**
  * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */

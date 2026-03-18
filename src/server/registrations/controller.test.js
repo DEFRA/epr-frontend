@@ -4,7 +4,12 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, queryByRole, within } from '@testing-library/dom'
+import {
+  getByRole,
+  queryByRole,
+  queryByText,
+  within
+} from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import {
@@ -785,11 +790,50 @@ describe('#accreditationDashboardController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
       })
+
+      it('should not show waste balance banner for registered-only operator', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(queryByText(body, /Available waste balance/)).toBeNull()
+      })
     })
 
     describe('when flag is disabled', () => {
       beforeEach(() => {
         config.set('featureFlags.registeredOnly', false)
+      })
+
+      it('should show waste balance banner for accredited operator', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          glassApproved
+        )
+        vi.mocked(
+          fetchWasteBalancesModule.fetchWasteBalances
+        ).mockResolvedValue({
+          'acc-001-glass-approved': { amount: 1000, availableAmount: 500 }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(queryByText(body, /Available waste balance/)).not.toBeNull()
       })
 
       it('should return 404 for registered-only operator', async ({
