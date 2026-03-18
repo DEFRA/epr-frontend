@@ -114,6 +114,6 @@ describe(fetchReportDetail, () => {
 
     await expect(
       fetchReportDetail(organisationId, registrationId, year, period, idToken)
-    ).rejects.toThrowError('Network error')
+    ).rejects.toThrow('Network error')
   })
 })
