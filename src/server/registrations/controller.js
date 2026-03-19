@@ -50,6 +50,21 @@ export const controller = {
 
 /**
  * @typedef {{
+ *   exists: false;
+ * }} NotPresent
+ */
+
+/**
+ * @typedef {{
+ *   exists: true;
+ *   reference: string;
+ *   status: string;
+ *   class: string;
+ * }} Status
+ */
+
+/**
+ * @typedef {{
  *   accreditationNumber: string | undefined;
  *   accreditationStatus: string | undefined;
  *   accreditationStatusClass: string | undefined;
@@ -57,23 +72,44 @@ export const controller = {
  *   contactRegulatorUrl: string;
  *   hasAccreditationNumber: boolean;
  *   hasAccreditationStatus: boolean;
- *   hasRegistrationNumber: boolean;
- *   hasRegistrationStatus: boolean;
  *   hasSiteName: boolean;
  *   isExporter: boolean;
  *   isRegisteredOnly: boolean;
  *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
- *   registrationNumber: string | undefined;
- *   registrationStatus: string;
- *   registrationStatusClass: string;
+ *   registration: NotPresent | Status;
  *   reports: { isEnabled: boolean; link: Link };
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
  *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
  * }} RegistrationViewModel
  */
+
+/**
+ * Build status for registration/accreditation
+ * @param {{
+ *    reference?: string;
+ *    status?: string;
+ * }} params
+ * @returns {NotPresent|Status}
+ */
+const buildStatus = ({ reference, status }) => {
+  if (!reference || !status) {
+    return {
+      exists: false
+    }
+  }
+
+  /** @type {Status} */
+  const rtn = {
+    exists: true,
+    reference,
+    status: capitalize(status),
+    class: getStatusClass(status)
+  }
+  return rtn
+}
 
 /**
  * Build view model for accreditation dashboard
@@ -103,35 +139,28 @@ function buildViewModel({
       localise('registrations:unknownSite'))
   const material = getDisplayMaterial(registration)
 
-  const registrationStatus = capitalize(registration.status)
   const accreditationStatus = capitalize(accreditation?.status)
 
   const uploadSummaryLogUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
+  /** @type {RegistrationViewModel} */
   const viewModel = {
-    pageTitle: localise('registrations:pageTitle', { siteName, material }),
-    siteName,
-    material,
-    isExporter,
-    isRegisteredOnly: !accreditation,
-    registrationStatus,
-    registrationStatusClass: getStatusClass(registrationStatus),
+    accreditationNumber: accreditation?.accreditationNumber,
     accreditationStatus,
     accreditationStatusClass: getStatusClass(accreditationStatus),
-    registrationNumber: registration.registrationNumber,
-    accreditationNumber: accreditation?.accreditationNumber,
-    hasRegistrationStatus: !!registrationStatus,
-    hasAccreditationStatus: !!accreditationStatus,
-    hasRegistrationNumber: !!registration.registrationNumber,
-    hasAccreditationNumber: !!accreditation?.accreditationNumber,
-    hasSiteName: !!siteName,
     backUrl: isExporter
       ? request.localiseUrl(`/organisations/${organisationId}/exporting`)
       : request.localiseUrl(`/organisations/${organisationId}`),
-    uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
+    hasAccreditationNumber: !!accreditation?.accreditationNumber,
+    hasAccreditationStatus: !!accreditationStatus,
+    hasSiteName: !!siteName,
+    isExporter,
+    isRegisteredOnly: !accreditation,
+    material,
+    pageTitle: localise('registrations:pageTitle', { siteName, material }),
     prns: getPrnViewData(
       request,
       { noteType, noteTypePlural },
@@ -140,6 +169,12 @@ function buildViewModel({
       registration.accreditationId
     ),
     reports: getReportsViewData(request, organisationId, registration.id),
+    registration: buildStatus({
+      reference: registration.registrationNumber,
+      status: registration.status
+    }),
+    siteName,
+    uploadSummaryLogUrl,
     wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural)
   }
 
