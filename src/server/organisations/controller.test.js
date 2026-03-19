@@ -1,10 +1,18 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByText
+} from '@testing-library/dom'
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { JSDOM } from 'jsdom'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
@@ -17,6 +25,23 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+
+/**
+ * @param {HTMLElement} table
+ * @returns {(columnName: string | RegExp) => HTMLElement}
+ */
+const cellInColumn = (table) => {
+  const headers = getAllByRole(table, 'columnheader')
+  const [, dataRow] = getAllByRole(table, 'row')
+
+  return (columnName) => {
+    const pattern =
+      columnName instanceof RegExp ? columnName : new RegExp(columnName, 'i')
+    const colIndex = headers.findIndex((h) => pattern.test(h.textContent))
+
+    return getAllByRole(dataRow, 'cell')[colIndex]
+  }
+}
 
 const mockAuth = {
   strategy: 'session',
@@ -323,6 +348,117 @@ describe('#organisationController', () => {
       ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
     })
 
+    describe('registered-only', () => {
+      const registeredOnlyOrganisation = {
+        ...fixtureData,
+        accreditations: [],
+        registrations: [
+          {
+            id: 'reg-no-acc-001',
+            status: 'approved',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            site: { address: { line1: 'Test Site' } }
+          }
+        ]
+      }
+
+      afterAll(() => {
+        config.reset('featureFlags.registeredOnly')
+      })
+
+      describe('feature flag off', () => {
+        beforeAll(() => {
+          config.set('featureFlags.registeredOnly', false)
+        })
+
+        it('should hide registered-only when flag is off', async ({
+          server
+        }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue(registeredOnlyOrganisation)
+
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url: '/organisations/6507f1f77bcf86cd79943901',
+            auth: mockAuth
+          })
+
+          const { body } = new JSDOM(result).window.document
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(getByText(body, /No sites found/i)).toBeDefined()
+          expect(queryByText(body, /Not accredited/i)).toBeNull()
+        })
+      })
+
+      describe('feature flag on', () => {
+        beforeAll(() => {
+          config.set('featureFlags.registeredOnly', true)
+        })
+
+        it('should exclude registrations whose accreditation has an excluded status', async ({
+          server
+        }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue({
+            ...fixtureData,
+            accreditations: [
+              {
+                id: 'acc-excluded-001',
+                status: 'created',
+                wasteProcessingType: 'reprocessor',
+                material: 'plastic'
+              }
+            ],
+            registrations: [
+              {
+                id: 'reg-with-excluded-acc',
+                accreditationId: 'acc-excluded-001',
+                status: 'approved',
+                wasteProcessingType: 'reprocessor',
+                material: 'plastic',
+                site: { address: { line1: 'Test Site' } }
+              }
+            ]
+          })
+
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url: '/organisations/6507f1f77bcf86cd79943901',
+            auth: mockAuth
+          })
+
+          const { body } = new JSDOM(result).window.document
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(getByText(body, /No sites found/i)).toBeDefined()
+        })
+
+        it('should show registered-only', async ({ server }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue(registeredOnlyOrganisation)
+
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url: '/organisations/6507f1f77bcf86cd79943901',
+            auth: mockAuth
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const cell = cellInColumn(getByRole(body, 'table'))
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(cell('Material')).toHaveTextContent(/Plastic/i)
+          expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
+          expect(cell(/Available waste balance/)).toHaveTextContent('N/A')
+        })
+      })
+    })
+
     describe('waste balance', () => {
       it('should not fetch waste balances when no displayable registrations', async ({
         server
@@ -619,77 +755,6 @@ describe('#organisationController', () => {
 
       expect(siteHeadings).toContain('Unknown site')
       expect(siteHeadings).toContain('Site With Address')
-    })
-
-    it('should handle accreditation without matching registration', async ({
-      server
-    }) => {
-      const dataWithUnmatchedAccreditation = {
-        ...fixtureData,
-        registrations: [] // No registrations
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithUnmatchedAccreditation)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901',
-        auth: mockAuth
-      })
-
-      const $ = load(result)
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      // Should use accreditation status history as fallback
-      const statusTags = $('.govuk-tag')
-
-      expect(statusTags.length).toBeGreaterThan(0)
-    })
-
-    it('should hide registrations without accreditations', async ({
-      server
-    }) => {
-      const dataWithNoAccreditations = {
-        ...fixtureData,
-        accreditations: [],
-        registrations: [
-          {
-            id: 'reg-no-acc-001',
-            status: 'approved',
-            wasteProcessingType: 'reprocessor',
-            material: 'plastic',
-            site: { address: { line1: 'Test Site' } }
-          },
-          {
-            id: 'reg-no-acc-002',
-            status: 'approved',
-            wasteProcessingType: 'exporter',
-            material: 'wood'
-          }
-        ]
-      }
-
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithNoAccreditations)
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901',
-        auth: mockAuth
-      })
-
-      const $ = load(result)
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('No sites found.')
-
-      const tableRows = $('tbody tr')
-
-      expect(tableRows).toHaveLength(0)
     })
 
     it('should display only exporting sites when no reprocessing sites exist', async ({
