@@ -4,7 +4,6 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
 import { CADENCE_MONTHLY, CADENCE_QUARTERLY } from './constants.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
-import { hasDetailView } from './helpers/has-detail-view.js'
 
 /**
  * Build table rows for the govukTable macro.
@@ -12,7 +11,6 @@ import { hasDetailView } from './helpers/has-detail-view.js'
  * @param {object} options
  * @param {Array<{year: number, period: number}>} options.periods
  * @param {string} options.cadence
- * @param {boolean} options.showViewLink
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {(url: string) => string} options.localiseUrl
@@ -22,7 +20,6 @@ import { hasDetailView } from './helpers/has-detail-view.js'
 function buildTableRows({
   periods,
   cadence,
-  showViewLink,
   organisationId,
   registrationId,
   localiseUrl,
@@ -30,20 +27,16 @@ function buildTableRows({
 }) {
   return periods.map((period) => {
     const label = formatPeriodLabel(period, cadence, localise)
+    const url = localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${period.period}`
+    )
 
-    const row = [{ text: label }]
-
-    if (showViewLink) {
-      const url = localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${period.period}`
-      )
-
-      row.push({
-        html: `<a href="${url}" class="govuk-link">View<span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
-      })
-    }
-
-    return row
+    return [
+      { text: label },
+      {
+        html: `<a href="${url}" class="govuk-link">${localise('reports:actionSelect')} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
+      }
+    ]
   })
 }
 
@@ -56,31 +49,27 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration, accreditation }, { cadence, periods }] =
-      await Promise.all([
-        fetchRegistrationAndAccreditation(
-          organisationId,
-          registrationId,
-          session.idToken
-        ),
-        fetchReportingPeriods(organisationId, registrationId, session.idToken)
-      ])
+    const [{ registration }, { cadence, periods }] = await Promise.all([
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      ),
+      fetchReportingPeriods(organisationId, registrationId, session.idToken)
+    ])
 
     const material = getDisplayMaterial(registration)
 
     const isMonthly = cadence === CADENCE_MONTHLY
     const isQuarterly = cadence === CADENCE_QUARTERLY
-    const showViewLink = hasDetailView(registration, accreditation)
-
-    const tableHead = [{ text: localise('reports:periodColumn') }]
-    if (showViewLink) {
-      tableHead.push({ text: localise('reports:actionColumn') })
-    }
+    const tableHead = [
+      { text: localise('reports:periodColumn') },
+      { text: localise('reports:actionColumn') }
+    ]
 
     const tableRows = buildTableRows({
       periods,
       cadence,
-      showViewLink,
       organisationId,
       registrationId,
       localiseUrl: (url) => request.localiseUrl(url),
