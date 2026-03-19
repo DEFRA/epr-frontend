@@ -53,16 +53,19 @@ export const controller = {
  *   reference: string;
  *   status: string;
  *   class: string;
- * }} Status
+ * }} TaggedReference
  */
 
 /**
- * @typedef {{ exists: true } & Status | { exists: false }} MaybeStatus
+ * @typedef {(
+ *   { exists: true } & TaggedReference
+ *   | { exists: false }
+ * )} MaybeTaggedReference
  */
 
 /**
  * @typedef {{
- *   accreditation: MaybeStatus;
+ *   accreditation: MaybeTaggedReference;
  *   backUrl: string;
  *   contactRegulatorUrl: string;
  *   hasSiteName: boolean;
@@ -70,7 +73,7 @@ export const controller = {
  *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
- *   registration: Status;
+ *   registration: TaggedReference;
  *   reports: { isEnabled: boolean; link: Link };
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
@@ -80,9 +83,9 @@ export const controller = {
 
 /**
  * @param {{ reference: string; status: string }} params
- * @returns {Status}
+ * @returns {TaggedReference}
  */
-const buildStatus = ({ reference, status }) => ({
+const buildTaggedReference = ({ reference, status }) => ({
   reference,
   status: capitalize(status),
   class: getStatusClass(status)
@@ -90,15 +93,15 @@ const buildStatus = ({ reference, status }) => ({
 
 /**
  * @param {{ reference?: string; status?: string }} params
- * @returns {MaybeStatus}
+ * @returns {MaybeTaggedReference}
  */
-const buildMaybeStatus = ({ reference, status }) => {
+const buildMaybeTaggedReference = ({ reference, status }) => {
   if (!reference || !status) {
     return { exists: false }
   }
 
   return {
-    ...buildStatus({ reference, status }),
+    ...buildTaggedReference({ reference, status }),
     exists: true
   }
 }
@@ -137,7 +140,7 @@ function buildViewModel({
 
   /** @type {RegistrationViewModel} */
   const viewModel = {
-    accreditation: buildMaybeStatus({
+    accreditation: buildMaybeTaggedReference({
       reference: accreditation?.accreditationNumber,
       status: accreditation?.status
     }),
@@ -157,7 +160,7 @@ function buildViewModel({
       registration.accreditationId
     ),
     reports: getReportsViewData(request, organisationId, registration.id),
-    registration: buildStatus({
+    registration: buildTaggedReference({
       reference: registration.registrationNumber,
       status: registration.status
     }),
