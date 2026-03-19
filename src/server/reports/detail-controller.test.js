@@ -119,7 +119,74 @@ const emptyReportDetail = {
   }
 }
 
+const accreditedReprocessorRegistration = {
+  organisationData: { id: 'org-123' },
+  registration: {
+    id: 'reg-001',
+    material: 'plastic',
+    wasteProcessingType: 'reprocessor',
+    registrationNumber: 'REG001234',
+    accreditationId: 'acc-001',
+    site: {
+      address: {
+        line1: 'North Road',
+        town: 'Manchester',
+        postcode: 'M1 1AA'
+      }
+    }
+  },
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ER992415095748M',
+    status: 'approved'
+  }
+}
+
+const accreditedReprocessorReportDetail = {
+  operatorCategory: 'REPROCESSOR',
+  cadence: 'monthly',
+  year: 2026,
+  period: 2,
+  startDate: '2026-02-01',
+  endDate: '2026-02-28',
+  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  details: {
+    material: 'plastic',
+    site: {
+      address: {
+        line1: 'North Road',
+        town: 'Manchester',
+        postcode: 'M1 1AA'
+      }
+    }
+  },
+  sections: {
+    wasteReceived: {
+      totalTonnage: 80.25,
+      suppliers: [
+        { supplierName: 'Grantham Waste', role: 'Baler', tonnage: 42.21 },
+        { supplierName: 'SUEZ recycling', role: 'Sorter', tonnage: 38.04 }
+      ]
+    },
+    wasteSentOn: {
+      totalTonnage: 1.0,
+      toReprocessors: 1.0,
+      toExporters: 0.0,
+      toOtherSites: 0.0,
+      destinations: [
+        {
+          recipientName: 'Lincoln recycling',
+          role: 'Reprocessor',
+          tonnage: 1.0
+        }
+      ]
+    }
+  }
+}
+
 const detailUrl = '/organisations/org-123/registrations/reg-001/reports/2026/1'
+const accreditedDetailUrl =
+  '/organisations/org-123/registrations/reg-001/reports/2026/2'
 
 describe('#detailReportsController', () => {
   beforeEach(() => {
@@ -484,6 +551,90 @@ describe('#detailReportsController', () => {
       })
     })
 
+    describe('for accredited reprocessor with data', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedReprocessorRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          accreditedReprocessorReportDetail
+        )
+      })
+
+      it('should return 200', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('should display monthly period heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /February 2026/,
+          level: 1
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should display accreditation in details', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('Accreditation:')
+        expect(body.textContent).toContain('ER992415095748M')
+      })
+
+      it('should display site details', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('North Road')
+      })
+
+      it('should display supplier details table', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = getAllByRole(body, 'table')
+        const supplierTable = tables[0]
+
+        expect(supplierTable.textContent).toContain('Grantham Waste')
+        expect(supplierTable.textContent).toContain('Baler')
+        expect(supplierTable.textContent).toContain('42.21')
+      })
+    })
+
     describe('error handling', () => {
       it('should return 404 when registration not found', async ({
         server
@@ -511,27 +662,6 @@ describe('#detailReportsController', () => {
             registrationNumber: 'REG001234'
           },
           accreditation: undefined
-        })
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: detailUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      })
-
-      it('should return 404 for accredited reprocessor', async ({ server }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          organisationData: { id: 'org-123' },
-          registration: {
-            id: 'reg-001',
-            material: 'plastic',
-            wasteProcessingType: 'reprocessor',
-            registrationNumber: 'REG001234'
-          },
-          accreditation: { id: 'acc-001', status: 'approved' }
         })
 
         const { statusCode } = await server.inject({

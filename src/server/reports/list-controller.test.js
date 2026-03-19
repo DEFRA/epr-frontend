@@ -205,7 +205,7 @@ describe('#listReportsController', () => {
         expect(table?.textContent).toContain('February 2026')
       })
 
-      it('should not display View links for accredited periods', async ({
+      it('should display Select links for accredited reprocessor periods', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -217,9 +217,13 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const viewLinks = body.querySelectorAll('.govuk-table a.govuk-link')
+        const selectLinks = body.querySelectorAll('.govuk-table a.govuk-link')
 
-        expect(viewLinks).toHaveLength(0)
+        expect(selectLinks).toHaveLength(2)
+        expect(selectLinks[0]?.getAttribute('href')).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/1'
+        )
+        expect(selectLinks[0]?.textContent).toContain('Select')
       })
 
       it('should not display Quarterly subheading', async ({ server }) => {
@@ -335,7 +339,7 @@ describe('#listReportsController', () => {
         vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
       })
 
-      it('should display View links for reprocessor periods', async ({
+      it('should display Select links for reprocessor periods', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -353,7 +357,7 @@ describe('#listReportsController', () => {
         expect(link?.getAttribute('href')).toBe(
           '/organisations/org-789/registrations/reg-003/reports/2026/1'
         )
-        expect(link?.textContent).toContain('View')
+        expect(link?.textContent).toContain('Select')
 
         const hidden = link?.querySelector('.govuk-visually-hidden')
         expect(hidden?.textContent).toBe('Quarter 1, 2026')

@@ -5,9 +5,9 @@ import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
-import { hasDetailView } from './helpers/has-detail-view.js'
 
 /**
  * Build govukTable rows for supplier details.
@@ -65,7 +65,7 @@ export const detailController = {
         session.idToken
       )
 
-    if (!hasDetailView(registration, accreditation)) {
+    if (!isReprocessorRegistration(registration)) {
       throw Boom.notFound('Detail view not available for this registration')
     }
 
@@ -105,6 +105,7 @@ export const detailController = {
             time: formatTime(reportDetail.lastUploadedAt)
           }
         : null,
+      accreditation: accreditation?.accreditationNumber,
       site: reportDetail.details.site,
       wasteReceived: {
         totalTonnage: wasteReceived.totalTonnage,
