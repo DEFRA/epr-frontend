@@ -42,7 +42,7 @@ export async function fetchReportDetail(
 
 /**
  * @typedef {{
- *   siteName: string,
+ *   siteName?: string,
  *   osrId: string
  * }} OverseasSiteEntry
  */
