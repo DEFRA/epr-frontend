@@ -51,10 +51,10 @@ export const controller = {
 /**
  * @typedef {{
  *   exists: false;
- * }} NotPresent
+ * }} Missing
  */
 
-/**
+/**s
  * @typedef {{
  *   exists: true;
  *   reference: string;
@@ -65,20 +65,16 @@ export const controller = {
 
 /**
  * @typedef {{
- *   accreditationNumber: string | undefined;
- *   accreditationStatus: string | undefined;
- *   accreditationStatusClass: string | undefined;
+ *   accreditation: Missing | Status;
  *   backUrl: string;
  *   contactRegulatorUrl: string;
- *   hasAccreditationNumber: boolean;
- *   hasAccreditationStatus: boolean;
  *   hasSiteName: boolean;
  *   isExporter: boolean;
  *   isRegisteredOnly: boolean;
  *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
- *   registration: NotPresent | Status;
+ *   registration: Status;
  *   reports: { isEnabled: boolean; link: Link };
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
@@ -92,7 +88,7 @@ export const controller = {
  *    reference?: string;
  *    status?: string;
  * }} params
- * @returns {NotPresent|Status}
+ * @returns {Missing|Status}
  */
 const buildStatus = ({ reference, status }) => {
   if (!reference || !status) {
@@ -101,14 +97,12 @@ const buildStatus = ({ reference, status }) => {
     }
   }
 
-  /** @type {Status} */
-  const rtn = {
+  return {
     exists: true,
     reference,
     status: capitalize(status),
     class: getStatusClass(status)
   }
-  return rtn
 }
 
 /**
@@ -139,23 +133,20 @@ function buildViewModel({
       localise('registrations:unknownSite'))
   const material = getDisplayMaterial(registration)
 
-  const accreditationStatus = capitalize(accreditation?.status)
-
   const uploadSummaryLogUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
   /** @type {RegistrationViewModel} */
   const viewModel = {
-    accreditationNumber: accreditation?.accreditationNumber,
-    accreditationStatus,
-    accreditationStatusClass: getStatusClass(accreditationStatus),
+    accreditation: buildStatus({
+      reference: accreditation?.accreditationNumber,
+      status: accreditation?.status
+    }),
     backUrl: isExporter
       ? request.localiseUrl(`/organisations/${organisationId}/exporting`)
       : request.localiseUrl(`/organisations/${organisationId}`),
     contactRegulatorUrl: request.localiseUrl('/contact'),
-    hasAccreditationNumber: !!accreditation?.accreditationNumber,
-    hasAccreditationStatus: !!accreditationStatus,
     hasSiteName: !!siteName,
     isExporter,
     isRegisteredOnly: !accreditation,

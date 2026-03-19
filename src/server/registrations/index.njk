@@ -40,19 +40,19 @@
             {% endif %}
           </div>
           <div class="govuk-grid-column-one-half">
-            {% if hasAccreditationStatus %}
+            {% if accreditation.exists %}
               <p class="govuk-body govuk-!-margin-bottom-4">
                 <span class="govuk-!-font-weight-bold">{{ localise("registrations:accreditation") }}:</span>
                 {{ govukTag({
-                  text: accreditationStatus,
-                  classes: "govuk-tag--" + accreditationStatusClass
+                  text: accreditation.status,
+                  classes: "govuk-tag--" + accreditation.class
                 }) }}
               </p>
             {% endif %}
-            {% if hasAccreditationNumber %}
+            {% if accreditation.exists %}
               <p class="govuk-body govuk-!-margin-bottom-0">
                 <span class="govuk-!-font-weight-bold">{{ localise("registrations:accreditationNumber") }}:</span>
-                {{ accreditationNumber }}
+                {{ accreditation.reference }}
               </p>
             {% endif %}
           </div>
