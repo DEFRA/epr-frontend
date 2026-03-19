@@ -65,10 +65,6 @@ export const detailController = {
         session.idToken
       )
 
-    if (!registration) {
-      throw Boom.notFound('Registration not found')
-    }
-
     if (!isReprocessorRegistration(registration)) {
       throw Boom.notFound('Detail view not available for this registration')
     }
