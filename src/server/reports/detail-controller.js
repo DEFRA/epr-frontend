@@ -1,13 +1,12 @@
-import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
-import { hasDetailView } from './helpers/has-detail-view.js'
 
 /**
  * Build govukTable rows for supplier details.
@@ -32,6 +31,18 @@ function buildDestinationRows(destinations) {
     { text: destination.recipientName },
     { text: destination.role },
     { text: destination.tonnage }
+  ])
+}
+
+/**
+ * Build govukTable rows for overseas reprocessing sites.
+ * @param {Array<{siteName: string, osrId: string}>} overseasSites
+ * @returns {Array<Array<{text: string}>>}
+ */
+function buildOverseasSiteRows(overseasSites) {
+  return overseasSites.map((overseasSite) => [
+    { text: overseasSite.siteName },
+    { text: overseasSite.osrId }
   ])
 }
 
@@ -65,10 +76,6 @@ export const detailController = {
         session.idToken
       )
 
-    if (!hasDetailView(registration, accreditation)) {
-      throw Boom.notFound('Detail view not available for this registration')
-    }
-
     const reportDetail = await fetchReportDetail(
       organisationId,
       registrationId,
@@ -84,13 +91,15 @@ export const detailController = {
       localise
     )
 
-    const { wasteReceived, wasteSentOn } = reportDetail.sections
+    const { wasteReceived, wasteExported, wasteSentOn } = reportDetail.sections
+    const isExporter = isExporterRegistration(registration)
 
     const viewData = {
       pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
       heading: localise('reports:detailHeading', { periodLabel }),
       material,
       periodLabel,
+      isExporter,
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/reports`
       ),
@@ -105,11 +114,18 @@ export const detailController = {
             time: formatTime(reportDetail.lastUploadedAt)
           }
         : null,
+      accreditation: accreditation?.accreditationNumber,
       site: reportDetail.details.site,
       wasteReceived: {
         totalTonnage: wasteReceived.totalTonnage,
         supplierRows: buildSupplierRows(wasteReceived.suppliers)
       },
+      wasteExported: wasteExported
+        ? {
+            totalTonnage: wasteExported.totalTonnage,
+            overseasSiteRows: buildOverseasSiteRows(wasteExported.overseasSites)
+          }
+        : null,
       wasteSentOn: {
         totalTonnage: wasteSentOn.totalTonnage,
         toReprocessors: wasteSentOn.toReprocessors,
