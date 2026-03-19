@@ -30,8 +30,7 @@ export const controller = {
     const wasteBalance = await getWasteBalance(
       organisationId,
       registration.accreditationId,
-      session.idToken,
-      request.logger
+      session.idToken
     )
 
     const viewModel = buildViewModel({
