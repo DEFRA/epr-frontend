@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getAllByRole, getByRole } from '@testing-library/dom'
+import { getAllByRole, getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -184,7 +184,88 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
+const exporterRegistration = {
+  organisationData: { id: 'org-456' },
+  registration: {
+    id: 'reg-002',
+    material: 'plastic',
+    wasteProcessingType: 'exporter',
+    registrationNumber: 'REG002345'
+  },
+  accreditation: undefined
+}
+
+const exporterReportDetail = {
+  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  cadence: 'quarterly',
+  year: 2026,
+  period: 1,
+  startDate: '2026-01-01',
+  endDate: '2026-03-31',
+  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  details: {
+    material: 'plastic'
+  },
+  sections: {
+    wasteReceived: {
+      totalTonnage: 80.25,
+      suppliers: [
+        { supplierName: 'Grantham Waste', role: 'Baler', tonnage: 42.21 },
+        { supplierName: 'SUEZ recycling', role: 'Sorter', tonnage: 38.04 }
+      ]
+    },
+    wasteExported: {
+      totalTonnage: 11.47,
+      overseasSites: [
+        { siteName: 'EuroPlast Recycling GmbH', osrId: '001' },
+        { siteName: 'RecyclePlast SA', osrId: '096' }
+      ]
+    },
+    wasteSentOn: {
+      totalTonnage: 1.0,
+      toReprocessors: 1.0,
+      toExporters: 0.0,
+      toOtherSites: 0.0,
+      destinations: [
+        { recipientName: 'Lincoln recycling', role: 'Exporter', tonnage: 1.0 }
+      ]
+    }
+  }
+}
+
+const emptyExporterReportDetail = {
+  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  cadence: 'quarterly',
+  year: 2026,
+  period: 1,
+  startDate: '2026-01-01',
+  endDate: '2026-03-31',
+  lastUploadedAt: null,
+  details: {
+    material: 'plastic'
+  },
+  sections: {
+    wasteReceived: {
+      totalTonnage: 0,
+      suppliers: []
+    },
+    wasteExported: {
+      totalTonnage: 0,
+      overseasSites: []
+    },
+    wasteSentOn: {
+      totalTonnage: 0,
+      toReprocessors: 0,
+      toExporters: 0,
+      toOtherSites: 0,
+      destinations: []
+    }
+  }
+}
+
 const detailUrl = '/organisations/org-123/registrations/reg-001/reports/2026/1'
+const exporterDetailUrl =
+  '/organisations/org-456/registrations/reg-002/reports/2026/1'
 const accreditedDetailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/2'
 
@@ -635,6 +716,231 @@ describe('#detailReportsController', () => {
       })
     })
 
+    describe('for registered-only exporter with data', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          exporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
+      })
+
+      it('should return 200', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('should display quarterly period heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /Quarter 1, 2026/,
+          level: 1
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should not display details section', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByRole(body, 'heading', {
+            name: /Details/,
+            level: 2
+          })
+        ).toBeNull()
+      })
+
+      it('should display waste received for export heading', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /Packaging waste received for export/,
+          level: 2
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should display total tonnage received', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('80.25')
+      })
+
+      it('should display supplier names in table', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = getAllByRole(body, 'table')
+        const supplierTable = tables[0]
+
+        expect(supplierTable.textContent).toContain('Grantham Waste')
+        expect(supplierTable.textContent).toContain('SUEZ recycling')
+      })
+
+      it('should display waste exported heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /Packaging waste exported for recycling/,
+          level: 2
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should display total tonnage exported', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('11.47')
+      })
+
+      it('should display overseas sites in table', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = getAllByRole(body, 'table')
+        const overseasTable = tables[1]
+
+        expect(overseasTable.textContent).toContain('EuroPlast Recycling GmbH')
+        expect(overseasTable.textContent).toContain('RecyclePlast SA')
+      })
+
+      it('should display waste sent on heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /Packaging waste sent on/,
+          level: 2
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should display destination details', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('Lincoln recycling')
+      })
+    })
+
+    describe('for registered-only exporter with no data', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          exporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          emptyExporterReportDetail
+        )
+      })
+
+      it('should display zero tonnage for all sections', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('0')
+      })
+
+      it('should not display supplier or overseas site tables when empty', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = body.querySelectorAll('table')
+
+        expect(tables).toHaveLength(1)
+      })
+    })
+
     describe('error handling', () => {
       it('should return 404 when registration not found', async ({
         server
@@ -642,27 +948,6 @@ describe('#detailReportsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
           Boom.notFound('Registration not found')
         )
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: detailUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      })
-
-      it('should return 404 for exporter registration', async ({ server }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          organisationData: { id: 'org-123' },
-          registration: {
-            id: 'reg-001',
-            material: 'plastic',
-            wasteProcessingType: 'exporter',
-            registrationNumber: 'REG001234'
-          },
-          accreditation: undefined
-        })
 
         const { statusCode } = await server.inject({
           method: 'GET',

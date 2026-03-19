@@ -297,7 +297,7 @@ describe('#listReportsController', () => {
         expect(table?.textContent).toContain('Quarter 1, 2026')
       })
 
-      it('should not display View links for exporter', async ({ server }) => {
+      it('should display Select links for exporter', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: exporterUrl,
@@ -307,9 +307,13 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const viewLinks = body.querySelectorAll('.govuk-table a.govuk-link')
+        const selectLinks = body.querySelectorAll('.govuk-table a.govuk-link')
 
-        expect(viewLinks).toHaveLength(0)
+        expect(selectLinks).toHaveLength(1)
+        expect(selectLinks[0]?.getAttribute('href')).toBe(
+          '/organisations/org-456/registrations/reg-002/reports/2026/1'
+        )
+        expect(selectLinks[0]?.textContent).toContain('Select')
       })
 
       it('should not display Monthly subheading', async ({ server }) => {
