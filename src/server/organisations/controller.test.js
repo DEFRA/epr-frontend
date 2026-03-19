@@ -12,7 +12,7 @@ import {
 } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
@@ -349,60 +349,113 @@ describe('#organisationController', () => {
     })
 
     describe('registered-only', () => {
-      beforeEach(() => {
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue({
-          ...fixtureData,
-          accreditations: [],
-          registrations: [
-            {
-              id: 'reg-no-acc-001',
-              status: 'approved',
-              wasteProcessingType: 'reprocessor',
-              material: 'plastic',
-              site: { address: { line1: 'Test Site' } }
-            }
-          ]
-        })
-      })
+      const registeredOnlyOrganisation = {
+        ...fixtureData,
+        accreditations: [],
+        registrations: [
+          {
+            id: 'reg-no-acc-001',
+            status: 'approved',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            site: { address: { line1: 'Test Site' } }
+          }
+        ]
+      }
 
-      afterEach(() => {
+      afterAll(() => {
         config.reset('featureFlags.registeredOnly')
       })
 
-      it('should hide registered-only when flag is off', async ({ server }) => {
-        config.set('featureFlags.registeredOnly', false)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901',
-          auth: mockAuth
+      describe('feature flag off', () => {
+        beforeAll(() => {
+          config.set('featureFlags.registeredOnly', false)
         })
 
-        const { body } = new JSDOM(result).window.document
+        it('should hide registered-only when flag is off', async ({
+          server
+        }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue(registeredOnlyOrganisation)
 
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(getByText(body, /No sites found/i)).toBeDefined()
-        expect(queryByText(body, /Not accredited/i)).toBeNull()
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url: '/organisations/6507f1f77bcf86cd79943901',
+            auth: mockAuth
+          })
+
+          const { body } = new JSDOM(result).window.document
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(getByText(body, /No sites found/i)).toBeDefined()
+          expect(queryByText(body, /Not accredited/i)).toBeNull()
+        })
       })
 
-      it('should show registered-only when flag is on', async ({ server }) => {
-        config.set('featureFlags.registeredOnly', true)
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901',
-          auth: mockAuth
+      describe('feature flag on', () => {
+        beforeAll(() => {
+          config.set('featureFlags.registeredOnly', true)
         })
 
-        const { body } = new JSDOM(result).window.document
-        const cell = cellInColumn(getByRole(body, 'table'))
+        it('should exclude registrations whose accreditation has an excluded status', async ({
+          server
+        }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue({
+            ...fixtureData,
+            accreditations: [
+              {
+                id: 'acc-excluded-001',
+                status: 'created',
+                wasteProcessingType: 'reprocessor',
+                material: 'plastic'
+              }
+            ],
+            registrations: [
+              {
+                id: 'reg-with-excluded-acc',
+                accreditationId: 'acc-excluded-001',
+                status: 'approved',
+                wasteProcessingType: 'reprocessor',
+                material: 'plastic',
+                site: { address: { line1: 'Test Site' } }
+              }
+            ]
+          })
 
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(cell('Material')).toHaveTextContent(/Plastic/i)
-        expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
-        expect(cell(/Available waste balance/)).toHaveTextContent('N/A')
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url: '/organisations/6507f1f77bcf86cd79943901',
+            auth: mockAuth
+          })
+
+          const { body } = new JSDOM(result).window.document
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(getByText(body, /No sites found/i)).toBeDefined()
+        })
+
+        it('should show registered-only', async ({ server }) => {
+          vi.mocked(
+            fetchOrganisationModule.fetchOrganisationById
+          ).mockResolvedValue(registeredOnlyOrganisation)
+
+          const { result, statusCode } = await server.inject({
+            method: 'GET',
+            url: '/organisations/6507f1f77bcf86cd79943901',
+            auth: mockAuth
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const cell = cellInColumn(getByRole(body, 'table'))
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(cell('Material')).toHaveTextContent(/Plastic/i)
+          expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
+          expect(cell(/Available waste balance/)).toHaveTextContent('N/A')
+        })
       })
     })
 
