@@ -105,6 +105,7 @@
               </div>
             </div>
           </div>
+          {% if not isRegisteredOnly %}
           <div class="govuk-grid-column-one-half">
             <div class="govuk-summary-card govuk-!-margin-bottom-4">
               <div class="govuk-summary-card__title-wrapper">
@@ -126,9 +127,7 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="govuk-grid-row epr-task-cards">
+          {% endif %}
           <div class="govuk-grid-column-one-half">
             <div class="govuk-summary-card govuk-!-margin-bottom-4">
               <div class="govuk-summary-card__title-wrapper">

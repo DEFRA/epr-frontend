@@ -805,11 +805,49 @@ describe('#accreditationDashboardController', () => {
 
         expect(queryByText(body, /Available waste balance/)).toBeNull()
       })
+
+      it('should not show PRNs card for registered-only operator', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByRole(body, 'heading', { name: /PRN|PERN/i, level: 3 })
+        ).toBeNull()
+      })
     })
 
     describe('when flag is disabled', () => {
       beforeEach(() => {
         config.set('featureFlags.registeredOnly', false)
+      })
+
+      it('should show PRNs card for accredited operator', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          glassApproved
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByRole(body, 'heading', { name: /PRN|PERN/i, level: 3 })
+        ).not.toBeNull()
       })
 
       it('should show waste balance banner for accredited operator', async ({
