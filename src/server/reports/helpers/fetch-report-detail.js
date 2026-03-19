@@ -42,6 +42,13 @@ export async function fetchReportDetail(
 
 /**
  * @typedef {{
+ *   siteName: string,
+ *   osrId: string
+ * }} OverseasSiteEntry
+ */
+
+/**
+ * @typedef {{
  *   operatorCategory: string,
  *   cadence: string,
  *   year: number,
@@ -57,6 +64,10 @@ export async function fetchReportDetail(
  *     wasteReceived: {
  *       totalTonnage: number,
  *       suppliers: SupplierEntry[]
+ *     },
+ *     wasteExported?: {
+ *       totalTonnage: number,
+ *       overseasSites: OverseasSiteEntry[]
  *     },
  *     wasteSentOn: {
  *       totalTonnage: number,
