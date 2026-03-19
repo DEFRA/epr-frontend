@@ -666,7 +666,7 @@ describe('#accreditationDashboardController', () => {
             status: 'approved',
             site: { address: { line1: 'Test Site' } }
           },
-          accreditation: { id: 'some-acc', status: 'approved' }
+          accreditation: { id: 'some-acc', accreditationNumber: 'ACC999', status: 'approved' }
         })
 
         const { result, statusCode } = await server.inject({

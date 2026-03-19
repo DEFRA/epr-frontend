@@ -31,8 +31,6 @@
                   classes: "govuk-tag--" + registration.class
                 }) }}
               </p>
-            {% endif %}
-            {% if registration.exists %}
               <p class="govuk-body govuk-!-margin-bottom-0">
                 <span class="govuk-!-font-weight-bold">{{ localise("registrations:registrationNumber") }}:</span>
                 {{ registration.reference }}
@@ -59,7 +57,7 @@
         </div>
 
 
-        {% if not isRegisteredOnly %}
+        {% if accreditation.exists %}
         <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
           <div class="govuk-summary-card__title-wrapper govuk-!-padding-6">
             <div>
@@ -105,7 +103,7 @@
               </div>
             </div>
           </div>
-          {% if not isRegisteredOnly %}
+          {% if accreditation.exists %}
           <div class="govuk-grid-column-one-half">
             <div class="govuk-summary-card govuk-!-margin-bottom-4">
               <div class="govuk-summary-card__title-wrapper">

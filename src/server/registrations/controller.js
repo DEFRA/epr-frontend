@@ -70,7 +70,6 @@ export const controller = {
  *   contactRegulatorUrl: string;
  *   hasSiteName: boolean;
  *   isExporter: boolean;
- *   isRegisteredOnly: boolean;
  *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
@@ -149,7 +148,6 @@ function buildViewModel({
     contactRegulatorUrl: request.localiseUrl('/contact'),
     hasSiteName: !!siteName,
     isExporter,
-    isRegisteredOnly: !accreditation,
     material,
     pageTitle: localise('registrations:pageTitle', { siteName, material }),
     prns: getPrnViewData(
