@@ -109,7 +109,10 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
   const wasteBalance = wasteBalanceMap?.[accreditationId]
 
   const cells = [
-    { text: getDisplayMaterial(registration) },
+    {
+      text: getDisplayMaterial(registration),
+      classes: 'govuk-!-width-one-quarter'
+    },
     {
       html: createTag(registration.status)
     },
