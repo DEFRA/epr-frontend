@@ -23,19 +23,17 @@
 
         <div class="govuk-grid-row">
           <div class="govuk-grid-column-one-half govuk-!-margin-bottom-4">
-            {% if registration.exists %}
-              <p class="govuk-body govuk-!-margin-bottom-4">
-                <span class="govuk-!-font-weight-bold">{{ localise("registrations:registration") }}:</span>
-                {{ govukTag({
-                  text: registration.status,
-                  classes: "govuk-tag--" + registration.class
-                }) }}
-              </p>
-              <p class="govuk-body govuk-!-margin-bottom-0">
-                <span class="govuk-!-font-weight-bold">{{ localise("registrations:registrationNumber") }}:</span>
-                {{ registration.reference }}
-              </p>
-            {% endif %}
+            <p class="govuk-body govuk-!-margin-bottom-4">
+              <span class="govuk-!-font-weight-bold">{{ localise("registrations:registration") }}:</span>
+              {{ govukTag({
+                text: registration.status,
+                classes: "govuk-tag--" + registration.class
+              }) }}
+            </p>
+            <p class="govuk-body govuk-!-margin-bottom-0">
+              <span class="govuk-!-font-weight-bold">{{ localise("registrations:registrationNumber") }}:</span>
+              {{ registration.reference }}
+            </p>
           </div>
           <div class="govuk-grid-column-one-half">
             {% if accreditation.exists %}
@@ -46,8 +44,6 @@
                   classes: "govuk-tag--" + accreditation.class
                 }) }}
               </p>
-            {% endif %}
-            {% if accreditation.exists %}
               <p class="govuk-body govuk-!-margin-bottom-0">
                 <span class="govuk-!-font-weight-bold">{{ localise("registrations:accreditationNumber") }}:</span>
                 {{ accreditation.reference }}
@@ -55,7 +51,6 @@
             {% endif %}
           </div>
         </div>
-
 
         {% if accreditation.exists %}
         <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-top-6 govuk-!-margin-bottom-8">
@@ -176,7 +171,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>

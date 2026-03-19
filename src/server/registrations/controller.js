@@ -50,13 +50,6 @@ export const controller = {
 
 /**
  * @typedef {{
- *   exists: false;
- * }} Missing
- */
-
-/**s
- * @typedef {{
- *   exists: true;
  *   reference: string;
  *   status: string;
  *   class: string;
@@ -64,8 +57,12 @@ export const controller = {
  */
 
 /**
+ * @typedef {{ exists: true } & Status | { exists: false }} MaybeStatus
+ */
+
+/**
  * @typedef {{
- *   accreditation: Missing | Status;
+ *   accreditation: MaybeStatus;
  *   backUrl: string;
  *   contactRegulatorUrl: string;
  *   hasSiteName: boolean;
@@ -82,25 +79,27 @@ export const controller = {
  */
 
 /**
- * Build status for registration/accreditation
- * @param {{
- *    reference?: string;
- *    status?: string;
- * }} params
- * @returns {Missing|Status}
+ * @param {{ reference: string; status: string }} params
+ * @returns {Status}
  */
-const buildStatus = ({ reference, status }) => {
+const buildStatus = ({ reference, status }) => ({
+  reference,
+  status: capitalize(status),
+  class: getStatusClass(status)
+})
+
+/**
+ * @param {{ reference?: string; status?: string }} params
+ * @returns {MaybeStatus}
+ */
+const buildMaybeStatus = ({ reference, status }) => {
   if (!reference || !status) {
-    return {
-      exists: false
-    }
+    return { exists: false }
   }
 
   return {
-    exists: true,
-    reference,
-    status: capitalize(status),
-    class: getStatusClass(status)
+    ...buildStatus({ reference, status }),
+    exists: true
   }
 }
 
@@ -138,7 +137,7 @@ function buildViewModel({
 
   /** @type {RegistrationViewModel} */
   const viewModel = {
-    accreditation: buildStatus({
+    accreditation: buildMaybeStatus({
       reference: accreditation?.accreditationNumber,
       status: accreditation?.status
     }),
