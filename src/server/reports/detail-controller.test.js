@@ -269,6 +269,57 @@ const exporterDetailUrl =
 const accreditedDetailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/2'
 
+const accreditedExporterRegistration = {
+  organisationData: { id: 'org-789' },
+  registration: {
+    id: 'reg-003',
+    material: 'plastic',
+    wasteProcessingType: 'exporter',
+    registrationNumber: 'REG003456',
+    accreditationId: 'acc-002'
+  },
+  accreditation: {
+    id: 'acc-002',
+    accreditationNumber: 'EE992415095748M',
+    status: 'approved'
+  }
+}
+
+const accreditedExporterReportDetail = {
+  operatorCategory: 'EXPORTER',
+  cadence: 'monthly',
+  year: 2026,
+  period: 2,
+  startDate: '2026-02-01',
+  endDate: '2026-02-28',
+  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  details: {
+    material: 'plastic'
+  },
+  sections: {
+    wasteReceived: {
+      totalTonnage: 80.25,
+      suppliers: []
+    },
+    wasteExported: {
+      totalTonnage: 11.47,
+      overseasSites: [{ osrId: '001' }, { osrId: '096' }]
+    },
+    wasteSentOn: {
+      totalTonnage: 1.0,
+      toReprocessors: 1.0,
+      toExporters: 0.0,
+      toOtherSites: 0.0,
+      destinations: [
+        { recipientName: 'Lincoln recycling', role: 'Exporter', tonnage: 1.0 }
+      ]
+    }
+  }
+}
+
+const accreditedExporterDetailUrl =
+  '/organisations/org-789/registrations/reg-003/reports/2026/2'
+
 describe('#detailReportsController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -724,16 +775,6 @@ describe('#detailReportsController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
       })
 
-      it('should return 200', async ({ server }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: exporterDetailUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
       it('should display quarterly period heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
@@ -790,36 +831,6 @@ describe('#detailReportsController', () => {
         expect(heading).toBeDefined()
       })
 
-      it('should display total tonnage received', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterDetailUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        expect(body.textContent).toContain('80.25')
-      })
-
-      it('should display supplier names in table', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterDetailUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const tables = getAllByRole(body, 'table')
-        const supplierTable = tables[0]
-
-        expect(supplierTable.textContent).toContain('Grantham Waste')
-        expect(supplierTable.textContent).toContain('SUEZ recycling')
-      })
-
       it('should display waste exported heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
@@ -867,37 +878,6 @@ describe('#detailReportsController', () => {
         expect(overseasTable.textContent).toContain('EuroPlast Recycling GmbH')
         expect(overseasTable.textContent).toContain('RecyclePlast SA')
       })
-
-      it('should display waste sent on heading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterDetailUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const heading = getByRole(body, 'heading', {
-          name: /Packaging waste sent on/,
-          level: 2
-        })
-
-        expect(heading).toBeDefined()
-      })
-
-      it('should display destination details', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterDetailUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        expect(body.textContent).toContain('Lincoln recycling')
-      })
     })
 
     describe('for registered-only exporter with no data', () => {
@@ -938,6 +918,109 @@ describe('#detailReportsController', () => {
         const tables = body.querySelectorAll('table')
 
         expect(tables).toHaveLength(1)
+      })
+    })
+
+    describe('for accredited exporter with data', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          accreditedExporterReportDetail
+        )
+      })
+
+      it('should return 200', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('should display monthly period heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /February 2026/,
+          level: 1
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should display accreditation in details', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('Accreditation:')
+        expect(body.textContent).toContain('EE992415095748M')
+      })
+
+      it('should not display site in details', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).not.toContain('Site:')
+      })
+
+      it('should not display supplier details table', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByRole(body, 'heading', {
+            name: /Supplier details/,
+            level: 3
+          })
+        ).toBeNull()
+      })
+
+      it('should display overseas site OSR IDs in table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = getAllByRole(body, 'table')
+        const overseasTable = tables[0]
+
+        expect(overseasTable.textContent).toContain('001')
+        expect(overseasTable.textContent).toContain('096')
       })
     })
 
