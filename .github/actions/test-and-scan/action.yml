@@ -132,7 +132,7 @@ runs:
 
     - name: SonarCloud Scan
       if: ${{ github.actor != 'dependabot[bot]' }}
-      uses: SonarSource/sonarqube-scan-action@v6
+      uses: SonarSource/sonarqube-scan-action@v7
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}
