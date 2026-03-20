@@ -15,9 +15,9 @@ import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accr
 export async function getRequiredRegistrationWithAccreditation({
   organisationId,
   registrationId,
+  accreditationId,
   idToken,
-  logger,
-  accreditationId
+  logger
 }) {
   const { registration, accreditation, organisationData } =
     await fetchRegistrationAndAccreditation(
@@ -31,7 +31,7 @@ export async function getRequiredRegistrationWithAccreditation({
     throw Boom.notFound('Not accredited for this registration')
   }
 
-  if (accreditationId && accreditation.id !== accreditationId) {
+  if (accreditation.id !== accreditationId) {
     logger.warn(
       { registrationId, accreditationId },
       'Accreditation ID mismatch'

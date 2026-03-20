@@ -33,7 +33,8 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       organisationId: 'org-123',
       registrationId: 'reg-001',
       idToken: 'mock-token',
-      logger: mockLogger
+      logger: mockLogger,
+      accreditationId: 'acc-001'
     })
 
     expect(result).toStrictEqual({
@@ -148,7 +149,8 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       organisationId: 'org-123',
       registrationId: 'reg-001',
       idToken: 'mock-token',
-      logger: mockLogger
+      logger: mockLogger,
+      accreditationId: 'acc-001'
     })
 
     expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(

@@ -1,9 +1,10 @@
-import { config } from '#config/config.js'
+import { config, isRegisteredOnlyEnabled } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
+import Boom from '@hapi/boom'
 import { capitalize } from 'lodash-es'
 
 /**
@@ -16,19 +17,24 @@ export const controller = {
     const session = request.auth.credentials
 
     const { registration, accreditation } =
-      await getRequiredRegistrationWithAccreditation({
+      await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        idToken: session.idToken,
-        logger: request.logger
-      })
+        session.idToken
+      )
 
-    const wasteBalance = await getWasteBalance(
-      organisationId,
-      registration.accreditationId,
-      session.idToken,
-      request.logger
-    )
+    if (!isRegisteredOnlyEnabled() && !accreditation) {
+      throw Boom.notFound('Registered-only not enabled')
+    }
+
+    const wasteBalance = registration.accreditationId
+      ? await getWasteBalance(
+          organisationId,
+          registration.accreditationId,
+          session.idToken,
+          request.logger
+        )
+      : null
 
     const viewModel = buildViewModel({
       request,
@@ -42,15 +48,76 @@ export const controller = {
   }
 }
 
+/** @typedef {{ href: string; text: string }} Link */
+
+/**
+ * @typedef {{
+ *   reference: string;
+ *   status: string;
+ *   class: string;
+ * }} TaggedReference
+ */
+
+/**
+ * @typedef {(
+ *   { exists: true } & TaggedReference
+ *   | { exists: false }
+ * )} MaybeTaggedReference
+ */
+
+/**
+ * @typedef {{
+ *   accreditation: MaybeTaggedReference;
+ *   backUrl: string;
+ *   contactRegulatorUrl: string;
+ *   hasSiteName: boolean;
+ *   isExporter: boolean;
+ *   material: string;
+ *   pageTitle: string;
+ *   prns: { description: string; link: Link; manageLink: Link; title: string };
+ *   registration: TaggedReference;
+ *   reports: { isEnabled: boolean; link: Link };
+ *   siteName: string | null;
+ *   uploadSummaryLogUrl: string;
+ *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
+ * }} RegistrationViewModel
+ */
+
+/**
+ * @param {{ reference: string; status: string }} params
+ * @returns {TaggedReference}
+ */
+const buildTaggedReference = ({ reference, status }) => ({
+  reference,
+  status: capitalize(status),
+  class: getStatusClass(status)
+})
+
+/**
+ * @param {{ reference?: string; status?: string }} params
+ * @returns {MaybeTaggedReference}
+ */
+const buildMaybeTaggedReference = ({ reference, status }) => {
+  if (!reference || !status) {
+    return { exists: false }
+  }
+
+  return {
+    ...buildTaggedReference({ reference, status }),
+    exists: true
+  }
+}
+
 /**
  * Build view model for accreditation dashboard
- * @param {object} params - Function parameters
- * @param {object} params.request - Hapi request object
- * @param {string} params.organisationId - Organisation ID
- * @param {object | undefined} params.accreditation - Accreditation data
- * @param {object} params.registration - Registration data
- * @param {WasteBalance | null} params.wasteBalance - Waste balance data
- * @returns {object} View model
+ * @param {{
+ *   request: Request;
+ *   organisationId: string;
+ *   registration: Registration;
+ *   accreditation?: Accreditation;
+ *   wasteBalance: WasteBalance | null;
+ * }} params
+ * @returns {RegistrationViewModel}
  */
 function buildViewModel({
   request,
@@ -60,6 +127,7 @@ function buildViewModel({
   wasteBalance
 }) {
   const { t: localise } = request
+
   const { isExporter, noteType, noteTypePlural } =
     getNoteTypeDisplayNames(registration)
   const siteName = isExporter
@@ -68,34 +136,24 @@ function buildViewModel({
       localise('registrations:unknownSite'))
   const material = getDisplayMaterial(registration)
 
-  const registrationStatus = capitalize(registration.status)
-  const accreditationStatus = capitalize(accreditation?.status)
-
   const uploadSummaryLogUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
+  /** @type {RegistrationViewModel} */
   const viewModel = {
-    pageTitle: localise('registrations:pageTitle', { siteName, material }),
-    siteName,
-    material,
-    isExporter,
-    registrationStatus,
-    registrationStatusClass: getStatusClass(registrationStatus),
-    accreditationStatus,
-    accreditationStatusClass: getStatusClass(accreditationStatus),
-    registrationNumber: registration.registrationNumber,
-    accreditationNumber: accreditation?.accreditationNumber,
-    hasRegistrationStatus: !!registrationStatus,
-    hasAccreditationStatus: !!accreditationStatus,
-    hasRegistrationNumber: !!registration.registrationNumber,
-    hasAccreditationNumber: !!accreditation?.accreditationNumber,
-    hasSiteName: !!siteName,
+    accreditation: buildMaybeTaggedReference({
+      reference: accreditation?.accreditationNumber,
+      status: accreditation?.status
+    }),
     backUrl: isExporter
       ? request.localiseUrl(`/organisations/${organisationId}/exporting`)
       : request.localiseUrl(`/organisations/${organisationId}`),
-    uploadSummaryLogUrl,
     contactRegulatorUrl: request.localiseUrl('/contact'),
+    hasSiteName: !!siteName,
+    isExporter,
+    material,
+    pageTitle: localise('registrations:pageTitle', { siteName, material }),
     prns: getPrnViewData(
       request,
       { noteType, noteTypePlural },
@@ -104,6 +162,12 @@ function buildViewModel({
       registration.accreditationId
     ),
     reports: getReportsViewData(request, organisationId, registration.id),
+    registration: buildTaggedReference({
+      reference: registration.registrationNumber,
+      status: registration.status
+    }),
+    siteName,
+    uploadSummaryLogUrl,
     wasteBalance: getWasteBalanceViewData(wasteBalance, noteTypePlural)
   }
 
@@ -166,29 +230,6 @@ function getPrnViewData(
   }
 }
 
-async function getWasteBalance(
-  organisationId,
-  accreditationId,
-  idToken,
-  logger
-) {
-  if (!accreditationId) {
-    return null
-  }
-
-  try {
-    const wasteBalanceMap = await fetchWasteBalances(
-      organisationId,
-      [accreditationId],
-      idToken
-    )
-    return wasteBalanceMap[accreditationId] ?? null
-  } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch waste balance')
-    return null
-  }
-}
-
 /**
  * @param {WasteBalance | null} wasteBalance
  * @param {'PRNs' | 'PERNs'} noteTypePlural
@@ -203,5 +244,7 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
 
 /**
  * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */
