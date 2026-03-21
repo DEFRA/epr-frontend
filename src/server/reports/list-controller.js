@@ -1,7 +1,8 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { CADENCE_MONTHLY, CADENCE_QUARTERLY } from './constants.js'
+import { CADENCE, SUBMISSION_STATUS } from './constants.js'
+import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 
@@ -9,7 +10,7 @@ import { formatPeriodLabel } from './helpers/format-period-label.js'
  * Build table rows for the govukTable macro.
  * Each row is an array of cell objects ({ text } or { html }).
  * @param {object} options
- * @param {Array<{year: number, period: number}>} options.periods
+ * @param {import('./helpers/fetch-reporting-periods.js').ReportingPeriod[]} options.reportingPeriods
  * @param {string} options.cadence
  * @param {string} options.organisationId
  * @param {string} options.registrationId
@@ -18,21 +19,28 @@ import { formatPeriodLabel } from './helpers/format-period-label.js'
  * @returns {Array<Array<{text: string} | {html: string}>>}
  */
 function buildTableRows({
-  periods,
+  reportingPeriods,
   cadence,
   organisationId,
   registrationId,
   localiseUrl,
   localise
 }) {
-  return periods.map((period) => {
+  return reportingPeriods.map((period) => {
     const label = formatPeriodLabel(period, cadence, localise)
     const url = localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${period.period}`
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
     )
+
+    const status = deriveSubmissionStatus(period.endDate, period.report)
+    const statusHtml =
+      status === SUBMISSION_STATUS.DUE
+        ? `<strong class="govuk-tag">${escapeHtml(localise('reports:statusDue'))}</strong>`
+        : ''
 
     return [
       { text: label },
+      { html: statusHtml },
       {
         html: `<a href="${url}" class="govuk-link">${localise('reports:actionSelect')} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
       }
@@ -49,26 +57,29 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration }, { cadence, periods }] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchReportingPeriods(organisationId, registrationId, session.idToken)
-    ])
+    const [{ registration }, { cadence, reportingPeriods }] = await Promise.all(
+      [
+        fetchRegistrationAndAccreditation(
+          organisationId,
+          registrationId,
+          session.idToken
+        ),
+        fetchReportingPeriods(organisationId, registrationId, session.idToken)
+      ]
+    )
 
     const material = getDisplayMaterial(registration)
 
-    const isMonthly = cadence === CADENCE_MONTHLY
-    const isQuarterly = cadence === CADENCE_QUARTERLY
+    const isMonthly = cadence === CADENCE.MONTHLY
+    const isQuarterly = cadence === CADENCE.QUARTERLY
     const tableHead = [
       { text: localise('reports:periodColumn') },
+      { text: localise('reports:statusColumn') },
       { text: localise('reports:actionColumn') }
     ]
 
     const tableRows = buildTableRows({
-      periods,
+      reportingPeriods,
       cadence,
       organisationId,
       registrationId,
@@ -83,13 +94,13 @@ export const listController = {
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
-      hasMonthlyPeriods: isMonthly && periods.length > 0,
-      hasQuarterlyPeriods: isQuarterly && periods.length > 0,
+      hasMonthlyPeriods: isMonthly && reportingPeriods.length > 0,
+      hasQuarterlyPeriods: isQuarterly && reportingPeriods.length > 0,
       monthlyTableHead: isMonthly ? tableHead : [],
       monthlyTableRows: isMonthly ? tableRows : [],
       quarterlyTableHead: isQuarterly ? tableHead : [],
       quarterlyTableRows: isQuarterly ? tableRows : [],
-      hasPeriods: periods.length > 0,
+      hasPeriods: reportingPeriods.length > 0,
       emptyStateMessage: localise('reports:emptyState')
     }
 

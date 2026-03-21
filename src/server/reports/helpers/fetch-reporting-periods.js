@@ -12,7 +12,7 @@ export async function fetchReportingPeriods(
   registrationId,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/calendar`
 
   return fetchJsonFromBackend(path, {
     method: 'GET',
@@ -25,13 +25,15 @@ export async function fetchReportingPeriods(
  *   year: number,
  *   period: number,
  *   startDate: string,
- *   endDate: string
+ *   endDate: string,
+ *   dueDate: string,
+ *   report: { id: string, status: string } | null
  * }} ReportingPeriod
  */
 
 /**
  * @typedef {{
- *   cadence: import('../constants.js').CADENCE_MONTHLY | import('../constants.js').CADENCE_QUARTERLY,
- *   periods: ReportingPeriod[]
+ *   cadence: import('../constants.js').CadenceValue,
+ *   reportingPeriods: ReportingPeriod[]
  * }} ReportingPeriodsResponse
  */

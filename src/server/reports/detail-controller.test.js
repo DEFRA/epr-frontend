@@ -263,11 +263,12 @@ const emptyExporterReportDetail = {
   }
 }
 
-const detailUrl = '/organisations/org-123/registrations/reg-001/reports/2026/1'
+const detailUrl =
+  '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1'
 const exporterDetailUrl =
-  '/organisations/org-456/registrations/reg-002/reports/2026/1'
+  '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1'
 const accreditedDetailUrl =
-  '/organisations/org-123/registrations/reg-001/reports/2026/2'
+  '/organisations/org-123/registrations/reg-001/reports/2026/monthly/2'
 
 const accreditedExporterRegistration = {
   organisationData: { id: 'org-789' },
@@ -318,7 +319,7 @@ const accreditedExporterReportDetail = {
 }
 
 const accreditedExporterDetailUrl =
-  '/organisations/org-789/registrations/reg-003/reports/2026/2'
+  '/organisations/org-789/registrations/reg-003/reports/2026/monthly/2'
 
 describe('#detailReportsController', () => {
   beforeEach(() => {
@@ -1044,7 +1045,17 @@ describe('#detailReportsController', () => {
       it('should return 400 for non-numeric year', async ({ server }) => {
         const { statusCode } = await server.inject({
           method: 'GET',
-          url: '/organisations/org-123/registrations/reg-001/reports/invalid/1',
+          url: '/organisations/org-123/registrations/reg-001/reports/invalid/monthly/1',
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+      })
+
+      it('should return 400 for invalid cadence', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/org-123/registrations/reg-001/reports/2026/biweekly/1',
           auth: mockAuth
         })
 

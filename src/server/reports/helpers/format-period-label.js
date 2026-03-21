@@ -1,4 +1,4 @@
-import { CADENCE_MONTHLY } from '../constants.js'
+import { CADENCE } from '../constants.js'
 
 /**
  * Formats a reporting period into a display label.
@@ -9,7 +9,7 @@ import { CADENCE_MONTHLY } from '../constants.js'
  * @returns {string}
  */
 export function formatPeriodLabel(period, cadence, localise) {
-  if (cadence === CADENCE_MONTHLY) {
+  if (cadence === CADENCE.MONTHLY) {
     const month = localise(`reports:months.${period.period}`)
     return `${month} ${period.year}`
   }
