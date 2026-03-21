@@ -5,6 +5,7 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import { CADENCE } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 
@@ -60,12 +61,16 @@ export const detailController = {
         organisationId: Joi.string().required(),
         registrationId: Joi.string().required(),
         year: Joi.number().integer().min(MIN_YEAR).max(MAX_YEAR).required(),
+        cadence: Joi.string()
+          .valid(CADENCE.MONTHLY, CADENCE.QUARTERLY)
+          .required(),
         period: Joi.number().integer().min(1).max(MAX_PERIOD).required()
       })
     }
   },
   async handler(request, h) {
-    const { organisationId, registrationId, year, period } = request.params
+    const { organisationId, registrationId, year, cadence, period } =
+      request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
@@ -80,6 +85,7 @@ export const detailController = {
       organisationId,
       registrationId,
       year,
+      cadence,
       period,
       session.idToken
     )

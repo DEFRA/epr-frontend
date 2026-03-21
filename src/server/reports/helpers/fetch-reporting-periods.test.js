@@ -16,12 +16,14 @@ describe(fetchReportingPeriods, () => {
 
   const mockResponse = {
     cadence: 'monthly',
-    periods: [
+    reportingPeriods: [
       {
         year: 2026,
         period: 1,
         startDate: '2026-01-01',
-        endDate: '2026-01-31'
+        endDate: '2026-01-31',
+        dueDate: '2026-02-20',
+        report: null
       }
     ]
   }
@@ -36,7 +38,7 @@ describe(fetchReportingPeriods, () => {
     await fetchReportingPeriods(organisationId, registrationId, idToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports',
+      '/v1/organisations/org-123/registrations/reg-456/reports/calendar',
       {
         method: 'GET',
         headers: {
@@ -52,7 +54,7 @@ describe(fetchReportingPeriods, () => {
     await fetchReportingPeriods('org/123', 'reg&456', idToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/calendar',
       expect.any(Object)
     )
   })
