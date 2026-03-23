@@ -40,8 +40,8 @@ const REUPLOAD_STATES = new Set([
 
 /**
  * Gets the waste record section number to display in UI copy based on processing type
- * @param {string} processingType - Processing type from summary log meta
- * @returns {number} Waste record section number (1 or 3)
+ * @param {ProcessingType} [processingType] - Processing type from summary log meta
+ * @returns {number | undefined} Waste record section number (1 or 3)
  */
 export const getWasteRecordSectionNumber = (processingType) => {
   return WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
