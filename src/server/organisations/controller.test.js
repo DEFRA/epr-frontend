@@ -454,7 +454,9 @@ describe('#organisationController', () => {
           expect(statusCode).toBe(statusCodes.ok)
           expect(cell('Material')).toHaveTextContent(/Plastic/i)
           expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
-          expect(cell(/Available waste balance/)).toHaveTextContent('N/A')
+          expect(cell(/Available waste balance/)).toHaveTextContent(
+            'Not applicable'
+          )
         })
       })
     })
