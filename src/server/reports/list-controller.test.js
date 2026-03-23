@@ -80,22 +80,65 @@ const registeredOnlyReprocessor = {
 
 const monthlyResponse = {
   cadence: 'monthly',
-  periods: [
-    { year: 2026, period: 1, startDate: '2026-01-01', endDate: '2026-01-31' },
-    { year: 2026, period: 2, startDate: '2026-02-01', endDate: '2026-02-28' }
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      dueDate: '2026-02-20',
+      report: null
+    },
+    {
+      year: 2026,
+      period: 2,
+      startDate: '2026-02-01',
+      endDate: '2026-02-28',
+      dueDate: '2026-03-20',
+      report: null
+    },
+    {
+      year: 2026,
+      period: 3,
+      startDate: '2026-03-01',
+      endDate: '2026-03-31',
+      dueDate: '2026-04-20',
+      report: null
+    }
   ]
 }
 
 const quarterlyResponse = {
   cadence: 'quarterly',
-  periods: [
-    { year: 2026, period: 1, startDate: '2026-01-01', endDate: '2026-03-31' }
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-03-31',
+      dueDate: '2026-04-20',
+      report: null
+    }
+  ]
+}
+
+const monthlyWithReportResponse = {
+  cadence: 'monthly',
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      dueDate: '2026-02-20',
+      report: { id: 'report-001', status: 'in_progress' }
+    }
   ]
 }
 
 const emptyResponse = {
   cadence: 'monthly',
-  periods: []
+  reportingPeriods: []
 }
 
 const accreditedUrl = '/organisations/org-123/registrations/reg-001/reports'
@@ -103,8 +146,19 @@ const exporterUrl = '/organisations/org-456/registrations/reg-002/reports'
 const reprocessorUrl = '/organisations/org-789/registrations/reg-003/reports'
 
 describe('#listReportsController', () => {
+  beforeAll(() => {
+    vi.useFakeTimers({
+      now: new Date('2026-03-20T12:00:00Z'),
+      toFake: ['Date']
+    })
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterAll(() => {
+    vi.useRealTimers()
   })
 
   describe('when feature flag is enabled', () => {
@@ -203,6 +257,7 @@ describe('#listReportsController', () => {
         expect(table).not.toBeNull()
         expect(table?.textContent).toContain('January 2026')
         expect(table?.textContent).toContain('February 2026')
+        expect(table?.textContent).toContain('March 2026')
       })
 
       it('should display Select links for accredited reprocessor periods', async ({
@@ -219,9 +274,9 @@ describe('#listReportsController', () => {
 
         const selectLinks = body.querySelectorAll('.govuk-table a.govuk-link')
 
-        expect(selectLinks).toHaveLength(2)
+        expect(selectLinks).toHaveLength(3)
         expect(selectLinks[0]?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/1'
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
         )
         expect(selectLinks[0]?.textContent).toContain('Select')
       })
@@ -242,6 +297,88 @@ describe('#listReportsController', () => {
             level: 2
           })
         ).toBeNull()
+      })
+
+      it('should display Status column in table header', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const headers = body.querySelectorAll('.govuk-table thead th')
+
+        expect(headers).toHaveLength(3)
+        expect(headers[0]?.textContent).toContain('Period')
+        expect(headers[1]?.textContent).toContain('Status')
+        expect(headers[2]?.textContent).toContain('Action')
+      })
+
+      it('should display Due tag for ended periods', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+
+        expect(tags).toHaveLength(2)
+        expect(tags[0]?.textContent?.trim()).toBe('Due')
+        expect(tags[1]?.textContent?.trim()).toBe('Due')
+      })
+
+      it('should not display Due tag for current period', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const rows = body.querySelectorAll('.govuk-table tbody tr')
+        const marchRow = rows[2]
+        const tag = marchRow?.querySelector('.govuk-tag')
+
+        expect(tag).toBeNull()
+      })
+    })
+
+    describe('for ended period with existing report', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedRegistration
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(
+          monthlyWithReportResponse
+        )
+      })
+
+      it('should not display Due tag when report exists', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+
+        expect(tags).toHaveLength(0)
       })
     })
 
@@ -311,7 +448,7 @@ describe('#listReportsController', () => {
 
         expect(selectLinks).toHaveLength(1)
         expect(selectLinks[0]?.getAttribute('href')).toBe(
-          '/organisations/org-456/registrations/reg-002/reports/2026/1'
+          '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1'
         )
         expect(selectLinks[0]?.textContent).toContain('Select')
       })
@@ -332,6 +469,23 @@ describe('#listReportsController', () => {
             level: 2
           })
         ).toBeNull()
+      })
+
+      it('should not display Due tag for current quarter', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+
+        expect(tags).toHaveLength(0)
       })
     })
 
@@ -359,7 +513,7 @@ describe('#listReportsController', () => {
 
         expect(link).not.toBeNull()
         expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-789/registrations/reg-003/reports/2026/1'
+          '/organisations/org-789/registrations/reg-003/reports/2026/quarterly/1'
         )
         expect(link?.textContent).toContain('Select')
 

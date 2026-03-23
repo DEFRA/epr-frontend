@@ -39,6 +39,8 @@
   "roleColumn": "Role",
   "siteLabel": "Site",
   "siteNameColumn": "Site name",
+  "statusColumn": "Status",
+  "statusDue": "Due",
   "supplierColumn": "Supplier",
   "supplierDetailsHeading": "Supplier details",
   "tonnageReceivedColumn": "Tonnage received",
