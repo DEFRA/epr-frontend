@@ -13,6 +13,7 @@ describe(fetchReportDetail, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const year = 2026
+  const cadence = 'quarterly'
   const period = 1
   const idToken = 'test-token'
 
@@ -68,12 +69,13 @@ describe(fetchReportDetail, () => {
       organisationId,
       registrationId,
       year,
+      cadence,
       period,
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1',
       {
         method: 'GET',
         headers: {
@@ -86,10 +88,17 @@ describe(fetchReportDetail, () => {
   it('encodes URL path parameters with special characters', async () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
-    await fetchReportDetail('org/123', 'reg&456', year, period, idToken)
+    await fetchReportDetail(
+      'org/123',
+      'reg&456',
+      year,
+      cadence,
+      period,
+      idToken
+    )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/1',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1',
       expect.any(Object)
     )
   })
@@ -101,6 +110,7 @@ describe(fetchReportDetail, () => {
       organisationId,
       registrationId,
       year,
+      cadence,
       period,
       idToken
     )
@@ -113,7 +123,14 @@ describe(fetchReportDetail, () => {
     fetchJsonFromBackend.mockRejectedValue(error)
 
     await expect(
-      fetchReportDetail(organisationId, registrationId, year, period, idToken)
+      fetchReportDetail(
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        idToken
+      )
     ).rejects.toThrow('Network error')
   })
 })

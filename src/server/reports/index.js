@@ -20,7 +20,7 @@ export const reports = {
         {
           ...detailController,
           method: 'GET',
-          path: `${basePath}/{year}/{period}`
+          path: `${basePath}/{year}/{cadence}/{period}`
         }
       ])
     }
