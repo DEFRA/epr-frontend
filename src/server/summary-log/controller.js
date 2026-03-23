@@ -1,3 +1,7 @@
+import {
+  PROCESSING_TYPES,
+  REGISTERED_ONLY_PROCESSING_TYPES
+} from '#domain/summary-logs/meta-fields.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import {
@@ -10,14 +14,15 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 
 /**
+ * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, SummaryLogStatusResponse, ValidationResponse } from './types.js'
  */
 
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
-  EXPORTER: 1,
-  REPROCESSOR_INPUT: 1,
-  REPROCESSOR_OUTPUT: 3
+  [PROCESSING_TYPES.EXPORTER]: 1,
+  [PROCESSING_TYPES.REPROCESSOR_INPUT]: 1,
+  [PROCESSING_TYPES.REPROCESSOR_OUTPUT]: 3
 }
 
 const PROCESSING_STATES = new Set([
@@ -35,8 +40,8 @@ const REUPLOAD_STATES = new Set([
 
 /**
  * Gets the waste record section number to display in UI copy based on processing type
- * @param {string} processingType - Processing type from summary log meta
- * @returns {number} Waste record section number (1 or 3)
+ * @param {ProcessingType} [processingType] - Processing type from summary log meta
+ * @returns {number | undefined} Waste record section number (1 or 3)
  */
 export const getWasteRecordSectionNumber = (processingType) => {
   return WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
@@ -57,11 +62,18 @@ const NO_ROWS = { count: 0, rowIds: [] }
 /**
  * Builds view model for a single load category (added or adjusted)
  * @param {RawLoadCategory} [category] - Category data from backend (e.g. loads.added)
+ * @param {object} [options]
+ * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {LoadCategoryViewModel}
  */
-const buildCategoryViewModel = (category) => {
+const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
   const included = category?.included ?? NO_ROWS
   const excluded = category?.excluded ?? NO_ROWS
+
+  if (registeredOnly) {
+    const valid = category?.valid ?? NO_ROWS
+    return { included: valid, excluded, total: valid.count }
+  }
 
   return {
     included,
@@ -74,12 +86,14 @@ const buildCategoryViewModel = (category) => {
  * Transforms raw loads data from backend into a view model
  * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
  * @param {RawLoads} [loads] - Raw loads data from backend API
+ * @param {object} [options]
+ * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {LoadsViewModel}
  */
-export const buildLoadsViewModel = (loads) => {
+export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
   return {
-    added: buildCategoryViewModel(loads?.added),
-    adjusted: buildCategoryViewModel(loads?.adjusted)
+    added: buildCategoryViewModel(loads?.added, { registeredOnly }),
+    adjusted: buildCategoryViewModel(loads?.adjusted, { registeredOnly })
   }
 }
 
@@ -162,7 +176,7 @@ const getStatusData = async (
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
- * @param {string} [context.processingType] - Processing type from summary log meta
+ * @param {ProcessingType} [context.processingType] - Processing type from summary log meta
  * @returns {object} Hapi view response
  */
 const renderCheckView = (
@@ -170,7 +184,8 @@ const renderCheckView = (
   localise,
   { loads, organisationId, registrationId, summaryLogId, processingType }
 ) => {
-  const loadsViewModel = buildLoadsViewModel(loads)
+  const registeredOnly = REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
+  const loadsViewModel = buildLoadsViewModel(loads, { registeredOnly })
   const sectionNumber = getWasteRecordSectionNumber(processingType)
 
   return h.view(CHECK_VIEW_NAME, {

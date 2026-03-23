@@ -1,0 +1,19 @@
+// copied from matching file in epr-backend - keep in sync (as much as we need)
+
+/**
+ * Valid PROCESSING_TYPE values that can appear in summary log spreadsheets
+ */
+export const PROCESSING_TYPES = Object.freeze({
+  EXPORTER_REGISTERED_ONLY: 'EXPORTER_REGISTERED_ONLY',
+  EXPORTER: 'EXPORTER',
+  REPROCESSOR_INPUT: 'REPROCESSOR_INPUT',
+  REPROCESSOR_OUTPUT: 'REPROCESSOR_OUTPUT',
+  REPROCESSOR_REGISTERED_ONLY: 'REPROCESSOR_REGISTERED_ONLY'
+})
+
+/** @typedef {typeof PROCESSING_TYPES[keyof typeof PROCESSING_TYPES]} ProcessingType */
+
+export const REGISTERED_ONLY_PROCESSING_TYPES = new Set([
+  PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY,
+  PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
+])
