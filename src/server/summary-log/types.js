@@ -1,4 +1,8 @@
 /**
+ * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
+ */
+
+/**
  * @typedef {{
  *   included: LoadRows,
  *   excluded: LoadRows,
@@ -54,7 +58,7 @@
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
- *   processingType?: string
+ *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
  * }} SummaryLogStatusResponse

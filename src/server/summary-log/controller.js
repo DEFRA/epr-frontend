@@ -1,3 +1,7 @@
+import {
+  PROCESSING_TYPES,
+  REGISTERED_ONLY_PROCESSING_TYPES
+} from '#domain/summary-logs/meta-fields.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import {
@@ -10,14 +14,15 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 
 /**
+ * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, SummaryLogStatusResponse, ValidationResponse } from './types.js'
  */
 
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
-  EXPORTER: 1,
-  REPROCESSOR_INPUT: 1,
-  REPROCESSOR_OUTPUT: 3
+  [PROCESSING_TYPES.EXPORTER]: 1,
+  [PROCESSING_TYPES.REPROCESSOR_INPUT]: 1,
+  [PROCESSING_TYPES.REPROCESSOR_OUTPUT]: 3
 }
 
 const PROCESSING_STATES = new Set([
@@ -171,7 +176,7 @@ const getStatusData = async (
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
- * @param {string} [context.processingType] - Processing type from summary log meta
+ * @param {ProcessingType} context.processingType - Processing type from summary log meta
  * @returns {object} Hapi view response
  */
 const renderCheckView = (
@@ -179,7 +184,7 @@ const renderCheckView = (
   localise,
   { loads, organisationId, registrationId, summaryLogId, processingType }
 ) => {
-  const registeredOnly = processingType?.includes('REGISTERED_ONLY')
+  const registeredOnly = REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
   const loadsViewModel = buildLoadsViewModel(loads, { registeredOnly })
   const sectionNumber = getWasteRecordSectionNumber(processingType)
 
