@@ -52,11 +52,18 @@ const NO_ROWS = { count: 0, rowIds: [] }
 /**
  * Builds view model for a single load category (added or adjusted)
  * @param {object} [category] - Category data from backend (e.g. loads.added)
+ * @param {object} [options]
+ * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {object} View model with included/excluded objects and total
  */
-const buildCategoryViewModel = (category) => {
+const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
   const included = category?.included ?? NO_ROWS
   const excluded = category?.excluded ?? NO_ROWS
+
+  if (registeredOnly) {
+    const valid = category?.valid ?? NO_ROWS
+    return { included: valid, excluded, total: valid.count }
+  }
 
   return {
     included,
@@ -69,12 +76,14 @@ const buildCategoryViewModel = (category) => {
  * Transforms raw loads data from backend into a view model
  * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
  * @param {object} [loads] - Raw loads data from backend API
+ * @param {object} [options]
+ * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {object} View model with row IDs and counts
  */
-export const buildLoadsViewModel = (loads) => {
+export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
   return {
-    added: buildCategoryViewModel(loads?.added),
-    adjusted: buildCategoryViewModel(loads?.adjusted)
+    added: buildCategoryViewModel(loads?.added, { registeredOnly }),
+    adjusted: buildCategoryViewModel(loads?.adjusted, { registeredOnly })
   }
 }
 
@@ -165,7 +174,8 @@ const renderCheckView = (
   localise,
   { loads, organisationId, registrationId, summaryLogId, processingType }
 ) => {
-  const loadsViewModel = buildLoadsViewModel(loads)
+  const registeredOnly = processingType?.includes('REGISTERED_ONLY')
+  const loadsViewModel = buildLoadsViewModel(loads, { registeredOnly })
   const sectionNumber = getWasteRecordSectionNumber(processingType)
 
   return h.view(CHECK_VIEW_NAME, {

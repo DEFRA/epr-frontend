@@ -417,6 +417,45 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    it('status: validated registered-only - should show new loads from valid count', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_REGISTERED_ONLY',
+        loads: {
+          added: {
+            valid: { count: 2, rowIds: [1000, 5000] },
+            invalid: { count: 0, rowIds: [] },
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] },
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expectCheckPageContent(result)
+
+      expect(result).toStrictEqual(
+        expect.stringContaining('2 new loads will be added')
+      )
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('There are no new loads')
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     it('status: validated with no new loads - should show no new loads heading', async ({
       server
     }) => {
@@ -2393,6 +2432,72 @@ describe('#buildLoadsViewModel', () => {
         excluded: noRows,
         total: 0
       }
+    })
+  })
+
+  test('registered-only: falls back to valid count when included + excluded are empty', () => {
+    const result = buildLoadsViewModel(
+      {
+        added: {
+          valid: { count: 2, rowIds: [1000, 5000] },
+          invalid: { count: 0, rowIds: [] },
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        },
+        adjusted: {
+          valid: { count: 0, rowIds: [] },
+          invalid: { count: 0, rowIds: [] },
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        }
+      },
+      { registeredOnly: true }
+    )
+
+    expect(result.added).toStrictEqual({
+      included: { count: 2, rowIds: [1000, 5000] },
+      excluded: { count: 0, rowIds: [] },
+      total: 2
+    })
+    expect(result.adjusted.total).toBe(0)
+  })
+
+  test('registered-only: handles missing valid gracefully', () => {
+    const result = buildLoadsViewModel(
+      {
+        added: {
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        },
+        adjusted: {
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        }
+      },
+      { registeredOnly: true }
+    )
+
+    expect(result.added.total).toBe(0)
+    expect(result.added.included).toStrictEqual({ count: 0, rowIds: [] })
+  })
+
+  test('registered-only: does not affect accredited uploads', () => {
+    const result = buildLoadsViewModel({
+      added: {
+        valid: { count: 10, rowIds: [] },
+        included: { count: 8, rowIds: [1001, 1002, 1003] },
+        excluded: { count: 2, rowIds: [1004, 1005] }
+      },
+      adjusted: {
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      }
+    })
+
+    expect(result.added).toStrictEqual({
+      included: { count: 8, rowIds: [1001, 1002, 1003] },
+      excluded: { count: 2, rowIds: [1004, 1005] },
+      total: 10
     })
   })
 
