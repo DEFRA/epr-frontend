@@ -176,7 +176,7 @@ const getStatusData = async (
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
- * @param {ProcessingType} context.processingType - Processing type from summary log meta
+ * @param {ProcessingType} [context.processingType] - Processing type from summary log meta
  * @returns {object} Hapi view response
  */
 const renderCheckView = (
