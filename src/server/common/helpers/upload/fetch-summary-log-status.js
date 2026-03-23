@@ -1,13 +1,17 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
+ * @import { SummaryLogStatusResponse } from '#server/summary-log/types.js'
+ */
+
+/**
  * Fetches summary log status from EPR Backend
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} summaryLogId
  * @param {object} [options]
  * @param {string} options.idToken - JWT ID token for authorization
- * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
+ * @returns {Promise<SummaryLogStatusResponse>}
  */
 async function fetchSummaryLogStatus(
   organisationId,

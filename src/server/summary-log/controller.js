@@ -9,6 +9,10 @@ import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summa
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 
+/**
+ * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, SummaryLogStatusResponse, ValidationResponse } from './types.js'
+ */
+
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
   EXPORTER: 1,
@@ -47,14 +51,15 @@ const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 const MAX_FILE_SIZE_MB = 100
 
+/** @type {LoadRows} */
 const NO_ROWS = { count: 0, rowIds: [] }
 
 /**
  * Builds view model for a single load category (added or adjusted)
- * @param {object} [category] - Category data from backend (e.g. loads.added)
+ * @param {RawLoadCategory} [category] - Category data from backend (e.g. loads.added)
  * @param {object} [options]
  * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
- * @returns {object} View model with included/excluded objects and total
+ * @returns {LoadCategoryViewModel}
  */
 const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
   const included = category?.included ?? NO_ROWS
@@ -75,10 +80,10 @@ const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
 /**
  * Transforms raw loads data from backend into a view model
  * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
- * @param {object} [loads] - Raw loads data from backend API
+ * @param {RawLoads} [loads] - Raw loads data from backend API
  * @param {object} [options]
  * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
- * @returns {object} View model with row IDs and counts
+ * @returns {LoadsViewModel}
  */
 export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
   return {
@@ -117,7 +122,7 @@ const getProgressViewData = (localise, status) => {
  * @param {string} registrationId - Registration ID
  * @param {string} summaryLogId - Summary log ID
  * @param {string} idToken - JWT ID token for authorization
- * @returns {Promise<{status: string, validation?: object, accreditationNumber?: string, loads?: object}>}
+ * @returns {Promise<SummaryLogStatusResponse>}
  */
 const getStatusData = async (
   request,
@@ -162,7 +167,7 @@ const getStatusData = async (
  * @param {object} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
- * @param {object} context.loads - Load statistics for the summary log
+ * @param {RawLoads} context.loads - Load statistics for the summary log
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
@@ -250,7 +255,7 @@ const renderSupersededView = (
  * @param {object} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {object} context - View context
- * @param {object} context.validation - Validation result containing failures
+ * @param {ValidationResponse} context.validation - Validation result containing failures
  * @param {string} context.uploadUrl - URL for re-uploading the file
  * @param {string} context.cancelUrl - URL for cancelling and returning to home
  * @returns {object} Hapi view response
@@ -351,9 +356,9 @@ const viewResolvers = {
  * @param {object} options.h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} options.localise - i18n localisation function
  * @param {string} options.status - Backend status
- * @param {object} [options.validation] - Validation object from backend
+ * @param {ValidationResponse} [options.validation] - Validation object from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
- * @param {object} [options.loads] - Loads data with row IDs for validated summary logs
+ * @param {RawLoads} [options.loads] - Loads data with row IDs for validated summary logs
  * @param {string} options.organisationId - Organisation ID
  * @param {string} options.registrationId - Registration ID
  * @param {string} options.summaryLogId - Summary log ID
