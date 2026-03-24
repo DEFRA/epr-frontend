@@ -62,27 +62,34 @@ const reprocessorReportDetail = {
       }
     }
   },
-  sections: {
-    wasteReceived: {
-      totalTonnage: 80.25,
-      suppliers: [
-        { supplierName: 'Grantham Waste', role: 'Baler', tonnage: 42.21 },
-        { supplierName: 'SUEZ recycling', role: 'Sorter', tonnage: 38.04 }
-      ]
-    },
-    wasteSentOn: {
-      totalTonnage: 1.0,
-      toReprocessors: 1.0,
-      toExporters: 0.0,
-      toOtherSites: 0.0,
-      destinations: [
-        {
-          recipientName: 'Lincoln recycling',
-          role: 'Reprocessor',
-          tonnage: 1.0
-        }
-      ]
-    }
+  recyclingActivity: {
+    totalTonnageReceived: 80.25,
+    suppliers: [
+      {
+        supplierName: 'Grantham Waste',
+        facilityType: 'Baler',
+        tonnageReceived: 42.21
+      },
+      {
+        supplierName: 'SUEZ recycling',
+        facilityType: 'Sorter',
+        tonnageReceived: 38.04
+      }
+    ],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  wasteSent: {
+    tonnageSentToReprocessor: 1.0,
+    tonnageSentToExporter: 0.0,
+    tonnageSentToAnotherSite: 0.0,
+    finalDestinations: [
+      {
+        recipientName: 'Lincoln recycling',
+        facilityType: 'Reprocessor',
+        tonnageSentOn: 1.0
+      }
+    ]
   }
 }
 
@@ -104,18 +111,17 @@ const emptyReportDetail = {
       }
     }
   },
-  sections: {
-    wasteReceived: {
-      totalTonnage: 0,
-      suppliers: []
-    },
-    wasteSentOn: {
-      totalTonnage: 0,
-      toReprocessors: 0,
-      toExporters: 0,
-      toOtherSites: 0,
-      destinations: []
-    }
+  recyclingActivity: {
+    totalTonnageReceived: 0,
+    suppliers: [],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  wasteSent: {
+    tonnageSentToReprocessor: 0,
+    tonnageSentToExporter: 0,
+    tonnageSentToAnotherSite: 0,
+    finalDestinations: []
   }
 }
 
@@ -160,27 +166,34 @@ const accreditedReprocessorReportDetail = {
       }
     }
   },
-  sections: {
-    wasteReceived: {
-      totalTonnage: 80.25,
-      suppliers: [
-        { supplierName: 'Grantham Waste', role: 'Baler', tonnage: 42.21 },
-        { supplierName: 'SUEZ recycling', role: 'Sorter', tonnage: 38.04 }
-      ]
-    },
-    wasteSentOn: {
-      totalTonnage: 1.0,
-      toReprocessors: 1.0,
-      toExporters: 0.0,
-      toOtherSites: 0.0,
-      destinations: [
-        {
-          recipientName: 'Lincoln recycling',
-          role: 'Reprocessor',
-          tonnage: 1.0
-        }
-      ]
-    }
+  recyclingActivity: {
+    totalTonnageReceived: 80.25,
+    suppliers: [
+      {
+        supplierName: 'Grantham Waste',
+        facilityType: 'Baler',
+        tonnageReceived: 42.21
+      },
+      {
+        supplierName: 'SUEZ recycling',
+        facilityType: 'Sorter',
+        tonnageReceived: 38.04
+      }
+    ],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  wasteSent: {
+    tonnageSentToReprocessor: 1.0,
+    tonnageSentToExporter: 0.0,
+    tonnageSentToAnotherSite: 0.0,
+    finalDestinations: [
+      {
+        recipientName: 'Lincoln recycling',
+        facilityType: 'Reprocessor',
+        tonnageSentOn: 1.0
+      }
+    ]
   }
 }
 
@@ -206,30 +219,45 @@ const exporterReportDetail = {
   details: {
     material: 'plastic'
   },
-  sections: {
-    wasteReceived: {
-      totalTonnage: 80.25,
-      suppliers: [
-        { supplierName: 'Grantham Waste', role: 'Baler', tonnage: 42.21 },
-        { supplierName: 'SUEZ recycling', role: 'Sorter', tonnage: 38.04 }
-      ]
-    },
-    wasteExported: {
-      totalTonnage: 11.47,
-      overseasSites: [
-        { siteName: 'EuroPlast Recycling GmbH', osrId: '001' },
-        { siteName: 'RecyclePlast SA', osrId: '096' }
-      ]
-    },
-    wasteSentOn: {
-      totalTonnage: 1.0,
-      toReprocessors: 1.0,
-      toExporters: 0.0,
-      toOtherSites: 0.0,
-      destinations: [
-        { recipientName: 'Lincoln recycling', role: 'Exporter', tonnage: 1.0 }
-      ]
-    }
+  recyclingActivity: {
+    totalTonnageReceived: 80.25,
+    suppliers: [
+      {
+        supplierName: 'Grantham Waste',
+        facilityType: 'Baler',
+        tonnageReceived: 42.21
+      },
+      {
+        supplierName: 'SUEZ recycling',
+        facilityType: 'Sorter',
+        tonnageReceived: 38.04
+      }
+    ],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  exportActivity: {
+    totalTonnageReceivedForExporting: 11.47,
+    overseasSites: [
+      { siteName: 'EuroPlast Recycling GmbH', orsId: '001' },
+      { siteName: 'RecyclePlast SA', orsId: '096' }
+    ],
+    tonnageReceivedNotExported: null,
+    tonnageRefusedAtRecepientDestination: null,
+    tonnageStoppedDuringExport: null,
+    tonnageRepatriated: null
+  },
+  wasteSent: {
+    tonnageSentToReprocessor: 1.0,
+    tonnageSentToExporter: 0.0,
+    tonnageSentToAnotherSite: 0.0,
+    finalDestinations: [
+      {
+        recipientName: 'Lincoln recycling',
+        facilityType: 'Exporter',
+        tonnageSentOn: 1.0
+      }
+    ]
   }
 }
 
@@ -244,22 +272,25 @@ const emptyExporterReportDetail = {
   details: {
     material: 'plastic'
   },
-  sections: {
-    wasteReceived: {
-      totalTonnage: 0,
-      suppliers: []
-    },
-    wasteExported: {
-      totalTonnage: 0,
-      overseasSites: []
-    },
-    wasteSentOn: {
-      totalTonnage: 0,
-      toReprocessors: 0,
-      toExporters: 0,
-      toOtherSites: 0,
-      destinations: []
-    }
+  recyclingActivity: {
+    totalTonnageReceived: 0,
+    suppliers: [],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  exportActivity: {
+    totalTonnageReceivedForExporting: 0,
+    overseasSites: [],
+    tonnageReceivedNotExported: null,
+    tonnageRefusedAtRecepientDestination: null,
+    tonnageStoppedDuringExport: null,
+    tonnageRepatriated: null
+  },
+  wasteSent: {
+    tonnageSentToReprocessor: 0,
+    tonnageSentToExporter: 0,
+    tonnageSentToAnotherSite: 0,
+    finalDestinations: []
   }
 }
 
@@ -297,24 +328,31 @@ const accreditedExporterReportDetail = {
   details: {
     material: 'plastic'
   },
-  sections: {
-    wasteReceived: {
-      totalTonnage: 80.25,
-      suppliers: []
-    },
-    wasteExported: {
-      totalTonnage: 11.47,
-      overseasSites: [{ osrId: '001' }, { osrId: '096' }]
-    },
-    wasteSentOn: {
-      totalTonnage: 1.0,
-      toReprocessors: 1.0,
-      toExporters: 0.0,
-      toOtherSites: 0.0,
-      destinations: [
-        { recipientName: 'Lincoln recycling', role: 'Exporter', tonnage: 1.0 }
-      ]
-    }
+  recyclingActivity: {
+    totalTonnageReceived: 80.25,
+    suppliers: [],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  exportActivity: {
+    totalTonnageReceivedForExporting: 11.47,
+    overseasSites: [{ orsId: '001' }, { orsId: '096' }],
+    tonnageReceivedNotExported: null,
+    tonnageRefusedAtRecepientDestination: null,
+    tonnageStoppedDuringExport: null,
+    tonnageRepatriated: null
+  },
+  wasteSent: {
+    tonnageSentToReprocessor: 1.0,
+    tonnageSentToExporter: 0.0,
+    tonnageSentToAnotherSite: 0.0,
+    finalDestinations: [
+      {
+        recipientName: 'Lincoln recycling',
+        facilityType: 'Exporter',
+        tonnageSentOn: 1.0
+      }
+    ]
   }
 }
 

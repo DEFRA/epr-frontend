@@ -29,23 +29,23 @@ export async function fetchReportDetail(
 /**
  * @typedef {{
  *   supplierName: string,
- *   role: string,
- *   tonnage: number
+ *   facilityType: string,
+ *   tonnageReceived: number
  * }} SupplierEntry
  */
 
 /**
  * @typedef {{
  *   recipientName: string,
- *   role: string,
- *   tonnage: number
- * }} DestinationEntry
+ *   facilityType: string,
+ *   tonnageSentOn: number
+ * }} FinalDestinationEntry
  */
 
 /**
  * @typedef {{
  *   siteName?: string,
- *   osrId: string
+ *   orsId: string
  * }} OverseasSiteEntry
  */
 
@@ -62,22 +62,28 @@ export async function fetchReportDetail(
  *     material: string,
  *     site?: { address: { line1: string, town: string, postcode: string } }
  *   },
- *   sections: {
- *     wasteReceived: {
- *       totalTonnage: number,
- *       suppliers: SupplierEntry[]
- *     },
- *     wasteExported?: {
- *       totalTonnage: number,
- *       overseasSites: OverseasSiteEntry[]
- *     },
- *     wasteSentOn: {
- *       totalTonnage: number,
- *       toReprocessors: number,
- *       toExporters: number,
- *       toOtherSites: number,
- *       destinations: DestinationEntry[]
- *     }
+ *   id?: string,
+ *   version?: number,
+ *   status?: string,
+ *   recyclingActivity: {
+ *     suppliers: SupplierEntry[],
+ *     totalTonnageReceived: number,
+ *     tonnageRecycled: number | null,
+ *     tonnageNotRecycled: number | null
+ *   },
+ *   exportActivity?: {
+ *     overseasSites: OverseasSiteEntry[],
+ *     totalTonnageReceivedForExporting: number,
+ *     tonnageReceivedNotExported: number | null,
+ *     tonnageRefusedAtRecepientDestination: number | null,
+ *     tonnageStoppedDuringExport: number | null,
+ *     tonnageRepatriated: number | null
+ *   },
+ *   wasteSent: {
+ *     tonnageSentToReprocessor: number,
+ *     tonnageSentToExporter: number,
+ *     tonnageSentToAnotherSite: number,
+ *     finalDestinations: FinalDestinationEntry[]
  *   }
  * }} ReportDetailResponse
  */

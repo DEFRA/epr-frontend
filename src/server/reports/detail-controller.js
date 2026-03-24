@@ -11,39 +11,39 @@ import { formatPeriodLabel } from './helpers/format-period-label.js'
 
 /**
  * Build govukTable rows for supplier details.
- * @param {Array<{supplierName: string, role: string, tonnage: number}>} suppliers
+ * @param {Array<{supplierName: string, facilityType: string, tonnageReceived: number}>} suppliers
  * @returns {Array<Array<{text: string | number}>>}
  */
 function buildSupplierRows(suppliers) {
   return suppliers.map((supplier) => [
     { text: supplier.supplierName },
-    { text: supplier.role },
-    { text: supplier.tonnage }
+    { text: supplier.facilityType },
+    { text: supplier.tonnageReceived }
   ])
 }
 
 /**
  * Build govukTable rows for destination details.
- * @param {Array<{recipientName: string, role: string, tonnage: number}>} destinations
+ * @param {Array<{recipientName: string, facilityType: string, tonnageSentOn: number}>} finalDestinations
  * @returns {Array<Array<{text: string | number}>>}
  */
-function buildDestinationRows(destinations) {
-  return destinations.map((destination) => [
+function buildDestinationRows(finalDestinations) {
+  return finalDestinations.map((destination) => [
     { text: destination.recipientName },
-    { text: destination.role },
-    { text: destination.tonnage }
+    { text: destination.facilityType },
+    { text: destination.tonnageSentOn }
   ])
 }
 
 /**
  * Build govukTable rows for overseas reprocessing sites.
- * @param {Array<{siteName: string, osrId: string}>} overseasSites
+ * @param {Array<{siteName: string, orsId: string}>} overseasSites
  * @returns {Array<Array<{text: string}>>}
  */
 function buildOverseasSiteRows(overseasSites) {
   return overseasSites.map((overseasSite) => [
     { text: overseasSite.siteName },
-    { text: overseasSite.osrId }
+    { text: overseasSite.orsId }
   ])
 }
 
@@ -97,7 +97,7 @@ export const detailController = {
       localise
     )
 
-    const { wasteReceived, wasteExported, wasteSentOn } = reportDetail.sections
+    const { recyclingActivity, exportActivity, wasteSent } = reportDetail
     const isExporter = isExporterRegistration(registration)
 
     const viewData = {
@@ -123,21 +123,26 @@ export const detailController = {
       accreditation: accreditation?.accreditationNumber,
       site: reportDetail.details.site,
       wasteReceived: {
-        totalTonnage: wasteReceived.totalTonnage,
-        supplierRows: buildSupplierRows(wasteReceived.suppliers)
+        totalTonnage: recyclingActivity.totalTonnageReceived,
+        supplierRows: buildSupplierRows(recyclingActivity.suppliers)
       },
-      wasteExported: wasteExported
+      wasteExported: exportActivity
         ? {
-            totalTonnage: wasteExported.totalTonnage,
-            overseasSiteRows: buildOverseasSiteRows(wasteExported.overseasSites)
+            totalTonnage: exportActivity.totalTonnageReceivedForExporting,
+            overseasSiteRows: buildOverseasSiteRows(
+              exportActivity.overseasSites
+            )
           }
         : null,
       wasteSentOn: {
-        totalTonnage: wasteSentOn.totalTonnage,
-        toReprocessors: wasteSentOn.toReprocessors,
-        toExporters: wasteSentOn.toExporters,
-        toOtherSites: wasteSentOn.toOtherSites,
-        destinationRows: buildDestinationRows(wasteSentOn.destinations)
+        totalTonnage:
+          wasteSent.tonnageSentToReprocessor +
+          wasteSent.tonnageSentToExporter +
+          wasteSent.tonnageSentToAnotherSite,
+        toReprocessors: wasteSent.tonnageSentToReprocessor,
+        toExporters: wasteSent.tonnageSentToExporter,
+        toOtherSites: wasteSent.tonnageSentToAnotherSite,
+        destinationRows: buildDestinationRows(wasteSent.finalDestinations)
       }
     }
 
