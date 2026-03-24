@@ -35,14 +35,14 @@ describe('#deriveSubmissionStatus', () => {
     expect(deriveSubmissionStatus('2026-12-31', null)).toBeNull()
   })
 
-  it('returns null when period has ended but report exists', () => {
+  it('returns report status when report exists', () => {
     const report = { id: 'report-123', status: 'in_progress' }
-    expect(deriveSubmissionStatus('2026-01-31', report)).toBeNull()
+    expect(deriveSubmissionStatus('2026-01-31', report)).toBe('in_progress')
   })
 
-  it('returns null when period has ended and report is submitted', () => {
+  it('returns report status when report is submitted', () => {
     const report = { id: 'report-456', status: 'submitted' }
-    expect(deriveSubmissionStatus('2026-01-31', report)).toBeNull()
+    expect(deriveSubmissionStatus('2026-01-31', report)).toBe('submitted')
   })
 
   it('returns null when period end date is in the future', () => {
