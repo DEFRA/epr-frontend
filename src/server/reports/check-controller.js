@@ -11,7 +11,8 @@ import {
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { updateReport } from './helpers/update-report.js'
+import { updateReportStatus } from './helpers/update-report-status.js'
+import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -66,6 +67,7 @@ export const checkGetController = {
       supportingInformationLabel: localise(
         'reports:supportingInformationLabel'
       ),
+      version: reportDetail.version,
       changeText: localise('reports:supportingInformationChange'),
       wasteReceived: {
         totalTonnage: recyclingActivity.totalTonnageReceived,
@@ -98,21 +100,25 @@ export const checkGetController = {
 export const checkPostController = {
   options: {
     validate: {
-      params: periodParamsSchema
+      params: periodParamsSchema,
+      payload: versionedPayloadSchema
     }
   },
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
+    const { version } = request.payload
     const session = request.auth.credentials
 
-    await updateReport(
+    const transition = { status: SUBMISSION_STATUS.READY_TO_SUBMIT, version }
+
+    await updateReportStatus(
       organisationId,
       registrationId,
       year,
       cadence,
       period,
-      { status: SUBMISSION_STATUS.READY_TO_SUBMIT },
+      transition,
       session.idToken
     )
 
