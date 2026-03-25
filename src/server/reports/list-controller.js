@@ -1,10 +1,14 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { CADENCE, SUBMISSION_STATUS } from './constants.js'
+import { CADENCE } from './constants.js'
 import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
+import {
+  getActionLabel,
+  getStatusLabel
+} from './helpers/format-submission-status.js'
 
 /**
  * Build table rows for the govukTable macro.
@@ -27,26 +31,22 @@ function buildTableRows({
   localise
 }) {
   return reportingPeriods.map((period) => {
-    const label = formatPeriodLabel(period, cadence, localise)
     const url = localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
     )
 
-    const derivedStatus = deriveSubmissionStatus(period.endDate, period.report)
-    const isInProgress = period.report?.status === 'in_progress'
+    const label = formatPeriodLabel(period, cadence, localise)
 
-    let statusHtml = ''
-    if (derivedStatus === SUBMISSION_STATUS.DUE) {
-      statusHtml = `<strong class="govuk-tag">${escapeHtml(localise('reports:statusDue'))}</strong>`
-    } else if (isInProgress) {
-      statusHtml = `<strong class="govuk-tag govuk-tag--light-blue">${escapeHtml(localise('reports:statusInProgress'))}</strong>`
-    }
+    const status = deriveSubmissionStatus(period.endDate, period.report)
+    const statusLabel = getStatusLabel(status, localise)
+    const statusHtml = statusLabel
+      ? `<strong class="govuk-tag">${escapeHtml(statusLabel)}</strong>`
+      : ''
 
-    const actionHtml = isInProgress
-      ? `${escapeHtml(localise('reports:actionContinue'))} <span class="govuk-visually-hidden">${escapeHtml(label)}</span>`
-      : `<a href="${url}" class="govuk-link">${escapeHtml(localise('reports:actionSelect'))} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
+    const actionLabel = getActionLabel(status, localise)
+    const labelHtml = `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
 
-    return [{ text: label }, { html: statusHtml }, { html: actionHtml }]
+    return [{ text: label }, { html: statusHtml }, { html: labelHtml }]
   })
 }
 
