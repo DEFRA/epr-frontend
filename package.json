@@ -148,6 +148,7 @@
     "eslint-plugin-import": {
       "eslint": "$eslint"
     },
-    "tmp": "0.2.5"
+    "tmp": "0.2.5",
+    "flatted": "3.4.2"
   }
 }
