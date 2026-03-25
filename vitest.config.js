@@ -31,7 +31,8 @@ export default defineConfig({
         'src/domain',
         'src/server/auth/types',
         'src/server/common/test-helpers',
-        'src/server/types'
+        'src/server/types',
+        'src/**/types.js'
       ],
       thresholds: {
         lines: 100,

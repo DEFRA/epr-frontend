@@ -151,11 +151,6 @@ const getSectionReference = (processingType, wasteRecordType, localise) => {
       wasteRecordType
     ]
 
-  if (!key)
-    throw new Error(
-      `No section reference for processingType "${processingType}", wasteRecordType "${wasteRecordType}"`
-    )
-
   return localise(`summary-log:${key}`)
 }
 
@@ -172,6 +167,12 @@ export const buildLoadsByWasteRecordTypeViewModel = (
   localise
 ) =>
   loadsByWasteRecordType
+    .filter(
+      ({ wasteRecordType }) =>
+        SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE[processingType]?.[
+          wasteRecordType
+        ]
+    )
     .toSorted(
       (a, b) =>
         WASTE_RECORD_TYPE_ORDER[a.wasteRecordType] -
