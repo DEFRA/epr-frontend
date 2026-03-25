@@ -2635,6 +2635,7 @@ describe('registered-only check view', () => {
     }
   ]
 
+  /* eslint-disable vitest/max-expects -- single request, asserting all parts of the rendered page */
   it('status: validated with registered-only processing type and loadsByWasteRecordType - should render check-registered-only view with sections and counts', async ({
     server
   }) => {
@@ -2688,9 +2689,9 @@ describe('registered-only check view', () => {
     expect(
       getByRole(main, 'heading', { name: '2 new loads have been added' })
     ).toBeDefined()
-    // eslint-disable-next-line vitest/max-expects
     expect(getByText(main, 'Show 1 load')).toBeDefined()
   })
+  /* eslint-enable vitest/max-expects */
 
   it('status: validated with registered-only processing type without loadsByWasteRecordType - should fall back to existing check view', async ({
     server
