@@ -1,5 +1,6 @@
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
+ * @import { WasteRecordType } from '#domain/waste-records/model.js'
  */
 
 /**
@@ -62,7 +63,7 @@
 
 /**
  * @typedef {{
- *   wasteRecordType: string,
+ *   wasteRecordType: WasteRecordType,
  *   sheetName: string,
  *   added: RawLoadValidOnly,
  *   unchanged: RawLoadValidOnly,

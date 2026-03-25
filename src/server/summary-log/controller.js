@@ -16,6 +16,7 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
+ * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
  *   LoadCategoryViewModel,
  *   LoadRows,
@@ -141,15 +142,22 @@ export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
 
 /**
  * @param {ProcessingType} processingType
- * @param {string} wasteRecordType
+ * @param {WasteRecordType} wasteRecordType
+ * @returns {string|undefined}
+ */
+const getSectionReferenceKey = (processingType, wasteRecordType) =>
+  SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE[processingType]?.[
+    wasteRecordType
+  ]
+
+/**
+ * @param {ProcessingType} processingType
+ * @param {WasteRecordType} wasteRecordType
  * @param {(key: string) => string} localise
  * @returns {string}
  */
 const getSectionReference = (processingType, wasteRecordType, localise) => {
-  const key =
-    SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE[processingType]?.[
-      wasteRecordType
-    ]
+  const key = getSectionReferenceKey(processingType, wasteRecordType)
 
   return localise(`summary-log:${key}`)
 }
@@ -167,11 +175,8 @@ export const buildLoadsByWasteRecordTypeViewModel = (
   localise
 ) =>
   loadsByWasteRecordType
-    .filter(
-      ({ wasteRecordType }) =>
-        SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE[processingType]?.[
-          wasteRecordType
-        ]
+    .filter(({ wasteRecordType }) =>
+      getSectionReferenceKey(processingType, wasteRecordType)
     )
     .toSorted(
       (a, b) =>
