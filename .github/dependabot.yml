@@ -48,6 +48,10 @@ updates:
 
     versioning-strategy: increase
 
+    ignore:
+      # Pinned to v3 — v4 breaks Bell/Wreck proxy support (see setup-proxy.js)
+      - dependency-name: global-agent
+
     allow:
       # Include direct package.json updates
       - dependency-type: direct
