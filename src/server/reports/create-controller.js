@@ -1,7 +1,5 @@
-import Joi from 'joi'
-
-import { CADENCE, MAX_PERIOD, MAX_YEAR, MIN_YEAR } from './constants.js'
 import { createReport } from './helpers/create-report.js'
+import { periodParamsSchema } from './helpers/period-params-schema.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -9,15 +7,7 @@ import { createReport } from './helpers/create-report.js'
 export const createController = {
   options: {
     validate: {
-      params: Joi.object({
-        organisationId: Joi.string().required(),
-        registrationId: Joi.string().required(),
-        year: Joi.number().integer().min(MIN_YEAR).max(MAX_YEAR).required(),
-        cadence: Joi.string()
-          .valid(CADENCE.MONTHLY, CADENCE.QUARTERLY)
-          .required(),
-        period: Joi.number().integer().min(1).max(MAX_PERIOD).required()
-      })
+      params: periodParamsSchema
     }
   },
   async handler(request, h) {
@@ -34,11 +24,11 @@ export const createController = {
       session.idToken
     )
 
-    const listUrl = request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+    const supportingInformationUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/supporting-information`
     )
 
-    return h.redirect(listUrl)
+    return h.redirect(supportingInformationUrl)
   }
 }
 

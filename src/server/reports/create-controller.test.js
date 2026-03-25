@@ -127,7 +127,9 @@ describe('#createReportController', () => {
         )
       })
 
-      it('should redirect to reports list page', async ({ server }) => {
+      it('should redirect to supporting information page', async ({
+        server
+      }) => {
         const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
           auth: mockAuth
         })
@@ -142,7 +144,7 @@ describe('#createReportController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          '/organisations/org-123/registrations/reg-001/reports'
+          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
         )
       })
     })
