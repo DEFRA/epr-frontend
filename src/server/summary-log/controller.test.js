@@ -2698,7 +2698,7 @@ describe('registered-only check view', () => {
       loadsByWasteRecordType: mockLoadsByWasteRecordType
     })
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
       url,
       auth: mockAuth
@@ -2708,16 +2708,29 @@ describe('registered-only check view', () => {
     const { body } = dom.window.document
     const main = getByRole(body, 'main')
 
-    expect(statusCode).toBe(statusCodes.ok)
     expect(
       getByRole(main, 'heading', { name: '3 new loads have been added' })
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'These are new loads that have been added to section 1 of your summary log.'
+      )
     ).toBeDefined()
     expect(
       getByRole(main, 'heading', { name: '1 existing load has been adjusted' })
     ).toBeDefined()
     expect(
+      getByText(
+        main,
+        'These are loads in section 1 of your summary log that have been changed since it was last uploaded.'
+      )
+    ).toBeDefined()
+    expect(
       getByRole(main, 'heading', { name: '2 new loads have been added' })
     ).toBeDefined()
+    // eslint-disable-next-line vitest/max-expects
+    expect(getByText(main, 'Show 1 load')).toBeDefined()
   })
 
   it('status: validated with registered-only processing type without loadsByWasteRecordType - should fall back to existing check view', async ({
@@ -2787,7 +2800,7 @@ describe('registered-only check view', () => {
       ]
     })
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
       url,
       auth: mockAuth
@@ -2797,7 +2810,6 @@ describe('registered-only check view', () => {
     const { body } = dom.window.document
     const main = getByRole(body, 'main')
 
-    expect(statusCode).toBe(statusCodes.ok)
     expect(
       getByRole(main, 'heading', { name: 'No new loads have been added' })
     ).toBeDefined()
@@ -2818,6 +2830,7 @@ describe('registered-only check view', () => {
         'No loads in section 1 of your summary log have been changed since it was last uploaded.'
       )
     ).toBeDefined()
+    expect(queryByText(main, /Show \d+ load/)).toBeNull()
   })
 
   it('status: validated with EXPORTER_REGISTERED_ONLY - should use correct section references per waste record type', async ({
