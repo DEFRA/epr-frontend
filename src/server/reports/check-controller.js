@@ -1,8 +1,7 @@
-import { formatDate } from '#server/common/helpers/format-date.js'
-import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import { SUBMISSION_STATUS } from './constants.js'
 import {
   buildDestinationRows,
   buildOverseasSiteRows,
@@ -12,11 +11,12 @@ import {
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { updateReport } from './helpers/update-report.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
  */
-export const detailController = {
+export const checkGetController = {
   options: {
     validate: {
       params: periodParamsSchema
@@ -28,12 +28,11 @@ export const detailController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      )
+    const { registration } = await fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    )
 
     const reportDetail = await fetchReportDetail(
       organisationId,
@@ -45,37 +44,29 @@ export const detailController = {
     )
 
     const material = getDisplayMaterial(registration)
-    const periodLabel = formatPeriodLabel(
-      { year: reportDetail.year, period: reportDetail.period },
-      reportDetail.cadence,
-      localise
-    )
+    const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
     const { recyclingActivity, exportActivity, wasteSent } = reportDetail
     const isExporter = isExporterRegistration(registration)
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
     const viewData = {
-      pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
-      heading: localise('reports:detailHeading', { periodLabel }),
+      pageTitle: localise('reports:checkPageTitle', { material, periodLabel }),
+      caption: localise('reports:checkCaption'),
+      heading: localise('reports:checkHeading'),
       material,
       periodLabel,
       isExporter,
-      backUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      backUrl: request.localiseUrl(`${basePath}/supporting-information`),
+      changeUrl: request.localiseUrl(`${basePath}/supporting-information`),
+      createButtonText: localise('reports:checkCreateReport'),
+      supportingInformation:
+        reportDetail.supportingInformation ||
+        localise('reports:supportingInformationNone'),
+      supportingInformationLabel: localise(
+        'reports:supportingInformationLabel'
       ),
-      uploadUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-      ),
-      lastUploadedAt: reportDetail.lastUploadedAt
-        ? {
-            date: formatDate(reportDetail.lastUploadedAt, {
-              includeYear: false
-            }),
-            time: formatTime(reportDetail.lastUploadedAt)
-          }
-        : null,
-      accreditation: accreditation?.accreditationNumber,
-      site: reportDetail.details.site,
+      changeText: localise('reports:supportingInformationChange'),
       wasteReceived: {
         totalTonnage: recyclingActivity.totalTonnageReceived,
         supplierRows: buildSupplierRows(recyclingActivity.suppliers)
@@ -97,7 +88,39 @@ export const detailController = {
       }
     }
 
-    return h.view('reports/detail', viewData)
+    return h.view('reports/check-your-answers', viewData)
+  }
+}
+
+/**
+ * @satisfies {Partial<ServerRoute>}
+ */
+export const checkPostController = {
+  options: {
+    validate: {
+      params: periodParamsSchema
+    }
+  },
+  async handler(request, h) {
+    const { organisationId, registrationId, year, cadence, period } =
+      request.params
+    const session = request.auth.credentials
+
+    await updateReport(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      { status: SUBMISSION_STATUS.READY_TO_SUBMIT },
+      session.idToken
+    )
+
+    return h.redirect(
+      request.localiseUrl(
+        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      )
+    )
   }
 }
 
