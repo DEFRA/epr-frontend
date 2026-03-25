@@ -70,6 +70,15 @@
 
 /**
  * @typedef {{
+ *   headingKey: string,
+ *   sectionNumber: number,
+ *   added: { count: number, rowIds: string[] },
+ *   adjusted: { count: number, rowIds: string[] }
+ * }} RegisteredOnlyLoadsSectionViewModel
+ */
+
+/**
+ * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,

@@ -1,17 +1,20 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { load } from 'cheerio'
+import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { JSDOM } from 'jsdom'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
+  buildLoadsByWasteRecordTypeViewModel,
   buildLoadsViewModel,
   getWasteRecordSectionNumber
 } from './controller.js'
@@ -2537,5 +2540,241 @@ describe('#getWasteRecordSectionNumber', () => {
 
   test('returns undefined for unknown processingType', () => {
     expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
+  })
+})
+
+describe('#buildLoadsByWasteRecordTypeViewModel', () => {
+  const mockLoadsByWasteRecordType = [
+    {
+      wasteRecordType: 'received',
+      added: {
+        valid: { count: 3, rowIds: ['001', '002', '003'] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 1, rowIds: ['004'] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      }
+    },
+    {
+      wasteRecordType: 'exported',
+      added: {
+        valid: { count: 2, rowIds: ['005', '006'] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      }
+    }
+  ]
+
+  it('should map each entry to a view model with correct headingKey, sectionNumber, added and adjusted totals', () => {
+    const result = buildLoadsByWasteRecordTypeViewModel(
+      mockLoadsByWasteRecordType
+    )
+
+    expect(result).toStrictEqual([
+      {
+        headingKey: 'registeredOnly.loadsReceivedSectionHeading',
+        sectionNumber: 1,
+        added: { count: 3, rowIds: ['001', '002', '003'] },
+        adjusted: { count: 1, rowIds: ['004'] }
+      },
+      {
+        headingKey: 'registeredOnly.loadsExportedSectionHeading',
+        sectionNumber: 2,
+        added: { count: 2, rowIds: ['005', '006'] },
+        adjusted: { count: 0, rowIds: [] }
+      }
+    ])
+  })
+})
+
+describe('registered-only check view', () => {
+  const organisationId = '123'
+  const registrationId = '456'
+  const summaryLogId = '789'
+  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+
+  const mockLoadsByWasteRecordType = [
+    {
+      wasteRecordType: 'received',
+      sheetName: 'Received',
+      added: {
+        valid: { count: 3, rowIds: ['001', '002', '003'] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 1, rowIds: ['004'] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      }
+    },
+    {
+      wasteRecordType: 'exported',
+      sheetName: 'Exported',
+      added: {
+        valid: { count: 2, rowIds: ['005', '006'] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] },
+        invalid: { count: 0, rowIds: [] },
+        included: { count: 0, rowIds: [] },
+        excluded: { count: 0, rowIds: [] }
+      }
+    }
+  ]
+
+  it('status: validated with registered-only processing type and loadsByWasteRecordType - should render check-registered-only view', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      loadsByWasteRecordType: mockLoadsByWasteRecordType
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body, title } = dom.window.document
+
+    expect(title).toMatch(/^Summary log \|/)
+    expect(statusCode).toBe(statusCodes.ok)
+
+    const main = getByRole(body, 'main')
+    const heading = getByRole(main, 'heading', { level: 1 })
+
+    expect(heading.textContent).toContain('Check before confirming upload')
+    expect(getByText(main, 'Check the following before confirming the upload.')).toBeDefined()
+  })
+
+  it('status: validated with registered-only processing type and loadsByWasteRecordType - should render a section per waste record type', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      loadsByWasteRecordType: mockLoadsByWasteRecordType
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body } = dom.window.document
+    const main = getByRole(body, 'main')
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(getByRole(main, 'heading', { name: 'Loads received' })).toBeDefined()
+    expect(getByRole(main, 'heading', { name: 'Loads exported' })).toBeDefined()
+  })
+
+  it('status: validated with registered-only processing type and loadsByWasteRecordType - should show correct section headings', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      loadsByWasteRecordType: mockLoadsByWasteRecordType
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body } = dom.window.document
+    const main = getByRole(body, 'main')
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(getByRole(main, 'heading', { name: '3 new loads have been added' })).toBeDefined()
+    expect(getByRole(main, 'heading', { name: '1 existing load has been adjusted' })).toBeDefined()
+    expect(getByRole(main, 'heading', { name: '2 new loads have been added' })).toBeDefined()
+  })
+
+  it('status: validated with registered-only processing type without loadsByWasteRecordType - should fall back to existing check view', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      loads: {
+        added: {
+          valid: { count: 2, rowIds: ['001', '002'] },
+          invalid: { count: 0, rowIds: [] },
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        },
+        adjusted: {
+          valid: { count: 0, rowIds: [] },
+          invalid: { count: 0, rowIds: [] },
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        }
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body } = dom.window.document
+    const main = getByRole(body, 'main')
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(getByRole(main, 'heading', { level: 1, name: /Check before confirming upload/ })).toBeDefined()
+    expect(queryByText(main, 'Check the following before confirming the upload.')).toBeNull()
   })
 })

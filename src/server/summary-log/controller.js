@@ -15,8 +15,22 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, RawLoadsByWasteRecordType, SummaryLogStatusResponse, ValidationResponse } from './types.js'
+ * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, RawLoadsByWasteRecordType, RegisteredOnlyLoadsSectionViewModel, SummaryLogStatusResponse, ValidationResponse } from './types.js'
  */
+
+const WASTE_RECORD_TYPE_SECTION = Object.freeze({
+  received: 1,
+  exported: 2,
+  processed: 3,
+  sentOn: 4
+})
+
+const WASTE_RECORD_TYPE_HEADING_KEY = Object.freeze({
+  received: 'registeredOnly.loadsReceivedSectionHeading',
+  exported: 'registeredOnly.loadsExportedSectionHeading',
+  processed: 'registeredOnly.loadsProcessedSectionHeading',
+  sentOn: 'registeredOnly.loadsSentOnSectionHeading'
+})
 
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
@@ -96,6 +110,19 @@ export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
     adjusted: buildCategoryViewModel(loads?.adjusted, { registeredOnly })
   }
 }
+
+/**
+ * Transforms raw loadsByWasteRecordType into view model sections
+ * @param {RawLoadsByWasteRecordType} loadsByWasteRecordType
+ * @returns {RegisteredOnlyLoadsSectionViewModel[]}
+ */
+export const buildLoadsByWasteRecordTypeViewModel = (loadsByWasteRecordType) =>
+  loadsByWasteRecordType.map(({ wasteRecordType, added, adjusted }) => ({
+    headingKey: WASTE_RECORD_TYPE_HEADING_KEY[wasteRecordType],
+    sectionNumber: WASTE_RECORD_TYPE_SECTION[wasteRecordType],
+    added: { count: added.valid.count, rowIds: added.valid.rowIds },
+    adjusted: { count: adjusted.valid.count, rowIds: adjusted.valid.rowIds }
+  }))
 
 /**
  * Gets view data for progress page (processing or error states)
@@ -180,6 +207,7 @@ const getStatusData = async (
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
  * @param {RawLoads} context.loads - Load statistics for the summary log
+ * @param {RawLoadsByWasteRecordType} [context.loadsByWasteRecordType] - Per-waste-record-type load breakdowns
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
@@ -189,9 +217,27 @@ const getStatusData = async (
 const renderCheckView = (
   h,
   localise,
-  { loads, organisationId, registrationId, summaryLogId, processingType }
+  {
+    loads,
+    loadsByWasteRecordType,
+    organisationId,
+    registrationId,
+    summaryLogId,
+    processingType
+  }
 ) => {
   const registeredOnly = REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
+
+  if (registeredOnly && loadsByWasteRecordType) {
+    return h.view('summary-log/check-registered-only', {
+      pageTitle: localise('summary-log:checkPageTitle'),
+      organisationId,
+      registrationId,
+      summaryLogId,
+      sections: buildLoadsByWasteRecordTypeViewModel(loadsByWasteRecordType)
+    })
+  }
+
   const loadsViewModel = buildLoadsViewModel(loads, { registeredOnly })
   const sectionNumber = getWasteRecordSectionNumber(processingType)
 
