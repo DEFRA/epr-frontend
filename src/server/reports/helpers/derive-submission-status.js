@@ -7,9 +7,13 @@ import { SUBMISSION_STATUS } from '../constants.js'
  * @returns {import('../constants.js').SubmissionStatusValue | null}
  */
 export function deriveSubmissionStatus(endDate, report) {
+  if (report !== null) {
+    return report.status
+  }
+
   const periodEnded = new Date(endDate + 'T23:59:59.999Z') < new Date()
 
-  if (periodEnded && report === null) {
+  if (periodEnded) {
     return SUBMISSION_STATUS.DUE
   }
 

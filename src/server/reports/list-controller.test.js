@@ -136,6 +136,20 @@ const monthlyWithReportResponse = {
   ]
 }
 
+const monthlyWithReadyToSubmitResponse = {
+  cadence: 'monthly',
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      dueDate: '2026-02-20',
+      report: { id: 'report-002', status: 'ready_to_submit' }
+    }
+  ]
+}
+
 const emptyResponse = {
   cadence: 'monthly',
   reportingPeriods: []
@@ -354,7 +368,7 @@ describe('#listReportsController', () => {
       })
     })
 
-    describe('for ended period with existing report', () => {
+    describe('for ended period with in_progress report', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           accreditedRegistration
@@ -364,9 +378,7 @@ describe('#listReportsController', () => {
         )
       })
 
-      it('should not display Due tag when report exists', async ({
-        server
-      }) => {
+      it('should display In progress tag', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -378,7 +390,74 @@ describe('#listReportsController', () => {
 
         const tags = body.querySelectorAll('.govuk-table .govuk-tag')
 
-        expect(tags).toHaveLength(0)
+        expect(tags).toHaveLength(1)
+        expect(tags[0]?.textContent?.trim()).toBe('In progress')
+      })
+
+      it('should display Continue link instead of Select', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = body.querySelector('.govuk-table a.govuk-link')
+
+        expect(link).not.toBeNull()
+        expect(link?.textContent).toContain('Continue')
+        expect(link?.getAttribute('href')).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+        )
+      })
+
+      it('should not display Due tag', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+        const dueTag = Array.from(tags).find(
+          (tag) => tag.textContent?.trim() === 'Due'
+        )
+
+        expect(dueTag).toBeUndefined()
+      })
+    })
+
+    describe('for ended period with ready_to_submit report', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedRegistration
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(
+          monthlyWithReadyToSubmitResponse
+        )
+      })
+
+      it('should display Ready to submit tag', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+
+        expect(tags).toHaveLength(1)
+        expect(tags[0]?.textContent?.trim()).toBe('Ready to submit')
       })
     })
 

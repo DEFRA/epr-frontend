@@ -65,6 +65,7 @@ export async function fetchReportDetail(
  *   id?: string,
  *   version?: number,
  *   status?: string,
+ *   supportingInformation?: string,
  *   recyclingActivity: {
  *     suppliers: SupplierEntry[],
  *     totalTonnageReceived: number,
