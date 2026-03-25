@@ -15,7 +15,7 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, SummaryLogStatusResponse, ValidationResponse } from './types.js'
+ * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, RawLoadsByWasteRecordType, SummaryLogStatusResponse, ValidationResponse } from './types.js'
  */
 
 /** Waste record section number to display in UI copy, mapped by processing type */
@@ -155,15 +155,22 @@ const getStatusData = async (
     })
   }
 
-  const { status, validation, accreditationNumber, loads, processingType } =
-    data
-
-  return {
-    status,
-    validation,
+  const {
     accreditationNumber,
     loads,
-    processingType
+    loadsByWasteRecordType,
+    processingType,
+    status,
+    validation
+  } = data
+
+  return {
+    accreditationNumber,
+    loads,
+    loadsByWasteRecordType,
+    processingType,
+    status,
+    validation
   }
 }
 
@@ -364,6 +371,7 @@ const viewResolvers = {
  * @param {ValidationResponse} [options.validation] - Validation object from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
  * @param {RawLoads} [options.loads] - Loads data with row IDs for validated summary logs
+ * @param {RawLoadsByWasteRecordType} [options.loadsByWasteRecordType] - Per-waste-record-type load breakdowns
  * @param {string} options.organisationId - Organisation ID
  * @param {string} options.registrationId - Registration ID
  * @param {string} options.summaryLogId - Summary log ID
@@ -472,14 +480,20 @@ export const summaryLogUploadProgressController = {
 
     const session = request.auth.credentials
 
-    const { status, validation, accreditationNumber, loads, processingType } =
-      await getStatusData(
-        request,
-        organisationId,
-        registrationId,
-        summaryLogId,
-        session.idToken
-      )
+    const {
+      accreditationNumber,
+      loads,
+      loadsByWasteRecordType,
+      processingType,
+      status,
+      validation
+    } = await getStatusData(
+      request,
+      organisationId,
+      registrationId,
+      summaryLogId,
+      session.idToken
+    )
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
@@ -509,6 +523,7 @@ export const summaryLogUploadProgressController = {
       validation,
       accreditationNumber,
       loads,
+      loadsByWasteRecordType,
       processingType,
       organisationId,
       registrationId,

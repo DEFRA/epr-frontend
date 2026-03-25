@@ -56,8 +56,23 @@
 
 /**
  * @typedef {{
+ *   wasteRecordType: string,
+ *   sheetName: string,
+ *   added: RawLoadCategory,
+ *   unchanged: RawLoadCategory,
+ *   adjusted: RawLoadCategory
+ * }} RawLoadsByWasteRecordTypeEntry
+ */
+
+/**
+ * @typedef {RawLoadsByWasteRecordTypeEntry[]} RawLoadsByWasteRecordType
+ */
+
+/**
+ * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
+ *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
