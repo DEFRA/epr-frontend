@@ -18,18 +18,23 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
  * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, RawLoadsByWasteRecordType, RegisteredOnlyLoadsSectionViewModel, SummaryLogStatusResponse, ValidationResponse } from './types.js'
  */
 
-const WASTE_RECORD_TYPE_SECTION = Object.freeze({
-  received: 1,
-  exported: 2,
-  processed: 3,
-  sentOn: 4
+const SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE = Object.freeze({
+  [PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY]: Object.freeze({
+    received: 'registeredOnly.sectionReference.reprocessor.received',
+    sentOn: 'registeredOnly.sectionReference.reprocessor.sentOn'
+  }),
+  [PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY]: Object.freeze({
+    received: 'registeredOnly.sectionReference.exporter.received',
+    exported: 'registeredOnly.sectionReference.exporter.exported',
+    sentOn: 'registeredOnly.sectionReference.exporter.sentOn'
+  })
 })
 
 const WASTE_RECORD_TYPE_HEADING_KEY = Object.freeze({
-  received: 'registeredOnly.loadsReceivedSectionHeading',
-  exported: 'registeredOnly.loadsExportedSectionHeading',
-  processed: 'registeredOnly.loadsProcessedSectionHeading',
-  sentOn: 'registeredOnly.loadsSentOnSectionHeading'
+  received: 'registeredOnly.sectionHeading.received',
+  exported: 'registeredOnly.sectionHeading.exported',
+  processed: 'registeredOnly.sectionHeading.processed',
+  sentOn: 'registeredOnly.sectionHeading.sentOn'
 })
 
 /** Waste record section number to display in UI copy, mapped by processing type */
@@ -112,14 +117,44 @@ export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
 }
 
 /**
+ * @param {ProcessingType} processingType
+ * @param {string} wasteRecordType
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+const getSectionReference = (processingType, wasteRecordType, localise) => {
+  const key =
+    SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE[processingType]?.[
+      wasteRecordType
+    ]
+
+  if (!key)
+    throw new Error(
+      `No section reference for processingType "${processingType}", wasteRecordType "${wasteRecordType}"`
+    )
+
+  return localise(`summary-log:${key}`)
+}
+
+/**
  * Transforms raw loadsByWasteRecordType into view model sections
  * @param {RawLoadsByWasteRecordType} loadsByWasteRecordType
+ * @param {ProcessingType} processingType
+ * @param {(key: string) => string} localise
  * @returns {RegisteredOnlyLoadsSectionViewModel[]}
  */
-export const buildLoadsByWasteRecordTypeViewModel = (loadsByWasteRecordType) =>
+export const buildLoadsByWasteRecordTypeViewModel = (
+  loadsByWasteRecordType,
+  processingType,
+  localise
+) =>
   loadsByWasteRecordType.map(({ wasteRecordType, added, adjusted }) => ({
     headingKey: WASTE_RECORD_TYPE_HEADING_KEY[wasteRecordType],
-    sectionNumber: WASTE_RECORD_TYPE_SECTION[wasteRecordType],
+    sectionReference: getSectionReference(
+      processingType,
+      wasteRecordType,
+      localise
+    ),
     added: { count: added.valid.count, rowIds: added.valid.rowIds },
     adjusted: { count: adjusted.valid.count, rowIds: adjusted.valid.rowIds }
   }))
@@ -234,7 +269,11 @@ const renderCheckView = (
       organisationId,
       registrationId,
       summaryLogId,
-      sections: buildLoadsByWasteRecordTypeViewModel(loadsByWasteRecordType)
+      sections: buildLoadsByWasteRecordTypeViewModel(
+        loadsByWasteRecordType,
+        processingType,
+        localise
+      )
     })
   }
 

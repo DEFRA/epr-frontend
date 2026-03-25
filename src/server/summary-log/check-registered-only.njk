@@ -21,9 +21,9 @@
     {{ appLoadsSection({
       heading: localise('summary-log:' + section.headingKey),
       addedHeading: localise('summary-log:registeredOnly.newLoadsAdded', { count: section.added.count }),
-      addedDescription: localise('summary-log:registeredOnly.newLoadsAddedDescription', { count: section.added.count, sectionNumber: section.sectionNumber }),
+      addedDescription: localise('summary-log:registeredOnly.newLoadsAddedDescription', { count: section.added.count, sectionReference: section.sectionReference }),
       adjustedHeading: localise('summary-log:registeredOnly.loadsAdjusted', { count: section.adjusted.count }),
-      adjustedDescription: localise('summary-log:registeredOnly.loadsAdjustedDescription', { count: section.adjusted.count, sectionNumber: section.sectionNumber }),
+      adjustedDescription: localise('summary-log:registeredOnly.loadsAdjustedDescription', { count: section.adjusted.count, sectionReference: section.sectionReference }),
       adjusted: section.adjusted,
       tooManyMessage: localise('summary-log:tooManyAdjustedLoadsToList'),
       showAdjustedLoadsText: localise('summary-log:showLoads', { count: section.adjusted.count }),

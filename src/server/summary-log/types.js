@@ -71,7 +71,7 @@
 /**
  * @typedef {{
  *   headingKey: string,
- *   sectionNumber: number,
+ *   sectionReference: string,
  *   added: { count: number, rowIds: string[] },
  *   adjusted: { count: number, rowIds: string[] }
  * }} RegisteredOnlyLoadsSectionViewModel

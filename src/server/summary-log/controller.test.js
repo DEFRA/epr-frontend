@@ -7,10 +7,10 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { load } from 'cheerio'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
@@ -2567,7 +2567,7 @@ describe('#buildLoadsByWasteRecordTypeViewModel', () => {
       }
     },
     {
-      wasteRecordType: 'exported',
+      wasteRecordType: 'sentOn',
       added: {
         valid: { count: 2, rowIds: ['005', '006'] },
         invalid: { count: 0, rowIds: [] },
@@ -2589,21 +2589,28 @@ describe('#buildLoadsByWasteRecordTypeViewModel', () => {
     }
   ]
 
-  it('should map each entry to a view model with correct headingKey, sectionNumber, added and adjusted totals', () => {
+  it('should map each entry to a view model with correct headingKey, sectionReference, added and adjusted totals', () => {
+    const sectionRefs = {
+      'summary-log:registeredOnly.sectionReference.reprocessor.received': '1',
+      'summary-log:registeredOnly.sectionReference.reprocessor.sentOn': '2'
+    }
+    const localise = (key) => sectionRefs[key] ?? key
     const result = buildLoadsByWasteRecordTypeViewModel(
-      mockLoadsByWasteRecordType
+      mockLoadsByWasteRecordType,
+      'REPROCESSOR_REGISTERED_ONLY',
+      localise
     )
 
     expect(result).toStrictEqual([
       {
-        headingKey: 'registeredOnly.loadsReceivedSectionHeading',
-        sectionNumber: 1,
+        headingKey: 'registeredOnly.sectionHeading.received',
+        sectionReference: '1',
         added: { count: 3, rowIds: ['001', '002', '003'] },
         adjusted: { count: 1, rowIds: ['004'] }
       },
       {
-        headingKey: 'registeredOnly.loadsExportedSectionHeading',
-        sectionNumber: 2,
+        headingKey: 'registeredOnly.sectionHeading.sentOn',
+        sectionReference: '2',
         added: { count: 2, rowIds: ['005', '006'] },
         adjusted: { count: 0, rowIds: [] }
       }
@@ -2669,7 +2676,7 @@ describe('registered-only check view', () => {
   }) => {
     fetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
-      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByWasteRecordType: mockLoadsByWasteRecordType
     })
 
@@ -2689,7 +2696,9 @@ describe('registered-only check view', () => {
     const heading = getByRole(main, 'heading', { level: 1 })
 
     expect(heading.textContent).toContain('Check before confirming upload')
-    expect(getByText(main, 'Check the following before confirming the upload.')).toBeDefined()
+    expect(
+      getByText(main, 'Check the following before confirming the upload.')
+    ).toBeDefined()
   })
 
   it('status: validated with registered-only processing type and loadsByWasteRecordType - should render a section per waste record type', async ({
@@ -2697,7 +2706,7 @@ describe('registered-only check view', () => {
   }) => {
     fetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
-      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByWasteRecordType: mockLoadsByWasteRecordType
     })
 
@@ -2721,7 +2730,7 @@ describe('registered-only check view', () => {
   }) => {
     fetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
-      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByWasteRecordType: mockLoadsByWasteRecordType
     })
 
@@ -2736,9 +2745,15 @@ describe('registered-only check view', () => {
     const main = getByRole(body, 'main')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(getByRole(main, 'heading', { name: '3 new loads have been added' })).toBeDefined()
-    expect(getByRole(main, 'heading', { name: '1 existing load has been adjusted' })).toBeDefined()
-    expect(getByRole(main, 'heading', { name: '2 new loads have been added' })).toBeDefined()
+    expect(
+      getByRole(main, 'heading', { name: '3 new loads have been added' })
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'heading', { name: '1 existing load has been adjusted' })
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'heading', { name: '2 new loads have been added' })
+    ).toBeDefined()
   })
 
   it('status: validated with registered-only processing type without loadsByWasteRecordType - should fall back to existing check view', async ({
@@ -2774,8 +2789,15 @@ describe('registered-only check view', () => {
     const main = getByRole(body, 'main')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(getByRole(main, 'heading', { level: 1, name: /Check before confirming upload/ })).toBeDefined()
-    expect(queryByText(main, 'Check the following before confirming the upload.')).toBeNull()
+    expect(
+      getByRole(main, 'heading', {
+        level: 1,
+        name: /Check before confirming upload/
+      })
+    ).toBeDefined()
+    expect(
+      queryByText(main, 'Check the following before confirming the upload.')
+    ).toBeNull()
   })
 
   it('status: validated with registered-only processing type and zero counts - should show no-activity headings and descriptions', async ({
@@ -2821,9 +2843,94 @@ describe('registered-only check view', () => {
     const main = getByRole(body, 'main')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(getByRole(main, 'heading', { name: 'No new loads have been added' })).toBeDefined()
-    expect(getByText(main, 'No new loads have been added to section 1 of your summary log.')).toBeDefined()
-    expect(getByRole(main, 'heading', { name: 'No existing loads have been adjusted' })).toBeDefined()
-    expect(getByText(main, 'No loads in section 1 of your summary log have been changed since it was last uploaded.')).toBeDefined()
+    expect(
+      getByRole(main, 'heading', { name: 'No new loads have been added' })
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 1 of your summary log.'
+      )
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'heading', {
+        name: 'No existing loads have been adjusted'
+      })
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No loads in section 1 of your summary log have been changed since it was last uploaded.'
+      )
+    ).toBeDefined()
+  })
+
+  it('status: validated with EXPORTER_REGISTERED_ONLY - should use correct section references per waste record type', async ({
+    server
+  }) => {
+    const emptyCategory = {
+      valid: { count: 0, rowIds: [] },
+      invalid: { count: 0, rowIds: [] },
+      included: { count: 0, rowIds: [] },
+      excluded: { count: 0, rowIds: [] }
+    }
+
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByWasteRecordType: [
+        {
+          wasteRecordType: 'received',
+          sheetName: 'Received',
+          added: emptyCategory,
+          adjusted: emptyCategory,
+          unchanged: emptyCategory
+        },
+        {
+          wasteRecordType: 'exported',
+          sheetName: 'Exported',
+          added: emptyCategory,
+          adjusted: emptyCategory,
+          unchanged: emptyCategory
+        },
+        {
+          wasteRecordType: 'sentOn',
+          sheetName: 'Sent on',
+          added: emptyCategory,
+          adjusted: emptyCategory,
+          unchanged: emptyCategory
+        }
+      ]
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body } = dom.window.document
+    const main = getByRole(body, 'main')
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 1 of your summary log.'
+      )
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 2 and 3 of your summary log.'
+      )
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 4 of your summary log.'
+      )
+    ).toBeDefined()
   })
 })
