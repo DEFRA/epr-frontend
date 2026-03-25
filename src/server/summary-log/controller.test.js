@@ -2635,7 +2635,7 @@ describe('registered-only check view', () => {
     }
   ]
 
-  it('status: validated with registered-only processing type and loadsByWasteRecordType - should render check-registered-only view', async ({
+  it('status: validated with registered-only processing type and loadsByWasteRecordType - should render check-registered-only view with sections and counts', async ({
     server
   }) => {
     fetchSummaryLogStatus.mockResolvedValueOnce({
@@ -2663,50 +2663,9 @@ describe('registered-only check view', () => {
     expect(
       getByText(main, 'Check the following before confirming the upload.')
     ).toBeDefined()
-  })
 
-  it('status: validated with registered-only processing type and loadsByWasteRecordType - should render a section per waste record type', async ({
-    server
-  }) => {
-    fetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      processingType: 'EXPORTER_REGISTERED_ONLY',
-      loadsByWasteRecordType: mockLoadsByWasteRecordType
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
-
-    const dom = new JSDOM(result)
-    const { body } = dom.window.document
-    const main = getByRole(body, 'main')
-
-    expect(statusCode).toBe(statusCodes.ok)
     expect(getByRole(main, 'heading', { name: 'Loads received' })).toBeDefined()
     expect(getByRole(main, 'heading', { name: 'Loads exported' })).toBeDefined()
-  })
-
-  it('status: validated with registered-only processing type and loadsByWasteRecordType - should show correct section headings', async ({
-    server
-  }) => {
-    fetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      processingType: 'EXPORTER_REGISTERED_ONLY',
-      loadsByWasteRecordType: mockLoadsByWasteRecordType
-    })
-
-    const { result } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
-
-    const dom = new JSDOM(result)
-    const { body } = dom.window.document
-    const main = getByRole(body, 'main')
 
     expect(
       getByRole(main, 'heading', { name: '3 new loads have been added' })
