@@ -15,14 +15,22 @@ export const createController = {
       request.params
     const session = request.auth.credentials
 
-    await createReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      session.idToken
-    )
+    try {
+      await createReport(
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        session.idToken
+      )
+    } catch (error) {
+      if (error.isBoom && error.output.statusCode === 409) {
+        // Report already exists — proceed to supporting information
+      } else {
+        throw error
+      }
+    }
 
     const supportingInformationUrl = request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/supporting-information`

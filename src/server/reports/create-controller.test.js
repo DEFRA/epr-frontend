@@ -160,7 +160,40 @@ describe('#createReportController', () => {
         )
       })
 
-      it('should return 409', async ({ server }) => {
+      it('should redirect to supporting information page', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: detailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
+        )
+      })
+    })
+
+    describe('when backend returns a non-409 error', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          reprocessorRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        vi.mocked(createReport).mockRejectedValue(
+          Boom.internal('Unexpected error')
+        )
+      })
+
+      it('should return 500', async ({ server }) => {
         const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
           auth: mockAuth
         })
@@ -173,7 +206,7 @@ describe('#createReportController', () => {
           payload: { crumb }
         })
 
-        expect(statusCode).toBe(statusCodes.conflict)
+        expect(statusCode).toBe(statusCodes.internalServerError)
       })
     })
 
