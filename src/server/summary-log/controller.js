@@ -37,6 +37,13 @@ const WASTE_RECORD_TYPE_HEADING_KEY = Object.freeze({
   sentOn: 'registeredOnly.sectionHeading.sentOn'
 })
 
+const WASTE_RECORD_TYPE_ORDER = Object.freeze({
+  received: 1,
+  processed: 2,
+  exported: 3,
+  sentOn: 4
+})
+
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
   [PROCESSING_TYPES.EXPORTER]: 1,
@@ -148,16 +155,22 @@ export const buildLoadsByWasteRecordTypeViewModel = (
   processingType,
   localise
 ) =>
-  loadsByWasteRecordType.map(({ wasteRecordType, added, adjusted }) => ({
-    headingKey: WASTE_RECORD_TYPE_HEADING_KEY[wasteRecordType],
-    sectionReference: getSectionReference(
-      processingType,
-      wasteRecordType,
-      localise
-    ),
-    added: { count: added.valid.count, rowIds: added.valid.rowIds },
-    adjusted: { count: adjusted.valid.count, rowIds: adjusted.valid.rowIds }
-  }))
+  loadsByWasteRecordType
+    .toSorted(
+      (a, b) =>
+        WASTE_RECORD_TYPE_ORDER[a.wasteRecordType] -
+        WASTE_RECORD_TYPE_ORDER[b.wasteRecordType]
+    )
+    .map(({ wasteRecordType, added, adjusted }) => ({
+      headingKey: WASTE_RECORD_TYPE_HEADING_KEY[wasteRecordType],
+      sectionReference: getSectionReference(
+        processingType,
+        wasteRecordType,
+        localise
+      ),
+      added: { count: added.valid.count, rowIds: added.valid.rowIds },
+      adjusted: { count: adjusted.valid.count, rowIds: adjusted.valid.rowIds }
+    }))
 
 /**
  * Gets view data for progress page (processing or error states)

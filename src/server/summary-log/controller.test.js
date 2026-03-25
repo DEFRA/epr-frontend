@@ -2546,15 +2546,15 @@ describe('#getWasteRecordSectionNumber', () => {
 describe('#buildLoadsByWasteRecordTypeViewModel', () => {
   const mockLoadsByWasteRecordType = [
     {
-      wasteRecordType: 'received',
+      wasteRecordType: 'sentOn',
       added: {
-        valid: { count: 3, rowIds: ['001', '002', '003'] },
+        valid: { count: 2, rowIds: ['005', '006'] },
         invalid: { count: 0, rowIds: [] },
         included: { count: 0, rowIds: [] },
         excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        valid: { count: 1, rowIds: ['004'] },
+        valid: { count: 0, rowIds: [] },
         invalid: { count: 0, rowIds: [] },
         included: { count: 0, rowIds: [] },
         excluded: { count: 0, rowIds: [] }
@@ -2567,15 +2567,15 @@ describe('#buildLoadsByWasteRecordTypeViewModel', () => {
       }
     },
     {
-      wasteRecordType: 'sentOn',
+      wasteRecordType: 'received',
       added: {
-        valid: { count: 2, rowIds: ['005', '006'] },
+        valid: { count: 3, rowIds: ['001', '002', '003'] },
         invalid: { count: 0, rowIds: [] },
         included: { count: 0, rowIds: [] },
         excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        valid: { count: 0, rowIds: [] },
+        valid: { count: 1, rowIds: ['004'] },
         invalid: { count: 0, rowIds: [] },
         included: { count: 0, rowIds: [] },
         excluded: { count: 0, rowIds: [] }
