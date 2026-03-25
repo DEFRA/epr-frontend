@@ -12,9 +12,9 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
-vi.mock(import('./helpers/update-report.js'))
+vi.mock(import('./helpers/update-report-status.js'))
 
-const { updateReport } = await import('./helpers/update-report.js')
+const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
 const mockCredentials = {
   profile: {
@@ -347,6 +347,25 @@ describe('#checkController', () => {
           expect(button?.textContent?.trim()).toContain('Create report')
         })
 
+        it('should include report version as hidden form field', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const versionInput = body.querySelector('input[name="version"]')
+
+          expect(versionInput).not.toBeNull()
+          expect(versionInput?.getAttribute('type')).toBe('hidden')
+          expect(versionInput?.getAttribute('value')).toBe('1')
+        })
+
         it('should display back link to supporting information page', async ({
           server
         }) => {
@@ -421,7 +440,7 @@ describe('#checkController', () => {
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
-        vi.mocked(updateReport).mockResolvedValue({ ok: true })
+        vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
       })
 
       describe('csrf protection', () => {
@@ -450,7 +469,7 @@ describe('#checkController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb }
+            payload: { crumb, version: 1 }
           })
 
           expect(statusCode).toBe(statusCodes.found)
@@ -459,7 +478,7 @@ describe('#checkController', () => {
           )
         })
 
-        it('should call updateReport with correct parameters', async ({
+        it('should call updateReportStatus with correct parameters', async ({
           server
         }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -471,16 +490,17 @@ describe('#checkController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb }
+            payload: { crumb, version: 1 }
           })
 
-          expect(updateReport).toHaveBeenCalledWith(
+          expect(updateReportStatus).toHaveBeenCalledWith(
             organisationId,
             registrationId,
             2026,
             'quarterly',
             1,
-            { status: 'ready_to_submit' },
+            'ready_to_submit',
+            1,
             'mock-id-token'
           )
         })
