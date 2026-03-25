@@ -7,7 +7,6 @@ export const loadCategorySchema = Joi.object({
   count: Joi.number().integer().min(0).required(),
   rowIds: Joi.array()
     .items(Joi.alternatives().try(Joi.string(), Joi.number()))
-    .max(100)
     .required()
 })
 
