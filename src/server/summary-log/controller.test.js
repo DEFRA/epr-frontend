@@ -2548,43 +2548,25 @@ describe('#buildLoadsByWasteRecordTypeViewModel', () => {
     {
       wasteRecordType: 'sentOn',
       added: {
-        valid: { count: 2, rowIds: ['005', '006'] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 2, rowIds: ['005', '006'] }
       },
       adjusted: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 0, rowIds: [] }
       },
       unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 0, rowIds: [] }
       }
     },
     {
       wasteRecordType: 'received',
       added: {
-        valid: { count: 3, rowIds: ['001', '002', '003'] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 3, rowIds: ['001', '002', '003'] }
       },
       adjusted: {
-        valid: { count: 1, rowIds: ['004'] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 1, rowIds: ['004'] }
       },
       unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 0, rowIds: [] }
       }
     }
   ]
@@ -2629,44 +2611,26 @@ describe('registered-only check view', () => {
       wasteRecordType: 'received',
       sheetName: 'Received',
       added: {
-        valid: { count: 3, rowIds: ['001', '002', '003'] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 3, rowIds: ['001', '002', '003'] }
       },
       adjusted: {
-        valid: { count: 1, rowIds: ['004'] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 1, rowIds: ['004'] }
       },
       unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 0, rowIds: [] }
       }
     },
     {
       wasteRecordType: 'exported',
       sheetName: 'Exported',
       added: {
-        valid: { count: 2, rowIds: ['005', '006'] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 2, rowIds: ['005', '006'] }
       },
       adjusted: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 0, rowIds: [] }
       },
       unchanged: {
-        valid: { count: 0, rowIds: [] },
-        invalid: { count: 0, rowIds: [] },
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
+        valid: { count: 0, rowIds: [] }
       }
     }
   ]
@@ -2811,22 +2775,13 @@ describe('registered-only check view', () => {
           wasteRecordType: 'received',
           sheetName: 'Received',
           added: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] },
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
+            valid: { count: 0, rowIds: [] }
           },
           adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] },
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
+            valid: { count: 0, rowIds: [] }
           },
           unchanged: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] },
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
+            valid: { count: 0, rowIds: [] }
           }
         }
       ]
@@ -2869,10 +2824,7 @@ describe('registered-only check view', () => {
     server
   }) => {
     const emptyCategory = {
-      valid: { count: 0, rowIds: [] },
-      invalid: { count: 0, rowIds: [] },
-      included: { count: 0, rowIds: [] },
-      excluded: { count: 0, rowIds: [] }
+      valid: { count: 0, rowIds: [] }
     }
 
     fetchSummaryLogStatus.mockResolvedValueOnce({

@@ -48,6 +48,12 @@
 
 /**
  * @typedef {{
+ *   valid: LoadRows
+ * }} RawLoadValidOnly
+ */
+
+/**
+ * @typedef {{
  *   added: RawLoadCategory,
  *   adjusted: RawLoadCategory
  *   unchanged: RawLoadCategory,
@@ -58,9 +64,9 @@
  * @typedef {{
  *   wasteRecordType: string,
  *   sheetName: string,
- *   added: RawLoadCategory,
- *   unchanged: RawLoadCategory,
- *   adjusted: RawLoadCategory
+ *   added: RawLoadValidOnly,
+ *   unchanged: RawLoadValidOnly,
+ *   adjusted: RawLoadValidOnly
  * }} RawLoadsByWasteRecordTypeEntry
  */
 

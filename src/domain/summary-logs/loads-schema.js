@@ -18,6 +18,10 @@ export const loadValiditySchema = Joi.object({
   excluded: loadCategorySchema.required()
 })
 
+export const loadValidOnlySchema = Joi.object({
+  valid: loadCategorySchema.required()
+})
+
 export const loadsSchema = Joi.object({
   added: loadValiditySchema.required(),
   unchanged: loadValiditySchema.required(),
@@ -31,9 +35,9 @@ export const loadsByWasteRecordTypeSchema = Joi.array()
         .valid(...Object.values(WASTE_RECORD_TYPE))
         .required(),
       sheetName: Joi.string().required(),
-      added: loadValiditySchema.required(),
-      unchanged: loadValiditySchema.required(),
-      adjusted: loadValiditySchema.required()
+      added: loadValidOnlySchema.required(),
+      unchanged: loadValidOnlySchema.required(),
+      adjusted: loadValidOnlySchema.required()
     })
   )
   .unique('wasteRecordType')

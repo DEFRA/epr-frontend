@@ -56,10 +56,7 @@ describe(fetchSummaryLogStatus, () => {
   }) => {
     const loadCategory = { count: 1, rowIds: ['row-1'] }
     const loadValidity = {
-      valid: loadCategory,
-      invalid: loadCategory,
-      included: loadCategory,
-      excluded: loadCategory
+      valid: loadCategory
     }
     const loadsByWasteRecordType = [
       {
