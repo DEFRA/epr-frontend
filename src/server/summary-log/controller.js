@@ -2,6 +2,7 @@ import {
   PROCESSING_TYPES,
   REGISTERED_ONLY_PROCESSING_TYPES
 } from '#domain/summary-logs/meta-fields.js'
+import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import {
@@ -20,28 +21,33 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 
 const SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE = Object.freeze({
   [PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY]: Object.freeze({
-    received: 'registeredOnly.sectionReference.reprocessor.received',
-    sentOn: 'registeredOnly.sectionReference.reprocessor.sentOn'
+    [WASTE_RECORD_TYPE.RECEIVED]:
+      'registeredOnly.sectionReference.reprocessor.received',
+    [WASTE_RECORD_TYPE.SENT_ON]:
+      'registeredOnly.sectionReference.reprocessor.sentOn'
   }),
   [PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY]: Object.freeze({
-    received: 'registeredOnly.sectionReference.exporter.received',
-    exported: 'registeredOnly.sectionReference.exporter.exported',
-    sentOn: 'registeredOnly.sectionReference.exporter.sentOn'
+    [WASTE_RECORD_TYPE.RECEIVED]:
+      'registeredOnly.sectionReference.exporter.received',
+    [WASTE_RECORD_TYPE.EXPORTED]:
+      'registeredOnly.sectionReference.exporter.exported',
+    [WASTE_RECORD_TYPE.SENT_ON]:
+      'registeredOnly.sectionReference.exporter.sentOn'
   })
 })
 
 const WASTE_RECORD_TYPE_HEADING_KEY = Object.freeze({
-  received: 'registeredOnly.sectionHeading.received',
-  exported: 'registeredOnly.sectionHeading.exported',
-  processed: 'registeredOnly.sectionHeading.processed',
-  sentOn: 'registeredOnly.sectionHeading.sentOn'
+  [WASTE_RECORD_TYPE.RECEIVED]: 'registeredOnly.sectionHeading.received',
+  [WASTE_RECORD_TYPE.EXPORTED]: 'registeredOnly.sectionHeading.exported',
+  [WASTE_RECORD_TYPE.PROCESSED]: 'registeredOnly.sectionHeading.processed',
+  [WASTE_RECORD_TYPE.SENT_ON]: 'registeredOnly.sectionHeading.sentOn'
 })
 
 const WASTE_RECORD_TYPE_ORDER = Object.freeze({
-  received: 1,
-  processed: 2,
-  exported: 3,
-  sentOn: 4
+  [WASTE_RECORD_TYPE.RECEIVED]: 1,
+  [WASTE_RECORD_TYPE.PROCESSED]: 2,
+  [WASTE_RECORD_TYPE.EXPORTED]: 3,
+  [WASTE_RECORD_TYPE.SENT_ON]: 4
 })
 
 /** Waste record section number to display in UI copy, mapped by processing type */
