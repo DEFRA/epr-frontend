@@ -14,6 +14,8 @@ import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/** @import {DOMWindow} from 'jsdom' */
+
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
@@ -27,8 +29,8 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
 /**
- * @param {HTMLElement} table
- * @returns {(columnName: string | RegExp) => HTMLElement}
+ * @param {InstanceType<DOMWindow['HTMLElement']>} table
+ * @returns {(columnName: string | RegExp) => InstanceType<DOMWindow['HTMLElement']>}
  */
 const cellInColumn = (table) => {
   const headers = getAllByRole(table, 'columnheader')

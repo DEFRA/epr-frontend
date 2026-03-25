@@ -3,6 +3,8 @@ import Boom from '@hapi/boom'
 import { withTraceId } from '@defra/hapi-tracing'
 import { getTracingHeaderName } from './request-tracing.js'
 
+/** @import {RequestInit} from 'undici' */
+
 /**
  * Fetch JSON from a given url
  * @param {string} url

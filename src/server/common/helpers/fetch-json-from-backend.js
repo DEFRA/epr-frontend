@@ -1,6 +1,8 @@
 import { config } from '#config/config.js'
 import { fetchJson } from './fetch-json.js'
 
+/** @import {RequestInit} from 'undici' */
+
 /**
  * Fetch JSON from a given path in the backend service.
  * @param {string} path - The API path to append to the backend URL
