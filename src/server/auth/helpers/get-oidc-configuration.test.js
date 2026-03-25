@@ -17,19 +17,19 @@ const mockServer = setupServer(
   http.get(oidcUrl, () => HttpResponse.json(mockOidcConfig))
 )
 
-beforeAll(() => {
-  mockServer.listen()
-})
-
-afterEach(() => {
-  mockServer.resetHandlers()
-})
-
-afterAll(() => {
-  mockServer.close()
-})
-
 describe('#getOidcConfiguration', () => {
+  beforeAll(() => {
+    mockServer.listen()
+  })
+
+  afterEach(() => {
+    mockServer.resetHandlers()
+  })
+
+  afterAll(() => {
+    mockServer.close()
+  })
+
   it('should return parsed OIDC configuration', async () => {
     const result = await getOidcConfiguration(oidcUrl)
 
@@ -41,7 +41,9 @@ describe('#getOidcConfiguration', () => {
       http.get(oidcUrl, () => new HttpResponse(null, { status: 404 }))
     )
 
-    await expect(getOidcConfiguration(oidcUrl)).rejects.toThrow()
+    await expect(getOidcConfiguration(oidcUrl)).rejects.toThrow(
+      'Response Error: 404'
+    )
   })
 
   it('should throw when response status is 500', async () => {
@@ -49,12 +51,16 @@ describe('#getOidcConfiguration', () => {
       http.get(oidcUrl, () => new HttpResponse(null, { status: 500 }))
     )
 
-    await expect(getOidcConfiguration(oidcUrl)).rejects.toThrow()
+    await expect(getOidcConfiguration(oidcUrl)).rejects.toThrow(
+      'Response Error: 500'
+    )
   })
 
   it('should throw when network request fails', async () => {
     mockServer.use(http.get(oidcUrl, () => HttpResponse.error()))
 
-    await expect(getOidcConfiguration(oidcUrl)).rejects.toThrow()
+    await expect(getOidcConfiguration(oidcUrl)).rejects.toThrow(
+      'Client request error'
+    )
   })
 })
