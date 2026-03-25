@@ -7,8 +7,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {number} year
  * @param {string} cadence
  * @param {number} period
- * @param {string} status - The target status (e.g. 'ready_to_submit')
- * @param {number} version - Report version for optimistic locking
+ * @param {{ status: string, version: number }} transition - The target status and report version for optimistic locking
  * @param {string} idToken
  * @returns {Promise<unknown>}
  */
@@ -18,8 +17,7 @@ export async function updateReportStatus(
   year,
   cadence,
   period,
-  status,
-  version,
+  transition,
   idToken
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/status`
@@ -29,6 +27,6 @@ export async function updateReportStatus(
     headers: {
       Authorization: `Bearer ${idToken}`
     },
-    body: JSON.stringify({ status, version })
+    body: JSON.stringify(transition)
   })
 }

@@ -32,8 +32,7 @@ describe(updateReportStatus, () => {
       year,
       cadence,
       period,
-      'ready_to_submit',
-      1,
+      { status: 'ready_to_submit', version: 1 },
       idToken
     )
 
@@ -58,8 +57,7 @@ describe(updateReportStatus, () => {
       year,
       cadence,
       period,
-      'ready_to_submit',
-      1,
+      { status: 'ready_to_submit', version: 1 },
       idToken
     )
 
@@ -78,8 +76,7 @@ describe(updateReportStatus, () => {
       year,
       cadence,
       period,
-      'ready_to_submit',
-      1,
+      { status: 'ready_to_submit', version: 1 },
       idToken
     )
 

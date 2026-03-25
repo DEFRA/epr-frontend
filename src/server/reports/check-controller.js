@@ -110,14 +110,15 @@ export const checkPostController = {
     const { version } = request.payload
     const session = request.auth.credentials
 
+    const transition = { status: SUBMISSION_STATUS.READY_TO_SUBMIT, version }
+
     await updateReportStatus(
       organisationId,
       registrationId,
       year,
       cadence,
       period,
-      SUBMISSION_STATUS.READY_TO_SUBMIT,
-      version,
+      transition,
       session.idToken
     )
 
