@@ -1,3 +1,4 @@
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { createReport } from './helpers/create-report.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 
@@ -25,7 +26,7 @@ export const createController = {
         session.idToken
       )
     } catch (error) {
-      if (error.isBoom && error.output.statusCode === 409) {
+      if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
         // Report already exists — proceed to supporting information
       } else {
         throw error
