@@ -32,19 +32,21 @@ function buildTableRows({
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
     )
 
-    const status = deriveSubmissionStatus(period.endDate, period.report)
-    const statusHtml =
-      status === SUBMISSION_STATUS.DUE
-        ? `<strong class="govuk-tag">${escapeHtml(localise('reports:statusDue'))}</strong>`
-        : ''
+    const derivedStatus = deriveSubmissionStatus(period.endDate, period.report)
+    const isInProgress = period.report?.status === 'in_progress'
 
-    return [
-      { text: label },
-      { html: statusHtml },
-      {
-        html: `<a href="${url}" class="govuk-link">${localise('reports:actionSelect')} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
-      }
-    ]
+    let statusHtml = ''
+    if (derivedStatus === SUBMISSION_STATUS.DUE) {
+      statusHtml = `<strong class="govuk-tag">${escapeHtml(localise('reports:statusDue'))}</strong>`
+    } else if (isInProgress) {
+      statusHtml = `<strong class="govuk-tag govuk-tag--light-blue">${escapeHtml(localise('reports:statusInProgress'))}</strong>`
+    }
+
+    const actionHtml = isInProgress
+      ? `${escapeHtml(localise('reports:actionContinue'))} <span class="govuk-visually-hidden">${escapeHtml(label)}</span>`
+      : `<a href="${url}" class="govuk-link">${escapeHtml(localise('reports:actionSelect'))} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
+
+    return [{ text: label }, { html: statusHtml }, { html: actionHtml }]
   })
 }
 

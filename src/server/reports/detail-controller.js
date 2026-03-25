@@ -5,7 +5,7 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { CADENCE } from './constants.js'
+import { CADENCE, MAX_PERIOD, MAX_YEAR, MIN_YEAR } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 
@@ -46,10 +46,6 @@ function buildOverseasSiteRows(overseasSites) {
     { text: overseasSite.orsId }
   ])
 }
-
-const MIN_YEAR = 2024
-const MAX_YEAR = 2100
-const MAX_PERIOD = 12
 
 /**
  * @satisfies {Partial<ServerRoute>}

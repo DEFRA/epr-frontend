@@ -354,7 +354,7 @@ describe('#listReportsController', () => {
       })
     })
 
-    describe('for ended period with existing report', () => {
+    describe('for ended period with in-progress report', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           accreditedRegistration
@@ -364,9 +364,7 @@ describe('#listReportsController', () => {
         )
       })
 
-      it('should not display Due tag when report exists', async ({
-        server
-      }) => {
+      it('should display In progress tag', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -378,7 +376,26 @@ describe('#listReportsController', () => {
 
         const tags = body.querySelectorAll('.govuk-table .govuk-tag')
 
-        expect(tags).toHaveLength(0)
+        expect(tags).toHaveLength(1)
+        expect(tags[0]?.textContent?.trim()).toBe('In progress')
+        expect(tags[0]?.classList.contains('govuk-tag--light-blue')).toBe(true)
+      })
+
+      it('should display Continue text without a link', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const rows = body.querySelectorAll('.govuk-table tbody tr')
+        const actionCell = rows[0]?.querySelectorAll('td')[2]
+
+        expect(actionCell?.textContent).toContain('Continue')
+        expect(actionCell?.querySelector('a')).toBeNull()
       })
     })
 

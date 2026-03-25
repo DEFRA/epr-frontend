@@ -12,3 +12,7 @@ export const CADENCE = Object.freeze({
 export const SUBMISSION_STATUS = Object.freeze({
   DUE: 'due'
 })
+
+export const MIN_YEAR = 2024
+export const MAX_YEAR = 2100
+export const MAX_PERIOD = 12

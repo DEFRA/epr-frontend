@@ -647,6 +647,41 @@ describe('#detailReportsController', () => {
         expect(destinationTable.textContent).toContain('Reprocessor')
         expect(destinationTable.textContent).toContain('1')
       })
+
+      it('should display Use this data button', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const button = getByRole(body, 'button', {
+          name: /Use this data/
+        })
+
+        expect(button).toBeDefined()
+      })
+
+      it('should have a POST form for the Use this data button', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const form = body.querySelector('form[method="POST"]')
+
+        expect(form).not.toBeNull()
+        expect(form?.querySelector('input[name="crumb"]')).not.toBeNull()
+      })
     })
 
     describe('when no records match the period', () => {
