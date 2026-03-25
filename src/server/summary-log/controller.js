@@ -16,7 +16,17 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, RawLoadsByWasteRecordType, RegisteredOnlyLoadsSectionViewModel, SummaryLogStatusResponse, ValidationResponse } from './types.js'
+ * @import {
+ *   LoadCategoryViewModel,
+ *   LoadRows,
+ *   LoadsViewModel,
+ *   RawLoadCategory,
+ *   RawLoads,
+ *   RawLoadsByWasteRecordType,
+ *   RegisteredOnlyLoadsSectionViewModel,
+ *   SummaryLogStatusResponse,
+ *   ValidationResponse
+ * } from './types.js'
  */
 
 const SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE = Object.freeze({
