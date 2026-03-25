@@ -85,13 +85,17 @@
     "loadsProcessedSectionHeading": "Loads processed",
     "loadsSentOnSectionHeading": "Loads sent on",
     "newLoadsAdded": "",
+    "newLoadsAdded_zero": "No new loads have been added",
     "newLoadsAdded_one": "{{count}} new load has been added",
     "newLoadsAdded_other": "{{count}} new loads have been added",
     "newLoadsAddedDescription": "These are new loads that have been added to section {{sectionNumber}} of your summary log.",
+    "newLoadsAddedDescription_zero": "No new loads have been added to section {{sectionNumber}} of your summary log.",
     "loadsAdjusted": "",
+    "loadsAdjusted_zero": "No existing loads have been adjusted",
     "loadsAdjusted_one": "{{count}} existing load has been adjusted",
     "loadsAdjusted_other": "{{count}} existing loads have been adjusted",
-    "loadsAdjustedDescription": "These are loads in section {{sectionNumber}} of your summary log that have been changed since it was last uploaded."
+    "loadsAdjustedDescription": "These are loads in section {{sectionNumber}} of your summary log that have been changed since it was last uploaded.",
+    "loadsAdjustedDescription_zero": "No loads in section {{sectionNumber}} of your summary log have been changed since it was last uploaded."
   },
   "returnToHome": "Return to home",
   "reuploadButton": "Re-upload summary log",

@@ -2777,4 +2777,53 @@ describe('registered-only check view', () => {
     expect(getByRole(main, 'heading', { level: 1, name: /Check before confirming upload/ })).toBeDefined()
     expect(queryByText(main, 'Check the following before confirming the upload.')).toBeNull()
   })
+
+  it('status: validated with registered-only processing type and zero counts - should show no-activity headings and descriptions', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      loadsByWasteRecordType: [
+        {
+          wasteRecordType: 'received',
+          sheetName: 'Received',
+          added: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] },
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] },
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] },
+            invalid: { count: 0, rowIds: [] },
+            included: { count: 0, rowIds: [] },
+            excluded: { count: 0, rowIds: [] }
+          }
+        }
+      ]
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body } = dom.window.document
+    const main = getByRole(body, 'main')
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(getByRole(main, 'heading', { name: 'No new loads have been added' })).toBeDefined()
+    expect(getByText(main, 'No new loads have been added to section 1 of your summary log.')).toBeDefined()
+    expect(getByRole(main, 'heading', { name: 'No existing loads have been adjusted' })).toBeDefined()
+    expect(getByText(main, 'No loads in section 1 of your summary log have been changed since it was last uploaded.')).toBeDefined()
+  })
 })
