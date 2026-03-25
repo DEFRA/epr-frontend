@@ -84,7 +84,7 @@ describe('#defraId', () => {
       )
 
       await expect(defraId.plugin.register(mockServer)).rejects.toThrow(
-        'OIDC config fetch failed: 404 Not Found'
+        'Response Error: 404 Not Found'
       )
     })
 
@@ -103,7 +103,7 @@ describe('#defraId', () => {
       )
 
       await expect(defraId.plugin.register(mockServer)).rejects.toThrow(
-        'OIDC config fetch failed: 500 Internal Server Error'
+        'Response Error: 500 Internal Server Error'
       )
     })
   })
