@@ -150,10 +150,44 @@ describe('#supportingInformationController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const caption = body.querySelector('.govuk-caption-l')
+          const caption = body.querySelector('.govuk-caption-xl')
 
           expect(caption).not.toBeNull()
           expect(caption?.textContent).toContain('Create report')
+        })
+
+        it('should display Enter a comment field label', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const label = body.querySelector('.govuk-label--m')
+
+          expect(label).not.toBeNull()
+          expect(label?.textContent).toContain('Enter a comment')
+        })
+
+        it('should display hint text', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const hint = body.querySelector('.govuk-hint')
+
+          expect(hint).not.toBeNull()
+          expect(hint?.textContent).toContain(
+            'Include any extra information you think your regulator will find useful'
+          )
         })
 
         it('should render a character count textarea', async ({ server }) => {
