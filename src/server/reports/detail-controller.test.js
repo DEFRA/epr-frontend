@@ -421,7 +421,7 @@ describe('#detailReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const caption = body.querySelector('.govuk-caption-l')
+        const caption = body.querySelector('.govuk-caption-xl')
 
         expect(caption?.textContent).toContain('Plastic')
       })
