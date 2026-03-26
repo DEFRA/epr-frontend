@@ -88,7 +88,7 @@ export const checkGetController = {
         toOtherSites: wasteSent.tonnageSentToAnotherSite,
         destinationRows: buildDestinationRows(wasteSent.finalDestinations)
       },
-      prn: reportDetail.prn ?? null
+      prn: reportDetail.prn
     }
 
     return h.view('reports/check-your-answers', viewData)
