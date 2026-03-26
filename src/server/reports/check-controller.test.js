@@ -158,6 +158,43 @@ const reprocessorReportDetail = {
   }
 }
 
+const accreditedReprocessorRegistration = {
+  organisationData: { id: 'org-123' },
+  registration: {
+    id: 'reg-001',
+    material: 'plastic',
+    wasteProcessingType: 'reprocessor',
+    registrationNumber: 'REG001234',
+    accreditationId: 'acc-001',
+    site: {
+      address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
+    }
+  },
+  accreditation: { id: 'acc-001', accreditationNumber: 'ER992415095748M' }
+}
+
+const accreditedExporterRegistration = {
+  organisationData: { id: 'org-123' },
+  registration: {
+    id: 'reg-001',
+    material: 'plastic',
+    wasteProcessingType: 'exporter',
+    registrationNumber: 'REG001234',
+    accreditationId: 'acc-002'
+  },
+  accreditation: { id: 'acc-002', accreditationNumber: 'EE992415095748M' }
+}
+
+const accreditedReprocessorReportDetail = {
+  ...reprocessorReportDetail,
+  prn: { issuedTonnage: 75 }
+}
+
+const accreditedExporterReportDetail = {
+  ...exporterReportDetail,
+  prn: { issuedTonnage: 75 }
+}
+
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/check-your-answers`
@@ -485,6 +522,83 @@ describe('#checkController', () => {
           const summaryList = body.querySelector('.govuk-summary-list')
 
           expect(summaryList?.textContent).toContain('None provided')
+        })
+
+        it('should not display PRNs section for registered-only operator', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            queryByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          ).toBeNull()
+        })
+      })
+
+      describe('for accredited reprocessor', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            accreditedReprocessorRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            accreditedReprocessorReportDetail
+          )
+        })
+
+        it('should display PRNs heading and issued tonnage', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          ).toBeDefined()
+          expect(body.textContent).toContain('Total tonnage of PRNs issued')
+          expect(body.textContent).toContain('75')
+        })
+      })
+
+      describe('for accredited exporter', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            accreditedExporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            accreditedExporterReportDetail
+          )
+        })
+
+        it('should display PERNs heading and issued tonnage', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', { name: /PERNs/, level: 3 })
+          ).toBeDefined()
+          expect(body.textContent).toContain('Total tonnage of PERNs issued')
+          expect(body.textContent).toContain('75')
         })
       })
     })
