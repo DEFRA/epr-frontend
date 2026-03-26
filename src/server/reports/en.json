@@ -65,7 +65,7 @@
   "submittedFutureChangesGuidance": "If future changes to your summary log affect the data you have submitted, you may need to submit an updated report for this period.",
   "submittedHeading": "{{ periodLabel }} report submitted to regulator",
   "submittedPageTitle": "Report submitted: {{ material }}: {{ periodLabel }}",
-  "submittedReturnToReports": "Return to reports",
+  "submittedReturnToReports": "Return to your reports",
   "supplierColumn": "Supplier",
   "supplierDetailsHeading": "Supplier details",
   "supportingInformationCaption": "Create report",

@@ -139,7 +139,29 @@ describe('#submittedController', () => {
         expect(panel.textContent).not.toContain('Status:')
       })
 
-      it('should display future changes guidance', async ({ server }) => {
+      it('should display future changes guidance as inset text', async ({
+        server
+      }) => {
+        const { cookies } = await setSubmittedSession(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: submittedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const insetText = body.querySelector('.govuk-inset-text')
+
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain(
+          'you may need to submit an updated report for this period'
+        )
+      })
+
+      it('should display Details heading', async ({ server }) => {
         const { cookies } = await setSubmittedSession(server)
 
         const { result } = await server.inject({
@@ -152,9 +174,12 @@ describe('#submittedController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        expect(body.textContent).toContain(
-          'you may need to submit an updated report for this period'
-        )
+        const heading = getByRole(body, 'heading', {
+          name: /Details/,
+          level: 2
+        })
+
+        expect(heading).toBeDefined()
       })
 
       it('should display registration number', async ({ server }) => {
@@ -204,7 +229,7 @@ describe('#submittedController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
         const main = getByRole(body, 'main')
-        const returnLink = getByText(main, /Return to reports/)
+        const returnLink = getByText(main, /Return to your reports/)
 
         expect(returnLink).toBeDefined()
         expect(returnLink.getAttribute('href')).toBe(reportsUrl)

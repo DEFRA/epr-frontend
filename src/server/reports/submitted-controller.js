@@ -58,6 +58,7 @@ export const submittedController = {
         periodLabel
       }),
       heading: localise('reports:submittedHeading', { periodLabel }),
+      detailsHeading: localise('reports:detailsHeading'),
       registrationNumber: registration.registrationNumber,
       material,
       futureChangesGuidance: localise('reports:submittedFutureChangesGuidance'),
