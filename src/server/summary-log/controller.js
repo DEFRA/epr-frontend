@@ -105,18 +105,11 @@ const NO_ROWS = { count: 0, rowIds: [] }
 /**
  * Builds view model for a single load category (added or adjusted)
  * @param {RawLoadCategory} [category] - Category data from backend (e.g. loads.added)
- * @param {object} [options]
- * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {LoadCategoryViewModel}
  */
-const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
+const buildCategoryViewModel = (category) => {
   const included = category?.included ?? NO_ROWS
   const excluded = category?.excluded ?? NO_ROWS
-
-  if (registeredOnly) {
-    const valid = category?.valid ?? NO_ROWS
-    return { included: valid, excluded, total: valid.count }
-  }
 
   return {
     included,
@@ -129,14 +122,12 @@ const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
  * Transforms raw loads data from backend into a view model
  * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
  * @param {RawLoads} [loads] - Raw loads data from backend API
- * @param {object} [options]
- * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {LoadsViewModel}
  */
-export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
+export const buildLoadsViewModel = (loads) => {
   return {
-    added: buildCategoryViewModel(loads?.added, { registeredOnly }),
-    adjusted: buildCategoryViewModel(loads?.adjusted, { registeredOnly })
+    added: buildCategoryViewModel(loads?.added),
+    adjusted: buildCategoryViewModel(loads?.adjusted)
   }
 }
 
@@ -296,9 +287,7 @@ const renderCheckView = (
     processingType
   }
 ) => {
-  const registeredOnly = REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
-
-  if (registeredOnly && loadsByWasteRecordType) {
+  if (REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)) {
     return h.view('summary-log/check-registered-only', {
       pageTitle: localise('summary-log:checkPageTitle'),
       organisationId,
@@ -312,7 +301,7 @@ const renderCheckView = (
     })
   }
 
-  const loadsViewModel = buildLoadsViewModel(loads, { registeredOnly })
+  const loadsViewModel = buildLoadsViewModel(loads)
   const sectionNumber = getWasteRecordSectionNumber(processingType)
 
   return h.view(CHECK_VIEW_NAME, {
