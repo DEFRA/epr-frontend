@@ -411,7 +411,7 @@ describe('#listReportsController', () => {
         expect(link).not.toBeNull()
         expect(link?.textContent).toContain('Continue')
         expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/supporting-information'
         )
       })
 
