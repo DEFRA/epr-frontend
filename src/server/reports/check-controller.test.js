@@ -223,7 +223,7 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const caption = body.querySelector('.govuk-caption-l')
+          const caption = body.querySelector('.govuk-caption-xl')
 
           expect(caption).not.toBeNull()
           expect(caption?.textContent).toContain('Create report')
@@ -241,6 +241,61 @@ describe('#checkController', () => {
 
           expect(body.textContent).toContain('Quarter 1, 2026')
           expect(body.textContent).toContain('Plastic')
+        })
+
+        it('should display Summary log data heading', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const heading = getByRole(body, 'heading', {
+            name: /Summary log data/,
+            level: 2
+          })
+
+          expect(heading).toBeDefined()
+        })
+
+        it('should display Summary log data guidance text', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain(
+            'If any information in this section is incorrect'
+          )
+        })
+
+        it('should display Supporting information heading', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const heading = getByRole(body, 'heading', {
+            name: /Supporting information/,
+            level: 2
+          })
+
+          expect(heading).toBeDefined()
         })
 
         it('should display waste received section', async ({ server }) => {
@@ -410,7 +465,7 @@ describe('#checkController', () => {
           expect(
             queryByRole(body, 'heading', {
               name: /waste exported/i,
-              level: 2
+              level: 3
             })
           ).toBeNull()
         })

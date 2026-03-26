@@ -22,19 +22,22 @@
         }) }}
       {% endif %}
 
+      <span class="govuk-caption-xl">{{ caption }}</span>
+      <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
-
-        <span class="govuk-caption-l">{{ caption }}</span>
 
         {{ govukCharacterCount({
           name: "supportingInformation",
           id: "supportingInformation",
           maxlength: maxLength,
           label: {
-            text: heading,
-            classes: "govuk-label--l",
-            isPageHeading: true
+            text: localise("reports:supportingInformationFieldLabel"),
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: localise("reports:supportingInformationHint")
           },
           value: value,
           errorMessage: errors.supportingInformation if errors else null
