@@ -1,7 +1,7 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { CADENCE } from './constants.js'
+import { CADENCE, SUBMISSION_STATUS } from './constants.js'
 import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -31,14 +31,17 @@ function buildTableRows({
   localise
 }) {
   return reportingPeriods.map((period) => {
-    const url = localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
-    )
+    const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
 
     const label = formatPeriodLabel(period, cadence, localise)
 
     const status = deriveSubmissionStatus(period.endDate, period.report)
     const statusLabel = getStatusLabel(status, localise)
+
+    const url =
+      status === SUBMISSION_STATUS.IN_PROGRESS
+        ? localiseUrl(`${periodPath}/supporting-information`)
+        : localiseUrl(periodPath)
     const statusHtml = statusLabel
       ? `<strong class="govuk-tag">${escapeHtml(statusLabel)}</strong>`
       : ''

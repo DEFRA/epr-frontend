@@ -72,6 +72,7 @@
   "totalTonnageExported": "Total tonnage exported",
   "totalTonnageReceived": "Total tonnage received",
   "totalTonnageSentOn": "Total tonnage sent on",
+  "useThisData": "Use this data",
   "wasteExportedHeading": "Packaging waste exported for recycling",
   "wasteExportedIntro": "The data for waste exported comes from your summary log. Your report will be accurate if all the necessary data has been added.",
   "wasteReceivedForExportHeading": "Packaging waste received for export",

@@ -1,4 +1,5 @@
 import { checkGetController, checkPostController } from './check-controller.js'
+import { createController } from './create-controller.js'
 import { detailController } from './detail-controller.js'
 import { listController } from './list-controller.js'
 import {
@@ -27,6 +28,11 @@ export const reports = {
         {
           ...detailController,
           method: 'GET',
+          path: periodPath
+        },
+        {
+          ...createController,
+          method: 'POST',
           path: periodPath
         },
         {
