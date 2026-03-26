@@ -1,0 +1,43 @@
+{% extends 'layouts/page.njk' %}
+{% from "loads-section/macro.njk" import appLoadsSection %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">
+      <span class="govuk-caption-xl">{{ localise('summary-log:checkCaption') }}</span>
+      {{ localise('summary-log:checkHeading') }}
+    </h1>
+    <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
+    <p class="govuk-body">{{ localise('summary-log:registeredOnly.checkIntro2') }}</p>
+    <div class="govuk-inset-text">
+      {{ localise('summary-log:checkWarningStart') }}
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
+      {{ localise('summary-log:checkWarningOr') }}
+      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
+    </div>
+
+    {% for section in sections %}
+    {{ appLoadsSection({
+      heading: localise('summary-log:' + section.headingKey),
+      addedHeading: localise('summary-log:registeredOnly.newLoadsAdded', { count: section.added.count }),
+      addedDescription: localise('summary-log:registeredOnly.newLoadsAddedDescription', { count: section.added.count, sectionReference: section.sectionReference }),
+      adjustedHeading: localise('summary-log:registeredOnly.loadsAdjusted', { count: section.adjusted.count }),
+      adjustedDescription: localise('summary-log:registeredOnly.loadsAdjustedDescription', { count: section.adjusted.count, sectionReference: section.sectionReference }),
+      adjusted: section.adjusted,
+      tooManyMessage: localise('summary-log:tooManyAdjustedLoadsToList'),
+      showAdjustedLoadsText: localise('summary-log:showLoads', { count: section.adjusted.count }),
+      rowIdExplanation: localise('summary-log:rowIdExplanation')
+    }) }}
+    {% endfor %}
+
+    <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
+      {{ govukButton({
+        text: localise('summary-log:confirmButton'),
+        preventDoubleClick: true
+      }) }}
+    </form>
+  </div>
+</div>
+{% endblock %}

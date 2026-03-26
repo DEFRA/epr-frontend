@@ -1,0 +1,22 @@
+{% from "row-id-list/macro.njk" import rowIdList %}
+
+{% macro appLoadsSection(params) %}
+<section class="govuk-!-margin-top-8">
+  <h2 class="govuk-heading-l">{{ params.heading }}</h2>
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+  <h3 class="govuk-heading-m">{{ params.addedHeading }}</h3>
+  <p class="govuk-body">{{ params.addedDescription }}</p>
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+  <h3 class="govuk-heading-m">{{ params.adjustedHeading }}</h3>
+  <p class="govuk-body">{{ params.adjustedDescription }}</p>
+  {% if params.adjusted.rowIds | length %}
+  {{ rowIdList({
+    rows: params.adjusted,
+    tooManyMessage: params.tooManyMessage,
+    showLoadsText: params.showAdjustedLoadsText,
+    explanationText: params.rowIdExplanation
+  }) }}
+  {% endif %}
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+</section>
+{% endmacro %}
