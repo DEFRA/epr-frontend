@@ -37,7 +37,8 @@ export const deleteGetController = {
     const viewData = {
       pageTitle: localise('reports:deletePageTitle', { material, periodLabel }),
       heading: localise('reports:deleteHeading'),
-      bodyText: localise('reports:deleteBody'),
+      bodyWarning: localise('reports:deleteBodyWarning'),
+      bodyGuidance: localise('reports:deleteBodyGuidance'),
       confirmButtonText: localise('reports:deleteConfirmButton'),
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/supporting-information`

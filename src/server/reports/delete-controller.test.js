@@ -127,7 +127,7 @@ describe('#deleteController', () => {
         )
       })
 
-      it('should display the body text', async ({ server }) => {
+      it('should display the warning and guidance text', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -136,9 +136,14 @@ describe('#deleteController', () => {
 
         const dom = new JSDOM(result)
         const { body } = dom.window.document
+        const paragraphs = body.querySelectorAll(
+          '.govuk-grid-column-two-thirds > p.govuk-body'
+        )
 
-        expect(body.textContent).toContain(
-          'Confirm that you want to delete this report'
+        expect(paragraphs).toHaveLength(2)
+        expect(paragraphs[0].textContent).toContain('cannot be undone')
+        expect(paragraphs[1].textContent).toContain(
+          'start creating the report again'
         )
       })
     })
@@ -210,6 +215,31 @@ describe('#deleteController', () => {
             'mock-id-token'
           )
         })
+      })
+    })
+
+    describe('when deleteReport fails', () => {
+      it('should propagate the error', async ({ server }) => {
+        vi.mocked(deleteReport).mockRejectedValue(
+          Object.assign(new Error('Backend error'), {
+            isBoom: true,
+            output: { statusCode: 500 }
+          })
+        )
+
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
       })
     })
 
