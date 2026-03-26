@@ -421,6 +421,25 @@ describe('#checkController', () => {
           expect(versionInput?.getAttribute('value')).toBe('1')
         })
 
+        it('should display delete and start again link', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const deleteLink = body.querySelector('a[href*="/delete"]')
+
+          expect(deleteLink).not.toBeNull()
+          expect(deleteLink?.textContent).toContain('Delete and start again')
+          expect(deleteLink?.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/delete`
+          )
+        })
+
         it('should display back link to supporting information page', async ({
           server
         }) => {
