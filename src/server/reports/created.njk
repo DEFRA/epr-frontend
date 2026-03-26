@@ -1,0 +1,47 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-panel govuk-panel--confirmation">
+      <h1 class="govuk-panel__title">
+        {{ heading }}
+      </h1>
+      <div class="govuk-panel__body">
+        {{ statusLabel }}<br>
+        <strong>{{ statusValue }}</strong>
+      </div>
+    </div>
+
+    <h2 class="govuk-heading-m">{{ detailsHeading }}</h2>
+
+    <p class="govuk-body">
+      <strong>{{ registrationLabel }}</strong> {{ registrationNumber }}
+    </p>
+
+    <p class="govuk-body">
+      <strong>{{ materialLabel }}</strong> {{ material }}
+    </p>
+
+    <h2 class="govuk-heading-m">{{ nextStepsHeading }}</h2>
+
+    <p class="govuk-body">
+      {{ nextStepsGuidance }}
+    </p>
+
+    <p class="govuk-body">
+      {{ selfSubmitGuidance }}
+    </p>
+
+    <p class="govuk-body">
+      <a href="{{ goToReportsButton.href }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button">
+        {{ goToReportsButton.text }}
+      </a>
+    </p>
+
+    <p class="govuk-body">
+      <a href="{{ returnHomeLink.href }}" class="govuk-link">{{ returnHomeLink.text }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

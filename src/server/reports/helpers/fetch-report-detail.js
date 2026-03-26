@@ -57,6 +57,7 @@ export async function fetchReportDetail(
  *   period: number,
  *   startDate: string,
  *   endDate: string,
+ *   dueDate: string,
  *   lastUploadedAt: string | null,
  *   details: {
  *     material: string,

@@ -1,5 +1,6 @@
 import { checkGetController, checkPostController } from './check-controller.js'
 import { createController } from './create-controller.js'
+import { createdController } from './created-controller.js'
 import { detailController } from './detail-controller.js'
 import { listController } from './list-controller.js'
 import {
@@ -54,6 +55,11 @@ export const reports = {
           ...checkPostController,
           method: 'POST',
           path: `${periodPath}/check-your-answers`
+        },
+        {
+          ...createdController,
+          method: 'GET',
+          path: `${periodPath}/created`
         }
       ])
     }
