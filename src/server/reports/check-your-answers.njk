@@ -98,12 +98,25 @@
 
         {% if isExporter %}
           <h3 class="govuk-heading-m">{{ localise("reports:pernSectionHeading") }}</h3>
-          <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:pernTotalIssuedTonnage") }}</p>
+          {{ govukSummaryList({
+            rows: [
+              {
+                key: { text: localise("reports:pernTotalIssuedTonnage") },
+                value: { text: prn.issuedTonnage | formatWholeNumberTonnage }
+              }
+            ]
+          }) }}
         {% else %}
           <h3 class="govuk-heading-m">{{ localise("reports:prnSectionHeading") }}</h3>
-          <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:prnTotalIssuedTonnage") }}</p>
+          {{ govukSummaryList({
+            rows: [
+              {
+                key: { text: localise("reports:prnTotalIssuedTonnage") },
+                value: { text: prn.issuedTonnage | formatWholeNumberTonnage }
+              }
+            ]
+          }) }}
         {% endif %}
-        <p class="govuk-heading-m">{{ prn.issuedTonnage }}</p>
       {% endif %}
 
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
