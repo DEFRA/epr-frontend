@@ -1,17 +1,20 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
+import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { load } from 'cheerio'
+import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
+  buildLoadsByWasteRecordTypeViewModel,
   buildLoadsViewModel,
   getWasteRecordSectionNumber
 } from './controller.js'
@@ -413,45 +416,6 @@ describe('#summaryLogUploadProgressController', () => {
         expect.stringContaining(
           '2 new loads will not be added to your waste balance'
         )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated registered-only - should show new loads from valid count', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'REPROCESSOR_REGISTERED_ONLY',
-        loads: {
-          added: {
-            valid: { count: 2, rowIds: [1000, 5000] },
-            invalid: { count: 0, rowIds: [] },
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            valid: { count: 0, rowIds: [] },
-            invalid: { count: 0, rowIds: [] },
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('2 new loads will be added')
-      )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('There are no new loads')
       )
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -2435,53 +2399,7 @@ describe('#buildLoadsViewModel', () => {
     })
   })
 
-  test('registered-only: falls back to valid count when included + excluded are empty', () => {
-    const result = buildLoadsViewModel(
-      {
-        added: {
-          valid: { count: 2, rowIds: [1000, 5000] },
-          invalid: { count: 0, rowIds: [] },
-          included: { count: 0, rowIds: [] },
-          excluded: { count: 0, rowIds: [] }
-        },
-        adjusted: {
-          valid: { count: 0, rowIds: [] },
-          invalid: { count: 0, rowIds: [] },
-          included: { count: 0, rowIds: [] },
-          excluded: { count: 0, rowIds: [] }
-        }
-      },
-      { registeredOnly: true }
-    )
-
-    expect(result.added).toStrictEqual({
-      included: { count: 2, rowIds: [1000, 5000] },
-      excluded: { count: 0, rowIds: [] },
-      total: 2
-    })
-    expect(result.adjusted.total).toBe(0)
-  })
-
-  test('registered-only: handles missing valid gracefully', () => {
-    const result = buildLoadsViewModel(
-      {
-        added: {
-          included: { count: 0, rowIds: [] },
-          excluded: { count: 0, rowIds: [] }
-        },
-        adjusted: {
-          included: { count: 0, rowIds: [] },
-          excluded: { count: 0, rowIds: [] }
-        }
-      },
-      { registeredOnly: true }
-    )
-
-    expect(result.added.total).toBe(0)
-    expect(result.added.included).toStrictEqual({ count: 0, rowIds: [] })
-  })
-
-  test('registered-only: does not affect accredited uploads', () => {
+  test('uses included and excluded counts, ignoring valid', () => {
     const result = buildLoadsViewModel({
       added: {
         valid: { count: 10, rowIds: [] },
@@ -2537,5 +2455,278 @@ describe('#getWasteRecordSectionNumber', () => {
 
   test('returns undefined for unknown processingType', () => {
     expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
+  })
+})
+
+describe('#buildLoadsByWasteRecordTypeViewModel', () => {
+  const mockLoadsByWasteRecordType = [
+    {
+      wasteRecordType: 'sentOn',
+      added: {
+        valid: { count: 2, rowIds: ['005', '006'] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] }
+      }
+    },
+    {
+      wasteRecordType: 'received',
+      added: {
+        valid: { count: 3, rowIds: ['001', '002', '003'] }
+      },
+      adjusted: {
+        valid: { count: 1, rowIds: ['004'] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] }
+      }
+    }
+  ]
+
+  it('should map each entry to a view model with correct headingKey, sectionReference, added and adjusted totals', () => {
+    const sectionRefs = {
+      'summary-log:registeredOnly.sectionReference.reprocessor.received': '1',
+      'summary-log:registeredOnly.sectionReference.reprocessor.sentOn': '2'
+    }
+    const localise = (key) => sectionRefs[key] ?? key
+    const result = buildLoadsByWasteRecordTypeViewModel(
+      mockLoadsByWasteRecordType,
+      'REPROCESSOR_REGISTERED_ONLY',
+      localise
+    )
+
+    expect(result).toStrictEqual([
+      {
+        headingKey: 'registeredOnly.sectionHeading.received',
+        sectionReference: '1',
+        added: { count: 3, rowIds: ['001', '002', '003'] },
+        adjusted: { count: 1, rowIds: ['004'] }
+      },
+      {
+        headingKey: 'registeredOnly.sectionHeading.sentOn',
+        sectionReference: '2',
+        added: { count: 2, rowIds: ['005', '006'] },
+        adjusted: { count: 0, rowIds: [] }
+      }
+    ])
+  })
+})
+
+describe('registered-only check view', () => {
+  const organisationId = '123'
+  const registrationId = '456'
+  const summaryLogId = '789'
+  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+
+  const mockLoadsByWasteRecordType = [
+    {
+      wasteRecordType: 'received',
+      sheetName: 'Received',
+      added: {
+        valid: { count: 3, rowIds: ['001', '002', '003'] }
+      },
+      adjusted: {
+        valid: { count: 1, rowIds: ['004'] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] }
+      }
+    },
+    {
+      wasteRecordType: 'exported',
+      sheetName: 'Exported',
+      added: {
+        valid: { count: 2, rowIds: ['005', '006'] }
+      },
+      adjusted: {
+        valid: { count: 0, rowIds: [] }
+      },
+      unchanged: {
+        valid: { count: 0, rowIds: [] }
+      }
+    }
+  ]
+
+  /* eslint-disable vitest/max-expects -- single request, asserting all parts of the rendered page */
+  it('status: validated with registered-only processing type and loadsByWasteRecordType - should render check-registered-only view with sections and counts', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByWasteRecordType: mockLoadsByWasteRecordType
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body, title } = dom.window.document
+
+    expect(title).toMatch(/^Summary log \|/)
+    expect(statusCode).toBe(statusCodes.ok)
+
+    const main = getByRole(body, 'main')
+    const heading = getByRole(main, 'heading', { level: 1 })
+
+    expect(heading.textContent).toContain('Check before confirming upload')
+    expect(
+      getByText(main, 'Check the following before confirming the upload.')
+    ).toBeDefined()
+
+    expect(getByRole(main, 'heading', { name: 'Loads received' })).toBeDefined()
+    expect(getByRole(main, 'heading', { name: 'Loads exported' })).toBeDefined()
+
+    expect(
+      getByRole(main, 'heading', { name: '3 new loads have been added' })
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'These are new loads that have been added to section 1 of your summary log.'
+      )
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'heading', { name: '1 existing load has been adjusted' })
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'These are loads in section 1 of your summary log that have been changed since it was last uploaded.'
+      )
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'heading', { name: '2 new loads have been added' })
+    ).toBeDefined()
+    expect(getByText(main, 'Show 1 load')).toBeDefined()
+  })
+  /* eslint-enable vitest/max-expects */
+
+  it('status: validated with registered-only processing type and zero counts - should show no-activity headings and descriptions', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      loadsByWasteRecordType: [
+        {
+          wasteRecordType: 'received',
+          sheetName: 'Received',
+          added: {
+            valid: { count: 0, rowIds: [] }
+          },
+          adjusted: {
+            valid: { count: 0, rowIds: [] }
+          },
+          unchanged: {
+            valid: { count: 0, rowIds: [] }
+          }
+        }
+      ]
+    })
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body } = dom.window.document
+    const main = getByRole(body, 'main')
+
+    expect(
+      getByRole(main, 'heading', { name: 'No new loads have been added' })
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 1 of your summary log.'
+      )
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'heading', {
+        name: 'No existing loads have been adjusted'
+      })
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No loads in section 1 of your summary log have been changed since it was last uploaded.'
+      )
+    ).toBeDefined()
+    expect(queryByText(main, /Show \d+ load/)).toBeNull()
+  })
+
+  it('status: validated with EXPORTER_REGISTERED_ONLY - should use correct section references per waste record type', async ({
+    server
+  }) => {
+    const emptyCategory = {
+      valid: { count: 0, rowIds: [] }
+    }
+
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByWasteRecordType: [
+        {
+          wasteRecordType: 'received',
+          sheetName: 'Received',
+          added: emptyCategory,
+          adjusted: emptyCategory,
+          unchanged: emptyCategory
+        },
+        {
+          wasteRecordType: 'exported',
+          sheetName: 'Exported',
+          added: emptyCategory,
+          adjusted: emptyCategory,
+          unchanged: emptyCategory
+        },
+        {
+          wasteRecordType: 'sentOn',
+          sheetName: 'Sent on',
+          added: emptyCategory,
+          adjusted: emptyCategory,
+          unchanged: emptyCategory
+        }
+      ]
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const dom = new JSDOM(result)
+    const { body } = dom.window.document
+    const main = getByRole(body, 'main')
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 1 of your summary log.'
+      )
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 2 and 3 of your summary log.'
+      )
+    ).toBeDefined()
+    expect(
+      getByText(
+        main,
+        'No new loads have been added to section 4 of your summary log.'
+      )
+    ).toBeDefined()
   })
 })

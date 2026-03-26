@@ -2,6 +2,7 @@ import {
   PROCESSING_TYPES,
   REGISTERED_ONLY_PROCESSING_TYPES
 } from '#domain/summary-logs/meta-fields.js'
+import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import {
@@ -15,8 +16,50 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { LoadCategoryViewModel, LoadRows, LoadsViewModel, RawLoadCategory, RawLoads, SummaryLogStatusResponse, ValidationResponse } from './types.js'
+ * @import { WasteRecordType } from '#domain/waste-records/model.js'
+ * @import {
+ *   LoadCategoryViewModel,
+ *   LoadRows,
+ *   LoadsViewModel,
+ *   RawLoadCategory,
+ *   RawLoads,
+ *   RawLoadsByWasteRecordType,
+ *   RegisteredOnlyLoadsSectionViewModel,
+ *   SummaryLogStatusResponse,
+ *   ValidationResponse
+ * } from './types.js'
  */
+
+const SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE = Object.freeze({
+  [PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY]: Object.freeze({
+    [WASTE_RECORD_TYPE.RECEIVED]:
+      'registeredOnly.sectionReference.reprocessor.received',
+    [WASTE_RECORD_TYPE.SENT_ON]:
+      'registeredOnly.sectionReference.reprocessor.sentOn'
+  }),
+  [PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY]: Object.freeze({
+    [WASTE_RECORD_TYPE.RECEIVED]:
+      'registeredOnly.sectionReference.exporter.received',
+    [WASTE_RECORD_TYPE.EXPORTED]:
+      'registeredOnly.sectionReference.exporter.exported',
+    [WASTE_RECORD_TYPE.SENT_ON]:
+      'registeredOnly.sectionReference.exporter.sentOn'
+  })
+})
+
+const WASTE_RECORD_TYPE_HEADING_KEY = Object.freeze({
+  [WASTE_RECORD_TYPE.RECEIVED]: 'registeredOnly.sectionHeading.received',
+  [WASTE_RECORD_TYPE.EXPORTED]: 'registeredOnly.sectionHeading.exported',
+  [WASTE_RECORD_TYPE.PROCESSED]: 'registeredOnly.sectionHeading.processed',
+  [WASTE_RECORD_TYPE.SENT_ON]: 'registeredOnly.sectionHeading.sentOn'
+})
+
+const WASTE_RECORD_TYPE_ORDER = Object.freeze({
+  [WASTE_RECORD_TYPE.RECEIVED]: 1,
+  [WASTE_RECORD_TYPE.PROCESSED]: 2,
+  [WASTE_RECORD_TYPE.EXPORTED]: 3,
+  [WASTE_RECORD_TYPE.SENT_ON]: 4
+})
 
 /** Waste record section number to display in UI copy, mapped by processing type */
 const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
@@ -62,18 +105,11 @@ const NO_ROWS = { count: 0, rowIds: [] }
 /**
  * Builds view model for a single load category (added or adjusted)
  * @param {RawLoadCategory} [category] - Category data from backend (e.g. loads.added)
- * @param {object} [options]
- * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {LoadCategoryViewModel}
  */
-const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
+const buildCategoryViewModel = (category) => {
   const included = category?.included ?? NO_ROWS
   const excluded = category?.excluded ?? NO_ROWS
-
-  if (registeredOnly) {
-    const valid = category?.valid ?? NO_ROWS
-    return { included: valid, excluded, total: valid.count }
-  }
 
   return {
     included,
@@ -86,16 +122,68 @@ const buildCategoryViewModel = (category, { registeredOnly } = {}) => {
  * Transforms raw loads data from backend into a view model
  * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
  * @param {RawLoads} [loads] - Raw loads data from backend API
- * @param {object} [options]
- * @param {boolean} [options.registeredOnly] - When true, falls back to valid count
  * @returns {LoadsViewModel}
  */
-export const buildLoadsViewModel = (loads, { registeredOnly } = {}) => {
+export const buildLoadsViewModel = (loads) => {
   return {
-    added: buildCategoryViewModel(loads?.added, { registeredOnly }),
-    adjusted: buildCategoryViewModel(loads?.adjusted, { registeredOnly })
+    added: buildCategoryViewModel(loads?.added),
+    adjusted: buildCategoryViewModel(loads?.adjusted)
   }
 }
+
+/**
+ * @param {ProcessingType} processingType
+ * @param {WasteRecordType} wasteRecordType
+ * @returns {string|undefined}
+ */
+const getSectionReferenceKey = (processingType, wasteRecordType) =>
+  SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE[processingType]?.[
+    wasteRecordType
+  ]
+
+/**
+ * @param {ProcessingType} processingType
+ * @param {WasteRecordType} wasteRecordType
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+const getSectionReference = (processingType, wasteRecordType, localise) => {
+  const key = getSectionReferenceKey(processingType, wasteRecordType)
+
+  return localise(`summary-log:${key}`)
+}
+
+/**
+ * Transforms raw loadsByWasteRecordType into view model sections
+ * @param {RawLoadsByWasteRecordType} loadsByWasteRecordType
+ * @param {ProcessingType} processingType
+ * @param {(key: string) => string} localise
+ * @returns {RegisteredOnlyLoadsSectionViewModel[]}
+ */
+export const buildLoadsByWasteRecordTypeViewModel = (
+  loadsByWasteRecordType,
+  processingType,
+  localise
+) =>
+  loadsByWasteRecordType
+    .filter(({ wasteRecordType }) =>
+      getSectionReferenceKey(processingType, wasteRecordType)
+    )
+    .toSorted(
+      (a, b) =>
+        WASTE_RECORD_TYPE_ORDER[a.wasteRecordType] -
+        WASTE_RECORD_TYPE_ORDER[b.wasteRecordType]
+    )
+    .map(({ wasteRecordType, added, adjusted }) => ({
+      headingKey: WASTE_RECORD_TYPE_HEADING_KEY[wasteRecordType],
+      sectionReference: getSectionReference(
+        processingType,
+        wasteRecordType,
+        localise
+      ),
+      added: { count: added.valid.count, rowIds: added.valid.rowIds },
+      adjusted: { count: adjusted.valid.count, rowIds: adjusted.valid.rowIds }
+    }))
 
 /**
  * Gets view data for progress page (processing or error states)
@@ -155,15 +243,22 @@ const getStatusData = async (
     })
   }
 
-  const { status, validation, accreditationNumber, loads, processingType } =
-    data
-
-  return {
-    status,
-    validation,
+  const {
     accreditationNumber,
     loads,
-    processingType
+    loadsByWasteRecordType,
+    processingType,
+    status,
+    validation
+  } = data
+
+  return {
+    accreditationNumber,
+    loads,
+    loadsByWasteRecordType,
+    processingType,
+    status,
+    validation
   }
 }
 
@@ -173,6 +268,7 @@ const getStatusData = async (
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {object} context - View context
  * @param {RawLoads} context.loads - Load statistics for the summary log
+ * @param {RawLoadsByWasteRecordType} [context.loadsByWasteRecordType] - Per-waste-record-type load breakdowns
  * @param {string} context.organisationId - Organisation ID
  * @param {string} context.registrationId - Registration ID
  * @param {string} context.summaryLogId - Summary log ID
@@ -182,10 +278,30 @@ const getStatusData = async (
 const renderCheckView = (
   h,
   localise,
-  { loads, organisationId, registrationId, summaryLogId, processingType }
+  {
+    loads,
+    loadsByWasteRecordType,
+    organisationId,
+    registrationId,
+    summaryLogId,
+    processingType
+  }
 ) => {
-  const registeredOnly = REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
-  const loadsViewModel = buildLoadsViewModel(loads, { registeredOnly })
+  if (REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)) {
+    return h.view('summary-log/check-registered-only', {
+      pageTitle: localise('summary-log:checkPageTitle'),
+      organisationId,
+      registrationId,
+      summaryLogId,
+      sections: buildLoadsByWasteRecordTypeViewModel(
+        loadsByWasteRecordType,
+        processingType,
+        localise
+      )
+    })
+  }
+
+  const loadsViewModel = buildLoadsViewModel(loads)
   const sectionNumber = getWasteRecordSectionNumber(processingType)
 
   return h.view(CHECK_VIEW_NAME, {
@@ -364,6 +480,7 @@ const viewResolvers = {
  * @param {ValidationResponse} [options.validation] - Validation object from backend
  * @param {string} [options.accreditationNumber] - Accreditation number for submitted logs
  * @param {RawLoads} [options.loads] - Loads data with row IDs for validated summary logs
+ * @param {RawLoadsByWasteRecordType} [options.loadsByWasteRecordType] - Per-waste-record-type load breakdowns
  * @param {string} options.organisationId - Organisation ID
  * @param {string} options.registrationId - Registration ID
  * @param {string} options.summaryLogId - Summary log ID
@@ -472,14 +589,20 @@ export const summaryLogUploadProgressController = {
 
     const session = request.auth.credentials
 
-    const { status, validation, accreditationNumber, loads, processingType } =
-      await getStatusData(
-        request,
-        organisationId,
-        registrationId,
-        summaryLogId,
-        session.idToken
-      )
+    const {
+      accreditationNumber,
+      loads,
+      loadsByWasteRecordType,
+      processingType,
+      status,
+      validation
+    } = await getStatusData(
+      request,
+      organisationId,
+      registrationId,
+      summaryLogId,
+      session.idToken
+    )
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
@@ -509,6 +632,7 @@ export const summaryLogUploadProgressController = {
       validation,
       accreditationNumber,
       loads,
+      loadsByWasteRecordType,
       processingType,
       organisationId,
       registrationId,

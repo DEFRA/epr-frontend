@@ -1,5 +1,6 @@
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
+ * @import { WasteRecordType } from '#domain/waste-records/model.js'
  */
 
 /**
@@ -48,6 +49,12 @@
 
 /**
  * @typedef {{
+ *   valid: LoadRows
+ * }} RawLoadValidOnly
+ */
+
+/**
+ * @typedef {{
  *   added: RawLoadCategory,
  *   adjusted: RawLoadCategory
  *   unchanged: RawLoadCategory,
@@ -56,8 +63,32 @@
 
 /**
  * @typedef {{
+ *   wasteRecordType: WasteRecordType,
+ *   sheetName: string,
+ *   added: RawLoadValidOnly,
+ *   unchanged: RawLoadValidOnly,
+ *   adjusted: RawLoadValidOnly
+ * }} RawLoadsByWasteRecordTypeEntry
+ */
+
+/**
+ * @typedef {RawLoadsByWasteRecordTypeEntry[]} RawLoadsByWasteRecordType
+ */
+
+/**
+ * @typedef {{
+ *   headingKey: string,
+ *   sectionReference: string,
+ *   added: { count: number, rowIds: string[] },
+ *   adjusted: { count: number, rowIds: string[] }
+ * }} RegisteredOnlyLoadsSectionViewModel
+ */
+
+/**
+ * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
+ *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,
