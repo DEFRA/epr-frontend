@@ -3,6 +3,7 @@ import { createController } from './create-controller.js'
 import { createdController } from './created-controller.js'
 import { detailController } from './detail-controller.js'
 import { listController } from './list-controller.js'
+import { submittedController } from './submitted-controller.js'
 import {
   supportingInformationGetController,
   supportingInformationPostController
@@ -60,6 +61,11 @@ export const reports = {
           ...createdController,
           method: 'GET',
           path: `${periodPath}/created`
+        },
+        {
+          ...submittedController,
+          method: 'GET',
+          path: `${periodPath}/submitted`
         }
       ])
     }
