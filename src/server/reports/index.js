@@ -1,5 +1,6 @@
 import { checkGetController, checkPostController } from './check-controller.js'
 import { createController } from './create-controller.js'
+import { createdController } from './created-controller.js'
 import {
   deleteGetController,
   deletePostController
@@ -58,6 +59,11 @@ export const reports = {
           ...checkPostController,
           method: 'POST',
           path: `${periodPath}/check-your-answers`
+        },
+        {
+          ...createdController,
+          method: 'GET',
+          path: `${periodPath}/created`
         },
         {
           ...deleteGetController,

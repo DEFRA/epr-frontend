@@ -531,7 +531,7 @@ describe('#checkController', () => {
       })
 
       describe('when Create report is clicked', () => {
-        it('should advance status and redirect to list page', async ({
+        it('should advance status and redirect to created page', async ({
           server
         }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -548,7 +548,7 @@ describe('#checkController', () => {
 
           expect(statusCode).toBe(statusCodes.found)
           expect(headers.location).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports`
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/created`
           )
         })
 

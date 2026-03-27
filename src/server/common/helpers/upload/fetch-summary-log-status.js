@@ -1,3 +1,4 @@
+import { summaryLogStatusResponseSchema } from '#domain/summary-logs/loads-schema.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
 
 /**
@@ -13,22 +14,19 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} options.idToken - JWT ID token for authorization
  * @returns {Promise<SummaryLogStatusResponse>}
  */
-async function fetchSummaryLogStatus(
+const fetchSummaryLogStatus = async (
   organisationId,
   registrationId,
   summaryLogId,
-  options = {}
-) {
-  const { idToken } = options
+  { idToken } = {}
+) => {
+  const data = await fetchJsonFromBackend(
+    `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,
+    { method: 'GET', headers: { Authorization: `Bearer ${idToken}` } }
+  )
 
-  const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-
-  return fetchJsonFromBackend(path, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${idToken}`
-    }
-  })
+  return summaryLogStatusResponseSchema.validate(data, { stripUnknown: true })
+    .value
 }
 
 export { fetchSummaryLogStatus }

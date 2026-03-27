@@ -1,19 +1,24 @@
 import { config } from '#config/config.js'
+import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { describe, expect } from 'vitest'
-
-import { test } from '#vite/fixtures/server.js'
-
+import { afterAll, beforeAll, describe, expect } from 'vitest'
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
-const backendUrl = config.get('eprBackendUrl')
-
 describe(fetchSummaryLogStatus, () => {
+  const backendUrl = 'http://fake-epr-backend'
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const summaryLogId = 'log-789'
 
-  test('returns summary log status when backend responds successfully', async ({
+  beforeAll(() => {
+    config.set('eprBackendUrl', backendUrl)
+  })
+
+  afterAll(() => {
+    config.reset('eprBackendUrl')
+  })
+
+  it('should return the summary log status when the backend responds successfully', async ({
     msw
   }) => {
     const mockResponse = {
@@ -46,7 +51,63 @@ describe(fetchSummaryLogStatus, () => {
     expect(result).toStrictEqual(mockResponse)
   })
 
-  test('throws Boom notFound error when backend returns 404', async ({
+  it('should return loadsByWasteRecordType when present in the response', async ({
+    msw
+  }) => {
+    const loadCategory = { count: 1, rowIds: ['row-1'] }
+    const loadValidity = {
+      valid: loadCategory
+    }
+    const loadsByWasteRecordType = [
+      {
+        wasteRecordType: 'received',
+        sheetName: 'Sheet1',
+        added: loadValidity,
+        unchanged: loadValidity,
+        adjusted: loadValidity
+      }
+    ]
+
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        () => HttpResponse.json({ status: 'validated', loadsByWasteRecordType })
+      )
+    )
+
+    const result = await fetchSummaryLogStatus(
+      organisationId,
+      registrationId,
+      summaryLogId,
+      { idToken: 'test-id-token' }
+    )
+
+    expect(result.loadsByWasteRecordType).toStrictEqual(loadsByWasteRecordType)
+  })
+
+  it('should strip unknown fields from the response', async ({ msw }) => {
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        () =>
+          HttpResponse.json({
+            status: 'validated',
+            unknownField: 'should be stripped'
+          })
+      )
+    )
+
+    const result = await fetchSummaryLogStatus(
+      organisationId,
+      registrationId,
+      summaryLogId,
+      { idToken: 'test-id-token' }
+    )
+
+    expect(result).not.toHaveProperty('unknownField')
+  })
+
+  it('should throw a Boom notFound error when the backend returns 404', async ({
     msw
   }) => {
     msw.use(
@@ -66,7 +127,7 @@ describe(fetchSummaryLogStatus, () => {
     })
   })
 
-  test('throws Boom error when backend returns other error status', async ({
+  it('should throw a Boom error when the backend returns a non-404 error status', async ({
     msw
   }) => {
     msw.use(
