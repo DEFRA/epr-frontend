@@ -47,6 +47,14 @@ describe('#formatWholeNumberTonnage', () => {
     expect(formatWholeNumberTonnage(0)).toBe('0')
   })
 
+  test('format non zero numbers', () => {
+    expect(formatWholeNumberTonnage(100)).toBe('100')
+  })
+
+  test('formats 4 digit numbers with comma', () => {
+    expect(formatWholeNumberTonnage(1333)).toBe('1,333')
+  })
+
   test('throws for a decimal value', () => {
     expect(() => formatWholeNumberTonnage(1234.9)).toThrow(TypeError)
   })
