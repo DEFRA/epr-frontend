@@ -42,6 +42,7 @@ export const fetchJson = async (url, options) => {
     if (response.headers.get('content-type')?.includes('application/json')) {
       return await response.json()
     }
+    return undefined
   } catch (error) {
     if (error.isBoom) {
       throw error
