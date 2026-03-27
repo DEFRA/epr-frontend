@@ -124,6 +124,22 @@ describe(fetchJson, () => {
     })
   })
 
+  it('should return undefined when response has no JSON content-type', async ({
+    msw
+  }) => {
+    msw.use(
+      http.delete('https://api.example.com/resource', () => {
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
+
+    const result = await fetchJson('https://api.example.com/resource', {
+      method: 'DELETE'
+    })
+
+    expect(result).toBeUndefined()
+  })
+
   it('should throw Boom internal error when fetch throws network error', async ({
     msw
   }) => {

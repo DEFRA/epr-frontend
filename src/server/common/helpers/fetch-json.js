@@ -6,10 +6,11 @@ import { getTracingHeaderName } from './request-tracing.js'
 /** @import {RequestInit} from 'undici' */
 
 /**
- * Fetch JSON from a given url
+ * Fetch from a given url, returning parsed JSON if the response has a JSON
+ * content-type, or undefined for responses with no body (e.g. 204 No Content).
  * @param {string} url
  * @param {RequestInit} [options] - Fetch API options (method, headers, body, etc.)
- * @returns {Promise<object>} The parsed JSON response or throws a Boom error
+ * @returns {Promise<object | undefined>} The parsed JSON response, or undefined
  */
 export const fetchJson = async (url, options) => {
   const completeOptions = {
@@ -38,7 +39,10 @@ export const fetchJson = async (url, options) => {
       throw error
     }
 
-    return await response.json()
+    if (response.headers.get('content-type')?.includes('application/json')) {
+      return await response.json()
+    }
+    return undefined
   } catch (error) {
     if (error.isBoom) {
       throw error
