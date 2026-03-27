@@ -1,21 +1,8 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { isSessionMatch } from './helpers/is-session-match.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-
-/**
- * @param {Record<string, unknown> | undefined} sessionData
- * @param {{ year: number, cadence: string, period: number }} duration
- * @returns {boolean}
- */
-function isSessionMatch(sessionData, duration) {
-  return (
-    !!sessionData &&
-    sessionData.year === duration.year &&
-    sessionData.cadence === duration.cadence &&
-    sessionData.period === duration.period
-  )
-}
 
 /**
  * @satisfies {Partial<ServerRoute>}
