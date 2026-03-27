@@ -23,6 +23,10 @@ export function getStatusLabel(status, localise) {
  * @returns {string}
  */
 export function getActionLabel(status, localise) {
+  if (status === SUBMISSION_STATUS.READY_TO_SUBMIT) {
+    return localise('reports:actionReviewAndSubmit')
+  }
+
   if (status === SUBMISSION_STATUS.IN_PROGRESS) {
     return localise('reports:actionContinue')
   }
