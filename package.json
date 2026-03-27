@@ -145,7 +145,6 @@
     "webpack-cli": "7.0.2"
   },
   "overrides": {
-    "@isaacs/brace-expansion": "5.0.1",
     "brace-expansion": "5.0.5",
     "eslint-plugin-import": {
       "eslint": "$eslint"
