@@ -87,7 +87,8 @@ export const checkGetController = {
         toExporters: wasteSent.tonnageSentToExporter,
         toOtherSites: wasteSent.tonnageSentToAnotherSite,
         destinationRows: buildDestinationRows(wasteSent.finalDestinations)
-      }
+      },
+      prn: reportDetail.prn
     }
 
     return h.view('reports/check-your-answers', viewData)

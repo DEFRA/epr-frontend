@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import {
+  formatTonnage,
+  formatWholeNumberTonnage
+} from '#config/nunjucks/filters/format-tonnage.js'
 
 describe('#formatTonnage', () => {
   describe('with defaults', () => {
@@ -32,5 +35,39 @@ describe('#formatTonnage', () => {
     test('formats with provided locale', () => {
       expect(formatTonnage(1234.56, 'de-DE')).toBe('1.234,56')
     })
+  })
+})
+
+describe('#formatWholeNumberTonnage', () => {
+  test('formats whole number with thousand separator and no decimals', () => {
+    expect(formatWholeNumberTonnage(1000)).toBe('1,000')
+  })
+
+  test('formats zero correctly', () => {
+    expect(formatWholeNumberTonnage(0)).toBe('0')
+  })
+
+  test('format non zero numbers', () => {
+    expect(formatWholeNumberTonnage(100)).toBe('100')
+  })
+
+  test('formats 4 digit numbers with comma', () => {
+    expect(formatWholeNumberTonnage(1333)).toBe('1,333')
+  })
+
+  test('throws for a decimal value', () => {
+    expect(() => formatWholeNumberTonnage(1234.9)).toThrow(TypeError)
+  })
+
+  test('throws for null', () => {
+    expect(() => formatWholeNumberTonnage(null)).toThrow(TypeError)
+  })
+
+  test('throws for undefined', () => {
+    expect(() => formatWholeNumberTonnage(undefined)).toThrow(TypeError)
+  })
+
+  test('throws for negative number', () => {
+    expect(() => formatWholeNumberTonnage(-1)).toThrow(TypeError)
   })
 })
