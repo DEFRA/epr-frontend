@@ -148,6 +148,10 @@
         {{ govukButton({
           text: createButtonText
         }) }}
+
+        <p class="govuk-body">
+          <a href="{{ deleteUrl }}" class="govuk-link">{{ localise("reports:deleteAndStartAgainLink") }}</a>
+        </p>
       </form>
 
     </div>

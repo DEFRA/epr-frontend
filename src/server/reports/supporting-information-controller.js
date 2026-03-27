@@ -74,6 +74,9 @@ async function buildViewData(
     backUrl: request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
     ),
+    deleteUrl: request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/delete`
+    ),
     maxLength: MAX_SUPPORTING_INFO_LENGTH,
     value: options.value ?? reportDetail.supportingInformation ?? '',
     errors: options.errors ?? null,

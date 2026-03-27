@@ -69,6 +69,7 @@ export const checkGetController = {
       ),
       version: reportDetail.version,
       changeText: localise('reports:supportingInformationChange'),
+      deleteUrl: request.localiseUrl(`${basePath}/delete`),
       wasteReceived: {
         totalTonnage: recyclingActivity.totalTonnageReceived,
         supplierRows: buildSupplierRows(recyclingActivity.suppliers)
