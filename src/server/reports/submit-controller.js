@@ -34,6 +34,26 @@ function getCreationDetails(statusHistory, localise) {
 }
 
 /**
+ * @param {object} exportActivity
+ * @returns {object}
+ */
+function buildWasteExportedViewData(exportActivity) {
+  return {
+    totalTonnage: exportActivity.totalTonnageReceivedForExporting,
+    overseasSiteDetailRows: buildOverseasSiteDetailRows(
+      exportActivity.overseasSites
+    ),
+    tonnageReceivedNotExported: exportActivity.tonnageReceivedNotExported,
+    tonnageRefusedOrStopped:
+      (exportActivity.tonnageRefusedAtRecepientDestination ?? 0) +
+      (exportActivity.tonnageStoppedDuringExport ?? 0),
+    tonnageRefused: exportActivity.tonnageRefusedAtRecepientDestination ?? 0,
+    tonnageStopped: exportActivity.tonnageStoppedDuringExport ?? 0,
+    tonnageRepatriated: exportActivity.tonnageRepatriated ?? 0
+  }
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const submitGetController = {
@@ -105,21 +125,7 @@ export const submitGetController = {
 
       // Waste exported (exporters only)
       wasteExported: exportActivity
-        ? {
-            totalTonnage: exportActivity.totalTonnageReceivedForExporting,
-            overseasSiteDetailRows: buildOverseasSiteDetailRows(
-              exportActivity.overseasSites
-            ),
-            tonnageReceivedNotExported:
-              exportActivity.tonnageReceivedNotExported,
-            tonnageRefusedOrStopped:
-              (exportActivity.tonnageRefusedAtRecepientDestination ?? 0) +
-              (exportActivity.tonnageStoppedDuringExport ?? 0),
-            tonnageRefused:
-              exportActivity.tonnageRefusedAtRecepientDestination ?? 0,
-            tonnageStopped: exportActivity.tonnageStoppedDuringExport ?? 0,
-            tonnageRepatriated: exportActivity.tonnageRepatriated ?? 0
-          }
+        ? buildWasteExportedViewData(exportActivity)
         : null,
 
       // Waste sent on
