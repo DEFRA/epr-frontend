@@ -49,6 +49,20 @@ const accreditedRegistration = {
   }
 }
 
+const accreditedExporter = {
+  organisationData: { id: 'org-123' },
+  registration: {
+    id: 'reg-001',
+    material: 'plastic',
+    wasteProcessingType: 'exporter',
+    registrationNumber: 'REG001234'
+  },
+  accreditation: {
+    id: 'acc-002',
+    status: 'approved'
+  }
+}
+
 const registeredOnlyExporter = {
   organisationData: { id: 'org-456' },
   registration: {
@@ -412,6 +426,29 @@ describe('#listReportsController', () => {
         expect(link?.textContent).toContain('Continue')
         expect(link?.getAttribute('href')).toBe(
           '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/supporting-information'
+        )
+      })
+
+      it('should link Continue to prn-summary for accredited exporter', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporter
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = body.querySelector('.govuk-table a.govuk-link')
+
+        expect(link?.getAttribute('href')).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/prn-summary'
         )
       })
 
