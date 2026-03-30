@@ -74,7 +74,7 @@ const reportDetail = {
     finalDestinations: []
   },
   prn: {
-    tonnageIssued: 91,
+    issuedTonnage: 91,
     totalRevenue: 1576.12,
     averagePricePerTonne: 17.32,
     freeTonnage: null

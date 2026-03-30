@@ -94,7 +94,7 @@ async function buildViewData(
     deleteUrl: request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/delete`
     ),
-    tonnageIssued: reportDetail.prn.tonnageIssued,
+    tonnageIssued: reportDetail.prn.issuedTonnage,
     value: options.value ?? reportDetail.prn.freeTonnage ?? '',
     errors: options.errors ?? null,
     errorSummary: options.errorSummary ?? null
@@ -185,7 +185,7 @@ export const freePernPostController = {
       session.idToken
     )
 
-    const tonnageIssued = reportDetail.prn.tonnageIssued
+    const tonnageIssued = reportDetail.prn.issuedTonnage
 
     if (freePernTonnage > tonnageIssued) {
       const { t: localise } = request

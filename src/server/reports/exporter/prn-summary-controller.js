@@ -89,7 +89,7 @@ async function buildViewData(
     caption: localise('reports:prnSummaryCaption'),
     heading: localise('reports:prnSummaryHeading', { material, periodLabel }),
     tonnageLabel: localise('reports:prnSummaryTonnageLabel'),
-    tonnageIssued: reportDetail.prn.tonnageIssued,
+    tonnageIssued: reportDetail.prn.issuedTonnage,
     revenueLabel: localise('reports:prnSummaryRevenueLabel'),
     backUrl: request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`

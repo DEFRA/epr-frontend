@@ -82,7 +82,7 @@ const reportDetail = {
     finalDestinations: []
   },
   prn: {
-    tonnageIssued: 91,
+    issuedTonnage: 91,
     totalRevenue: null,
     averagePricePerTonne: null
   }
