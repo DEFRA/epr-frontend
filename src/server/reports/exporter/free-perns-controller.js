@@ -42,19 +42,11 @@ function pageFields({ periodLabel, periodPath, reportDetail }) {
 
 /**
  * @param {Request} request
- * @param {object} params
  * @param {object} [options]
  */
-async function buildViewData(request, params, options = {}) {
-  const { organisationId, registrationId, year, cadence, period } = params
-
+async function buildViewData(request, options = {}) {
   return buildExporterViewData(
     request,
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
     (ctx) => {
       const fields = pageFields(ctx)(request.t)
       fields.backUrl = request.localiseUrl(fields.backUrl)
@@ -74,7 +66,7 @@ export const freePernGetController = {
     }
   },
   async handler(request, h) {
-    const viewData = await buildViewData(request, request.params)
+    const viewData = await buildViewData(request)
     return h.view(VIEW_PATH, viewData)
   }
 }
@@ -90,7 +82,7 @@ export const freePernPostController = {
       async failAction(request, h, error) {
         const { errors, errorSummary } = buildValidationErrors(request, error)
 
-        const viewData = await buildViewData(request, request.params, {
+        const viewData = await buildViewData(request, {
           value: request.payload.freePernTonnage,
           errors,
           errorSummary
@@ -121,7 +113,7 @@ export const freePernPostController = {
       const { t: localise } = request
       const message = localise('reports:freePernErrorExceedsTotal')
 
-      const viewData = await buildViewData(request, request.params, {
+      const viewData = await buildViewData(request, {
         value: freePernTonnage,
         errors: {
           freePernTonnage: { text: message }

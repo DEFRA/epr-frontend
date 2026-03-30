@@ -45,19 +45,11 @@ function pageFields({ material, periodLabel, periodPath, reportDetail }) {
 
 /**
  * @param {Request} request
- * @param {object} params
  * @param {object} [options]
  */
-async function buildViewData(request, params, options = {}) {
-  const { organisationId, registrationId, year, cadence, period } = params
-
+async function buildViewData(request, options = {}) {
   return buildExporterViewData(
     request,
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
     (ctx) => {
       const fields = pageFields(ctx)(request.t)
       fields.backUrl = request.localiseUrl(fields.backUrl)
@@ -77,7 +69,7 @@ export const prnSummaryGetController = {
     }
   },
   async handler(request, h) {
-    const viewData = await buildViewData(request, request.params)
+    const viewData = await buildViewData(request)
     return h.view(VIEW_PATH, viewData)
   }
 }
@@ -93,7 +85,7 @@ export const prnSummaryPostController = {
       async failAction(request, h, error) {
         const { errors, errorSummary } = buildValidationErrors(request, error)
 
-        const viewData = await buildViewData(request, request.params, {
+        const viewData = await buildViewData(request, {
           value: request.payload.prnRevenue,
           errors,
           errorSummary

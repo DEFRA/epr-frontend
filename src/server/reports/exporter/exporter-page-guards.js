@@ -69,11 +69,6 @@ export async function fetchGuardedExporterData(
  * by prn-summary and free-perns pages. Page-specific fields are merged from
  * the callback return value.
  * @param {Request} request
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
  * @param {(ctx: { registration: object, reportDetail: object, material: string, periodLabel: string, periodPath: string }) => object} buildPageFields
  * @param {object} [options]
  * @param {unknown} [options.value]
@@ -83,14 +78,11 @@ export async function fetchGuardedExporterData(
  */
 export async function buildExporterViewData(
   request,
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
   buildPageFields,
   options = {}
 ) {
+  const { organisationId, registrationId, year, cadence, period } =
+    request.params
   const { t: localise } = request
 
   const { registration, reportDetail } = await fetchGuardedExporterData(
