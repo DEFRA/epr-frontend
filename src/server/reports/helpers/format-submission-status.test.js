@@ -41,9 +41,9 @@ describe('#getActionLabel', () => {
     expect(getActionLabel('due', localise)).toBe('reports:actionSelect')
   })
 
-  it('returns "Select" action for "ready_to_submit" status', () => {
+  it('returns "Review and submit" action for "ready_to_submit" status', () => {
     expect(getActionLabel('ready_to_submit', localise)).toBe(
-      'reports:actionSelect'
+      'reports:actionReviewAndSubmit'
     )
   })
 
