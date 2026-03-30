@@ -1,22 +1,22 @@
 import Joi from 'joi'
 
-import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { formatPeriodLabel } from '../helpers/format-period-label.js'
 import { periodParamsSchema } from '../helpers/period-params-schema.js'
 import { updateReport } from '../helpers/update-report.js'
 import {
-  fetchGuardedExporterData,
+  buildExporterViewData,
   buildValidationErrors,
   getRedirectUrl
 } from './exporter-page-guards.js'
+
+const FORMAT_ERROR = 'reports:prnSummaryErrorFormat'
 
 const payloadSchema = Joi.object({
   prnRevenue: Joi.number().min(0).required().messages({
     'any.required': 'reports:prnSummaryErrorRequired',
     'number.base': 'reports:prnSummaryErrorRequired',
-    'number.min': 'reports:prnSummaryErrorFormat',
-    'number.unsafe': 'reports:prnSummaryErrorFormat',
-    'number.infinity': 'reports:prnSummaryErrorFormat'
+    'number.min': FORMAT_ERROR,
+    'number.unsafe': FORMAT_ERROR,
+    'number.infinity': FORMAT_ERROR
   }),
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
@@ -25,42 +25,10 @@ const payloadSchema = Joi.object({
 const VIEW_PATH = 'reports/exporter/prn-summary'
 
 /**
- * @param {Request} request
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
- * @param {object} [options]
- * @param {string} [options.value] - Pre-fill value for revenue input
- * @param {object} [options.errors] - Validation errors
- * @param {object} [options.errorSummary] - Error summary for govukErrorSummary
+ * @param {{ material: string, periodLabel: string, periodPath: string, reportDetail: object }} ctx
  */
-async function buildViewData(
-  request,
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  options = {}
-) {
-  const { t: localise } = request
-
-  const { registration, reportDetail } = await fetchGuardedExporterData(
-    request,
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period
-  )
-
-  const material = getDisplayMaterial(registration)
-  const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-  const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-
-  return {
+function pageFields({ material, periodLabel, periodPath, reportDetail }) {
+  return (localise) => ({
     pageTitle: localise('reports:prnSummaryPageTitle', {
       material,
       periodLabel
@@ -70,12 +38,33 @@ async function buildViewData(
     tonnageLabel: localise('reports:prnSummaryTonnageLabel'),
     tonnageIssued: reportDetail.prn.issuedTonnage,
     revenueLabel: localise('reports:prnSummaryRevenueLabel'),
-    backUrl: request.localiseUrl(periodPath),
-    deleteUrl: request.localiseUrl(`${periodPath}/delete`),
-    value: options.value ?? reportDetail.prn.totalRevenue ?? '',
-    errors: options.errors ?? null,
-    errorSummary: options.errorSummary ?? null
-  }
+    backUrl: periodPath,
+    defaultValue: reportDetail.prn.totalRevenue
+  })
+}
+
+/**
+ * @param {Request} request
+ * @param {object} params
+ * @param {object} [options]
+ */
+async function buildViewData(request, params, options = {}) {
+  const { organisationId, registrationId, year, cadence, period } = params
+
+  return buildExporterViewData(
+    request,
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period,
+    (ctx) => {
+      const fields = pageFields(ctx)(request.t)
+      fields.backUrl = request.localiseUrl(fields.backUrl)
+      return fields
+    },
+    options
+  )
 }
 
 /**
@@ -88,18 +77,7 @@ export const prnSummaryGetController = {
     }
   },
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
-
-    const viewData = await buildViewData(
-      request,
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period
-    )
-
+    const viewData = await buildViewData(request, request.params)
     return h.view(VIEW_PATH, viewData)
   }
 }
@@ -113,24 +91,13 @@ export const prnSummaryPostController = {
       params: periodParamsSchema,
       payload: payloadSchema,
       async failAction(request, h, error) {
-        const { organisationId, registrationId, year, cadence, period } =
-          request.params
-
         const { errors, errorSummary } = buildValidationErrors(request, error)
 
-        const viewData = await buildViewData(
-          request,
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          {
-            value: request.payload.prnRevenue,
-            errors,
-            errorSummary
-          }
-        )
+        const viewData = await buildViewData(request, request.params, {
+          value: request.payload.prnRevenue,
+          errors,
+          errorSummary
+        })
 
         return h.view(VIEW_PATH, viewData).takeover()
       }
