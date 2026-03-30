@@ -192,7 +192,12 @@ const accreditedReprocessorReportDetail = {
 
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
-  prn: { issuedTonnage: 75 }
+  prn: {
+    issuedTonnage: 75,
+    totalRevenue: 1576.12,
+    freeTonnage: 0,
+    averagePricePerTonne: 21.01
+  }
 }
 
 const organisationId = 'org-123'
@@ -618,6 +623,79 @@ describe('#checkController', () => {
           ).toBeDefined()
           expect(body.textContent).toContain('Total tonnage of PERNs issued')
           expect(body.textContent).toContain('75')
+        })
+
+        it('should display total revenue with Change link', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain('Total revenue of PERNs')
+          expect(body.textContent).toContain('£1,576.12')
+
+          const changeLinks = body.querySelectorAll(
+            '.govuk-summary-list a[href*="prn-summary"]'
+          )
+          expect(changeLinks.length).toBeGreaterThan(0)
+        })
+
+        it('should display free PERNs tonnage with Change link', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain(
+            'Total tonnage of PERNs issued for free'
+          )
+
+          const changeLinks = body.querySelectorAll(
+            '.govuk-summary-list a[href*="free-perns"]'
+          )
+          expect(changeLinks.length).toBeGreaterThan(0)
+        })
+
+        it('should display average price per tonne without Change link', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain('Average price per tonne')
+          expect(body.textContent).toContain('£21.01')
+        })
+
+        it('should display note about free PERNs exclusion from average', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          expect(result).toContain(
+            'not included in the average price per tonne calculation'
+          )
         })
       })
     })

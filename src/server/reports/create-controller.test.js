@@ -45,6 +45,20 @@ const reprocessorRegistration = {
   accreditation: undefined
 }
 
+const accreditedExporterRegistration = {
+  organisationData: { id: 'org-123' },
+  registration: {
+    id: 'reg-001',
+    material: 'plastic',
+    wasteProcessingType: 'exporter',
+    registrationNumber: 'REG001234'
+  },
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ER992415095748M'
+  }
+}
+
 const reportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -128,6 +142,81 @@ describe('#createReportController', () => {
       })
 
       it('should redirect to supporting information page', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: detailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
+        )
+      })
+    })
+
+    describe('for accredited exporter with monthly cadence', () => {
+      const monthlyDetailUrl =
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reportDetail,
+          cadence: 'monthly',
+          period: 1
+        })
+        vi.mocked(createReport).mockResolvedValue({
+          id: 'report-001',
+          status: 'in_progress'
+        })
+      })
+
+      it('should redirect to prn-summary instead of supporting-information', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, monthlyDetailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: monthlyDetailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/prn-summary'
+        )
+      })
+    })
+
+    describe('for accredited exporter with quarterly cadence', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        vi.mocked(createReport).mockResolvedValue({
+          id: 'report-001',
+          status: 'in_progress'
+        })
+      })
+
+      it('should redirect to supporting-information not prn-summary', async ({
         server
       }) => {
         const { cookie, crumb } = await getCsrfToken(server, detailUrl, {

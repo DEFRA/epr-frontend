@@ -1,25 +1,22 @@
+import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { CADENCE } from './constants.js'
-import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
-import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { updateReport } from './helpers/update-report.js'
-
-const MAX_SUPPORTING_INFO_LENGTH = 2000
+import { CADENCE } from '../constants.js'
+import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
+import { formatPeriodLabel } from '../helpers/format-period-label.js'
+import { periodParamsSchema } from '../helpers/period-params-schema.js'
+import { updateReport } from '../helpers/update-report.js'
 
 const payloadSchema = Joi.object({
-  supportingInformation: Joi.string()
-    .max(MAX_SUPPORTING_INFO_LENGTH)
-    .allow('')
-    .optional()
-    .default('')
-    .messages({
-      'string.max': 'reports:supportingInformationError'
-    }),
+  freePernTonnage: Joi.number().min(0).required().messages({
+    'any.required': 'reports:freePernErrorRequired',
+    'number.base': 'reports:freePernErrorRequired',
+    'number.min': 'reports:freePernErrorFormat',
+    'number.unsafe': 'reports:freePernErrorFormat'
+  }),
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
 })
@@ -32,7 +29,7 @@ const payloadSchema = Joi.object({
  * @param {string} cadence
  * @param {number} period
  * @param {object} [options]
- * @param {string} [options.value] - Pre-fill value for textarea
+ * @param {string} [options.value] - Pre-fill value for tonnage input
  * @param {object} [options.errors] - Validation errors
  * @param {object} [options.errorSummary] - Error summary for govukErrorSummary
  */
@@ -48,47 +45,57 @@ async function buildViewData(
   const session = request.auth.credentials
   const { t: localise } = request
 
-  const { registration, accreditation } =
-    await fetchRegistrationAndAccreditation(
+  const [{ registration, accreditation }, reportDetail] = await Promise.all([
+    fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
       session.idToken
+    ),
+    fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      session.idToken
     )
+  ])
 
-  const reportDetail = await fetchReportDetail(
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period,
-    session.idToken
-  )
+  if (
+    !accreditation ||
+    !isExporterRegistration(registration) ||
+    cadence !== CADENCE.MONTHLY
+  ) {
+    throw Boom.notFound()
+  }
+
+  if (!reportDetail.id || reportDetail.status !== 'in_progress') {
+    throw Boom.notFound()
+  }
+
+  if (!reportDetail.prn) {
+    throw Boom.badImplementation('PRN data missing for accredited report')
+  }
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-
-  const isAccreditedExporter =
-    accreditation &&
-    isExporterRegistration(registration) &&
-    cadence === CADENCE.MONTHLY
-
-  const backPage = isAccreditedExporter ? `${basePath}/free-perns` : basePath
-
   return {
-    pageTitle: localise('reports:supportingInformationPageTitle', {
+    pageTitle: localise('reports:freePernPageTitle', {
       material,
       periodLabel
     }),
-    caption: localise('reports:supportingInformationCaption'),
-    heading: localise('reports:supportingInformationHeading'),
-    backUrl: request.localiseUrl(backPage),
+    caption: localise('reports:freePernCaption'),
+    heading: localise('reports:freePernHeading', { periodLabel }),
+    hintText: localise('reports:freePernHint'),
+    backUrl: request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/prn-summary`
+    ),
     deleteUrl: request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/delete`
     ),
-    maxLength: MAX_SUPPORTING_INFO_LENGTH,
-    value: options.value ?? reportDetail.supportingInformation ?? '',
+    tonnageIssued: reportDetail.prn.tonnageIssued,
+    value: options.value ?? reportDetail.prn.freeTonnage ?? '',
     errors: options.errors ?? null,
     errorSummary: options.errorSummary ?? null
   }
@@ -97,7 +104,7 @@ async function buildViewData(
 /**
  * @satisfies {Partial<ServerRoute>}
  */
-export const supportingInformationGetController = {
+export const freePernGetController = {
   options: {
     validate: {
       params: periodParamsSchema
@@ -116,14 +123,14 @@ export const supportingInformationGetController = {
       period
     )
 
-    return h.view('reports/supporting-information', viewData)
+    return h.view('reports/exporter/free-perns', viewData)
   }
 }
 
 /**
  * @satisfies {Partial<ServerRoute>}
  */
-export const supportingInformationPostController = {
+export const freePernPostController = {
   options: {
     validate: {
       params: periodParamsSchema,
@@ -150,7 +157,7 @@ export const supportingInformationPostController = {
           cadence,
           period,
           {
-            value: request.payload.supportingInformation,
+            value: request.payload.freePernTonnage,
             errors,
             errorSummary: {
               titleText: request.t('common:errorSummaryTitle'),
@@ -159,15 +166,52 @@ export const supportingInformationPostController = {
           }
         )
 
-        return h.view('reports/supporting-information', viewData).takeover()
+        return h.view('reports/exporter/free-perns', viewData).takeover()
       }
     }
   },
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
-    const { supportingInformation, action } = request.payload
+    const { freePernTonnage, action } = request.payload
     const session = request.auth.credentials
+
+    const reportDetail = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      session.idToken
+    )
+
+    const tonnageIssued = reportDetail.prn.tonnageIssued
+
+    if (freePernTonnage > tonnageIssued) {
+      const { t: localise } = request
+      const message = localise('reports:freePernErrorExceedsTotal')
+
+      const viewData = await buildViewData(
+        request,
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        {
+          value: freePernTonnage,
+          errors: {
+            freePernTonnage: { text: message }
+          },
+          errorSummary: {
+            titleText: localise('common:errorSummaryTitle'),
+            errorList: [{ text: message, href: '#freePernTonnage' }]
+          }
+        }
+      )
+
+      return h.view('reports/exporter/free-perns', viewData)
+    }
 
     await updateReport(
       organisationId,
@@ -175,7 +219,7 @@ export const supportingInformationPostController = {
       year,
       cadence,
       period,
-      { supportingInformation },
+      { freePernTonnage },
       session.idToken
     )
 
@@ -184,7 +228,7 @@ export const supportingInformationPostController = {
     if (action === 'continue') {
       return h.redirect(
         request.localiseUrl(
-          `${basePath}/${year}/${cadence}/${period}/check-your-answers`
+          `${basePath}/${year}/${cadence}/${period}/supporting-information`
         )
       )
     }
