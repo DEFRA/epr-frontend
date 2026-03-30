@@ -38,10 +38,11 @@ function buildTableRows({
     const status = deriveSubmissionStatus(period.endDate, period.report)
     const statusLabel = getStatusLabel(status, localise)
 
-    const url =
-      status === SUBMISSION_STATUS.IN_PROGRESS
-        ? localiseUrl(`${periodPath}/supporting-information`)
-        : localiseUrl(periodPath)
+    const suffixByStatus = {
+      [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
+      [SUBMISSION_STATUS.IN_PROGRESS]: '/supporting-information'
+    }
+    const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
     const statusHtml = statusLabel
       ? `<strong class="govuk-tag">${escapeHtml(statusLabel)}</strong>`
       : ''
