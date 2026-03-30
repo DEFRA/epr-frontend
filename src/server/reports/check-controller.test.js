@@ -503,6 +503,30 @@ describe('#checkController', () => {
         })
       })
 
+      describe('for registered-only exporter', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            exporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
+        })
+
+        it('should not display PERNs section', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            queryByRole(body, 'heading', { name: /PERNs/, level: 3 })
+          ).toBeNull()
+        })
+      })
+
       describe('for reprocessor without supporting information', () => {
         beforeEach(() => {
           vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(

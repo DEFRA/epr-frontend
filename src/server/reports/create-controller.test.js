@@ -45,6 +45,17 @@ const reprocessorRegistration = {
   accreditation: undefined
 }
 
+const registeredOnlyExporterRegistration = {
+  organisationData: { id: 'org-123' },
+  registration: {
+    id: 'reg-001',
+    material: 'plastic',
+    wasteProcessingType: 'exporter',
+    registrationNumber: 'REG001234'
+  },
+  accreditation: undefined
+}
+
 const accreditedExporterRegistration = {
   organisationData: { id: 'org-123' },
   registration: {
@@ -219,6 +230,38 @@ describe('#createReportController', () => {
       it('should redirect to supporting-information not prn-summary', async ({
         server
       }) => {
+        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: detailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
+        )
+      })
+    })
+
+    describe('for registered-only exporter', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          registeredOnlyExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        vi.mocked(createReport).mockResolvedValue({
+          id: 'report-001',
+          status: 'in_progress'
+        })
+      })
+
+      it('should redirect to supporting-information', async ({ server }) => {
         const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
           auth: mockAuth
         })
