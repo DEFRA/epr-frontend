@@ -496,6 +496,27 @@ describe('#listReportsController', () => {
         expect(tags).toHaveLength(1)
         expect(tags[0]?.textContent?.trim()).toBe('Ready to submit')
       })
+
+      it('should display Review and submit link to submit page', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = body.querySelector('.govuk-table a.govuk-link')
+
+        expect(link).not.toBeNull()
+        expect(link?.textContent).toContain('Review and submit')
+        expect(link?.getAttribute('href')).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submit'
+        )
+      })
     })
 
     describe('for registered-only exporter (quarterly)', () => {

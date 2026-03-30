@@ -29,9 +29,10 @@ export const createController = {
         session.idToken
       )
     } catch (error) {
-      if (error.isBoom && error.output.statusCode === statusCodes.conflict) {
-        // Report already exists — proceed to supporting information
-      } else {
+      const isConflict =
+        error.isBoom && error.output.statusCode === statusCodes.conflict
+
+      if (!isConflict) {
         throw error
       }
     }

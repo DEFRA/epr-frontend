@@ -41,16 +41,16 @@ function buildTableRows({
     const status = deriveSubmissionStatus(period.endDate, period.report)
     const statusLabel = getStatusLabel(status, localise)
 
-    let url
-    if (status === SUBMISSION_STATUS.IN_PROGRESS) {
-      const resumePage =
-        isAccreditedExporter && cadence === CADENCE.MONTHLY
-          ? 'prn-summary'
-          : 'supporting-information'
-      url = localiseUrl(`${periodPath}/${resumePage}`)
-    } else {
-      url = localiseUrl(periodPath)
+    const inProgressSuffix =
+      isAccreditedExporter && cadence === CADENCE.MONTHLY
+        ? '/prn-summary'
+        : '/supporting-information'
+
+    const suffixByStatus = {
+      [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
+      [SUBMISSION_STATUS.IN_PROGRESS]: inProgressSuffix
     }
+    const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
     const statusHtml = statusLabel
       ? `<strong class="govuk-tag">${escapeHtml(statusLabel)}</strong>`
       : ''

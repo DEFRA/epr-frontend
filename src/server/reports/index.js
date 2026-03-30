@@ -15,6 +15,10 @@ import {
   prnSummaryPostController
 } from './exporter/prn-summary-controller.js'
 import { listController } from './list-controller.js'
+import {
+  submitGetController,
+  submitPostController
+} from './submit-controller.js'
 import { submittedController } from './submitted-controller.js'
 import {
   supportingInformationGetController,
@@ -88,6 +92,16 @@ export const reports = {
           ...checkPostController,
           method: 'POST',
           path: `${periodPath}/check-your-answers`
+        },
+        {
+          ...submitGetController,
+          method: 'GET',
+          path: `${periodPath}/submit`
+        },
+        {
+          ...submitPostController,
+          method: 'POST',
+          path: `${periodPath}/submit`
         },
         {
           ...createdController,
