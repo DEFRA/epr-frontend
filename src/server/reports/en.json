@@ -46,7 +46,7 @@
   "freePernErrorFormat": "Enter a value in digits, using a decimal point if needed",
   "freePernErrorRequired": "Enter the total tonnage of free PERNs, even if zero",
   "freePernHeading": "What is the total tonnage of PERNs you issued for free in {{periodLabel}}?",
-  "freePernHint": "For example, you may have issued PERNs to your own company for \u00a30.00.",
+  "freePernHint": "For example, you may have issued PERNs to your own company for £0.00.",
   "freePernPageTitle": "Free PERNs: {{material}}: {{periodLabel}}",
   "freePernSave": "Save and come back later",
   "heading": "Reports",
