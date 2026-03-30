@@ -1,14 +1,15 @@
-import Boom from '@hapi/boom'
 import Joi from 'joi'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { CADENCE } from '../constants.js'
 import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from '../helpers/format-period-label.js'
 import { periodParamsSchema } from '../helpers/period-params-schema.js'
 import { updateReport } from '../helpers/update-report.js'
+import {
+  fetchGuardedExporterData,
+  buildValidationErrors,
+  getRedirectUrl
+} from './exporter-page-guards.js'
 
 const payloadSchema = Joi.object({
   freePernTonnage: Joi.number().min(0).required().messages({
@@ -20,6 +21,8 @@ const payloadSchema = Joi.object({
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
 })
+
+const VIEW_PATH = 'reports/exporter/free-perns'
 
 /**
  * @param {Request} request
@@ -42,43 +45,20 @@ async function buildViewData(
   period,
   options = {}
 ) {
-  const session = request.auth.credentials
   const { t: localise } = request
 
-  const [{ registration, accreditation }, reportDetail] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    ),
-    fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      session.idToken
-    )
-  ])
-
-  if (
-    !accreditation ||
-    !isExporterRegistration(registration) ||
-    cadence !== CADENCE.MONTHLY
-  ) {
-    throw Boom.notFound()
-  }
-
-  if (!reportDetail.id || reportDetail.status !== 'in_progress') {
-    throw Boom.notFound()
-  }
-
-  if (!reportDetail.prn) {
-    throw Boom.badImplementation('PRN data missing for accredited report')
-  }
+  const { registration, reportDetail } = await fetchGuardedExporterData(
+    request,
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period
+  )
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
   return {
     pageTitle: localise('reports:freePernPageTitle', {
@@ -88,12 +68,8 @@ async function buildViewData(
     caption: localise('reports:freePernCaption'),
     heading: localise('reports:freePernHeading', { periodLabel }),
     hintText: localise('reports:freePernHint'),
-    backUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/prn-summary`
-    ),
-    deleteUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/delete`
-    ),
+    backUrl: request.localiseUrl(`${periodPath}/prn-summary`),
+    deleteUrl: request.localiseUrl(`${periodPath}/delete`),
     tonnageIssued: reportDetail.prn.issuedTonnage,
     value: options.value ?? reportDetail.prn.freeTonnage ?? '',
     errors: options.errors ?? null,
@@ -123,7 +99,7 @@ export const freePernGetController = {
       period
     )
 
-    return h.view('reports/exporter/free-perns', viewData)
+    return h.view(VIEW_PATH, viewData)
   }
 }
 
@@ -139,15 +115,7 @@ export const freePernPostController = {
         const { organisationId, registrationId, year, cadence, period } =
           request.params
 
-        const errors = {}
-        const errorList = []
-
-        for (const detail of error.details) {
-          const field = detail.path[0]
-          const message = request.t(detail.message)
-          errors[field] = { text: message }
-          errorList.push({ text: message, href: `#${field}` })
-        }
+        const { errors, errorSummary } = buildValidationErrors(request, error)
 
         const viewData = await buildViewData(
           request,
@@ -159,14 +127,11 @@ export const freePernPostController = {
           {
             value: request.payload.freePernTonnage,
             errors,
-            errorSummary: {
-              titleText: request.t('common:errorSummaryTitle'),
-              errorList
-            }
+            errorSummary
           }
         )
 
-        return h.view('reports/exporter/free-perns', viewData).takeover()
+        return h.view(VIEW_PATH, viewData).takeover()
       }
     }
   },
@@ -210,7 +175,7 @@ export const freePernPostController = {
         }
       )
 
-      return h.view('reports/exporter/free-perns', viewData)
+      return h.view(VIEW_PATH, viewData)
     }
 
     await updateReport(
@@ -223,17 +188,9 @@ export const freePernPostController = {
       session.idToken
     )
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-
-    if (action === 'continue') {
-      return h.redirect(
-        request.localiseUrl(
-          `${basePath}/${year}/${cadence}/${period}/supporting-information`
-        )
-      )
-    }
-
-    return h.redirect(request.localiseUrl(basePath))
+    return h.redirect(
+      getRedirectUrl(request, request.params, action, 'supporting-information')
+    )
   }
 }
 

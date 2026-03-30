@@ -1,14 +1,14 @@
-import Boom from '@hapi/boom'
 import Joi from 'joi'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { CADENCE } from '../constants.js'
-import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from '../helpers/format-period-label.js'
 import { periodParamsSchema } from '../helpers/period-params-schema.js'
 import { updateReport } from '../helpers/update-report.js'
+import {
+  fetchGuardedExporterData,
+  buildValidationErrors,
+  getRedirectUrl
+} from './exporter-page-guards.js'
 
 const payloadSchema = Joi.object({
   prnRevenue: Joi.number().min(0).required().messages({
@@ -21,6 +21,8 @@ const payloadSchema = Joi.object({
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
 })
+
+const VIEW_PATH = 'reports/exporter/prn-summary'
 
 /**
  * @param {Request} request
@@ -43,43 +45,20 @@ async function buildViewData(
   period,
   options = {}
 ) {
-  const session = request.auth.credentials
   const { t: localise } = request
 
-  const [{ registration, accreditation }, reportDetail] = await Promise.all([
-    fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    ),
-    fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      session.idToken
-    )
-  ])
-
-  if (
-    !accreditation ||
-    !isExporterRegistration(registration) ||
-    cadence !== CADENCE.MONTHLY
-  ) {
-    throw Boom.notFound()
-  }
-
-  if (!reportDetail.id || reportDetail.status !== 'in_progress') {
-    throw Boom.notFound()
-  }
-
-  if (!reportDetail.prn) {
-    throw Boom.badImplementation('PRN data missing for accredited report')
-  }
+  const { registration, reportDetail } = await fetchGuardedExporterData(
+    request,
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period
+  )
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
   return {
     pageTitle: localise('reports:prnSummaryPageTitle', {
@@ -91,12 +70,8 @@ async function buildViewData(
     tonnageLabel: localise('reports:prnSummaryTonnageLabel'),
     tonnageIssued: reportDetail.prn.issuedTonnage,
     revenueLabel: localise('reports:prnSummaryRevenueLabel'),
-    backUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-    ),
-    deleteUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/delete`
-    ),
+    backUrl: request.localiseUrl(periodPath),
+    deleteUrl: request.localiseUrl(`${periodPath}/delete`),
     value: options.value ?? reportDetail.prn.totalRevenue ?? '',
     errors: options.errors ?? null,
     errorSummary: options.errorSummary ?? null
@@ -125,7 +100,7 @@ export const prnSummaryGetController = {
       period
     )
 
-    return h.view('reports/exporter/prn-summary', viewData)
+    return h.view(VIEW_PATH, viewData)
   }
 }
 
@@ -141,15 +116,7 @@ export const prnSummaryPostController = {
         const { organisationId, registrationId, year, cadence, period } =
           request.params
 
-        const errors = {}
-        const errorList = []
-
-        for (const detail of error.details) {
-          const field = detail.path[0]
-          const message = request.t(detail.message)
-          errors[field] = { text: message }
-          errorList.push({ text: message, href: `#${field}` })
-        }
+        const { errors, errorSummary } = buildValidationErrors(request, error)
 
         const viewData = await buildViewData(
           request,
@@ -161,14 +128,11 @@ export const prnSummaryPostController = {
           {
             value: request.payload.prnRevenue,
             errors,
-            errorSummary: {
-              titleText: request.t('common:errorSummaryTitle'),
-              errorList
-            }
+            errorSummary
           }
         )
 
-        return h.view('reports/exporter/prn-summary', viewData).takeover()
+        return h.view(VIEW_PATH, viewData).takeover()
       }
     }
   },
@@ -178,29 +142,19 @@ export const prnSummaryPostController = {
     const { prnRevenue, action } = request.payload
     const session = request.auth.credentials
 
-    const fields = { prnRevenue }
-
     await updateReport(
       organisationId,
       registrationId,
       year,
       cadence,
       period,
-      fields,
+      { prnRevenue },
       session.idToken
     )
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-
-    if (action === 'continue') {
-      return h.redirect(
-        request.localiseUrl(
-          `${basePath}/${year}/${cadence}/${period}/free-perns`
-        )
-      )
-    }
-
-    return h.redirect(request.localiseUrl(basePath))
+    return h.redirect(
+      getRedirectUrl(request, request.params, action, 'free-perns')
+    )
   }
 }
 
