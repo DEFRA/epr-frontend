@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -11,6 +12,7 @@ import {
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
+import { formatTonnageOrDash } from './helpers/format-tonnage-or-dash.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
@@ -38,18 +40,31 @@ function getCreationDetails(statusHistory, localise) {
  * @returns {object}
  */
 function buildWasteExportedViewData(exportActivity) {
+  const totalTonnageReceivedForExporting =
+    exportActivity.totalTonnageReceivedForExporting
+
+  const overseasSiteDetailRows = buildOverseasSiteDetailRows(
+    exportActivity.overseasSites.map((overseasSite) => ({
+      ...overseasSite,
+      tonnageExported: formatTonnage(overseasSite.tonnageExported)
+    }))
+  )
+
+  const tonnageRefused = exportActivity.tonnageRefusedAtRecepientDestination
+  const tonnageStopped = exportActivity.tonnageStoppedDuringExport
+  const tonnageRefusedOrStopped =
+    tonnageRefused === null ? null : tonnageRefused + tonnageStopped
+  const tonnageReceivedNotExported = exportActivity.tonnageReceivedNotExported
+  const tonnageRepatriated = exportActivity.tonnageRepatriated
+
   return {
-    totalTonnage: exportActivity.totalTonnageReceivedForExporting,
-    overseasSiteDetailRows: buildOverseasSiteDetailRows(
-      exportActivity.overseasSites
-    ),
-    tonnageReceivedNotExported: exportActivity.tonnageReceivedNotExported,
-    tonnageRefusedOrStopped:
-      (exportActivity.tonnageRefusedAtRecepientDestination ?? 0) +
-      (exportActivity.tonnageStoppedDuringExport ?? 0),
-    tonnageRefused: exportActivity.tonnageRefusedAtRecepientDestination ?? 0,
-    tonnageStopped: exportActivity.tonnageStoppedDuringExport ?? 0,
-    tonnageRepatriated: exportActivity.tonnageRepatriated ?? 0
+    totalTonnage: formatTonnage(totalTonnageReceivedForExporting),
+    overseasSiteDetailRows,
+    tonnageReceivedNotExported: formatTonnageOrDash(tonnageReceivedNotExported),
+    tonnageRefusedOrStopped: formatTonnageOrDash(tonnageRefusedOrStopped),
+    tonnageRefused: formatTonnageOrDash(tonnageRefused),
+    tonnageStopped: formatTonnageOrDash(tonnageStopped),
+    tonnageRepatriated: formatTonnageOrDash(tonnageRepatriated)
   }
 }
 
@@ -119,7 +134,7 @@ export const submitGetController = {
 
       // Waste received
       wasteReceived: {
-        totalTonnage: recyclingActivity.totalTonnageReceived,
+        totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
         supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
       },
 
@@ -130,12 +145,15 @@ export const submitGetController = {
 
       // Waste sent on
       wasteSentOn: {
-        totalTonnage: getTotalTonnageSentOn(wasteSent),
-        toReprocessors: wasteSent.tonnageSentToReprocessor,
-        toExporters: wasteSent.tonnageSentToExporter,
-        toOtherSites: wasteSent.tonnageSentToAnotherSite,
+        totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
+        toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+        toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
+        toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
         destinationDetailRows: buildDestinationDetailRows(
-          wasteSent.finalDestinations
+          wasteSent.finalDestinations.map((dest) => ({
+            ...dest,
+            tonnageSentOn: formatTonnage(dest.tonnageSentOn)
+          }))
         )
       },
 

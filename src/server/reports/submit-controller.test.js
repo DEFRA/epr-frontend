@@ -473,7 +473,7 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Total tonnage repatriated')
         })
 
-        it('should default null refused and stopped values to zero', async ({
+        it('should display dash when refused, stopped and repatriated values are null', async ({
           server
         }) => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -488,8 +488,13 @@ describe('#submitController', () => {
 
           const body = await getBody(server)
 
-          expect(body.textContent).toContain('Total tonnage refused or stopped')
-          expect(body.textContent).toContain('0')
+          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const refusedOrStoppedLabel = labels.find((el) =>
+            el.textContent.includes('Total tonnage refused or stopped')
+          )
+          const combinedTotal = refusedOrStoppedLabel.nextElementSibling
+
+          expect(combinedTotal.textContent.trim()).toBe('-')
         })
 
         // Waste sent on section
