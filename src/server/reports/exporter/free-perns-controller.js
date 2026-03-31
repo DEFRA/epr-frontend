@@ -1,9 +1,6 @@
 import Joi from 'joi'
 
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
-import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
-import { getRedirectUrl } from '../helpers/redirect.js'
-import { updateReport } from '../helpers/update-report.js'
 import { buildExporterViewData } from './exporter-page-guards.js'
 
 const { getController, postController } = createDataPageControllers({
@@ -37,59 +34,8 @@ const { getController, postController } = createDataPageControllers({
     })
   },
   guardFn: buildExporterViewData,
-  createPostHandler({ getViewData, viewPath }) {
-    return async (request, h) => {
-      const { organisationId, registrationId, year, cadence, period } =
-        request.params
-      const { freeTonnage, action } = request.payload
-      const session = request.auth.credentials
-
-      const reportDetail = await fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        session.idToken
-      )
-
-      if (freeTonnage > reportDetail.prn.issuedTonnage) {
-        const message = request.t('reports:freePernErrorExceedsTotal')
-
-        const viewData = await getViewData(request, {
-          value: freeTonnage,
-          errors: {
-            freeTonnage: { text: message }
-          },
-          errorSummary: {
-            titleText: request.t('common:errorSummaryTitle'),
-            errorList: [{ text: message, href: '#freeTonnage' }]
-          }
-        })
-
-        return h.view(viewPath, viewData)
-      }
-
-      await updateReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        { freeTonnage },
-        session.idToken
-      )
-
-      return h.redirect(
-        getRedirectUrl(
-          request,
-          request.params,
-          action,
-          'supporting-information'
-        )
-      )
-    }
-  }
+  nextPage: 'supporting-information',
+  exceedsTotalErrorKey: 'reports:freePernErrorExceedsTotal'
 })
 
 export {

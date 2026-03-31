@@ -1,3 +1,4 @@
+import { fetchReportDetail } from './fetch-report-detail.js'
 import { periodParamsSchema } from './period-params-schema.js'
 import { getRedirectUrl } from './redirect.js'
 import { updateReport } from './update-report.js'
@@ -31,9 +32,10 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  * data from a guard function + page fields, render a template. This factory
  * extracts that boilerplate so each page only supplies its unique config.
  *
- * For simple pages that just save a field and redirect, provide `nextPage`.
- * For pages with custom post logic (e.g. business validation), provide
- * `createPostHandler` which receives `{ buildViewData, viewPath }`.
+ * POST handler modes (mutually exclusive, checked in order):
+ * - `createPostHandler` — full custom handler, receives `{ getViewData, viewPath }`
+ * - `exceedsTotalErrorKey` + `nextPage` — validates free tonnage against issued, then saves
+ * - `nextPage` alone — simple save-and-redirect
  * @param {object} config
  * @param {string} config.viewPath - Nunjucks template path
  * @param {string} config.fieldName - Payload field name
@@ -41,7 +43,8 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  * @param {(ctx: object) => (localise: (key: string, params?: object) => string) => object} config.pageFields - Returns localised page fields from context
  * @param {(request: Request, buildPageFields: (ctx: object) => object, options: object) => Promise<object>} config.guardFn - Guard function (buildExporterViewData or buildReprocessorViewData)
  * @param {object} [config.guardOptions] - Extra options passed to guardFn (e.g. { accreditedOnly: true })
- * @param {string} [config.nextPage] - Redirect target for simple update-and-redirect handlers
+ * @param {string} [config.nextPage] - Redirect target after saving
+ * @param {string} [config.exceedsTotalErrorKey] - i18n key for the exceeds-total error (enables tonnage validation)
  * @param {(deps: { getViewData: (request: Request, options?: object) => Promise<object>, viewPath: string }) => (request: Request, h: ResponseToolkit) => Promise<ResponseObject>} [config.createPostHandler] - Factory for custom POST handler
  * @returns {{ getController: Partial<ServerRoute>, postController: Partial<ServerRoute> }}
  */
@@ -53,6 +56,7 @@ export function createDataPageControllers({
   guardFn,
   guardOptions = {},
   nextPage,
+  exceedsTotalErrorKey,
   createPostHandler
 }) {
   /** @param {Request} request */
@@ -72,9 +76,20 @@ export function createDataPageControllers({
     }
   }
 
-  const postHandler = createPostHandler
-    ? createPostHandler({ getViewData, viewPath })
-    : createSimplePostHandler(fieldName, nextPage)
+  let postHandler
+  if (createPostHandler) {
+    postHandler = createPostHandler({ getViewData, viewPath })
+  } else if (exceedsTotalErrorKey) {
+    postHandler = createTonnagePostHandler(
+      fieldName,
+      nextPage,
+      exceedsTotalErrorKey,
+      getViewData,
+      viewPath
+    )
+  } else {
+    postHandler = createSimplePostHandler(fieldName, nextPage)
+  }
 
   /** @satisfies {Partial<ServerRoute>} */
   const postController = {
@@ -119,6 +134,71 @@ function createSimplePostHandler(fieldName, nextPage) {
       cadence,
       period,
       { [fieldName]: request.payload[fieldName] },
+      session.idToken
+    )
+
+    return h.redirect(
+      getRedirectUrl(request, request.params, request.payload.action, nextPage)
+    )
+  }
+}
+
+/**
+ * Creates a POST handler that validates free tonnage does not exceed the
+ * total issued tonnage before saving.
+ * @param {string} fieldName
+ * @param {string} nextPage
+ * @param {string} errorKey - i18n key for the exceeds-total error message
+ * @param {(request: Request, options?: object) => Promise<object>} getViewData
+ * @param {string} viewPath
+ * @returns {(request: Request, h: ResponseToolkit) => Promise<ResponseObject>}
+ */
+function createTonnagePostHandler(
+  fieldName,
+  nextPage,
+  errorKey,
+  getViewData,
+  viewPath
+) {
+  return async (request, h) => {
+    const { organisationId, registrationId, year, cadence, period } =
+      request.params
+    const fieldValue = request.payload[fieldName]
+    const session = request.auth.credentials
+
+    const reportDetail = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      session.idToken
+    )
+
+    if (fieldValue > reportDetail.prn.issuedTonnage) {
+      const message = request.t(errorKey)
+
+      const viewData = await getViewData(request, {
+        value: fieldValue,
+        errors: {
+          [fieldName]: { text: message }
+        },
+        errorSummary: {
+          titleText: request.t('common:errorSummaryTitle'),
+          errorList: [{ text: message, href: `#${fieldName}` }]
+        }
+      })
+
+      return h.view(viewPath, viewData)
+    }
+
+    await updateReport(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      { [fieldName]: fieldValue },
       session.idToken
     )
 
