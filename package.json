@@ -148,6 +148,9 @@
     "eslint-plugin-import": {
       "eslint": "$eslint"
     },
-    "flatted": "3.4.2"
+    "flatted": "3.4.2",
+    "i18next-cli": {
+      "i18next": "26.0.1"
+    }
   }
 }
