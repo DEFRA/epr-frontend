@@ -1,7 +1,10 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE, SUBMISSION_STATUS } from './constants.js'
 import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
@@ -20,6 +23,7 @@ import {
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {boolean} options.isAccreditedExporter
+ * @param {boolean} options.isReprocessor
  * @param {(url: string) => string} options.localiseUrl
  * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
  * @returns {Array<Array<{text: string} | {html: string}>>}
@@ -30,6 +34,7 @@ function buildTableRows({
   organisationId,
   registrationId,
   isAccreditedExporter,
+  isReprocessor,
   localiseUrl,
   localise
 }) {
@@ -41,10 +46,14 @@ function buildTableRows({
     const status = deriveSubmissionStatus(period.endDate, period.report)
     const statusLabel = getStatusLabel(status, localise)
 
-    const inProgressSuffix =
-      isAccreditedExporter && cadence === CADENCE.MONTHLY
-        ? '/prn-summary'
-        : '/supporting-information'
+    let inProgressSuffix
+    if (isAccreditedExporter && cadence === CADENCE.MONTHLY) {
+      inProgressSuffix = '/prn-summary'
+    } else if (isReprocessor) {
+      inProgressSuffix = '/tonnes-recycled'
+    } else {
+      inProgressSuffix = '/supporting-information'
+    }
 
     const suffixByStatus = {
       [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
@@ -84,6 +93,7 @@ export const listController = {
     const material = getDisplayMaterial(registration)
     const isAccreditedExporter =
       !!accreditation && isExporterRegistration(registration)
+    const isReprocessor = isReprocessorRegistration(registration)
 
     const isMonthly = cadence === CADENCE.MONTHLY
     const isQuarterly = cadence === CADENCE.QUARTERLY
@@ -99,6 +109,7 @@ export const listController = {
       organisationId,
       registrationId,
       isAccreditedExporter,
+      isReprocessor,
       localiseUrl: (url) => request.localiseUrl(url),
       localise
     })

@@ -289,7 +289,7 @@ describe('#supportingInformationController', () => {
           )
         })
 
-        it('should display back link to detail for accredited reprocessor', async ({
+        it('should display back link to free-prns for accredited reprocessor', async ({
           server
         }) => {
           vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
@@ -314,7 +314,36 @@ describe('#supportingInformationController', () => {
           const backLink = body.querySelector('.govuk-back-link')
 
           expect(backLink?.getAttribute('href')).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1`
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-prns`
+          )
+        })
+
+        it('should display back link to tonnes-not-recycled for registered-only reprocessor', async ({
+          server
+        }) => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+            ...registeredOnlyExporter,
+            registration: {
+              ...registeredOnlyExporter.registration,
+              wasteProcessingType: 'reprocessor'
+            }
+          })
+
+          const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: quarterlyUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const backLink = body.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-not-recycled`
           )
         })
 
