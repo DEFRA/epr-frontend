@@ -615,6 +615,18 @@ describe('#submitController', () => {
           expect(versionInput.getAttribute('type')).toBe('hidden')
           expect(versionInput.getAttribute('value')).toBe('1')
         })
+
+        it('should display Delete report link', async ({ server }) => {
+          const body = await getBody(server)
+          const deleteLink = getByRole(body, 'link', {
+            name: /Delete report/i
+          })
+
+          expect(deleteLink).toBeDefined()
+          expect(deleteLink.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/delete`
+          )
+        })
       })
 
       describe('for reprocessor without supporting information', () => {

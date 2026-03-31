@@ -157,7 +157,12 @@ export const submitGetController = {
       ],
 
       // Form
-      version: reportDetail.version
+      version: reportDetail.version,
+
+      // Delete
+      deleteUrl: request.localiseUrl(
+        `${reportsUrl}/${year}/${cadence}/${period}/delete`
+      )
     }
 
     return h.view('reports/submit', viewData)
