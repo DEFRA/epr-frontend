@@ -29,6 +29,37 @@ const payloadSchema = Joi.object({
 })
 
 /**
+ * @param {string} basePath
+ * @param {object} registration
+ * @param {object | null} accreditation
+ * @param {string} cadence
+ * @returns {string}
+ */
+function getBackPage(basePath, registration, accreditation, cadence) {
+  if (
+    accreditation &&
+    isReprocessorRegistration(registration) &&
+    cadence === CADENCE.MONTHLY
+  ) {
+    return `${basePath}/free-prns`
+  }
+
+  if (!accreditation && isReprocessorRegistration(registration)) {
+    return `${basePath}/tonnes-not-recycled`
+  }
+
+  if (
+    accreditation &&
+    isExporterRegistration(registration) &&
+    cadence === CADENCE.MONTHLY
+  ) {
+    return `${basePath}/free-perns`
+  }
+
+  return basePath
+}
+
+/**
  * @param {Request} request
  * @param {object} [options]
  * @param {string} [options.value] - Pre-fill value for textarea
@@ -62,27 +93,7 @@ async function buildViewData(request, options = {}) {
 
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
-  const isAccreditedExporter =
-    accreditation &&
-    isExporterRegistration(registration) &&
-    cadence === CADENCE.MONTHLY
-
-  const isAccreditedReprocessor =
-    accreditation &&
-    isReprocessorRegistration(registration) &&
-    cadence === CADENCE.MONTHLY
-
-  const isRegisteredOnlyReprocessor =
-    !accreditation && isReprocessorRegistration(registration)
-
-  let backPage = basePath
-  if (isAccreditedReprocessor) {
-    backPage = `${basePath}/free-prns`
-  } else if (isRegisteredOnlyReprocessor) {
-    backPage = `${basePath}/tonnes-not-recycled`
-  } else if (isAccreditedExporter) {
-    backPage = `${basePath}/free-perns`
-  }
+  const backPage = getBackPage(basePath, registration, accreditation, cadence)
 
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {

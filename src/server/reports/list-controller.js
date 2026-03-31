@@ -46,12 +46,12 @@ function buildTableRows({
     const status = deriveSubmissionStatus(period.endDate, period.report)
     const statusLabel = getStatusLabel(status, localise)
 
-    const inProgressSuffix =
-      isAccreditedExporter && cadence === CADENCE.MONTHLY
-        ? '/prn-summary'
-        : isReprocessor
-          ? '/tonnes-recycled'
-          : '/supporting-information'
+    let inProgressSuffix = '/supporting-information'
+    if (isAccreditedExporter && cadence === CADENCE.MONTHLY) {
+      inProgressSuffix = '/prn-summary'
+    } else if (isReprocessor) {
+      inProgressSuffix = '/tonnes-recycled'
+    }
 
     const suffixByStatus = {
       [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
