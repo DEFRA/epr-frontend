@@ -3,12 +3,13 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
-  buildDestinationRows,
+  buildDestinationDetailRows,
   buildOverseasSiteRows,
-  buildSupplierRows,
+  buildSupplierDetailRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
+import { formatExportTonnages } from './helpers/format-export-tonnages.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
@@ -46,6 +47,7 @@ export const checkGetController = {
 
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+    const cadenceLabel = localise(`reports:${cadence}Heading`)
 
     const { recyclingActivity, exportActivity, wasteSent } = reportDetail
     const isExporter = isExporterRegistration(registration)
@@ -57,6 +59,8 @@ export const checkGetController = {
       heading: localise('reports:checkHeading'),
       material,
       periodLabel,
+      cadenceLabel,
+      registrationNumber: registration.registrationNumber,
       isExporter,
       backUrl: request.localiseUrl(`${basePath}/supporting-information`),
       changeUrl: request.localiseUrl(`${basePath}/supporting-information`),
@@ -72,14 +76,15 @@ export const checkGetController = {
       deleteUrl: request.localiseUrl(`${basePath}/delete`),
       wasteReceived: {
         totalTonnage: recyclingActivity.totalTonnageReceived,
-        supplierRows: buildSupplierRows(recyclingActivity.suppliers)
+        supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
       },
       wasteExported: exportActivity
         ? {
             totalTonnage: exportActivity.totalTonnageReceivedForExporting,
             overseasSiteRows: buildOverseasSiteRows(
               exportActivity.overseasSites
-            )
+            ),
+            ...formatExportTonnages(exportActivity)
           }
         : null,
       wasteSentOn: {
@@ -87,7 +92,9 @@ export const checkGetController = {
         toReprocessors: wasteSent.tonnageSentToReprocessor,
         toExporters: wasteSent.tonnageSentToExporter,
         toOtherSites: wasteSent.tonnageSentToAnotherSite,
-        destinationRows: buildDestinationRows(wasteSent.finalDestinations)
+        destinationDetailRows: buildDestinationDetailRows(
+          wasteSent.finalDestinations
+        )
       },
       prn: reportDetail.prn
     }

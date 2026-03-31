@@ -73,6 +73,7 @@
   "quarterlyHeading": "Quarterly",
   "quarterlyPeriod": "Quarter {{number}}, {{year}}",
   "recipientColumn": "Recipient",
+  "registrationLabel": "Registration",
   "roleColumn": "Role",
   "siteLabel": "Site",
   "siteNameColumn": "Site name",
