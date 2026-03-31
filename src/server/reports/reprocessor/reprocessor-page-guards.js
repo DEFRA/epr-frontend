@@ -2,31 +2,21 @@ import Boom from '@hapi/boom'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE } from '../constants.js'
 import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from '../helpers/format-period-label.js'
 
 /**
  * Fetches registration/accreditation and report detail, then enforces the
- * accredited-exporter-monthly guard. Returns the validated data needed by
- * both prn-summary and free-perns pages.
+ * reprocessor guard (any cadence). Returns validated data for pages available
+ * to all reprocessors (tonnes-recycled, tonnes-not-recycled).
  * @param {Request} request
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
- * @returns {Promise<{ registration: object, reportDetail: object }>}
+ * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: object }>}
  */
-export async function fetchGuardedExporterData(
-  request,
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period
-) {
+export async function fetchGuardedReprocessorData(request) {
+  const { organisationId, registrationId, year, cadence, period } =
+    request.params
   const session = request.auth.credentials
 
   const [{ registration, accreditation }, reportDetail] = await Promise.all([
@@ -45,11 +35,7 @@ export async function fetchGuardedExporterData(
     )
   ])
 
-  if (
-    !accreditation ||
-    !isExporterRegistration(registration) ||
-    cadence !== CADENCE.MONTHLY
-  ) {
+  if (!isReprocessorRegistration(registration)) {
     throw Boom.notFound()
   }
 
@@ -57,26 +43,47 @@ export async function fetchGuardedExporterData(
     throw Boom.notFound()
   }
 
+  return { registration, accreditation, reportDetail }
+}
+
+/**
+ * Fetches registration/accreditation and report detail, then enforces the
+ * accredited-reprocessor-monthly guard. Returns validated data for pages
+ * available only to accredited reprocessors (prn-summary, free-prns).
+ * @param {Request} request
+ * @returns {Promise<{ registration: object, accreditation: object, reportDetail: object }>}
+ */
+export async function fetchGuardedAccreditedReprocessorData(request) {
+  const { registration, accreditation, reportDetail } =
+    await fetchGuardedReprocessorData(request)
+
+  const { cadence } = request.params
+
+  if (!accreditation || cadence !== CADENCE.MONTHLY) {
+    throw Boom.notFound()
+  }
+
   if (!reportDetail.prn) {
     throw Boom.badImplementation('PRN data missing for accredited report')
   }
 
-  return { registration, reportDetail }
+  return { registration, accreditation, reportDetail }
 }
 
 /**
- * Fetches guarded exporter data and builds the common view data fields shared
- * by prn-summary and free-perns pages. Page-specific fields are merged from
- * the callback return value.
+ * Fetches guarded reprocessor data and builds the common view data fields
+ * shared by reprocessor pages. Page-specific fields are merged from the
+ * callback return value.
  * @param {Request} request
- * @param {(ctx: { registration: object, reportDetail: object, material: string, periodLabel: string, periodPath: string }) => object} buildPageFields
+ * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string }) => object} buildPageFields
  * @param {object} [options]
  * @param {unknown} [options.value]
  * @param {object} [options.errors]
  * @param {object} [options.errorSummary]
+ * @param {boolean} [options.accreditedOnly]
  * @returns {Promise<object>}
  */
-export async function buildExporterViewData(
+export async function buildReprocessorViewData(
   request,
   buildPageFields,
   options = {}
@@ -85,14 +92,9 @@ export async function buildExporterViewData(
     request.params
   const { t: localise } = request
 
-  const { registration, reportDetail } = await fetchGuardedExporterData(
-    request,
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period
-  )
+  const { registration, accreditation, reportDetail } = options.accreditedOnly
+    ? await fetchGuardedAccreditedReprocessorData(request)
+    : await fetchGuardedReprocessorData(request)
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
@@ -100,6 +102,7 @@ export async function buildExporterViewData(
 
   const pageFields = buildPageFields({
     registration,
+    accreditation,
     reportDetail,
     material,
     periodLabel,
@@ -114,9 +117,6 @@ export async function buildExporterViewData(
     errorSummary: options.errorSummary ?? null
   }
 }
-
-export { buildValidationErrors } from '../helpers/validation.js'
-export { getRedirectUrl } from '../helpers/redirect.js'
 
 /**
  * @import { Request } from '@hapi/hapi'
