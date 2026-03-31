@@ -2,6 +2,8 @@ import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import { CADENCE } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -46,11 +48,12 @@ async function buildViewData(
   const session = request.auth.credentials
   const { t: localise } = request
 
-  const { registration } = await fetchRegistrationAndAccreditation(
-    organisationId,
-    registrationId,
-    session.idToken
-  )
+  const { registration, accreditation } =
+    await fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    )
 
   const reportDetail = await fetchReportDetail(
     organisationId,
@@ -64,6 +67,15 @@ async function buildViewData(
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
+  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+
+  const isAccreditedExporter =
+    accreditation &&
+    isExporterRegistration(registration) &&
+    cadence === CADENCE.MONTHLY
+
+  const backPage = isAccreditedExporter ? `${basePath}/free-perns` : basePath
+
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {
       material,
@@ -71,9 +83,7 @@ async function buildViewData(
     }),
     caption: localise('reports:supportingInformationCaption'),
     heading: localise('reports:supportingInformationHeading'),
-    backUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-    ),
+    backUrl: request.localiseUrl(backPage),
     deleteUrl: request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/delete`
     ),

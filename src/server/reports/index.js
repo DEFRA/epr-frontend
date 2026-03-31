@@ -6,6 +6,14 @@ import {
   deletePostController
 } from './delete-controller.js'
 import { detailController } from './detail-controller.js'
+import {
+  freePernGetController,
+  freePernPostController
+} from './exporter/free-perns-controller.js'
+import {
+  prnSummaryGetController,
+  prnSummaryPostController
+} from './exporter/prn-summary-controller.js'
 import { listController } from './list-controller.js'
 import {
   submitGetController,
@@ -44,6 +52,26 @@ export const reports = {
           ...createController,
           method: 'POST',
           path: periodPath
+        },
+        {
+          ...prnSummaryGetController,
+          method: 'GET',
+          path: `${periodPath}/prn-summary`
+        },
+        {
+          ...prnSummaryPostController,
+          method: 'POST',
+          path: `${periodPath}/prn-summary`
+        },
+        {
+          ...freePernGetController,
+          method: 'GET',
+          path: `${periodPath}/free-perns`
+        },
+        {
+          ...freePernPostController,
+          method: 'POST',
+          path: `${periodPath}/free-perns`
         },
         {
           ...supportingInformationGetController,

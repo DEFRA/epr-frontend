@@ -1,6 +1,7 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE, SUBMISSION_STATUS } from './constants.js'
 import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
@@ -18,6 +19,7 @@ import {
  * @param {string} options.cadence
  * @param {string} options.organisationId
  * @param {string} options.registrationId
+ * @param {boolean} options.isAccreditedExporter
  * @param {(url: string) => string} options.localiseUrl
  * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
  * @returns {Array<Array<{text: string} | {html: string}>>}
@@ -27,6 +29,7 @@ function buildTableRows({
   cadence,
   organisationId,
   registrationId,
+  isAccreditedExporter,
   localiseUrl,
   localise
 }) {
@@ -38,9 +41,14 @@ function buildTableRows({
     const status = deriveSubmissionStatus(period.endDate, period.report)
     const statusLabel = getStatusLabel(status, localise)
 
+    const inProgressSuffix =
+      isAccreditedExporter && cadence === CADENCE.MONTHLY
+        ? '/prn-summary'
+        : '/supporting-information'
+
     const suffixByStatus = {
       [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
-      [SUBMISSION_STATUS.IN_PROGRESS]: '/supporting-information'
+      [SUBMISSION_STATUS.IN_PROGRESS]: inProgressSuffix
     }
     const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
     const statusHtml = statusLabel
@@ -63,18 +71,19 @@ export const listController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration }, { cadence, reportingPeriods }] = await Promise.all(
-      [
+    const [{ registration, accreditation }, { cadence, reportingPeriods }] =
+      await Promise.all([
         fetchRegistrationAndAccreditation(
           organisationId,
           registrationId,
           session.idToken
         ),
         fetchReportingPeriods(organisationId, registrationId, session.idToken)
-      ]
-    )
+      ])
 
     const material = getDisplayMaterial(registration)
+    const isAccreditedExporter =
+      !!accreditation && isExporterRegistration(registration)
 
     const isMonthly = cadence === CADENCE.MONTHLY
     const isQuarterly = cadence === CADENCE.QUARTERLY
@@ -89,6 +98,7 @@ export const listController = {
       cadence,
       organisationId,
       registrationId,
+      isAccreditedExporter,
       localiseUrl: (url) => request.localiseUrl(url),
       localise
     })

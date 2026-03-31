@@ -96,7 +96,9 @@ export const checkGetController = {
           wasteSent.finalDestinations
         )
       },
-      prn: reportDetail.prn
+      prn: reportDetail.prn,
+      prnRevenueChangeUrl: request.localiseUrl(`${basePath}/prn-summary`),
+      freePernChangeUrl: request.localiseUrl(`${basePath}/free-perns`)
     }
 
     return h.view('reports/check-your-answers', viewData)
