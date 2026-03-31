@@ -1,6 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE } from './constants.js'
 import { createReport } from './helpers/create-report.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -51,9 +54,14 @@ export const createController = {
       isExporterRegistration(registration) &&
       cadence === CADENCE.MONTHLY
 
-    const nextPage = isAccreditedExporter
-      ? `${basePath}/prn-summary`
-      : `${basePath}/supporting-information`
+    let nextPage
+    if (isAccreditedExporter) {
+      nextPage = `${basePath}/prn-summary`
+    } else if (isReprocessorRegistration(registration)) {
+      nextPage = `${basePath}/tonnes-recycled`
+    } else {
+      nextPage = `${basePath}/supporting-information`
+    }
 
     return h.redirect(request.localiseUrl(nextPage))
   }
