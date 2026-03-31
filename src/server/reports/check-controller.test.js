@@ -77,12 +77,18 @@ const exporterReportDetail = {
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        address: '12 Industrial Estate, Grantham, NG31 7AA',
+        phone: '01234 567890',
+        email: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        tonnageReceived: 38.04
+        tonnageReceived: 38.04,
+        address: '45 Recycling Park, Leeds, LS1 2AB',
+        phone: '09876 543210',
+        email: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -91,10 +97,10 @@ const exporterReportDetail = {
   exportActivity: {
     totalTonnageReceivedForExporting: 50,
     overseasSites: [{ siteName: 'Brussels Recycling', orsId: 'OSR-001' }],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
+    tonnageReceivedNotExported: 15.5,
+    tonnageRefusedAtRecepientDestination: 3.2,
+    tonnageStoppedDuringExport: 1.8,
+    tonnageRepatriated: 0.5
   },
   wasteSent: {
     tonnageSentToReprocessor: 5,
@@ -104,7 +110,8 @@ const exporterReportDetail = {
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Reprocessor',
-        tonnageSentOn: 5
+        tonnageSentOn: 5,
+        address: '7 Waste Lane, Lincoln, LN1 3CD'
       }
     ]
   }
@@ -138,7 +145,10 @@ const reprocessorReportDetail = {
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        address: '12 Industrial Estate, Grantham, NG31 7AA',
+        phone: '01234 567890',
+        email: 'info@granthamwaste.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -152,7 +162,8 @@ const reprocessorReportDetail = {
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Reprocessor',
-        tonnageSentOn: 1
+        tonnageSentOn: 1,
+        address: '7 Waste Lane, Lincoln, LN1 3CD'
       }
     ]
   }
@@ -271,7 +282,9 @@ describe('#checkController', () => {
           expect(caption?.textContent).toContain('Create report')
         })
 
-        it('should display period label and material', async ({ server }) => {
+        it('should display summary list with period, registration, and material', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: baseUrl,
@@ -281,8 +294,14 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          expect(body.textContent).toContain('Quarter 1, 2026')
-          expect(body.textContent).toContain('Plastic')
+          const summaryLists = body.querySelectorAll('.govuk-summary-list')
+          const headerSummaryList = summaryLists[0]
+
+          expect(headerSummaryList).not.toBeNull()
+          expect(headerSummaryList?.textContent).toContain('Period')
+          expect(headerSummaryList?.textContent).toContain('Quarterly')
+          expect(headerSummaryList?.textContent).toContain('REG001234')
+          expect(headerSummaryList?.textContent).toContain('Plastic')
         })
 
         it('should display Summary log data heading', async ({ server }) => {
@@ -303,7 +322,7 @@ describe('#checkController', () => {
           expect(heading).toBeDefined()
         })
 
-        it('should display Summary log data guidance text', async ({
+        it('should display correction guidance as inset text', async ({
           server
         }) => {
           const { result } = await server.inject({
@@ -315,7 +334,10 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          expect(body.textContent).toContain(
+          const insetText = body.querySelector('.govuk-inset-text')
+
+          expect(insetText).not.toBeNull()
+          expect(insetText?.textContent).toContain(
             'If any information in this section is incorrect'
           )
         })
@@ -340,7 +362,9 @@ describe('#checkController', () => {
           expect(heading).toBeDefined()
         })
 
-        it('should display waste received section', async ({ server }) => {
+        it('should display supplier table with 5 contact detail columns', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: baseUrl,
@@ -350,9 +374,40 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          expect(body.textContent).toContain('80.25')
-          expect(body.textContent).toContain('Grantham Waste')
-          expect(body.textContent).toContain('SUEZ recycling')
+          const tables = body.querySelectorAll('.govuk-table')
+          const supplierTable = tables[0]
+          const headers = supplierTable?.querySelectorAll('th')
+
+          expect(headers).toHaveLength(5)
+          expect(headers?.[0]?.textContent).toContain('Supplier')
+          expect(headers?.[1]?.textContent).toContain('Activity')
+          expect(headers?.[2]?.textContent).toContain('Address')
+          expect(headers?.[4]?.textContent).toContain('Email')
+        })
+
+        it('should display supplier contact details in table rows', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const supplierTable = tables[0]
+
+          expect(supplierTable?.textContent).toContain('Grantham Waste')
+          expect(supplierTable?.textContent).toContain(
+            '12 Industrial Estate, Grantham, NG31 7AA'
+          )
+          expect(supplierTable?.textContent).toContain('01234 567890')
+          expect(supplierTable?.textContent).toContain(
+            'info@granthamwaste.co.uk'
+          )
         })
 
         it('should display waste exported section for exporters', async ({
@@ -371,7 +426,9 @@ describe('#checkController', () => {
           expect(body.textContent).toContain('Brussels Recycling')
         })
 
-        it('should display waste sent on section', async ({ server }) => {
+        it('should display received but not exported heading', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: baseUrl,
@@ -381,8 +438,182 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          expect(body.textContent).toContain('10')
-          expect(body.textContent).toContain('Lincoln recycling')
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste received but not exported/,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should display received but not exported tonnage', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain('15.50')
+        })
+
+        it('should display refused or stopped heading', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste refused or stopped during export/,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should display refused or stopped breakdown', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain('Total tonnage refused')
+          expect(body.textContent).toContain('3.20')
+          expect(body.textContent).toContain('Total tonnage stopped')
+          expect(body.textContent).toContain('1.80')
+          expect(body.textContent).toContain('Total tonnage repatriated')
+        })
+
+        it('should display dash when refused and stopped values are null', async ({
+          server
+        }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            exportActivity: {
+              ...exporterReportDetail.exportActivity,
+              tonnageRefusedAtRecepientDestination: null,
+              tonnageStoppedDuringExport: null,
+              tonnageRepatriated: null
+            }
+          })
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const refusedOrStoppedLabel = labels.find((el) =>
+            el.textContent.includes('Total tonnage refused or stopped')
+          )
+          const combinedTotal = refusedOrStoppedLabel?.nextElementSibling
+
+          expect(combinedTotal?.textContent?.trim()).toBe('-')
+        })
+
+        it('should display combined total when refused is null but stopped is not', async ({
+          server
+        }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            exportActivity: {
+              ...exporterReportDetail.exportActivity,
+              tonnageRefusedAtRecepientDestination: null,
+              tonnageStoppedDuringExport: 4.0
+            }
+          })
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const refusedOrStoppedLabel = labels.find((el) =>
+            el.textContent.includes('Total tonnage refused or stopped')
+          )
+          const combinedTotal = refusedOrStoppedLabel?.nextElementSibling
+
+          expect(combinedTotal?.textContent?.trim()).toBe('4.00')
+        })
+
+        it('should display combined total when stopped is null but refused is not', async ({
+          server
+        }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            exportActivity: {
+              ...exporterReportDetail.exportActivity,
+              tonnageRefusedAtRecepientDestination: 2.5,
+              tonnageStoppedDuringExport: null
+            }
+          })
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const refusedOrStoppedLabel = labels.find((el) =>
+            el.textContent.includes('Total tonnage refused or stopped')
+          )
+          const combinedTotal = refusedOrStoppedLabel?.nextElementSibling
+
+          expect(combinedTotal?.textContent?.trim()).toBe('2.50')
+        })
+
+        it('should display destination table with 4 columns including address', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const destinationTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Lincoln recycling')
+          )
+          const headers = destinationTable?.querySelectorAll('th')
+
+          expect(headers).toHaveLength(4)
+          expect(headers?.[0]?.textContent).toContain('Recipient')
+          expect(headers?.[2]?.textContent).toContain('Address')
+          expect(headers?.[3]?.textContent).toContain('Tonnage sent on')
+          expect(destinationTable?.textContent).toContain(
+            '7 Waste Lane, Lincoln, LN1 3CD'
+          )
         })
 
         it('should display supporting information with saved text', async ({
@@ -397,10 +628,11 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const summaryList = body.querySelector('.govuk-summary-list')
+          const summaryLists = body.querySelectorAll('.govuk-summary-list')
+          const supportingInfoList = summaryLists[summaryLists.length - 1]
 
-          expect(summaryList).not.toBeNull()
-          expect(summaryList?.textContent).toContain(
+          expect(supportingInfoList).not.toBeNull()
+          expect(supportingInfoList?.textContent).toContain(
             'Supply chain disruption in February'
           )
         })
@@ -555,6 +787,46 @@ describe('#checkController', () => {
           ).toBeNull()
         })
 
+        it('should not display received but not exported section', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            queryByRole(body, 'heading', {
+              name: /received but not exported/i,
+              level: 3
+            })
+          ).toBeNull()
+        })
+
+        it('should not display refused or stopped section', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            queryByRole(body, 'heading', {
+              name: /refused or stopped/i,
+              level: 3
+            })
+          ).toBeNull()
+        })
+
         it('should display None provided for empty supporting information', async ({
           server
         }) => {
@@ -567,9 +839,10 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const summaryList = body.querySelector('.govuk-summary-list')
+          const summaryLists = body.querySelectorAll('.govuk-summary-list')
+          const supportingInfoList = summaryLists[summaryLists.length - 1]
 
-          expect(summaryList?.textContent).toContain('None provided')
+          expect(supportingInfoList?.textContent).toContain('None provided')
         })
 
         it('should not display PRNs section for registered-only operator', async ({

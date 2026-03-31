@@ -12,7 +12,7 @@ import {
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatTonnageOrDash } from './helpers/format-tonnage-or-dash.js'
+import { formatExportTonnages } from './helpers/format-export-tonnages.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
@@ -40,9 +40,6 @@ function getCreationDetails(statusHistory, localise) {
  * @returns {object}
  */
 function buildWasteExportedViewData(exportActivity) {
-  const totalTonnageReceivedForExporting =
-    exportActivity.totalTonnageReceivedForExporting
-
   const overseasSiteDetailRows = buildOverseasSiteDetailRows(
     exportActivity.overseasSites.map((overseasSite) => ({
       ...overseasSite,
@@ -50,21 +47,12 @@ function buildWasteExportedViewData(exportActivity) {
     }))
   )
 
-  const tonnageRefused = exportActivity.tonnageRefusedAtRecepientDestination
-  const tonnageStopped = exportActivity.tonnageStoppedDuringExport
-  const tonnageRefusedOrStopped =
-    tonnageRefused === null ? null : tonnageRefused + tonnageStopped
-  const tonnageReceivedNotExported = exportActivity.tonnageReceivedNotExported
-  const tonnageRepatriated = exportActivity.tonnageRepatriated
-
   return {
-    totalTonnage: formatTonnage(totalTonnageReceivedForExporting),
+    totalTonnage: formatTonnage(
+      exportActivity.totalTonnageReceivedForExporting
+    ),
     overseasSiteDetailRows,
-    tonnageReceivedNotExported: formatTonnageOrDash(tonnageReceivedNotExported),
-    tonnageRefusedOrStopped: formatTonnageOrDash(tonnageRefusedOrStopped),
-    tonnageRefused: formatTonnageOrDash(tonnageRefused),
-    tonnageStopped: formatTonnageOrDash(tonnageStopped),
-    tonnageRepatriated: formatTonnageOrDash(tonnageRepatriated)
+    ...formatExportTonnages(exportActivity)
   }
 }
 
