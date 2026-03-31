@@ -943,6 +943,124 @@ describe('#checkController', () => {
           )
           expect(changeLinks.length).toBeGreaterThan(0)
         })
+
+        it('should link tonnage recycled Change to the tonnes-recycled page', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const changeLink = body.querySelector(
+            '.govuk-summary-list a[href*="tonnes-recycled"]'
+          )
+
+          expect(changeLink?.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-recycled`
+          )
+        })
+
+        it('should link tonnage not recycled Change to the tonnes-not-recycled page', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const changeLink = body.querySelector(
+            '.govuk-summary-list a[href*="tonnes-not-recycled"]'
+          )
+
+          expect(changeLink?.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-not-recycled`
+          )
+        })
+
+        it('should not display PRNs section', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            queryByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          ).toBeNull()
+        })
+      })
+
+      describe('for registered-only reprocessor with unanswered recycling tonnages', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            reprocessorRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            reprocessorReportDetail
+          )
+        })
+
+        it('should display dash for null tonnage recycled', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const summaryRows = body.querySelectorAll('.govuk-summary-list__row')
+          const recycledRow = Array.from(summaryRows).find((row) =>
+            row.textContent?.includes(
+              'Total tonnage of packaging waste recycled'
+            )
+          )
+
+          const value = recycledRow?.querySelector('.govuk-summary-list__value')
+
+          expect(value?.textContent?.trim()).toBe('—')
+        })
+
+        it('should display dash for null tonnage not recycled', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const summaryRows = body.querySelectorAll('.govuk-summary-list__row')
+          const notRecycledRow = Array.from(summaryRows).find((row) =>
+            row.textContent?.includes(
+              'Total tonnage of packaging waste received but not recycled'
+            )
+          )
+
+          const value = notRecycledRow?.querySelector(
+            '.govuk-summary-list__value'
+          )
+
+          expect(value?.textContent?.trim()).toBe('—')
+        })
       })
 
       describe('for accredited reprocessor', () => {
