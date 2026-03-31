@@ -1,11 +1,12 @@
 import Joi from 'joi'
 
+import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
 import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
-import { periodParamsSchema } from '../helpers/period-params-schema.js'
-import { updateReport } from '../helpers/update-report.js'
-import { buildValidationErrors } from '../helpers/validation.js'
 import { getRedirectUrl } from '../helpers/redirect.js'
+import { updateReport } from '../helpers/update-report.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
+
+const FIELD_NAME = 'freeTonnage'
 
 const payloadSchema = Joi.object({
   freeTonnage: Joi.number().min(0).required().messages({
@@ -19,7 +20,7 @@ const payloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
-const VIEW_PATH = 'reports/reprocessor/free-prns'
+const VIEW_PATH = 'reports/tonnage-input'
 
 /**
  * @param {{ periodLabel: string, periodPath: string, reportDetail: object }} ctx
@@ -33,6 +34,9 @@ function pageFields({ periodLabel, periodPath, reportDetail }) {
     caption: localise('reports:reprocessorFreePrnCaption'),
     heading: localise('reports:reprocessorFreePrnHeading', { periodLabel }),
     hintText: localise('reports:reprocessorFreePrnHint'),
+    continueText: localise('reports:reprocessorFreePrnContinue'),
+    saveText: localise('reports:reprocessorFreePrnSave'),
+    fieldName: FIELD_NAME,
     backUrl: `${periodPath}/prn-summary`,
     tonnageIssued: reportDetail.prn.issuedTonnage,
     defaultValue: reportDetail.prn.freeTonnage
@@ -55,43 +59,12 @@ async function buildViewData(request, options = {}) {
   )
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const reprocessorFreePrnsGetController = {
-  options: {
-    validate: {
-      params: periodParamsSchema
-    }
-  },
-  async handler(request, h) {
-    const viewData = await buildViewData(request)
-    return h.view(VIEW_PATH, viewData)
-  }
-}
-
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const reprocessorFreePrnsPostController = {
-  options: {
-    validate: {
-      params: periodParamsSchema,
-      payload: payloadSchema,
-      async failAction(request, h, error) {
-        const { errors, errorSummary } = buildValidationErrors(request, error)
-
-        const viewData = await buildViewData(request, {
-          value: request.payload.freeTonnage,
-          errors,
-          errorSummary
-        })
-
-        return h.view(VIEW_PATH, viewData).takeover()
-      }
-    }
-  },
-  async handler(request, h) {
+const { getController, postController } = createDataPageControllers({
+  viewPath: VIEW_PATH,
+  fieldName: FIELD_NAME,
+  payloadSchema,
+  buildViewData,
+  async postHandler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
     const { freeTonnage, action } = request.payload
@@ -140,6 +113,11 @@ export const reprocessorFreePrnsPostController = {
       getRedirectUrl(request, request.params, action, 'supporting-information')
     )
   }
+})
+
+export {
+  getController as reprocessorFreePrnsGetController,
+  postController as reprocessorFreePrnsPostController
 }
 
 /**

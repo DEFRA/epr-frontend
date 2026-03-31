@@ -31,8 +31,8 @@
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
         {{ govukInput({
-          id: "tonnageNotRecycled",
-          name: "tonnageNotRecycled",
+          id: fieldName,
+          name: fieldName,
           inputmode: "decimal",
           spellcheck: false,
           suffix: {
@@ -43,18 +43,18 @@
             classes: "govuk-visually-hidden"
           },
           value: value,
-          errorMessage: errors.tonnageNotRecycled if errors else null
+          errorMessage: errors[fieldName] if errors else null
         }) }}
 
         <div class="govuk-button-group">
           {{ govukButton({
-            text: localise("reports:tonnageNotRecycledContinue"),
+            text: continueText,
             name: "action",
             value: "continue"
           }) }}
 
           {{ govukButton({
-            text: localise("reports:tonnageNotRecycledSave"),
+            text: saveText,
             name: "action",
             value: "save",
             classes: "govuk-button--secondary"

@@ -1,12 +1,9 @@
 import Joi from 'joi'
 
-import { periodParamsSchema } from '../helpers/period-params-schema.js'
+import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
+import { getRedirectUrl } from '../helpers/redirect.js'
 import { updateReport } from '../helpers/update-report.js'
-import {
-  buildExporterViewData,
-  buildValidationErrors,
-  getRedirectUrl
-} from './exporter-page-guards.js'
+import { buildExporterViewData } from './exporter-page-guards.js'
 
 const FORMAT_ERROR = 'reports:prnSummaryErrorFormat'
 
@@ -22,7 +19,7 @@ const payloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
-const VIEW_PATH = 'reports/exporter/prn-summary'
+const VIEW_PATH = 'reports/prn-summary'
 
 /**
  * @param {{ material: string, periodLabel: string, periodPath: string, reportDetail: object }} ctx
@@ -38,6 +35,8 @@ function pageFields({ material, periodLabel, periodPath, reportDetail }) {
     tonnageLabel: localise('reports:prnSummaryTonnageLabel'),
     tonnageIssued: reportDetail.prn.issuedTonnage,
     revenueLabel: localise('reports:prnSummaryRevenueLabel'),
+    continueText: localise('reports:prnSummaryContinue'),
+    saveText: localise('reports:prnSummarySave'),
     backUrl: periodPath,
     defaultValue: reportDetail.prn.totalRevenue
   })
@@ -59,43 +58,12 @@ async function buildViewData(request, options = {}) {
   )
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const prnSummaryGetController = {
-  options: {
-    validate: {
-      params: periodParamsSchema
-    }
-  },
-  async handler(request, h) {
-    const viewData = await buildViewData(request)
-    return h.view(VIEW_PATH, viewData)
-  }
-}
-
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const prnSummaryPostController = {
-  options: {
-    validate: {
-      params: periodParamsSchema,
-      payload: payloadSchema,
-      async failAction(request, h, error) {
-        const { errors, errorSummary } = buildValidationErrors(request, error)
-
-        const viewData = await buildViewData(request, {
-          value: request.payload.prnRevenue,
-          errors,
-          errorSummary
-        })
-
-        return h.view(VIEW_PATH, viewData).takeover()
-      }
-    }
-  },
-  async handler(request, h) {
+const { getController, postController } = createDataPageControllers({
+  viewPath: VIEW_PATH,
+  fieldName: 'prnRevenue',
+  payloadSchema,
+  buildViewData,
+  async postHandler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
     const { prnRevenue, action } = request.payload
@@ -115,6 +83,11 @@ export const prnSummaryPostController = {
       getRedirectUrl(request, request.params, action, 'free-perns')
     )
   }
+})
+
+export {
+  getController as prnSummaryGetController,
+  postController as prnSummaryPostController
 }
 
 /**

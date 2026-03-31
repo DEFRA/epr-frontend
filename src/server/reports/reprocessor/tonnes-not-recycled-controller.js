@@ -1,11 +1,12 @@
 import Joi from 'joi'
 
-import { periodParamsSchema } from '../helpers/period-params-schema.js'
-import { updateReport } from '../helpers/update-report.js'
-import { buildValidationErrors } from '../helpers/validation.js'
-import { getRedirectUrl } from '../helpers/redirect.js'
 import { CADENCE } from '../constants.js'
+import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
+import { getRedirectUrl } from '../helpers/redirect.js'
+import { updateReport } from '../helpers/update-report.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
+
+const FIELD_NAME = 'tonnageNotRecycled'
 
 const payloadSchema = Joi.object({
   tonnageNotRecycled: Joi.number().min(0).required().messages({
@@ -19,7 +20,7 @@ const payloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
-const VIEW_PATH = 'reports/reprocessor/tonnes-not-recycled'
+const VIEW_PATH = 'reports/tonnage-input'
 
 /**
  * @param {{ material: string, periodLabel: string, periodPath: string, reportDetail: object }} ctx
@@ -36,6 +37,9 @@ function pageFields({ material, periodLabel, periodPath, reportDetail }) {
       periodLabel
     }),
     hintText: localise('reports:tonnageNotRecycledHint'),
+    continueText: localise('reports:tonnageNotRecycledContinue'),
+    saveText: localise('reports:tonnageNotRecycledSave'),
+    fieldName: FIELD_NAME,
     backUrl: `${periodPath}/tonnes-recycled`,
     defaultValue: reportDetail.recyclingActivity?.tonnageNotRecycled
   })
@@ -57,43 +61,12 @@ async function buildViewData(request, options = {}) {
   )
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const tonnesNotRecycledGetController = {
-  options: {
-    validate: {
-      params: periodParamsSchema
-    }
-  },
-  async handler(request, h) {
-    const viewData = await buildViewData(request)
-    return h.view(VIEW_PATH, viewData)
-  }
-}
-
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const tonnesNotRecycledPostController = {
-  options: {
-    validate: {
-      params: periodParamsSchema,
-      payload: payloadSchema,
-      async failAction(request, h, error) {
-        const { errors, errorSummary } = buildValidationErrors(request, error)
-
-        const viewData = await buildViewData(request, {
-          value: request.payload.tonnageNotRecycled,
-          errors,
-          errorSummary
-        })
-
-        return h.view(VIEW_PATH, viewData).takeover()
-      }
-    }
-  },
-  async handler(request, h) {
+const { getController, postController } = createDataPageControllers({
+  viewPath: VIEW_PATH,
+  fieldName: FIELD_NAME,
+  payloadSchema,
+  buildViewData,
+  async postHandler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
     const { tonnageNotRecycled, action } = request.payload
@@ -114,6 +87,11 @@ export const tonnesNotRecycledPostController = {
 
     return h.redirect(getRedirectUrl(request, request.params, action, nextPage))
   }
+})
+
+export {
+  getController as tonnesNotRecycledGetController,
+  postController as tonnesNotRecycledPostController
 }
 
 /**

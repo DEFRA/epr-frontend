@@ -115,9 +115,6 @@ export async function buildExporterViewData(
   }
 }
 
-export { buildValidationErrors } from '../helpers/validation.js'
-export { getRedirectUrl } from '../helpers/redirect.js'
-
 /**
  * @import { Request } from '@hapi/hapi'
  */

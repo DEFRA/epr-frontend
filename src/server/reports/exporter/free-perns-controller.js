@@ -1,13 +1,12 @@
 import Joi from 'joi'
 
+import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
 import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
-import { periodParamsSchema } from '../helpers/period-params-schema.js'
+import { getRedirectUrl } from '../helpers/redirect.js'
 import { updateReport } from '../helpers/update-report.js'
-import {
-  buildExporterViewData,
-  buildValidationErrors,
-  getRedirectUrl
-} from './exporter-page-guards.js'
+import { buildExporterViewData } from './exporter-page-guards.js'
+
+const FIELD_NAME = 'freeTonnage'
 
 const payloadSchema = Joi.object({
   freeTonnage: Joi.number().min(0).required().messages({
@@ -20,7 +19,7 @@ const payloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
-const VIEW_PATH = 'reports/exporter/free-perns'
+const VIEW_PATH = 'reports/tonnage-input'
 
 /**
  * @param {{ periodLabel: string, periodPath: string, reportDetail: object }} ctx
@@ -34,6 +33,9 @@ function pageFields({ periodLabel, periodPath, reportDetail }) {
     caption: localise('reports:freePernCaption'),
     heading: localise('reports:freePernHeading', { periodLabel }),
     hintText: localise('reports:freePernHint'),
+    continueText: localise('reports:freePernContinue'),
+    saveText: localise('reports:freePernSave'),
+    fieldName: FIELD_NAME,
     backUrl: `${periodPath}/prn-summary`,
     tonnageIssued: reportDetail.prn.issuedTonnage,
     defaultValue: reportDetail.prn.freeTonnage
@@ -56,43 +58,12 @@ async function buildViewData(request, options = {}) {
   )
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const freePernGetController = {
-  options: {
-    validate: {
-      params: periodParamsSchema
-    }
-  },
-  async handler(request, h) {
-    const viewData = await buildViewData(request)
-    return h.view(VIEW_PATH, viewData)
-  }
-}
-
-/**
- * @satisfies {Partial<ServerRoute>}
- */
-export const freePernPostController = {
-  options: {
-    validate: {
-      params: periodParamsSchema,
-      payload: payloadSchema,
-      async failAction(request, h, error) {
-        const { errors, errorSummary } = buildValidationErrors(request, error)
-
-        const viewData = await buildViewData(request, {
-          value: request.payload.freeTonnage,
-          errors,
-          errorSummary
-        })
-
-        return h.view(VIEW_PATH, viewData).takeover()
-      }
-    }
-  },
-  async handler(request, h) {
+const { getController, postController } = createDataPageControllers({
+  viewPath: VIEW_PATH,
+  fieldName: FIELD_NAME,
+  payloadSchema,
+  buildViewData,
+  async postHandler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
     const { freeTonnage, action } = request.payload
@@ -141,6 +112,11 @@ export const freePernPostController = {
       getRedirectUrl(request, request.params, action, 'supporting-information')
     )
   }
+})
+
+export {
+  getController as freePernGetController,
+  postController as freePernPostController
 }
 
 /**

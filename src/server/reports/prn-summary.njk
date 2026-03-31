@@ -25,36 +25,36 @@
       <span class="govuk-caption-xl">{{ caption }}</span>
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-      <p class="govuk-hint">{{ hintText }}</p>
+      <p class="govuk-body">{{ tonnageLabel }}: <strong>{{ tonnageIssued }}</strong></p>
 
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
         {{ govukInput({
-          id: "tonnageRecycled",
-          name: "tonnageRecycled",
+          id: "prnRevenue",
+          name: "prnRevenue",
           inputmode: "decimal",
           spellcheck: false,
-          suffix: {
-            text: "tonnes"
+          prefix: {
+            text: "£"
           },
           label: {
-            text: heading,
-            classes: "govuk-visually-hidden"
+            text: revenueLabel,
+            classes: "govuk-label--m"
           },
           value: value,
-          errorMessage: errors.tonnageRecycled if errors else null
+          errorMessage: errors.prnRevenue if errors else null
         }) }}
 
         <div class="govuk-button-group">
           {{ govukButton({
-            text: localise("reports:tonnageRecycledContinue"),
+            text: continueText,
             name: "action",
             value: "continue"
           }) }}
 
           {{ govukButton({
-            text: localise("reports:tonnageRecycledSave"),
+            text: saveText,
             name: "action",
             value: "save",
             classes: "govuk-button--secondary"
