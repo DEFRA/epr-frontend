@@ -2,12 +2,16 @@ import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReport } from './helpers/update-report.js'
+import { buildValidationErrors } from './helpers/validation.js'
 
 const MAX_SUPPORTING_INFO_LENGTH = 2000
 
@@ -25,26 +29,46 @@ const payloadSchema = Joi.object({
 })
 
 /**
- * @param {Request} request
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
+ * @param {string} basePath
+ * @param {object} registration
+ * @param {object | null} accreditation
  * @param {string} cadence
- * @param {number} period
+ * @returns {string}
+ */
+function getBackPage(basePath, registration, accreditation, cadence) {
+  if (
+    accreditation &&
+    isReprocessorRegistration(registration) &&
+    cadence === CADENCE.MONTHLY
+  ) {
+    return `${basePath}/free-prns`
+  }
+
+  if (!accreditation && isReprocessorRegistration(registration)) {
+    return `${basePath}/tonnes-not-recycled`
+  }
+
+  if (
+    accreditation &&
+    isExporterRegistration(registration) &&
+    cadence === CADENCE.MONTHLY
+  ) {
+    return `${basePath}/free-perns`
+  }
+
+  return basePath
+}
+
+/**
+ * @param {Request} request
  * @param {object} [options]
  * @param {string} [options.value] - Pre-fill value for textarea
  * @param {object} [options.errors] - Validation errors
  * @param {object} [options.errorSummary] - Error summary for govukErrorSummary
  */
-async function buildViewData(
-  request,
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  options = {}
-) {
+async function buildViewData(request, options = {}) {
+  const { organisationId, registrationId, year, cadence, period } =
+    request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
@@ -69,12 +93,7 @@ async function buildViewData(
 
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
-  const isAccreditedExporter =
-    accreditation &&
-    isExporterRegistration(registration) &&
-    cadence === CADENCE.MONTHLY
-
-  const backPage = isAccreditedExporter ? `${basePath}/free-perns` : basePath
+  const backPage = getBackPage(basePath, registration, accreditation, cadence)
 
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {
@@ -104,17 +123,7 @@ export const supportingInformationGetController = {
     }
   },
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
-
-    const viewData = await buildViewData(
-      request,
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period
-    )
+    const viewData = await buildViewData(request)
 
     return h.view('reports/supporting-information', viewData)
   }
@@ -129,35 +138,13 @@ export const supportingInformationPostController = {
       params: periodParamsSchema,
       payload: payloadSchema,
       async failAction(request, h, error) {
-        const { organisationId, registrationId, year, cadence, period } =
-          request.params
+        const { errors, errorSummary } = buildValidationErrors(request, error)
 
-        const errors = {}
-        const errorList = []
-
-        for (const detail of error.details) {
-          const field = detail.path[0]
-          const message = request.t(detail.message)
-          errors[field] = { text: message }
-          errorList.push({ text: message, href: `#${field}` })
-        }
-
-        const viewData = await buildViewData(
-          request,
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          {
-            value: request.payload.supportingInformation,
-            errors,
-            errorSummary: {
-              titleText: request.t('common:errorSummaryTitle'),
-              errorList
-            }
-          }
-        )
+        const viewData = await buildViewData(request, {
+          value: request.payload.supportingInformation,
+          errors,
+          errorSummary
+        })
 
         return h.view('reports/supporting-information', viewData).takeover()
       }

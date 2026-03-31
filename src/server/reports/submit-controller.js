@@ -89,9 +89,8 @@ export const submitGetController = {
 
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-    const isExporter = isExporterRegistration(registration)
-
     const { recyclingActivity, exportActivity, wasteSent } = reportDetail
+    const isExporter = isExporterRegistration(registration)
 
     const { createdBy, createdOn } = getCreationDetails(
       reportDetail.status.created,
