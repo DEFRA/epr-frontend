@@ -29,12 +29,12 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const accreditedExporter = {
+const accreditedReprocessor = {
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
     material: 'plastic',
-    wasteProcessingType: 'exporter',
+    wasteProcessingType: 'reprocessor',
     registrationNumber: 'REG001234'
   },
   accreditation: {
@@ -43,21 +43,13 @@ const accreditedExporter = {
   }
 }
 
-const registeredOnlyExporter = {
-  ...accreditedExporter,
+const registeredOnlyReprocessor = {
+  ...accreditedReprocessor,
   accreditation: undefined
 }
 
-const accreditedReprocessor = {
-  ...accreditedExporter,
-  registration: {
-    ...accreditedExporter.registration,
-    wasteProcessingType: 'reprocessor'
-  }
-}
-
 const reportDetail = {
-  operatorCategory: 'EXPORTER_ACCREDITED',
+  operatorCategory: 'REPROCESSOR_ACCREDITED',
   cadence: 'monthly',
   year: 2026,
   period: 1,
@@ -70,37 +62,32 @@ const reportDetail = {
   status: 'in_progress',
   supportingInformation: null,
   recyclingActivity: {
-    totalTonnageReceived: 80.25,
+    totalTonnageReceived: 200,
     suppliers: [],
     tonnageRecycled: null,
     tonnageNotRecycled: null
   },
-  wasteSent: {
-    tonnageSentToReprocessor: 5,
-    tonnageSentToExporter: 3,
-    tonnageSentToAnotherSite: 2,
-    finalDestinations: []
-  },
   prn: {
     issuedTonnage: 91,
-    totalRevenue: null,
-    averagePricePerTonne: null
+    totalRevenue: 1576.12,
+    averagePricePerTonne: 17.32,
+    freeTonnage: null
   }
 }
 
-const reportDetailWithRevenue = {
+const reportDetailWithFreeTonnage = {
   ...reportDetail,
   prn: {
     ...reportDetail.prn,
-    totalRevenue: 1576.12
+    freeTonnage: 5
   }
 }
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/prn-summary`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-prns`
 
-describe('#prnSummaryController', () => {
+describe('#reprocessorFreePrnsController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -117,14 +104,12 @@ describe('#prnSummaryController', () => {
     describe('GET', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedExporter
+          accreditedReprocessor
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
       })
 
-      it('should return 200 for accredited exporter with monthly cadence', async ({
-        server
-      }) => {
+      it('should return 200 for accredited reprocessor', async ({ server }) => {
         const { statusCode } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -134,7 +119,7 @@ describe('#prnSummaryController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      it('should display the heading', async ({ server }) => {
+      it('should display PRN heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -144,25 +129,26 @@ describe('#prnSummaryController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const heading = getByRole(body, 'heading', {
-          level: 1
-        })
-
-        expect(heading.textContent).toContain('PERNs issued for')
+        const heading = getByRole(body, 'heading', { level: 1 })
+        expect(heading.textContent).toContain(
+          'total tonnage of PRNs you issued for free'
+        )
       })
 
-      it('should display tonnage issued', async ({ server }) => {
+      it('should display PRN hint text', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
           auth: mockAuth
         })
 
-        expect(result).toContain('91')
+        expect(result).toContain('you may have issued PRNs to your own company')
       })
 
-      it('should pre-fill revenue if previously saved', async ({ server }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetailWithRevenue)
+      it('should pre-fill tonnage if previously saved', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          reportDetailWithFreeTonnage
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -170,14 +156,14 @@ describe('#prnSummaryController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain('1576.12')
+        expect(result).toContain('value="5"')
       })
 
-      it('should return 404 for non-accredited exporter', async ({
+      it('should return 404 for registered-only reprocessor', async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyExporter
+          registeredOnlyReprocessor
         )
 
         const { statusCode } = await server.inject({
@@ -189,24 +175,8 @@ describe('#prnSummaryController', () => {
         expect(statusCode).toBe(statusCodes.notFound)
       })
 
-      it('should dispatch to reprocessor controller for accredited reprocessor', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedReprocessor
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
       it('should return 404 for quarterly cadence', async ({ server }) => {
-        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/prn-summary`
+        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/free-prns`
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -253,27 +223,14 @@ describe('#prnSummaryController', () => {
     describe('POST', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedExporter
+          accreditedReprocessor
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         vi.mocked(updateReport).mockResolvedValue(undefined)
       })
 
-      describe('csrf protection', () => {
-        it('should reject POST without CSRF token', async ({ server }) => {
-          const { statusCode } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            payload: {}
-          })
-
-          expect(statusCode).toBe(statusCodes.forbidden)
-        })
-      })
-
-      describe('when continue is clicked with valid revenue', () => {
-        it('should redirect to free-perns', async ({ server }) => {
+      describe('when continue is clicked with valid tonnage', () => {
+        it('should redirect to supporting-information', async ({ server }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
             auth: mockAuth
           })
@@ -283,16 +240,16 @@ describe('#prnSummaryController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, prnRevenue: 1576.12, action: 'continue' }
+            payload: { crumb, freeTonnage: 5, action: 'continue' }
           })
 
           expect(statusCode).toBe(statusCodes.found)
           expect(headers.location).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-perns`
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/supporting-information`
           )
         })
 
-        it('should call updateReport with prnRevenue', async ({ server }) => {
+        it('should call updateReport with freeTonnage', async ({ server }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
             auth: mockAuth
           })
@@ -302,7 +259,7 @@ describe('#prnSummaryController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, prnRevenue: 1576.12, action: 'continue' }
+            payload: { crumb, freeTonnage: 5, action: 'continue' }
           })
 
           expect(updateReport).toHaveBeenCalledWith(
@@ -311,7 +268,7 @@ describe('#prnSummaryController', () => {
             2026,
             'monthly',
             1,
-            { prnRevenue: 1576.12 },
+            { freeTonnage: 5 },
             'mock-id-token'
           )
         })
@@ -328,7 +285,7 @@ describe('#prnSummaryController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, prnRevenue: 1576.12, action: 'save' }
+            payload: { crumb, freeTonnage: 0, action: 'save' }
           })
 
           expect(statusCode).toBe(statusCodes.found)
@@ -339,7 +296,26 @@ describe('#prnSummaryController', () => {
       })
 
       describe('validation errors', () => {
-        it('should show error when revenue is non-numeric', async ({
+        it('should show error when tonnage is empty', async ({ server }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          const { statusCode, result } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, freeTonnage: '', action: 'continue' }
+          })
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(result).toContain(
+            'Enter the total tonnage of free PRNs, even if zero'
+          )
+        })
+
+        it('should show error when tonnage exceeds total PRNs issued', async ({
           server
         }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -351,28 +327,13 @@ describe('#prnSummaryController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, prnRevenue: 'abc', action: 'continue' }
+            payload: { crumb, freeTonnage: 100, action: 'continue' }
           })
 
           expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain('Enter the total revenue of PERNs issued')
-        })
-
-        it('should show error when revenue is empty', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { statusCode, result } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, prnRevenue: '', action: 'continue' }
-          })
-
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain('Enter the total revenue of PERNs issued')
+          expect(result).toContain(
+            'Enter a number less than the total number of PRNs you issued in this period'
+          )
         })
       })
     })

@@ -11,10 +11,22 @@ import {
   freePernPostController
 } from './exporter/free-perns-controller.js'
 import {
-  prnSummaryGetController,
-  prnSummaryPostController
-} from './exporter/prn-summary-controller.js'
+  prnSummaryDispatchGetController,
+  prnSummaryDispatchPostController
+} from './prn-summary-dispatcher.js'
 import { listController } from './list-controller.js'
+import {
+  tonnesRecycledGetController,
+  tonnesRecycledPostController
+} from './reprocessor/tonnes-recycled-controller.js'
+import {
+  tonnesNotRecycledGetController,
+  tonnesNotRecycledPostController
+} from './reprocessor/tonnes-not-recycled-controller.js'
+import {
+  reprocessorFreePrnsGetController,
+  reprocessorFreePrnsPostController
+} from './reprocessor/free-prns-controller.js'
 import {
   submitGetController,
   submitPostController
@@ -54,12 +66,12 @@ export const reports = {
           path: periodPath
         },
         {
-          ...prnSummaryGetController,
+          ...prnSummaryDispatchGetController,
           method: 'GET',
           path: `${periodPath}/prn-summary`
         },
         {
-          ...prnSummaryPostController,
+          ...prnSummaryDispatchPostController,
           method: 'POST',
           path: `${periodPath}/prn-summary`
         },
@@ -72,6 +84,36 @@ export const reports = {
           ...freePernPostController,
           method: 'POST',
           path: `${periodPath}/free-perns`
+        },
+        {
+          ...reprocessorFreePrnsGetController,
+          method: 'GET',
+          path: `${periodPath}/free-prns`
+        },
+        {
+          ...reprocessorFreePrnsPostController,
+          method: 'POST',
+          path: `${periodPath}/free-prns`
+        },
+        {
+          ...tonnesRecycledGetController,
+          method: 'GET',
+          path: `${periodPath}/tonnes-recycled`
+        },
+        {
+          ...tonnesRecycledPostController,
+          method: 'POST',
+          path: `${periodPath}/tonnes-recycled`
+        },
+        {
+          ...tonnesNotRecycledGetController,
+          method: 'GET',
+          path: `${periodPath}/tonnes-not-recycled`
+        },
+        {
+          ...tonnesNotRecycledPostController,
+          method: 'POST',
+          path: `${periodPath}/tonnes-not-recycled`
         },
         {
           ...supportingInformationGetController,
