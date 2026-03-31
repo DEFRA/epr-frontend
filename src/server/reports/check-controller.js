@@ -1,6 +1,9 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
   buildDestinationDetailRows,
@@ -14,6 +17,34 @@ import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
+
+/**
+ * @param {object} reportDetail
+ * @param {Function} localise
+ * @returns {string}
+ */
+function getSupportingInformation(reportDetail, localise) {
+  if (reportDetail.supportingInformation) {
+    return reportDetail.supportingInformation
+  }
+  return localise('reports:supportingInformationNone')
+}
+
+/**
+ * @param {object|undefined} exportActivity
+ * @returns {object|null}
+ */
+function buildWasteExported(exportActivity) {
+  if (!exportActivity) {
+    return null
+  }
+
+  return {
+    totalTonnage: exportActivity.totalTonnageReceivedForExporting,
+    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites),
+    ...formatExportTonnages(exportActivity)
+  }
+}
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -30,11 +61,12 @@ export const checkGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const { registration } = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    )
+    const { registration, accreditation } =
+      await fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      )
 
     const reportDetail = await fetchReportDetail(
       organisationId,
@@ -51,6 +83,7 @@ export const checkGetController = {
 
     const { recyclingActivity, exportActivity, wasteSent } = reportDetail
     const isExporter = isExporterRegistration(registration)
+    const isReprocessor = isReprocessorRegistration(registration)
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
     const viewData = {
@@ -62,12 +95,12 @@ export const checkGetController = {
       cadenceLabel,
       registrationNumber: registration.registrationNumber,
       isExporter,
+      isReprocessor,
+      isAccredited: !!accreditation,
       backUrl: request.localiseUrl(`${basePath}/supporting-information`),
       changeUrl: request.localiseUrl(`${basePath}/supporting-information`),
       createButtonText: localise('reports:checkCreateReport'),
-      supportingInformation:
-        reportDetail.supportingInformation ||
-        localise('reports:supportingInformationNone'),
+      supportingInformation: getSupportingInformation(reportDetail, localise),
       supportingInformationLabel: localise(
         'reports:supportingInformationLabel'
       ),
@@ -78,15 +111,7 @@ export const checkGetController = {
         totalTonnage: recyclingActivity.totalTonnageReceived,
         supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
       },
-      wasteExported: exportActivity
-        ? {
-            totalTonnage: exportActivity.totalTonnageReceivedForExporting,
-            overseasSiteRows: buildOverseasSiteRows(
-              exportActivity.overseasSites
-            ),
-            ...formatExportTonnages(exportActivity)
-          }
-        : null,
+      wasteExported: buildWasteExported(exportActivity),
       wasteSentOn: {
         totalTonnage: getTotalTonnageSentOn(wasteSent),
         toReprocessors: wasteSent.tonnageSentToReprocessor,
@@ -96,9 +121,17 @@ export const checkGetController = {
           wasteSent.finalDestinations
         )
       },
+      recyclingActivity: reportDetail.recyclingActivity,
+      tonnageRecycledChangeUrl: request.localiseUrl(
+        `${basePath}/tonnes-recycled`
+      ),
+      tonnageNotRecycledChangeUrl: request.localiseUrl(
+        `${basePath}/tonnes-not-recycled`
+      ),
       prn: reportDetail.prn,
       prnRevenueChangeUrl: request.localiseUrl(`${basePath}/prn-summary`),
-      freePernChangeUrl: request.localiseUrl(`${basePath}/free-perns`)
+      freePernChangeUrl: request.localiseUrl(`${basePath}/free-perns`),
+      freePrnsChangeUrl: request.localiseUrl(`${basePath}/free-prns`)
     }
 
     return h.view('reports/check-your-answers', viewData)

@@ -863,6 +863,88 @@ describe('#checkController', () => {
         })
       })
 
+      describe('for registered-only reprocessor recycling activity', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            reprocessorRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reprocessorReportDetail,
+            recyclingActivity: {
+              ...reprocessorReportDetail.recyclingActivity,
+              tonnageRecycled: 150.5,
+              tonnageNotRecycled: 20
+            }
+          })
+        })
+
+        it('should display recycling activity section heading', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Recycling activity/,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should display tonnage recycled with Change link', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain(
+            'Total tonnage of packaging waste recycled'
+          )
+          expect(body.textContent).toContain('150.5')
+
+          const changeLinks = body.querySelectorAll(
+            '.govuk-summary-list a[href*="tonnes-recycled"]'
+          )
+          expect(changeLinks.length).toBeGreaterThan(0)
+        })
+
+        it('should display tonnage not recycled with Change link', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain(
+            'Total tonnage of packaging waste received but not recycled'
+          )
+          expect(body.textContent).toContain('20')
+
+          const changeLinks = body.querySelectorAll(
+            '.govuk-summary-list a[href*="tonnes-not-recycled"]'
+          )
+          expect(changeLinks.length).toBeGreaterThan(0)
+        })
+      })
+
       describe('for accredited reprocessor', () => {
         beforeEach(() => {
           vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(

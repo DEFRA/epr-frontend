@@ -2,7 +2,10 @@ import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -74,7 +77,22 @@ async function buildViewData(
     isExporterRegistration(registration) &&
     cadence === CADENCE.MONTHLY
 
-  const backPage = isAccreditedExporter ? `${basePath}/free-perns` : basePath
+  const isAccreditedReprocessor =
+    accreditation &&
+    isReprocessorRegistration(registration) &&
+    cadence === CADENCE.MONTHLY
+
+  const isRegisteredOnlyReprocessor =
+    !accreditation && isReprocessorRegistration(registration)
+
+  let backPage = basePath
+  if (isAccreditedReprocessor) {
+    backPage = `${basePath}/free-prns`
+  } else if (isRegisteredOnlyReprocessor) {
+    backPage = `${basePath}/tonnes-not-recycled`
+  } else if (isAccreditedExporter) {
+    backPage = `${basePath}/free-perns`
+  }
 
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {

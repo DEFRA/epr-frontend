@@ -136,7 +136,40 @@
         }) }}
       {% endif %}
 
-      {% if prn %}
+      {% if isReprocessor %}
+        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+        <h3 class="govuk-heading-m">{{ localise("reports:checkRecyclingActivityHeading") }}</h3>
+
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: localise("reports:checkTonnageRecycledLabel") },
+              value: { text: recyclingActivity.tonnageRecycled if recyclingActivity.tonnageRecycled !== null else "—" },
+              actions: {
+                items: [{
+                  href: tonnageRecycledChangeUrl,
+                  text: changeText,
+                  visuallyHiddenText: localise("reports:checkTonnageRecycledLabel")
+                }]
+              }
+            },
+            {
+              key: { text: localise("reports:checkTonnageNotRecycledLabel") },
+              value: { text: recyclingActivity.tonnageNotRecycled if recyclingActivity.tonnageNotRecycled !== null else "—" },
+              actions: {
+                items: [{
+                  href: tonnageNotRecycledChangeUrl,
+                  text: changeText,
+                  visuallyHiddenText: localise("reports:checkTonnageNotRecycledLabel")
+                }]
+              }
+            }
+          ]
+        }) }}
+      {% endif %}
+
+      {% if prn and (isExporter or (isReprocessor and isAccredited)) %}
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
         {% if isExporter %}
@@ -171,14 +204,20 @@
             {{ prn.freeTonnage }}
             <p class="govuk-body-s govuk-!-margin-top-1 govuk-!-margin-bottom-0">{{ localise("reports:checkFreePernNote") }}</p>
           {% endset %}
+          {% set freeTonnageChangeUrl = freePrnsChangeUrl if isReprocessor else freePernChangeUrl %}
+          {% if isExporter %}
+            {% set freeTonnageLabel = localise("reports:checkFreePernLabel") %}
+          {% else %}
+            {% set freeTonnageLabel = localise("reports:checkFreePrnsLabel") %}
+          {% endif %}
           {% set prnRows = prnRows.concat([{
-            key: { text: localise("reports:checkFreePernLabel") },
+            key: { text: freeTonnageLabel },
             value: { html: freeTonnageHtml },
             actions: {
               items: [{
-                href: freePernChangeUrl,
+                href: freeTonnageChangeUrl,
                 text: changeText,
-                visuallyHiddenText: localise("reports:checkFreePernLabel")
+                visuallyHiddenText: freeTonnageLabel
               }]
             }
           }]) %}
