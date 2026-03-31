@@ -616,7 +616,7 @@ describe('#submitController', () => {
           expect(versionInput.getAttribute('value')).toBe('1')
         })
 
-        it('should display Delete report link', async ({ server }) => {
+        it('should display delete report link', async ({ server }) => {
           const body = await getBody(server)
           const deleteLink = getByRole(body, 'link', {
             name: /Delete report/i
