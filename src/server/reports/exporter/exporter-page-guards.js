@@ -12,21 +12,11 @@ import { formatPeriodLabel } from '../helpers/format-period-label.js'
  * accredited-exporter-monthly guard. Returns the validated data needed by
  * both prn-summary and free-perns pages.
  * @param {Request} request
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
  * @returns {Promise<{ registration: object, reportDetail: object }>}
  */
-export async function fetchGuardedExporterData(
-  request,
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period
-) {
+export async function fetchGuardedExporterData(request) {
+  const { organisationId, registrationId, year, cadence, period } =
+    request.params
   const session = request.auth.credentials
 
   const [{ registration, accreditation }, reportDetail] = await Promise.all([
@@ -85,14 +75,7 @@ export async function buildExporterViewData(
     request.params
   const { t: localise } = request
 
-  const { registration, reportDetail } = await fetchGuardedExporterData(
-    request,
-    organisationId,
-    registrationId,
-    year,
-    cadence,
-    period
-  )
+  const { registration, reportDetail } = await fetchGuardedExporterData(request)
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)

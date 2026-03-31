@@ -11,6 +11,7 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReport } from './helpers/update-report.js'
+import { buildValidationErrors } from './helpers/validation.js'
 
 const MAX_SUPPORTING_INFO_LENGTH = 2000
 
@@ -29,25 +30,14 @@ const payloadSchema = Joi.object({
 
 /**
  * @param {Request} request
- * @param {string} organisationId
- * @param {string} registrationId
- * @param {number} year
- * @param {string} cadence
- * @param {number} period
  * @param {object} [options]
  * @param {string} [options.value] - Pre-fill value for textarea
  * @param {object} [options.errors] - Validation errors
  * @param {object} [options.errorSummary] - Error summary for govukErrorSummary
  */
-async function buildViewData(
-  request,
-  organisationId,
-  registrationId,
-  year,
-  cadence,
-  period,
-  options = {}
-) {
+async function buildViewData(request, options = {}) {
+  const { organisationId, registrationId, year, cadence, period } =
+    request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
@@ -122,17 +112,7 @@ export const supportingInformationGetController = {
     }
   },
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
-
-    const viewData = await buildViewData(
-      request,
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period
-    )
+    const viewData = await buildViewData(request)
 
     return h.view('reports/supporting-information', viewData)
   }
@@ -147,35 +127,13 @@ export const supportingInformationPostController = {
       params: periodParamsSchema,
       payload: payloadSchema,
       async failAction(request, h, error) {
-        const { organisationId, registrationId, year, cadence, period } =
-          request.params
+        const { errors, errorSummary } = buildValidationErrors(request, error)
 
-        const errors = {}
-        const errorList = []
-
-        for (const detail of error.details) {
-          const field = detail.path[0]
-          const message = request.t(detail.message)
-          errors[field] = { text: message }
-          errorList.push({ text: message, href: `#${field}` })
-        }
-
-        const viewData = await buildViewData(
-          request,
-          organisationId,
-          registrationId,
-          year,
-          cadence,
-          period,
-          {
-            value: request.payload.supportingInformation,
-            errors,
-            errorSummary: {
-              titleText: request.t('common:errorSummaryTitle'),
-              errorList
-            }
-          }
-        )
+        const viewData = await buildViewData(request, {
+          value: request.payload.supportingInformation,
+          errors,
+          errorSummary
+        })
 
         return h.view('reports/supporting-information', viewData).takeover()
       }
