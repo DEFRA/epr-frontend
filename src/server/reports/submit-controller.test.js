@@ -704,6 +704,18 @@ describe('#submitController', () => {
 
           expect(body.textContent).toContain('Jane Smith')
         })
+
+        it('should display delete report link', async ({ server }) => {
+          const body = await getBody(server)
+          const deleteLink = getByRole(body, 'link', {
+            name: /Delete report/i
+          })
+
+          expect(deleteLink).toBeDefined()
+          expect(deleteLink.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/delete`
+          )
+        })
       })
     })
 
