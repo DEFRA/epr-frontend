@@ -368,6 +368,113 @@ describe('#createReportController', () => {
       })
     })
 
+    describe('for accredited exporter with monthly cadence', () => {
+      const monthlyDetailUrl =
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reportDetail,
+          cadence: 'monthly',
+          period: 1
+        })
+        vi.mocked(createReport).mockResolvedValue({
+          id: 'report-001',
+          status: 'in_progress'
+        })
+      })
+
+      it('should redirect to prn-summary instead of supporting-information', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, monthlyDetailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: monthlyDetailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/prn-summary'
+        )
+      })
+    })
+
+    describe('for accredited exporter with quarterly cadence', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        vi.mocked(createReport).mockResolvedValue({
+          id: 'report-001',
+          status: 'in_progress'
+        })
+      })
+
+      it('should redirect to supporting-information not prn-summary', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: detailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
+        )
+      })
+    })
+
+    describe('for registered-only exporter', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          registeredOnlyExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        vi.mocked(createReport).mockResolvedValue({
+          id: 'report-001',
+          status: 'in_progress'
+        })
+      })
+
+      it('should redirect to supporting-information', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: detailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
+        )
+      })
+    })
+
     describe('when backend returns 409 conflict', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
