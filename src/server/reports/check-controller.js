@@ -20,7 +20,7 @@ import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
  * @param {object} reportDetail
- * @param {Function} localise
+ * @param {(key: string) => string} localise
  * @returns {string}
  */
 function getSupportingInformation(reportDetail, localise) {

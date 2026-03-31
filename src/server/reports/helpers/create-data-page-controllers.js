@@ -13,7 +13,7 @@ import { buildValidationErrors } from './validation.js'
  * @param {string} config.fieldName - Payload field name (used to extract the submitted value on validation failure)
  * @param {import('joi').Schema} config.payloadSchema - Joi schema for POST payload
  * @param {(request: Request, options?: object) => Promise<object>} config.buildViewData - Builds the full view-model for the template
- * @param {(request: Request, h: ResponseToolkit) => Promise<*>} config.postHandler - POST success handler
+ * @param {(request: Request, h: ResponseToolkit) => Promise<ResponseObject>} config.postHandler - POST success handler
  * @returns {{ getController: Partial<ServerRoute>, postController: Partial<ServerRoute> }}
  */
 export function createDataPageControllers({
@@ -62,5 +62,5 @@ export function createDataPageControllers({
 }
 
 /**
- * @import { Request, ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { Request, ResponseObject, ResponseToolkit, ServerRoute } from '@hapi/hapi'
  */
