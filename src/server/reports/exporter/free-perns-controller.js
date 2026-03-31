@@ -10,7 +10,7 @@ import {
 } from './exporter-page-guards.js'
 
 const payloadSchema = Joi.object({
-  freePernTonnage: Joi.number().min(0).required().messages({
+  freeTonnage: Joi.number().min(0).required().messages({
     'any.required': 'reports:freePernErrorRequired',
     'number.base': 'reports:freePernErrorRequired',
     'number.min': 'reports:freePernErrorFormat',
@@ -83,7 +83,7 @@ export const freePernPostController = {
         const { errors, errorSummary } = buildValidationErrors(request, error)
 
         const viewData = await buildViewData(request, {
-          value: request.payload.freePernTonnage,
+          value: request.payload.freeTonnage,
           errors,
           errorSummary
         })
@@ -95,7 +95,7 @@ export const freePernPostController = {
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
-    const { freePernTonnage, action } = request.payload
+    const { freeTonnage, action } = request.payload
     const session = request.auth.credentials
 
     const reportDetail = await fetchReportDetail(
@@ -109,18 +109,18 @@ export const freePernPostController = {
 
     const tonnageIssued = reportDetail.prn.issuedTonnage
 
-    if (freePernTonnage > tonnageIssued) {
+    if (freeTonnage > tonnageIssued) {
       const { t: localise } = request
       const message = localise('reports:freePernErrorExceedsTotal')
 
       const viewData = await buildViewData(request, {
-        value: freePernTonnage,
+        value: freeTonnage,
         errors: {
-          freePernTonnage: { text: message }
+          freeTonnage: { text: message }
         },
         errorSummary: {
           titleText: localise('common:errorSummaryTitle'),
-          errorList: [{ text: message, href: '#freePernTonnage' }]
+          errorList: [{ text: message, href: '#freeTonnage' }]
         }
       })
 
@@ -133,7 +133,7 @@ export const freePernPostController = {
       year,
       cadence,
       period,
-      { freePernTonnage },
+      { freeTonnage },
       session.idToken
     )
 

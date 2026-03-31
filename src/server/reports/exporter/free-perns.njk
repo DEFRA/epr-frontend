@@ -31,8 +31,8 @@
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
         {{ govukInput({
-          id: "freePernTonnage",
-          name: "freePernTonnage",
+          id: "freeTonnage",
+          name: "freeTonnage",
           inputmode: "decimal",
           spellcheck: false,
           suffix: {
@@ -43,7 +43,7 @@
             classes: "govuk-visually-hidden"
           },
           value: value,
-          errorMessage: errors.freePernTonnage if errors else null
+          errorMessage: errors.freeTonnage if errors else null
         }) }}
 
         <div class="govuk-button-group">

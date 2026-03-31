@@ -266,7 +266,7 @@ describe('#freePernController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, freePernTonnage: 5, action: 'continue' }
+            payload: { crumb, freeTonnage: 5, action: 'continue' }
           })
 
           expect(statusCode).toBe(statusCodes.found)
@@ -275,9 +275,7 @@ describe('#freePernController', () => {
           )
         })
 
-        it('should call updateReport with freePernTonnage', async ({
-          server
-        }) => {
+        it('should call updateReport with freeTonnage', async ({ server }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
             auth: mockAuth
           })
@@ -287,7 +285,7 @@ describe('#freePernController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, freePernTonnage: 5, action: 'continue' }
+            payload: { crumb, freeTonnage: 5, action: 'continue' }
           })
 
           expect(updateReport).toHaveBeenCalledWith(
@@ -296,7 +294,7 @@ describe('#freePernController', () => {
             2026,
             'monthly',
             1,
-            { freePernTonnage: 5 },
+            { freeTonnage: 5 },
             'mock-id-token'
           )
         })
@@ -313,7 +311,7 @@ describe('#freePernController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, freePernTonnage: 0, action: 'save' }
+            payload: { crumb, freeTonnage: 0, action: 'save' }
           })
 
           expect(statusCode).toBe(statusCodes.found)
@@ -334,7 +332,7 @@ describe('#freePernController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, freePernTonnage: '', action: 'continue' }
+            payload: { crumb, freeTonnage: '', action: 'continue' }
           })
 
           expect(statusCode).toBe(statusCodes.ok)
@@ -355,7 +353,7 @@ describe('#freePernController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, freePernTonnage: 100, action: 'continue' }
+            payload: { crumb, freeTonnage: 100, action: 'continue' }
           })
 
           expect(statusCode).toBe(statusCodes.ok)
