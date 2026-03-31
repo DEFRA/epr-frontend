@@ -40,6 +40,14 @@ const registeredOnlyExporter = {
   accreditation: undefined
 }
 
+const accreditedExporter = {
+  ...registeredOnlyExporter,
+  accreditation: {
+    id: 'acc-001',
+    accreditationNumber: 'ER992415095748M'
+  }
+}
+
 const reportDetailWithoutSupportingInfo = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -278,6 +286,61 @@ describe('#supportingInformationController', () => {
           expect(backLink).not.toBeNull()
           expect(backLink?.getAttribute('href')).toBe(
             `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1`
+          )
+        })
+
+        it('should display back link to detail for accredited reprocessor', async ({
+          server
+        }) => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+            ...accreditedExporter,
+            registration: {
+              ...accreditedExporter.registration,
+              wasteProcessingType: 'reprocessor'
+            }
+          })
+
+          const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/supporting-information`
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: monthlyUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const backLink = body.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1`
+          )
+        })
+
+        it('should display back link to free-perns for accredited exporter', async ({
+          server
+        }) => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            accreditedExporter
+          )
+
+          const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/supporting-information`
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: monthlyUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const backLink = body.querySelector('.govuk-back-link')
+
+          expect(backLink).not.toBeNull()
+          expect(backLink?.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-perns`
           )
         })
       })
