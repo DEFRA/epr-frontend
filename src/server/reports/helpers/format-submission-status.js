@@ -10,7 +10,10 @@ export function getStatusLabel(status, localise) {
   const labels = {
     [SUBMISSION_STATUS.DUE]: localise('reports:statusDue'),
     [SUBMISSION_STATUS.IN_PROGRESS]: localise('reports:statusInProgress'),
-    [SUBMISSION_STATUS.READY_TO_SUBMIT]: localise('reports:statusReadyToSubmit')
+    [SUBMISSION_STATUS.READY_TO_SUBMIT]: localise(
+      'reports:statusReadyToSubmit'
+    ),
+    [SUBMISSION_STATUS.SUBMITTED]: localise('reports:statusSubmitted')
   }
 
   return labels[status] ?? null

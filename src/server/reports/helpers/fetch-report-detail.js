@@ -65,7 +65,13 @@ export async function fetchReportDetail(
  *   },
  *   id?: string,
  *   version?: number,
- *   status?: string,
+ *   status?: {
+ *     currentStatus: string,
+ *     currentStatusAt: string,
+ *     created: { at: string, by: { id: string, name: string, position: string } },
+ *     ready?: { at: string, by: { id: string, name: string, position: string } },
+ *     submitted?: { at: string, by: { id: string, name: string, position: string } }
+ *   },
  *   supportingInformation?: string,
  *   recyclingActivity: {
  *     suppliers: SupplierEntry[],

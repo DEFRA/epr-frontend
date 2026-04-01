@@ -69,20 +69,15 @@ const exporterReportDetail = {
   details: { material: 'plastic' },
   id: 'report-001',
   version: 1,
-  status: 'ready_to_submit',
-  supportingInformation: 'Supply chain disruption in February',
-  statusHistory: [
-    {
-      status: 'in_progress',
-      changedBy: { id: 'user-456', name: 'Michael Doran', position: 'User' },
-      changedAt: '2026-01-20T14:30:00.000Z'
-    },
-    {
-      status: 'ready_to_submit',
-      changedBy: { id: 'user-456', name: 'Michael Doran', position: 'User' },
-      changedAt: '2026-01-20T14:35:00.000Z'
+  status: {
+    currentStatus: 'ready_to_submit',
+    currentStatusAt: '2026-01-20T14:35:00.000Z',
+    created: {
+      at: '2026-01-20T14:30:00.000Z',
+      by: { id: 'user-456', name: 'Michael Doran', position: 'User' }
     }
-  ],
+  },
+  supportingInformation: 'Supply chain disruption in February',
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
@@ -153,20 +148,15 @@ const reprocessorReportDetail = {
   },
   id: 'report-001',
   version: 1,
-  status: 'ready_to_submit',
-  supportingInformation: null,
-  statusHistory: [
-    {
-      status: 'in_progress',
-      changedBy: { id: 'user-789', name: 'Jane Smith', position: 'User' },
-      changedAt: '2026-01-10T09:00:00.000Z'
-    },
-    {
-      status: 'ready_to_submit',
-      changedBy: { id: 'user-789', name: 'Jane Smith', position: 'User' },
-      changedAt: '2026-01-10T09:05:00.000Z'
+  status: {
+    currentStatus: 'ready_to_submit',
+    currentStatusAt: '2026-01-10T09:05:00.000Z',
+    created: {
+      at: '2026-01-10T09:00:00.000Z',
+      by: { id: 'user-789', name: 'Jane Smith', position: 'User' }
     }
-  ],
+  },
+  supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
