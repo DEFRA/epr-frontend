@@ -42,7 +42,6 @@
   "deleteHeading": "Confirm deletion of this report",
   "deletePageTitle": "Confirm deletion: {{ material }}: {{ periodLabel }}",
   "deleteReportLink": "Delete report",
-  "destinationHeading": "Final destination of waste sent on",
   "destinationsHeading": "Final destinations",
   "detailHeading": "Your summary log data for {{ periodLabel }}",
   "detailPageTitle": "Report: {{ material }}: {{ periodLabel }}",
@@ -151,7 +150,6 @@
   "submittedRegistrationLabel": "Registration:",
   "submittedReturnToReports": "Return to your reports",
   "supplierColumn": "Supplier",
-  "supplierDetailsHeading": "Supplier details",
   "suppliersHeading": "Suppliers",
   "supportingInformationCaption": "Create report",
   "supportingInformationChange": "Change",
@@ -204,7 +202,7 @@
   "wasteReceivedForExportHeading": "Packaging waste received for exporting",
   "wasteReceivedForExportIntro": "The data for waste received for export comes from your summary log. Your report will be accurate if all the necessary data has been added.",
   "wasteReceivedHeading": "Packaging waste received for reprocessing",
-  "wasteReceivedIntro": "The data for waste received comes from sections 1 and 2 of your summary log. Your report will be accurate if all the necessary data has been added to these sections.",
+  "wasteReceivedIntro": "This data comes from sections 1 and 2 of your summary log.",
   "wasteSentOnHeading": "Packaging waste sent on",
-  "wasteSentOnIntro": "This information is based on the data in sections 5, 6 and 7 of your summary log. Your report will be accurate if all the necessary data has been added to these sections."
+  "wasteSentOnIntro": "This data comes from sections 5 and 6 of your summary log."
 }

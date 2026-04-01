@@ -78,17 +78,17 @@ const exporterReportDetail = {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
         tonnageReceived: 42.21,
-        address: '12 Industrial Estate, Grantham, NG31 7AA',
-        phone: '01234 567890',
-        email: 'info@granthamwaste.co.uk'
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
         tonnageReceived: 38.04,
-        address: '45 Recycling Park, Leeds, LS1 2AB',
-        phone: '09876 543210',
-        email: 'info@suez.co.uk'
+        supplierAddress: '45 Recycling Park, Leeds, LS1 2AB',
+        supplierPhone: '09876 543210',
+        supplierEmail: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -146,9 +146,9 @@ const reprocessorReportDetail = {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
         tonnageReceived: 42.21,
-        address: '12 Industrial Estate, Grantham, NG31 7AA',
-        phone: '01234 567890',
-        email: 'info@granthamwaste.co.uk'
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -861,6 +861,48 @@ describe('#checkController', () => {
             queryByRole(body, 'heading', { name: /PRNs/, level: 3 })
           ).toBeNull()
         })
+
+        it('should display site in header summary list', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const summaryLists = body.querySelectorAll('.govuk-summary-list')
+          const headerSummaryList = summaryLists[0]
+
+          expect(headerSummaryList?.textContent).toContain('Site')
+          expect(headerSummaryList?.textContent).toContain('North Road')
+        })
+
+        it('should display destination table with 4 columns', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const destinationTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Lincoln recycling')
+          )
+          const headers = destinationTable?.querySelectorAll('th')
+
+          expect(headers).toHaveLength(4)
+          expect(headers?.[0]?.textContent).toContain('Recipient')
+          expect(headers?.[1]?.textContent).toContain('Activity')
+          expect(headers?.[2]?.textContent).toContain('Address')
+          expect(headers?.[3]?.textContent).toContain('Tonnage sent on')
+        })
       })
 
       describe('for registered-only reprocessor recycling activity', () => {
@@ -893,7 +935,7 @@ describe('#checkController', () => {
           expect(
             getByRole(body, 'heading', {
               name: /Recycling activity/,
-              level: 3
+              level: 2
             })
           ).toBeDefined()
         })
@@ -1071,6 +1113,25 @@ describe('#checkController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue(
             accreditedReprocessorReportDetail
           )
+        })
+
+        it('should display accreditation number and label in header summary list', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const summaryLists = body.querySelectorAll('.govuk-summary-list')
+          const headerSummaryList = summaryLists[0]
+
+          expect(headerSummaryList?.textContent).toContain('Accreditation')
+          expect(headerSummaryList?.textContent).toContain('ER992415095748M')
         })
 
         it('should display PRNs heading and issued tonnage', async ({

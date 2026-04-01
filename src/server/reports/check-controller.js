@@ -47,6 +47,70 @@ function buildWasteExported(exportActivity) {
 }
 
 /**
+ * @param {{ registration: object, accreditation: object|undefined, reportDetail: object, basePath: string, localise: (key: string, params?: object) => string, localiseUrl: (path: string) => string }} params
+ * @returns {object}
+ */
+function buildCheckViewData({
+  registration,
+  accreditation,
+  reportDetail,
+  basePath,
+  localise,
+  localiseUrl,
+  material,
+  periodLabel,
+  cadenceLabel
+}) {
+  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
+  const isExporter = isExporterRegistration(registration)
+  const isReprocessor = isReprocessorRegistration(registration)
+
+  return {
+    pageTitle: localise('reports:checkPageTitle', { material, periodLabel }),
+    caption: localise('reports:checkCaption'),
+    heading: localise('reports:checkHeading'),
+    material,
+    periodLabel,
+    cadenceLabel,
+    registrationNumber: registration.registrationNumber,
+    accreditationNumber: accreditation?.accreditationNumber,
+    site: registration.site,
+    isExporter,
+    isReprocessor,
+    isAccredited: !!accreditation,
+    backUrl: localiseUrl(`${basePath}/supporting-information`),
+    changeUrl: localiseUrl(`${basePath}/supporting-information`),
+    createButtonText: localise('reports:checkCreateReport'),
+    supportingInformation: getSupportingInformation(reportDetail, localise),
+    supportingInformationLabel: localise('reports:supportingInformationLabel'),
+    version: reportDetail.version,
+    changeText: localise('reports:supportingInformationChange'),
+    deleteUrl: localiseUrl(`${basePath}/delete`),
+    wasteReceived: {
+      totalTonnage: recyclingActivity.totalTonnageReceived,
+      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+    },
+    wasteExported: buildWasteExported(exportActivity),
+    wasteSentOn: {
+      totalTonnage: getTotalTonnageSentOn(wasteSent),
+      toReprocessors: wasteSent.tonnageSentToReprocessor,
+      toExporters: wasteSent.tonnageSentToExporter,
+      toOtherSites: wasteSent.tonnageSentToAnotherSite,
+      destinationDetailRows: buildDestinationDetailRows(
+        wasteSent.finalDestinations
+      )
+    },
+    recyclingActivity: reportDetail.recyclingActivity,
+    tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
+    tonnageNotRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-not-recycled`),
+    prn: reportDetail.prn,
+    prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
+    freePernChangeUrl: localiseUrl(`${basePath}/free-perns`),
+    freePrnsChangeUrl: localiseUrl(`${basePath}/free-prns`)
+  }
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const checkGetController = {
@@ -77,62 +141,22 @@ export const checkGetController = {
       session.idToken
     )
 
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
     const cadenceLabel = localise(`reports:${cadence}Heading`)
 
-    const { recyclingActivity, exportActivity, wasteSent } = reportDetail
-    const isExporter = isExporterRegistration(registration)
-    const isReprocessor = isReprocessorRegistration(registration)
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-
-    const viewData = {
-      pageTitle: localise('reports:checkPageTitle', { material, periodLabel }),
-      caption: localise('reports:checkCaption'),
-      heading: localise('reports:checkHeading'),
+    const viewData = buildCheckViewData({
+      registration,
+      accreditation,
+      reportDetail,
+      basePath,
+      localise,
+      localiseUrl: request.localiseUrl.bind(request),
       material,
       periodLabel,
-      cadenceLabel,
-      registrationNumber: registration.registrationNumber,
-      isExporter,
-      isReprocessor,
-      isAccredited: !!accreditation,
-      backUrl: request.localiseUrl(`${basePath}/supporting-information`),
-      changeUrl: request.localiseUrl(`${basePath}/supporting-information`),
-      createButtonText: localise('reports:checkCreateReport'),
-      supportingInformation: getSupportingInformation(reportDetail, localise),
-      supportingInformationLabel: localise(
-        'reports:supportingInformationLabel'
-      ),
-      version: reportDetail.version,
-      changeText: localise('reports:supportingInformationChange'),
-      deleteUrl: request.localiseUrl(`${basePath}/delete`),
-      wasteReceived: {
-        totalTonnage: recyclingActivity.totalTonnageReceived,
-        supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-      },
-      wasteExported: buildWasteExported(exportActivity),
-      wasteSentOn: {
-        totalTonnage: getTotalTonnageSentOn(wasteSent),
-        toReprocessors: wasteSent.tonnageSentToReprocessor,
-        toExporters: wasteSent.tonnageSentToExporter,
-        toOtherSites: wasteSent.tonnageSentToAnotherSite,
-        destinationDetailRows: buildDestinationDetailRows(
-          wasteSent.finalDestinations
-        )
-      },
-      recyclingActivity: reportDetail.recyclingActivity,
-      tonnageRecycledChangeUrl: request.localiseUrl(
-        `${basePath}/tonnes-recycled`
-      ),
-      tonnageNotRecycledChangeUrl: request.localiseUrl(
-        `${basePath}/tonnes-not-recycled`
-      ),
-      prn: reportDetail.prn,
-      prnRevenueChangeUrl: request.localiseUrl(`${basePath}/prn-summary`),
-      freePernChangeUrl: request.localiseUrl(`${basePath}/free-perns`),
-      freePrnsChangeUrl: request.localiseUrl(`${basePath}/free-prns`)
-    }
+      cadenceLabel
+    })
 
     return h.view('reports/check-your-answers', viewData)
   }
