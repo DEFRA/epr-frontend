@@ -146,9 +146,9 @@ const reprocessorReportDetail = {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
         tonnageReceived: 42.21,
-        address: '12 Industrial Estate, Grantham, NG31 7AA',
-        phone: '01234 567890',
-        email: 'info@granthamwaste.co.uk'
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       }
     ],
     tonnageRecycled: null,
