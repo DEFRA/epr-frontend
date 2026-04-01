@@ -14,6 +14,78 @@ import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 
 /**
+ * @param {{ organisationId: string, registrationId: string }} ids
+ * @param {object} registration
+ * @param {object | undefined} accreditation
+ * @param {object} reportDetail
+ * @param {Function} localise
+ * @param {Function} localiseUrl
+ */
+function buildViewData(
+  { organisationId, registrationId },
+  registration,
+  accreditation,
+  reportDetail,
+  localise,
+  localiseUrl
+) {
+  const material = getDisplayMaterial(registration)
+  const periodLabel = formatPeriodLabel(
+    { year: reportDetail.year, period: reportDetail.period },
+    reportDetail.cadence,
+    localise
+  )
+  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
+  const isExporter = isExporterRegistration(registration)
+
+  return {
+    pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
+    heading: localise('reports:detailHeading', { periodLabel }),
+    material,
+    periodLabel,
+    isExporter,
+    backUrl: localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+    ),
+    uploadUrl: localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+    ),
+    lastUploadedAt: reportDetail.lastUploadedAt
+      ? {
+          date: formatDate(reportDetail.lastUploadedAt, { includeYear: false }),
+          time: formatTime(reportDetail.lastUploadedAt)
+        }
+      : null,
+    accreditation: accreditation?.accreditationNumber,
+    site: reportDetail.details.site,
+    wasteReceived: {
+      totalTonnage: recyclingActivity.totalTonnageReceived,
+      supplierRows: buildSupplierRows(recyclingActivity.suppliers)
+    },
+    wasteExported: exportActivity
+      ? {
+          totalTonnage: exportActivity.totalTonnageExported,
+          overseasSiteDetailRows: buildOverseasSiteDetailRows(
+            exportActivity.overseasSites
+          ),
+          tonnageReceivedNotExported: exportActivity.tonnageReceivedNotExported,
+          tonnageRefusedOrStopped: exportActivity.totalTonnageRefusedOrStopped,
+          tonnageRefused: exportActivity.tonnageRefusedAtDestination,
+          tonnageStopped: exportActivity.tonnageStoppedDuringExport,
+          tonnageRepatriated: exportActivity.tonnageRepatriated
+        }
+      : null,
+    wasteSentOn: {
+      totalTonnage: getTotalTonnageSentOn(wasteSent),
+      toReprocessors: wasteSent.tonnageSentToReprocessor,
+      toExporters: wasteSent.tonnageSentToExporter,
+      toOtherSites: wasteSent.tonnageSentToAnotherSite,
+      destinationRows: buildDestinationRows(wasteSent.finalDestinations)
+    }
+  }
+}
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const detailController = {
@@ -44,65 +116,14 @@ export const detailController = {
       session.idToken
     )
 
-    const material = getDisplayMaterial(registration)
-    const periodLabel = formatPeriodLabel(
-      { year: reportDetail.year, period: reportDetail.period },
-      reportDetail.cadence,
-      localise
+    const viewData = buildViewData(
+      { organisationId, registrationId },
+      registration,
+      accreditation,
+      reportDetail,
+      localise,
+      request.localiseUrl.bind(request)
     )
-
-    const { recyclingActivity, exportActivity, wasteSent } = reportDetail
-    const isExporter = isExporterRegistration(registration)
-
-    const viewData = {
-      pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
-      heading: localise('reports:detailHeading', { periodLabel }),
-      material,
-      periodLabel,
-      isExporter,
-      backUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
-      ),
-      uploadUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
-      ),
-      lastUploadedAt: reportDetail.lastUploadedAt
-        ? {
-            date: formatDate(reportDetail.lastUploadedAt, {
-              includeYear: false
-            }),
-            time: formatTime(reportDetail.lastUploadedAt)
-          }
-        : null,
-      accreditation: accreditation?.accreditationNumber,
-      site: reportDetail.details.site,
-      wasteReceived: {
-        totalTonnage: recyclingActivity.totalTonnageReceived,
-        supplierRows: buildSupplierRows(recyclingActivity.suppliers)
-      },
-      wasteExported: exportActivity
-        ? {
-            totalTonnage: exportActivity.totalTonnageExported,
-            overseasSiteDetailRows: buildOverseasSiteDetailRows(
-              exportActivity.overseasSites
-            ),
-            tonnageReceivedNotExported:
-              exportActivity.tonnageReceivedNotExported,
-            tonnageRefusedOrStopped:
-              exportActivity.totalTonnageRefusedOrStopped,
-            tonnageRefused: exportActivity.tonnageRefusedAtDestination,
-            tonnageStopped: exportActivity.tonnageStoppedDuringExport,
-            tonnageRepatriated: exportActivity.tonnageRepatriated
-          }
-        : null,
-      wasteSentOn: {
-        totalTonnage: getTotalTonnageSentOn(wasteSent),
-        toReprocessors: wasteSent.tonnageSentToReprocessor,
-        toExporters: wasteSent.tonnageSentToExporter,
-        toOtherSites: wasteSent.tonnageSentToAnotherSite,
-        destinationRows: buildDestinationRows(wasteSent.finalDestinations)
-      }
-    }
 
     return h.view('reports/detail', viewData)
   }
