@@ -159,7 +159,6 @@ export const submitGetController = {
       // Form
       version: reportDetail.version,
 
-      // Delete
       deleteUrl: request.localiseUrl(
         `${reportsUrl}/${year}/${cadence}/${period}/delete`
       )
