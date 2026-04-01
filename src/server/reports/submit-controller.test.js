@@ -693,6 +693,55 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Jane Smith')
         })
       })
+
+      describe('delete report button', () => {
+        it.for([
+          {
+            label: 'exporter quarterly',
+            registration: exporterRegistration,
+            report: exporterReportDetail,
+            cadence: 'quarterly',
+            period: 1
+          },
+          {
+            label: 'reprocessor monthly',
+            registration: reprocessorRegistration,
+            report: {
+              ...reprocessorReportDetail,
+              cadence: 'monthly',
+              period: 3
+            },
+            cadence: 'monthly',
+            period: 3
+          }
+        ])(
+          'should display warning button for $label',
+          async ({ registration, report, cadence, period }, { server }) => {
+            vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+              registration
+            )
+            vi.mocked(fetchReportDetail).mockResolvedValue(report)
+
+            const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/submit`
+            const { result } = await server.inject({
+              method: 'GET',
+              url,
+              auth: mockAuth
+            })
+            const body = new JSDOM(result).window.document.body
+            const deleteButton = getByRole(body, 'button', {
+              name: /Delete report/i
+            })
+
+            expect(deleteButton.getAttribute('href')).toBe(
+              `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/delete`
+            )
+            expect(
+              deleteButton.classList.contains('govuk-button--warning')
+            ).toBe(true)
+          }
+        )
+      })
     })
 
     describe('POST', () => {
