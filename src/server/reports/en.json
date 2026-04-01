@@ -126,6 +126,7 @@
   "statusDue": "Due",
   "statusInProgress": "In progress",
   "statusReadyToSubmit": "Ready to submit",
+  "statusSubmitted": "Submitted",
   "submitButton": "Confirm and submit",
   "submitCreatedByLabel": "Created by:",
   "submitCreatedOnLabel": "Created on:",
