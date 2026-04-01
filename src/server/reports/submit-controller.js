@@ -18,6 +18,8 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
+/** @import { ReportDetailResponse } from './helpers/fetch-report-detail.js' */
+
 /**
  * @param {{ at: string, by: { name: string } }} statusCreated
  * @param {(key: string, params?: Record<string, string>) => string} localise
@@ -55,6 +57,33 @@ function buildWasteExportedViewData(exportActivity) {
     ...formatExportTonnages(exportActivity)
   }
 }
+
+/**
+ * @typedef {{
+ *   destinationDetailRows: Array<Array<{text: string}>>,
+ *   toExporters: string,
+ *   toOtherSites: string,
+ *   toReprocessors: string,
+ *   totalTonnage: string
+ * }} WasteSentOnViewData
+ */
+
+/**
+ * @param {ReportDetailResponse['wasteSent']} wasteSent
+ * @returns {WasteSentOnViewData}
+ */
+const buildWasteSentOnViewData = (wasteSent) => ({
+  destinationDetailRows: buildDestinationDetailRows(
+    wasteSent.finalDestinations.map((dest) => ({
+      ...dest,
+      tonnageSentOn: formatTonnage(dest.tonnageSentOn)
+    }))
+  ),
+  toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
+  toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
+  toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+  totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
+})
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -131,18 +160,7 @@ export const submitGetController = {
         : null,
 
       // Waste sent on
-      wasteSentOn: {
-        totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-        toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-        toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-        toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-        destinationDetailRows: buildDestinationDetailRows(
-          wasteSent.finalDestinations.map((dest) => ({
-            ...dest,
-            tonnageSentOn: formatTonnage(dest.tonnageSentOn)
-          }))
-        )
-      },
+      wasteSentOn: buildWasteSentOnViewData(wasteSent),
 
       // Supporting information
       supportingInformation:
