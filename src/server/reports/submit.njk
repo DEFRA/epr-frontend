@@ -176,14 +176,18 @@
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         <input type="hidden" name="version" value="{{ version }}" />
 
-        {{ govukButton({
-          text: localise("reports:submitButton")
-        }) }}
-      </form>
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: localise("reports:submitButton")
+          }) }}
 
-      <p class="govuk-body">
-        <a href="{{ deleteUrl }}" class="govuk-link">{{ localise("reports:deleteReportLink") }}</a>
-      </p>
+          {{ govukButton({
+            text: localise("reports:deleteReportLink"),
+            href: deleteUrl,
+            classes: "govuk-button--warning"
+          }) }}
+        </div>
+      </form>
 
     </div>
   </div>

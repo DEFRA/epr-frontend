@@ -616,15 +616,19 @@ describe('#submitController', () => {
           expect(versionInput.getAttribute('value')).toBe('1')
         })
 
-        it('should display delete report link', async ({ server }) => {
+        it('should display delete report warning button', async ({
+          server
+        }) => {
           const body = await getBody(server)
-          const deleteLink = getByRole(body, 'link', {
+          const deleteButton = getByRole(body, 'button', {
             name: /Delete report/i
           })
 
-          expect(deleteLink).toBeDefined()
-          expect(deleteLink.getAttribute('href')).toBe(
+          expect(deleteButton.getAttribute('href')).toBe(
             `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/delete`
+          )
+          expect(deleteButton.classList.contains('govuk-button--warning')).toBe(
+            true
           )
         })
       })
@@ -705,15 +709,19 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Jane Smith')
         })
 
-        it('should display delete report link', async ({ server }) => {
+        it('should display delete report warning button', async ({
+          server
+        }) => {
           const body = await getBody(server)
-          const deleteLink = getByRole(body, 'link', {
+          const deleteButton = getByRole(body, 'button', {
             name: /Delete report/i
           })
 
-          expect(deleteLink).toBeDefined()
-          expect(deleteLink.getAttribute('href')).toBe(
+          expect(deleteButton.getAttribute('href')).toBe(
             `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/delete`
+          )
+          expect(deleteButton.classList.contains('govuk-button--warning')).toBe(
+            true
           )
         })
       })
