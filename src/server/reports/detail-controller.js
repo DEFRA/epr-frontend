@@ -5,7 +5,7 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import {
   buildDestinationRows,
-  buildOverseasSiteRows,
+  buildOverseasSiteDetailRows,
   buildSupplierRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
@@ -82,10 +82,17 @@ export const detailController = {
       },
       wasteExported: exportActivity
         ? {
-            totalTonnage: exportActivity.totalTonnageReceivedForExporting,
-            overseasSiteRows: buildOverseasSiteRows(
+            totalTonnage: exportActivity.totalTonnageExported,
+            overseasSiteDetailRows: buildOverseasSiteDetailRows(
               exportActivity.overseasSites
-            )
+            ),
+            tonnageReceivedNotExported:
+              exportActivity.tonnageReceivedNotExported,
+            tonnageRefusedOrStopped:
+              exportActivity.totalTonnageRefusedOrStopped,
+            tonnageRefused: exportActivity.tonnageRefusedAtDestination,
+            tonnageStopped: exportActivity.tonnageStoppedDuringExport,
+            tonnageRepatriated: exportActivity.tonnageRepatriated
           }
         : null,
       wasteSentOn: {

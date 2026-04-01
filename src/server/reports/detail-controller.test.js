@@ -237,15 +237,16 @@ const exporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 11.47,
+    totalTonnageExported: 11.47,
     overseasSites: [
       { siteName: 'EuroPlast Recycling GmbH', orsId: '001' },
       { siteName: 'RecyclePlast SA', orsId: '096' }
     ],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
+    tonnageReceivedNotExported: 0,
+    totalTonnageRefusedOrStopped: 0,
+    tonnageRefusedAtDestination: 0,
+    tonnageStoppedDuringExport: 0,
+    tonnageRepatriated: 0
   },
   wasteSent: {
     tonnageSentToReprocessor: 1.0,
@@ -279,12 +280,13 @@ const emptyExporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 0,
+    totalTonnageExported: 0,
     overseasSites: [],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
+    tonnageReceivedNotExported: 0,
+    totalTonnageRefusedOrStopped: 0,
+    tonnageRefusedAtDestination: 0,
+    tonnageStoppedDuringExport: 0,
+    tonnageRepatriated: 0
   },
   wasteSent: {
     tonnageSentToReprocessor: 0,
@@ -335,12 +337,13 @@ const accreditedExporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 11.47,
+    totalTonnageExported: 11.47,
     overseasSites: [{ orsId: '001' }, { orsId: '096' }],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
+    tonnageReceivedNotExported: 0,
+    totalTonnageRefusedOrStopped: 0,
+    tonnageRefusedAtDestination: 0,
+    tonnageStoppedDuringExport: 0,
+    tonnageRepatriated: 0
   },
   wasteSent: {
     tonnageSentToReprocessor: 1.0,
@@ -991,7 +994,7 @@ describe('#detailReportsController', () => {
 
         const tables = body.querySelectorAll('table')
 
-        expect(tables).toHaveLength(1)
+        expect(tables).toHaveLength(2)
       })
     })
 

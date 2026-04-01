@@ -102,13 +102,14 @@ const exporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 50,
+    totalTonnageExported: 50,
     overseasSites: [
-      { siteName: 'Brussels Recycling', orsId: 'OSR-001', tonnageExported: 30 },
-      { siteName: 'RecyclePlast SA', orsId: 'OSR-096', tonnageExported: 20 }
+      { siteName: 'Brussels Recycling', orsId: 'OSR-001', country: 'Belgium' },
+      { siteName: 'RecyclePlast SA', orsId: 'OSR-096', country: 'France' }
     ],
     tonnageReceivedNotExported: 12.5,
-    tonnageRefusedAtRecepientDestination: 2.5,
+    totalTonnageRefusedOrStopped: 10.8,
+    tonnageRefusedAtDestination: 2.5,
     tonnageStoppedDuringExport: 8.3,
     tonnageRepatriated: 8.3
   },
@@ -356,7 +357,7 @@ describe('#submitController', () => {
           ).toBeDefined()
         })
 
-        it('should display supplier details with contact information', async ({
+        it('should display supplier details with name, activity and contact information', async ({
           server
         }) => {
           const body = await getBody(server)
@@ -364,7 +365,6 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Grantham Waste')
           expect(body.textContent).toContain('Baler')
           expect(body.textContent).toContain('17 Foster St, L20 8EX')
-          expect(body.textContent).toContain('0345 340 9656')
           expect(body.textContent).toContain('enquiries@granthamwaste.co.uk')
         })
 
@@ -391,17 +391,13 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('50')
         })
 
-        it('should display Overseas reprocessing sites subheading', async ({
+        it('should display overseas sites table under waste exported section', async ({
           server
         }) => {
           const body = await getBody(server)
 
-          expect(
-            getByRole(body, 'heading', {
-              name: /Overseas reprocessing sites/i,
-              level: 3
-            })
-          ).toBeDefined()
+          expect(body.textContent).toContain('Site name')
+          expect(body.textContent).toContain('Approved overseas reprocessor ID')
         })
 
         it('should display overseas sites with tonnage and OSR ID', async ({
@@ -470,7 +466,8 @@ describe('#submitController', () => {
             ...exporterReportDetail,
             exportActivity: {
               ...exporterReportDetail.exportActivity,
-              tonnageRefusedAtRecepientDestination: null,
+              totalTonnageRefusedOrStopped: null,
+              tonnageRefusedAtDestination: null,
               tonnageStoppedDuringExport: null,
               tonnageRepatriated: null
             }
@@ -478,7 +475,7 @@ describe('#submitController', () => {
 
           const body = await getBody(server)
 
-          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const labels = [...body.querySelectorAll('.govuk-caption-l')]
           const refusedOrStoppedLabel = labels.find((el) =>
             el.textContent.includes('Total tonnage refused or stopped')
           )

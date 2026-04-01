@@ -29,7 +29,7 @@ export function buildSupplierRows(suppliers) {
 /**
  * Build govukTable rows for supplier details with contact information.
  * Used on review/submit pages where contact details replace tonnage.
- * @property {Array<{supplierName: string, facilityType: string, tonnageReceived: number, supplierAddress: string, supplierPhone: string|null, supplierEmail: string|null}>} suppliers
+ * @param {Array<{supplierName: string, facilityType: string, supplierAddress: string, supplierPhone: string|null, supplierEmail: string|null}>} suppliers
  * @returns {Array<Array<{text: string}>>}
  */
 export function buildSupplierDetailRows(suppliers) {
@@ -71,25 +71,27 @@ export function buildDestinationDetailRows(finalDestinations) {
 
 /**
  * Build govukTable rows for overseas reprocessing sites.
- * @param {Array<{siteName: string, orsId: string}>} overseasSites
+ * @param {Array<{siteName: string, orsId: string, country: string|null}>} overseasSites
  * @returns {Array<Array<{text: string}>>}
  */
 export function buildOverseasSiteRows(overseasSites) {
   return overseasSites.map((overseasSite) => [
     { text: overseasSite.siteName },
-    { text: overseasSite.orsId }
+    { text: overseasSite.orsId },
+    { text: overseasSite.country }
   ])
 }
 
 /**
- * Build govukTable rows for overseas sites with tonnage exported.
- * @param {Array<{siteName: string, tonnageExported: number, orsId: string}>} overseasSites
+ * Build govukTable rows for overseas sites with tonnage exported and country.
+ * @param {Array<{siteName: string, tonnageExported: number, orsId: string, country: string|null}>} overseasSites
  * @returns {Array<Array<{text: string | number}>>}
  */
 export function buildOverseasSiteDetailRows(overseasSites) {
   return overseasSites.map((overseasSite) => [
     { text: overseasSite.siteName },
-    { text: overseasSite.tonnageExported },
-    { text: overseasSite.orsId }
+    { text: formatTonnage(overseasSite.tonnageExported) },
+    { text: overseasSite.orsId },
+    { text: overseasSite.country }
   ])
 }

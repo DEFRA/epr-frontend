@@ -68,7 +68,7 @@ const reportDetailWithoutSupportingInfo = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 50,
+    totalTonnageExported: 50,
     overseasSites: [],
     tonnageReceivedNotExported: null,
     tonnageRefusedAtRecepientDestination: null,

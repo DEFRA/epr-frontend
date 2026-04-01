@@ -67,43 +67,42 @@
       {% endif %}
 
       {% if wasteExported %}
-        <h3 class="govuk-heading-m">{{ localise("reports:wasteExportedHeading") }}</h3>
+        <h3 class="govuk-heading-l">{{ localise("reports:wasteExportedHeading") }}</h3>
 
-        <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
-        <p class="govuk-heading-m">{{ wasteExported.totalTonnage }}</p>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
+        <p class="govuk-heading-l">{{ wasteExported.totalTonnage | formatTonnage }}</p>
 
         {% if wasteExported.overseasSiteRows | length > 0 %}
-          <h4 class="govuk-heading-s">{{ localise("reports:overseasSitesHeading") }}</h4>
           {{ govukTable({
             head: [
               { text: localise("reports:siteNameColumn") },
-              { text: localise("reports:osrIdColumn") }
+              { text: localise("reports:osrIdColumn") },
+              { text: localise("reports:countryColumn") }
             ],
             rows: wasteExported.overseasSiteRows
           }) }}
         {% endif %}
 
+        <h3 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h3>
 
-        <h3 class="govuk-heading-m">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h3>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
+        <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
 
-        <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
-        <p class="govuk-heading-m">{{ wasteExported.tonnageReceivedNotExported }}</p>
+        <h3 class="govuk-heading-l">{{ localise("reports:tonnageRefusedOrStoppedHeading") }}</h3>
 
-        <h3 class="govuk-heading-m">{{ localise("reports:tonnageRefusedOrStoppedHeading") }}</h3>
-
-        <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:tonnageRefusedOrStoppedLabel") }}</p>
-        <p class="govuk-heading-m">{{ wasteExported.tonnageRefusedOrStopped }}</p>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageRefusedOrStoppedLabel") }}</p>
+        <p class="govuk-heading-l">{{ wasteExported.tonnageRefusedOrStopped }}</p>
 
         {{ govukTable({
           rows: [
-            [{ text: localise("reports:tonnageRefusedLabel") }, { text: wasteExported.tonnageRefused }],
-            [{ text: localise("reports:tonnageStoppedLabel") }, { text: wasteExported.tonnageStopped }],
-            [{ text: localise("reports:tonnageRepatriatedLabel") }, { text: wasteExported.tonnageRepatriated }]
+            [{ html: "<strong>" ~ localise("reports:tonnageRefusedLabel") ~ "</strong>" }, { text: wasteExported.tonnageRefused }],
+            [{ html: "<strong>" ~ localise("reports:tonnageStoppedLabel") ~ "</strong>" }, { text: wasteExported.tonnageStopped }],
+            [{ html: "<strong>" ~ localise("reports:tonnageRepatriatedLabel") ~ "</strong>" }, { text: wasteExported.tonnageRepatriated }]
           ]
         }) }}
       {% endif %}
 
-      <h3 class="govuk-heading-m">{{ localise("reports:wasteSentOnHeading") }}</h3>
+      <h3 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h3>
 
       <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
       <p class="govuk-heading-l">{{ wasteSentOn.totalTonnage | formatTonnage }}</p>
