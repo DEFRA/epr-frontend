@@ -21,6 +21,12 @@ describe('#getStatusLabel', () => {
     )
   })
 
+  it('returns localised label for "submitted" status', () => {
+    expect(getStatusLabel('submitted', localise)).toBe(
+      'reports:statusSubmitted'
+    )
+  })
+
   it('returns null for null status', () => {
     expect(getStatusLabel(null, localise)).toBeNull()
   })

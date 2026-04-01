@@ -19,12 +19,12 @@ import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
- * @param {Array<{by: {name: string}, at: string}>} statusHistory
+ * @param {{ at: string, by: { name: string } }} statusCreated
  * @param {(key: string, params?: Record<string, string>) => string} localise
  * @returns {{ createdBy: string, createdOn: string }}
  */
-function getCreationDetails(statusHistory, localise) {
-  const { by, at } = statusHistory[0]
+function getCreationDetails(statusCreated, localise) {
+  const { by, at } = statusCreated
 
   return {
     createdBy: by.name,
@@ -93,7 +93,7 @@ export const submitGetController = {
     const isExporter = isExporterRegistration(registration)
 
     const { createdBy, createdOn } = getCreationDetails(
-      reportDetail.status.history,
+      reportDetail.status.created,
       localise
     )
 
