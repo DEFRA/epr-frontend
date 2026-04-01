@@ -47,7 +47,7 @@ function buildWasteExported(exportActivity) {
 }
 
 /**
- * @param {{ registration: object, accreditation: object|undefined, reportDetail: object, basePath: string, localise: Function, localiseUrl: Function }} params
+ * @param {{ registration: object, accreditation: object|undefined, reportDetail: object, basePath: string, localise: (key: string, params?: object) => string, localiseUrl: (path: string) => string }} params
  * @returns {object}
  */
 function buildCheckViewData({
