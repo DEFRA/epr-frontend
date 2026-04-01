@@ -381,12 +381,16 @@ describe('#checkController', () => {
           const supplierTable = tables[0]
           const headers = supplierTable?.querySelectorAll('th')
 
-          expect(headers).toHaveLength(5)
-          expect(headers?.[0]?.textContent).toContain('Supplier')
-          expect(headers?.[1]?.textContent).toContain('Activity')
-          expect(headers?.[2]?.textContent).toContain('Address')
-          expect(headers?.[3]?.textContent).toContain('Phone')
-          expect(headers?.[4]?.textContent).toContain('Email')
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+          expect(headerTexts).toStrictEqual([
+            'Supplier',
+            'Activity',
+            'Address',
+            'Phone',
+            'Email'
+          ])
         })
 
         it('should display supplier name and contact details in table rows', async ({
