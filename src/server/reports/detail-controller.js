@@ -18,8 +18,8 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
  * @param {object} registration
  * @param {object | undefined} accreditation
  * @param {object} reportDetail
- * @param {Function} localise
- * @param {Function} localiseUrl
+ * @param {(key: string, params?: object) => string} localise
+ * @param {(path: string) => string} localiseUrl
  */
 function buildViewData(
   { organisationId, registrationId },
