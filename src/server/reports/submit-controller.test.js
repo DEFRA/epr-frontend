@@ -84,17 +84,17 @@ const exporterReportDetail = {
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        address: '17 Foster St, L20 8EX',
-        phone: '0345 340 9656',
-        email: 'enquiries@granthamwaste.co.uk',
+        supplierAddress: '17 Foster St, L20 8EX',
+        supplierPhone: '0345 340 9656',
+        supplierEmail: 'enquiries@granthamwaste.co.uk',
         tonnageReceived: 42.21
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        address: 'Knowsley Industrial Estate, L33 7UZ',
-        phone: '0800 542 3549',
-        email: 'customer@suez.com',
+        supplierAddress: 'Knowsley Industrial Estate, L33 7UZ',
+        supplierPhone: '0800 542 3549',
+        supplierEmail: 'customer@suez.com',
         tonnageReceived: 38.04
       }
     ],
@@ -163,9 +163,9 @@ const reprocessorReportDetail = {
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        address: '17 Foster St, L20 8EX',
-        phone: '0345 340 9656',
-        email: 'enquiries@granthamwaste.co.uk',
+        supplierAddress: '17 Foster St, L20 8EX',
+        supplierPhone: '0345 340 9656',
+        supplierEmail: 'enquiries@granthamwaste.co.uk',
         tonnageReceived: 42.21
       }
     ],

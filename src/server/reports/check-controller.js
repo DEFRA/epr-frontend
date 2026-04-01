@@ -94,6 +94,8 @@ export const checkGetController = {
       periodLabel,
       cadenceLabel,
       registrationNumber: registration.registrationNumber,
+      accreditationNumber: accreditation?.accreditationNumber,
+      site: registration.site,
       isExporter,
       isReprocessor,
       isAccredited: !!accreditation,
