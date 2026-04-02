@@ -204,6 +204,22 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
+const accreditedExporterRegistration = {
+  ...exporterRegistration,
+  accreditation: { id: 'acc-002' }
+}
+
+const accreditedExporterReportDetail = {
+  ...exporterReportDetail,
+  operatorCategory: 'EXPORTER_ACCREDITED',
+  prn: {
+    averagePricePerTonne: 200,
+    freeTonnage: 10,
+    issuedTonnage: 100,
+    totalRevenue: 20000
+  }
+}
+
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submit`
@@ -652,6 +668,100 @@ describe('#submitController', () => {
           expect(versionInput.getAttribute('type')).toBe('hidden')
           expect(versionInput.getAttribute('value')).toBe('1')
         })
+
+        it('should not display recycling activity section', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            queryByRole(body, 'heading', {
+              name: /Packaging waste recycling/i,
+              level: 2
+            })
+          ).toBeNull()
+        })
+
+        it('should not display PERN section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            queryByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
+          ).toBeNull()
+        })
+      })
+
+      describe('for accredited exporter', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            accreditedExporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            accreditedExporterReportDetail
+          )
+        })
+
+        it('should not display recycling activity section', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            queryByRole(body, 'heading', {
+              name: /Packaging waste recycling/i,
+              level: 2
+            })
+          ).toBeNull()
+        })
+
+        it('should display PERN section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
+          ).toBeDefined()
+        })
+
+        it('should display total tonnage of PERNs issued label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total tonnage of PERNs issued')
+          expect(body.textContent).toContain('100')
+        })
+
+        it('should display total tonnage of PERNs issued for free label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain(
+            'Total tonnage of PERNs issued for free'
+          )
+          expect(body.textContent).toContain('10')
+          expect(body.textContent).toContain(
+            '(These are not included in the average price per tonne calculation)'
+          )
+        })
+
+        it('should display total revenue of PERNs label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total revenue of PERNs')
+          expect(body.textContent).toContain('£20,000.00')
+        })
+
+        it('should display average price per tonne of PERNs label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Average price per tonne of PERNs')
+          expect(body.textContent).toContain('£200.00')
+        })
       })
 
       describe('for reprocessor without supporting information', () => {
@@ -837,6 +947,9 @@ describe('#submitController', () => {
             'Total tonnage of PRNs issued for free'
           )
           expect(body.textContent).toContain('5')
+          expect(body.textContent).toContain(
+            '(These are not included in the average price per tonne calculation)'
+          )
         })
 
         it('should display total revenue of PRNs label and value', async ({

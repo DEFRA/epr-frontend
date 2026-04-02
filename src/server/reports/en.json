@@ -139,7 +139,7 @@
   "submitDeclarationItem3": "you understand that submission of false or misleading information may result in enforcement action",
   "submitDeclarationText": "By submitting this report to your regulator you confirm that:",
   "submitDetailsHeading": "Details",
-  "submitFreePernLabel": "Total tonnage of PERNs issued for free",
+  "submitFreePernsLabel": "Total tonnage of PERNs issued for free",
   "submitFreePrnsLabel": "Total tonnage of PRNs issued for free",
   "submitFreeTonnageNote": "(These are not included in the average price per tonne calculation)",
   "submitHeading": "Submit report for {{ periodLabel }}",
