@@ -65,10 +65,7 @@ function buildWasteExportedViewData(exportActivity) {
  */
 const buildWasteSentOnViewData = (wasteSent) => ({
   destinationDetailRows: buildDestinationDetailRows(
-    wasteSent.finalDestinations.map((dest) => ({
-      ...dest,
-      tonnageSentOn: formatTonnage(dest.tonnageSentOn)
-    }))
+    wasteSent.finalDestinations
   ),
   toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
   toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),

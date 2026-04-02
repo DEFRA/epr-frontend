@@ -544,6 +544,30 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('12 Juniper St, L20 8EL')
         })
 
+        it('should display destination tonnageSentOn >= 1000 as formatted number, not NaN', async ({
+          server
+        }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            wasteSent: {
+              ...exporterReportDetail.wasteSent,
+              finalDestinations: [
+                {
+                  recipientName: 'HighLow Limited',
+                  facilityType: 'Exporter',
+                  address: '11 high street, G59NS',
+                  tonnageSentOn: 1000
+                }
+              ]
+            }
+          })
+
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('1,000.00')
+          expect(body.textContent).not.toContain('NaN')
+        })
+
         // Supporting information section
 
         it('should display Supporting information heading', async ({
