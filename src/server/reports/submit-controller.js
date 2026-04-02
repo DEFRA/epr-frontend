@@ -107,89 +107,117 @@ export const submitGetController = {
       )
     ])
 
-    const material = getDisplayMaterial(registration)
-    const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-    const { recyclingActivity, exportActivity, wasteSent } = reportDetail
-    const isExporter = isExporterRegistration(registration)
-
-    const { createdBy, createdOn } = getCreationDetails(
-      reportDetail.status.created,
-      localise
-    )
-
-    const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-
-    const viewData = {
-      pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
-      heading: localise('reports:submitHeading', { periodLabel }),
-      isAccredited: !!accreditation,
-      isReprocessor: isReprocessorRegistration(registration),
-      isExporter,
-      backUrl: request.localiseUrl(reportsUrl),
-
-      // Inset text
-      insetText: localise('reports:submitInsetText'),
-
-      // Details section
-      statusTag: localise('reports:statusReadyToSubmit'),
-      createdByLabel: localise('reports:submitCreatedByLabel'),
-      createdBy,
-      createdOnLabel: localise('reports:submitCreatedOnLabel'),
-      createdOn,
-
-      // Your report summary list
-      periodLabel,
-      material,
-
-      // Waste received
-      wasteReceived: {
-        totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-        supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-      },
-
-      // Waste exported (exporters only)
-      wasteExported: exportActivity
-        ? buildWasteExportedViewData(exportActivity)
-        : null,
-
-      // Waste sent on
-      wasteSentOn: buildWasteSentOnViewData(wasteSent),
-
-      // PRNs
-      prn: {
-        averagePricePerTonne: reportDetail.prn?.averagePricePerTonne,
-        freeTonnage: reportDetail.prn?.freeTonnage,
-        issuedTonnage: reportDetail.prn?.issuedTonnage,
-        totalRevenue: reportDetail.prn?.totalRevenue
-      },
-
-      // Recycling activity
-      recyclingActivity: {
-        tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
-        tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
-      },
-
-      // Supporting information
-      supportingInformation:
-        reportDetail.supportingInformation ||
-        localise('reports:supportingInformationNone'),
-
-      // Declaration
-      declarationItems: [
-        localise('reports:submitDeclarationItem1'),
-        localise('reports:submitDeclarationItem2'),
-        localise('reports:submitDeclarationItem3')
-      ],
-
-      // Form
-      version: reportDetail.version,
-
-      deleteUrl: request.localiseUrl(
-        `${reportsUrl}/${year}/${cadence}/${period}/delete`
-      )
-    }
+    const viewData = buildViewData({
+      registration,
+      accreditation,
+      reportDetail,
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      localise,
+      localiseUrl: (url) => request.localiseUrl(url)
+    })
 
     return h.view('reports/submit', viewData)
+  }
+}
+
+/**
+ * @param {{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse, organisationId: string, registrationId: string, year: number, cadence: string, period: number, localise: (key: string, params?: Record<string, string>) => string, localiseUrl: (url: string) => string }} params
+ * @returns {object}
+ */
+function buildViewData({
+  registration,
+  accreditation,
+  reportDetail,
+  organisationId,
+  registrationId,
+  year,
+  cadence,
+  period,
+  localise,
+  localiseUrl
+}) {
+  const material = getDisplayMaterial(registration)
+  const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
+  const isExporter = isExporterRegistration(registration)
+
+  const { createdBy, createdOn } = getCreationDetails(
+    reportDetail.status.created,
+    localise
+  )
+
+  const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+
+  return {
+    pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
+    heading: localise('reports:submitHeading', { periodLabel }),
+    isAccredited: !!accreditation,
+    isReprocessor: isReprocessorRegistration(registration),
+    isExporter,
+    backUrl: localiseUrl(reportsUrl),
+
+    // Inset text
+    insetText: localise('reports:submitInsetText'),
+
+    // Details section
+    statusTag: localise('reports:statusReadyToSubmit'),
+    createdByLabel: localise('reports:submitCreatedByLabel'),
+    createdBy,
+    createdOnLabel: localise('reports:submitCreatedOnLabel'),
+    createdOn,
+
+    // Your report summary list
+    periodLabel,
+    material,
+
+    // Waste received
+    wasteReceived: {
+      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
+      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+    },
+
+    // Waste exported (exporters only)
+    wasteExported: exportActivity
+      ? buildWasteExportedViewData(exportActivity)
+      : null,
+
+    // Waste sent on
+    wasteSentOn: buildWasteSentOnViewData(wasteSent),
+
+    // PRNs
+    prn: {
+      averagePricePerTonne: reportDetail.prn?.averagePricePerTonne,
+      freeTonnage: reportDetail.prn?.freeTonnage,
+      issuedTonnage: reportDetail.prn?.issuedTonnage,
+      totalRevenue: reportDetail.prn?.totalRevenue
+    },
+
+    // Recycling activity
+    recyclingActivity: {
+      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
+    },
+
+    // Supporting information
+    supportingInformation:
+      reportDetail.supportingInformation ||
+      localise('reports:supportingInformationNone'),
+
+    // Declaration
+    declarationItems: [
+      localise('reports:submitDeclarationItem1'),
+      localise('reports:submitDeclarationItem2'),
+      localise('reports:submitDeclarationItem3')
+    ],
+
+    // Form
+    version: reportDetail.version,
+
+    deleteUrl: localiseUrl(`${reportsUrl}/${year}/${cadence}/${period}/delete`)
   }
 }
 
