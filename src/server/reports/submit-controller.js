@@ -3,7 +3,10 @@ import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
   buildDestinationDetailRows,
@@ -88,7 +91,7 @@ export const submitGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration }, reportDetail] = await Promise.all([
+    const [{ registration, accreditation }, reportDetail] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -119,6 +122,8 @@ export const submitGetController = {
     const viewData = {
       pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
       heading: localise('reports:submitHeading', { periodLabel }),
+      isAccredited: !!accreditation,
+      isReprocessor: isReprocessorRegistration(registration),
       isExporter,
       backUrl: request.localiseUrl(reportsUrl),
 
@@ -149,6 +154,20 @@ export const submitGetController = {
 
       // Waste sent on
       wasteSentOn: buildWasteSentOnViewData(wasteSent),
+
+      // PRNs
+      prn: {
+        averagePricePerTonne: reportDetail.prn?.averagePricePerTonne,
+        freeTonnage: reportDetail.prn?.freeTonnage,
+        issuedTonnage: reportDetail.prn?.issuedTonnage,
+        totalRevenue: reportDetail.prn?.totalRevenue
+      },
+
+      // Recycling activity
+      recyclingActivity: {
+        tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+        tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
+      },
 
       // Supporting information
       supportingInformation:
