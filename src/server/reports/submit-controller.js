@@ -7,7 +7,7 @@ import { isExporterRegistration } from '#server/common/helpers/prns/registration
 import { SUBMISSION_STATUS } from './constants.js'
 import {
   buildDestinationDetailRows,
-  buildOverseasSiteDetailRows,
+  buildOverseasSiteRows,
   buildSupplierDetailRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
@@ -42,18 +42,9 @@ function getCreationDetails(statusCreated, localise) {
  * @returns {object}
  */
 function buildWasteExportedViewData(exportActivity) {
-  const overseasSiteDetailRows = buildOverseasSiteDetailRows(
-    exportActivity.overseasSites.map((overseasSite) => ({
-      ...overseasSite,
-      tonnageExported: formatTonnage(overseasSite.tonnageExported)
-    }))
-  )
-
   return {
-    totalTonnage: formatTonnage(
-      exportActivity.totalTonnageReceivedForExporting
-    ),
-    overseasSiteDetailRows,
+    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
+    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites),
     ...formatExportTonnages(exportActivity)
   }
 }
