@@ -61,7 +61,7 @@ export async function fetchReportDetail(
  *   startDate: string,
  *   endDate: string,
  *   dueDate: string,
- *   lastUploadedAt: string | null,
+ *   source: { summaryLogId: string | null, lastUploadedAt: string | null },
  *   details: {
  *     material: string,
  *     site?: { address: { line1: string, town: string, postcode: string } }

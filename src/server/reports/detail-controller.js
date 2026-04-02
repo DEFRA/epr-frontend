@@ -50,10 +50,12 @@ function buildViewData(
     uploadUrl: localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
     ),
-    lastUploadedAt: reportDetail.lastUploadedAt
+    lastUploadedAt: reportDetail.source?.lastUploadedAt
       ? {
-          date: formatDate(reportDetail.lastUploadedAt, { includeYear: false }),
-          time: formatTime(reportDetail.lastUploadedAt)
+          date: formatDate(reportDetail.source.lastUploadedAt, {
+            includeYear: false
+          }),
+          time: formatTime(reportDetail.source.lastUploadedAt)
         }
       : null,
     accreditation: accreditation?.accreditationNumber,

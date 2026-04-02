@@ -51,7 +51,7 @@ const reprocessorReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
     site: {
@@ -100,7 +100,7 @@ const emptyReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: null,
+  source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic',
     site: {
@@ -155,7 +155,7 @@ const accreditedReprocessorReportDetail = {
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
     site: {
@@ -215,7 +215,7 @@ const exporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
   },
@@ -269,7 +269,7 @@ const emptyExporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: null,
+  source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic'
   },
@@ -326,7 +326,7 @@ const accreditedExporterReportDetail = {
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
   },
