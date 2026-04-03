@@ -1,10 +1,6 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
-{% from "govuk/components/button/macro.njk" import govukButton %}
-{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
-{% from "govuk/components/table/macro.njk" import govukTable %}
-{% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -17,6 +13,26 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+        <div id="report-period">
+          {{ govukSummaryList({
+            rows: [
+              {
+                key: { text: localise("reports:periodColumn") },
+                value: { text: periodLabel }
+              },
+              {
+                key: { text: localise("reports:materialLabel") },
+                value: { text: material }
+              }
+            ].concat([
+              {
+                key: { text: localise("reports:siteLabel") },
+                value: { text: site }
+              }
+            ] if site else [])
+          }) }}
+        </div>
     </div>
   </div>
 {% endblock %}

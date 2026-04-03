@@ -67,7 +67,14 @@ describe('#viewController', () => {
         id: 'reg-001',
         material: 'plastic',
         wasteProcessingType: 'exporter',
-        registrationNumber: 'REG001234'
+        registrationNumber: 'REG001234',
+        site: {
+          address: {
+            line1: 'North Road',
+            town: 'Manchester',
+            postcode: 'M1 1AA'
+          }
+        }
       },
       accreditation: undefined
     }
@@ -168,6 +175,33 @@ describe('#viewController', () => {
         expect(backLink?.getAttribute('href')).toBe(
           `/organisations/${mockRegistrationAndAccreditation.organisationData.id}/registrations/${mockRegistrationAndAccreditation.registration.id}/reports`
         )
+      })
+
+      it('renders period, material and site information', async ({
+        server
+      }) => {
+        const { result } = await loadPage({
+          server,
+          organisationId: mockRegistrationAndAccreditation.organisationData.id,
+          registrationId: mockRegistrationAndAccreditation.registration.id
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const reportPeriodSection = body.querySelector('#report-period')
+
+        expect(reportPeriodSection).not.toBeNull()
+
+        expect(reportPeriodSection.textContent).toContain('Period')
+        expect(reportPeriodSection.textContent).toContain('January 2026')
+
+        expect(reportPeriodSection.textContent).toContain('Material')
+        expect(reportPeriodSection.textContent).toContain('Plastic')
+
+        // TODO this is reprocessor only
+        expect(reportPeriodSection.textContent).toContain('Site')
+        expect(reportPeriodSection.textContent).toContain('North Road')
       })
     })
   })
