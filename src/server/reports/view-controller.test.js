@@ -35,6 +35,17 @@ async function loadPage({ server, organisationId, registrationId }) {
   })
 }
 
+async function loadPageBody({ server, mockRegistrationAndAccreditation }) {
+  const { result } = await loadPage({
+    server,
+    organisationId: mockRegistrationAndAccreditation.organisationData.id,
+    registrationId: mockRegistrationAndAccreditation.registration.id
+  })
+
+  const dom = new JSDOM(result)
+  return dom.window.document.body
+}
+
 describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -124,7 +135,6 @@ describe('#viewController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           mockRegistrationAndAccreditation
         )
-
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
       })
 
@@ -160,14 +170,10 @@ describe('#viewController', () => {
       it('renders a back link to the report landing page', async ({
         server
       }) => {
-        const { result } = await loadPage({
+        const body = await loadPageBody({
           server,
-          organisationId: mockRegistrationAndAccreditation.organisationData.id,
-          registrationId: mockRegistrationAndAccreditation.registration.id
+          mockRegistrationAndAccreditation
         })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
 
         const backLink = body.querySelector('.govuk-back-link')
 
@@ -177,31 +183,42 @@ describe('#viewController', () => {
         )
       })
 
-      it('renders period, material and site information', async ({
-        server
-      }) => {
-        const { result } = await loadPage({
-          server,
-          organisationId: mockRegistrationAndAccreditation.organisationData.id,
-          registrationId: mockRegistrationAndAccreditation.registration.id
+      describe('report details section', () => {
+        it('renders period information', async ({ server }) => {
+          const body = await loadPageBody({
+            server,
+            mockRegistrationAndAccreditation
+          })
+          const reportPeriodSection = body.querySelector('#report-period')
+
+          expect(reportPeriodSection).not.toBeNull()
+
+          expect(reportPeriodSection.textContent).toContain('Period')
+          expect(reportPeriodSection.textContent).toContain('January 2026')
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        it('renders material information', async ({ server }) => {
+          const body = await loadPageBody({
+            server,
+            mockRegistrationAndAccreditation
+          })
+          const reportPeriodSection = body.querySelector('#report-period')
 
-        const reportPeriodSection = body.querySelector('#report-period')
-
-        expect(reportPeriodSection).not.toBeNull()
-
-        expect(reportPeriodSection.textContent).toContain('Period')
-        expect(reportPeriodSection.textContent).toContain('January 2026')
-
-        expect(reportPeriodSection.textContent).toContain('Material')
-        expect(reportPeriodSection.textContent).toContain('Plastic')
+          expect(reportPeriodSection.textContent).toContain('Material')
+          expect(reportPeriodSection.textContent).toContain('Plastic')
+        })
 
         // TODO this is reprocessor only
-        expect(reportPeriodSection.textContent).toContain('Site')
-        expect(reportPeriodSection.textContent).toContain('North Road')
+        it('renders site information', async ({ server }) => {
+          const body = await loadPageBody({
+            server,
+            mockRegistrationAndAccreditation
+          })
+          const reportPeriodSection = body.querySelector('#report-period')
+
+          expect(reportPeriodSection.textContent).toContain('Site')
+          expect(reportPeriodSection.textContent).toContain('North Road')
+        })
       })
     })
   })
