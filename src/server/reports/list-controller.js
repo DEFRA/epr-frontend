@@ -57,7 +57,8 @@ function buildTableRows({
 
     const suffixByStatus = {
       [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
-      [SUBMISSION_STATUS.IN_PROGRESS]: inProgressSuffix
+      [SUBMISSION_STATUS.IN_PROGRESS]: inProgressSuffix,
+      [SUBMISSION_STATUS.SUBMITTED]: '/view'
     }
     const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
     const statusHtml = statusLabel
