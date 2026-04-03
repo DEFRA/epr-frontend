@@ -201,6 +201,8 @@
   "totalTonnageReceived": "Total tonnage received",
   "totalTonnageSentOn": "Total tonnage sent on",
   "useThisData": "Use this data",
+  "viewHeading": "Report for {{ periodLabel }}",
+  "viewPageTitle": "View submitted report",
   "wasteExportedHeading": "Packaging waste exported for recycling",
   "wasteExportedIntro": "This data comes from sections 1 and 2 of your summary log.",
   "wasteReceivedForExportHeading": "Packaging waste received for exporting",
