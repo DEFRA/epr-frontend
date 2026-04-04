@@ -131,6 +131,8 @@ describe('#viewController', () => {
         },
         recyclingActivity: {
           totalTonnageReceived: 12.5,
+          tonnageRecycled: 10.25,
+          tonnageNotRecycled: 2.25,
           suppliers: [
             {
               supplierName: 'Acme Recycling Ltd',
@@ -289,6 +291,44 @@ describe('#viewController', () => {
           )
           expect(tableBody.textContent).toContain('0113 000 0000')
           expect(tableBody.textContent).toContain('contact@acme.example.com')
+        })
+      })
+
+      describe('packaging-waste-recycling section', () => {
+        async function loadSection({ server }) {
+          const body = await loadPageBody({
+            server,
+            mockRegistrationAndAccreditation
+          })
+
+          return body.querySelector('#packaging-waste-recycling')
+        }
+
+        it('renders the section heading', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section).not.toBeNull()
+          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+            'Packaging waste recycling'
+          )
+        })
+
+        it('renders the total tonnage recycled', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section.textContent).toContain('Total tonnage recycled')
+          expect(section.textContent).toContain('10.25')
+        })
+
+        it('renders the tonnage not recycled', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          const summaryList = section.querySelector('dl.govuk-summary-list')
+
+          expect(summaryList.textContent).toContain(
+            'Total tonnage received but not recycled'
+          )
+          expect(summaryList.textContent).toContain('2.25')
         })
       })
     })

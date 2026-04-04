@@ -15,46 +15,62 @@
     <div class="govuk-grid-column-two-thirds">
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-        <div id="report-period">
-          {{ govukSummaryList({
-            rows: [
-              {
-                key: { text: localise("reports:periodColumn") },
-                value: { text: periodLabel }
-              },
-              {
-                key: { text: localise("reports:materialLabel") },
-                value: { text: material }
-              }
-            ].concat([
-              {
-                key: { text: localise("reports:siteLabel") },
-                value: { text: site }
-              }
-            ] if site else [])
+      <div id="report-period">
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: localise("reports:periodColumn") },
+              value: { text: periodLabel }
+            },
+            {
+              key: { text: localise("reports:materialLabel") },
+              value: { text: material }
+            }
+          ].concat([
+            {
+              key: { text: localise("reports:siteLabel") },
+              value: { text: site }
+            }
+          ] if site else [])
+        }) }}
+      </div>
+
+      <div id="waste-received-for-reprocessing">
+        <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedHeading") }}</h2>
+
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
+        <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
+
+        {% if wasteReceived.supplierDetailRows | length > 0 %}
+          <h3 class="govuk-heading-m">{{ localise("reports:suppliersHeading") }}</h3>
+          {{ govukTable({
+            head: [
+              { text: localise("reports:supplierColumn") },
+              { text: localise("reports:activityColumn") },
+              { text: localise("reports:addressColumn") },
+              { text: localise("reports:phoneColumn") },
+              { text: localise("reports:emailColumn") }
+            ],
+            rows: wasteReceived.supplierDetailRows
           }) }}
-        </div>
+        {% endif %}
+      </div>
 
-        <div id="waste-received-for-reprocessing">
-          <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedHeading") }}</h2>
+      <div id="packaging-waste-recycling">
+        <h2 class="govuk-heading-l">{{ localise("reports:submitRecyclingActivityHeading") }}</h2>
 
-          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
-          <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:submitTotalTonnageRecycled") }}</p>
+        <p class="govuk-heading-l">{{ packagingWasteRecycling.tonnageRecycled }}</p>
 
-          {% if wasteReceived.supplierDetailRows | length > 0 %}
-            <h3 class="govuk-heading-m">{{ localise("reports:suppliersHeading") }}</h3>
-            {{ govukTable({
-              head: [
-                { text: localise("reports:supplierColumn") },
-                { text: localise("reports:activityColumn") },
-                { text: localise("reports:addressColumn") },
-                { text: localise("reports:phoneColumn") },
-                { text: localise("reports:emailColumn") }
-              ],
-              rows: wasteReceived.supplierDetailRows
-            }) }}
-          {% endif %}
-        </div>
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: localise("reports:submitTotalTonnageReceivedNotRecycled") },
+              value: { text: packagingWasteRecycling.tonnageNotRecycled }
+            }
+          ]
+        }) }}
+      </div>
     </div>
   </div>
 {% endblock %}

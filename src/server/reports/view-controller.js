@@ -61,6 +61,11 @@ export const viewGetController = {
       wasteReceived: {
         totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
         supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+      },
+
+      packagingWasteRecycling: {
+        tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+        tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
       }
     }
     return h.view('reports/view', viewData)
