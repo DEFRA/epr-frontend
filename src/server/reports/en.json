@@ -208,6 +208,7 @@
   "viewHeading": "Report for {{ periodLabel }}",
   "viewPageTitle": "View submitted report",
   "viewRecyclingActivityHeading": "Packaging waste recycling",
+  "viewSupportingInformationHeading": "Supporting information",
   "viewTotalRevenuePern": "Total revenue of PERNs",
   "viewTotalRevenuePrn": "Total revenue of PRNs",
   "viewTotalTonnageReceivedNotRecycled": "Total tonnage received but not recycled",

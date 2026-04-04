@@ -213,7 +213,8 @@ describe('#viewController', () => {
           freeTonnage: 20,
           totalRevenue: 5000,
           averagePricePerTonne: 50
-        }
+        },
+        supportingInformation: 'Test supporting information note'
       }
 
       beforeAll(() => {
@@ -637,6 +638,60 @@ describe('#viewController', () => {
             })
 
             expect(section).toBeNull()
+          })
+        })
+      })
+
+      describe('supporting-information section', () => {
+        async function loadSection({ server }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+
+          return body.querySelector('#supporting-information')
+        }
+
+        it('renders the section heading', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section).not.toBeNull()
+          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+            'Supporting information'
+          )
+        })
+
+        it('renders the supporting information label and value', async ({
+          server
+        }) => {
+          const section = await loadSection({ server })
+          const summaryList = section.querySelector('dl.govuk-summary-list')
+
+          expect(summaryList.textContent).toContain(
+            'Supporting information for your regulator'
+          )
+          expect(summaryList.textContent).toContain(
+            'Test supporting information note'
+          )
+        })
+
+        describe('when no supporting information is provided', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              supportingInformation: null
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it('renders "None provided"', async ({ server }) => {
+            const section = await loadSection({ server })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain('None provided')
           })
         })
       })

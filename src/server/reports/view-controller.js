@@ -91,7 +91,11 @@ export const viewGetController = {
         destinationDetailRows: buildDestinationDetailRows(
           wasteSent.finalDestinations
         )
-      }
+      },
+
+      supportingInformation:
+        reportDetail.supportingInformation ||
+        localise('reports:supportingInformationNone')
     }
     return h.view('reports/view', viewData)
   }
