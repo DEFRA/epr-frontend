@@ -71,6 +71,44 @@
           ]
         }) }}
       </div>
+
+      <div id="packaging-waste-sent-on">
+        <h2 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h2>
+
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
+        <p class="govuk-heading-l">{{ wasteSentOn.totalTonnage }}</p>
+
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: localise("reports:tonnageSentOnToReprocessors") },
+              value: { text: wasteSentOn.toReprocessors }
+            },
+            {
+              key: { text: localise("reports:tonnageSentOnToExporters") },
+              value: { text: wasteSentOn.toExporters }
+            },
+            {
+              key: { text: localise("reports:tonnageSentOnToOtherSites") },
+              value: { text: wasteSentOn.toOtherSites }
+            }
+          ]
+        }) }}
+
+        {% if wasteSentOn.destinationDetailRows | length > 0 %}
+          {{ govukTable({
+            caption: localise("reports:destinationsHeading"),
+            captionClasses: "govuk-heading-m",
+            head: [
+              { text: localise("reports:recipientColumn") },
+              { text: localise("reports:facilityTypeColumn") },
+              { text: localise("reports:addressColumn") },
+              { text: localise("reports:tonnageSentOnColumn") }
+            ],
+            rows: wasteSentOn.destinationDetailRows
+          }) }}
+        {% endif %}
+      </div>
     </div>
   </div>
 {% endblock %}

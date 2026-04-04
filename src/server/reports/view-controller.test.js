@@ -142,6 +142,19 @@ describe('#viewController', () => {
               supplierEmail: 'contact@acme.example.com'
             }
           ]
+        },
+        wasteSent: {
+          tonnageSentToReprocessor: 5.0,
+          tonnageSentToExporter: 3.0,
+          tonnageSentToAnotherSite: 2.0,
+          finalDestinations: [
+            {
+              recipientName: 'Green Reprocessors Ltd',
+              facilityType: 'Reprocessor',
+              address: '5 Factory Road, Sheffield, S1 1AB',
+              tonnageSentOn: 1.0
+            }
+          ]
         }
       }
 
@@ -269,7 +282,7 @@ describe('#viewController', () => {
           )
         })
 
-        it('renders the table column headers', async ({ server }) => {
+        it('renders the suppliers table column headers', async ({ server }) => {
           const section = await loadSection({ server })
           const tableHeader = section.querySelector('table thead')
 
@@ -280,7 +293,7 @@ describe('#viewController', () => {
           expect(tableHeader.textContent).toContain('Email')
         })
 
-        it('renders supplier row data', async ({ server }) => {
+        it('renders suppliers table row data', async ({ server }) => {
           const section = await loadSection({ server })
           const tableBody = section.querySelector('table tbody')
 
@@ -329,6 +342,96 @@ describe('#viewController', () => {
             'Total tonnage received but not recycled'
           )
           expect(summaryList.textContent).toContain('2.25')
+        })
+      })
+
+      describe('packaging-waste-sent-on section', () => {
+        async function loadSection({ server }) {
+          const body = await loadPageBody({
+            server,
+            mockRegistrationAndAccreditation
+          })
+
+          return body.querySelector('#packaging-waste-sent-on')
+        }
+
+        it('renders the section heading', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section).not.toBeNull()
+          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+            'Packaging waste sent on'
+          )
+        })
+
+        it('renders the total tonnage sent on', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section.textContent).toContain('Total tonnage sent on')
+          expect(section.textContent).toContain('10.00')
+        })
+
+        describe('breakdown of tonnage sent on', () => {
+          it('renders tonnage sent on to reprocessors', async ({ server }) => {
+            const section = await loadSection({ server })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain(
+              'Total tonnage sent on to reprocessors'
+            )
+            expect(summaryList.textContent).toContain('5.00')
+          })
+
+          it('renders tonnage sent on to exporters', async ({ server }) => {
+            const section = await loadSection({ server })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain(
+              'Total tonnage sent on to exporters'
+            )
+            expect(summaryList.textContent).toContain('3.00')
+          })
+
+          it('renders tonnage sent on to other sites', async ({ server }) => {
+            const section = await loadSection({ server })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain(
+              'Total tonnage sent on to other sites or facilities'
+            )
+            expect(summaryList.textContent).toContain('2.00')
+          })
+        })
+
+        describe('final destinations table', () => {
+          it('renders sub-heading', async ({ server }) => {
+            const section = await loadSection({ server })
+            const tableCaption = section.querySelector('table caption')
+
+            expect(tableCaption.textContent).toContain('Final destinations')
+          })
+
+          it('renders headers in table', async ({ server }) => {
+            const section = await loadSection({ server })
+            const tableHeader = section.querySelector('table thead')
+
+            expect(tableHeader.textContent).toContain('Recipient')
+            expect(tableHeader.textContent).toContain('Facility type')
+            expect(tableHeader.textContent).toContain('Address')
+            expect(tableHeader.textContent).toContain('Tonnage sent on')
+          })
+
+          it('renders row data in table', async ({ server }) => {
+            const section = await loadSection({ server })
+            const tableBody = section.querySelector('table tbody')
+
+            expect(tableBody.textContent).toContain('Green Reprocessors Ltd')
+            expect(tableBody.textContent).toContain('Reprocessor')
+            expect(tableBody.textContent).toContain(
+              '5 Factory Road, Sheffield, S1 1AB'
+            )
+            expect(tableBody.textContent).toContain('1.00')
+          })
         })
       })
     })
