@@ -57,15 +57,15 @@
       </div>
 
       <div id="packaging-waste-recycling">
-        <h2 class="govuk-heading-l">{{ localise("reports:submitRecyclingActivityHeading") }}</h2>
+        <h2 class="govuk-heading-l">{{ localise("reports:viewRecyclingActivityHeading") }}</h2>
 
-        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:submitTotalTonnageRecycled") }}</p>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:viewTotalTonnageRecycled") }}</p>
         <p class="govuk-heading-l">{{ packagingWasteRecycling.tonnageRecycled }}</p>
 
         {{ govukSummaryList({
           rows: [
             {
-              key: { text: localise("reports:submitTotalTonnageReceivedNotRecycled") },
+              key: { text: localise("reports:viewTotalTonnageReceivedNotRecycled") },
               value: { text: packagingWasteRecycling.tonnageNotRecycled }
             }
           ]
@@ -109,6 +109,37 @@
           }) }}
         {% endif %}
       </div>
+
+      {% if isAccredited %}
+        <div id="prns">
+          {% if isExporter %}
+            <h2 class="govuk-heading-l">{{ localise("reports:pernSectionHeading") }}</h2>
+            <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:pernTotalIssuedTonnage") }}</p>
+          {% else %}
+            <h2 class="govuk-heading-l">{{ localise("reports:prnSectionHeading") }}</h2>
+            <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:prnTotalIssuedTonnage") }}</p>
+          {% endif %}
+
+          <p class="govuk-heading-l">{{ prn.issuedTonnage | formatWholeNumberTonnage }}</p>
+
+          {{ govukSummaryList({
+            rows: [
+              {
+                key: { text: localise("reports:viewFreePernsLabel") if isExporter else localise("reports:viewFreePrnsLabel") },
+                value: { text: prn.freeTonnage | formatWholeNumberTonnage }
+              },
+              {
+                key: { text: localise("reports:viewTotalRevenuePern") if isExporter else localise("reports:viewTotalRevenuePrn") },
+                value: { text: prn.totalRevenue | formatCurrency }
+              },
+              {
+                key: { text: localise("reports:viewAvgPricePern") if isExporter else localise("reports:viewAvgPricePrn") },
+                value: { text: prn.averagePricePerTonne | formatCurrency }
+              }
+            ]
+          }) }}
+        </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

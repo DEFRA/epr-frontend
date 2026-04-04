@@ -9,6 +9,7 @@ import {
 } from './helpers/build-table-rows.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
@@ -27,7 +28,7 @@ export const viewGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration }, reportDetail] = await Promise.all([
+    const [{ registration, accreditation }, reportDetail] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -50,6 +51,8 @@ export const viewGetController = {
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
     const { recyclingActivity, wasteSent } = reportDetail
+    const isAccredited = !!accreditation
+    const isExporter = isExporterRegistration(registration)
 
     const viewData = {
       pageTitle: localise('reports:viewPageTitle'),
@@ -72,6 +75,14 @@ export const viewGetController = {
         tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
       },
 
+      isAccredited,
+      isExporter,
+      prn: {
+        issuedTonnage: reportDetail.prn?.issuedTonnage,
+        freeTonnage: reportDetail.prn?.freeTonnage,
+        totalRevenue: reportDetail.prn?.totalRevenue,
+        averagePricePerTonne: reportDetail.prn?.averagePricePerTonne
+      },
       wasteSentOn: {
         totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
         toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),

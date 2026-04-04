@@ -27,7 +27,12 @@ const mockAuth = {
   }
 }
 
-async function loadPage({ server, organisationId, registrationId }) {
+async function loadPage({ server, registrationAndAccreditation }) {
+  vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+    registrationAndAccreditation
+  )
+  const organisationId = registrationAndAccreditation.organisationData?.id
+  const registrationId = registrationAndAccreditation.registration?.id
   return await server.inject({
     method: 'GET',
     url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/view`,
@@ -35,11 +40,10 @@ async function loadPage({ server, organisationId, registrationId }) {
   })
 }
 
-async function loadPageBody({ server, mockRegistrationAndAccreditation }) {
+async function loadPageBody({ server, registrationAndAccreditation }) {
   const { result } = await loadPage({
     server,
-    organisationId: mockRegistrationAndAccreditation.organisationData.id,
-    registrationId: mockRegistrationAndAccreditation.registration.id
+    registrationAndAccreditation
   })
 
   const dom = new JSDOM(result)
@@ -47,6 +51,78 @@ async function loadPageBody({ server, mockRegistrationAndAccreditation }) {
 }
 
 describe('#viewController', () => {
+  const mockAccreditedReprocessor = {
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor',
+      registrationNumber: 'REG001234',
+      site: {
+        address: {
+          line1: 'North Road',
+          town: 'Manchester',
+          postcode: 'M1 1AA'
+        }
+      }
+    },
+    accreditation: { id: 'acc-001' }
+  }
+
+  const mockAccreditedExporter = {
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'exporter',
+      registrationNumber: 'REG001234',
+      site: {
+        address: {
+          line1: 'North Road',
+          town: 'Manchester',
+          postcode: 'M1 1AA'
+        }
+      }
+    },
+    accreditation: { id: 'acc-001' }
+  }
+
+  const mockRegisteredOnlyReprocessor = {
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor',
+      registrationNumber: 'REG001234',
+      site: {
+        address: {
+          line1: 'North Road',
+          town: 'Manchester',
+          postcode: 'M1 1AA'
+        }
+      }
+    },
+    accreditation: undefined
+  }
+
+  const mockRegisteredOnlyExporter = {
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'exporter',
+      registrationNumber: 'REG001234',
+      site: {
+        address: {
+          line1: 'North Road',
+          town: 'Manchester',
+          postcode: 'M1 1AA'
+        }
+      }
+    },
+    accreditation: undefined
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -63,8 +139,7 @@ describe('#viewController', () => {
     it('should return 404', async ({ server }) => {
       const { statusCode } = await loadPage({
         server,
-        organisationId: 'org-123',
-        registrationId: 'reg-001'
+        registrationAndAccreditation: mockAccreditedReprocessor
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
@@ -72,24 +147,6 @@ describe('#viewController', () => {
   })
 
   describe('when feature flag is enabled', () => {
-    const mockRegistrationAndAccreditation = {
-      organisationData: { id: 'org-123' },
-      registration: {
-        id: 'reg-001',
-        material: 'plastic',
-        wasteProcessingType: 'exporter',
-        registrationNumber: 'REG001234',
-        site: {
-          address: {
-            line1: 'North Road',
-            town: 'Manchester',
-            postcode: 'M1 1AA'
-          }
-        }
-      },
-      accreditation: undefined
-    }
-
     beforeAll(() => {
       config.set('featureFlags.reports', true)
     })
@@ -106,18 +163,13 @@ describe('#viewController', () => {
       }
 
       beforeAll(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          mockRegistrationAndAccreditation
-        )
-
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
       })
 
       it('should return 404', async ({ server }) => {
         const { statusCode } = await loadPage({
           server,
-          organisationId: mockRegistrationAndAccreditation.organisationData.id,
-          registrationId: mockRegistrationAndAccreditation.registration.id
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         expect(statusCode).toBe(statusCodes.notFound)
@@ -155,21 +207,23 @@ describe('#viewController', () => {
               tonnageSentOn: 1.0
             }
           ]
+        },
+        prn: {
+          issuedTonnage: 100,
+          freeTonnage: 20,
+          totalRevenue: 5000,
+          averagePricePerTonne: 50
         }
       }
 
       beforeAll(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          mockRegistrationAndAccreditation
-        )
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
       })
 
       it('should return 200', async ({ server }) => {
         const response = await loadPage({
           server,
-          organisationId: mockRegistrationAndAccreditation.organisationData.id,
-          registrationId: mockRegistrationAndAccreditation.registration.id
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         expect(response.statusCode).toBe(statusCodes.ok)
@@ -180,8 +234,7 @@ describe('#viewController', () => {
       }) => {
         const { result } = await loadPage({
           server,
-          organisationId: mockRegistrationAndAccreditation.organisationData.id,
-          registrationId: mockRegistrationAndAccreditation.registration.id
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         const dom = new JSDOM(result)
@@ -199,14 +252,14 @@ describe('#viewController', () => {
       }) => {
         const body = await loadPageBody({
           server,
-          mockRegistrationAndAccreditation
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         const backLink = body.querySelector('.govuk-back-link')
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${mockRegistrationAndAccreditation.organisationData.id}/registrations/${mockRegistrationAndAccreditation.registration.id}/reports`
+          `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports`
         )
       })
 
@@ -214,7 +267,7 @@ describe('#viewController', () => {
         it('renders period information', async ({ server }) => {
           const body = await loadPageBody({
             server,
-            mockRegistrationAndAccreditation
+            registrationAndAccreditation: mockAccreditedReprocessor
           })
           const reportPeriodSection = body.querySelector('#report-period')
 
@@ -227,7 +280,7 @@ describe('#viewController', () => {
         it('renders material information', async ({ server }) => {
           const body = await loadPageBody({
             server,
-            mockRegistrationAndAccreditation
+            registrationAndAccreditation: mockAccreditedReprocessor
           })
           const reportPeriodSection = body.querySelector('#report-period')
 
@@ -239,7 +292,7 @@ describe('#viewController', () => {
         it('renders site information', async ({ server }) => {
           const body = await loadPageBody({
             server,
-            mockRegistrationAndAccreditation
+            registrationAndAccreditation: mockAccreditedReprocessor
           })
           const reportPeriodSection = body.querySelector('#report-period')
 
@@ -252,7 +305,7 @@ describe('#viewController', () => {
         async function loadSection({ server }) {
           const body = await loadPageBody({
             server,
-            mockRegistrationAndAccreditation
+            registrationAndAccreditation: mockAccreditedReprocessor
           })
 
           return body.querySelector('#waste-received-for-reprocessing')
@@ -311,7 +364,7 @@ describe('#viewController', () => {
         async function loadSection({ server }) {
           const body = await loadPageBody({
             server,
-            mockRegistrationAndAccreditation
+            registrationAndAccreditation: mockAccreditedReprocessor
           })
 
           return body.querySelector('#packaging-waste-recycling')
@@ -349,7 +402,7 @@ describe('#viewController', () => {
         async function loadSection({ server }) {
           const body = await loadPageBody({
             server,
-            mockRegistrationAndAccreditation
+            registrationAndAccreditation: mockAccreditedReprocessor
           })
 
           return body.querySelector('#packaging-waste-sent-on')
@@ -431,6 +484,159 @@ describe('#viewController', () => {
               '5 Factory Road, Sheffield, S1 1AB'
             )
             expect(tableBody.textContent).toContain('1.00')
+          })
+        })
+      })
+
+      describe('prns section', () => {
+        async function loadSection({
+          server,
+          registrationAndAccreditation = mockAccreditedReprocessor
+        }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation
+          })
+
+          return body.querySelector('#prns')
+        }
+
+        describe('for an accredited reprocessor', () => {
+          it('renders the section heading', async ({ server }) => {
+            const section = await loadSection({ server })
+
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'PRNs'
+            )
+          })
+
+          it('renders the total tonnage of PRNs issued', async ({ server }) => {
+            const section = await loadSection({ server })
+
+            expect(section.textContent).toContain(
+              'Total tonnage of PRNs issued'
+            )
+            expect(section.textContent).toContain('100')
+          })
+
+          it('renders total PRNs issued for free', async ({ server }) => {
+            const section = await loadSection({ server })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain(
+              'Total tonnage of PRNs issued for free'
+            )
+            expect(summaryList.textContent).toContain('20')
+          })
+
+          it('renders total revenue of PRNs', async ({ server }) => {
+            const section = await loadSection({ server })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain('Total revenue of PRNs')
+            expect(summaryList.textContent).toContain('£5,000.00')
+          })
+
+          it('renders the average price per tonne of PRNs', async ({
+            server
+          }) => {
+            const section = await loadSection({ server })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain(
+              'Average price per tonne of PRNs'
+            )
+            expect(summaryList.textContent).toContain('£50.00')
+          })
+        })
+
+        describe('for an accredited exporter', () => {
+          it('renders the section heading', async ({ server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedExporter
+            })
+
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'PERNs'
+            )
+          })
+
+          it('renders the total tonnage of PERNs issued', async ({
+            server
+          }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedExporter
+            })
+
+            expect(section.textContent).toContain(
+              'Total tonnage of PERNs issued'
+            )
+            expect(section.textContent).toContain('100')
+          })
+
+          it('renders total PERNs issued for free', async ({ server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedExporter
+            })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain(
+              'Total tonnage of PERNs issued for free'
+            )
+            expect(summaryList.textContent).toContain('20')
+          })
+
+          it('renders total revenue of PERNs', async ({ server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedExporter
+            })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain('Total revenue of PERNs')
+            expect(summaryList.textContent).toContain('£5,000.00')
+          })
+
+          it('renders the average price per tonne of PERNs', async ({
+            server
+          }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedExporter
+            })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
+
+            expect(summaryList.textContent).toContain(
+              'Average price per tonne of PERNs'
+            )
+            expect(summaryList.textContent).toContain('£50.00')
+          })
+        })
+
+        describe('for a registered-only reprocessor', () => {
+          it('does not render the prns section', async ({ server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockRegisteredOnlyReprocessor
+            })
+
+            expect(section).toBeNull()
+          })
+        })
+
+        describe('for a registered-only exporter', () => {
+          it('does not render the prns section', async ({ server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockRegisteredOnlyExporter
+            })
+
+            expect(section).toBeNull()
           })
         })
       })
