@@ -128,6 +128,18 @@ describe('#viewController', () => {
       const reportDetail = {
         status: {
           currentStatus: 'submitted'
+        },
+        recyclingActivity: {
+          totalTonnageReceived: 12.5,
+          suppliers: [
+            {
+              supplierName: 'Acme Recycling Ltd',
+              facilityType: 'Reprocessor',
+              supplierAddress: '1 Green Lane, Leeds, LS1 1AA',
+              supplierPhone: '0113 000 0000',
+              supplierEmail: 'contact@acme.example.com'
+            }
+          ]
         }
       }
 
@@ -183,7 +195,7 @@ describe('#viewController', () => {
         )
       })
 
-      describe('report details section', () => {
+      describe('report-period section', () => {
         it('renders period information', async ({ server }) => {
           const body = await loadPageBody({
             server,
@@ -218,6 +230,65 @@ describe('#viewController', () => {
 
           expect(reportPeriodSection.textContent).toContain('Site')
           expect(reportPeriodSection.textContent).toContain('North Road')
+        })
+      })
+
+      describe('waste-received-for-reprocessing section', () => {
+        async function loadSection({ server }) {
+          const body = await loadPageBody({
+            server,
+            mockRegistrationAndAccreditation
+          })
+
+          return body.querySelector('#waste-received-for-reprocessing')
+        }
+
+        it('renders the section heading', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section).not.toBeNull()
+          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+            'Packaging waste received for reprocessing'
+          )
+        })
+
+        it('renders the total tonnage received', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section.textContent).toContain('Total tonnage received')
+          expect(section.textContent).toContain('12.50')
+        })
+
+        it('renders the suppliers table sub-heading', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section.querySelector('h3')?.textContent?.trim()).toBe(
+            'Suppliers'
+          )
+        })
+
+        it('renders the table column headers', async ({ server }) => {
+          const section = await loadSection({ server })
+          const tableHeader = section.querySelector('table thead')
+
+          expect(tableHeader.textContent).toContain('Supplier')
+          expect(tableHeader.textContent).toContain('Activity')
+          expect(tableHeader.textContent).toContain('Address')
+          expect(tableHeader.textContent).toContain('Phone')
+          expect(tableHeader.textContent).toContain('Email')
+        })
+
+        it('renders supplier row data', async ({ server }) => {
+          const section = await loadSection({ server })
+          const tableBody = section.querySelector('table tbody')
+
+          expect(tableBody.textContent).toContain('Acme Recycling Ltd')
+          expect(tableBody.textContent).toContain('Reprocessor')
+          expect(tableBody.textContent).toContain(
+            '1 Green Lane, Leeds, LS1 1AA'
+          )
+          expect(tableBody.textContent).toContain('0113 000 0000')
+          expect(tableBody.textContent).toContain('contact@acme.example.com')
         })
       })
     })

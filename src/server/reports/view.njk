@@ -1,6 +1,7 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -32,6 +33,27 @@
               }
             ] if site else [])
           }) }}
+        </div>
+
+        <div id="waste-received-for-reprocessing">
+          <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedHeading") }}</h2>
+
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
+          <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
+
+          {% if wasteReceived.supplierDetailRows | length > 0 %}
+            <h3 class="govuk-heading-m">{{ localise("reports:suppliersHeading") }}</h3>
+            {{ govukTable({
+              head: [
+                { text: localise("reports:supplierColumn") },
+                { text: localise("reports:activityColumn") },
+                { text: localise("reports:addressColumn") },
+                { text: localise("reports:phoneColumn") },
+                { text: localise("reports:emailColumn") }
+              ],
+              rows: wasteReceived.supplierDetailRows
+            }) }}
+          {% endif %}
         </div>
     </div>
   </div>

@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
+import { buildSupplierDetailRows } from './helpers/build-table-rows.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -43,6 +45,7 @@ export const viewGetController = {
 
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+    const { recyclingActivity } = reportDetail
 
     const viewData = {
       pageTitle: localise('reports:viewPageTitle'),
@@ -53,7 +56,12 @@ export const viewGetController = {
 
       material,
       periodLabel,
-      site: registration.site?.address?.line1
+      site: registration.site?.address?.line1,
+
+      wasteReceived: {
+        totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
+        supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+      }
     }
     return h.view('reports/view', viewData)
   }
