@@ -53,7 +53,7 @@ export const viewGetController = {
 
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-    const { recyclingActivity, wasteSent } = reportDetail
+    const { recyclingActivity, exportActivity, wasteSent } = reportDetail
     const isAccredited = !!accreditation
     const isExporter = isExporterRegistration(registration)
     const isReprocessor = isReprocessorRegistration(registration)
@@ -78,6 +78,18 @@ export const viewGetController = {
         tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
         tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
       },
+
+      wasteExported: exportActivity
+        ? {
+            totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
+            overseasSiteRows: exportActivity.overseasSites.map(
+              (overseasSite) => [
+                { text: overseasSite.siteName },
+                { text: overseasSite.orsId }
+              ]
+            )
+          }
+        : null,
 
       isAccredited,
       isExporter,

@@ -203,6 +203,15 @@ describe('#viewController', () => {
             }
           ]
         },
+        exportActivity: {
+          totalTonnageExported: 8.0,
+          overseasSites: [
+            {
+              siteName: 'Seoul Recycling Co',
+              orsId: 'ORS-001'
+            }
+          ]
+        },
         wasteSent: {
           tonnageSentToReprocessor: 5.0,
           tonnageSentToExporter: 3.0,
@@ -592,6 +601,112 @@ describe('#viewController', () => {
             expect(tableBody.textContent).toContain('contact@acme.example.com')
           }
         )
+
+        it.for(reprocessors)(
+          '($scenario) does not render the section',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).toBeNull()
+          }
+        )
+      })
+
+      describe('waste-exported-for-recycling section', () => {
+        async function loadSection({ server, registrationAndAccreditation }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation
+          })
+
+          return body.querySelector('#waste-exported-for-recycling')
+        }
+
+        it.for(exporters)(
+          '($scenario) renders the section heading',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Packaging waste exported for recycling'
+            )
+          }
+        )
+
+        it.for(exporters)(
+          '($scenario) renders the total tonnage exported',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.textContent).toContain('Total tonnage exported')
+            expect(section.textContent).toContain('8.00')
+          }
+        )
+
+        it.for(exporters)(
+          '($scenario) renders the overseas sites table column headers',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+            const tableHeader = section.querySelector('table thead')
+
+            expect(tableHeader.textContent).toContain('Site name')
+            expect(tableHeader.textContent).toContain(
+              'Approved overseas reprocessor ID'
+            )
+          }
+        )
+
+        it.for(exporters)(
+          '($scenario) renders overseas sites table row data',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+            const tableBody = section.querySelector('table tbody')
+
+            expect(tableBody.textContent).toContain('Seoul Recycling Co')
+            expect(tableBody.textContent).toContain('ORS-001')
+          }
+        )
+
+        describe('when no waste exported', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              exportActivity: null
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it.for(exporters)(
+            '($scenario) does not render the section',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section).toBeNull()
+            }
+          )
+        })
 
         it.for(reprocessors)(
           '($scenario) does not render the section',

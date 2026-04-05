@@ -97,6 +97,25 @@
         </div>
       {% endif %}
 
+      {% if isExporter and wasteExported %}
+        <div id="waste-exported-for-recycling">
+          <h2 class="govuk-heading-l">{{ localise("reports:wasteExportedHeading") }}</h2>
+
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
+          <p class="govuk-heading-l">{{ wasteExported.totalTonnage }}</p>
+
+          {% if wasteExported.overseasSiteRows | length > 0 %}
+            {{ govukTable({
+              head: [
+                { text: localise("reports:siteNameColumn") },
+                { text: localise("reports:osrIdColumn") }
+              ],
+              rows: wasteExported.overseasSiteRows
+            }) }}
+          {% endif %}
+        </div>
+      {% endif %}
+
       <div id="packaging-waste-sent-on">
         <h2 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h2>
 
