@@ -57,15 +57,15 @@
       </div>
 
       <div id="packaging-waste-recycling">
-        <h2 class="govuk-heading-l">{{ localise("reports:viewRecyclingActivityHeading") }}</h2>
+        <h2 class="govuk-heading-l">{{ localise("reports:view:recyclingActivityHeading") }}</h2>
 
-        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:viewTotalTonnageRecycled") }}</p>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:view:totalTonnageRecycled") }}</p>
         <p class="govuk-heading-l">{{ packagingWasteRecycling.tonnageRecycled }}</p>
 
         {{ govukSummaryList({
           rows: [
             {
-              key: { text: localise("reports:viewTotalTonnageReceivedNotRecycled") },
+              key: { text: localise("reports:view:totalTonnageReceivedNotRecycled") },
               value: { text: packagingWasteRecycling.tonnageNotRecycled }
             }
           ]
@@ -125,15 +125,15 @@
           {{ govukSummaryList({
             rows: [
               {
-                key: { text: localise("reports:viewFreePernsLabel") if isExporter else localise("reports:viewFreePrnsLabel") },
+                key: { text: localise("reports:view:freePernsLabel") if isExporter else localise("reports:view:freePrnsLabel") },
                 value: { text: prn.freeTonnage | formatWholeNumberTonnage }
               },
               {
-                key: { text: localise("reports:viewTotalRevenuePern") if isExporter else localise("reports:viewTotalRevenuePrn") },
+                key: { text: localise("reports:view:totalRevenuePern") if isExporter else localise("reports:view:totalRevenuePrn") },
                 value: { text: prn.totalRevenue | formatCurrency }
               },
               {
-                key: { text: localise("reports:viewAvgPricePern") if isExporter else localise("reports:viewAvgPricePrn") },
+                key: { text: localise("reports:view:avgPricePern") if isExporter else localise("reports:view:avgPricePrn") },
                 value: { text: prn.averagePricePerTonne | formatCurrency }
               }
             ]
@@ -142,7 +142,7 @@
       {% endif %}
 
       <div id="supporting-information">
-        <h2 class="govuk-heading-l">{{ localise("reports:viewSupportingInformationHeading") }}</h2>
+        <h2 class="govuk-heading-l">{{ localise("reports:view:supportingInformationHeading") }}</h2>
 
         {{ govukSummaryList({
           rows: [

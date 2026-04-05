@@ -55,8 +55,8 @@ export const viewGetController = {
     const isExporter = isExporterRegistration(registration)
 
     const viewData = {
-      pageTitle: localise('reports:viewPageTitle'),
-      heading: localise('reports:viewHeading', { periodLabel }),
+      pageTitle: localise('reports:view:pageTitle'),
+      heading: localise('reports:view:heading', { periodLabel }),
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/reports`
       ),
