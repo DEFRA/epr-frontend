@@ -36,6 +36,7 @@ import {
   supportingInformationGetController,
   supportingInformationPostController
 } from './supporting-information-controller.js'
+import { viewGetController } from './view-controller.js'
 
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/reports'
@@ -164,6 +165,11 @@ export const reports = {
           ...deletePostController,
           method: 'POST',
           path: `${periodPath}/delete`
+        },
+        {
+          ...viewGetController,
+          method: 'GET',
+          path: `${periodPath}/view`
         }
       ])
     }

@@ -164,6 +164,20 @@ const monthlyWithReadyToSubmitResponse = {
   ]
 }
 
+const monthlyWithSubmittedResponse = {
+  cadence: 'monthly',
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      dueDate: '2026-02-20',
+      report: { id: 'report-002', status: 'submitted' }
+    }
+  ]
+}
+
 const emptyResponse = {
   cadence: 'monthly',
   reportingPeriods: []
@@ -515,6 +529,54 @@ describe('#listReportsController', () => {
         expect(link?.textContent).toContain('Review and submit')
         expect(link?.getAttribute('href')).toBe(
           '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submit'
+        )
+      })
+    })
+
+    describe('for ended period with submitted report', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedRegistration
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(
+          monthlyWithSubmittedResponse
+        )
+      })
+
+      it('should display Submitted tag', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+
+        expect(tags).toHaveLength(1)
+        expect(tags[0]?.textContent?.trim()).toBe('Submitted')
+      })
+
+      it('should display View link to view reports page', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = body.querySelector('.govuk-table a.govuk-link')
+
+        expect(link).not.toBeNull()
+        expect(link?.textContent).toContain('View')
+        expect(link?.getAttribute('href')).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/view'
         )
       })
     })
