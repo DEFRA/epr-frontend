@@ -16,6 +16,82 @@ import {
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
+function buildViewData({
+  registration,
+  accreditation,
+  reportDetail,
+  year,
+  cadence,
+  period,
+  backUrl,
+  localise
+}) {
+  const material = getDisplayMaterial(registration)
+  const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
+  const isAccredited = !!accreditation
+  const isExporter = isExporterRegistration(registration)
+  const isReprocessor = isReprocessorRegistration(registration)
+
+  return {
+    pageTitle: localise('reports:view:pageTitle'),
+    heading: localise('reports:view:heading', { periodLabel }),
+    backUrl,
+
+    material,
+    periodLabel,
+    site: registration.site?.address?.line1,
+
+    wasteReceived: {
+      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
+      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+    },
+
+    packagingWasteRecycling: {
+      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
+    },
+
+    wasteExported: exportActivity
+      ? {
+          totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
+          overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
+            { text: overseasSite.siteName },
+            { text: overseasSite.orsId }
+          ]),
+          tonnageReceivedNotExported: formatTonnage(
+            exportActivity.tonnageReceivedNotExported
+          )
+        }
+      : null,
+
+    isAccredited,
+    isExporter,
+    isReprocessor,
+
+    prn: {
+      issuedTonnage: reportDetail.prn?.issuedTonnage,
+      freeTonnage: reportDetail.prn?.freeTonnage,
+      totalRevenue: reportDetail.prn?.totalRevenue,
+      averagePricePerTonne: reportDetail.prn?.averagePricePerTonne
+    },
+
+    wasteSentOn: {
+      totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
+      toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+      toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
+      toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
+      destinationDetailRows: buildDestinationDetailRows(
+        wasteSent.finalDestinations
+      )
+    },
+
+    supportingInformation:
+      reportDetail.supportingInformation ||
+      localise('reports:supportingInformationNone')
+  }
+}
+
 /**
  * @satisfies {Partial<import('@hapi/hapi').ServerRoute>}
  */
@@ -51,73 +127,22 @@ export const viewGetController = {
       throw Boom.notFound()
     }
 
-    const material = getDisplayMaterial(registration)
-    const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-    const { recyclingActivity, exportActivity, wasteSent } = reportDetail
-    const isAccredited = !!accreditation
-    const isExporter = isExporterRegistration(registration)
-    const isReprocessor = isReprocessorRegistration(registration)
+    const backUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+    )
 
-    const viewData = {
-      pageTitle: localise('reports:view:pageTitle'),
-      heading: localise('reports:view:heading', { periodLabel }),
-      backUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
-      ),
-
-      material,
-      periodLabel,
-      site: registration.site?.address?.line1,
-
-      wasteReceived: {
-        totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-        supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-      },
-
-      packagingWasteRecycling: {
-        tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
-        tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
-      },
-
-      wasteExported: exportActivity
-        ? {
-            totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-            overseasSiteRows: exportActivity.overseasSites.map(
-              (overseasSite) => [
-                { text: overseasSite.siteName },
-                { text: overseasSite.orsId }
-              ]
-            ),
-            tonnageReceivedNotExported: formatTonnage(
-              exportActivity.tonnageReceivedNotExported
-            )
-          }
-        : null,
-
-      isAccredited,
-      isExporter,
-      isReprocessor,
-
-      prn: {
-        issuedTonnage: reportDetail.prn?.issuedTonnage,
-        freeTonnage: reportDetail.prn?.freeTonnage,
-        totalRevenue: reportDetail.prn?.totalRevenue,
-        averagePricePerTonne: reportDetail.prn?.averagePricePerTonne
-      },
-      wasteSentOn: {
-        totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-        toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-        toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-        toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-        destinationDetailRows: buildDestinationDetailRows(
-          wasteSent.finalDestinations
-        )
-      },
-
-      supportingInformation:
-        reportDetail.supportingInformation ||
-        localise('reports:supportingInformationNone')
-    }
-    return h.view('reports/view', viewData)
+    return h.view(
+      'reports/view',
+      buildViewData({
+        registration,
+        accreditation,
+        reportDetail,
+        year,
+        cadence,
+        period,
+        backUrl,
+        localise
+      })
+    )
   }
 }
