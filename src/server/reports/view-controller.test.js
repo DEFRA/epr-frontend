@@ -75,14 +75,7 @@ describe('#viewController', () => {
       id: 'reg-001',
       material: 'plastic',
       wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
+      registrationNumber: 'REG001234'
     },
     accreditation: { id: 'acc-001' }
   }
@@ -111,14 +104,7 @@ describe('#viewController', () => {
       id: 'reg-001',
       material: 'plastic',
       wasteProcessingType: 'exporter',
-      registrationNumber: 'REG001234',
-      site: {
-        address: {
-          line1: 'North Road',
-          town: 'Manchester',
-          postcode: 'M1 1AA'
-        }
-      }
+      registrationNumber: 'REG001234'
     },
     accreditation: undefined
   }
@@ -289,8 +275,7 @@ describe('#viewController', () => {
           expect(reportPeriodSection.textContent).toContain('Plastic')
         })
 
-        // TODO this is reprocessor only
-        it('renders site information', async ({ server }) => {
+        it('renders site information for reprocessors', async ({ server }) => {
           const body = await loadPageBody({
             server,
             registrationAndAccreditation: mockAccreditedReprocessor
@@ -299,6 +284,18 @@ describe('#viewController', () => {
 
           expect(reportPeriodSection.textContent).toContain('Site')
           expect(reportPeriodSection.textContent).toContain('North Road')
+        })
+
+        it('does not render site information for exporters', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedExporter // exporter registration data does not include site
+          })
+          const reportPeriodSection = body.querySelector('#report-period')
+
+          expect(reportPeriodSection.textContent).not.toContain('Site')
         })
       })
 
