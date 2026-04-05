@@ -505,6 +505,107 @@ describe('#viewController', () => {
         )
       })
 
+      describe('waste-received-for-exporting section', () => {
+        async function loadSection({ server, registrationAndAccreditation }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation
+          })
+
+          return body.querySelector('#waste-received-for-exporting')
+        }
+
+        it.for(exporters)(
+          'renders the section heading for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Packaging waste received for exporting'
+            )
+          }
+        )
+
+        it.for(exporters)(
+          'renders the total tonnage received for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.textContent).toContain('Total tonnage received')
+            expect(section.textContent).toContain('12.50')
+          }
+        )
+
+        it.for(exporters)(
+          'renders the suppliers table sub-heading for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.querySelector('h3')?.textContent?.trim()).toBe(
+              'Suppliers'
+            )
+          }
+        )
+
+        it.for(exporters)(
+          'renders the suppliers table column headers for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+            const tableHeader = section.querySelector('table thead')
+
+            expect(tableHeader.textContent).toContain('Supplier')
+            expect(tableHeader.textContent).toContain('Activity')
+            expect(tableHeader.textContent).toContain('Address')
+            expect(tableHeader.textContent).toContain('Phone')
+            expect(tableHeader.textContent).toContain('Email')
+          }
+        )
+
+        it.for(exporters)(
+          'renders suppliers table row data for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+            const tableBody = section.querySelector('table tbody')
+
+            expect(tableBody.textContent).toContain('Acme Recycling Ltd')
+            expect(tableBody.textContent).toContain('Reprocessor')
+            expect(tableBody.textContent).toContain(
+              '1 Green Lane, Leeds, LS1 1AA'
+            )
+            expect(tableBody.textContent).toContain('0113 000 0000')
+            expect(tableBody.textContent).toContain('contact@acme.example.com')
+          }
+        )
+
+        it.for(reprocessors)(
+          'does not render the section for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).toBeNull()
+          }
+        )
+      })
+
       describe('packaging-waste-sent-on section', () => {
         async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({

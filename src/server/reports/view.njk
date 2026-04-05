@@ -56,9 +56,7 @@
             }) }}
           {% endif %}
         </div>
-      {% endif %}
 
-      {% if isReprocessor %}
         <div id="packaging-waste-recycling">
           <h2 class="govuk-heading-l">{{ localise("reports:view:recyclingActivityHeading") }}</h2>
 
@@ -73,6 +71,29 @@
               }
             ]
           }) }}
+        </div>
+      {% endif %}
+
+      {% if isExporter %}
+        <div id="waste-received-for-exporting">
+          <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedForExportHeading") }}</h2>
+
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
+          <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
+
+          {% if wasteReceived.supplierDetailRows | length > 0 %}
+            <h3 class="govuk-heading-m">{{ localise("reports:suppliersHeading") }}</h3>
+            {{ govukTable({
+              head: [
+                { text: localise("reports:supplierColumn") },
+                { text: localise("reports:activityColumn") },
+                { text: localise("reports:addressColumn") },
+                { text: localise("reports:phoneColumn") },
+                { text: localise("reports:emailColumn") }
+              ],
+              rows: wasteReceived.supplierDetailRows
+            }) }}
+          {% endif %}
         </div>
       {% endif %}
 
