@@ -87,6 +87,9 @@ export const viewGetController = {
                 { text: overseasSite.siteName },
                 { text: overseasSite.orsId }
               ]
+            ),
+            tonnageReceivedNotExported: formatTonnage(
+              exportActivity.tonnageReceivedNotExported
             )
           }
         : null,
