@@ -109,6 +109,28 @@ describe('#viewController', () => {
     accreditation: undefined
   }
 
+  const reprocessors = [
+    {
+      label: 'Accredited Reprocessor',
+      registrationAndAccreditation: mockAccreditedReprocessor
+    },
+    {
+      label: 'Registered Only Reprocessor',
+      registrationAndAccreditation: mockRegisteredOnlyReprocessor
+    }
+  ]
+  const exporters = [
+    {
+      label: 'Accredited Exporter',
+      registrationAndAccreditation: mockAccreditedExporter
+    },
+    {
+      label: 'Registered Only Exporter',
+      registrationAndAccreditation: mockRegisteredOnlyExporter
+    }
+  ]
+  const reprocessorsAndExporters = [...reprocessors, ...exporters]
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -251,246 +273,378 @@ describe('#viewController', () => {
       })
 
       describe('report-period section', () => {
-        it('renders period information', async ({ server }) => {
+        async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({
             server,
-            registrationAndAccreditation: mockAccreditedReprocessor
+            registrationAndAccreditation
           })
-          const reportPeriodSection = body.querySelector('#report-period')
 
-          expect(reportPeriodSection).not.toBeNull()
+          return body.querySelector('#report-period')
+        }
 
-          expect(reportPeriodSection.textContent).toContain('Period')
-          expect(reportPeriodSection.textContent).toContain('January 2026')
-        })
+        it.for(reprocessorsAndExporters)(
+          'renders period information for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const reportPeriodSection = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-        it('renders material information', async ({ server }) => {
-          const body = await loadPageBody({
-            server,
-            registrationAndAccreditation: mockAccreditedReprocessor
-          })
-          const reportPeriodSection = body.querySelector('#report-period')
+            expect(reportPeriodSection).not.toBeNull()
 
-          expect(reportPeriodSection.textContent).toContain('Material')
-          expect(reportPeriodSection.textContent).toContain('Plastic')
-        })
+            expect(reportPeriodSection.textContent).toContain('Period')
+            expect(reportPeriodSection.textContent).toContain('January 2026')
+          }
+        )
 
-        it('renders site information for reprocessors', async ({ server }) => {
-          const body = await loadPageBody({
-            server,
-            registrationAndAccreditation: mockAccreditedReprocessor
-          })
-          const reportPeriodSection = body.querySelector('#report-period')
+        it.for(reprocessorsAndExporters)(
+          'renders material information for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const reportPeriodSection = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(reportPeriodSection.textContent).toContain('Site')
-          expect(reportPeriodSection.textContent).toContain('North Road')
-        })
+            expect(reportPeriodSection.textContent).toContain('Material')
+            expect(reportPeriodSection.textContent).toContain('Plastic')
+          }
+        )
 
-        it('does not render site information for exporters', async ({
-          server
-        }) => {
-          const body = await loadPageBody({
-            server,
-            registrationAndAccreditation: mockAccreditedExporter // exporter registration data does not include site
-          })
-          const reportPeriodSection = body.querySelector('#report-period')
+        it.for(reprocessors)(
+          'renders site information for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const reportPeriodSection = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(reportPeriodSection.textContent).not.toContain('Site')
-        })
+            expect(reportPeriodSection.textContent).toContain('Site')
+            expect(reportPeriodSection.textContent).toContain('North Road')
+          }
+        )
+
+        it.for(exporters)(
+          'does not render site information for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const reportPeriodSection = await loadSection({
+              server,
+              registrationAndAccreditation // exporter registration data does not include site
+            })
+
+            expect(reportPeriodSection.textContent).not.toContain('Site')
+          }
+        )
       })
 
       describe('waste-received-for-reprocessing section', () => {
-        async function loadSection({ server }) {
+        async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({
             server,
-            registrationAndAccreditation: mockAccreditedReprocessor
+            registrationAndAccreditation
           })
 
           return body.querySelector('#waste-received-for-reprocessing')
         }
 
-        it('renders the section heading', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessors)(
+          'renders the section heading for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(section).not.toBeNull()
-          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
-            'Packaging waste received for reprocessing'
-          )
-        })
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Packaging waste received for reprocessing'
+            )
+          }
+        )
 
-        it('renders the total tonnage received', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessors)(
+          'renders the total tonnage received for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(section.textContent).toContain('Total tonnage received')
-          expect(section.textContent).toContain('12.50')
-        })
+            expect(section.textContent).toContain('Total tonnage received')
+            expect(section.textContent).toContain('12.50')
+          }
+        )
 
-        it('renders the suppliers table sub-heading', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessors)(
+          'renders the suppliers table sub-heading for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(section.querySelector('h3')?.textContent?.trim()).toBe(
-            'Suppliers'
-          )
-        })
+            expect(section.querySelector('h3')?.textContent?.trim()).toBe(
+              'Suppliers'
+            )
+          }
+        )
 
-        it('renders the suppliers table column headers', async ({ server }) => {
-          const section = await loadSection({ server })
-          const tableHeader = section.querySelector('table thead')
+        it.for(reprocessors)(
+          'renders the suppliers table column headers for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+            const tableHeader = section.querySelector('table thead')
 
-          expect(tableHeader.textContent).toContain('Supplier')
-          expect(tableHeader.textContent).toContain('Activity')
-          expect(tableHeader.textContent).toContain('Address')
-          expect(tableHeader.textContent).toContain('Phone')
-          expect(tableHeader.textContent).toContain('Email')
-        })
+            expect(tableHeader.textContent).toContain('Supplier')
+            expect(tableHeader.textContent).toContain('Activity')
+            expect(tableHeader.textContent).toContain('Address')
+            expect(tableHeader.textContent).toContain('Phone')
+            expect(tableHeader.textContent).toContain('Email')
+          }
+        )
 
-        it('renders suppliers table row data', async ({ server }) => {
-          const section = await loadSection({ server })
-          const tableBody = section.querySelector('table tbody')
+        it.for(reprocessors)(
+          'renders suppliers table row data for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+            const tableBody = section.querySelector('table tbody')
 
-          expect(tableBody.textContent).toContain('Acme Recycling Ltd')
-          expect(tableBody.textContent).toContain('Reprocessor')
-          expect(tableBody.textContent).toContain(
-            '1 Green Lane, Leeds, LS1 1AA'
-          )
-          expect(tableBody.textContent).toContain('0113 000 0000')
-          expect(tableBody.textContent).toContain('contact@acme.example.com')
-        })
+            expect(tableBody.textContent).toContain('Acme Recycling Ltd')
+            expect(tableBody.textContent).toContain('Reprocessor')
+            expect(tableBody.textContent).toContain(
+              '1 Green Lane, Leeds, LS1 1AA'
+            )
+            expect(tableBody.textContent).toContain('0113 000 0000')
+            expect(tableBody.textContent).toContain('contact@acme.example.com')
+          }
+        )
+
+        it.for(exporters)(
+          'does not render the section for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).toBeNull()
+          }
+        )
       })
 
       describe('packaging-waste-recycling section', () => {
-        async function loadSection({ server }) {
+        async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({
             server,
-            registrationAndAccreditation: mockAccreditedReprocessor
+            registrationAndAccreditation
           })
 
           return body.querySelector('#packaging-waste-recycling')
         }
 
-        it('renders the section heading', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessors)(
+          'renders the section heading for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(section).not.toBeNull()
-          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
-            'Packaging waste recycling'
-          )
-        })
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Packaging waste recycling'
+            )
+          }
+        )
 
-        it('renders the total tonnage recycled', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessors)(
+          'renders the total tonnage recycled for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(section.textContent).toContain('Total tonnage recycled')
-          expect(section.textContent).toContain('10.25')
-        })
+            expect(section.textContent).toContain('Total tonnage recycled')
+            expect(section.textContent).toContain('10.25')
+          }
+        )
 
-        it('renders the tonnage not recycled', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessors)(
+          'renders the tonnage not recycled for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          const summaryList = section.querySelector('dl.govuk-summary-list')
+            const summaryList = section.querySelector('dl.govuk-summary-list')
 
-          expect(summaryList.textContent).toContain(
-            'Total tonnage received but not recycled'
-          )
-          expect(summaryList.textContent).toContain('2.25')
-        })
+            expect(summaryList.textContent).toContain(
+              'Total tonnage received but not recycled'
+            )
+            expect(summaryList.textContent).toContain('2.25')
+          }
+        )
+
+        it.for(exporters)(
+          'does not render the section for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).toBeNull()
+          }
+        )
       })
 
       describe('packaging-waste-sent-on section', () => {
-        async function loadSection({ server }) {
+        async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({
             server,
-            registrationAndAccreditation: mockAccreditedReprocessor
+            registrationAndAccreditation
           })
 
           return body.querySelector('#packaging-waste-sent-on')
         }
 
-        it('renders the section heading', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessorsAndExporters)(
+          'renders the section heading for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(section).not.toBeNull()
-          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
-            'Packaging waste sent on'
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Packaging waste sent on'
+            )
+          }
+        )
+
+        it.for(reprocessorsAndExporters)(
+          'renders the total tonnage sent on for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.textContent).toContain('Total tonnage sent on')
+            expect(section.textContent).toContain('10.00')
+          }
+        )
+
+        describe('breakdown of tonnage sent on', () => {
+          it.for(reprocessorsAndExporters)(
+            'renders tonnage sent on to reprocessor for $label',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const summaryList = section.querySelector('dl.govuk-summary-list')
+
+              expect(summaryList.textContent).toContain(
+                'Total tonnage sent on to reprocessors'
+              )
+              expect(summaryList.textContent).toContain('5.00')
+            }
+          )
+
+          it.for(reprocessorsAndExporters)(
+            'renders tonnage sent on to exporters for $label',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const summaryList = section.querySelector('dl.govuk-summary-list')
+
+              expect(summaryList.textContent).toContain(
+                'Total tonnage sent on to exporters'
+              )
+              expect(summaryList.textContent).toContain('3.00')
+            }
+          )
+
+          it.for(reprocessorsAndExporters)(
+            'renders tonnage sent on to other sites for $label',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const summaryList = section.querySelector('dl.govuk-summary-list')
+
+              expect(summaryList.textContent).toContain(
+                'Total tonnage sent on to other sites or facilities'
+              )
+              expect(summaryList.textContent).toContain('2.00')
+            }
           )
         })
 
-        it('renders the total tonnage sent on', async ({ server }) => {
-          const section = await loadSection({ server })
-
-          expect(section.textContent).toContain('Total tonnage sent on')
-          expect(section.textContent).toContain('10.00')
-        })
-
-        describe('breakdown of tonnage sent on', () => {
-          it('renders tonnage sent on to reprocessors', async ({ server }) => {
-            const section = await loadSection({ server })
-            const summaryList = section.querySelector('dl.govuk-summary-list')
-
-            expect(summaryList.textContent).toContain(
-              'Total tonnage sent on to reprocessors'
-            )
-            expect(summaryList.textContent).toContain('5.00')
-          })
-
-          it('renders tonnage sent on to exporters', async ({ server }) => {
-            const section = await loadSection({ server })
-            const summaryList = section.querySelector('dl.govuk-summary-list')
-
-            expect(summaryList.textContent).toContain(
-              'Total tonnage sent on to exporters'
-            )
-            expect(summaryList.textContent).toContain('3.00')
-          })
-
-          it('renders tonnage sent on to other sites', async ({ server }) => {
-            const section = await loadSection({ server })
-            const summaryList = section.querySelector('dl.govuk-summary-list')
-
-            expect(summaryList.textContent).toContain(
-              'Total tonnage sent on to other sites or facilities'
-            )
-            expect(summaryList.textContent).toContain('2.00')
-          })
-        })
-
         describe('final destinations table', () => {
-          it('renders sub-heading', async ({ server }) => {
-            const section = await loadSection({ server })
-            const tableCaption = section.querySelector('table caption')
+          it.for(reprocessorsAndExporters)(
+            'renders sub-heading for $label',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const tableCaption = section.querySelector('table caption')
 
-            expect(tableCaption.textContent).toContain('Final destinations')
-          })
+              expect(tableCaption.textContent).toContain('Final destinations')
+            }
+          )
 
-          it('renders headers in table', async ({ server }) => {
-            const section = await loadSection({ server })
-            const tableHeader = section.querySelector('table thead')
+          it.for(reprocessorsAndExporters)(
+            'renders headers in table for $label',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const tableHeader = section.querySelector('table thead')
 
-            expect(tableHeader.textContent).toContain('Recipient')
-            expect(tableHeader.textContent).toContain('Facility type')
-            expect(tableHeader.textContent).toContain('Address')
-            expect(tableHeader.textContent).toContain('Tonnage sent on')
-          })
+              expect(tableHeader.textContent).toContain('Recipient')
+              expect(tableHeader.textContent).toContain('Facility type')
+              expect(tableHeader.textContent).toContain('Address')
+              expect(tableHeader.textContent).toContain('Tonnage sent on')
+            }
+          )
 
-          it('renders row data in table', async ({ server }) => {
-            const section = await loadSection({ server })
-            const tableBody = section.querySelector('table tbody')
+          it.for(reprocessorsAndExporters)(
+            'renders row data in table for $label',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const tableBody = section.querySelector('table tbody')
 
-            expect(tableBody.textContent).toContain('Green Reprocessors Ltd')
-            expect(tableBody.textContent).toContain('Reprocessor')
-            expect(tableBody.textContent).toContain(
-              '5 Factory Road, Sheffield, S1 1AB'
-            )
-            expect(tableBody.textContent).toContain('1.00')
-          })
+              expect(tableBody.textContent).toContain('Green Reprocessors Ltd')
+              expect(tableBody.textContent).toContain('Reprocessor')
+              expect(tableBody.textContent).toContain(
+                '5 Factory Road, Sheffield, S1 1AB'
+              )
+              expect(tableBody.textContent).toContain('1.00')
+            }
+          )
         })
       })
 
       describe('prns section', () => {
-        async function loadSection({
-          server,
-          registrationAndAccreditation = mockAccreditedReprocessor
-        }) {
+        async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({
             server,
             registrationAndAccreditation
@@ -501,7 +655,10 @@ describe('#viewController', () => {
 
         describe('for an accredited reprocessor', () => {
           it('renders the section heading', async ({ server }) => {
-            const section = await loadSection({ server })
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedReprocessor
+            })
 
             expect(section).not.toBeNull()
             expect(section.querySelector('h2')?.textContent?.trim()).toBe(
@@ -510,7 +667,10 @@ describe('#viewController', () => {
           })
 
           it('renders the total tonnage of PRNs issued', async ({ server }) => {
-            const section = await loadSection({ server })
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedReprocessor
+            })
 
             expect(section.textContent).toContain(
               'Total tonnage of PRNs issued'
@@ -519,7 +679,10 @@ describe('#viewController', () => {
           })
 
           it('renders total PRNs issued for free', async ({ server }) => {
-            const section = await loadSection({ server })
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedReprocessor
+            })
             const summaryList = section.querySelector('dl.govuk-summary-list')
 
             expect(summaryList.textContent).toContain(
@@ -529,7 +692,10 @@ describe('#viewController', () => {
           })
 
           it('renders total revenue of PRNs', async ({ server }) => {
-            const section = await loadSection({ server })
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedReprocessor
+            })
             const summaryList = section.querySelector('dl.govuk-summary-list')
 
             expect(summaryList.textContent).toContain('Total revenue of PRNs')
@@ -539,7 +705,10 @@ describe('#viewController', () => {
           it('renders the average price per tonne of PRNs', async ({
             server
           }) => {
-            const section = await loadSection({ server })
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedReprocessor
+            })
             const summaryList = section.querySelector('dl.govuk-summary-list')
 
             expect(summaryList.textContent).toContain(
@@ -640,37 +809,47 @@ describe('#viewController', () => {
       })
 
       describe('supporting-information section', () => {
-        async function loadSection({ server }) {
+        async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({
             server,
-            registrationAndAccreditation: mockAccreditedReprocessor
+            registrationAndAccreditation
           })
 
           return body.querySelector('#supporting-information')
         }
 
-        it('renders the section heading', async ({ server }) => {
-          const section = await loadSection({ server })
+        it.for(reprocessorsAndExporters)(
+          'renders the section heading for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
 
-          expect(section).not.toBeNull()
-          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
-            'Supporting information'
-          )
-        })
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Supporting information'
+            )
+          }
+        )
 
-        it('renders the supporting information label and value', async ({
-          server
-        }) => {
-          const section = await loadSection({ server })
-          const summaryList = section.querySelector('dl.govuk-summary-list')
+        it.for(reprocessorsAndExporters)(
+          'renders the supporting information label and value for $label',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+            const summaryList = section.querySelector('dl.govuk-summary-list')
 
-          expect(summaryList.textContent).toContain(
-            'Supporting information for your regulator'
-          )
-          expect(summaryList.textContent).toContain(
-            'Test supporting information note'
-          )
-        })
+            expect(summaryList.textContent).toContain(
+              'Supporting information for your regulator'
+            )
+            expect(summaryList.textContent).toContain(
+              'Test supporting information note'
+            )
+          }
+        )
 
         describe('when no supporting information is provided', () => {
           beforeAll(() => {
@@ -684,12 +863,18 @@ describe('#viewController', () => {
             vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
           })
 
-          it('renders "None provided"', async ({ server }) => {
-            const section = await loadSection({ server })
-            const summaryList = section.querySelector('dl.govuk-summary-list')
+          it.for(reprocessorsAndExporters)(
+            'renders "None provided" for $label',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const summaryList = section.querySelector('dl.govuk-summary-list')
 
-            expect(summaryList.textContent).toContain('None provided')
-          })
+              expect(summaryList.textContent).toContain('None provided')
+            }
+          )
         })
       })
     })

@@ -9,7 +9,10 @@ import {
 } from './helpers/build-table-rows.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  isExporterRegistration,
+  isReprocessorRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
@@ -53,6 +56,7 @@ export const viewGetController = {
     const { recyclingActivity, wasteSent } = reportDetail
     const isAccredited = !!accreditation
     const isExporter = isExporterRegistration(registration)
+    const isReprocessor = isReprocessorRegistration(registration)
 
     const viewData = {
       pageTitle: localise('reports:view:pageTitle'),
@@ -77,6 +81,8 @@ export const viewGetController = {
 
       isAccredited,
       isExporter,
+      isReprocessor,
+
       prn: {
         issuedTonnage: reportDetail.prn?.issuedTonnage,
         freeTonnage: reportDetail.prn?.freeTonnage,
