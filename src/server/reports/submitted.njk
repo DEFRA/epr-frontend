@@ -1,4 +1,5 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
 <div class="govuk-grid-row">
@@ -21,6 +22,12 @@
 
     <p class="govuk-body">
       <strong>{{ materialLabel }}</strong> {{ material }}
+    </p>
+
+    <p class="govuk-body">
+      <a href="{{ viewReportLink.href }}" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button" target="_blank" rel="noopener noreferrer">
+        {{ viewReportLink.text }}
+      </a>
     </p>
 
     <p class="govuk-body">

@@ -54,6 +54,12 @@ export const submittedController = {
       returnToReportsLink: {
         text: localise('reports:submittedReturnToReports'),
         href: request.localiseUrl(reportsUrl)
+      },
+      viewReportLink: {
+        text: localise('reports:submittedViewReport'),
+        href: request.localiseUrl(
+          `${reportsUrl}/${year}/${cadence}/${period}/view`
+        )
       }
     })
   }

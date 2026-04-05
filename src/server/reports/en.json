@@ -151,6 +151,7 @@
   "submittedPageTitle": "Report submitted: {{ material }}: {{ periodLabel }}",
   "submittedRegistrationLabel": "Registration:",
   "submittedReturnToReports": "Return to your reports",
+  "submittedViewReport": "View report (Opens in a new tab)",
   "supplierColumn": "Supplier",
   "suppliersHeading": "Suppliers",
   "supportingInformationCaption": "Create report",
