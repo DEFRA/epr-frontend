@@ -111,21 +111,21 @@ describe('#viewController', () => {
 
   const reprocessors = [
     {
-      label: 'Accredited Reprocessor',
+      scenario: 'Accredited Reprocessor',
       registrationAndAccreditation: mockAccreditedReprocessor
     },
     {
-      label: 'Registered Only Reprocessor',
+      scenario: 'Registered Only Reprocessor',
       registrationAndAccreditation: mockRegisteredOnlyReprocessor
     }
   ]
   const exporters = [
     {
-      label: 'Accredited Exporter',
+      scenario: 'Accredited Exporter',
       registrationAndAccreditation: mockAccreditedExporter
     },
     {
-      label: 'Registered Only Exporter',
+      scenario: 'Registered Only Exporter',
       registrationAndAccreditation: mockRegisteredOnlyExporter
     }
   ]
@@ -283,7 +283,7 @@ describe('#viewController', () => {
         }
 
         it.for(reprocessorsAndExporters)(
-          'renders period information for $label',
+          '($scenario) renders period information',
           async ({ registrationAndAccreditation }, { server }) => {
             const reportPeriodSection = await loadSection({
               server,
@@ -298,7 +298,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessorsAndExporters)(
-          'renders material information for $label',
+          '($scenario) renders material information',
           async ({ registrationAndAccreditation }, { server }) => {
             const reportPeriodSection = await loadSection({
               server,
@@ -311,7 +311,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'renders site information for $label',
+          '($scenario) renders site information',
           async ({ registrationAndAccreditation }, { server }) => {
             const reportPeriodSection = await loadSection({
               server,
@@ -324,7 +324,7 @@ describe('#viewController', () => {
         )
 
         it.for(exporters)(
-          'does not render site information for $label',
+          '($scenario) does not render site information',
           async ({ registrationAndAccreditation }, { server }) => {
             const reportPeriodSection = await loadSection({
               server,
@@ -347,7 +347,7 @@ describe('#viewController', () => {
         }
 
         it.for(reprocessors)(
-          'renders the section heading for $label',
+          '($scenario) renders the section heading',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -362,7 +362,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'renders the total tonnage received for $label',
+          '($scenario) renders the total tonnage received',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -375,7 +375,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'renders the suppliers table sub-heading for $label',
+          '($scenario) renders the suppliers table sub-heading',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -389,7 +389,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'renders the suppliers table column headers for $label',
+          '($scenario) renders the suppliers table column headers',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -406,7 +406,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'renders suppliers table row data for $label',
+          '($scenario) renders suppliers table row data',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -425,7 +425,7 @@ describe('#viewController', () => {
         )
 
         it.for(exporters)(
-          'does not render the section for $label',
+          '($scenario) does not render the section',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -448,7 +448,7 @@ describe('#viewController', () => {
         }
 
         it.for(reprocessors)(
-          'renders the section heading for $label',
+          '($scenario) renders the section heading',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -463,7 +463,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'renders the total tonnage recycled for $label',
+          '($scenario) renders the total tonnage recycled',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -476,7 +476,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'renders the tonnage not recycled for $label',
+          '($scenario) renders the tonnage not recycled',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -493,7 +493,7 @@ describe('#viewController', () => {
         )
 
         it.for(exporters)(
-          'does not render the section for $label',
+          '($scenario) does not render the section',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -516,7 +516,7 @@ describe('#viewController', () => {
         }
 
         it.for(exporters)(
-          'renders the section heading for $label',
+          '($scenario) renders the section heading',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -531,7 +531,7 @@ describe('#viewController', () => {
         )
 
         it.for(exporters)(
-          'renders the total tonnage received for $label',
+          '($scenario) renders the total tonnage received',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -544,7 +544,7 @@ describe('#viewController', () => {
         )
 
         it.for(exporters)(
-          'renders the suppliers table sub-heading for $label',
+          '($scenario) renders the suppliers table sub-heading',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -558,7 +558,7 @@ describe('#viewController', () => {
         )
 
         it.for(exporters)(
-          'renders the suppliers table column headers for $label',
+          '($scenario) renders the suppliers table column headers',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -575,7 +575,7 @@ describe('#viewController', () => {
         )
 
         it.for(exporters)(
-          'renders suppliers table row data for $label',
+          '($scenario) renders suppliers table row data',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -594,7 +594,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessors)(
-          'does not render the section for $label',
+          '($scenario) does not render the section',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -617,7 +617,7 @@ describe('#viewController', () => {
         }
 
         it.for(reprocessorsAndExporters)(
-          'renders the section heading for $label',
+          '($scenario) renders the section heading',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -632,7 +632,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessorsAndExporters)(
-          'renders the total tonnage sent on for $label',
+          '($scenario) renders the total tonnage sent on',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -646,7 +646,7 @@ describe('#viewController', () => {
 
         describe('breakdown of tonnage sent on', () => {
           it.for(reprocessorsAndExporters)(
-            'renders tonnage sent on to reprocessor for $label',
+            '($scenario) renders tonnage sent on to reprocessor',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
@@ -662,7 +662,7 @@ describe('#viewController', () => {
           )
 
           it.for(reprocessorsAndExporters)(
-            'renders tonnage sent on to exporters for $label',
+            '($scenario) renders tonnage sent on to exporters',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
@@ -678,7 +678,7 @@ describe('#viewController', () => {
           )
 
           it.for(reprocessorsAndExporters)(
-            'renders tonnage sent on to other sites for $label',
+            '($scenario) renders tonnage sent on to other sites',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
@@ -696,7 +696,7 @@ describe('#viewController', () => {
 
         describe('final destinations table', () => {
           it.for(reprocessorsAndExporters)(
-            'renders sub-heading for $label',
+            '($scenario) renders sub-heading',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
@@ -709,7 +709,7 @@ describe('#viewController', () => {
           )
 
           it.for(reprocessorsAndExporters)(
-            'renders headers in table for $label',
+            '($scenario) renders headers in table',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
@@ -725,7 +725,7 @@ describe('#viewController', () => {
           )
 
           it.for(reprocessorsAndExporters)(
-            'renders row data in table for $label',
+            '($scenario) renders row data in table',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
@@ -920,7 +920,7 @@ describe('#viewController', () => {
         }
 
         it.for(reprocessorsAndExporters)(
-          'renders the section heading for $label',
+          '($scenario) renders the section heading',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -935,7 +935,7 @@ describe('#viewController', () => {
         )
 
         it.for(reprocessorsAndExporters)(
-          'renders the supporting information label and value for $label',
+          '($scenario) renders the supporting information label and value',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -965,7 +965,7 @@ describe('#viewController', () => {
           })
 
           it.for(reprocessorsAndExporters)(
-            'renders "None provided" for $label',
+            '($scenario) renders "None provided"',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
