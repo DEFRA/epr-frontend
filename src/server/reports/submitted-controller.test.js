@@ -216,6 +216,34 @@ describe('#submittedController', () => {
         expect(body.textContent).toContain('Plastic')
       })
 
+      it('should display View report button linking to view page in new tab', async ({
+        server
+      }) => {
+        const { cookies } = await setSubmittedSession(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: submittedUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const viewButton = getByRole(body, 'button', {
+          name: /View report/
+        })
+
+        expect(viewButton).toBeDefined()
+        expect(viewButton.textContent?.trim()).toBe(
+          'View report (Opens in a new tab)'
+        )
+        expect(viewButton.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/view`
+        )
+        expect(viewButton.getAttribute('target')).toBe('_blank')
+      })
+
       it('should display Return to reports link', async ({ server }) => {
         const { cookies } = await setSubmittedSession(server)
 
