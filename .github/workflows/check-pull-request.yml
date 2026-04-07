@@ -19,8 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Prepare PR
-        # FIXME: change back to @main before merging
-        uses: DEFRA/epr-re-ex-service/.github/actions/pr-preparation@PAE-1286-add-renovate-docker-config
+        uses: DEFRA/epr-re-ex-service/.github/actions/pr-preparation@main
 
   pr-validator:
     name: Run Pull Request Checks
