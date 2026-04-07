@@ -175,14 +175,19 @@
         ] %}
 
         {% if prn.totalRevenue is defined and prn.totalRevenue !== null %}
+          {% if isExporter %}
+            {% set totalRevenueLabel = localise("reports:checkPernRevenueLabel") %}
+          {% else %}
+            {% set totalRevenueLabel = localise("reports:checkPrnRevenueLabel") %}
+          {% endif %}
           {% set prnRows = prnRows.concat([{
-            key: { text: localise("reports:checkPrnRevenueLabel") },
+            key: { text: totalRevenueLabel },
             value: { text: prn.totalRevenue | formatCurrency },
             actions: {
               items: [{
                 href: prnRevenueChangeUrl,
                 text: changeText,
-                visuallyHiddenText: localise("reports:checkPrnRevenueLabel")
+                visuallyHiddenText: totalRevenueLabel
               }]
             }
           }]) %}
