@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 jobs:
   renovate:
@@ -15,7 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: renovatebot/github-action@v41
+      - uses: renovatebot/github-action@v46.1.8
         with:
-          configurationFile: renovate.json
+          renovate-version: 43.108.1
           token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
