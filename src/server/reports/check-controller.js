@@ -32,11 +32,26 @@ function getSupportingInformation(reportDetail, localise) {
 
 /**
  * @param {object|undefined} exportActivity
+ * @param {boolean} isExporter
  * @returns {object|null}
  */
-function buildWasteExported(exportActivity) {
-  if (!exportActivity) {
+function buildWasteExported(exportActivity, isExporter) {
+  if (!isExporter) {
     return null
+  }
+
+  if (!exportActivity) {
+    return {
+      totalTonnage: 0,
+      overseasSiteRows: [],
+      ...formatExportTonnages({
+        tonnageReceivedNotExported: null,
+        tonnageRefusedAtDestination: null,
+        tonnageStoppedDuringExport: null,
+        totalTonnageRefusedOrStopped: null,
+        tonnageRepatriated: null
+      })
+    }
   }
 
   return {
@@ -90,7 +105,7 @@ function buildCheckViewData({
       totalTonnage: recyclingActivity.totalTonnageReceived,
       supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
     },
-    wasteExported: buildWasteExported(exportActivity),
+    wasteExported: buildWasteExported(exportActivity, isExporter),
     wasteSentOn: {
       totalTonnage: getTotalTonnageSentOn(wasteSent),
       toReprocessors: wasteSent.tonnageSentToReprocessor,

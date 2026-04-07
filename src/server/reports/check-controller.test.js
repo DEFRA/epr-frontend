@@ -58,6 +58,7 @@ const reprocessorRegistration = {
   accreditation: undefined
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -120,6 +121,7 @@ const exporterReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -199,6 +201,7 @@ const accreditedExporterRegistration = {
   accreditation: { id: 'acc-002', accreditationNumber: 'EE992415095748M' }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
   prn: {
@@ -209,6 +212,7 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   prn: {
@@ -772,6 +776,99 @@ describe('#checkController', () => {
           expect(
             queryByRole(body, 'heading', { name: /PERNs/, level: 3 })
           ).toBeNull()
+        })
+      })
+
+      describe('for exporter with no export activity', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            exporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            exportActivity: null
+          })
+        })
+
+        it('should still display waste exported heading', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste exported for recycling/i,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should display zero for total tonnage exported', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const labels = [...body.querySelectorAll('.govuk-caption-l')]
+          const exportedLabel = labels.find((el) =>
+            el.textContent.includes('Total tonnage exported')
+          )
+          const value = exportedLabel?.nextElementSibling
+
+          expect(value?.textContent?.trim()).toBe('0.00')
+        })
+
+        it('should still display received but not exported heading', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste received but not exported/i,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should still display refused or stopped heading', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste refused or stopped during export/i,
+              level: 3
+            })
+          ).toBeDefined()
         })
       })
 

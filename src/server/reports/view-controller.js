@@ -65,7 +65,7 @@ function buildViewData({
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
 
-    wasteExported: buildWasteExported(exportActivity),
+    wasteExported: buildWasteExported(exportActivity, isExporter),
 
     isAccredited,
     isExporter,
@@ -94,26 +94,32 @@ function buildViewData({
   }
 }
 
-function buildWasteExported(exportActivity) {
-  if (!exportActivity) {
+function buildWasteExported(exportActivity, isExporter) {
+  if (!isExporter) {
     return null
   }
 
   return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
-      { text: overseasSite.siteName },
-      { text: overseasSite.orsId }
-    ]),
+    totalTonnage: formatTonnage(exportActivity?.totalTonnageExported ?? 0),
+    overseasSiteRows: (exportActivity?.overseasSites ?? []).map(
+      (overseasSite) => [
+        { text: overseasSite.siteName },
+        { text: overseasSite.orsId }
+      ]
+    ),
     tonnageReceivedNotExported: formatTonnage(
-      exportActivity.tonnageReceivedNotExported
+      exportActivity?.tonnageReceivedNotExported ?? 0
     ),
     tonnageRefusedOrStopped: formatTonnage(
-      exportActivity.totalTonnageRefusedOrStopped
+      exportActivity?.totalTonnageRefusedOrStopped ?? 0
     ),
-    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
-    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
-    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
+    tonnageRefused: formatTonnage(
+      exportActivity?.tonnageRefusedAtDestination ?? 0
+    ),
+    tonnageStopped: formatTonnage(
+      exportActivity?.tonnageStoppedDuringExport ?? 0
+    ),
+    tonnageRepatriated: formatTonnage(exportActivity?.tonnageRepatriated ?? 0)
   }
 }
 
