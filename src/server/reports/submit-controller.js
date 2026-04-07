@@ -40,15 +40,31 @@ function getCreationDetails(statusCreated, localise) {
   }
 }
 
+const defaultExportActivity = {
+  totalTonnageExported: 0,
+  overseasSites: [],
+  tonnageReceivedNotExported: null,
+  tonnageRefusedAtDestination: null,
+  tonnageStoppedDuringExport: null,
+  totalTonnageRefusedOrStopped: null,
+  tonnageRepatriated: null
+}
+
 /**
- * @param {object} exportActivity
- * @returns {object}
+ * @param {object|null|undefined} exportActivity
+ * @param {boolean} isExporter
+ * @returns {object|null}
  */
-function buildWasteExportedViewData(exportActivity) {
+function buildWasteExported(exportActivity, isExporter) {
+  if (!isExporter) {
+    return null
+  }
+
+  const activity = exportActivity ?? defaultExportActivity
   return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites),
-    ...formatExportTonnages(exportActivity)
+    totalTonnage: formatTonnage(activity.totalTonnageExported),
+    overseasSiteRows: buildOverseasSiteRows(activity.overseasSites),
+    ...formatExportTonnages(activity)
   }
 }
 
@@ -181,19 +197,7 @@ function buildViewData({
     },
 
     // Waste exported (exporters only — always show section with defaults)
-    wasteExported: isExporter
-      ? buildWasteExportedViewData(
-          exportActivity ?? {
-            totalTonnageExported: 0,
-            overseasSites: [],
-            tonnageReceivedNotExported: null,
-            tonnageRefusedAtDestination: null,
-            tonnageStoppedDuringExport: null,
-            totalTonnageRefusedOrStopped: null,
-            tonnageRepatriated: null
-          }
-        )
-      : null,
+    wasteExported: buildWasteExported(exportActivity, isExporter),
 
     // Waste sent on
     wasteSentOn: buildWasteSentOnViewData(wasteSent),
