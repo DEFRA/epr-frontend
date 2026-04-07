@@ -1266,6 +1266,30 @@ describe('#checkController', () => {
             'not included in the average price per tonne calculation'
           )
         })
+
+        it('should display £0.00 for average price per tonne when averagePricePerTonne is 0', async ({
+          server
+        }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...accreditedExporterReportDetail,
+            prn: {
+              ...accreditedExporterReportDetail.prn,
+              averagePricePerTonne: 0
+            }
+          })
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain('Average price per tonne')
+          expect(body.textContent).toContain('£0.00')
+        })
       })
     })
 
