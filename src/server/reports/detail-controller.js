@@ -71,17 +71,19 @@ function buildViewData(
       totalTonnage: recyclingActivity.totalTonnageReceived,
       supplierRows: buildSupplierRows(recyclingActivity.suppliers)
     },
-    wasteExported: exportActivity
+    wasteExported: isExporter
       ? {
-          totalTonnage: exportActivity.totalTonnageExported,
+          totalTonnage: exportActivity?.totalTonnageExported ?? 0,
           overseasSiteDetailRows: buildOverseasSiteDetailRows(
-            exportActivity.overseasSites
+            exportActivity?.overseasSites ?? []
           ),
-          tonnageReceivedNotExported: exportActivity.tonnageReceivedNotExported,
-          tonnageRefusedOrStopped: exportActivity.totalTonnageRefusedOrStopped,
-          tonnageRefused: exportActivity.tonnageRefusedAtDestination,
-          tonnageStopped: exportActivity.tonnageStoppedDuringExport,
-          tonnageRepatriated: exportActivity.tonnageRepatriated
+          tonnageReceivedNotExported:
+            exportActivity?.tonnageReceivedNotExported ?? 0,
+          tonnageRefusedOrStopped:
+            exportActivity?.totalTonnageRefusedOrStopped ?? 0,
+          tonnageRefused: exportActivity?.tonnageRefusedAtDestination ?? 0,
+          tonnageStopped: exportActivity?.tonnageStoppedDuringExport ?? 0,
+          tonnageRepatriated: exportActivity?.tonnageRepatriated ?? 0
         }
       : null,
     wasteSentOn: {
