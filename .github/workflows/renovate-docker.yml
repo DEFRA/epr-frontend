@@ -21,4 +21,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_BASE_BRANCHES: ${{ github.ref_name }}
           LOG_LEVEL: debug
