@@ -2,7 +2,10 @@ import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
+import {
+  getNoteTypeDisplayNames,
+  isExporterRegistration
+} from '#server/common/helpers/prns/registration-helpers.js'
 import {
   buildDestinationRows,
   buildOverseasSiteDetailRows,
@@ -37,6 +40,7 @@ function buildViewData(
   )
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
+  const { wasteActionGerund } = getNoteTypeDisplayNames(registration)
 
   return {
     pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
@@ -44,6 +48,9 @@ function buildViewData(
     material,
     periodLabel,
     isExporter,
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
     backUrl: localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports`
     ),

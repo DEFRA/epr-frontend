@@ -4,6 +4,7 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
+  getNoteTypeDisplayNames,
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
@@ -144,6 +145,8 @@ function buildViewData({
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
+  const { noteTypePlural, wasteActionGerund } =
+    getNoteTypeDisplayNames(registration)
 
   const { createdBy, createdOn } = getCreationDetails(
     reportDetail.status.created,
@@ -158,6 +161,18 @@ function buildViewData({
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
     isExporter,
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
+    }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    freeLabel: localise('reports:submitFreeLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:submitTotalRevenue', { noteTypePlural }),
+    avgPriceLabel: localise('reports:submitAvgPrice', { noteTypePlural }),
     backUrl: localiseUrl(reportsUrl),
 
     // Inset text

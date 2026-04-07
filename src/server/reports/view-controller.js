@@ -10,6 +10,7 @@ import {
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
+  getNoteTypeDisplayNames,
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
@@ -32,11 +33,25 @@ function buildViewData({
   const isAccredited = !!accreditation
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
+  const { noteTypePlural, wasteActionGerund } =
+    getNoteTypeDisplayNames(registration)
 
   return {
     pageTitle: localise('reports:view:pageTitle'),
     heading: localise('reports:view:heading', { periodLabel }),
     backUrl,
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
+    }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    freeLabel: localise('reports:view:freeLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:view:totalRevenue', { noteTypePlural }),
+    avgPriceLabel: localise('reports:view:avgPrice', { noteTypePlural }),
 
     material,
     periodLabel,

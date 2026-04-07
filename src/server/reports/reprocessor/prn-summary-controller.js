@@ -1,17 +1,18 @@
 import Joi from 'joi'
 
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
-const FORMAT_ERROR = 'reports:reprocessorPrnSummaryErrorFormat'
+const FORMAT_ERROR = 'reports:noteSummaryErrorFormat'
 
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/prn-summary',
   fieldName: 'prnRevenue',
   payloadSchema: Joi.object({
     prnRevenue: Joi.number().min(0).required().messages({
-      'any.required': 'reports:reprocessorPrnSummaryErrorRequired',
-      'number.base': 'reports:reprocessorPrnSummaryErrorRequired',
+      'any.required': 'reports:noteSummaryErrorRequired',
+      'number.base': 'reports:noteSummaryErrorRequired',
       'number.min': FORMAT_ERROR,
       'number.unsafe': FORMAT_ERROR,
       'number.infinity': FORMAT_ERROR
@@ -19,22 +20,34 @@ const { getController, postController } = createDataPageControllers({
     action: Joi.string().valid('continue', 'save').required(),
     crumb: Joi.string()
   }),
-  pageFields({ material, periodLabel, periodPath, reportDetail }) {
+  pageFields({
+    material,
+    periodLabel,
+    periodPath,
+    registration,
+    reportDetail
+  }) {
+    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
     return (localise) => ({
-      pageTitle: localise('reports:reprocessorPrnSummaryPageTitle', {
+      noteTypePlural,
+      pageTitle: localise('reports:noteSummaryPageTitle', {
+        noteTypePlural,
         material,
         periodLabel
       }),
-      caption: localise('reports:reprocessorPrnSummaryCaption'),
-      heading: localise('reports:reprocessorPrnSummaryHeading', {
+      caption: localise('reports:noteSummaryCaption'),
+      heading: localise('reports:noteSummaryHeading', {
+        noteTypePlural,
         material,
         periodLabel
       }),
-      tonnageLabel: localise('reports:reprocessorPrnSummaryTonnageLabel'),
+      tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
       tonnageIssued: reportDetail.prn.issuedTonnage,
-      revenueLabel: localise('reports:reprocessorPrnSummaryRevenueLabel'),
-      continueText: localise('reports:reprocessorPrnSummaryContinue'),
-      saveText: localise('reports:reprocessorPrnSummarySave'),
+      revenueLabel: localise('reports:noteSummaryRevenueLabel', {
+        noteTypePlural
+      }),
+      continueText: localise('reports:noteSummaryContinue'),
+      saveText: localise('reports:noteSummarySave'),
       backUrl: `${periodPath}/tonnes-not-recycled`,
       defaultValue: reportDetail.prn.totalRevenue
     })
