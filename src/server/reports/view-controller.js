@@ -1,5 +1,7 @@
 import Boom from '@hapi/boom'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import { formatDate } from '#server/common/helpers/format-date.js'
+import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
@@ -36,6 +38,13 @@ function buildViewData({
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
+  const submittedAt = reportDetail.status.submitted.at
+  const submittedBy = reportDetail.status.submitted.by.name
+  const submittedOn = localise('reports:view:submittedOnValue', {
+    date: formatDate(submittedAt),
+    time: formatTime(submittedAt)
+  })
+
   return {
     pageTitle: localise('reports:view:pageTitle'),
     heading: localise('reports:view:heading', { periodLabel }),
@@ -56,6 +65,10 @@ function buildViewData({
     material,
     periodLabel,
     site: registration.site?.address?.line1,
+
+    submittedBy,
+    submittedOn,
+    statusTag: localise('reports:statusSubmitted'),
 
     wasteReceived: {
       totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
