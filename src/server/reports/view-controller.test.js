@@ -187,7 +187,11 @@ describe('#viewController', () => {
     describe('for a submitted report', () => {
       const reportDetail = {
         status: {
-          currentStatus: 'submitted'
+          currentStatus: 'submitted',
+          submitted: {
+            at: '2026-03-15T14:30:00.000Z',
+            by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
+          }
         },
         recyclingActivity: {
           totalTonnageReceived: 12.5,
@@ -284,6 +288,91 @@ describe('#viewController', () => {
         expect(backLink?.getAttribute('href')).toBe(
           `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports`
         )
+      })
+
+      describe('submission-details section', () => {
+        async function loadSection({ server, registrationAndAccreditation }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation
+          })
+
+          return body.querySelector('#submission-details')
+        }
+
+        it('renders the details heading', async ({ server }) => {
+          const section = await loadSection({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+
+          expect(section).not.toBeNull()
+          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+            'Details'
+          )
+        })
+
+        it('renders the Submitted status tag', async ({ server }) => {
+          const section = await loadSection({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+
+          expect(section.textContent).toContain('Status:')
+          expect(section.textContent).toContain('Submitted')
+        })
+
+        it('renders the submitted by name', async ({ server }) => {
+          const section = await loadSection({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+
+          expect(section.textContent).toContain('Submitted by:')
+          expect(section.textContent).toContain('Michael Doran')
+        })
+
+        it('renders the submitted on date and time', async ({ server }) => {
+          const section = await loadSection({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+
+          expect(section.textContent).toContain('Submitted on:')
+          expect(section.textContent).toContain('15 March 2026')
+          expect(section.textContent).toContain('2:30pm')
+        })
+
+        describe('when submitted details are absent', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              status: { currentStatus: 'submitted' }
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it('does not render submitted by', async ({ server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedReprocessor
+            })
+
+            expect(section.textContent).not.toContain('Submitted by:')
+          })
+
+          it('does not render submitted on', async ({ server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation: mockAccreditedReprocessor
+            })
+
+            expect(section.textContent).not.toContain('Submitted on:')
+          })
+        })
       })
 
       describe('report-period section', () => {
