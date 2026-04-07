@@ -52,18 +52,7 @@ function buildViewData({
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
 
-    wasteExported: exportActivity
-      ? {
-          totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-          overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
-            { text: overseasSite.siteName },
-            { text: overseasSite.orsId }
-          ]),
-          tonnageReceivedNotExported: formatTonnage(
-            exportActivity.tonnageReceivedNotExported
-          )
-        }
-      : null,
+    wasteExported: buildWasteExported(exportActivity),
 
     isAccredited,
     isExporter,
@@ -89,6 +78,29 @@ function buildViewData({
     supportingInformation:
       reportDetail.supportingInformation ||
       localise('reports:supportingInformationNone')
+  }
+}
+
+function buildWasteExported(exportActivity) {
+  if (!exportActivity) {
+    return null
+  }
+
+  return {
+    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
+    overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
+      { text: overseasSite.siteName },
+      { text: overseasSite.orsId }
+    ]),
+    tonnageReceivedNotExported: formatTonnage(
+      exportActivity.tonnageReceivedNotExported
+    ),
+    tonnageRefusedOrStopped: formatTonnage(
+      exportActivity.totalTonnageRefusedOrStopped
+    ),
+    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
+    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
+    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
   }
 }
 
