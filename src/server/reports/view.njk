@@ -116,6 +116,15 @@
         </div>
       {% endif %}
 
+      {% if isExporter and wasteExported %}
+        <div id="waste-received-but-not-exported">
+          <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
+
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
+          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+        </div>
+      {% endif %}
+
       <div id="packaging-waste-sent-on">
         <h2 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h2>
 
@@ -153,15 +162,6 @@
           }) }}
         {% endif %}
       </div>
-
-      {% if isExporter and wasteExported %}
-        <div id="waste-received-but-not-exported">
-          <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
-
-          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
-          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
-        </div>
-      {% endif %}
 
       {% if isAccredited %}
         <div id="prns">

@@ -722,6 +722,82 @@ describe('#viewController', () => {
         )
       })
 
+      describe('waste-received-but-not-exported section', () => {
+        async function loadSection({ server, registrationAndAccreditation }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation
+          })
+
+          return body.querySelector('#waste-received-but-not-exported')
+        }
+
+        it.for(exporters)(
+          '($scenario) renders the section heading',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Packaging waste received but not exported'
+            )
+          }
+        )
+
+        it.for(exporters)(
+          '($scenario) renders the tonnage received but not exported',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.textContent).toContain('Total tonnage not exported')
+            expect(section.textContent).toContain('4.50')
+          }
+        )
+
+        describe('when no waste exported', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              exportActivity: null
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it.for(exporters)(
+            '($scenario) does not render the section',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section).toBeNull()
+            }
+          )
+        })
+
+        it.for(reprocessors)(
+          '($scenario) does not render the section',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).toBeNull()
+          }
+        )
+      })
+
       describe('packaging-waste-sent-on section', () => {
         async function loadSection({ server, registrationAndAccreditation }) {
           const body = await loadPageBody({
@@ -858,82 +934,6 @@ describe('#viewController', () => {
             }
           )
         })
-      })
-
-      describe('waste-received-but-not-exported section', () => {
-        async function loadSection({ server, registrationAndAccreditation }) {
-          const body = await loadPageBody({
-            server,
-            registrationAndAccreditation
-          })
-
-          return body.querySelector('#waste-received-but-not-exported')
-        }
-
-        it.for(exporters)(
-          '($scenario) renders the section heading',
-          async ({ registrationAndAccreditation }, { server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation
-            })
-
-            expect(section).not.toBeNull()
-            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
-              'Packaging waste received but not exported'
-            )
-          }
-        )
-
-        it.for(exporters)(
-          '($scenario) renders the tonnage received but not exported',
-          async ({ registrationAndAccreditation }, { server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation
-            })
-
-            expect(section.textContent).toContain('Total tonnage not exported')
-            expect(section.textContent).toContain('4.50')
-          }
-        )
-
-        describe('when no waste exported', () => {
-          beforeAll(() => {
-            vi.mocked(fetchReportDetail).mockResolvedValue({
-              ...reportDetail,
-              exportActivity: null
-            })
-          })
-
-          afterAll(() => {
-            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-          })
-
-          it.for(exporters)(
-            '($scenario) does not render the section',
-            async ({ registrationAndAccreditation }, { server }) => {
-              const section = await loadSection({
-                server,
-                registrationAndAccreditation
-              })
-
-              expect(section).toBeNull()
-            }
-          )
-        })
-
-        it.for(reprocessors)(
-          '($scenario) does not render the section',
-          async ({ registrationAndAccreditation }, { server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation
-            })
-
-            expect(section).toBeNull()
-          }
-        )
       })
 
       describe('prns section', () => {
