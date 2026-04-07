@@ -12,15 +12,7 @@ import {
 } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  vi
-} from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -73,11 +65,6 @@ describe('#accreditationDashboardController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({})
-    config.set('featureFlags.registeredOnly', true)
-  })
-
-  afterEach(() => {
-    config.reset('featureFlags.registeredOnly')
   })
 
   describe('happy path - reprocessor', () => {
@@ -825,85 +812,6 @@ describe('#accreditationDashboardController', () => {
         expect(
           queryByRole(body, 'heading', { name: /PRN|PERN/i, level: 3 })
         ).toBeNull()
-      })
-    })
-
-    describe('when flag is disabled', () => {
-      beforeEach(() => {
-        config.set('featureFlags.registeredOnly', false)
-      })
-
-      it('should show PRNs card for accredited operator', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        expect(
-          queryByRole(body, 'heading', { name: /PRN|PERN/i, level: 3 })
-        ).not.toBeNull()
-      })
-
-      it('should show waste balance banner for accredited operator', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
-        vi.mocked(
-          fetchWasteBalancesModule.fetchWasteBalances
-        ).mockResolvedValue({
-          'acc-001-glass-approved': { amount: 1000, availableAmount: 500 }
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        expect(queryByText(body, /Available waste balance/)).not.toBeNull()
-      })
-
-      it('should return 404 for registered-only operator', async ({
-        server
-      }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      })
-
-      it('should still return 200 for accredited operator', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
       })
     })
   })
