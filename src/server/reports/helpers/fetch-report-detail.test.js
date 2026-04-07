@@ -24,7 +24,10 @@ describe(fetchReportDetail, () => {
     period: 1,
     startDate: '2026-01-01',
     endDate: '2026-03-31',
-    lastUploadedAt: '2026-02-15T15:09:00.000Z',
+    source: {
+      summaryLogId: 'sl-1',
+      lastUploadedAt: '2026-02-15T15:09:00.000Z'
+    },
     details: {
       material: 'plastic',
       site: {

@@ -7,20 +7,19 @@ import { formatTonnageOrDash } from './format-tonnage-or-dash.js'
  * @returns {{ tonnageReceivedNotExported: string, tonnageRefused: string, tonnageStopped: string, tonnageRefusedOrStopped: string, tonnageRepatriated: string }}
  */
 export function formatExportTonnages(exportActivity) {
-  const tonnageReceivedNotExported = exportActivity.tonnageReceivedNotExported
-  const tonnageRefused = exportActivity.tonnageRefusedAtRecepientDestination
-  const tonnageStopped = exportActivity.tonnageStoppedDuringExport
-  const tonnageRefusedOrStopped =
-    tonnageRefused === null && tonnageStopped === null
-      ? null
-      : (tonnageRefused ?? 0) + (tonnageStopped ?? 0)
-  const tonnageRepatriated = exportActivity.tonnageRepatriated
-
   return {
-    tonnageReceivedNotExported: formatTonnageOrDash(tonnageReceivedNotExported),
-    tonnageRefused: formatTonnageOrDash(tonnageRefused),
-    tonnageStopped: formatTonnageOrDash(tonnageStopped),
-    tonnageRefusedOrStopped: formatTonnageOrDash(tonnageRefusedOrStopped),
-    tonnageRepatriated: formatTonnageOrDash(tonnageRepatriated)
+    tonnageReceivedNotExported: formatTonnageOrDash(
+      exportActivity.tonnageReceivedNotExported
+    ),
+    tonnageRefused: formatTonnageOrDash(
+      exportActivity.tonnageRefusedAtDestination
+    ),
+    tonnageStopped: formatTonnageOrDash(
+      exportActivity.tonnageStoppedDuringExport
+    ),
+    tonnageRefusedOrStopped: formatTonnageOrDash(
+      exportActivity.totalTonnageRefusedOrStopped
+    ),
+    tonnageRepatriated: formatTonnageOrDash(exportActivity.tonnageRepatriated)
   }
 }

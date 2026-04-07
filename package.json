@@ -14,7 +14,8 @@
     "#vite/*": "./.vite/*"
   },
   "engines": {
-    "node": "^24.10.0"
+    "node": "^24.10.0",
+    "npm": ">=11.11.0"
   },
   "scripts": {
     "build": "run-s build:frontend build:server",

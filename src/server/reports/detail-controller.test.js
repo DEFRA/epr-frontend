@@ -51,7 +51,7 @@ const reprocessorReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
     site: {
@@ -100,7 +100,7 @@ const emptyReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: null,
+  source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic',
     site: {
@@ -155,7 +155,7 @@ const accreditedReprocessorReportDetail = {
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
     site: {
@@ -215,7 +215,7 @@ const exporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
   },
@@ -237,15 +237,16 @@ const exporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 11.47,
+    totalTonnageExported: 11.47,
     overseasSites: [
       { siteName: 'EuroPlast Recycling GmbH', orsId: '001' },
       { siteName: 'RecyclePlast SA', orsId: '096' }
     ],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
+    tonnageReceivedNotExported: 0,
+    totalTonnageRefusedOrStopped: 0,
+    tonnageRefusedAtDestination: 0,
+    tonnageStoppedDuringExport: 0,
+    tonnageRepatriated: 0
   },
   wasteSent: {
     tonnageSentToReprocessor: 1.0,
@@ -268,7 +269,7 @@ const emptyExporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: null,
+  source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic'
   },
@@ -279,12 +280,13 @@ const emptyExporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 0,
+    totalTonnageExported: 0,
     overseasSites: [],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
+    tonnageReceivedNotExported: 0,
+    totalTonnageRefusedOrStopped: 0,
+    tonnageRefusedAtDestination: 0,
+    tonnageStoppedDuringExport: 0,
+    tonnageRepatriated: 0
   },
   wasteSent: {
     tonnageSentToReprocessor: 0,
@@ -324,7 +326,7 @@ const accreditedExporterReportDetail = {
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
   },
@@ -335,12 +337,13 @@ const accreditedExporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 11.47,
+    totalTonnageExported: 11.47,
     overseasSites: [{ orsId: '001' }, { orsId: '096' }],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
+    tonnageReceivedNotExported: 0,
+    totalTonnageRefusedOrStopped: 0,
+    tonnageRefusedAtDestination: 0,
+    tonnageStoppedDuringExport: 0,
+    tonnageRepatriated: 0
   },
   wasteSent: {
     tonnageSentToReprocessor: 1.0,
@@ -991,7 +994,7 @@ describe('#detailReportsController', () => {
 
         const tables = body.querySelectorAll('table')
 
-        expect(tables).toHaveLength(1)
+        expect(tables).toHaveLength(2)
       })
     })
 

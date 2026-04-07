@@ -1,3 +1,5 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+
 /**
  * Calculate total tonnage sent on from the waste sent breakdown.
  * @param {{ tonnageSentToReprocessor: number, tonnageSentToExporter: number, tonnageSentToAnotherSite: number }} wasteSent
@@ -20,23 +22,23 @@ export function buildSupplierRows(suppliers) {
   return suppliers.map((supplier) => [
     { text: supplier.supplierName },
     { text: supplier.facilityType },
-    { text: supplier.tonnageReceived }
+    { text: formatTonnage(supplier.tonnageReceived) }
   ])
 }
 
 /**
  * Build govukTable rows for supplier details with contact information.
  * Used on review/submit pages where contact details replace tonnage.
- * @param {Array<{supplierName: string, facilityType: string, address: string, phone: string, email: string}>} suppliers
+ * @param {Array<{supplierName: string, facilityType: string, supplierAddress: string, supplierPhone: string|null, supplierEmail: string|null}>} suppliers
  * @returns {Array<Array<{text: string}>>}
  */
 export function buildSupplierDetailRows(suppliers) {
   return suppliers.map((supplier) => [
     { text: supplier.supplierName },
     { text: supplier.facilityType },
-    { text: supplier.address },
-    { text: supplier.phone },
-    { text: supplier.email }
+    { text: supplier.supplierAddress },
+    { text: supplier.supplierPhone },
+    { text: supplier.supplierEmail }
   ])
 }
 
@@ -49,7 +51,7 @@ export function buildDestinationRows(finalDestinations) {
   return finalDestinations.map((finalDestination) => [
     { text: finalDestination.recipientName },
     { text: finalDestination.facilityType },
-    { text: finalDestination.tonnageSentOn }
+    { text: formatTonnage(finalDestination.tonnageSentOn) }
   ])
 }
 
@@ -63,31 +65,33 @@ export function buildDestinationDetailRows(finalDestinations) {
     { text: destination.recipientName },
     { text: destination.facilityType },
     { text: destination.address },
-    { text: destination.tonnageSentOn }
+    { text: formatTonnage(destination.tonnageSentOn) }
   ])
 }
 
 /**
  * Build govukTable rows for overseas reprocessing sites.
- * @param {Array<{siteName: string, orsId: string}>} overseasSites
+ * @param {Array<{siteName: string, orsId: string, country: string|null}>} overseasSites
  * @returns {Array<Array<{text: string}>>}
  */
 export function buildOverseasSiteRows(overseasSites) {
   return overseasSites.map((overseasSite) => [
     { text: overseasSite.siteName },
-    { text: overseasSite.orsId }
+    { text: overseasSite.orsId },
+    { text: overseasSite.country }
   ])
 }
 
 /**
- * Build govukTable rows for overseas sites with tonnage exported.
- * @param {Array<{siteName: string, tonnageExported: number, orsId: string}>} overseasSites
+ * Build govukTable rows for overseas sites with tonnage exported and country.
+ * @param {Array<{siteName: string, tonnageExported: number, orsId: string, country: string|null}>} overseasSites
  * @returns {Array<Array<{text: string | number}>>}
  */
 export function buildOverseasSiteDetailRows(overseasSites) {
   return overseasSites.map((overseasSite) => [
     { text: overseasSite.siteName },
-    { text: overseasSite.tonnageExported },
-    { text: overseasSite.orsId }
+    { text: formatTonnage(overseasSite.tonnageExported) },
+    { text: overseasSite.orsId },
+    { text: overseasSite.country }
   ])
 }

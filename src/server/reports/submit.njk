@@ -59,8 +59,8 @@
         <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedHeading") }}</h2>
       {% endif %}
 
-      <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
-      <p class="govuk-heading-m">{{ wasteReceived.totalTonnage }}</p>
+      <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
+      <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
 
       {% if wasteReceived.supplierDetailRows | length > 0 %}
         <h3 class="govuk-heading-m">{{ localise("reports:suppliersHeading") }}</h3>
@@ -77,60 +77,52 @@
       {% endif %}
 
       {% if wasteExported %}
-        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
         <h2 class="govuk-heading-l">{{ localise("reports:wasteExportedHeading") }}</h2>
 
-        <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
-        <p class="govuk-heading-m">{{ wasteExported.totalTonnage }}</p>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
+        <p class="govuk-heading-l">{{ wasteExported.totalTonnage }}</p>
 
-        {% if wasteExported.overseasSiteDetailRows | length > 0 %}
-          <h3 class="govuk-heading-m">{{ localise("reports:overseasSitesHeading") }}</h3>
+        {% if wasteExported.overseasSiteRows | length > 0 %}
           {{ govukTable({
             head: [
               { text: localise("reports:siteNameColumn") },
-              { text: localise("reports:tonnageExportedColumn") },
-              { text: localise("reports:osrIdColumn") }
+              { text: localise("reports:osrIdColumn") },
+              { text: localise("reports:countryColumn") }
             ],
-            rows: wasteExported.overseasSiteDetailRows
+            rows: wasteExported.overseasSiteRows
           }) }}
         {% endif %}
 
-        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-
         <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
 
-        <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
-        <p class="govuk-heading-m">{{ wasteExported.tonnageReceivedNotExported }}</p>
-
-        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
+        <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
 
         <h2 class="govuk-heading-l">{{ localise("reports:tonnageRefusedOrStoppedHeading") }}</h2>
 
-        <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:tonnageRefusedOrStoppedLabel") }}</p>
-        <p class="govuk-heading-m">{{ wasteExported.tonnageRefusedOrStopped }}</p>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageRefusedOrStoppedLabel") }}</p>
+        <p class="govuk-heading-l">{{ wasteExported.tonnageRefusedOrStopped }}</p>
 
         {{ govukTable({
           rows: [
-            [{ text: localise("reports:tonnageRefusedLabel") }, { text: wasteExported.tonnageRefused }],
-            [{ text: localise("reports:tonnageStoppedLabel") }, { text: wasteExported.tonnageStopped }],
-            [{ text: localise("reports:tonnageRepatriatedLabel") }, { text: wasteExported.tonnageRepatriated }]
+            [{ html: "<strong>" ~ localise("reports:tonnageRefusedLabel") ~ "</strong>" }, { text: wasteExported.tonnageRefused }],
+            [{ html: "<strong>" ~ localise("reports:tonnageStoppedLabel") ~ "</strong>" }, { text: wasteExported.tonnageStopped }],
+            [{ html: "<strong>" ~ localise("reports:tonnageRepatriatedLabel") ~ "</strong>" }, { text: wasteExported.tonnageRepatriated }]
           ]
         }) }}
       {% endif %}
 
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-
       <h2 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h2>
 
-      <p class="govuk-body-s govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
-      <p class="govuk-heading-m">{{ wasteSentOn.totalTonnage }}</p>
+      <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
+      <p class="govuk-heading-l">{{ wasteSentOn.totalTonnage }}</p>
 
       {{ govukTable({
         rows: [
-          [{ text: localise("reports:tonnageSentOnToReprocessors") }, { text: wasteSentOn.toReprocessors }],
-          [{ text: localise("reports:tonnageSentOnToExporters") }, { text: wasteSentOn.toExporters }],
-          [{ text: localise("reports:tonnageSentOnToOtherSites") }, { text: wasteSentOn.toOtherSites }]
+          [{ html: "<strong>" ~ localise("reports:tonnageSentOnToReprocessors") ~ "</strong>" }, { text: wasteSentOn.toReprocessors }],
+          [{ html: "<strong>" ~ localise("reports:tonnageSentOnToExporters") ~ "</strong>" }, { text: wasteSentOn.toExporters }],
+          [{ html: "<strong>" ~ localise("reports:tonnageSentOnToOtherSites") ~ "</strong>" }, { text: wasteSentOn.toOtherSites }]
         ]
       }) }}
 
@@ -146,8 +138,55 @@
           rows: wasteSentOn.destinationDetailRows
         }) }}
       {% endif %}
+      
+      {% if isReprocessor %}
+        <h2 class="govuk-heading-l">{{ localise("reports:submitRecyclingActivityHeading") }}</h2>
 
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:submitTotalTonnageRecycled") }}</p>
+        <p class="govuk-heading-l">{{ recyclingActivity.tonnageRecycled }}</p>
+
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { text: localise("reports:submitTotalTonnageReceivedNotRecycled") },
+              value: { text: recyclingActivity.tonnageNotRecycled }
+            }
+          ]
+        }) }}
+
+      {% endif %}
+
+      {% if isAccredited %}
+        {% if isExporter %}
+          <h2 class="govuk-heading-l">{{ localise("reports:pernSectionHeading") }}</h2>
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:pernTotalIssuedTonnage") }}</p>
+        {% else %}
+          <h2 class="govuk-heading-l">{{ localise("reports:prnSectionHeading") }}</h2>
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:prnTotalIssuedTonnage") }}</p>
+        {% endif %}
+
+        <p class="govuk-heading-l">{{ prn.issuedTonnage | formatWholeNumberTonnage }}</p>
+
+        {% set freeTonnageKey = localise("reports:submitFreePernsLabel") if isExporter else localise("reports:submitFreePrnsLabel") %}
+        {% set freeTonnageKey = freeTonnageKey + '<br><span class="govuk-!-font-weight-regular">' + localise("reports:submitFreeTonnageNote") + '</span>' %}
+
+        {{ govukSummaryList({
+          rows: [
+            {
+              key: { html: freeTonnageKey },
+              value: { text: prn.freeTonnage | formatWholeNumberTonnage }
+            },
+            {
+              key: { text: localise("reports:submitTotalRevenuePern") if isExporter else localise("reports:submitTotalRevenuePrn") },
+              value: { text: prn.totalRevenue | formatCurrency }
+            },
+            {
+              key: { text: localise("reports:submitAvgPricePern") if isExporter else localise("reports:submitAvgPricePrn") },
+              value: { text: prn.averagePricePerTonne | formatCurrency }
+            }
+          ]
+        }) }}
+      {% endif %}
 
       <h2 class="govuk-heading-l">{{ localise("reports:submitSupportingInformationHeading") }}</h2>
 
@@ -159,8 +198,6 @@
           }
         ]
       }) }}
-
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
       <h2 class="govuk-heading-l">{{ localise("reports:submitDeclarationHeading") }}</h2>
 
@@ -176,9 +213,17 @@
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         <input type="hidden" name="version" value="{{ version }}" />
 
-        {{ govukButton({
-          text: localise("reports:submitButton")
-        }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: localise("reports:submitButton")
+          }) }}
+
+          {{ govukButton({
+            text: localise("reports:deleteReportLink"),
+            href: deleteUrl,
+            classes: "govuk-button--warning"
+          }) }}
+        </div>
       </form>
 
     </div>
