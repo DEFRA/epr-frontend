@@ -82,7 +82,9 @@ function buildViewData({
 }
 
 function buildWasteExported(exportActivity) {
-  if (!exportActivity) return null
+  if (!exportActivity) {
+    return null
+  }
 
   return {
     totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
