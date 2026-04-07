@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "minimumReleaseAge": "3 days",
+  "enabledManagers": ["dockerfile"],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "defradigital/node",
+        "defradigital/node-development"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-node(?<build>\\d+\\.\\d+\\.\\d+)$"
+    }
+  ]
+}
