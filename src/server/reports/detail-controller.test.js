@@ -296,6 +296,32 @@ const emptyExporterReportDetail = {
   }
 }
 
+const nullExportActivityReportDetail = {
+  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  cadence: 'quarterly',
+  year: 2026,
+  period: 1,
+  startDate: '2026-01-01',
+  endDate: '2026-03-31',
+  source: { summaryLogId: null, lastUploadedAt: null },
+  details: {
+    material: 'plastic'
+  },
+  recyclingActivity: {
+    totalTonnageReceived: 0,
+    suppliers: [],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  exportActivity: null,
+  wasteSent: {
+    tonnageSentToReprocessor: 0,
+    tonnageSentToExporter: 0,
+    tonnageSentToAnotherSite: 0,
+    finalDestinations: []
+  }
+}
+
 const detailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1'
 const exporterDetailUrl =
@@ -995,6 +1021,87 @@ describe('#detailReportsController', () => {
         const tables = body.querySelectorAll('table')
 
         expect(tables).toHaveLength(2)
+      })
+    })
+
+    describe('for exporter with no export activity', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          exporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          nullExportActivityReportDetail
+        )
+      })
+
+      it('should return 200', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('should still render waste exported heading with zero tonnage', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /Packaging waste exported for recycling/,
+          level: 2
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should still render tonnage received not exported heading', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /Packaging waste received but not exported/,
+          level: 2
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should still render tonnage refused or stopped heading', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const heading = getByRole(body, 'heading', {
+          name: /Packaging waste refused or stopped during export/,
+          level: 2
+        })
+
+        expect(heading).toBeDefined()
       })
     })
 

@@ -180,9 +180,19 @@ function buildViewData({
       supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
     },
 
-    // Waste exported (exporters only)
-    wasteExported: exportActivity
-      ? buildWasteExportedViewData(exportActivity)
+    // Waste exported (exporters only — always show section with defaults)
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(
+          exportActivity ?? {
+            totalTonnageExported: 0,
+            overseasSites: [],
+            tonnageReceivedNotExported: null,
+            tonnageRefusedAtDestination: null,
+            tonnageStoppedDuringExport: null,
+            totalTonnageRefusedOrStopped: null,
+            tonnageRepatriated: null
+          }
+        )
       : null,
 
     // Waste sent on

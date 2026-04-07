@@ -691,6 +691,70 @@ describe('#submitController', () => {
         })
       })
 
+      describe('for exporter with no export activity', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            exporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            exportActivity: null
+          })
+        })
+
+        it('should still display waste exported heading', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste exported for recycling/i,
+              level: 2
+            })
+          ).toBeDefined()
+        })
+
+        it('should display zero for total tonnage exported', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+          const labels = [...body.querySelectorAll('.govuk-caption-l')]
+          const exportedLabel = labels.find((el) =>
+            el.textContent.includes('Total tonnage exported')
+          )
+          const value = exportedLabel?.nextElementSibling
+
+          expect(value?.textContent?.trim()).toBe('0.00')
+        })
+
+        it('should still display received but not exported heading', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste received but not exported/i,
+              level: 2
+            })
+          ).toBeDefined()
+        })
+
+        it('should still display refused or stopped heading', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste refused or stopped during export/i,
+              level: 2
+            })
+          ).toBeDefined()
+        })
+      })
+
       describe('for accredited exporter', () => {
         beforeEach(() => {
           vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
