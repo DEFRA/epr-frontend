@@ -2,8 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "minimumReleaseAge": "3 days",
   "recreateWhen": "always",
-  "commitMessagePrefix": "renovate:",
-  "commitMessageLowerCase": "auto",
+  "commitMessagePrefix": "Renovate:",
   "enabledManagers": ["dockerfile"],
   "packageRules": [
     {
