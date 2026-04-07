@@ -201,7 +201,12 @@ const accreditedExporterRegistration = {
 
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
-  prn: { issuedTonnage: 75 }
+  prn: {
+    issuedTonnage: 75,
+    totalRevenue: 1576.12,
+    freeTonnage: 0,
+    averagePricePerTonne: 21.01
+  }
 }
 
 const accreditedExporterReportDetail = {
@@ -1162,6 +1167,47 @@ describe('#checkController', () => {
           ).toBeDefined()
           expect(body.textContent).toContain('Total tonnage of PRNs issued')
           expect(body.textContent).toContain('75')
+        })
+
+        it('should display total revenue with PRN wording and Change link', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(body.textContent).toContain('Total revenue of PRNs')
+          expect(body.textContent).not.toContain('Total revenue of PERNs')
+          expect(body.textContent).toContain('£1,576.12')
+
+          const changeLinks = body.querySelectorAll(
+            '.govuk-summary-list a[href*="prn-summary"]'
+          )
+          expect(changeLinks.length).toBeGreaterThan(0)
+        })
+
+        it('should announce Change Total revenue of PRNs to screen readers', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const changeLink = getByRole(body, 'link', {
+            name: /Change\s*Total revenue of PRNs/
+          })
+
+          expect(changeLink).toBeDefined()
         })
       })
 
