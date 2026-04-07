@@ -53,11 +53,7 @@
         ]
       }) }}
 
-      {% if isExporter %}
-        <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedForExportHeading") }}</h2>
-      {% else %}
-        <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedHeading") }}</h2>
-      {% endif %}
+      <h2 class="govuk-heading-l">{{ wasteReceivedHeading }}</h2>
 
       <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
       <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
@@ -157,18 +153,12 @@
       {% endif %}
 
       {% if isAccredited %}
-        {% if isExporter %}
-          <h2 class="govuk-heading-l">{{ localise("reports:pernSectionHeading") }}</h2>
-          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:pernTotalIssuedTonnage") }}</p>
-        {% else %}
-          <h2 class="govuk-heading-l">{{ localise("reports:prnSectionHeading") }}</h2>
-          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:prnTotalIssuedTonnage") }}</p>
-        {% endif %}
+        <h2 class="govuk-heading-l">{{ noteTypeSectionHeading }}</h2>
+        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ totalIssuedTonnageLabel }}</p>
 
         <p class="govuk-heading-l">{{ prn.issuedTonnage | formatWholeNumberTonnage }}</p>
 
-        {% set freeTonnageKey = localise("reports:submitFreePernsLabel") if isExporter else localise("reports:submitFreePrnsLabel") %}
-        {% set freeTonnageKey = freeTonnageKey + '<br><span class="govuk-!-font-weight-regular">' + localise("reports:submitFreeTonnageNote") + '</span>' %}
+        {% set freeTonnageKey = freeLabel + '<br><span class="govuk-!-font-weight-regular">' + localise("reports:submitFreeTonnageNote") + '</span>' %}
 
         {{ govukSummaryList({
           rows: [
@@ -177,11 +167,11 @@
               value: { text: prn.freeTonnage | formatWholeNumberTonnage }
             },
             {
-              key: { text: localise("reports:submitTotalRevenuePern") if isExporter else localise("reports:submitTotalRevenuePrn") },
+              key: { text: revenueLabel },
               value: { text: prn.totalRevenue | formatCurrency }
             },
             {
-              key: { text: localise("reports:submitAvgPricePern") if isExporter else localise("reports:submitAvgPricePrn") },
+              key: { text: avgPriceLabel },
               value: { text: prn.averagePricePerTonne | formatCurrency }
             }
           ]

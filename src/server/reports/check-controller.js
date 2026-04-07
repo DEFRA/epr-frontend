@@ -1,6 +1,7 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
+  getNoteTypeDisplayNames,
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
@@ -79,6 +80,8 @@ function buildCheckViewData({
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
+  const { noteTypePlural, wasteActionGerund } =
+    getNoteTypeDisplayNames(registration)
 
   return {
     pageTitle: localise('reports:checkPageTitle', { material, periodLabel }),
@@ -93,6 +96,18 @@ function buildCheckViewData({
     isExporter,
     isReprocessor,
     isAccredited: !!accreditation,
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
+    }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    revenueLabel: localise('reports:checkRevenueLabel', { noteTypePlural }),
+    freeLabel: localise('reports:checkFreeLabel', { noteTypePlural }),
+    freeNote: localise('reports:checkFreeNote'),
     backUrl: localiseUrl(`${basePath}/supporting-information`),
     changeUrl: localiseUrl(`${basePath}/supporting-information`),
     createButtonText: localise('reports:checkCreateReport'),

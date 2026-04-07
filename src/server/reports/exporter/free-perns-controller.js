@@ -1,5 +1,6 @@
 import Joi from 'joi'
 
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
 import { buildExporterViewData } from './exporter-page-guards.js'
 
@@ -8,25 +9,29 @@ const { getController, postController } = createDataPageControllers({
   fieldName: 'freeTonnage',
   payloadSchema: Joi.object({
     freeTonnage: Joi.number().min(0).required().messages({
-      'any.required': 'reports:freePernErrorRequired',
-      'number.base': 'reports:freePernErrorRequired',
-      'number.min': 'reports:freePernErrorFormat',
-      'number.unsafe': 'reports:freePernErrorFormat'
+      'any.required': 'reports:freeErrorRequired',
+      'number.base': 'reports:freeErrorRequired',
+      'number.min': 'reports:freeErrorNegative',
+      'number.unsafe': 'reports:freeErrorFormat',
+      'number.infinity': 'reports:freeErrorFormat'
     }),
     action: Joi.string().valid('continue', 'save').required(),
     crumb: Joi.string()
   }),
-  pageFields({ periodLabel, periodPath, reportDetail }) {
+  pageFields({ periodLabel, periodPath, registration, reportDetail }) {
+    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
     return (localise) => ({
-      pageTitle: localise('reports:freePernPageTitle', {
+      noteTypePlural,
+      pageTitle: localise('reports:freePageTitle', {
+        noteTypePlural,
         material: undefined,
         periodLabel
       }),
-      caption: localise('reports:freePernCaption'),
-      heading: localise('reports:freePernHeading', { periodLabel }),
-      hintText: localise('reports:freePernHint'),
-      continueText: localise('reports:freePernContinue'),
-      saveText: localise('reports:freePernSave'),
+      caption: localise('reports:freeCaption'),
+      heading: localise('reports:freeHeading', { noteTypePlural, periodLabel }),
+      hintText: localise('reports:freeHint', { noteTypePlural }),
+      continueText: localise('reports:freeContinue'),
+      saveText: localise('reports:freeSave'),
       fieldName: 'freeTonnage',
       backUrl: `${periodPath}/prn-summary`,
       tonnageIssued: reportDetail.prn.issuedTonnage,
@@ -35,7 +40,7 @@ const { getController, postController } = createDataPageControllers({
   },
   guardFn: buildExporterViewData,
   nextPage: 'supporting-information',
-  exceedsTotalErrorKey: 'reports:freePernErrorExceedsTotal'
+  exceedsTotalErrorKey: 'reports:freeErrorExceedsTotal'
 })
 
 export {

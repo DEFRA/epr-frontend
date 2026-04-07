@@ -55,7 +55,7 @@
 
       {% if isReprocessor %}
         <div id="waste-received-for-reprocessing">
-          <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedHeading") }}</h2>
+          <h2 class="govuk-heading-l">{{ wasteReceivedHeading }}</h2>
 
           <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
           <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
@@ -94,7 +94,7 @@
 
       {% if isExporter %}
         <div id="waste-received-for-exporting">
-          <h2 class="govuk-heading-l">{{ localise("reports:wasteReceivedForExportHeading") }}</h2>
+          <h2 class="govuk-heading-l">{{ wasteReceivedHeading }}</h2>
 
           <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
           <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
@@ -196,28 +196,23 @@
 
       {% if isAccredited %}
         <div id="prns">
-          {% if isExporter %}
-            <h2 class="govuk-heading-l">{{ localise("reports:pernSectionHeading") }}</h2>
-            <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:pernTotalIssuedTonnage") }}</p>
-          {% else %}
-            <h2 class="govuk-heading-l">{{ localise("reports:prnSectionHeading") }}</h2>
-            <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:prnTotalIssuedTonnage") }}</p>
-          {% endif %}
+          <h2 class="govuk-heading-l">{{ noteTypeSectionHeading }}</h2>
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ totalIssuedTonnageLabel }}</p>
 
           <p class="govuk-heading-l">{{ prn.issuedTonnage | formatWholeNumberTonnage }}</p>
 
           {{ govukSummaryList({
             rows: [
               {
-                key: { text: localise("reports:view:freePernsLabel") if isExporter else localise("reports:view:freePrnsLabel") },
+                key: { text: freeLabel },
                 value: { text: prn.freeTonnage | formatWholeNumberTonnage }
               },
               {
-                key: { text: localise("reports:view:totalRevenuePern") if isExporter else localise("reports:view:totalRevenuePrn") },
+                key: { text: revenueLabel },
                 value: { text: prn.totalRevenue | formatCurrency }
               },
               {
-                key: { text: localise("reports:view:avgPricePern") if isExporter else localise("reports:view:avgPricePrn") },
+                key: { text: avgPriceLabel },
                 value: { text: prn.averagePricePerTonne | formatCurrency }
               }
             ]
