@@ -57,6 +57,7 @@ const reprocessorRegistration = {
   accreditation: undefined
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -133,6 +134,7 @@ const accreditedReprocessorRegistration = {
   accreditation: { id: 'acc-001' }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -193,6 +195,7 @@ const reprocessorReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
   operatorCategory: 'REPROCESSOR_ACCREDITED',
@@ -209,6 +212,7 @@ const accreditedExporterRegistration = {
   accreditation: { id: 'acc-002' }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   operatorCategory: 'EXPORTER_ACCREDITED',

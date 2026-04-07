@@ -44,6 +44,7 @@ const reprocessorRegistration = {
   accreditation: undefined
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -93,6 +94,7 @@ const reprocessorReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const emptyReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -148,6 +150,7 @@ const accreditedReprocessorRegistration = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR',
   cadence: 'monthly',
@@ -208,6 +211,7 @@ const exporterRegistration = {
   accreditation: undefined
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -262,6 +266,7 @@ const exporterReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const emptyExporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -296,6 +301,7 @@ const emptyExporterReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const nullExportActivityReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -345,6 +351,7 @@ const accreditedExporterRegistration = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   operatorCategory: 'EXPORTER',
   cadence: 'monthly',

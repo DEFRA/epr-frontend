@@ -58,6 +58,7 @@ const reprocessorRegistration = {
   accreditation: undefined
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -120,6 +121,7 @@ const exporterReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -199,6 +201,7 @@ const accreditedExporterRegistration = {
   accreditation: { id: 'acc-002', accreditationNumber: 'EE992415095748M' }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
   prn: {
@@ -209,6 +212,7 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   prn: {
