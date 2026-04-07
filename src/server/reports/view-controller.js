@@ -19,6 +19,34 @@ import {
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
+/**
+ * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
+ * @returns {object}
+ */
+function buildPageLabels({
+  localise,
+  periodLabel,
+  noteTypePlural,
+  wasteActionGerund
+}) {
+  return {
+    pageTitle: localise('reports:view:pageTitle'),
+    heading: localise('reports:view:heading', { periodLabel }),
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
+    }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    freeLabel: localise('reports:view:freeLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:view:totalRevenue', { noteTypePlural }),
+    avgPriceLabel: localise('reports:view:avgPrice', { noteTypePlural })
+  }
+}
+
 function buildViewData({
   registration,
   accreditation,
@@ -46,21 +74,13 @@ function buildViewData({
   })
 
   return {
-    pageTitle: localise('reports:view:pageTitle'),
-    heading: localise('reports:view:heading', { periodLabel }),
-    backUrl,
-    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+    ...buildPageLabels({
+      localise,
+      periodLabel,
+      noteTypePlural,
       wasteActionGerund
     }),
-    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
-      noteTypePlural
-    }),
-    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
-      noteTypePlural
-    }),
-    freeLabel: localise('reports:view:freeLabel', { noteTypePlural }),
-    revenueLabel: localise('reports:view:totalRevenue', { noteTypePlural }),
-    avgPriceLabel: localise('reports:view:avgPrice', { noteTypePlural }),
+    backUrl,
 
     material,
     periodLabel,
