@@ -211,7 +211,11 @@ describe('#viewController', () => {
               orsId: 'ORS-001'
             }
           ],
-          tonnageReceivedNotExported: 4.5
+          tonnageReceivedNotExported: 4.5,
+          tonnageRefusedAtDestination: 1.0,
+          tonnageStoppedDuringExport: 0.5,
+          totalTonnageRefusedOrStopped: 1.5,
+          tonnageRepatriated: 0.5
         },
         wasteSent: {
           tonnageSentToReprocessor: 5.0,
@@ -759,6 +763,127 @@ describe('#viewController', () => {
             expect(section.textContent).toContain('4.50')
           }
         )
+
+        describe('when no waste exported', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              exportActivity: null
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it.for(exporters)(
+            '($scenario) does not render the section',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section).toBeNull()
+            }
+          )
+        })
+
+        it.for(reprocessors)(
+          '($scenario) does not render the section',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).toBeNull()
+          }
+        )
+      })
+
+      describe('packaging-waste-refused-or-stopped-during-export section', () => {
+        async function loadSection({ server, registrationAndAccreditation }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation
+          })
+
+          return body.querySelector(
+            '#packaging-waste-refused-or-stopped-during-export'
+          )
+        }
+
+        it.for(exporters)(
+          '($scenario) renders the section heading',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).not.toBeNull()
+            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+              'Packaging waste refused or stopped during export'
+            )
+          }
+        )
+
+        it.for(exporters)(
+          '($scenario) renders the total tonnage refused or stopped',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.textContent).toContain(
+              'Total tonnage refused or stopped'
+            )
+            expect(section.textContent).toContain('1.50')
+          }
+        )
+
+        describe('breakdown of refused or stopped tonnage', () => {
+          it.for(exporters)(
+            '($scenario) renders tonnage refused at destination',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).toContain('Total tonnage refused')
+              expect(section.textContent).toContain('1.00')
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) renders tonnage stopped during export',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).toContain('Total tonnage stopped')
+              expect(section.textContent).toContain('0.50')
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) renders tonnage repatriated',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).toContain('Total tonnage repatriated')
+              expect(section.textContent).toContain('0.50')
+            }
+          )
+        })
 
         describe('when no waste exported', () => {
           beforeAll(() => {

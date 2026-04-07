@@ -61,7 +61,17 @@ function buildViewData({
           ]),
           tonnageReceivedNotExported: formatTonnage(
             exportActivity.tonnageReceivedNotExported
-          )
+          ),
+          tonnageRefusedOrStopped: formatTonnage(
+            exportActivity.totalTonnageRefusedOrStopped
+          ),
+          tonnageRefused: formatTonnage(
+            exportActivity.tonnageRefusedAtDestination
+          ),
+          tonnageStopped: formatTonnage(
+            exportActivity.tonnageStoppedDuringExport
+          ),
+          tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
         }
       : null,
 
