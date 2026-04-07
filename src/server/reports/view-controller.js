@@ -35,14 +35,12 @@ function buildViewData({
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
 
-  const submittedAt = reportDetail.status?.submitted?.at
-  const submittedBy = reportDetail.status?.submitted?.by?.name ?? null
-  const submittedOn = submittedAt
-    ? localise('reports:view:submittedOnValue', {
-        date: formatDate(submittedAt),
-        time: formatTime(submittedAt)
-      })
-    : null
+  const submittedAt = reportDetail.status.submitted.at
+  const submittedBy = reportDetail.status.submitted.by.name
+  const submittedOn = localise('reports:view:submittedOnValue', {
+    date: formatDate(submittedAt),
+    time: formatTime(submittedAt)
+  })
 
   return {
     pageTitle: localise('reports:view:pageTitle'),

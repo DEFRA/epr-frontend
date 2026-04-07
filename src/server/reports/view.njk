@@ -23,16 +23,12 @@
           <strong>{{ localise("reports:view:statusLabel") }}</strong>
           {{ govukTag({ text: statusTag, classes: "govuk-tag--green" }) }}
         </p>
-        {% if submittedBy %}
-          <p class="govuk-body">
+        <p class="govuk-body">
             <strong>{{ localise("reports:view:submittedByLabel") }}</strong> {{ submittedBy }}
           </p>
-        {% endif %}
-        {% if submittedOn %}
-          <p class="govuk-body">
+        <p class="govuk-body">
             <strong>{{ localise("reports:view:submittedOnLabel") }}</strong> {{ submittedOn }}
-          </p>
-        {% endif %}
+        </p>
       </div>
 
       <hr class="govuk-section-break govuk-section-break--l">

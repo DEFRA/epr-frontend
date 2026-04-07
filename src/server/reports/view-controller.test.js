@@ -342,37 +342,6 @@ describe('#viewController', () => {
           expect(section.textContent).toContain('15 March 2026')
           expect(section.textContent).toContain('2:30pm')
         })
-
-        describe('when submitted details are absent', () => {
-          beforeAll(() => {
-            vi.mocked(fetchReportDetail).mockResolvedValue({
-              ...reportDetail,
-              status: { currentStatus: 'submitted' }
-            })
-          })
-
-          afterAll(() => {
-            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-          })
-
-          it('does not render submitted by', async ({ server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation: mockAccreditedReprocessor
-            })
-
-            expect(section.textContent).not.toContain('Submitted by:')
-          })
-
-          it('does not render submitted on', async ({ server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation: mockAccreditedReprocessor
-            })
-
-            expect(section.textContent).not.toContain('Submitted on:')
-          })
-        })
       })
 
       describe('report-period section', () => {
