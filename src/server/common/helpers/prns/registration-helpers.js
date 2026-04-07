@@ -30,6 +30,7 @@ export const getNoteTypeDisplayNames = (registration) => {
       : 'Packaging Waste Recycling Note',
     noteTypePlural: isExporter ? 'PERNs' : 'PRNs',
     wasteAction: isExporter ? 'export' : 'reprocessing',
+    // 'reprocessing' is both noun and gerund in English, hence the overlap with wasteAction
     wasteActionGerund: isExporter ? 'exporting' : 'reprocessing'
   }
 }
