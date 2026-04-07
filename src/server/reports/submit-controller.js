@@ -126,6 +126,35 @@ export const submitGetController = {
 }
 
 /**
+ * @param {{ localise: (key: string, params?: Record<string, string>) => string, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
+ * @returns {object}
+ */
+function buildPageLabels({
+  localise,
+  material,
+  periodLabel,
+  noteTypePlural,
+  wasteActionGerund
+}) {
+  return {
+    pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
+    heading: localise('reports:submitHeading', { periodLabel }),
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
+    }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    freeLabel: localise('reports:submitFreeLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:submitTotalRevenue', { noteTypePlural }),
+    avgPriceLabel: localise('reports:submitAvgPrice', { noteTypePlural })
+  }
+}
+
+/**
  * @param {{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse, organisationId: string, registrationId: string, year: number, cadence: string, period: number, localise: (key: string, params?: Record<string, string>) => string, localiseUrl: (url: string) => string }} params
  * @returns {object}
  */
@@ -156,23 +185,16 @@ function buildViewData({
   const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
   return {
-    pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
-    heading: localise('reports:submitHeading', { periodLabel }),
+    ...buildPageLabels({
+      localise,
+      material,
+      periodLabel,
+      noteTypePlural,
+      wasteActionGerund
+    }),
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
     isExporter,
-    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
-      wasteActionGerund
-    }),
-    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
-      noteTypePlural
-    }),
-    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
-      noteTypePlural
-    }),
-    freeLabel: localise('reports:submitFreeLabel', { noteTypePlural }),
-    revenueLabel: localise('reports:submitTotalRevenue', { noteTypePlural }),
-    avgPriceLabel: localise('reports:submitAvgPrice', { noteTypePlural }),
     backUrl: localiseUrl(reportsUrl),
 
     // Inset text
