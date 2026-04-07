@@ -40,7 +40,7 @@ function buildWasteExported(exportActivity) {
   }
 
   return {
-    totalTonnage: exportActivity.totalTonnageReceivedForExporting,
+    totalTonnage: exportActivity.totalTonnageExported,
     overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites),
     ...formatExportTonnages(exportActivity)
   }

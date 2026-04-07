@@ -30,7 +30,10 @@ export async function fetchReportDetail(
  * @typedef {{
  *   supplierName: string,
  *   facilityType: string,
- *   tonnageReceived: number
+ *   tonnageReceived: number,
+ *   supplierAddress: string | null,
+ *   supplierPhone: string | null,
+ *   supplierEmail: string | null
  * }} SupplierEntry
  */
 
@@ -58,7 +61,7 @@ export async function fetchReportDetail(
  *   startDate: string,
  *   endDate: string,
  *   dueDate: string,
- *   lastUploadedAt: string | null,
+ *   source: { summaryLogId: string | null, lastUploadedAt: string | null },
  *   details: {
  *     material: string,
  *     site?: { address: { line1: string, town: string, postcode: string } }
@@ -81,11 +84,12 @@ export async function fetchReportDetail(
  *   },
  *   exportActivity?: {
  *     overseasSites: OverseasSiteEntry[],
- *     totalTonnageReceivedForExporting: number,
- *     tonnageReceivedNotExported: number | null,
- *     tonnageRefusedAtRecepientDestination: number | null,
- *     tonnageStoppedDuringExport: number | null,
- *     tonnageRepatriated: number | null
+ *     totalTonnageExported: number,
+ *     tonnageReceivedNotExported: number,
+ *     totalTonnageRefusedOrStopped: number,
+ *     tonnageRefusedAtDestination: number,
+ *     tonnageStoppedDuringExport: number,
+ *     tonnageRepatriated: number
  *   },
  *   wasteSent: {
  *     tonnageSentToReprocessor: number,

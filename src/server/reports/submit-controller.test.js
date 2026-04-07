@@ -65,7 +65,7 @@ const exporterReportDetail = {
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-04-20',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: { material: 'plastic' },
   id: 'report-001',
   version: 1,
@@ -102,13 +102,14 @@ const exporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 50,
+    totalTonnageExported: 50,
     overseasSites: [
-      { siteName: 'Brussels Recycling', orsId: 'OSR-001', tonnageExported: 30 },
-      { siteName: 'RecyclePlast SA', orsId: 'OSR-096', tonnageExported: 20 }
+      { siteName: 'Brussels Recycling', orsId: 'OSR-001', country: 'Belgium' },
+      { siteName: 'RecyclePlast SA', orsId: 'OSR-096', country: 'France' }
     ],
     tonnageReceivedNotExported: 12.5,
-    tonnageRefusedAtRecepientDestination: 2.5,
+    totalTonnageRefusedOrStopped: 10.8,
+    tonnageRefusedAtDestination: 2.5,
     tonnageStoppedDuringExport: 8.3,
     tonnageRepatriated: 8.3
   },
@@ -127,6 +128,11 @@ const exporterReportDetail = {
   }
 }
 
+const accreditedReprocessorRegistration = {
+  ...reprocessorRegistration,
+  accreditation: { id: 'acc-001' }
+}
+
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -135,7 +141,7 @@ const reprocessorReportDetail = {
   startDate: '2026-01-01',
   endDate: '2026-03-31',
   dueDate: '2026-04-20',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
     site: {
@@ -169,8 +175,8 @@ const reprocessorReportDetail = {
         tonnageReceived: 42.21
       }
     ],
-    tonnageRecycled: null,
-    tonnageNotRecycled: null
+    tonnageRecycled: 75.5,
+    tonnageNotRecycled: 4.75
   },
   wasteSent: {
     tonnageSentToReprocessor: 1,
@@ -184,6 +190,33 @@ const reprocessorReportDetail = {
         tonnageSentOn: 1
       }
     ]
+  }
+}
+
+const accreditedReprocessorReportDetail = {
+  ...reprocessorReportDetail,
+  operatorCategory: 'REPROCESSOR_ACCREDITED',
+  prn: {
+    averagePricePerTonne: 150,
+    freeTonnage: 5,
+    issuedTonnage: 50,
+    totalRevenue: 7500
+  }
+}
+
+const accreditedExporterRegistration = {
+  ...exporterRegistration,
+  accreditation: { id: 'acc-002' }
+}
+
+const accreditedExporterReportDetail = {
+  ...exporterReportDetail,
+  operatorCategory: 'EXPORTER_ACCREDITED',
+  prn: {
+    averagePricePerTonne: 200,
+    freeTonnage: 10,
+    issuedTonnage: 100,
+    totalRevenue: 20000
   }
 }
 
@@ -356,7 +389,7 @@ describe('#submitController', () => {
           ).toBeDefined()
         })
 
-        it('should display supplier details with contact information', async ({
+        it('should display supplier details with name, activity and contact information', async ({
           server
         }) => {
           const body = await getBody(server)
@@ -364,7 +397,6 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Grantham Waste')
           expect(body.textContent).toContain('Baler')
           expect(body.textContent).toContain('17 Foster St, L20 8EX')
-          expect(body.textContent).toContain('0345 340 9656')
           expect(body.textContent).toContain('enquiries@granthamwaste.co.uk')
         })
 
@@ -391,17 +423,13 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('50')
         })
 
-        it('should display Overseas reprocessing sites subheading', async ({
+        it('should display overseas sites table under waste exported section', async ({
           server
         }) => {
           const body = await getBody(server)
 
-          expect(
-            getByRole(body, 'heading', {
-              name: /Overseas reprocessing sites/i,
-              level: 3
-            })
-          ).toBeDefined()
+          expect(body.textContent).toContain('Site name')
+          expect(body.textContent).toContain('Approved overseas reprocessor ID')
         })
 
         it('should display overseas sites with tonnage and OSR ID', async ({
@@ -470,7 +498,8 @@ describe('#submitController', () => {
             ...exporterReportDetail,
             exportActivity: {
               ...exporterReportDetail.exportActivity,
-              tonnageRefusedAtRecepientDestination: null,
+              totalTonnageRefusedOrStopped: null,
+              tonnageRefusedAtDestination: null,
               tonnageStoppedDuringExport: null,
               tonnageRepatriated: null
             }
@@ -478,7 +507,7 @@ describe('#submitController', () => {
 
           const body = await getBody(server)
 
-          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const labels = [...body.querySelectorAll('.govuk-caption-l')]
           const refusedOrStoppedLabel = labels.find((el) =>
             el.textContent.includes('Total tonnage refused or stopped')
           )
@@ -545,6 +574,30 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Lincoln recycling')
           expect(body.textContent).toContain('Reprocessor')
           expect(body.textContent).toContain('12 Juniper St, L20 8EL')
+        })
+
+        it('should display destination tonnageSentOn >= 1000 as formatted number, not NaN', async ({
+          server
+        }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            wasteSent: {
+              ...exporterReportDetail.wasteSent,
+              finalDestinations: [
+                {
+                  recipientName: 'HighLow Limited',
+                  facilityType: 'Exporter',
+                  address: '11 high street, G59NS',
+                  tonnageSentOn: 1000
+                }
+              ]
+            }
+          })
+
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('1,000.00')
+          expect(body.textContent).not.toContain('NaN')
         })
 
         // Supporting information section
@@ -614,6 +667,100 @@ describe('#submitController', () => {
           expect(versionInput).not.toBeNull()
           expect(versionInput.getAttribute('type')).toBe('hidden')
           expect(versionInput.getAttribute('value')).toBe('1')
+        })
+
+        it('should not display recycling activity section', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            queryByRole(body, 'heading', {
+              name: /Packaging waste recycling/i,
+              level: 2
+            })
+          ).toBeNull()
+        })
+
+        it('should not display PERN section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            queryByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
+          ).toBeNull()
+        })
+      })
+
+      describe('for accredited exporter', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            accreditedExporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            accreditedExporterReportDetail
+          )
+        })
+
+        it('should not display recycling activity section', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            queryByRole(body, 'heading', {
+              name: /Packaging waste recycling/i,
+              level: 2
+            })
+          ).toBeNull()
+        })
+
+        it('should display PERN section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
+          ).toBeDefined()
+        })
+
+        it('should display total tonnage of PERNs issued label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total tonnage of PERNs issued')
+          expect(body.textContent).toContain('100')
+        })
+
+        it('should display total tonnage of PERNs issued for free label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain(
+            'Total tonnage of PERNs issued for free'
+          )
+          expect(body.textContent).toContain('10')
+          expect(body.textContent).toContain(
+            '(These are not included in the average price per tonne calculation)'
+          )
+        })
+
+        it('should display total revenue of PERNs label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total revenue of PERNs')
+          expect(body.textContent).toContain('£20,000.00')
+        })
+
+        it('should display average price per tonne of PERNs label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Average price per tonne of PERNs')
+          expect(body.textContent).toContain('£200.00')
         })
       })
 
@@ -691,6 +838,136 @@ describe('#submitController', () => {
           const body = await getBody(server)
 
           expect(body.textContent).toContain('Jane Smith')
+        })
+
+        it('should display recycling activity section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste recycling/i,
+              level: 2
+            })
+          ).toBeDefined()
+        })
+
+        it('should display total tonnage recycled label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total tonnage recycled')
+          expect(body.textContent).toContain('75.50')
+        })
+
+        it('should display total tonnage received but not recycled label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain(
+            'Total tonnage received but not recycled'
+          )
+          expect(body.textContent).toContain('4.75')
+        })
+
+        it('should not display PRN section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            queryByRole(body, 'heading', { name: /^PRNs$/i, level: 2 })
+          ).toBeNull()
+        })
+      })
+
+      describe('for accredited reprocessor', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            accreditedReprocessorRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            accreditedReprocessorReportDetail
+          )
+        })
+
+        it('should display recycling activity section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste recycling/i,
+              level: 2
+            })
+          ).toBeDefined()
+        })
+
+        it('should display total tonnage recycled label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total tonnage recycled')
+          expect(body.textContent).toContain('75.50')
+        })
+
+        it('should display total tonnage received but not recycled label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain(
+            'Total tonnage received but not recycled'
+          )
+          expect(body.textContent).toContain('4.75')
+        })
+
+        it('should display PRN section', async ({ server }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', { name: /^PRNs$/i, level: 2 })
+          ).toBeDefined()
+        })
+
+        it('should display total tonnage of PRNs issued label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total tonnage of PRNs issued')
+          expect(body.textContent).toContain('50')
+        })
+
+        it('should display total tonnage of PRNs issued for free label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain(
+            'Total tonnage of PRNs issued for free'
+          )
+          expect(body.textContent).toContain('5')
+          expect(body.textContent).toContain(
+            '(These are not included in the average price per tonne calculation)'
+          )
+        })
+
+        it('should display total revenue of PRNs label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Total revenue of PRNs')
+          expect(body.textContent).toContain('£7,500.00')
+        })
+
+        it('should display average price per tonne of PRNs label and value', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Average price per tonne of PRNs')
+          expect(body.textContent).toContain('£150.00')
         })
       })
 

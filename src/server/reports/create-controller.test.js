@@ -77,7 +77,7 @@ const reportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: null,
+  source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic',
     site: {

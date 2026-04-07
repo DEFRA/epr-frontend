@@ -65,7 +65,7 @@ const exporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: { material: 'plastic' },
   id: 'report-001',
   version: 1,
@@ -95,10 +95,13 @@ const exporterReportDetail = {
     tonnageNotRecycled: null
   },
   exportActivity: {
-    totalTonnageReceivedForExporting: 50,
-    overseasSites: [{ siteName: 'Brussels Recycling', orsId: 'OSR-001' }],
+    totalTonnageExported: 50,
+    overseasSites: [
+      { siteName: 'Brussels Recycling', orsId: 'OSR-001', country: 'Belgium' }
+    ],
     tonnageReceivedNotExported: 15.5,
-    tonnageRefusedAtRecepientDestination: 3.2,
+    totalTonnageRefusedOrStopped: 5.0,
+    tonnageRefusedAtDestination: 3.2,
     tonnageStoppedDuringExport: 1.8,
     tonnageRepatriated: 0.5
   },
@@ -124,7 +127,7 @@ const reprocessorReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
-  lastUploadedAt: '2026-02-15T15:09:00.000Z',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
     site: {
@@ -362,7 +365,7 @@ describe('#checkController', () => {
           expect(heading).toBeDefined()
         })
 
-        it('should display supplier table with 5 contact detail columns', async ({
+        it('should display supplier table with 5 columns', async ({
           server
         }) => {
           const { result } = await server.inject({
@@ -378,14 +381,19 @@ describe('#checkController', () => {
           const supplierTable = tables[0]
           const headers = supplierTable?.querySelectorAll('th')
 
-          expect(headers).toHaveLength(5)
-          expect(headers?.[0]?.textContent).toContain('Supplier')
-          expect(headers?.[1]?.textContent).toContain('Activity')
-          expect(headers?.[2]?.textContent).toContain('Address')
-          expect(headers?.[4]?.textContent).toContain('Email')
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+          expect(headerTexts).toStrictEqual([
+            'Supplier',
+            'Activity',
+            'Address',
+            'Phone',
+            'Email'
+          ])
         })
 
-        it('should display supplier contact details in table rows', async ({
+        it('should display supplier name and contact details in table rows', async ({
           server
         }) => {
           const { result } = await server.inject({
@@ -401,10 +409,10 @@ describe('#checkController', () => {
           const supplierTable = tables[0]
 
           expect(supplierTable?.textContent).toContain('Grantham Waste')
+          expect(supplierTable?.textContent).toContain('SUEZ recycling')
           expect(supplierTable?.textContent).toContain(
             '12 Industrial Estate, Grantham, NG31 7AA'
           )
-          expect(supplierTable?.textContent).toContain('01234 567890')
           expect(supplierTable?.textContent).toContain(
             'info@granthamwaste.co.uk'
           )
@@ -505,7 +513,8 @@ describe('#checkController', () => {
             ...exporterReportDetail,
             exportActivity: {
               ...exporterReportDetail.exportActivity,
-              tonnageRefusedAtRecepientDestination: null,
+              totalTonnageRefusedOrStopped: null,
+              tonnageRefusedAtDestination: null,
               tonnageStoppedDuringExport: null,
               tonnageRepatriated: null
             }
@@ -520,7 +529,7 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const labels = [...body.querySelectorAll('.govuk-caption-l')]
           const refusedOrStoppedLabel = labels.find((el) =>
             el.textContent.includes('Total tonnage refused or stopped')
           )
@@ -536,7 +545,8 @@ describe('#checkController', () => {
             ...exporterReportDetail,
             exportActivity: {
               ...exporterReportDetail.exportActivity,
-              tonnageRefusedAtRecepientDestination: null,
+              totalTonnageRefusedOrStopped: 4.0,
+              tonnageRefusedAtDestination: null,
               tonnageStoppedDuringExport: 4.0
             }
           })
@@ -550,7 +560,7 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const labels = [...body.querySelectorAll('.govuk-caption-l')]
           const refusedOrStoppedLabel = labels.find((el) =>
             el.textContent.includes('Total tonnage refused or stopped')
           )
@@ -566,7 +576,8 @@ describe('#checkController', () => {
             ...exporterReportDetail,
             exportActivity: {
               ...exporterReportDetail.exportActivity,
-              tonnageRefusedAtRecepientDestination: 2.5,
+              totalTonnageRefusedOrStopped: 2.5,
+              tonnageRefusedAtDestination: 2.5,
               tonnageStoppedDuringExport: null
             }
           })
@@ -580,7 +591,7 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const labels = [...body.querySelectorAll('.govuk-body-s')]
+          const labels = [...body.querySelectorAll('.govuk-caption-l')]
           const refusedOrStoppedLabel = labels.find((el) =>
             el.textContent.includes('Total tonnage refused or stopped')
           )
