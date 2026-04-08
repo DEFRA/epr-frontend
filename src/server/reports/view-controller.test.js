@@ -222,7 +222,12 @@ describe('#viewController', () => {
             }
           ]
         },
-        prn: null,
+        prn: {
+          issuedTonnage: 50,
+          freeTonnage: 10,
+          totalRevenue: 2500,
+          averagePricePerTonne: 50
+        },
         supportingInformation: null
       }
 
@@ -233,7 +238,7 @@ describe('#viewController', () => {
       it('should return 200', async ({ server }) => {
         const { statusCode } = await loadPage({
           server,
-          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -242,7 +247,7 @@ describe('#viewController', () => {
       it('renders the draft page title and heading', async ({ server }) => {
         const { result } = await loadPage({
           server,
-          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         const dom = new JSDOM(result)
@@ -260,7 +265,7 @@ describe('#viewController', () => {
       it('does not render a back link', async ({ server }) => {
         const body = await loadPageBody({
           server,
-          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         const backLink = body.querySelector('.govuk-back-link')
@@ -270,7 +275,7 @@ describe('#viewController', () => {
       it('renders the intro text with due date', async ({ server }) => {
         const body = await loadPageBody({
           server,
-          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         expect(body.textContent).toContain(
@@ -283,7 +288,7 @@ describe('#viewController', () => {
       }) => {
         const body = await loadPageBody({
           server,
-          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         const link = body.querySelector('a[href*="/reports"]')
@@ -295,7 +300,7 @@ describe('#viewController', () => {
         async function loadSection({ server }) {
           const body = await loadPageBody({
             server,
-            registrationAndAccreditation: mockRegisteredOnlyReprocessor
+            registrationAndAccreditation: mockAccreditedReprocessor
           })
 
           return body.querySelector('#submission-details')
@@ -330,7 +335,7 @@ describe('#viewController', () => {
       it('renders the Your report heading', async ({ server }) => {
         const body = await loadPageBody({
           server,
-          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          registrationAndAccreditation: mockAccreditedReprocessor
         })
 
         const headings = [...body.querySelectorAll('h2')]

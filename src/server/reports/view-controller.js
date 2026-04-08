@@ -20,7 +20,7 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
 /**
- * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, isDraft: boolean }} params
+ * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: import('./constants.js').SubmissionStatusValue }} params
  * @returns {object}
  */
 function buildPageLabels({
@@ -28,8 +28,9 @@ function buildPageLabels({
   periodLabel,
   noteTypePlural,
   wasteActionGerund,
-  isDraft
+  status
 }) {
+  const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
   const headingKey = isDraft
     ? 'reports:view:draftHeading'
     : 'reports:view:heading'
@@ -57,36 +58,28 @@ function buildPageLabels({
 
 /**
  * @param {object} reportDetail
- * @param {boolean} isDraft
+ * @param {import('./constants.js').SubmissionStatusValue} status
  * @param {(key: string, params?: Record<string, string>) => string} localise
  * @returns {{ statusTag: string, statusTagClass: string, authorLabel: string, authorValue: string, dateLabel: string, dateValue: string }}
  */
-function buildStatusDetails(reportDetail, isDraft, localise) {
-  if (isDraft) {
-    const { by, at } = reportDetail.status.created
-    return {
-      statusTag: localise('reports:statusReadyToSubmit'),
-      statusTagClass: 'govuk-tag--blue',
-      authorLabel: localise('reports:view:createdByLabel'),
-      authorValue: by.name,
-      dateLabel: localise('reports:view:createdOnLabel'),
-      dateValue: localise('reports:view:createdOnValue', {
-        date: formatDate(at),
-        time: formatTime(at)
-      })
-    }
-  }
+function buildStatusDetails(reportDetail, status, localise) {
+  const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
+  const statusEntry = isDraft
+    ? reportDetail.status.created
+    : reportDetail.status.submitted
+  const labelPrefix = isDraft ? 'created' : 'submitted'
 
-  const { by, at } = reportDetail.status.submitted
   return {
-    statusTag: localise('reports:statusSubmitted'),
-    statusTagClass: 'govuk-tag--green',
-    authorLabel: localise('reports:view:submittedByLabel'),
-    authorValue: by.name,
-    dateLabel: localise('reports:view:submittedOnLabel'),
-    dateValue: localise('reports:view:submittedOnValue', {
-      date: formatDate(at),
-      time: formatTime(at)
+    statusTag: localise(
+      isDraft ? 'reports:statusReadyToSubmit' : 'reports:statusSubmitted'
+    ),
+    statusTagClass: isDraft ? 'govuk-tag--blue' : 'govuk-tag--green',
+    authorLabel: localise(`reports:view:${labelPrefix}ByLabel`),
+    authorValue: statusEntry.by.name,
+    dateLabel: localise(`reports:view:${labelPrefix}OnLabel`),
+    dateValue: localise(`reports:view:${labelPrefix}OnValue`, {
+      date: formatDate(statusEntry.at),
+      time: formatTime(statusEntry.at)
     })
   }
 }
@@ -98,11 +91,12 @@ function buildViewData({
   year,
   cadence,
   period,
-  isDraft,
+  status,
   backUrl,
   reportsUrl,
   localise
 }) {
+  const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
@@ -112,26 +106,17 @@ function buildViewData({
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
-  return {
+  const viewData = {
     ...buildPageLabels({
       localise,
       periodLabel,
       noteTypePlural,
       wasteActionGerund,
-      isDraft
+      status
     }),
-    ...buildStatusDetails(reportDetail, isDraft, localise),
+    ...buildStatusDetails(reportDetail, status, localise),
     isDraft,
     backUrl: isDraft ? null : backUrl,
-
-    ...(isDraft
-      ? {
-          introText: localise('reports:view:draftIntroText', {
-            dueDate: formatDate(reportDetail.dueDate)
-          }),
-          reportsUrl
-        }
-      : {}),
 
     material,
     periodLabel,
@@ -174,6 +159,15 @@ function buildViewData({
       reportDetail.supportingInformation ||
       localise('reports:supportingInformationNone')
   }
+
+  if (isDraft) {
+    viewData.introText = localise('reports:view:draftIntroText', {
+      dueDate: formatDate(reportDetail.dueDate)
+    })
+    viewData.reportsUrl = reportsUrl
+  }
+
+  return viewData
 }
 
 function buildWasteExported(exportActivity, isExporter) {
@@ -244,7 +238,6 @@ export const viewGetController = {
       throw Boom.notFound()
     }
 
-    const isDraft = currentStatus === SUBMISSION_STATUS.READY_TO_SUBMIT
     const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
     const backUrl = request.localiseUrl(reportsPath)
     const reportsUrl = request.localiseUrl(reportsPath)
@@ -258,7 +251,7 @@ export const viewGetController = {
         year,
         cadence,
         period,
-        isDraft,
+        status: currentStatus,
         backUrl,
         reportsUrl,
         localise
