@@ -163,10 +163,10 @@ describe('#viewController', () => {
       config.reset('featureFlags.reports')
     })
 
-    describe('for a non-submitted report', () => {
+    describe('for a report that cannot be viewed', () => {
       const reportDetail = {
         status: {
-          currentStatus: 'ready_to_submit'
+          currentStatus: 'in_progress'
         }
       }
 
@@ -181,6 +181,163 @@ describe('#viewController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
+    describe('for a draft report', () => {
+      const reportDetail = {
+        status: {
+          currentStatus: 'ready_to_submit',
+          created: {
+            at: '2026-04-20T15:56:00.000Z',
+            by: { id: 'user-789', name: 'Michael Doran', position: 'Manager' }
+          }
+        },
+        dueDate: '2026-04-21',
+        recyclingActivity: {
+          totalTonnageReceived: 12.5,
+          tonnageRecycled: 10.25,
+          tonnageNotRecycled: 2.25,
+          suppliers: [
+            {
+              supplierName: 'Acme Recycling Ltd',
+              facilityType: 'Reprocessor',
+              supplierAddress: '1 Green Lane, Leeds, LS1 1AA',
+              supplierPhone: '0113 000 0000',
+              supplierEmail: 'contact@acme.example.com'
+            }
+          ]
+        },
+        exportActivity: null,
+        wasteSent: {
+          tonnageSentToReprocessor: 5.0,
+          tonnageSentToExporter: 3.0,
+          tonnageSentToAnotherSite: 2.0,
+          finalDestinations: [
+            {
+              recipientName: 'Green Reprocessors Ltd',
+              facilityType: 'Reprocessor',
+              address: '5 Factory Road, Sheffield, S1 1AB',
+              tonnageSentOn: 1.0
+            }
+          ]
+        },
+        prn: null,
+        supportingInformation: null
+      }
+
+      beforeAll(() => {
+        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      })
+
+      it('should return 200', async ({ server }) => {
+        const { statusCode } = await loadPage({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      it('renders the draft page title and heading', async ({ server }) => {
+        const { result } = await loadPage({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+        })
+
+        const dom = new JSDOM(result)
+
+        expect(dom.window.document.title).toBe(
+          'View draft report | Record reprocessed or exported packaging waste'
+        )
+
+        const heading = dom.window.document.body.querySelector('h1')
+        expect(heading?.textContent?.trim()).toBe(
+          'Draft report for January 2026'
+        )
+      })
+
+      it('does not render a back link', async ({ server }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+        })
+
+        const backLink = body.querySelector('.govuk-back-link')
+        expect(backLink).toBeNull()
+      })
+
+      it('renders the intro text with due date', async ({ server }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+        })
+
+        expect(body.textContent).toContain(
+          'An approved person from your business needs to submit this report to your regulator by 21 April 2026'
+        )
+      })
+
+      it('renders the self-submit guidance with reports page link', async ({
+        server
+      }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+        })
+
+        const link = body.querySelector('a[href*="/reports"]')
+        expect(link).not.toBeNull()
+        expect(link?.textContent).toContain('reports page')
+      })
+
+      describe('submission-details section', () => {
+        async function loadSection({ server }) {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          })
+
+          return body.querySelector('#submission-details')
+        }
+
+        it('renders the Ready to submit status tag', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section.textContent).toContain('Status:')
+          expect(section.textContent).toContain('Ready to submit')
+
+          const tag = section.querySelector('.govuk-tag')
+          expect(tag?.classList.contains('govuk-tag--blue')).toBe(true)
+        })
+
+        it('renders the created by name', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section.textContent).toContain('Created by:')
+          expect(section.textContent).toContain('Michael Doran')
+        })
+
+        it('renders the created on date and time', async ({ server }) => {
+          const section = await loadSection({ server })
+
+          expect(section.textContent).toContain('Created on:')
+          expect(section.textContent).toContain('20 April 2026')
+          expect(section.textContent).toContain('4:56pm')
+        })
+      })
+
+      it('renders the Your report heading', async ({ server }) => {
+        const body = await loadPageBody({
+          server,
+          registrationAndAccreditation: mockRegisteredOnlyReprocessor
+        })
+
+        const headings = [...body.querySelectorAll('h2')]
+        const yourReportHeading = headings.find(
+          (h) => h.textContent?.trim() === 'Your report'
+        )
+        expect(yourReportHeading).toBeDefined()
       })
     })
 

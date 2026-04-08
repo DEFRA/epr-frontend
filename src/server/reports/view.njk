@@ -5,10 +5,12 @@
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block beforeContent %}
-  {{ govukBackLink({
-    text: localise("common:back"),
-    href: backUrl
-  }) }}
+  {% if backUrl %}
+    {{ govukBackLink({
+      text: localise("common:back"),
+      href: backUrl
+    }) }}
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -16,22 +18,34 @@
     <div class="govuk-grid-column-two-thirds">
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
+      {% if isDraft %}
+        <p class="govuk-body">{{ introText }}</p>
+        <p class="govuk-body">
+          {{ localise("reports:view:draftSelfSubmitPrefix") }}
+          <a href="{{ reportsUrl }}" class="govuk-link">{{ localise("reports:view:draftSelfSubmitLink") }}</a>.
+        </p>
+      {% endif %}
+
       <div id="submission-details">
         <h2 class="govuk-heading-l">{{ localise("reports:view:detailsHeading") }}</h2>
 
         <p class="govuk-body">
           <strong>{{ localise("reports:view:statusLabel") }}</strong>
-          {{ govukTag({ text: statusTag, classes: "govuk-tag--green" }) }}
+          {{ govukTag({ text: statusTag, classes: statusTagClass }) }}
         </p>
         <p class="govuk-body">
-            <strong>{{ localise("reports:view:submittedByLabel") }}</strong> {{ submittedBy }}
-          </p>
+          <strong>{{ authorLabel }}</strong> {{ authorValue }}
+        </p>
         <p class="govuk-body">
-            <strong>{{ localise("reports:view:submittedOnLabel") }}</strong> {{ submittedOn }}
+          <strong>{{ dateLabel }}</strong> {{ dateValue }}
         </p>
       </div>
 
       <hr class="govuk-section-break govuk-section-break--l">
+
+      {% if isDraft %}
+        <h2 class="govuk-heading-l">{{ localise("reports:view:draftYourReportHeading") }}</h2>
+      {% endif %}
 
       <div id="report-period">
         {{ govukSummaryList({

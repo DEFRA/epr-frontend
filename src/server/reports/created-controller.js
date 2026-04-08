@@ -53,6 +53,7 @@ export const createdController = {
     const formattedDueDate = formatDate(reportDetail.dueDate)
 
     const homeUrl = `/organisations/${organisationId}`
+    const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/view`
 
     return h.view('reports/created', {
       pageTitle: localise('reports:createdPageTitle', {
@@ -75,6 +76,10 @@ export const createdController = {
       goToReportsButton: {
         text: localise('reports:createdGoToReports'),
         href: request.localiseUrl(reportsUrl)
+      },
+      viewDraftReportLink: {
+        text: localise('reports:createdViewDraftReport'),
+        href: request.localiseUrl(viewDraftUrl)
       },
       returnHomeLink: {
         text: localise('reports:createdReturnHome'),

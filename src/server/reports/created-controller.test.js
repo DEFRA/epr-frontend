@@ -304,6 +304,30 @@ describe('#createdController', () => {
         expect(button.closest('a').getAttribute('href')).toBe(listUrl)
       })
 
+      it('should display View draft report link that opens in new tab', async ({
+        server
+      }) => {
+        const { cookies } = await createReportFlow(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth,
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+        const link = getByText(main, /View draft report/)
+
+        expect(link).toBeDefined()
+        expect(link.closest('a').getAttribute('href')).toBe(
+          `${basePeriodPath}/view`
+        )
+        expect(link.closest('a').getAttribute('target')).toBe('_blank')
+      })
+
       it('should display Return to home link', async ({ server }) => {
         const { cookies } = await createReportFlow(server)
 
