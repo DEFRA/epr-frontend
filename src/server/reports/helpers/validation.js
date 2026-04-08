@@ -9,7 +9,11 @@ export const maxTwoDecimalPlaces = (value, helpers) => {
   return value
 }
 
-const FORMAT_ERROR = 'reports:noteSummaryErrorFormat'
+const revenueErrors = Object.freeze({
+  decimalPlaces: 'reports:noteSummaryErrorDecimalPlaces',
+  format: 'reports:noteSummaryErrorFormat',
+  required: 'reports:noteSummaryErrorRequired'
+})
 
 export const revenuePayloadSchema = Joi.object({
   prnRevenue: Joi.number()
@@ -17,12 +21,12 @@ export const revenuePayloadSchema = Joi.object({
     .custom(maxTwoDecimalPlaces)
     .required()
     .messages({
-      'any.required': 'reports:noteSummaryErrorRequired',
-      'number.base': 'reports:noteSummaryErrorRequired',
-      'number.min': FORMAT_ERROR,
-      'number.unsafe': FORMAT_ERROR,
-      'number.infinity': FORMAT_ERROR,
-      'number.maxDecimalPlaces': 'reports:noteSummaryErrorDecimalPlaces'
+      'any.required': revenueErrors.required,
+      'number.base': revenueErrors.required,
+      'number.min': revenueErrors.format,
+      'number.unsafe': revenueErrors.format,
+      'number.infinity': revenueErrors.format,
+      'number.maxDecimalPlaces': revenueErrors.decimalPlaces
     }),
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
