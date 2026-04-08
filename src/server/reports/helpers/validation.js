@@ -1,3 +1,5 @@
+import Joi from 'joi'
+
 const TWO_DP_FACTOR = 100
 
 export const maxTwoDecimalPlaces = (value, helpers) => {
@@ -6,6 +8,25 @@ export const maxTwoDecimalPlaces = (value, helpers) => {
   }
   return value
 }
+
+const FORMAT_ERROR = 'reports:noteSummaryErrorFormat'
+
+export const revenuePayloadSchema = Joi.object({
+  prnRevenue: Joi.number()
+    .min(0)
+    .custom(maxTwoDecimalPlaces)
+    .required()
+    .messages({
+      'any.required': 'reports:noteSummaryErrorRequired',
+      'number.base': 'reports:noteSummaryErrorRequired',
+      'number.min': FORMAT_ERROR,
+      'number.unsafe': FORMAT_ERROR,
+      'number.infinity': FORMAT_ERROR,
+      'number.maxDecimalPlaces': 'reports:noteSummaryErrorDecimalPlaces'
+    }),
+  action: Joi.string().valid('continue', 'save').required(),
+  crumb: Joi.string()
+})
 
 /**
  * Builds validation error objects from Joi error details, suitable for

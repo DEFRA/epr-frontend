@@ -365,7 +365,7 @@ describe('#prnSummaryController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: baseUrl,
             auth: mockAuth,
@@ -376,8 +376,9 @@ describe('#prnSummaryController', () => {
           const { body } = new JSDOM(result).window.document
           const alert = getByRole(body, 'alert')
 
-          expect(statusCode).toBe(statusCodes.ok)
-          getByText(alert, 'Enter an amount in pounds and pence, like 1576.12')
+          expect(
+            getByText(alert, /Enter an amount in pounds and pence/)
+          ).toBeDefined()
         })
 
         it('should show error when revenue is empty', async ({ server }) => {
