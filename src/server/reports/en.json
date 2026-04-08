@@ -80,6 +80,7 @@
   },
   "noteSummaryCaption": "Create report",
   "noteSummaryContinue": "Continue",
+  "noteSummaryErrorDecimalPlaces": "Enter an amount in pounds and pence, like 1576.12",
   "noteSummaryErrorFormat": "Enter a value in digits, using a decimal point if needed",
   "noteSummaryErrorRequired": "Enter the total revenue of {{noteTypePlural}} issued",
   "noteSummaryHeading": "{{noteTypePlural}} issued for {{material}} packaging waste in {{periodLabel}}",

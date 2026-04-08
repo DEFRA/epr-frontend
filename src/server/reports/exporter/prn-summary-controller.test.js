@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -356,6 +356,28 @@ describe('#prnSummaryController', () => {
 
           expect(statusCode).toBe(statusCodes.ok)
           expect(result).toContain('Enter the total revenue of PERNs issued')
+        })
+
+        it('should show error when revenue has more than 2 decimal places', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          const { statusCode, result } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, prnRevenue: 1576.123, action: 'continue' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(statusCode).toBe(statusCodes.ok)
+          getByText(alert, 'Enter an amount in pounds and pence, like 1576.12')
         })
 
         it('should show error when revenue is empty', async ({ server }) => {

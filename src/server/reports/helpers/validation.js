@@ -1,3 +1,12 @@
+const TWO_DP_FACTOR = 100
+
+export const maxTwoDecimalPlaces = (value, helpers) => {
+  if (Math.round(value * TWO_DP_FACTOR) !== value * TWO_DP_FACTOR) {
+    return helpers.error('number.maxDecimalPlaces')
+  }
+  return value
+}
+
 /**
  * Builds validation error objects from Joi error details, suitable for
  * govukErrorSummary and inline error display.
