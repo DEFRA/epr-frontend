@@ -98,15 +98,19 @@ export function createDataPageControllers({
         params: periodParamsSchema,
         payload: payloadSchema,
         async failAction(request, h, error) {
-          const { errors, errorSummary } = buildValidationErrors(request, error)
-
           const viewData = await getViewData(request, {
-            value: request.payload[fieldName],
-            errors,
-            errorSummary
+            value: request.payload[fieldName]
           })
 
-          return h.view(viewPath, viewData).takeover()
+          const { errors, errorSummary } = buildValidationErrors(
+            request,
+            error,
+            { noteTypePlural: viewData.noteTypePlural }
+          )
+
+          return h
+            .view(viewPath, { ...viewData, errors, errorSummary })
+            .takeover()
         }
       }
     },
@@ -176,10 +180,13 @@ function createTonnagePostHandler(
     )
 
     if (fieldValue > reportDetail.prn.issuedTonnage) {
-      const message = request.t(errorKey)
+      const viewData = await getViewData(request, { value: fieldValue })
+      const message = request.t(errorKey, {
+        noteTypePlural: viewData.noteTypePlural
+      })
 
-      const viewData = await getViewData(request, {
-        value: fieldValue,
+      return h.view(viewPath, {
+        ...viewData,
         errors: {
           [fieldName]: { text: message }
         },
@@ -188,8 +195,6 @@ function createTonnagePostHandler(
           errorList: [{ text: message, href: `#${fieldName}` }]
         }
       })
-
-      return h.view(viewPath, viewData)
     }
 
     await updateReport(

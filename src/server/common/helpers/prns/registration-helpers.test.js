@@ -50,7 +50,8 @@ describe('#getNoteTypeDisplayNames', () => {
       noteType: 'PRN',
       noteTypeFull: 'Packaging Waste Recycling Note',
       noteTypePlural: 'PRNs',
-      wasteAction: 'reprocessing'
+      wasteAction: 'reprocessing',
+      wasteActionGerund: 'reprocessing'
     })
   })
 
@@ -64,7 +65,8 @@ describe('#getNoteTypeDisplayNames', () => {
       noteType: 'PERN',
       noteTypeFull: 'Packaging Waste Export Recycling Note',
       noteTypePlural: 'PERNs',
-      wasteAction: 'export'
+      wasteAction: 'export',
+      wasteActionGerund: 'exporting'
     })
   })
 })

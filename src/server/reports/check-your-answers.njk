@@ -44,11 +44,7 @@
         text: localise("reports:checkSummaryLogDataGuidance")
       }) }}
 
-      {% if isExporter %}
-        <h3 class="govuk-heading-m">{{ localise("reports:wasteReceivedForExportHeading") }}</h3>
-      {% else %}
-        <h3 class="govuk-heading-m">{{ localise("reports:wasteReceivedHeading") }}</h3>
-      {% endif %}
+      <h3 class="govuk-heading-l">{{ wasteReceivedHeading }}</h3>
 
       <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
       <p class="govuk-heading-l">{{ wasteReceived.totalTonnage | formatTonnage }}</p>
@@ -66,7 +62,7 @@
         }) }}
       {% endif %}
 
-      {% if wasteExported %}
+      {% if isExporter %}
         <h3 class="govuk-heading-l">{{ localise("reports:wasteExportedHeading") }}</h3>
 
         <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
@@ -161,33 +157,24 @@
 
       {% if prn and (isExporter or (isReprocessor and isAccredited)) %}
 
-        {% if isExporter %}
-          <h3 class="govuk-heading-m">{{ localise("reports:pernSectionHeading") }}</h3>
-        {% else %}
-          <h3 class="govuk-heading-m">{{ localise("reports:prnSectionHeading") }}</h3>
-        {% endif %}
+        <h3 class="govuk-heading-m">{{ noteTypeSectionHeading }}</h3>
 
         {% set prnRows = [
           {
-            key: { text: localise("reports:pernTotalIssuedTonnage") if isExporter else localise("reports:prnTotalIssuedTonnage") },
+            key: { text: totalIssuedTonnageLabel },
             value: { text: prn.issuedTonnage | formatWholeNumberTonnage }
           }
         ] %}
 
         {% if prn.totalRevenue is defined and prn.totalRevenue !== null %}
-          {% if isExporter %}
-            {% set totalRevenueLabel = localise("reports:checkPernRevenueLabel") %}
-          {% else %}
-            {% set totalRevenueLabel = localise("reports:checkPrnRevenueLabel") %}
-          {% endif %}
           {% set prnRows = prnRows.concat([{
-            key: { text: totalRevenueLabel },
+            key: { text: revenueLabel },
             value: { text: prn.totalRevenue | formatCurrency },
             actions: {
               items: [{
                 href: prnRevenueChangeUrl,
                 text: changeText,
-                visuallyHiddenText: totalRevenueLabel
+                visuallyHiddenText: revenueLabel
               }]
             }
           }]) %}
@@ -196,22 +183,17 @@
         {% if prn.freeTonnage is defined and prn.freeTonnage !== null %}
           {% set freeTonnageHtml %}
             {{ prn.freeTonnage }}
-            <p class="govuk-body-s govuk-!-margin-top-1 govuk-!-margin-bottom-0">{{ localise("reports:checkFreePernNote") }}</p>
+            <p class="govuk-body-s govuk-!-margin-top-1 govuk-!-margin-bottom-0">{{ freeNote }}</p>
           {% endset %}
           {% set freeTonnageChangeUrl = freePrnsChangeUrl if isReprocessor else freePernChangeUrl %}
-          {% if isExporter %}
-            {% set freeTonnageLabel = localise("reports:checkFreePernLabel") %}
-          {% else %}
-            {% set freeTonnageLabel = localise("reports:checkFreePrnsLabel") %}
-          {% endif %}
           {% set prnRows = prnRows.concat([{
-            key: { text: freeTonnageLabel },
+            key: { text: freeLabel },
             value: { html: freeTonnageHtml },
             actions: {
               items: [{
                 href: freeTonnageChangeUrl,
                 text: changeText,
-                visuallyHiddenText: freeTonnageLabel
+                visuallyHiddenText: freeLabel
               }]
             }
           }]) %}

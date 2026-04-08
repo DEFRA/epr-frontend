@@ -12,11 +12,40 @@ import {
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
+  getNoteTypeDisplayNames,
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
+
+/**
+ * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
+ * @returns {object}
+ */
+function buildPageLabels({
+  localise,
+  periodLabel,
+  noteTypePlural,
+  wasteActionGerund
+}) {
+  return {
+    pageTitle: localise('reports:view:pageTitle'),
+    heading: localise('reports:view:heading', { periodLabel }),
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
+    }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    freeLabel: localise('reports:view:freeLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:view:totalRevenue', { noteTypePlural }),
+    avgPriceLabel: localise('reports:view:avgPrice', { noteTypePlural })
+  }
+}
 
 function buildViewData({
   registration,
@@ -34,6 +63,8 @@ function buildViewData({
   const isAccredited = !!accreditation
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
+  const { noteTypePlural, wasteActionGerund } =
+    getNoteTypeDisplayNames(registration)
 
   const submittedAt = reportDetail.status.submitted.at
   const submittedBy = reportDetail.status.submitted.by.name
@@ -43,8 +74,12 @@ function buildViewData({
   })
 
   return {
-    pageTitle: localise('reports:view:pageTitle'),
-    heading: localise('reports:view:heading', { periodLabel }),
+    ...buildPageLabels({
+      localise,
+      periodLabel,
+      noteTypePlural,
+      wasteActionGerund
+    }),
     backUrl,
 
     material,
@@ -65,7 +100,7 @@ function buildViewData({
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
 
-    wasteExported: buildWasteExported(exportActivity),
+    wasteExported: buildWasteExported(exportActivity, isExporter),
 
     isAccredited,
     isExporter,
@@ -94,26 +129,32 @@ function buildViewData({
   }
 }
 
-function buildWasteExported(exportActivity) {
-  if (!exportActivity) {
+function buildWasteExported(exportActivity, isExporter) {
+  if (!isExporter) {
     return null
   }
 
   return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
-      { text: overseasSite.siteName },
-      { text: overseasSite.orsId }
-    ]),
+    totalTonnage: formatTonnage(exportActivity?.totalTonnageExported ?? 0),
+    overseasSiteRows: (exportActivity?.overseasSites ?? []).map(
+      (overseasSite) => [
+        { text: overseasSite.siteName },
+        { text: overseasSite.orsId }
+      ]
+    ),
     tonnageReceivedNotExported: formatTonnage(
-      exportActivity.tonnageReceivedNotExported
+      exportActivity?.tonnageReceivedNotExported ?? 0
     ),
     tonnageRefusedOrStopped: formatTonnage(
-      exportActivity.totalTonnageRefusedOrStopped
+      exportActivity?.totalTonnageRefusedOrStopped ?? 0
     ),
-    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
-    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
-    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
+    tonnageRefused: formatTonnage(
+      exportActivity?.tonnageRefusedAtDestination ?? 0
+    ),
+    tonnageStopped: formatTonnage(
+      exportActivity?.tonnageStoppedDuringExport ?? 0
+    ),
+    tonnageRepatriated: formatTonnage(exportActivity?.tonnageRepatriated ?? 0)
   }
 }
 

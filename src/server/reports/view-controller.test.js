@@ -759,14 +759,15 @@ describe('#viewController', () => {
           })
 
           it.for(exporters)(
-            '($scenario) does not render the section',
+            '($scenario) still renders the section with zero tonnage',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
                 registrationAndAccreditation
               })
 
-              expect(section).toBeNull()
+              expect(section).not.toBeNull()
+              expect(section.textContent).toContain('0.00')
             }
           )
         })
@@ -835,14 +836,15 @@ describe('#viewController', () => {
           })
 
           it.for(exporters)(
-            '($scenario) does not render the section',
+            '($scenario) still renders the section with zero tonnage',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
                 registrationAndAccreditation
               })
 
-              expect(section).toBeNull()
+              expect(section).not.toBeNull()
+              expect(section.textContent).toContain('0.00')
             }
           )
         })
@@ -956,14 +958,15 @@ describe('#viewController', () => {
           })
 
           it.for(exporters)(
-            '($scenario) does not render the section',
+            '($scenario) still renders the section with zero tonnage',
             async ({ registrationAndAccreditation }, { server }) => {
               const section = await loadSection({
                 server,
                 registrationAndAccreditation
               })
 
-              expect(section).toBeNull()
+              expect(section).not.toBeNull()
+              expect(section.textContent).toContain('0.00')
             }
           )
         })

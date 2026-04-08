@@ -4,6 +4,7 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
+  getNoteTypeDisplayNames,
   isExporterRegistration,
   isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
@@ -40,15 +41,31 @@ function getCreationDetails(statusCreated, localise) {
   }
 }
 
+const defaultExportActivity = {
+  totalTonnageExported: 0,
+  overseasSites: [],
+  tonnageReceivedNotExported: null,
+  tonnageRefusedAtDestination: null,
+  tonnageStoppedDuringExport: null,
+  totalTonnageRefusedOrStopped: null,
+  tonnageRepatriated: null
+}
+
 /**
- * @param {object} exportActivity
- * @returns {object}
+ * @param {object|null|undefined} exportActivity
+ * @param {boolean} isExporter
+ * @returns {object|null}
  */
-function buildWasteExportedViewData(exportActivity) {
+function buildWasteExported(exportActivity, isExporter) {
+  if (!isExporter) {
+    return null
+  }
+
+  const activity = exportActivity ?? defaultExportActivity
   return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites),
-    ...formatExportTonnages(exportActivity)
+    totalTonnage: formatTonnage(activity.totalTonnageExported),
+    overseasSiteRows: buildOverseasSiteRows(activity.overseasSites),
+    ...formatExportTonnages(activity)
   }
 }
 
@@ -125,6 +142,35 @@ export const submitGetController = {
 }
 
 /**
+ * @param {{ localise: (key: string, params?: Record<string, string>) => string, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
+ * @returns {object}
+ */
+function buildPageLabels({
+  localise,
+  material,
+  periodLabel,
+  noteTypePlural,
+  wasteActionGerund
+}) {
+  return {
+    pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
+    heading: localise('reports:submitHeading', { periodLabel }),
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    }),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
+    }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    freeLabel: localise('reports:submitFreeLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:submitTotalRevenue', { noteTypePlural }),
+    avgPriceLabel: localise('reports:submitAvgPrice', { noteTypePlural })
+  }
+}
+
+/**
  * @param {{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse, organisationId: string, registrationId: string, year: number, cadence: string, period: number, localise: (key: string, params?: Record<string, string>) => string, localiseUrl: (url: string) => string }} params
  * @returns {object}
  */
@@ -144,6 +190,8 @@ function buildViewData({
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
+  const { noteTypePlural, wasteActionGerund } =
+    getNoteTypeDisplayNames(registration)
 
   const { createdBy, createdOn } = getCreationDetails(
     reportDetail.status.created,
@@ -153,8 +201,13 @@ function buildViewData({
   const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
   return {
-    pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
-    heading: localise('reports:submitHeading', { periodLabel }),
+    ...buildPageLabels({
+      localise,
+      material,
+      periodLabel,
+      noteTypePlural,
+      wasteActionGerund
+    }),
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
     isExporter,
@@ -180,10 +233,8 @@ function buildViewData({
       supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
     },
 
-    // Waste exported (exporters only)
-    wasteExported: exportActivity
-      ? buildWasteExportedViewData(exportActivity)
-      : null,
+    // Waste exported (exporters only — always show section with defaults)
+    wasteExported: buildWasteExported(exportActivity, isExporter),
 
     // Waste sent on
     wasteSentOn: buildWasteSentOnViewData(wasteSent),
