@@ -326,6 +326,9 @@ describe('#createdController', () => {
           `${basePeriodPath}/view`
         )
         expect(link.closest('a').getAttribute('target')).toBe('_blank')
+        expect(link.closest('a').getAttribute('rel')).toBe(
+          'noopener noreferrer'
+        )
       })
 
       it('should display Return to home link', async ({ server }) => {
