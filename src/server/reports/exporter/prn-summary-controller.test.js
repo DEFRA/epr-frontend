@@ -178,6 +178,21 @@ describe('#prnSummaryController', () => {
         expect(result).toContain('1576.12')
       })
 
+      it('should format revenue to 2 decimal places', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reportDetail,
+          prn: { ...reportDetail.prn, totalRevenue: 1576.1 }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        expect(result).toContain('1576.10')
+      })
+
       it('should return 404 for non-accredited exporter', async ({
         server
       }) => {
