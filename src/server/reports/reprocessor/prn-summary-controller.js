@@ -1,25 +1,12 @@
-import Joi from 'joi'
-
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
+import { formatRevenue, revenuePayloadSchema } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
-
-const FORMAT_ERROR = 'reports:noteSummaryErrorFormat'
 
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/prn-summary',
   fieldName: 'prnRevenue',
-  payloadSchema: Joi.object({
-    prnRevenue: Joi.number().min(0).required().messages({
-      'any.required': 'reports:noteSummaryErrorRequired',
-      'number.base': 'reports:noteSummaryErrorRequired',
-      'number.min': FORMAT_ERROR,
-      'number.unsafe': FORMAT_ERROR,
-      'number.infinity': FORMAT_ERROR
-    }),
-    action: Joi.string().valid('continue', 'save').required(),
-    crumb: Joi.string()
-  }),
+  payloadSchema: revenuePayloadSchema,
   pageFields({
     material,
     periodLabel,
@@ -46,10 +33,11 @@ const { getController, postController } = createDataPageControllers({
       revenueLabel: localise('reports:noteSummaryRevenueLabel', {
         noteTypePlural
       }),
+      revenueHint: localise('reports:noteSummaryRevenueHint'),
       continueText: localise('reports:noteSummaryContinue'),
       saveText: localise('reports:noteSummarySave'),
       backUrl: `${periodPath}/tonnes-not-recycled`,
-      defaultValue: reportDetail.prn.totalRevenue
+      defaultValue: formatRevenue(reportDetail.prn.totalRevenue)
     })
   },
   guardFn: buildReprocessorViewData,

@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -125,7 +125,12 @@ describe('#reprocessorPrnSummaryController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain('91')
+        const { body } = new JSDOM(result).window.document
+        const inset = body.querySelector('.govuk-inset-text')
+
+        expect(inset).not.toBeNull()
+        expect(getByText(inset, /Total tonnage of PRNs issued/)).toBeDefined()
+        expect(getByText(inset, '91')).toBeDefined()
       })
 
       it('should display PRN heading with material', async ({ server }) => {
@@ -271,12 +276,38 @@ describe('#reprocessorPrnSummaryController', () => {
         )
       })
 
+      it('should show error when revenue has more than 2 decimal places', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, prnRevenue: 1576.123, action: 'continue' }
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(
+            alert,
+            /Total revenue should only have 2 digits after the decimal point/
+          )
+        ).toBeDefined()
+      })
+
       it('should show error when revenue is empty', async ({ server }) => {
         const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
           auth: mockAuth
         })
 
-        const { statusCode, result } = await server.inject({
+        const { result } = await server.inject({
           method: 'POST',
           url: baseUrl,
           auth: mockAuth,
@@ -284,8 +315,12 @@ describe('#reprocessorPrnSummaryController', () => {
           payload: { crumb, prnRevenue: '', action: 'continue' }
         })
 
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain('Enter the total revenue of PRNs issued')
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(alert, /Enter the total revenue of PRNs issued/)
+        ).toBeDefined()
       })
     })
   })

@@ -1,3 +1,41 @@
+import Decimal from 'decimal.js'
+import Joi from 'joi'
+
+const TWO_DECIMAL_PLACES = 2
+
+export const formatRevenue = (value) => value?.toFixed(TWO_DECIMAL_PLACES)
+
+export const maxTwoDecimalPlaces = (value, helpers) => {
+  if (new Decimal(value).decimalPlaces() > TWO_DECIMAL_PLACES) {
+    return helpers.error('number.maxDecimalPlaces')
+  }
+  return value
+}
+
+const revenueErrors = Object.freeze({
+  decimalPlaces: 'reports:noteSummaryErrorDecimalPlaces',
+  format: 'reports:noteSummaryErrorFormat',
+  required: 'reports:noteSummaryErrorRequired'
+})
+
+export const revenuePayloadSchema = Joi.object({
+  prnRevenue: Joi.number()
+    .empty('')
+    .min(0)
+    .custom(maxTwoDecimalPlaces)
+    .required()
+    .messages({
+      'any.required': revenueErrors.required,
+      'number.base': revenueErrors.format,
+      'number.min': revenueErrors.format,
+      'number.unsafe': revenueErrors.format,
+      'number.infinity': revenueErrors.format,
+      'number.maxDecimalPlaces': revenueErrors.decimalPlaces
+    }),
+  action: Joi.string().valid('continue', 'save').required(),
+  crumb: Joi.string()
+})
+
 /**
  * Builds validation error objects from Joi error details, suitable for
  * govukErrorSummary and inline error display.

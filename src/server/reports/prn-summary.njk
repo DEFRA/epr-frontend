@@ -25,7 +25,10 @@
       <span class="govuk-caption-xl">{{ caption }}</span>
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-      <p class="govuk-body">{{ tonnageLabel }}: <strong>{{ tonnageIssued }}</strong></p>
+      <div class="govuk-inset-text">
+        {{ tonnageLabel }}<br>
+        <strong class="govuk-!-font-size-36">{{ tonnageIssued }}</strong>
+      </div>
 
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
@@ -35,12 +38,16 @@
           name: "prnRevenue",
           inputmode: "decimal",
           spellcheck: false,
+          classes: "govuk-input--width-10",
           prefix: {
             text: "£"
           },
           label: {
             text: revenueLabel,
             classes: "govuk-label--m"
+          },
+          hint: {
+            text: revenueHint
           },
           value: value,
           errorMessage: errors.prnRevenue if errors else null
