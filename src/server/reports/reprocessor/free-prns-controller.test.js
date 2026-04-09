@@ -135,14 +135,34 @@ describe('#reprocessorFreePrnsController', () => {
         )
       })
 
-      it('should display PRN hint text', async ({ server }) => {
+      it('should display inset hint, input label, and input hint', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
           auth: mockAuth
         })
 
-        expect(result).toContain('you may have issued PRNs to your own company')
+        const { body } = new JSDOM(result).window.document
+        const inset = body.querySelector('.govuk-inset-text')
+
+        expect(inset).not.toBeNull()
+        expect(
+          getByText(
+            inset,
+            /you may have issued PRNs to your own company for no charge/
+          )
+        ).toBeDefined()
+        expect(
+          getByText(body, /Enter total tonnage of PRNs issued for free/)
+        ).toBeDefined()
+        expect(
+          getByText(
+            body,
+            /Total tonnage should be a whole number without decimal numbers/
+          )
+        ).toBeDefined()
       })
 
       it('should pre-fill tonnage if previously saved', async ({ server }) => {

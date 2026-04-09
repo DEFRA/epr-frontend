@@ -305,7 +305,7 @@ describe('#tonnesNotRecycledController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: monthlyUrl,
             auth: mockAuth,
@@ -313,10 +313,41 @@ describe('#tonnesNotRecycledController', () => {
             payload: { crumb, tonnageNotRecycled: '', action: 'continue' }
           })
 
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain(
-            'Enter the total tonnage of packaging waste received but not recycled'
-          )
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total tonnage of packaging waste received but not recycled/
+            )
+          ).toBeDefined()
+        })
+
+        it('should show error when tonnage is non-numeric', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, monthlyUrl, {
+            auth: mockAuth
+          })
+
+          const { result } = await server.inject({
+            method: 'POST',
+            url: monthlyUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, tonnageNotRecycled: 'abc', action: 'continue' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total tonnage in digits, using a decimal point if needed/
+            )
+          ).toBeDefined()
         })
 
         it('should show error when tonnage has more than 2 decimal places', async ({
@@ -338,7 +369,10 @@ describe('#tonnesNotRecycledController', () => {
           const alert = getByRole(body, 'alert')
 
           expect(
-            getByText(alert, /Enter a tonnage to no more than 2 decimal places/)
+            getByText(
+              alert,
+              /Total tonnage should only have two digits after the decimal point/
+            )
           ).toBeDefined()
         })
       })

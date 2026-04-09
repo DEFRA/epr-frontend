@@ -12,12 +12,13 @@ const { getController, postController } = createDataPageControllers({
   fieldName: 'tonnageNotRecycled',
   payloadSchema: Joi.object({
     tonnageNotRecycled: Joi.number()
+      .empty('')
       .min(0)
       .custom(maxTwoDecimalPlaces)
       .required()
       .messages({
         'any.required': 'reports:tonnageNotRecycledErrorRequired',
-        'number.base': 'reports:tonnageNotRecycledErrorRequired',
+        'number.base': 'reports:tonnageNotRecycledErrorFormat',
         'number.min': 'reports:tonnageNotRecycledErrorNegative',
         'number.unsafe': 'reports:tonnageNotRecycledErrorFormat',
         'number.infinity': 'reports:tonnageNotRecycledErrorFormat',
