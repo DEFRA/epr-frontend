@@ -135,7 +135,7 @@
 
           {% if wasteExported.unapprovedOverseasSiteRows | length > 0 %}
             <h3 class="govuk-heading-m">{{ localise("reports:unapprovedOverseasSitesHeading") }}</h3>
-            <p class="govuk-body">{{ localise("reports:unapprovedOverseasSitesIntro") }}</p>
+            <div class="govuk-inset-text">{{ localise("reports:unapprovedOverseasSitesIntro") }}</div>
             {{ govukTable({
               head: [
                 { text: localise("reports:unapprovedOrsIdColumn") }
