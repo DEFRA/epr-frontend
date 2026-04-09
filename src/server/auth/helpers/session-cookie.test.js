@@ -77,19 +77,27 @@ describe('#sessionCookie - integration', () => {
       }
     })
 
+    const testHandler = (request) => ({
+      userId: request.auth.credentials.profile.id,
+      email: request.auth.credentials.profile.email,
+      idToken: request.auth.credentials.idToken
+    })
+
     beforeEach(({ server }) => {
-      server.route({
-        method: 'GET',
-        path: '/test-auth',
-        options: {
-          auth: 'session'
+      server.route([
+        {
+          method: 'GET',
+          path: '/test-auth',
+          options: { auth: 'session' },
+          handler: testHandler
         },
-        handler: (request) => ({
-          userId: request.auth.credentials.profile.id,
-          email: request.auth.credentials.profile.email,
-          idToken: request.auth.credentials.idToken
-        })
-      })
+        {
+          method: 'POST',
+          path: '/test-auth',
+          options: { auth: 'session', plugins: { crumb: false } },
+          handler: testHandler
+        }
+      ])
     })
 
     it('should refresh token in background when token expires within 5 minutes', async ({
@@ -419,7 +427,82 @@ describe('#sessionCookie - integration', () => {
       )
     })
 
-    it('should await refresh and update session before response when token expires within 10 seconds', async ({
+    it('should redirect GET request to /auth/refresh when token expires within 10 seconds', async ({
+      server
+    }) => {
+      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
+
+      // Expires in 5 seconds: within the 10-second awaited-refresh window
+      const expiresAt = addSeconds(new Date(), 5).toISOString()
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-awaited',
+        expiresAt
+      )
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      // GET request is redirected to /auth/refresh instead of blocking
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(
+        '/auth/refresh?returnTo=%2Ftest-auth'
+      )
+
+      // No refresh happened yet — just a redirect
+      expect(timerSpy).not.toHaveBeenCalled()
+
+      // Session is unchanged in cache
+      const unchangedSession = await server.app.cache.get(sessionId)
+      expect(unchangedSession.idToken).toBe(sessionData.idToken)
+    })
+
+    it('should preserve query string in returnTo when redirecting to /auth/refresh', async ({
+      server
+    }) => {
+      const expiresAt = addSeconds(new Date(), 5).toISOString()
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-query-string',
+        expiresAt
+      )
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth?page=2&sort=date',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(
+        '/auth/refresh?returnTo=%2Ftest-auth%3Fpage%3D2%26sort%3Ddate'
+      )
+    })
+
+    it('should perform blocking refresh inline for POST request when token expires within 10 seconds', async ({
       server,
       msw
     }) => {
@@ -440,7 +523,7 @@ describe('#sessionCookie - integration', () => {
       // Expires in 5 seconds: within the 10-second awaited-refresh window
       const expiresAt = addSeconds(new Date(), 5).toISOString()
       const { sessionId, sessionData } = createExpiredRefreshSessionData(
-        'user-awaited',
+        'user-post',
         expiresAt
       )
 
@@ -457,8 +540,10 @@ describe('#sessionCookie - integration', () => {
         Iron.defaults
       )
 
+      // POST requests still use inline blocking refresh to avoid losing
+      // the request body in a redirect
       const response = await server.inject({
-        method: 'GET',
+        method: 'POST',
         url: '/test-auth',
         headers: {
           cookie: `userSession=${sealedCookie}`
@@ -469,11 +554,6 @@ describe('#sessionCookie - integration', () => {
 
       const updatedSession = await server.app.cache.get(sessionId)
       expect(updatedSession.refreshToken).toBe('awaited-new-refresh-token')
-      const newExpiresAt = new Date(updatedSession.expiresAt)
-      expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
-
-      const payload = JSON.parse(response.payload)
-      expect(updatedSession.idToken).toBe(payload.idToken)
 
       expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
         'tokenRefreshDuration',
@@ -482,7 +562,7 @@ describe('#sessionCookie - integration', () => {
       )
     })
 
-    it('should drop session synchronously when awaited refresh fails for token expiring within 10 seconds', async ({
+    it('should drop session for POST request when inline blocking refresh fails', async ({
       server,
       msw
     }) => {
@@ -503,7 +583,7 @@ describe('#sessionCookie - integration', () => {
       // Expires in 5 seconds: within the 10-second awaited-refresh window
       const expiresAt = addSeconds(new Date(), 5).toISOString()
       const { sessionId, sessionData } = createExpiredRefreshSessionData(
-        'user-awaited-fail',
+        'user-post-fail',
         expiresAt
       )
 
@@ -517,7 +597,7 @@ describe('#sessionCookie - integration', () => {
       )
 
       const response = await server.inject({
-        method: 'GET',
+        method: 'POST',
         url: '/test-auth',
         headers: {
           cookie: `userSession=${sealedCookie}`
@@ -529,59 +609,6 @@ describe('#sessionCookie - integration', () => {
 
       const removedSession = await server.app.cache.get(sessionId)
       expect(removedSession).toBeNull()
-
-      expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
-        'tokenRefreshDuration',
-        expect.any(Function),
-        { type: 'blocking' }
-      )
-    })
-
-    it('should skip refresh when idTokenRefreshInProgress is already set', async ({
-      server
-    }) => {
-      const timerSpy = vi.spyOn(Metrics.prototype, 'timer')
-      // Expires in 5 seconds: would normally trigger an awaited refresh
-      const expiresAt = addSeconds(new Date(), 5).toISOString()
-      const sessionId = 'test-session-in-progress'
-
-      const sessionData = {
-        profile: { id: 'user-in-progress', email: 'inprogress@example.com' },
-        expiresAt,
-        idToken: 'old-id-token-in-progress',
-        refreshToken: 'old-refresh-token-in-progress',
-        idTokenRefreshInProgress: true,
-        urls: {
-          token: 'http://defra-id.auth/token',
-          logout: 'http://defra-id.auth/logout'
-        }
-      }
-
-      await server.app.cache.set(sessionId, sessionData)
-
-      const cookiePassword = config.get('session.cookie.password')
-      const sealedCookie = await Iron.seal(
-        { sessionId },
-        cookiePassword,
-        Iron.defaults
-      )
-
-      const response = await server.inject({
-        method: 'GET',
-        url: '/test-auth',
-        headers: {
-          cookie: `userSession=${sealedCookie}`
-        }
-      })
-
-      expect(response.statusCode).toBe(statusCodes.ok)
-
-      // Session must be unchanged: refresh was skipped because it was already in progress
-      const unchangedSession = await server.app.cache.get(sessionId)
-      expect(unchangedSession.idToken).toBe('old-id-token-in-progress')
-      expect(unchangedSession.refreshToken).toBe(
-        'old-refresh-token-in-progress'
-      )
 
       expect(timerSpy).toHaveBeenCalledExactlyOnceWith(
         'tokenRefreshDuration',

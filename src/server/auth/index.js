@@ -1,10 +1,11 @@
 import { controller as callbackController } from '#server/auth/callback/controller.js'
 import { controller as organisationController } from '#server/auth/organisation/controller.js'
+import { controller as refreshController } from '#server/auth/refresh/controller.js'
 import { paths } from '#server/paths.js'
 
 /**
  * Auth plugin
- * Registers auth routes for OAuth2/OIDC callback, organisation selection, and logout callback
+ * Registers auth routes for OAuth2/OIDC callback, organisation selection, token refresh, and logout callback
  */
 const auth = {
   plugin: {
@@ -27,6 +28,11 @@ const auth = {
           ...organisationController,
           method: 'GET',
           path: paths.auth.organisation
+        },
+        {
+          ...refreshController,
+          method: 'GET',
+          path: paths.auth.refresh
         }
       ])
     }

@@ -4,6 +4,7 @@ import {
   removeUserSession,
   updateUserSession
 } from '#server/auth/helpers/user-session.js'
+import { paths } from '#server/paths.js'
 import authCookie from '@hapi/cookie'
 import { isPast, parseISO, subMinutes, subSeconds } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
@@ -172,6 +173,9 @@ const createSessionCookie = (verifyToken) => {
       register: async (server) => {
         await server.register(authCookie)
 
+        // Expose blockingRefresh for the /auth/refresh endpoint
+        server.app.blockingRefresh = blockingRefresh
+
         server.auth.strategy('session', 'cookie', {
           cookie: {
             name: 'userSession',
@@ -197,7 +201,17 @@ const createSessionCookie = (verifyToken) => {
 
             // Note this first check also catches an expired session
             if (userSessionExpires(userSession, inNext10Seconds)) {
-              return blockingRefresh(request, userSession)
+              if (request.method === 'get') {
+                // Flag for onPostAuth to redirect to /auth/refresh.
+                // This moves the slow OIDC token refresh off the page
+                // response time, avoiding false alerts on the CDP
+                // average response time metric.
+                request.app.needsTokenRefreshRedirect = true
+              } else {
+                // Non-GET requests (e.g. POST) still use inline blocking
+                // refresh because a redirect would lose the request body
+                return blockingRefresh(request, userSession)
+              }
             } else if (userSessionExpires(userSession, inNext5Minutes)) {
               backgroundRefresh(request, userSession)
             } else {
@@ -212,6 +226,24 @@ const createSessionCookie = (verifyToken) => {
         })
 
         server.auth.default('session')
+
+        // Redirect expired GET requests to /auth/refresh instead of
+        // blocking inline. The refresh endpoint is a distinct URL that
+        // can be excluded from the CDP response time alert.
+        server.ext('onPostAuth', (request, h) => {
+          if (
+            request.app.needsTokenRefreshRedirect &&
+            request.path !== paths.auth.refresh
+          ) {
+            const returnTo = `${request.url.pathname}${request.url.search}`
+            return h
+              .redirect(
+                `${paths.auth.refresh}?returnTo=${encodeURIComponent(returnTo)}`
+              )
+              .takeover()
+          }
+          return h.continue
+        })
       }
     }
   }
