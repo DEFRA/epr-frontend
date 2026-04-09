@@ -123,6 +123,7 @@
           <p class="govuk-heading-l">{{ wasteExported.totalTonnage }}</p>
 
           {% if wasteExported.overseasSiteRows | length > 0 %}
+            <h3 class="govuk-heading-m">{{ localise("reports:overseasSitesHeading") }}</h3>
             {{ govukTable({
               head: [
                 { text: localise("reports:siteNameColumn") },

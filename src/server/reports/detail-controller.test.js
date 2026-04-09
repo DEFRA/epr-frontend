@@ -304,8 +304,8 @@ const exporterWithUnapprovedReportDetail = {
       }
     ],
     unapprovedOverseasSites: [
-      { orsId: '500', tonnageExported: 10 },
-      { orsId: '501', tonnageExported: 5 }
+      { orsId: 'ORS-777', tonnageExported: 10 },
+      { orsId: 'ORS-888', tonnageExported: 5 }
     ],
     tonnageReceivedNotExported: 0,
     totalTonnageRefusedOrStopped: 0,
@@ -1131,22 +1131,20 @@ describe('#detailReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const unapprovedHeading = Array.from(body.querySelectorAll('h3')).find(
-          (h) =>
-            h.textContent?.includes(
-              'Overseas reprocessor IDs that have not been approved'
-            )
-        )
-        let unapprovedTable = unapprovedHeading?.nextElementSibling
-        while (unapprovedTable && unapprovedTable.tagName !== 'TABLE') {
-          unapprovedTable = unapprovedTable.nextElementSibling
-        }
+        const tables = getAllByRole(body, 'table')
+        const unapprovedTable = tables.find((t) => {
+          const headers = t.querySelector('thead')?.textContent ?? ''
+          return (
+            headers.includes('Overseas reprocessor ID') &&
+            !headers.includes('Approved overseas reprocessor ID')
+          )
+        })
 
-        expect(unapprovedTable).not.toBeNull()
-        expect(unapprovedTable.textContent).toContain('500')
-        expect(unapprovedTable.textContent).toContain('501')
-        expect(unapprovedTable.textContent).toContain('10')
-        expect(unapprovedTable.textContent).toContain('5')
+        expect(unapprovedTable).toBeDefined()
+        expect(unapprovedTable.textContent).toContain('ORS-777')
+        expect(unapprovedTable.textContent).toContain('ORS-888')
+        expect(unapprovedTable.textContent).toContain('10.00')
+        expect(unapprovedTable.textContent).toContain('5.00')
       })
 
       it('should still display the approved overseas site in its own table', async ({
