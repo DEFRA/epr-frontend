@@ -15,6 +15,7 @@ import {
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
 /**
  * @param {{ organisationId: string, registrationId: string }} ids
@@ -117,6 +118,8 @@ export const detailController = {
         registrationId,
         session.idToken
       )
+
+    validateCadenceForRegistration(cadence, accreditation)
 
     const reportDetail = await fetchReportDetail(
       organisationId,

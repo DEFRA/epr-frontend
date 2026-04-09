@@ -215,26 +215,19 @@ describe('#createReportController', () => {
       })
     })
 
-    describe('for accredited exporter with quarterly cadence', () => {
-      beforeEach(() => {
+    describe('cadence validation', () => {
+      it('should return 404 when accredited registration uses quarterly cadence', async ({
+        server
+      }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           accreditedExporterRegistration
         )
-        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-        vi.mocked(createReport).mockResolvedValue({
-          id: 'report-001',
-          status: 'in_progress'
-        })
-      })
 
-      it('should redirect to supporting-information not prn-summary', async ({
-        server
-      }) => {
         const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
           auth: mockAuth
         })
 
-        const { statusCode, headers } = await server.inject({
+        const { statusCode } = await server.inject({
           method: 'POST',
           url: detailUrl,
           auth: mockAuth,
@@ -242,10 +235,54 @@ describe('#createReportController', () => {
           payload: { crumb }
         })
 
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      it('should not call createReport when cadence mismatches', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporterRegistration
         )
+
+        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url: detailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(createReport).not.toHaveBeenCalled()
+      })
+
+      it('should return 404 when registered-only registration uses monthly cadence', async ({
+        server
+      }) => {
+        const monthlyUrl =
+          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          reprocessorRegistration
+        )
+
+        const { cookie, crumb } = await getCsrfToken(server, monthlyUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: monthlyUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
       })
     })
 
@@ -292,46 +329,6 @@ describe('#createReportController', () => {
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
           '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/tonnes-recycled'
-        )
-      })
-    })
-
-    describe('for accredited reprocessor with quarterly cadence', () => {
-      const accreditedReprocessorRegistration = {
-        ...reprocessorRegistration,
-        accreditation: {
-          id: 'acc-001',
-          accreditationNumber: 'ER992415095748M'
-        }
-      }
-
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedReprocessorRegistration
-        )
-        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-        vi.mocked(createReport).mockResolvedValue({
-          id: 'report-001',
-          status: 'in_progress'
-        })
-      })
-
-      it('should redirect to tonnes-recycled', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
-
-        const { statusCode, headers } = await server.inject({
-          method: 'POST',
-          url: detailUrl,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: { crumb }
-        })
-
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/tonnes-recycled'
         )
       })
     })
