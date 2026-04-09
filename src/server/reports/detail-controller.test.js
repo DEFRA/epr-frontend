@@ -357,33 +357,6 @@ const emptyExporterReportDetail = {
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const nullExportActivityReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
-  cadence: 'quarterly',
-  year: 2026,
-  period: 1,
-  startDate: '2026-01-01',
-  endDate: '2026-03-31',
-  source: { summaryLogId: null, lastUploadedAt: null },
-  details: {
-    material: 'plastic'
-  },
-  recyclingActivity: {
-    totalTonnageReceived: 0,
-    suppliers: [],
-    tonnageRecycled: null,
-    tonnageNotRecycled: null
-  },
-  exportActivity: null,
-  wasteSent: {
-    tonnageSentToReprocessor: 0,
-    tonnageSentToExporter: 0,
-    tonnageSentToAnotherSite: 0,
-    finalDestinations: []
-  }
-}
-
 const detailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1'
 const exporterDetailUrl =
@@ -1202,31 +1175,8 @@ describe('#detailReportsController', () => {
 
         expect(tables).toHaveLength(2)
       })
-    })
 
-    describe('for exporter with no export activity', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          exporterRegistration
-        )
-        vi.mocked(fetchReportDetail).mockResolvedValue(
-          nullExportActivityReportDetail
-        )
-      })
-
-      it('should return 200', async ({ server }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: exporterDetailUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
-      it('should still render waste exported heading with zero tonnage', async ({
-        server
-      }) => {
+      it('should still render waste exported heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: exporterDetailUrl,

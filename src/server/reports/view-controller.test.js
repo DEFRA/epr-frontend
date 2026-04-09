@@ -815,7 +815,16 @@ describe('#viewController', () => {
           beforeAll(() => {
             vi.mocked(fetchReportDetail).mockResolvedValue({
               ...reportDetail,
-              exportActivity: null
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
             })
           })
 
@@ -833,6 +842,83 @@ describe('#viewController', () => {
 
               expect(section).not.toBeNull()
               expect(section.textContent).toContain('0.00')
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) does not render the approved overseas sites table',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).not.toContain(
+                'Overseas reprocessing sites'
+              )
+              expect(section.querySelector('table')).toBeNull()
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) does not render the unapproved overseas sites table',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).not.toContain(
+                'Overseas reprocessor IDs that have not been approved'
+              )
+            }
+          )
+        })
+
+        describe('when only unapproved overseas sites are present', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              exportActivity: {
+                ...reportDetail.exportActivity,
+                overseasSites: [],
+                unapprovedOverseasSites: [
+                  { orsId: 'ORS-777', tonnageExported: 8 }
+                ]
+              }
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it.for(exporters)(
+            '($scenario) does not render the approved overseas sites heading',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).not.toContain(
+                'Overseas reprocessing sites'
+              )
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) renders the unapproved overseas sites section',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).toContain(
+                'Overseas reprocessor IDs that have not been approved'
+              )
+              expect(section.textContent).toContain('ORS-777')
             }
           )
         })
@@ -892,7 +978,16 @@ describe('#viewController', () => {
           beforeAll(() => {
             vi.mocked(fetchReportDetail).mockResolvedValue({
               ...reportDetail,
-              exportActivity: null
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
             })
           })
 
@@ -1014,7 +1109,16 @@ describe('#viewController', () => {
           beforeAll(() => {
             vi.mocked(fetchReportDetail).mockResolvedValue({
               ...reportDetail,
-              exportActivity: null
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
             })
           })
 
