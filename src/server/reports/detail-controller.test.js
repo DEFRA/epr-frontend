@@ -1215,6 +1215,40 @@ describe('#detailReportsController', () => {
       })
     })
 
+    describe('cadence validation', () => {
+      it('should return 404 when accredited registration uses quarterly cadence', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedReprocessorRegistration
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1',
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      it('should return 404 when registered-only registration uses monthly cadence', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          reprocessorRegistration
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1',
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
     describe('error handling', () => {
       it('should return 404 when registration not found', async ({
         server
