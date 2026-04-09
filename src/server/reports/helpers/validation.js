@@ -1,12 +1,12 @@
+import Decimal from 'decimal.js'
 import Joi from 'joi'
 
 const TWO_DECIMAL_PLACES = 2
-const TWO_DP_FACTOR = 10 ** TWO_DECIMAL_PLACES
 
 export const formatRevenue = (value) => value?.toFixed(TWO_DECIMAL_PLACES)
 
 export const maxTwoDecimalPlaces = (value, helpers) => {
-  if (Math.round(value * TWO_DP_FACTOR) !== value * TWO_DP_FACTOR) {
+  if (new Decimal(value).decimalPlaces() > TWO_DECIMAL_PLACES) {
     return helpers.error('number.maxDecimalPlaces')
   }
   return value
