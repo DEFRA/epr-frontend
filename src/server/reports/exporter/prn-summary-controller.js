@@ -33,6 +33,7 @@ const { getController, postController } = createDataPageControllers({
       revenueLabel: localise('reports:noteSummaryRevenueLabel', {
         noteTypePlural
       }),
+      revenueHint: localise('reports:noteSummaryRevenueHint'),
       continueText: localise('reports:noteSummaryContinue'),
       saveText: localise('reports:noteSummarySave'),
       backUrl: periodPath,

@@ -85,6 +85,7 @@
   "noteSummaryErrorRequired": "Enter the total revenue of {{noteTypePlural}} issued",
   "noteSummaryHeading": "{{noteTypePlural}} issued for {{material}} packaging waste in {{periodLabel}}",
   "noteSummaryPageTitle": "{{noteTypePlural}} issued: {{material}}: {{periodLabel}}",
+  "noteSummaryRevenueHint": "For example, £1576.12",
   "noteSummaryRevenueLabel": "Enter total revenue of {{noteTypePlural}}, excluding VAT",
   "noteSummarySave": "Save and come back later",
   "noteTypeSectionHeading": "{{noteTypePlural}}",
