@@ -158,7 +158,12 @@ describe('#prnSummaryController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain('91')
+        const { body } = new JSDOM(result).window.document
+        const inset = body.querySelector('.govuk-inset-text')
+
+        expect(inset).not.toBeNull()
+        expect(getByText(inset, /Total tonnage of PERNs issued/)).toBeDefined()
+        expect(getByText(inset, '91')).toBeDefined()
       })
 
       it('should pre-fill revenue if previously saved', async ({ server }) => {
