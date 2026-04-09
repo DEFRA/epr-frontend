@@ -336,7 +336,7 @@ describe('#reprocessorFreePrnsController', () => {
           )
         })
 
-        it('should show error when tonnage has more than 2 decimal places', async ({
+        it('should show error when tonnage is not a whole number', async ({
           server
         }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -348,14 +348,14 @@ describe('#reprocessorFreePrnsController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, freeTonnage: 12.345, action: 'continue' }
+            payload: { crumb, freeTonnage: 12.5, action: 'continue' }
           })
 
           const { body } = new JSDOM(result).window.document
           const alert = getByRole(body, 'alert')
 
           expect(
-            getByText(alert, /Enter a tonnage to no more than 2 decimal places/)
+            getByText(alert, /Enter a whole number without decimal places/)
           ).toBeDefined()
         })
       })

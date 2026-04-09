@@ -2,25 +2,20 @@ import Joi from 'joi'
 
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
-import { maxTwoDecimalPlaces } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'freeTonnage',
   payloadSchema: Joi.object({
-    freeTonnage: Joi.number()
-      .min(0)
-      .custom(maxTwoDecimalPlaces)
-      .required()
-      .messages({
-        'any.required': 'reports:freeErrorRequired',
-        'number.base': 'reports:freeErrorRequired',
-        'number.min': 'reports:freeErrorNegative',
-        'number.unsafe': 'reports:freeErrorFormat',
-        'number.infinity': 'reports:freeErrorFormat',
-        'number.maxDecimalPlaces': 'reports:freeErrorDecimalPlaces'
-      }),
+    freeTonnage: Joi.number().integer().min(0).required().messages({
+      'any.required': 'reports:freeErrorRequired',
+      'number.base': 'reports:freeErrorRequired',
+      'number.integer': 'reports:freeErrorInteger',
+      'number.min': 'reports:freeErrorNegative',
+      'number.unsafe': 'reports:freeErrorFormat',
+      'number.infinity': 'reports:freeErrorFormat'
+    }),
     action: Joi.string().valid('continue', 'save').required(),
     crumb: Joi.string()
   }),
