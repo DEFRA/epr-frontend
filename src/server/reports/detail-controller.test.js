@@ -243,9 +243,20 @@ const exporterReportDetail = {
   exportActivity: {
     totalTonnageExported: 11.47,
     overseasSites: [
-      { siteName: 'EuroPlast Recycling GmbH', orsId: '001' },
-      { siteName: 'RecyclePlast SA', orsId: '096' }
+      {
+        siteName: 'EuroPlast Recycling GmbH',
+        orsId: '001',
+        country: 'Germany',
+        tonnageExported: 5
+      },
+      {
+        siteName: 'RecyclePlast SA',
+        orsId: '096',
+        country: 'France',
+        tonnageExported: 6.47
+      }
     ],
+    unapprovedOverseasSites: [],
     tonnageReceivedNotExported: 0,
     totalTonnageRefusedOrStopped: 0,
     tonnageRefusedAtDestination: 0,
@@ -263,6 +274,50 @@ const exporterReportDetail = {
         tonnageSentOn: 1.0
       }
     ]
+  }
+}
+
+/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+const exporterWithUnapprovedReportDetail = {
+  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  cadence: 'quarterly',
+  year: 2026,
+  period: 1,
+  startDate: '2026-01-01',
+  endDate: '2026-03-31',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
+  details: { material: 'plastic' },
+  recyclingActivity: {
+    totalTonnageReceived: 80.25,
+    suppliers: [],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  exportActivity: {
+    totalTonnageExported: 20.0,
+    overseasSites: [
+      {
+        siteName: 'EuroPlast Recycling GmbH',
+        orsId: '001',
+        country: 'Germany',
+        tonnageExported: 5
+      }
+    ],
+    unapprovedOverseasSites: [
+      { orsId: '500', tonnageExported: 10 },
+      { orsId: '501', tonnageExported: 5 }
+    ],
+    tonnageReceivedNotExported: 0,
+    totalTonnageRefusedOrStopped: 0,
+    tonnageRefusedAtDestination: 0,
+    tonnageStoppedDuringExport: 0,
+    tonnageRepatriated: 0
+  },
+  wasteSent: {
+    tonnageSentToReprocessor: 0,
+    tonnageSentToExporter: 0,
+    tonnageSentToAnotherSite: 0,
+    finalDestinations: []
   }
 }
 
@@ -287,6 +342,7 @@ const emptyExporterReportDetail = {
   exportActivity: {
     totalTonnageExported: 0,
     overseasSites: [],
+    unapprovedOverseasSites: [],
     tonnageReceivedNotExported: 0,
     totalTonnageRefusedOrStopped: 0,
     tonnageRefusedAtDestination: 0,
@@ -371,7 +427,21 @@ const accreditedExporterReportDetail = {
   },
   exportActivity: {
     totalTonnageExported: 11.47,
-    overseasSites: [{ orsId: '001' }, { orsId: '096' }],
+    overseasSites: [
+      {
+        siteName: 'EuroPlast Recycling GmbH',
+        orsId: '001',
+        country: 'Germany',
+        tonnageExported: 5.47
+      },
+      {
+        siteName: 'RecyclePlast SA',
+        orsId: '096',
+        country: 'France',
+        tonnageExported: 6
+      }
+    ],
+    unapprovedOverseasSites: [],
     tonnageReceivedNotExported: 0,
     totalTonnageRefusedOrStopped: 0,
     tonnageRefusedAtDestination: 0,
@@ -987,6 +1057,111 @@ describe('#detailReportsController', () => {
 
         expect(overseasTable.textContent).toContain('EuroPlast Recycling GmbH')
         expect(overseasTable.textContent).toContain('RecyclePlast SA')
+      })
+
+      it('should not display the unapproved overseas sites section when none are present', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).not.toContain(
+          'Overseas reprocessor IDs that have not been approved'
+        )
+      })
+    })
+
+    describe('for registered-only exporter with unapproved overseas sites', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          exporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          exporterWithUnapprovedReportDetail
+        )
+      })
+
+      it('should display the approved overseas sites section heading', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('Overseas reprocessing sites')
+      })
+
+      it('should display the unapproved overseas sites section heading', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'Overseas reprocessor IDs that have not been approved'
+        )
+      })
+
+      it('should list the unapproved ORS IDs with their tonnage exported', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const unapprovedHeading = Array.from(body.querySelectorAll('h3')).find(
+          (h) =>
+            h.textContent?.includes(
+              'Overseas reprocessor IDs that have not been approved'
+            )
+        )
+        let unapprovedTable = unapprovedHeading?.nextElementSibling
+        while (unapprovedTable && unapprovedTable.tagName !== 'TABLE') {
+          unapprovedTable = unapprovedTable.nextElementSibling
+        }
+
+        expect(unapprovedTable).not.toBeNull()
+        expect(unapprovedTable.textContent).toContain('500')
+        expect(unapprovedTable.textContent).toContain('501')
+        expect(unapprovedTable.textContent).toContain('10')
+        expect(unapprovedTable.textContent).toContain('5')
+      })
+
+      it('should still display the approved overseas site in its own table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('EuroPlast Recycling GmbH')
       })
     })
 

@@ -7,6 +7,7 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
   buildDestinationDetailRows,
   buildSupplierDetailRows,
+  buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -141,6 +142,9 @@ function buildWasteExported(exportActivity, isExporter) {
         { text: overseasSite.siteName },
         { text: overseasSite.orsId }
       ]
+    ),
+    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
+      exportActivity?.unapprovedOverseasSites ?? []
     ),
     tonnageReceivedNotExported: formatTonnage(
       exportActivity?.tonnageReceivedNotExported ?? 0

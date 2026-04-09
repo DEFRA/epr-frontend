@@ -10,6 +10,7 @@ import {
   buildDestinationRows,
   buildOverseasSiteDetailRows,
   buildSupplierRows,
+  buildUnapprovedOverseasSiteDetailRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
@@ -77,6 +78,10 @@ function buildViewData(
           overseasSiteDetailRows: buildOverseasSiteDetailRows(
             exportActivity?.overseasSites ?? []
           ),
+          unapprovedOverseasSiteDetailRows:
+            buildUnapprovedOverseasSiteDetailRows(
+              exportActivity?.unapprovedOverseasSites ?? []
+            ),
           tonnageReceivedNotExported:
             exportActivity?.tonnageReceivedNotExported ?? 0,
           tonnageRefusedOrStopped:
