@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -360,6 +360,29 @@ describe('#freePernController', () => {
           expect(result).toContain(
             'Enter a number less than the total number of PERNs you issued in this period'
           )
+        })
+
+        it('should show error when tonnage has more than 2 decimal places', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          const { result } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, freeTonnage: 12.345, action: 'continue' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(alert, /Enter a tonnage to no more than 2 decimal places/)
+          ).toBeDefined()
         })
       })
     })

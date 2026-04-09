@@ -1,19 +1,25 @@
 import Joi from 'joi'
 
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
+import { maxTwoDecimalPlaces } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageRecycled',
   payloadSchema: Joi.object({
-    tonnageRecycled: Joi.number().min(0).required().messages({
-      'any.required': 'reports:tonnageRecycledErrorRequired',
-      'number.base': 'reports:tonnageRecycledErrorRequired',
-      'number.min': 'reports:tonnageRecycledErrorNegative',
-      'number.unsafe': 'reports:tonnageRecycledErrorFormat',
-      'number.infinity': 'reports:tonnageRecycledErrorFormat'
-    }),
+    tonnageRecycled: Joi.number()
+      .min(0)
+      .custom(maxTwoDecimalPlaces)
+      .required()
+      .messages({
+        'any.required': 'reports:tonnageRecycledErrorRequired',
+        'number.base': 'reports:tonnageRecycledErrorRequired',
+        'number.min': 'reports:tonnageRecycledErrorNegative',
+        'number.unsafe': 'reports:tonnageRecycledErrorFormat',
+        'number.infinity': 'reports:tonnageRecycledErrorFormat',
+        'number.maxDecimalPlaces': 'reports:tonnageRecycledErrorDecimalPlaces'
+      }),
     action: Joi.string().valid('continue', 'save').required(),
     crumb: Joi.string()
   }),
