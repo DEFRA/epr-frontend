@@ -7,6 +7,7 @@ import {
 import { CADENCE } from './constants.js'
 import { createReport } from './helpers/create-report.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -21,6 +22,15 @@ export const createController = {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
     const session = request.auth.credentials
+
+    const { registration, accreditation } =
+      await fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      )
+
+    validateCadenceForRegistration(cadence, accreditation)
 
     try {
       await createReport(
@@ -41,13 +51,6 @@ export const createController = {
     }
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-
-    const { registration, accreditation } =
-      await fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      )
 
     const isAccreditedExporter =
       accreditation &&
