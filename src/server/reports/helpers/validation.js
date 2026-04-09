@@ -36,6 +36,76 @@ export const revenuePayloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
+const tonnageRecycledErrors = Object.freeze({
+  decimalPlaces: 'reports:tonnageRecycledErrorDecimalPlaces',
+  format: 'reports:tonnageRecycledErrorFormat',
+  negative: 'reports:tonnageRecycledErrorNegative',
+  required: 'reports:tonnageRecycledErrorRequired'
+})
+
+export const tonnageRecycledPayloadSchema = Joi.object({
+  tonnageRecycled: Joi.number()
+    .empty('')
+    .min(0)
+    .custom(maxTwoDecimalPlaces)
+    .required()
+    .messages({
+      'any.required': tonnageRecycledErrors.required,
+      'number.base': tonnageRecycledErrors.format,
+      'number.min': tonnageRecycledErrors.negative,
+      'number.unsafe': tonnageRecycledErrors.format,
+      'number.infinity': tonnageRecycledErrors.format,
+      'number.maxDecimalPlaces': tonnageRecycledErrors.decimalPlaces
+    }),
+  action: Joi.string().valid('continue', 'save').required(),
+  crumb: Joi.string()
+})
+
+const tonnageNotRecycledErrors = Object.freeze({
+  decimalPlaces: 'reports:tonnageNotRecycledErrorDecimalPlaces',
+  format: 'reports:tonnageNotRecycledErrorFormat',
+  negative: 'reports:tonnageNotRecycledErrorNegative',
+  required: 'reports:tonnageNotRecycledErrorRequired'
+})
+
+export const tonnageNotRecycledPayloadSchema = Joi.object({
+  tonnageNotRecycled: Joi.number()
+    .empty('')
+    .min(0)
+    .custom(maxTwoDecimalPlaces)
+    .required()
+    .messages({
+      'any.required': tonnageNotRecycledErrors.required,
+      'number.base': tonnageNotRecycledErrors.format,
+      'number.min': tonnageNotRecycledErrors.negative,
+      'number.unsafe': tonnageNotRecycledErrors.format,
+      'number.infinity': tonnageNotRecycledErrors.format,
+      'number.maxDecimalPlaces': tonnageNotRecycledErrors.decimalPlaces
+    }),
+  action: Joi.string().valid('continue', 'save').required(),
+  crumb: Joi.string()
+})
+
+const freeTonnageErrors = Object.freeze({
+  format: 'reports:freeErrorFormat',
+  integer: 'reports:freeErrorInteger',
+  negative: 'reports:freeErrorNegative',
+  required: 'reports:freeErrorRequired'
+})
+
+export const freeTonnagePayloadSchema = Joi.object({
+  freeTonnage: Joi.number().integer().min(0).required().messages({
+    'any.required': freeTonnageErrors.required,
+    'number.base': freeTonnageErrors.required,
+    'number.integer': freeTonnageErrors.integer,
+    'number.min': freeTonnageErrors.negative,
+    'number.unsafe': freeTonnageErrors.format,
+    'number.infinity': freeTonnageErrors.format
+  }),
+  action: Joi.string().valid('continue', 'save').required(),
+  crumb: Joi.string()
+})
+
 /**
  * Builds validation error objects from Joi error details, suitable for
  * govukErrorSummary and inline error display.
