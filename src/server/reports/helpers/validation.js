@@ -20,12 +20,13 @@ const revenueErrors = Object.freeze({
 
 export const revenuePayloadSchema = Joi.object({
   prnRevenue: Joi.number()
+    .empty('')
     .min(0)
     .custom(maxTwoDecimalPlaces)
     .required()
     .messages({
       'any.required': revenueErrors.required,
-      'number.base': revenueErrors.required,
+      'number.base': revenueErrors.format,
       'number.min': revenueErrors.format,
       'number.unsafe': revenueErrors.format,
       'number.infinity': revenueErrors.format,

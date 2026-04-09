@@ -295,7 +295,10 @@ describe('#reprocessorPrnSummaryController', () => {
         const alert = getByRole(body, 'alert')
 
         expect(
-          getByText(alert, /Enter an amount in pounds and pence/)
+          getByText(
+            alert,
+            /Total revenue should only have 2 digits after the decimal point/
+          )
         ).toBeDefined()
       })
 
@@ -304,7 +307,7 @@ describe('#reprocessorPrnSummaryController', () => {
           auth: mockAuth
         })
 
-        const { statusCode, result } = await server.inject({
+        const { result } = await server.inject({
           method: 'POST',
           url: baseUrl,
           auth: mockAuth,
@@ -312,8 +315,12 @@ describe('#reprocessorPrnSummaryController', () => {
           payload: { crumb, prnRevenue: '', action: 'continue' }
         })
 
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain('Enter the total revenue of PRNs issued')
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(alert, /Enter the total revenue of PRNs issued/)
+        ).toBeDefined()
       })
     })
   })

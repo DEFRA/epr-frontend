@@ -366,7 +366,7 @@ describe('#prnSummaryController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: baseUrl,
             auth: mockAuth,
@@ -374,8 +374,15 @@ describe('#prnSummaryController', () => {
             payload: { crumb, prnRevenue: 'abc', action: 'continue' }
           })
 
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain('Enter the total revenue of PERNs issued')
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total revenue in digits, using a decimal point if needed/
+            )
+          ).toBeDefined()
         })
 
         it('should show error when revenue has more than 2 decimal places', async ({
@@ -397,7 +404,10 @@ describe('#prnSummaryController', () => {
           const alert = getByRole(body, 'alert')
 
           expect(
-            getByText(alert, /Enter an amount in pounds and pence/)
+            getByText(
+              alert,
+              /Total revenue should only have 2 digits after the decimal point/
+            )
           ).toBeDefined()
         })
 
@@ -406,7 +416,7 @@ describe('#prnSummaryController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: baseUrl,
             auth: mockAuth,
@@ -414,8 +424,12 @@ describe('#prnSummaryController', () => {
             payload: { crumb, prnRevenue: '', action: 'continue' }
           })
 
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain('Enter the total revenue of PERNs issued')
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(alert, /Enter the total revenue of PERNs issued/)
+          ).toBeDefined()
         })
       })
     })
