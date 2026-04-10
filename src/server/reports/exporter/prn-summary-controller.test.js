@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -158,7 +158,12 @@ describe('#prnSummaryController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain('91')
+        const { body } = new JSDOM(result).window.document
+        const inset = body.querySelector('.govuk-inset-text')
+
+        expect(inset).not.toBeNull()
+        expect(getByText(inset, /Total tonnage of PERNs issued/)).toBeDefined()
+        expect(getByText(inset, '91')).toBeDefined()
       })
 
       it('should pre-fill revenue if previously saved', async ({ server }) => {
@@ -171,6 +176,21 @@ describe('#prnSummaryController', () => {
         })
 
         expect(result).toContain('1576.12')
+      })
+
+      it('should format revenue to 2 decimal places', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reportDetail,
+          prn: { ...reportDetail.prn, totalRevenue: 1576.1 }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        expect(result).toContain('1576.10')
       })
 
       it('should return 404 for non-accredited exporter', async ({
@@ -346,7 +366,7 @@ describe('#prnSummaryController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: baseUrl,
             auth: mockAuth,
@@ -354,8 +374,41 @@ describe('#prnSummaryController', () => {
             payload: { crumb, prnRevenue: 'abc', action: 'continue' }
           })
 
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain('Enter the total revenue of PERNs issued')
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total revenue in digits, using a decimal point if needed/
+            )
+          ).toBeDefined()
+        })
+
+        it('should show error when revenue has more than 2 decimal places', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          const { result } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, prnRevenue: 1576.123, action: 'continue' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Total revenue should only have 2 digits after the decimal point/
+            )
+          ).toBeDefined()
         })
 
         it('should show error when revenue is empty', async ({ server }) => {
@@ -363,7 +416,7 @@ describe('#prnSummaryController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: baseUrl,
             auth: mockAuth,
@@ -371,8 +424,12 @@ describe('#prnSummaryController', () => {
             payload: { crumb, prnRevenue: '', action: 'continue' }
           })
 
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain('Enter the total revenue of PERNs issued')
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(alert, /Enter the total revenue of PERNs issued/)
+          ).toBeDefined()
         })
       })
     })
