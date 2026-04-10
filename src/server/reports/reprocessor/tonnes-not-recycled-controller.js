@@ -1,6 +1,9 @@
 import { CADENCE } from '../constants.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
-import { tonnageNotRecycledPayloadSchema } from '../helpers/validation.js'
+import {
+  formatToTwoDecimalPlaces,
+  tonnageNotRecycledPayloadSchema
+} from '../helpers/validation.js'
 import { getRedirectUrl } from '../helpers/redirect.js'
 import { updateReport } from '../helpers/update-report.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
@@ -25,7 +28,9 @@ const { getController, postController } = createDataPageControllers({
       saveText: localise('reports:tonnageNotRecycledSave'),
       fieldName: 'tonnageNotRecycled',
       backUrl: `${periodPath}/tonnes-recycled`,
-      defaultValue: reportDetail.recyclingActivity?.tonnageNotRecycled
+      defaultValue: formatToTwoDecimalPlaces(
+        reportDetail.recyclingActivity?.tonnageNotRecycled
+      )
     })
   },
   guardFn: buildReprocessorViewData,

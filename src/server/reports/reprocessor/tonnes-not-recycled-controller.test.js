@@ -73,7 +73,7 @@ const reportDetailWithTonnage = {
   ...reportDetail,
   recyclingActivity: {
     ...reportDetail.recyclingActivity,
-    tonnageNotRecycled: 89.31
+    tonnageNotRecycled: 89.3
   }
 }
 
@@ -143,7 +143,9 @@ describe('#tonnesNotRecycledController', () => {
         )
       })
 
-      it('should pre-fill tonnage if previously saved', async ({ server }) => {
+      it('should pre-fill tonnage formatted to 2 decimal places', async ({
+        server
+      }) => {
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetailWithTonnage)
 
         const { result } = await server.inject({
@@ -152,7 +154,12 @@ describe('#tonnesNotRecycledController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain('value="89.31"')
+        const { body } = new JSDOM(result).window.document
+        const input = getByRole(body, 'textbox', {
+          name: /How many tonnes of plastic packaging waste did you receive in January 2026 but not recycle/
+        })
+
+        expect(input.value).toBe('89.30')
       })
 
       it('should have back link to tonnes-recycled', async ({ server }) => {

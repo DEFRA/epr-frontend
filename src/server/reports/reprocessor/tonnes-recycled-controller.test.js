@@ -150,7 +150,9 @@ describe('#tonnesRecycledController', () => {
         expect(result).toContain('This total may differ from the')
       })
 
-      it('should pre-fill tonnage if previously saved', async ({ server }) => {
+      it('should pre-fill tonnage formatted to 2 decimal places', async ({
+        server
+      }) => {
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetailWithTonnage)
 
         const { result } = await server.inject({
@@ -159,7 +161,12 @@ describe('#tonnesRecycledController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain('value="150.5"')
+        const { body } = new JSDOM(result).window.document
+        const input = getByRole(body, 'textbox', {
+          name: /How many tonnes of plastic packaging waste did you recycle/
+        })
+
+        expect(input.value).toBe('150.50')
       })
 
       it('should return 200 for registered-only reprocessor', async ({

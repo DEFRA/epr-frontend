@@ -3,7 +3,14 @@ import Joi from 'joi'
 
 const TWO_DECIMAL_PLACES = 2
 
-export const formatRevenue = (value) => value?.toFixed(TWO_DECIMAL_PLACES)
+/**
+ * Formats a number as a string with exactly two decimal places, for
+ * pre-filling form inputs so trailing zeros are preserved (e.g. 12.3 → "12.30").
+ * @param {number | null | undefined} value
+ * @returns {string | undefined}
+ */
+export const formatToTwoDecimalPlaces = (value) =>
+  value?.toFixed(TWO_DECIMAL_PLACES)
 
 export const maxTwoDecimalPlaces = (value, helpers) => {
   if (new Decimal(value).decimalPlaces() > TWO_DECIMAL_PLACES) {
