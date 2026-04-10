@@ -4,14 +4,26 @@ import Joi from 'joi'
 const TWO_DECIMAL_PLACES = 2
 
 /**
- * Formats a number as a string with exactly two decimal places, for
- * pre-filling form inputs so trailing zeros are preserved (e.g. 12.3 → "12.30").
+ * Formats a number to a whole number or two decimal places (e.g. 150 → "150", 12.3 → "12.30").
  * @param {number | null | undefined} value
- * @returns {string | undefined}
+ * @returns {string}
  */
-export const formatToTwoDecimalPlaces = (value) =>
-  value?.toFixed(TWO_DECIMAL_PLACES)
+export const formatToTwoDecimalPlaces = (value) => {
+  if (value !== null && value !== undefined) {
+    return Number.isInteger(value)
+      ? String(value)
+      : value.toFixed(TWO_DECIMAL_PLACES)
+  }
+  return ''
+}
 
+/**
+ * Joi custom validator that rejects numbers with more than two decimal places.
+ * Uses Decimal.js to avoid IEEE 754 floating point errors (e.g. 0.07 * 100 !== 7).
+ * @param {number} value
+ * @param {import('joi').CustomHelpers} helpers
+ * @returns {number | import('joi').ErrorReport}
+ */
 export const maxTwoDecimalPlaces = (value, helpers) => {
   if (new Decimal(value).decimalPlaces() > TWO_DECIMAL_PLACES) {
     return helpers.error('number.maxDecimalPlaces')

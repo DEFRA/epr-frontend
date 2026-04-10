@@ -77,14 +77,6 @@ const reportDetail = {
   }
 }
 
-const reportDetailWithTonnage = {
-  ...reportDetail,
-  recyclingActivity: {
-    ...reportDetail.recyclingActivity,
-    tonnageRecycled: 150.5
-  }
-}
-
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/tonnes-recycled`
@@ -123,23 +115,6 @@ describe('#tonnesRecycledController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      it('should display the heading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        const { body } = new JSDOM(result).window.document
-
-        expect(
-          getByRole(body, 'heading', {
-            level: 1,
-            name: /How many tonnes of plastic packaging waste did you recycle in January 2026\?/
-          })
-        ).toBeDefined()
-      })
-
       it('should display hint text', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
@@ -150,24 +125,39 @@ describe('#tonnesRecycledController', () => {
         expect(result).toContain('This total may differ from the')
       })
 
-      it('should pre-fill tonnage formatted to 2 decimal places', async ({
-        server
-      }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetailWithTonnage)
+      it.for([
+        { tonnage: 150.5, expected: '150.50' },
+        { tonnage: 150.55, expected: '150.55' },
+        { tonnage: 150, expected: '150' }
+      ])(
+        'should display heading and pre-fill tonnage $tonnage as $expected',
+        async ({ tonnage, expected }, { server }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            recyclingActivity: {
+              ...reportDetail.recyclingActivity,
+              tonnageRecycled: tonnage
+            }
+          })
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
 
-        const { body } = new JSDOM(result).window.document
-        const input = getByRole(body, 'textbox', {
-          name: /How many tonnes of plastic packaging waste did you recycle/
-        })
+          const { body } = new JSDOM(result).window.document
+          const headingName =
+            /How many tonnes of plastic packaging waste did you recycle in January 2026\?/
 
-        expect(input.value).toBe('150.50')
-      })
+          expect(
+            getByRole(body, 'heading', { level: 1, name: headingName })
+          ).toBeDefined()
+          expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
+            expected
+          )
+        }
+      )
 
       it('should return 200 for registered-only reprocessor', async ({
         server
