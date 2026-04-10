@@ -374,9 +374,12 @@ describe('#viewController', () => {
           overseasSites: [
             {
               siteName: 'Seoul Recycling Co',
-              orsId: 'ORS-001'
+              orsId: 'ORS-001',
+              country: 'South Korea',
+              tonnageExported: 8
             }
           ],
+          unapprovedOverseasSites: [],
           tonnageReceivedNotExported: 4.5,
           tonnageRefusedAtDestination: 1.0,
           tonnageStoppedDuringExport: 0.5,
@@ -908,11 +911,82 @@ describe('#viewController', () => {
           }
         )
 
+        it.for(exporters)(
+          '($scenario) does not render the unapproved section when none are present',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.textContent).not.toContain(
+              'Overseas reprocessor IDs that have not been approved'
+            )
+          }
+        )
+
+        describe('when unapproved overseas sites are present', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              exportActivity: {
+                ...reportDetail.exportActivity,
+                unapprovedOverseasSites: [
+                  { orsId: 'ORS-999', tonnageExported: 3.25 },
+                  { orsId: 'ORS-888', tonnageExported: 1.75 }
+                ]
+              }
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it.for(exporters)(
+            '($scenario) renders the unapproved overseas sites section heading',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).toContain(
+                'Overseas reprocessor IDs that have not been approved'
+              )
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) lists the unapproved ORS IDs',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+              const tables = section.querySelectorAll('table')
+              const unapprovedTable = tables[tables.length - 1]
+
+              expect(unapprovedTable.textContent).toContain('ORS-999')
+              expect(unapprovedTable.textContent).toContain('ORS-888')
+            }
+          )
+        })
+
         describe('when no waste exported', () => {
           beforeAll(() => {
             vi.mocked(fetchReportDetail).mockResolvedValue({
               ...reportDetail,
-              exportActivity: null
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
             })
           })
 
@@ -930,6 +1004,83 @@ describe('#viewController', () => {
 
               expect(section).not.toBeNull()
               expect(section.textContent).toContain('0.00')
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) does not render the approved overseas sites table',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).not.toContain(
+                'Overseas reprocessing sites'
+              )
+              expect(section.querySelector('table')).toBeNull()
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) does not render the unapproved overseas sites table',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).not.toContain(
+                'Overseas reprocessor IDs that have not been approved'
+              )
+            }
+          )
+        })
+
+        describe('when only unapproved overseas sites are present', () => {
+          beforeAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue({
+              ...reportDetail,
+              exportActivity: {
+                ...reportDetail.exportActivity,
+                overseasSites: [],
+                unapprovedOverseasSites: [
+                  { orsId: 'ORS-777', tonnageExported: 8 }
+                ]
+              }
+            })
+          })
+
+          afterAll(() => {
+            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          })
+
+          it.for(exporters)(
+            '($scenario) does not render the approved overseas sites heading',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).not.toContain(
+                'Overseas reprocessing sites'
+              )
+            }
+          )
+
+          it.for(exporters)(
+            '($scenario) renders the unapproved overseas sites section',
+            async ({ registrationAndAccreditation }, { server }) => {
+              const section = await loadSection({
+                server,
+                registrationAndAccreditation
+              })
+
+              expect(section.textContent).toContain(
+                'Overseas reprocessor IDs that have not been approved'
+              )
+              expect(section.textContent).toContain('ORS-777')
             }
           )
         })
@@ -989,7 +1140,16 @@ describe('#viewController', () => {
           beforeAll(() => {
             vi.mocked(fetchReportDetail).mockResolvedValue({
               ...reportDetail,
-              exportActivity: null
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
             })
           })
 
@@ -1111,7 +1271,16 @@ describe('#viewController', () => {
           beforeAll(() => {
             vi.mocked(fetchReportDetail).mockResolvedValue({
               ...reportDetail,
-              exportActivity: null
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
             })
           })
 
