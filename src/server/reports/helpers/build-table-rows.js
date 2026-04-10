@@ -71,15 +71,24 @@ export function buildDestinationDetailRows(finalDestinations) {
 
 /**
  * Build govukTable rows for overseas reprocessing sites.
- * @param {Array<{siteName: string, orsId: string, country: string|null}>} overseasSites
+ * @param {Array<{siteName: string, orsId: string, country: string|null, approved: boolean}>} overseasSites
+ * @param {{ showApprovalColumn?: boolean }} [options]
  * @returns {Array<Array<{text: string}>>}
  */
-export function buildOverseasSiteRows(overseasSites) {
-  return overseasSites.map((overseasSite) => [
-    { text: overseasSite.siteName },
-    { text: overseasSite.orsId },
-    { text: overseasSite.country }
-  ])
+export function buildOverseasSiteRows(overseasSites, options) {
+  return overseasSites.map((overseasSite) => {
+    const row = [
+      { text: overseasSite.siteName },
+      { text: overseasSite.orsId },
+      { text: overseasSite.country }
+    ]
+
+    if (options?.showApprovalColumn) {
+      row.push({ text: overseasSite.approved ? '✓' : '' })
+    }
+
+    return row
+  })
 }
 
 /**

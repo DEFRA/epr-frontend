@@ -111,15 +111,59 @@ describe(buildDestinationDetailRows, () => {
 })
 
 describe(buildOverseasSiteRows, () => {
-  it('builds rows with site name, ORS ID, and country', () => {
-    const sites = [
-      { siteName: 'Hamburg Plant', orsId: 'ORS-001', country: 'Germany' }
-    ]
+  const overseasSites = [
+    {
+      siteName: 'Hamburg Plant',
+      orsId: 'ORS-001',
+      country: 'Germany',
+      approved: true
+    },
+    {
+      siteName: 'Paris Facility',
+      orsId: 'ORS-002',
+      country: 'France',
+      approved: false
+    }
+  ]
 
-    const rows = buildOverseasSiteRows(sites)
+  it('builds rows with site name, ORS ID, and country', () => {
+    const rows = buildOverseasSiteRows(overseasSites)
 
     expect(rows).toStrictEqual([
-      [{ text: 'Hamburg Plant' }, { text: 'ORS-001' }, { text: 'Germany' }]
+      [{ text: 'Hamburg Plant' }, { text: 'ORS-001' }, { text: 'Germany' }],
+      [{ text: 'Paris Facility' }, { text: 'ORS-002' }, { text: 'France' }]
+    ])
+  })
+
+  it('appends tick for approved sites when showApprovalColumn is true', () => {
+    const rows = buildOverseasSiteRows(overseasSites, {
+      showApprovalColumn: true
+    })
+
+    expect(rows).toStrictEqual([
+      [
+        { text: 'Hamburg Plant' },
+        { text: 'ORS-001' },
+        { text: 'Germany' },
+        { text: '✓' }
+      ],
+      [
+        { text: 'Paris Facility' },
+        { text: 'ORS-002' },
+        { text: 'France' },
+        { text: '' }
+      ]
+    ])
+  })
+
+  it('omits approval column when showApprovalColumn is false', () => {
+    const rows = buildOverseasSiteRows(overseasSites, {
+      showApprovalColumn: false
+    })
+
+    expect(rows).toStrictEqual([
+      [{ text: 'Hamburg Plant' }, { text: 'ORS-001' }, { text: 'Germany' }],
+      [{ text: 'Paris Facility' }, { text: 'ORS-002' }, { text: 'France' }]
     ])
   })
 })

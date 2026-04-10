@@ -98,8 +98,14 @@ const exporterReportDetail = {
   exportActivity: {
     totalTonnageExported: 50,
     overseasSites: [
-      { siteName: 'Brussels Recycling', orsId: 'OSR-001', country: 'Belgium' }
+      {
+        siteName: 'Brussels Recycling',
+        orsId: 'OSR-001',
+        country: 'Belgium',
+        approved: false
+      }
     ],
+    unapprovedOverseasSites: [{ orsId: 'OSR-999', tonnageExported: 12.5 }],
     tonnageReceivedNotExported: 15.5,
     totalTonnageRefusedOrStopped: 5.0,
     tonnageRefusedAtDestination: 3.2,
@@ -215,6 +221,17 @@ const accreditedReprocessorReportDetail = {
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
+  exportActivity: {
+    ...exporterReportDetail.exportActivity,
+    overseasSites: [
+      {
+        siteName: 'Brussels Recycling',
+        orsId: 'OSR-001',
+        country: 'Belgium',
+        approved: true
+      }
+    ]
+  },
   prn: {
     issuedTonnage: 75,
     totalRevenue: 1576.12,
@@ -441,6 +458,139 @@ describe('#checkController', () => {
 
           expect(body.textContent).toContain('50')
           expect(body.textContent).toContain('Brussels Recycling')
+        })
+
+        it('should display overseas sites heading', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Overseas reprocessing sites/,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should display overseas sites table with 3 columns for registered-only exporter', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const overseasSiteTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Brussels Recycling')
+          )
+          const headers = overseasSiteTable?.querySelectorAll('th')
+
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+          expect(headerTexts).toStrictEqual([
+            'Site name',
+            'Approved overseas reprocessor ID',
+            'Country'
+          ])
+        })
+
+        it('should not display Approved column for registered-only exporter', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const overseasSiteTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Brussels Recycling')
+          )
+          const headers = overseasSiteTable?.querySelectorAll('th')
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+
+          expect(headerTexts).not.toContain('Approved')
+        })
+
+        it('should display unapproved overseas sites heading', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Overseas reprocessor IDs that have not been logged/,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should display unapproved overseas sites intro text', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          expect(
+            getByText(
+              body,
+              /These overseas reprocessor IDs were in your summary log/
+            )
+          ).toBeDefined()
+        })
+
+        it('should display unapproved ORS ID in table', async ({ server }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const unapprovedTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('OSR-999')
+          )
+
+          expect(unapprovedTable).not.toBeNull()
+          const headers = unapprovedTable?.querySelectorAll('th')
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+          expect(headerTexts).toStrictEqual(['Overseas reprocessor ID'])
         })
 
         it('should display received but not exported heading', async ({
@@ -1354,6 +1504,57 @@ describe('#checkController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue(
             accreditedExporterReportDetail
           )
+        })
+
+        it('should display overseas sites table with Approved column', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const overseasSiteTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Brussels Recycling')
+          )
+          const headers = overseasSiteTable?.querySelectorAll('th')
+
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+          expect(headerTexts).toStrictEqual([
+            'Site name',
+            'Approved overseas reprocessor ID',
+            'Country',
+            'Approved'
+          ])
+        })
+
+        it('should display tick for approved overseas site', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const overseasSiteTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Brussels Recycling')
+          )
+          const cells = overseasSiteTable?.querySelectorAll('td')
+          const lastCell = cells?.[cells.length - 1]
+
+          expect(lastCell?.textContent?.trim()).toBe('✓')
         })
 
         it('should display PERNs heading and issued tonnage', async ({
