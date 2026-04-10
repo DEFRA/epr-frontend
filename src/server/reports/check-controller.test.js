@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, queryByRole } from '@testing-library/dom'
+import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -734,6 +734,28 @@ describe('#checkController', () => {
           )
         })
 
+        it('should display summary log warning before create button', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          getByText(
+            body,
+            /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
+          )
+          getByText(
+            body,
+            /You can delete this report before it's submitted and start again if you need to update your records/
+          )
+        })
+
         it('should display back link to supporting information page', async ({
           server
         }) => {
@@ -990,6 +1012,24 @@ describe('#checkController', () => {
 
           expect(headerSummaryList?.textContent).toContain('Site')
           expect(headerSummaryList?.textContent).toContain('North Road')
+        })
+
+        it('should display summary log warning for reprocessor', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+
+          getByText(
+            body,
+            /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
+          )
         })
 
         it('should display destination table with 4 columns', async ({

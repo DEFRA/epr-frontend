@@ -229,6 +229,10 @@
         ]
       }) }}
 
+      {{ govukInsetText({
+        text: localise("reports:checkSummaryLogWarning")
+      }) }}
+
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         <input type="hidden" name="version" value="{{ version }}" />
