@@ -787,6 +787,23 @@ describe('#detailReportsController', () => {
         expect(form).not.toBeNull()
         expect(form?.querySelector('input[name="crumb"]')).not.toBeNull()
       })
+
+      it('should display section 2 intro text for waste sent on', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 2 of your summary log'
+        )
+      })
     })
 
     describe('when no records match the period', () => {
@@ -959,6 +976,23 @@ describe('#detailReportsController', () => {
           queryByText(body, /upload your summary logs again for this period/)
         ).toBeNull()
       })
+
+      it('should display section 2 intro text for waste sent on', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 2 of your summary log'
+        )
+      })
     })
 
     describe('for registered-only exporter with data', () => {
@@ -1125,6 +1159,91 @@ describe('#detailReportsController', () => {
 
         expect(body.textContent).not.toContain(
           'Overseas reprocessor IDs that have not been logged'
+        )
+      })
+
+      it('should display section 1 intro text for waste received for export', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'The data for waste received comes from section 1 of your summary log'
+        )
+      })
+
+      it('should display section 2 intro text for waste exported for recycling', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 2 of your summary log'
+        )
+      })
+
+      it('should display section 1 intro text for tonnage received not exported', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 1 of your summary log'
+        )
+      })
+
+      it('should display section 2 intro text for tonnage refused or stopped', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 2 of your summary log'
+        )
+      })
+
+      it('should display section 4 intro text for waste sent on', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 4 of your summary log'
         )
       })
     })
@@ -1472,6 +1591,91 @@ describe('#detailReportsController', () => {
 
         expect(getByText(rows[0], 'Yes')).toBeDefined()
         expect(getByText(rows[1], 'No')).toBeDefined()
+      })
+
+      it('should display sections 1 and 2 intro text for waste received for export', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'The data for waste received comes from sections 1 and 2 of your summary log.'
+        )
+      })
+
+      it('should display sections 1 and 2 intro text for waste exported for recycling', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from sections 1 and 2 of your summary log.'
+        )
+      })
+
+      it('should display section 1 intro text for tonnage received not exported', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 1 of your summary log.'
+        )
+      })
+
+      it('should display sections 1 and 2 intro text for tonnage refused or stopped', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'The data comes from sections 1 and 2 of your summary log.'
+        )
+      })
+
+      it('should display section 4 and 5 intro text for waste sent on', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 4 and 5 of your summary log'
+        )
       })
     })
 

@@ -47,6 +47,47 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
 }
 
 /**
+ * @param {boolean} isAccreditedExporter
+ * @param {boolean} isExporter
+ * @returns {string}
+ */
+function getWasteSentOnIntroKey(isAccreditedExporter, isExporter) {
+  if (isAccreditedExporter) {
+    return 'reports:wasteSentOnIntroAccreditedExporter'
+  }
+  if (isExporter) {
+    return 'reports:wasteSentOnIntroExporter'
+  }
+  return 'reports:wasteSentOnIntroReprocessor'
+}
+
+/**
+ * @param {boolean} isAccreditedExporter
+ * @param {boolean} isExporter
+ * @param {(key: string) => string} localise
+ * @returns {object}
+ */
+function buildSectionIntros(isAccreditedExporter, isExporter, localise) {
+  return {
+    wasteSentOnIntro: localise(
+      getWasteSentOnIntroKey(isAccreditedExporter, isExporter)
+    ),
+    wasteReceivedForExportIntro: isAccreditedExporter
+      ? localise('reports:wasteReceivedForExportIntro')
+      : localise('reports:wasteReceivedForExportIntroRegOnly'),
+    wasteExportedIntro: isAccreditedExporter
+      ? localise('reports:wasteExportedIntro')
+      : localise('reports:wasteExportedIntroRegOnly'),
+    tonnageReceivedNotExportedIntro: isAccreditedExporter
+      ? localise('reports:tonnageReceivedNotExportedIntro')
+      : localise('reports:tonnageReceivedNotExportedIntroRegOnly'),
+    tonnageRefusedOrStoppedIntro: isAccreditedExporter
+      ? localise('reports:tonnageRefusedOrStoppedIntro')
+      : localise('reports:tonnageRefusedOrStoppedIntroRegOnly')
+  }
+}
+
+/**
  * @param {{ organisationId: string, registrationId: string }} ids
  * @param {object} registration
  * @param {object | undefined} accreditation
@@ -114,7 +155,8 @@ function buildViewData(
       toExporters: wasteSent.tonnageSentToExporter,
       toOtherSites: wasteSent.tonnageSentToAnotherSite,
       destinationRows: buildDestinationRows(wasteSent.finalDestinations)
-    }
+    },
+    ...buildSectionIntros(isAccreditedExporter, isExporter, localise)
   }
 }
 

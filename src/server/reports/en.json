@@ -173,6 +173,7 @@
   "tonnageReceivedColumn": "Tonnage received",
   "tonnageReceivedNotExportedHeading": "Packaging waste received but not exported",
   "tonnageReceivedNotExportedIntro": "This data comes from section 1 of your summary log.",
+  "tonnageReceivedNotExportedIntroRegOnly": "This data comes from section 1 of your summary log",
   "tonnageReceivedNotExportedLabel": "Total tonnage not exported",
   "tonnageRecycledCaption": "Create report",
   "tonnageRecycledContinue": "Continue",
@@ -187,6 +188,7 @@
   "tonnageRefusedLabel": "Total tonnage refused",
   "tonnageRefusedOrStoppedHeading": "Packaging waste refused or stopped during export",
   "tonnageRefusedOrStoppedIntro": "The data comes from sections 1 and 2 of your summary log.",
+  "tonnageRefusedOrStoppedIntroRegOnly": "This data comes from section 2 of your summary log",
   "tonnageRefusedOrStoppedLabel": "Total tonnage refused or stopped",
   "tonnageRepatriatedLabel": "Total tonnage repatriated",
   "tonnageSentOnColumn": "Tonnage sent on",
@@ -229,9 +231,13 @@
   },
   "wasteExportedHeading": "Packaging waste exported for recycling",
   "wasteExportedIntro": "This data comes from sections 1 and 2 of your summary log.",
+  "wasteExportedIntroRegOnly": "This data comes from section 2 of your summary log",
   "wasteReceivedForExportIntro": "The data for waste received comes from sections 1 and 2 of your summary log.",
+  "wasteReceivedForExportIntroRegOnly": "The data for waste received comes from section 1 of your summary log",
   "wasteReceivedHeading": "Packaging waste received for {{wasteActionGerund}}",
   "wasteReceivedIntro": "This data comes from sections 1 and 2 of your summary log.",
   "wasteSentOnHeading": "Packaging waste sent on",
-  "wasteSentOnIntro": "This data comes from sections 5 and 6 of your summary log."
+  "wasteSentOnIntroAccreditedExporter": "This data comes from section 4 and 5 of your summary log",
+  "wasteSentOnIntroExporter": "This data comes from section 4 of your summary log",
+  "wasteSentOnIntroReprocessor": "This data comes from section 2 of your summary log"
 }
