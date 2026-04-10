@@ -10,6 +10,7 @@ import {
   buildDestinationDetailRows,
   buildOverseasSiteRows,
   buildSupplierDetailRows,
+  buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
@@ -34,9 +35,10 @@ function getSupportingInformation(reportDetail, localise) {
 /**
  * @param {object|undefined} exportActivity
  * @param {boolean} isExporter
+ * @param {boolean} isAccreditedExporter
  * @returns {object|null}
  */
-function buildWasteExported(exportActivity, isExporter) {
+function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
   if (!isExporter) {
     return null
   }
@@ -45,6 +47,7 @@ function buildWasteExported(exportActivity, isExporter) {
     return {
       totalTonnage: 0,
       overseasSiteRows: [],
+      unapprovedOverseasSiteRows: [],
       ...formatExportTonnages({
         tonnageReceivedNotExported: null,
         tonnageRefusedAtDestination: null,
@@ -57,8 +60,29 @@ function buildWasteExported(exportActivity, isExporter) {
 
   return {
     totalTonnage: exportActivity.totalTonnageExported,
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites),
+    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
+      showApprovalColumn: isAccreditedExporter
+    }),
+    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
+      exportActivity.unapprovedOverseasSites
+    ),
     ...formatExportTonnages(exportActivity)
+  }
+}
+
+/**
+ * @param {object} wasteSent
+ * @returns {object}
+ */
+function buildWasteSentOn(wasteSent) {
+  return {
+    totalTonnage: getTotalTonnageSentOn(wasteSent),
+    toReprocessors: wasteSent.tonnageSentToReprocessor,
+    toExporters: wasteSent.tonnageSentToExporter,
+    toOtherSites: wasteSent.tonnageSentToAnotherSite,
+    destinationDetailRows: buildDestinationDetailRows(
+      wasteSent.finalDestinations
+    )
   }
 }
 
@@ -80,6 +104,7 @@ function buildCheckViewData({
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
+  const isAccreditedExporter = isExporter && !!accreditation
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
@@ -96,6 +121,7 @@ function buildCheckViewData({
     isExporter,
     isReprocessor,
     isAccredited: !!accreditation,
+    showApprovalColumn: isAccreditedExporter,
     wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
       wasteActionGerund
     }),
@@ -120,16 +146,12 @@ function buildCheckViewData({
       totalTonnage: recyclingActivity.totalTonnageReceived,
       supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
     },
-    wasteExported: buildWasteExported(exportActivity, isExporter),
-    wasteSentOn: {
-      totalTonnage: getTotalTonnageSentOn(wasteSent),
-      toReprocessors: wasteSent.tonnageSentToReprocessor,
-      toExporters: wasteSent.tonnageSentToExporter,
-      toOtherSites: wasteSent.tonnageSentToAnotherSite,
-      destinationDetailRows: buildDestinationDetailRows(
-        wasteSent.finalDestinations
-      )
-    },
+    wasteExported: buildWasteExported(
+      exportActivity,
+      isExporter,
+      isAccreditedExporter
+    ),
+    wasteSentOn: buildWasteSentOn(wasteSent),
     recyclingActivity: reportDetail.recyclingActivity,
     tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
     tonnageNotRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-not-recycled`),

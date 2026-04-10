@@ -12,6 +12,7 @@ import {
   expect,
   vi
 } from 'vitest'
+import { getAllByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 
 vi.mock(
@@ -376,7 +377,15 @@ describe('#viewController', () => {
               siteName: 'Seoul Recycling Co',
               orsId: 'ORS-001',
               country: 'South Korea',
-              tonnageExported: 8
+              tonnageExported: 8,
+              approved: true
+            },
+            {
+              siteName: 'Berlin Plastics GmbH',
+              orsId: 'ORS-002',
+              country: 'Germany',
+              tonnageExported: 4,
+              approved: false
             }
           ],
           unapprovedOverseasSites: [],
@@ -894,6 +903,7 @@ describe('#viewController', () => {
             expect(tableHeader.textContent).toContain(
               'Approved overseas reprocessor ID'
             )
+            expect(tableHeader.textContent).toContain('Country')
           }
         )
 
@@ -908,8 +918,64 @@ describe('#viewController', () => {
 
             expect(tableBody.textContent).toContain('Seoul Recycling Co')
             expect(tableBody.textContent).toContain('ORS-001')
+            expect(tableBody.textContent).toContain('South Korea')
           }
         )
+
+        it('(Accredited Exporter) renders the Approved column header', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedExporter
+          })
+
+          const section = body.querySelector('#waste-exported-for-recycling')
+          const tables = getAllByRole(section, 'table')
+          const overseasTable = tables[0]
+          const headerCells = overseasTable.querySelectorAll('thead th')
+          const headerTexts = [...headerCells].map((th) =>
+            th.textContent.trim()
+          )
+
+          expect(headerTexts).toContain('Approved')
+        })
+
+        it('(Registered Only Exporter) does not render the Approved column header', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockRegisteredOnlyExporter
+          })
+
+          const section = body.querySelector('#waste-exported-for-recycling')
+          const tables = getAllByRole(section, 'table')
+          const overseasTable = tables[0]
+          const headerCells = overseasTable.querySelectorAll('thead th')
+          const headerTexts = [...headerCells].map((th) =>
+            th.textContent.trim()
+          )
+
+          expect(headerTexts).not.toContain('Approved')
+        })
+
+        it('(Accredited Exporter) shows approval status for overseas sites', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedExporter
+          })
+
+          const section = body.querySelector('#waste-exported-for-recycling')
+          const tables = getAllByRole(section, 'table')
+          const overseasTable = tables[0]
+          const rows = overseasTable.querySelectorAll('tbody tr')
+
+          expect(getByText(rows[0], 'Yes')).toBeDefined()
+          expect(getByText(rows[1], 'No')).toBeDefined()
+        })
 
         it.for(exporters)(
           '($scenario) does not render the unapproved section when none are present',
@@ -920,7 +986,7 @@ describe('#viewController', () => {
             })
 
             expect(section.textContent).not.toContain(
-              'Overseas reprocessor IDs that have not been approved'
+              'Overseas reprocessor IDs that have not been logged'
             )
           }
         )
@@ -952,7 +1018,7 @@ describe('#viewController', () => {
               })
 
               expect(section.textContent).toContain(
-                'Overseas reprocessor IDs that have not been approved'
+                'Overseas reprocessor IDs that have not been logged'
               )
             }
           )
@@ -1031,7 +1097,7 @@ describe('#viewController', () => {
               })
 
               expect(section.textContent).not.toContain(
-                'Overseas reprocessor IDs that have not been approved'
+                'Overseas reprocessor IDs that have not been logged'
               )
             }
           )
@@ -1078,7 +1144,7 @@ describe('#viewController', () => {
               })
 
               expect(section.textContent).toContain(
-                'Overseas reprocessor IDs that have not been approved'
+                'Overseas reprocessor IDs that have not been logged'
               )
               expect(section.textContent).toContain('ORS-777')
             }

@@ -3,6 +3,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -80,30 +81,27 @@
           <p class="govuk-body">{{ localise("reports:orsHelpLine2") }}</p>
         </div>
 
-        {% if wasteExported.overseasSiteDetailRows | length > 0 %}
-          <h3 class="govuk-heading-m">{{ localise("reports:overseasSitesHeading") }}</h3>
-          {{ govukTable({
-            head: [
-              { text: localise("reports:siteNameColumn") },
-              { text: localise("reports:tonnageExportedColumn") },
-              { text: localise("reports:osrIdColumn") },
-              { text: localise("reports:countryColumn") }
-            ],
-            rows: wasteExported.overseasSiteDetailRows
-          }) }}
+        {% set overseasSiteHead = [
+            { text: localise("reports:siteNameColumn") },
+            { text: localise("reports:tonnageExportedColumn") },
+            { text: localise("reports:osrIdColumn") },
+            { text: localise("reports:countryColumn") }
+        ] %}
+        {% if showApprovalColumn %}
+          {% set overseasSiteHead = overseasSiteHead.concat([{ text: localise("reports:approvedColumn") }]) %}
         {% endif %}
-
-        {% if wasteExported.unapprovedOverseasSiteDetailRows | length > 0 %}
-          <h3 class="govuk-heading-m">{{ localise("reports:unapprovedOverseasSitesHeading") }}</h3>
-          <div class="govuk-inset-text">{{ localise("reports:unapprovedOverseasSitesIntro") }}</div>
-          {{ govukTable({
-            head: [
-              { text: localise("reports:tonnageExportedColumn") },
-              { text: localise("reports:unapprovedOrsIdColumn") }
-            ],
-            rows: wasteExported.unapprovedOverseasSiteDetailRows
-          }) }}
-        {% endif %}
+        {{ overseasSitesTables({
+          approvedRows: wasteExported.overseasSiteDetailRows,
+          approvedHead: overseasSiteHead,
+          approvedHeading: localise("reports:overseasSitesHeading"),
+          unapprovedRows: wasteExported.unapprovedOverseasSiteDetailRows,
+          unapprovedHead: [
+            { text: localise("reports:tonnageExportedColumn") },
+            { text: localise("reports:unapprovedOrsIdColumn") }
+          ],
+          unapprovedHeading: localise("reports:unapprovedOverseasSitesHeading"),
+          unapprovedIntro: localise("reports:unapprovedOverseasSitesIntro")
+        }) }}
 
         <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
         <p class="govuk-body">{{ localise("reports:tonnageReceivedNotExportedIntro") }}</p>

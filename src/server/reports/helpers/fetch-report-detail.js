@@ -50,7 +50,8 @@ export async function fetchReportDetail(
  *   siteName: string,
  *   orsId: string,
  *   country: string | null,
- *   tonnageExported: number
+ *   tonnageExported: number,
+ *   approved: boolean
  * }} OverseasSiteEntry
  */
 

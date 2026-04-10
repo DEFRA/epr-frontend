@@ -253,13 +253,15 @@ const exporterReportDetail = {
         siteName: 'EuroPlast Recycling GmbH',
         orsId: '001',
         country: 'Germany',
-        tonnageExported: 5
+        tonnageExported: 5,
+        approved: false
       },
       {
         siteName: 'RecyclePlast SA',
         orsId: '096',
         country: 'France',
-        tonnageExported: 6.47
+        tonnageExported: 6.47,
+        approved: false
       }
     ],
     unapprovedOverseasSites: [],
@@ -306,7 +308,8 @@ const exporterWithUnapprovedReportDetail = {
         siteName: 'EuroPlast Recycling GmbH',
         orsId: '001',
         country: 'Germany',
-        tonnageExported: 5
+        tonnageExported: 5,
+        approved: false
       }
     ],
     unapprovedOverseasSites: [
@@ -411,13 +414,15 @@ const accreditedExporterReportDetail = {
         siteName: 'EuroPlast Recycling GmbH',
         orsId: '001',
         country: 'Germany',
-        tonnageExported: 5.47
+        tonnageExported: 5.47,
+        approved: true
       },
       {
         siteName: 'RecyclePlast SA',
         orsId: '096',
         country: 'France',
-        tonnageExported: 6
+        tonnageExported: 6,
+        approved: false
       }
     ],
     unapprovedOverseasSites: [],
@@ -1086,6 +1091,26 @@ describe('#detailReportsController', () => {
         expect(overseasTable.textContent).toContain('RecyclePlast SA')
       })
 
+      it('should not display Approved column header for registered-only exporter', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = getAllByRole(body, 'table')
+        const overseasTable = tables[1]
+        const headerCells = overseasTable.querySelectorAll('thead th')
+        const headerTexts = [...headerCells].map((th) => th.textContent.trim())
+
+        expect(headerTexts).not.toContain('Approved')
+      })
+
       it('should not display the unapproved overseas sites section when none are present', async ({
         server
       }) => {
@@ -1099,7 +1124,7 @@ describe('#detailReportsController', () => {
         const { body } = dom.window.document
 
         expect(body.textContent).not.toContain(
-          'Overseas reprocessor IDs that have not been approved'
+          'Overseas reprocessor IDs that have not been logged'
         )
       })
     })
@@ -1142,7 +1167,7 @@ describe('#detailReportsController', () => {
         const { body } = dom.window.document
 
         expect(body.textContent).toContain(
-          'Overseas reprocessor IDs that have not been approved'
+          'Overseas reprocessor IDs that have not been logged'
         )
       })
 
@@ -1407,6 +1432,46 @@ describe('#detailReportsController', () => {
 
         expect(overseasTable.textContent).toContain('001')
         expect(overseasTable.textContent).toContain('096')
+      })
+
+      it('should display Approved column header for accredited exporter', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = getAllByRole(body, 'table')
+        const overseasTable = tables[0]
+        const headerCells = overseasTable.querySelectorAll('thead th')
+        const headerTexts = [...headerCells].map((th) => th.textContent.trim())
+
+        expect(headerTexts).toContain('Approved')
+      })
+
+      it('should display approval status for overseas sites', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = getAllByRole(body, 'table')
+        const overseasTable = tables[0]
+        const rows = overseasTable.querySelectorAll('tbody tr')
+
+        expect(getByText(rows[0], 'Yes')).toBeDefined()
+        expect(getByText(rows[1], 'No')).toBeDefined()
       })
     })
 

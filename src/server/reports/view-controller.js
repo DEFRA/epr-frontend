@@ -6,6 +6,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
   buildDestinationDetailRows,
+  buildOverseasSiteRows,
   buildSupplierDetailRows,
   buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
@@ -133,7 +134,7 @@ function buildViewData({
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
 
-    wasteExported: buildWasteExported(exportActivity, isExporter),
+    wasteExported: buildWasteExported(exportActivity, isExporter, isAccredited),
 
     isAccredited,
     isExporter,
@@ -171,17 +172,16 @@ function buildViewData({
   return viewData
 }
 
-function buildWasteExported(exportActivity, isExporter) {
+function buildWasteExported(exportActivity, isExporter, isAccredited) {
   if (!isExporter || !exportActivity) {
     return null
   }
 
   return {
     totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
-      { text: overseasSite.siteName },
-      { text: overseasSite.orsId }
-    ]),
+    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
+      showApprovalColumn: isAccredited
+    }),
     unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
       exportActivity.unapprovedOverseasSites
     ),
