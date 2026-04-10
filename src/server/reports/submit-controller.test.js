@@ -8,7 +8,7 @@ import {
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, queryByRole } from '@testing-library/dom'
+import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -105,9 +105,20 @@ const exporterReportDetail = {
   exportActivity: {
     totalTonnageExported: 50,
     overseasSites: [
-      { siteName: 'Brussels Recycling', orsId: 'OSR-001', country: 'Belgium' },
-      { siteName: 'RecyclePlast SA', orsId: 'OSR-096', country: 'France' }
+      {
+        siteName: 'Brussels Recycling',
+        orsId: 'OSR-001',
+        country: 'Belgium',
+        approved: false
+      },
+      {
+        siteName: 'RecyclePlast SA',
+        orsId: 'OSR-096',
+        country: 'France',
+        approved: false
+      }
     ],
+    unapprovedOverseasSites: [{ orsId: 'OSR-999', tonnageExported: 12.5 }],
     tonnageReceivedNotExported: 12.5,
     totalTonnageRefusedOrStopped: 10.8,
     tonnageRefusedAtDestination: 2.5,
@@ -216,6 +227,17 @@ const accreditedExporterRegistration = {
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   operatorCategory: 'EXPORTER_ACCREDITED',
+  exportActivity: {
+    ...exporterReportDetail.exportActivity,
+    overseasSites: [
+      {
+        siteName: 'Brussels Recycling',
+        orsId: 'OSR-001',
+        country: 'Belgium',
+        approved: true
+      }
+    ]
+  },
   prn: {
     averagePricePerTonne: 200,
     freeTonnage: 10,
@@ -445,6 +467,65 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('30')
           expect(body.textContent).toContain('OSR-001')
           expect(body.textContent).toContain('RecyclePlast SA')
+        })
+
+        it('should not display Approved column header for non-accredited exporter', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const overseasSiteTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Brussels Recycling')
+          )
+          const headers = overseasSiteTable?.querySelectorAll('th')
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+
+          expect(headerTexts).not.toContain('Approved')
+        })
+
+        it('should display unapproved overseas sites heading', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Overseas reprocessor IDs that have not been logged/,
+              level: 3
+            })
+          ).toBeDefined()
+        })
+
+        it('should display unapproved overseas sites intro text', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByText(
+              body,
+              /These overseas reprocessor IDs were in your summary log/
+            )
+          ).toBeDefined()
+        })
+
+        it('should display unapproved ORS ID in table', async ({ server }) => {
+          const body = await getBody(server)
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const unapprovedTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('OSR-999')
+          )
+
+          expect(unapprovedTable).not.toBeNull()
+          const headers = unapprovedTable?.querySelectorAll('th')
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+          expect(headerTexts).toStrictEqual(['Overseas reprocessor ID'])
         })
 
         // Received but not exported section
@@ -767,6 +848,43 @@ describe('#submitController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue(
             accreditedExporterReportDetail
           )
+        })
+
+        it('should display Approved column header in overseas sites table', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const overseasSiteTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Brussels Recycling')
+          )
+          const headers = overseasSiteTable?.querySelectorAll('th')
+          const headerTexts = Array.from(headers).map((h) =>
+            h.textContent?.trim()
+          )
+
+          expect(headerTexts).toStrictEqual([
+            'Site name',
+            'Overseas reprocessor ID',
+            'Country',
+            'Approved'
+          ])
+        })
+
+        it('should display approval status for approved overseas site', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          const tables = body.querySelectorAll('.govuk-table')
+          const overseasSiteTable = Array.from(tables).find((table) =>
+            table.textContent?.includes('Brussels Recycling')
+          )
+          const cells = overseasSiteTable?.querySelectorAll('td')
+          const lastCell = cells?.[cells.length - 1]
+
+          expect(lastCell?.textContent?.trim()).toBe('Yes')
         })
 
         it('should not display recycling activity section', async ({
