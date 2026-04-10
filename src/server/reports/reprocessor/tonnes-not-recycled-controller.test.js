@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -69,14 +69,6 @@ const reportDetail = {
   }
 }
 
-const reportDetailWithTonnage = {
-  ...reportDetail,
-  recyclingActivity: {
-    ...reportDetail.recyclingActivity,
-    tonnageNotRecycled: 89.31
-  }
-}
-
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/tonnes-not-recycled`
@@ -114,23 +106,6 @@ describe('#tonnesNotRecycledController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
-      it('should display the heading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: monthlyUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const heading = getByRole(body, 'heading', {
-          level: 1
-        })
-
-        expect(heading.textContent).toContain('packaging waste did you receive')
-      })
-
       it('should display hint text', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
@@ -143,8 +118,16 @@ describe('#tonnesNotRecycledController', () => {
         )
       })
 
-      it('should pre-fill tonnage if previously saved', async ({ server }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetailWithTonnage)
+      it('should display heading and pre-fill saved tonnage unchanged', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reportDetail,
+          recyclingActivity: {
+            ...reportDetail.recyclingActivity,
+            tonnageNotRecycled: 89.3
+          }
+        })
 
         const { result } = await server.inject({
           method: 'GET',
@@ -152,7 +135,16 @@ describe('#tonnesNotRecycledController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain('value="89.31"')
+        const { body } = new JSDOM(result).window.document
+        const headingName =
+          /How many tonnes of plastic packaging waste did you receive in January 2026 but not recycle\?/
+
+        expect(
+          getByRole(body, 'heading', { level: 1, name: headingName })
+        ).toBeDefined()
+        expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
+          '89.3'
+        )
       })
 
       it('should have back link to tonnes-recycled', async ({ server }) => {
@@ -305,7 +297,7 @@ describe('#tonnesNotRecycledController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: monthlyUrl,
             auth: mockAuth,
@@ -313,10 +305,67 @@ describe('#tonnesNotRecycledController', () => {
             payload: { crumb, tonnageNotRecycled: '', action: 'continue' }
           })
 
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain(
-            'Enter the total tonnage of packaging waste received but not recycled'
-          )
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total tonnage of packaging waste received but not recycled/
+            )
+          ).toBeDefined()
+        })
+
+        it('should show error when tonnage is non-numeric', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, monthlyUrl, {
+            auth: mockAuth
+          })
+
+          const { result } = await server.inject({
+            method: 'POST',
+            url: monthlyUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, tonnageNotRecycled: 'abc', action: 'continue' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total tonnage in digits, using a decimal point if needed/
+            )
+          ).toBeDefined()
+        })
+
+        it('should show error when tonnage has more than 2 decimal places', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, monthlyUrl, {
+            auth: mockAuth
+          })
+
+          const { result } = await server.inject({
+            method: 'POST',
+            url: monthlyUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, tonnageNotRecycled: 12.345, action: 'continue' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Total tonnage should only have two digits after the decimal point/
+            )
+          ).toBeDefined()
         })
       })
     })

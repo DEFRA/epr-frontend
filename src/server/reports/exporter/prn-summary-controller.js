@@ -1,6 +1,9 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
-import { formatRevenue, revenuePayloadSchema } from '../helpers/validation.js'
+import {
+  padToTwoDecimalPlaces,
+  revenuePayloadSchema
+} from '../helpers/validation.js'
 import { buildExporterViewData } from './exporter-page-guards.js'
 
 const { getController, postController } = createDataPageControllers({
@@ -37,7 +40,7 @@ const { getController, postController } = createDataPageControllers({
       continueText: localise('reports:noteSummaryContinue'),
       saveText: localise('reports:noteSummarySave'),
       backUrl: periodPath,
-      defaultValue: formatRevenue(reportDetail.prn.totalRevenue)
+      defaultValue: padToTwoDecimalPlaces(reportDetail.prn.totalRevenue)
     })
   },
   guardFn: buildExporterViewData,

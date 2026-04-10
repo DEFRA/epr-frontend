@@ -1,23 +1,12 @@
-import Joi from 'joi'
-
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
+import { freeTonnagePayloadSchema } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'freeTonnage',
-  payloadSchema: Joi.object({
-    freeTonnage: Joi.number().min(0).required().messages({
-      'any.required': 'reports:freeErrorRequired',
-      'number.base': 'reports:freeErrorRequired',
-      'number.min': 'reports:freeErrorNegative',
-      'number.unsafe': 'reports:freeErrorFormat',
-      'number.infinity': 'reports:freeErrorFormat'
-    }),
-    action: Joi.string().valid('continue', 'save').required(),
-    crumb: Joi.string()
-  }),
+  payloadSchema: freeTonnagePayloadSchema,
   pageFields({ periodLabel, periodPath, registration, reportDetail }) {
     const { noteTypePlural } = getNoteTypeDisplayNames(registration)
     return (localise) => ({
@@ -29,7 +18,9 @@ const { getController, postController } = createDataPageControllers({
       }),
       caption: localise('reports:freeCaption'),
       heading: localise('reports:freeHeading', { noteTypePlural, periodLabel }),
-      hintText: localise('reports:freeHint', { noteTypePlural }),
+      insetText: localise('reports:freeHint', { noteTypePlural }),
+      inputLabel: localise('reports:freeInputLabel', { noteTypePlural }),
+      inputHint: localise('reports:freeInputHint'),
       continueText: localise('reports:freeContinue'),
       saveText: localise('reports:freeSave'),
       fieldName: 'freeTonnage',
