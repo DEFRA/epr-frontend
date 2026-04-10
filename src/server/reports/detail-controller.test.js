@@ -4,7 +4,13 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getAllByRole, getByRole, queryByRole } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -744,6 +750,21 @@ describe('#detailReportsController', () => {
         expect(button).toBeDefined()
       })
 
+      it('should not display ORS help text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByText(body, /upload your summary logs again for this period/)
+        ).toBeNull()
+      })
+
       it('should have a POST form for the Use this data button', async ({
         server
       }) => {
@@ -918,6 +939,21 @@ describe('#detailReportsController', () => {
         expect(supplierTable.textContent).toContain('Baler')
         expect(supplierTable.textContent).toContain('42.21')
       })
+
+      it('should not display ORS help text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByText(body, /upload your summary logs again for this period/)
+        ).toBeNull()
+      })
     })
 
     describe('for registered-only exporter with data', () => {
@@ -1013,6 +1049,24 @@ describe('#detailReportsController', () => {
         const { body } = dom.window.document
 
         expect(body.textContent).toContain('11.47')
+      })
+
+      it('should display ORS help text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          getByText(body, /upload your summary logs again for this period/)
+        ).toBeDefined()
+        expect(
+          getByText(body, /please contact your regulator before you create/)
+        ).toBeDefined()
       })
 
       it('should display overseas sites in table', async ({ server }) => {
@@ -1316,6 +1370,24 @@ describe('#detailReportsController', () => {
             level: 3
           })
         ).toBeNull()
+      })
+
+      it('should display ORS help text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedExporterDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          getByText(body, /upload your summary logs again for this period/)
+        ).toBeDefined()
+        expect(
+          getByText(body, /please contact your regulator before you create/)
+        ).toBeDefined()
       })
 
       it('should display overseas site OSR IDs in table', async ({
