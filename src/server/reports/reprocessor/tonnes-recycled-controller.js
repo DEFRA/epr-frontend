@@ -1,8 +1,5 @@
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
-import {
-  formatToTwoDecimalPlaces,
-  tonnageRecycledPayloadSchema
-} from '../helpers/validation.js'
+import { tonnageRecycledPayloadSchema } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
 const { getController, postController } = createDataPageControllers({
@@ -25,9 +22,7 @@ const { getController, postController } = createDataPageControllers({
       saveText: localise('reports:tonnageRecycledSave'),
       fieldName: 'tonnageRecycled',
       backUrl: periodPath,
-      defaultValue: formatToTwoDecimalPlaces(
-        reportDetail.recyclingActivity?.tonnageRecycled
-      )
+      defaultValue: reportDetail.recyclingActivity?.tonnageRecycled
     })
   },
   guardFn: buildReprocessorViewData,

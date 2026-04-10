@@ -178,20 +178,32 @@ describe('#prnSummaryController', () => {
         expect(result).toContain('1576.12')
       })
 
-      it('should format revenue to 2 decimal places', async ({ server }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          prn: { ...reportDetail.prn, totalRevenue: 1576.1 }
-        })
+      it.for([
+        { revenue: 1576.12, expected: '1576.12' },
+        { revenue: 1576.1, expected: '1576.10' },
+        { revenue: 1576, expected: '1576' }
+      ])(
+        'should pre-fill revenue $revenue as $expected',
+        async ({ revenue, expected }, { server }) => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            prn: { ...reportDetail.prn, totalRevenue: revenue }
+          })
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
 
-        expect(result).toContain('1576.10')
-      })
+          const { body } = new JSDOM(result).window.document
+          const input = getByRole(body, 'textbox', {
+            name: /Enter total revenue of PERNs, excluding VAT/
+          })
+
+          expect(input.value).toBe(expected)
+        }
+      )
 
       it('should return 404 for non-accredited exporter', async ({
         server

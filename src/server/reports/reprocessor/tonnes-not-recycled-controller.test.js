@@ -118,39 +118,34 @@ describe('#tonnesNotRecycledController', () => {
         )
       })
 
-      it.for([
-        { tonnage: 89.3, expected: '89.30' },
-        { tonnage: 89.35, expected: '89.35' },
-        { tonnage: 89, expected: '89' }
-      ])(
-        'should display heading and pre-fill tonnage $tonnage as $expected',
-        async ({ tonnage, expected }, { server }) => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            recyclingActivity: {
-              ...reportDetail.recyclingActivity,
-              tonnageNotRecycled: tonnage
-            }
-          })
+      it('should display heading and pre-fill saved tonnage unchanged', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reportDetail,
+          recyclingActivity: {
+            ...reportDetail.recyclingActivity,
+            tonnageNotRecycled: 89.3
+          }
+        })
 
-          const { result } = await server.inject({
-            method: 'GET',
-            url: monthlyUrl,
-            auth: mockAuth
-          })
+        const { result } = await server.inject({
+          method: 'GET',
+          url: monthlyUrl,
+          auth: mockAuth
+        })
 
-          const { body } = new JSDOM(result).window.document
-          const headingName =
-            /How many tonnes of plastic packaging waste did you receive in January 2026 but not recycle\?/
+        const { body } = new JSDOM(result).window.document
+        const headingName =
+          /How many tonnes of plastic packaging waste did you receive in January 2026 but not recycle\?/
 
-          expect(
-            getByRole(body, 'heading', { level: 1, name: headingName })
-          ).toBeDefined()
-          expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
-            expected
-          )
-        }
-      )
+        expect(
+          getByRole(body, 'heading', { level: 1, name: headingName })
+        ).toBeDefined()
+        expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
+          '89.3'
+        )
+      })
 
       it('should have back link to tonnes-recycled', async ({ server }) => {
         const { result } = await server.inject({

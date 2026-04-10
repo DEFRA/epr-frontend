@@ -125,39 +125,34 @@ describe('#tonnesRecycledController', () => {
         expect(result).toContain('This total may differ from the')
       })
 
-      it.for([
-        { tonnage: 150.5, expected: '150.50' },
-        { tonnage: 150.55, expected: '150.55' },
-        { tonnage: 150, expected: '150' }
-      ])(
-        'should display heading and pre-fill tonnage $tonnage as $expected',
-        async ({ tonnage, expected }, { server }) => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            recyclingActivity: {
-              ...reportDetail.recyclingActivity,
-              tonnageRecycled: tonnage
-            }
-          })
+      it('should display heading and pre-fill saved tonnage unchanged', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reportDetail,
+          recyclingActivity: {
+            ...reportDetail.recyclingActivity,
+            tonnageRecycled: 150.5
+          }
+        })
 
-          const { result } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth
-          })
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
 
-          const { body } = new JSDOM(result).window.document
-          const headingName =
-            /How many tonnes of plastic packaging waste did you recycle in January 2026\?/
+        const { body } = new JSDOM(result).window.document
+        const headingName =
+          /How many tonnes of plastic packaging waste did you recycle in January 2026\?/
 
-          expect(
-            getByRole(body, 'heading', { level: 1, name: headingName })
-          ).toBeDefined()
-          expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
-            expected
-          )
-        }
-      )
+        expect(
+          getByRole(body, 'heading', { level: 1, name: headingName })
+        ).toBeDefined()
+        expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
+          '150.5'
+        )
+      })
 
       it('should return 200 for registered-only reprocessor', async ({
         server

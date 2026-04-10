@@ -4,11 +4,11 @@ import Joi from 'joi'
 const TWO_DECIMAL_PLACES = 2
 
 /**
- * Formats a number to a whole number or two decimal places (e.g. 150 → "150", 12.3 → "12.30").
+ * Pads a number with trailing zeros to two decimal places when a decimal point is present (e.g. 12.3 → "12.30", 150 → "150").
  * @param {number | null | undefined} value
  * @returns {string}
  */
-export const formatToTwoDecimalPlaces = (value) => {
+export const padToTwoDecimalPlaces = (value) => {
   if (value !== null && value !== undefined) {
     return Number.isInteger(value)
       ? String(value)
