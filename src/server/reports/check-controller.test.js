@@ -744,10 +744,12 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          getByText(
-            body,
-            /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
-          )
+          expect(
+            getByText(
+              body,
+              /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
+            )
+          ).toBeDefined()
         })
 
         it('should display back link to supporting information page', async ({
@@ -1020,10 +1022,12 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          getByText(
-            body,
-            /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
-          )
+          expect(
+            getByText(
+              body,
+              /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
+            )
+          ).toBeDefined()
         })
 
         it('should display destination table with 4 columns', async ({
