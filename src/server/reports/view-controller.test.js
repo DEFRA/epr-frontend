@@ -900,9 +900,7 @@ describe('#viewController', () => {
             const tableHeader = section.querySelector('table thead')
 
             expect(tableHeader.textContent).toContain('Site name')
-            expect(tableHeader.textContent).toContain(
-              'Approved overseas reprocessor ID'
-            )
+            expect(tableHeader.textContent).toContain('Overseas reprocessor ID')
             expect(tableHeader.textContent).toContain('Country')
           }
         )

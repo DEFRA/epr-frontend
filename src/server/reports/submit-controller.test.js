@@ -433,7 +433,7 @@ describe('#submitController', () => {
           const body = await getBody(server)
 
           expect(body.textContent).toContain('Site name')
-          expect(body.textContent).toContain('Approved overseas reprocessor ID')
+          expect(body.textContent).toContain('Overseas reprocessor ID')
         })
 
         it('should display overseas sites with tonnage and OSR ID', async ({
