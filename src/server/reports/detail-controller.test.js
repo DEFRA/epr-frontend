@@ -1188,7 +1188,7 @@ describe('#detailReportsController', () => {
           const headers = t.querySelector('thead')?.textContent ?? ''
           return (
             headers.includes('Overseas reprocessor ID') &&
-            !headers.includes('Approved overseas reprocessor ID')
+            !headers.includes('Site name')
           )
         })
 

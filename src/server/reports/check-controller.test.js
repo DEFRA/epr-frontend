@@ -501,7 +501,7 @@ describe('#checkController', () => {
           )
           expect(headerTexts).toStrictEqual([
             'Site name',
-            'Approved overseas reprocessor ID',
+            'Overseas reprocessor ID',
             'Country'
           ])
         })
@@ -1529,7 +1529,7 @@ describe('#checkController', () => {
           )
           expect(headerTexts).toStrictEqual([
             'Site name',
-            'Approved overseas reprocessor ID',
+            'Overseas reprocessor ID',
             'Country',
             'Approved'
           ])
