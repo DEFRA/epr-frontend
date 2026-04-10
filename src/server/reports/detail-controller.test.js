@@ -939,6 +939,21 @@ describe('#detailReportsController', () => {
         expect(supplierTable.textContent).toContain('Baler')
         expect(supplierTable.textContent).toContain('42.21')
       })
+
+      it('should not display ORS help text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByText(body, /upload your summary logs again for this period/)
+        ).toBeNull()
+      })
     })
 
     describe('for registered-only exporter with data', () => {
