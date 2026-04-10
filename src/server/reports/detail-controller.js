@@ -10,6 +10,7 @@ import {
   buildDestinationRows,
   buildOverseasSiteDetailRows,
   buildSupplierRows,
+  buildUnapprovedOverseasSiteDetailRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
@@ -72,21 +73,26 @@ function buildViewData(
       totalTonnage: recyclingActivity.totalTonnageReceived,
       supplierRows: buildSupplierRows(recyclingActivity.suppliers)
     },
-    wasteExported: isExporter
-      ? {
-          totalTonnage: exportActivity?.totalTonnageExported ?? 0,
-          overseasSiteDetailRows: buildOverseasSiteDetailRows(
-            exportActivity?.overseasSites ?? []
-          ),
-          tonnageReceivedNotExported:
-            exportActivity?.tonnageReceivedNotExported ?? 0,
-          tonnageRefusedOrStopped:
-            exportActivity?.totalTonnageRefusedOrStopped ?? 0,
-          tonnageRefused: exportActivity?.tonnageRefusedAtDestination ?? 0,
-          tonnageStopped: exportActivity?.tonnageStoppedDuringExport ?? 0,
-          tonnageRepatriated: exportActivity?.tonnageRepatriated ?? 0
-        }
-      : null,
+    wasteExported:
+      isExporter && exportActivity
+        ? {
+            totalTonnage: exportActivity.totalTonnageExported,
+            overseasSiteDetailRows: buildOverseasSiteDetailRows(
+              exportActivity.overseasSites
+            ),
+            unapprovedOverseasSiteDetailRows:
+              buildUnapprovedOverseasSiteDetailRows(
+                exportActivity.unapprovedOverseasSites
+              ),
+            tonnageReceivedNotExported:
+              exportActivity.tonnageReceivedNotExported,
+            tonnageRefusedOrStopped:
+              exportActivity.totalTonnageRefusedOrStopped,
+            tonnageRefused: exportActivity.tonnageRefusedAtDestination,
+            tonnageStopped: exportActivity.tonnageStoppedDuringExport,
+            tonnageRepatriated: exportActivity.tonnageRepatriated
+          }
+        : null,
     wasteSentOn: {
       totalTonnage: getTotalTonnageSentOn(wasteSent),
       toReprocessors: wasteSent.tonnageSentToReprocessor,

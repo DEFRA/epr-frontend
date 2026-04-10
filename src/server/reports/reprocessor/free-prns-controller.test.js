@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole } from '@testing-library/dom'
+import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -129,20 +129,42 @@ describe('#reprocessorFreePrnsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const heading = getByRole(body, 'heading', { level: 1 })
-        expect(heading.textContent).toContain(
-          'total tonnage of PRNs you issued for free'
-        )
+        expect(
+          getByRole(body, 'heading', {
+            level: 1,
+            name: /What is the total tonnage of PRNs you issued for free in January 2026\?/
+          })
+        ).toBeDefined()
       })
 
-      it('should display PRN hint text', async ({ server }) => {
+      it('should display inset hint, input label, and input hint', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
           auth: mockAuth
         })
 
-        expect(result).toContain('you may have issued PRNs to your own company')
+        const { body } = new JSDOM(result).window.document
+        const inset = body.querySelector('.govuk-inset-text')
+
+        expect(inset).not.toBeNull()
+        expect(
+          getByText(
+            inset,
+            /you may have issued PRNs to your own company for no charge/
+          )
+        ).toBeDefined()
+        expect(
+          getByText(body, /Enter total tonnage of PRNs issued for free/)
+        ).toBeDefined()
+        expect(
+          getByText(
+            body,
+            /Total tonnage should be a whole number without decimal numbers/
+          )
+        ).toBeDefined()
       })
 
       it('should pre-fill tonnage if previously saved', async ({ server }) => {
@@ -334,6 +356,29 @@ describe('#reprocessorFreePrnsController', () => {
           expect(result).toContain(
             'Enter a number less than the total number of PRNs you issued in this period'
           )
+        })
+
+        it('should show error when tonnage is not a whole number', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          const { result } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, freeTonnage: 12.5, action: 'continue' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(alert, /Enter a whole number without decimal places/)
+          ).toBeDefined()
         })
       })
     })

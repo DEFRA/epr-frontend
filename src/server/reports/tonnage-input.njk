@@ -25,7 +25,11 @@
       <span class="govuk-caption-xl">{{ caption }}</span>
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-      <p class="govuk-hint">{{ hintText }}</p>
+      {% if insetText %}
+        <div class="govuk-inset-text">{{ insetText }}</div>
+      {% else %}
+        <p class="govuk-hint">{{ hintText }}</p>
+      {% endif %}
 
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
@@ -35,13 +39,17 @@
           name: fieldName,
           inputmode: "decimal",
           spellcheck: false,
+          classes: "govuk-input--width-5",
           suffix: {
             text: "tonnes"
           },
           label: {
-            text: heading,
-            classes: "govuk-visually-hidden"
+            text: inputLabel if inputLabel else heading,
+            classes: "govuk-label--m" if inputLabel else "govuk-visually-hidden"
           },
+          hint: {
+            text: inputHint
+          } if inputHint else undefined,
           value: value,
           errorMessage: errors[fieldName] if errors else null
         }) }}

@@ -75,6 +75,11 @@
         <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
         <p class="govuk-heading-l">{{ wasteExported.totalTonnage | formatTonnage }}</p>
 
+        <div class="govuk-inset-text">
+          <p class="govuk-body">{{ localise("reports:orsHelpLine1") }}</p>
+          <p class="govuk-body">{{ localise("reports:orsHelpLine2") }}</p>
+        </div>
+
         {% if wasteExported.overseasSiteDetailRows | length > 0 %}
           <h3 class="govuk-heading-m">{{ localise("reports:overseasSitesHeading") }}</h3>
           {{ govukTable({
@@ -85,6 +90,18 @@
               { text: localise("reports:countryColumn") }
             ],
             rows: wasteExported.overseasSiteDetailRows
+          }) }}
+        {% endif %}
+
+        {% if wasteExported.unapprovedOverseasSiteDetailRows | length > 0 %}
+          <h3 class="govuk-heading-m">{{ localise("reports:unapprovedOverseasSitesHeading") }}</h3>
+          <div class="govuk-inset-text">{{ localise("reports:unapprovedOverseasSitesIntro") }}</div>
+          {{ govukTable({
+            head: [
+              { text: localise("reports:tonnageExportedColumn") },
+              { text: localise("reports:unapprovedOrsIdColumn") }
+            ],
+            rows: wasteExported.unapprovedOverseasSiteDetailRows
           }) }}
         {% endif %}
 
