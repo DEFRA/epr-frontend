@@ -133,7 +133,7 @@ function buildViewData({
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
 
-    wasteExported: buildWasteExported(exportActivity, isExporter),
+    wasteExported: buildWasteExported(exportActivity, isExporter, isAccredited),
 
     isAccredited,
     isExporter,
@@ -171,17 +171,25 @@ function buildViewData({
   return viewData
 }
 
-function buildWasteExported(exportActivity, isExporter) {
+function buildWasteExported(exportActivity, isExporter, isAccredited) {
   if (!isExporter || !exportActivity) {
     return null
   }
 
   return {
     totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
-      { text: overseasSite.siteName },
-      { text: overseasSite.orsId }
-    ]),
+    overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => {
+      const row = [
+        { text: overseasSite.siteName },
+        { text: overseasSite.orsId }
+      ]
+
+      if (isAccredited) {
+        row.push({ text: overseasSite.approved ? '✓' : '' })
+      }
+
+      return row
+    }),
     unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
       exportActivity.unapprovedOverseasSites
     ),

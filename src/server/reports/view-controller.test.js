@@ -12,6 +12,7 @@ import {
   expect,
   vi
 } from 'vitest'
+import { getAllByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 
 vi.mock(
@@ -376,7 +377,15 @@ describe('#viewController', () => {
               siteName: 'Seoul Recycling Co',
               orsId: 'ORS-001',
               country: 'South Korea',
-              tonnageExported: 8
+              tonnageExported: 8,
+              approved: true
+            },
+            {
+              siteName: 'Berlin Plastics GmbH',
+              orsId: 'ORS-002',
+              country: 'Germany',
+              tonnageExported: 4,
+              approved: false
             }
           ],
           unapprovedOverseasSites: [],
@@ -910,6 +919,61 @@ describe('#viewController', () => {
             expect(tableBody.textContent).toContain('ORS-001')
           }
         )
+
+        it('(Accredited Exporter) renders the Approved column header', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedExporter
+          })
+
+          const section = body.querySelector('#waste-exported-for-recycling')
+          const tables = getAllByRole(section, 'table')
+          const overseasTable = tables[0]
+          const headerCells = overseasTable.querySelectorAll('thead th')
+          const headerTexts = [...headerCells].map((th) =>
+            th.textContent.trim()
+          )
+
+          expect(headerTexts).toContain('Approved')
+        })
+
+        it('(Registered Only Exporter) does not render the Approved column header', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockRegisteredOnlyExporter
+          })
+
+          const section = body.querySelector('#waste-exported-for-recycling')
+          const tables = getAllByRole(section, 'table')
+          const overseasTable = tables[0]
+          const headerCells = overseasTable.querySelectorAll('thead th')
+          const headerTexts = [...headerCells].map((th) =>
+            th.textContent.trim()
+          )
+
+          expect(headerTexts).not.toContain('Approved')
+        })
+
+        it('(Accredited Exporter) shows approval tick for approved overseas site', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedExporter
+          })
+
+          const section = body.querySelector('#waste-exported-for-recycling')
+          const tables = getAllByRole(section, 'table')
+          const overseasTable = tables[0]
+          const rows = overseasTable.querySelectorAll('tbody tr')
+
+          expect(rows[0].textContent).toContain('✓')
+          expect(rows[1].textContent).not.toContain('✓')
+        })
 
         it.for(exporters)(
           '($scenario) does not render the unapproved section when none are present',

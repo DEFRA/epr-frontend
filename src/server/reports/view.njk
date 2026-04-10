@@ -138,11 +138,15 @@
 
           {% if wasteExported.overseasSiteRows | length > 0 %}
             <h3 class="govuk-heading-m">{{ localise("reports:overseasSitesHeading") }}</h3>
-            {{ govukTable({
-              head: [
+            {% set overseasSiteHead = [
                 { text: localise("reports:siteNameColumn") },
                 { text: localise("reports:osrIdColumn") }
-              ],
+            ] %}
+            {% if isAccredited %}
+              {% set overseasSiteHead = overseasSiteHead.concat([{ text: localise("reports:approvedColumn") }]) %}
+            {% endif %}
+            {{ govukTable({
+              head: overseasSiteHead,
               rows: wasteExported.overseasSiteRows
             }) }}
           {% endif %}
