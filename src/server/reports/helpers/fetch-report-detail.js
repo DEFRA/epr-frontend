@@ -47,9 +47,18 @@ export async function fetchReportDetail(
 
 /**
  * @typedef {{
- *   siteName?: string,
- *   orsId: string
+ *   siteName: string,
+ *   orsId: string,
+ *   country: string | null,
+ *   tonnageExported: number
  * }} OverseasSiteEntry
+ */
+
+/**
+ * @typedef {{
+ *   orsId: string,
+ *   tonnageExported: number
+ * }} UnapprovedOverseasSiteEntry
  */
 
 /**
@@ -84,6 +93,7 @@ export async function fetchReportDetail(
  *   },
  *   exportActivity?: {
  *     overseasSites: OverseasSiteEntry[],
+ *     unapprovedOverseasSites: UnapprovedOverseasSiteEntry[],
  *     totalTonnageExported: number,
  *     tonnageReceivedNotExported: number,
  *     totalTonnageRefusedOrStopped: number,
