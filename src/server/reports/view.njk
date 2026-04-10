@@ -140,7 +140,8 @@
             <h3 class="govuk-heading-m">{{ localise("reports:overseasSitesHeading") }}</h3>
             {% set overseasSiteHead = [
                 { text: localise("reports:siteNameColumn") },
-                { text: localise("reports:osrIdColumn") }
+                { text: localise("reports:osrIdColumn") },
+                { text: localise("reports:countryColumn") }
             ] %}
             {% if isAccredited %}
               {% set overseasSiteHead = overseasSiteHead.concat([{ text: localise("reports:approvedColumn") }]) %}

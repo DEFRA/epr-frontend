@@ -903,6 +903,7 @@ describe('#viewController', () => {
             expect(tableHeader.textContent).toContain(
               'Approved overseas reprocessor ID'
             )
+            expect(tableHeader.textContent).toContain('Country')
           }
         )
 
@@ -917,6 +918,7 @@ describe('#viewController', () => {
 
             expect(tableBody.textContent).toContain('Seoul Recycling Co')
             expect(tableBody.textContent).toContain('ORS-001')
+            expect(tableBody.textContent).toContain('South Korea')
           }
         )
 

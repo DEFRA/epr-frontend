@@ -181,7 +181,8 @@ function buildWasteExported(exportActivity, isExporter, isAccredited) {
     overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => {
       const row = [
         { text: overseasSite.siteName },
-        { text: overseasSite.orsId }
+        { text: overseasSite.orsId },
+        { text: overseasSite.country }
       ]
 
       if (isAccredited) {
