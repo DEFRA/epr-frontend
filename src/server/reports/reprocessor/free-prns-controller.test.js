@@ -129,10 +129,12 @@ describe('#reprocessorFreePrnsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const heading = getByRole(body, 'heading', { level: 1 })
-        expect(heading.textContent).toContain(
-          'total tonnage of PRNs you issued for free'
-        )
+        expect(
+          getByRole(body, 'heading', {
+            level: 1,
+            name: /What is the total tonnage of PRNs you issued for free in January 2026\?/
+          })
+        ).toBeDefined()
       })
 
       it('should display inset hint, input label, and input hint', async ({

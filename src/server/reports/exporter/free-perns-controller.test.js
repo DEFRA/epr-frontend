@@ -134,16 +134,14 @@ describe('#freePernController', () => {
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        const { body } = new JSDOM(result).window.document
 
-        const heading = getByRole(body, 'heading', {
-          level: 1
-        })
-
-        expect(heading.textContent).toContain(
-          'total tonnage of PERNs you issued for free'
-        )
+        expect(
+          getByRole(body, 'heading', {
+            level: 1,
+            name: /What is the total tonnage of PERNs you issued for free in January 2026\?/
+          })
+        ).toBeDefined()
       })
 
       it('should display inset hint, input label, and input hint', async ({

@@ -130,14 +130,14 @@ describe('#tonnesRecycledController', () => {
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        const { body } = new JSDOM(result).window.document
 
-        const heading = getByRole(body, 'heading', {
-          level: 1
-        })
-
-        expect(heading.textContent).toContain('packaging waste did you recycle')
+        expect(
+          getByRole(body, 'heading', {
+            level: 1,
+            name: /How many tonnes of plastic packaging waste did you recycle in January 2026\?/
+          })
+        ).toBeDefined()
       })
 
       it('should display hint text', async ({ server }) => {
