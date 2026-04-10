@@ -50,14 +50,12 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
 /**
  * @param {boolean} isAccreditedExporter
  * @param {boolean} isAccreditedReprocessor
- * @param {boolean} isExporter
  * @param {(key: string) => string} localise
  * @returns {object}
  */
 function buildSectionIntros(
   isAccreditedExporter,
   isAccreditedReprocessor,
-  isExporter,
   localise
 ) {
   return {
@@ -160,7 +158,6 @@ function buildViewData(
     ...buildSectionIntros(
       isAccreditedExporter,
       isAccreditedReprocessor,
-      isExporter,
       localise
     )
   }
