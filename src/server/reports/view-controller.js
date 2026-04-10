@@ -7,6 +7,7 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
   buildDestinationDetailRows,
   buildSupplierDetailRows,
+  buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -171,31 +172,28 @@ function buildViewData({
 }
 
 function buildWasteExported(exportActivity, isExporter) {
-  if (!isExporter) {
+  if (!isExporter || !exportActivity) {
     return null
   }
 
   return {
-    totalTonnage: formatTonnage(exportActivity?.totalTonnageExported ?? 0),
-    overseasSiteRows: (exportActivity?.overseasSites ?? []).map(
-      (overseasSite) => [
-        { text: overseasSite.siteName },
-        { text: overseasSite.orsId }
-      ]
+    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
+    overseasSiteRows: exportActivity.overseasSites.map((overseasSite) => [
+      { text: overseasSite.siteName },
+      { text: overseasSite.orsId }
+    ]),
+    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
+      exportActivity.unapprovedOverseasSites
     ),
     tonnageReceivedNotExported: formatTonnage(
-      exportActivity?.tonnageReceivedNotExported ?? 0
+      exportActivity.tonnageReceivedNotExported
     ),
     tonnageRefusedOrStopped: formatTonnage(
-      exportActivity?.totalTonnageRefusedOrStopped ?? 0
+      exportActivity.totalTonnageRefusedOrStopped
     ),
-    tonnageRefused: formatTonnage(
-      exportActivity?.tonnageRefusedAtDestination ?? 0
-    ),
-    tonnageStopped: formatTonnage(
-      exportActivity?.tonnageStoppedDuringExport ?? 0
-    ),
-    tonnageRepatriated: formatTonnage(exportActivity?.tonnageRepatriated ?? 0)
+    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
+    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
+    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
   }
 }
 

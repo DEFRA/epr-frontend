@@ -88,6 +88,18 @@
           }) }}
         {% endif %}
 
+        {% if wasteExported.unapprovedOverseasSiteDetailRows | length > 0 %}
+          <h3 class="govuk-heading-m">{{ localise("reports:unapprovedOverseasSitesHeading") }}</h3>
+          <div class="govuk-inset-text">{{ localise("reports:unapprovedOverseasSitesIntro") }}</div>
+          {{ govukTable({
+            head: [
+              { text: localise("reports:tonnageExportedColumn") },
+              { text: localise("reports:unapprovedOrsIdColumn") }
+            ],
+            rows: wasteExported.unapprovedOverseasSiteDetailRows
+          }) }}
+        {% endif %}
+
         <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
         <p class="govuk-body">{{ localise("reports:tonnageReceivedNotExportedIntro") }}</p>
 
