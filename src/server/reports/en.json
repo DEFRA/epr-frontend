@@ -93,6 +93,8 @@
   "noteSummaryRevenueLabel": "Enter total revenue of {{noteTypePlural}}, excluding VAT",
   "noteSummarySave": "Save and come back later",
   "noteTypeSectionHeading": "{{noteTypePlural}}",
+  "orsHelpLine1": "If any of your ORS data is missing, upload your summary logs again for this period to fix the problem.",
+  "orsHelpLine2": "If this does not fix the problem, please contact your regulator before you create your report.",
   "osrIdColumn": "Approved overseas reprocessor ID",
   "overseasSitesHeading": "Overseas reprocessing sites",
   "overviewIntro": "The following is an overview of your summary log data for {{ periodLabel }}. Only the data that will appear in your report is shown here.",
