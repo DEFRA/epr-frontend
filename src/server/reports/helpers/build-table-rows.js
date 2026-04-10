@@ -95,3 +95,28 @@ export function buildOverseasSiteDetailRows(overseasSites) {
     { text: overseasSite.country }
   ])
 }
+
+/**
+ * Build govukTable rows for unapproved overseas reprocessor IDs
+ * with tonnage exported. Used on the detail/overview page.
+ * @param {Array<{orsId: string, tonnageExported: number}>} unapprovedOverseasSites
+ * @returns {Array<Array<{text: string | number}>>}
+ */
+export function buildUnapprovedOverseasSiteDetailRows(unapprovedOverseasSites) {
+  return unapprovedOverseasSites.map((unapprovedSite) => [
+    { text: formatTonnage(unapprovedSite.tonnageExported) },
+    { text: unapprovedSite.orsId }
+  ])
+}
+
+/**
+ * Build govukTable rows for unapproved overseas reprocessor IDs
+ * showing only the ORS ID. Used on the post-submission view page.
+ * @param {Array<{orsId: string, tonnageExported: number}>} unapprovedOverseasSites
+ * @returns {Array<Array<{text: string}>>}
+ */
+export function buildUnapprovedOverseasSiteRows(unapprovedOverseasSites) {
+  return unapprovedOverseasSites.map((unapprovedSite) => [
+    { text: unapprovedSite.orsId }
+  ])
+}
