@@ -18,6 +18,7 @@
   "checkRevenueLabel": "Total revenue of {{noteTypePlural}}",
   "checkSummaryLogDataGuidance": "If any information in this section is incorrect, cancel this report, upload an updated summary log and create a new report.",
   "checkSummaryLogDataHeading": "Summary log data",
+  "checkSummaryLogWarning": "Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report. You can delete this report before it's submitted and start again if you need to update your records.",
   "checkSupportingInformationHeading": "Supporting information",
   "checkTonnageNotRecycledLabel": "Total tonnage of packaging waste received but not recycled",
   "checkTonnageRecycledLabel": "Total tonnage of packaging waste recycled",
