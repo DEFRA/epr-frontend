@@ -42,6 +42,7 @@ function buildViewData(
   )
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
+  const isAccreditedExporter = isExporter && !!accreditation
   const { wasteActionGerund } = getNoteTypeDisplayNames(registration)
 
   return {
@@ -73,12 +74,14 @@ function buildViewData(
       totalTonnage: recyclingActivity.totalTonnageReceived,
       supplierRows: buildSupplierRows(recyclingActivity.suppliers)
     },
+    showApprovalColumn: isAccreditedExporter,
     wasteExported:
       isExporter && exportActivity
         ? {
             totalTonnage: exportActivity.totalTonnageExported,
             overseasSiteDetailRows: buildOverseasSiteDetailRows(
-              exportActivity.overseasSites
+              exportActivity.overseasSites,
+              { showApprovalColumn: isAccreditedExporter }
             ),
             unapprovedOverseasSiteDetailRows:
               buildUnapprovedOverseasSiteDetailRows(

@@ -82,13 +82,17 @@
 
         {% if wasteExported.overseasSiteDetailRows | length > 0 %}
           <h3 class="govuk-heading-m">{{ localise("reports:overseasSitesHeading") }}</h3>
-          {{ govukTable({
-            head: [
+          {% set overseasSiteHead = [
               { text: localise("reports:siteNameColumn") },
               { text: localise("reports:tonnageExportedColumn") },
               { text: localise("reports:osrIdColumn") },
               { text: localise("reports:countryColumn") }
-            ],
+          ] %}
+          {% if showApprovalColumn %}
+            {% set overseasSiteHead = overseasSiteHead.concat([{ text: localise("reports:approvedColumn") }]) %}
+          {% endif %}
+          {{ govukTable({
+            head: overseasSiteHead,
             rows: wasteExported.overseasSiteDetailRows
           }) }}
         {% endif %}
