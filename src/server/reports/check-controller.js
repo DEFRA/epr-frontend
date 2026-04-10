@@ -71,6 +71,22 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
 }
 
 /**
+ * @param {object} wasteSent
+ * @returns {object}
+ */
+function buildWasteSentOn(wasteSent) {
+  return {
+    totalTonnage: getTotalTonnageSentOn(wasteSent),
+    toReprocessors: wasteSent.tonnageSentToReprocessor,
+    toExporters: wasteSent.tonnageSentToExporter,
+    toOtherSites: wasteSent.tonnageSentToAnotherSite,
+    destinationDetailRows: buildDestinationDetailRows(
+      wasteSent.finalDestinations
+    )
+  }
+}
+
+/**
  * @param {{ registration: object, accreditation: object|undefined, reportDetail: object, basePath: string, localise: (key: string, params?: object) => string, localiseUrl: (path: string) => string }} params
  * @returns {object}
  */
@@ -135,15 +151,7 @@ function buildCheckViewData({
       isExporter,
       isAccreditedExporter
     ),
-    wasteSentOn: {
-      totalTonnage: getTotalTonnageSentOn(wasteSent),
-      toReprocessors: wasteSent.tonnageSentToReprocessor,
-      toExporters: wasteSent.tonnageSentToExporter,
-      toOtherSites: wasteSent.tonnageSentToAnotherSite,
-      destinationDetailRows: buildDestinationDetailRows(
-        wasteSent.finalDestinations
-      )
-    },
+    wasteSentOn: buildWasteSentOn(wasteSent),
     recyclingActivity: reportDetail.recyclingActivity,
     tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
     tonnageNotRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-not-recycled`),

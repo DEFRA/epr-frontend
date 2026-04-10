@@ -1535,7 +1535,7 @@ describe('#checkController', () => {
           ])
         })
 
-        it('should display tick for approved overseas site', async ({
+        it('should display approval status for approved overseas site', async ({
           server
         }) => {
           const { result } = await server.inject({
@@ -1554,7 +1554,7 @@ describe('#checkController', () => {
           const cells = overseasSiteTable?.querySelectorAll('td')
           const lastCell = cells?.[cells.length - 1]
 
-          expect(lastCell?.textContent?.trim()).toBe('✓')
+          expect(lastCell?.textContent?.trim()).toBe('Yes')
         })
 
         it('should display PERNs heading and issued tonnage', async ({

@@ -84,7 +84,7 @@ export function buildOverseasSiteRows(overseasSites, options) {
     ]
 
     if (options?.showApprovalColumn) {
-      row.push({ text: overseasSite.approved ? '✓' : '' })
+      row.push({ text: overseasSite.approved ? 'Yes' : 'No' })
     }
 
     return row
@@ -107,7 +107,7 @@ export function buildOverseasSiteDetailRows(overseasSites, options) {
     ]
 
     if (options?.showApprovalColumn) {
-      row.push({ text: overseasSite.approved ? '✓' : '' })
+      row.push({ text: overseasSite.approved ? 'Yes' : 'No' })
     }
 
     return row

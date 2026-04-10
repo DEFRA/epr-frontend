@@ -12,7 +12,7 @@ import {
   expect,
   vi
 } from 'vitest'
-import { getAllByRole } from '@testing-library/dom'
+import { getAllByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 
 vi.mock(
@@ -960,7 +960,7 @@ describe('#viewController', () => {
           expect(headerTexts).not.toContain('Approved')
         })
 
-        it('(Accredited Exporter) shows approval tick for approved overseas site', async ({
+        it('(Accredited Exporter) shows approval status for overseas sites', async ({
           server
         }) => {
           const body = await loadPageBody({
@@ -973,8 +973,8 @@ describe('#viewController', () => {
           const overseasTable = tables[0]
           const rows = overseasTable.querySelectorAll('tbody tr')
 
-          expect(rows[0].textContent).toContain('✓')
-          expect(rows[1].textContent).not.toContain('✓')
+          expect(getByText(rows[0], 'Yes')).toBeDefined()
+          expect(getByText(rows[1], 'No')).toBeDefined()
         })
 
         it.for(exporters)(

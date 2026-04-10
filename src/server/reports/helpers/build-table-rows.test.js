@@ -135,7 +135,7 @@ describe(buildOverseasSiteRows, () => {
     ])
   })
 
-  it('appends tick for approved sites when showApprovalColumn is true', () => {
+  it('appends Yes/No for approval when showApprovalColumn is true', () => {
     const rows = buildOverseasSiteRows(overseasSites, {
       showApprovalColumn: true
     })
@@ -145,13 +145,13 @@ describe(buildOverseasSiteRows, () => {
         { text: 'Hamburg Plant' },
         { text: 'ORS-001' },
         { text: 'Germany' },
-        { text: '✓' }
+        { text: 'Yes' }
       ],
       [
         { text: 'Paris Facility' },
         { text: 'ORS-002' },
         { text: 'France' },
-        { text: '' }
+        { text: 'No' }
       ]
     ])
   })
@@ -205,7 +205,7 @@ describe(buildOverseasSiteDetailRows, () => {
     ])
   })
 
-  it('appends tick for approved sites when showApprovalColumn is true', () => {
+  it('appends Yes/No for approval when showApprovalColumn is true', () => {
     const rows = buildOverseasSiteDetailRows(overseasSites, {
       showApprovalColumn: true
     })
@@ -216,14 +216,14 @@ describe(buildOverseasSiteDetailRows, () => {
         { text: '100.50' },
         { text: 'ORS-001' },
         { text: 'Germany' },
-        { text: '✓' }
+        { text: 'Yes' }
       ],
       [
         { text: 'Paris Facility' },
         { text: '200.00' },
         { text: 'ORS-002' },
         { text: 'France' },
-        { text: '' }
+        { text: 'No' }
       ]
     ])
   })

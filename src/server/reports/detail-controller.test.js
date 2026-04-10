@@ -1454,7 +1454,7 @@ describe('#detailReportsController', () => {
         expect(headerTexts).toContain('Approved')
       })
 
-      it('should display approval tick for approved overseas site', async ({
+      it('should display approval status for overseas sites', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -1470,8 +1470,8 @@ describe('#detailReportsController', () => {
         const overseasTable = tables[0]
         const rows = overseasTable.querySelectorAll('tbody tr')
 
-        expect(rows[0].textContent).toContain('✓')
-        expect(rows[1].textContent).not.toContain('✓')
+        expect(getByText(rows[0], 'Yes')).toBeDefined()
+        expect(getByText(rows[1], 'No')).toBeDefined()
       })
     })
 

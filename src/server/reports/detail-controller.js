@@ -19,6 +19,34 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
 /**
+ * @param {object|undefined} exportActivity
+ * @param {boolean} isExporter
+ * @param {boolean} isAccreditedExporter
+ * @returns {object|null}
+ */
+function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
+  if (!isExporter || !exportActivity) {
+    return null
+  }
+
+  return {
+    totalTonnage: exportActivity.totalTonnageExported,
+    overseasSiteDetailRows: buildOverseasSiteDetailRows(
+      exportActivity.overseasSites,
+      { showApprovalColumn: isAccreditedExporter }
+    ),
+    unapprovedOverseasSiteDetailRows: buildUnapprovedOverseasSiteDetailRows(
+      exportActivity.unapprovedOverseasSites
+    ),
+    tonnageReceivedNotExported: exportActivity.tonnageReceivedNotExported,
+    tonnageRefusedOrStopped: exportActivity.totalTonnageRefusedOrStopped,
+    tonnageRefused: exportActivity.tonnageRefusedAtDestination,
+    tonnageStopped: exportActivity.tonnageStoppedDuringExport,
+    tonnageRepatriated: exportActivity.tonnageRepatriated
+  }
+}
+
+/**
  * @param {{ organisationId: string, registrationId: string }} ids
  * @param {object} registration
  * @param {object | undefined} accreditation
@@ -75,27 +103,11 @@ function buildViewData(
       supplierRows: buildSupplierRows(recyclingActivity.suppliers)
     },
     showApprovalColumn: isAccreditedExporter,
-    wasteExported:
-      isExporter && exportActivity
-        ? {
-            totalTonnage: exportActivity.totalTonnageExported,
-            overseasSiteDetailRows: buildOverseasSiteDetailRows(
-              exportActivity.overseasSites,
-              { showApprovalColumn: isAccreditedExporter }
-            ),
-            unapprovedOverseasSiteDetailRows:
-              buildUnapprovedOverseasSiteDetailRows(
-                exportActivity.unapprovedOverseasSites
-              ),
-            tonnageReceivedNotExported:
-              exportActivity.tonnageReceivedNotExported,
-            tonnageRefusedOrStopped:
-              exportActivity.totalTonnageRefusedOrStopped,
-            tonnageRefused: exportActivity.tonnageRefusedAtDestination,
-            tonnageStopped: exportActivity.tonnageStoppedDuringExport,
-            tonnageRepatriated: exportActivity.tonnageRepatriated
-          }
-        : null,
+    wasteExported: buildWasteExported(
+      exportActivity,
+      isExporter,
+      isAccreditedExporter
+    ),
     wasteSentOn: {
       totalTonnage: getTotalTonnageSentOn(wasteSent),
       toReprocessors: wasteSent.tonnageSentToReprocessor,
