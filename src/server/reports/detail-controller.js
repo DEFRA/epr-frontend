@@ -114,7 +114,24 @@ function buildViewData(
       toExporters: wasteSent.tonnageSentToExporter,
       toOtherSites: wasteSent.tonnageSentToAnotherSite,
       destinationRows: buildDestinationRows(wasteSent.finalDestinations)
-    }
+    },
+    wasteSentOnIntro: isAccreditedExporter
+      ? localise('reports:wasteSentOnIntroAccreditedExporter')
+      : isExporter
+        ? localise('reports:wasteSentOnIntroExporter')
+        : localise('reports:wasteSentOnIntroReprocessor'),
+    wasteReceivedForExportIntro: isAccreditedExporter
+      ? localise('reports:wasteReceivedForExportIntro')
+      : localise('reports:wasteReceivedForExportIntroRegOnly'),
+    wasteExportedIntro: isAccreditedExporter
+      ? localise('reports:wasteExportedIntro')
+      : localise('reports:wasteExportedIntroRegOnly'),
+    tonnageReceivedNotExportedIntro: isAccreditedExporter
+      ? localise('reports:tonnageReceivedNotExportedIntro')
+      : localise('reports:tonnageReceivedNotExportedIntroRegOnly'),
+    tonnageRefusedOrStoppedIntro: isAccreditedExporter
+      ? localise('reports:tonnageRefusedOrStoppedIntro')
+      : localise('reports:tonnageRefusedOrStoppedIntroRegOnly')
   }
 }
 
