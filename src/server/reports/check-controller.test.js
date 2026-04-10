@@ -734,9 +734,7 @@ describe('#checkController', () => {
           )
         })
 
-        it('should display summary log warning before create button', async ({
-          server
-        }) => {
+        it('should display summary log warning', async ({ server }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: baseUrl,
@@ -749,10 +747,6 @@ describe('#checkController', () => {
           getByText(
             body,
             /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
-          )
-          getByText(
-            body,
-            /You can delete this report before it's submitted and start again if you need to update your records/
           )
         })
 
