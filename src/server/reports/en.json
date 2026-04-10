@@ -7,6 +7,7 @@
   "actionView": "View",
   "activityColumn": "Activity",
   "addressColumn": "Address",
+  "approvedColumn": "Approved",
   "checkAvgPriceLabel": "Average price per tonne",
   "checkCaption": "Create report",
   "checkCreateReport": "Create report",

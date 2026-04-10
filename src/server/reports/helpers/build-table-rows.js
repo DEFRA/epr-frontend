@@ -84,16 +84,25 @@ export function buildOverseasSiteRows(overseasSites) {
 
 /**
  * Build govukTable rows for overseas sites with tonnage exported and country.
- * @param {Array<{siteName: string, tonnageExported: number, orsId: string, country: string|null}>} overseasSites
+ * @param {Array<{siteName: string, tonnageExported: number, orsId: string, country: string|null, approved: boolean}>} overseasSites
+ * @param {{ showApprovalColumn?: boolean }} [options]
  * @returns {Array<Array<{text: string | number}>>}
  */
-export function buildOverseasSiteDetailRows(overseasSites) {
-  return overseasSites.map((overseasSite) => [
-    { text: overseasSite.siteName },
-    { text: formatTonnage(overseasSite.tonnageExported) },
-    { text: overseasSite.orsId },
-    { text: overseasSite.country }
-  ])
+export function buildOverseasSiteDetailRows(overseasSites, options) {
+  return overseasSites.map((overseasSite) => {
+    const row = [
+      { text: overseasSite.siteName },
+      { text: formatTonnage(overseasSite.tonnageExported) },
+      { text: overseasSite.orsId },
+      { text: overseasSite.country }
+    ]
+
+    if (options?.showApprovalColumn) {
+      row.push({ text: overseasSite.approved ? '✓' : '' })
+    }
+
+    return row
+  })
 }
 
 /**
