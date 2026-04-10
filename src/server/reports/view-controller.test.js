@@ -984,7 +984,7 @@ describe('#viewController', () => {
             })
 
             expect(section.textContent).not.toContain(
-              'Overseas reprocessor IDs that have not been approved'
+              'Overseas reprocessor IDs that have not been logged'
             )
           }
         )
@@ -1016,7 +1016,7 @@ describe('#viewController', () => {
               })
 
               expect(section.textContent).toContain(
-                'Overseas reprocessor IDs that have not been approved'
+                'Overseas reprocessor IDs that have not been logged'
               )
             }
           )
@@ -1095,7 +1095,7 @@ describe('#viewController', () => {
               })
 
               expect(section.textContent).not.toContain(
-                'Overseas reprocessor IDs that have not been approved'
+                'Overseas reprocessor IDs that have not been logged'
               )
             }
           )
@@ -1142,7 +1142,7 @@ describe('#viewController', () => {
               })
 
               expect(section.textContent).toContain(
-                'Overseas reprocessor IDs that have not been approved'
+                'Overseas reprocessor IDs that have not been logged'
               )
               expect(section.textContent).toContain('ORS-777')
             }

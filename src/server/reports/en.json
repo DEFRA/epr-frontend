@@ -199,8 +199,8 @@
   "totalTonnageReceived": "Total tonnage received",
   "totalTonnageSentOn": "Total tonnage sent on",
   "unapprovedOrsIdColumn": "Overseas reprocessor ID",
-  "unapprovedOverseasSitesHeading": "Overseas reprocessor IDs that have not been approved",
-  "unapprovedOverseasSitesIntro": "These overseas reprocessor IDs were in your summary log, but do not match any approved overseas reprocessors in our records. The tonnage displayed is still included in the total tonnage exported.",
+  "unapprovedOverseasSitesHeading": "Overseas reprocessor IDs that have not been logged",
+  "unapprovedOverseasSitesIntro": "These overseas reprocessor IDs were in your summary log, but do not match any overseas reprocessors in our records. The tonnage displayed is still included in the total tonnage exported.",
   "useThisData": "Use this data",
   "view": {
     "avgPrice": "Average price per tonne of {{noteTypePlural}}",

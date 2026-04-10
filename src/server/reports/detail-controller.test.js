@@ -1124,7 +1124,7 @@ describe('#detailReportsController', () => {
         const { body } = dom.window.document
 
         expect(body.textContent).not.toContain(
-          'Overseas reprocessor IDs that have not been approved'
+          'Overseas reprocessor IDs that have not been logged'
         )
       })
     })
@@ -1167,7 +1167,7 @@ describe('#detailReportsController', () => {
         const { body } = dom.window.document
 
         expect(body.textContent).toContain(
-          'Overseas reprocessor IDs that have not been approved'
+          'Overseas reprocessor IDs that have not been logged'
         )
       })
 
