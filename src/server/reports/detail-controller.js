@@ -4,7 +4,8 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
-  isExporterRegistration
+  isExporterRegistration,
+  isReprocessorRegistration
 } from '#server/common/helpers/prns/registration-helpers.js'
 import {
   buildDestinationRows,
@@ -48,29 +49,25 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
 
 /**
  * @param {boolean} isAccreditedExporter
- * @param {boolean} isExporter
- * @returns {string}
- */
-function getWasteSentOnIntroKey(isAccreditedExporter, isExporter) {
-  if (isAccreditedExporter) {
-    return 'reports:wasteSentOnIntroAccreditedExporter'
-  }
-  if (isExporter) {
-    return 'reports:wasteSentOnIntroExporter'
-  }
-  return 'reports:wasteSentOnIntroReprocessor'
-}
-
-/**
- * @param {boolean} isAccreditedExporter
- * @param {boolean} isExporter
+ * @param {boolean} isAccreditedReprocessor
  * @param {(key: string) => string} localise
  * @returns {object}
  */
-function buildSectionIntros(isAccreditedExporter, isExporter, localise) {
+function buildSectionIntros(
+  isAccreditedExporter,
+  isAccreditedReprocessor,
+  localise
+) {
   return {
-    wasteSentOnIntro: localise(
-      getWasteSentOnIntroKey(isAccreditedExporter, isExporter)
+    wasteSentOnIntroReprocessor: localise(
+      isAccreditedReprocessor
+        ? 'reports:wasteSentOnIntroAccreditedReprocessor'
+        : 'reports:wasteSentOnIntroReprocessor'
+    ),
+    wasteSentOnIntroExporter: localise(
+      isAccreditedExporter
+        ? 'reports:wasteSentOnIntroAccreditedExporter'
+        : 'reports:wasteSentOnIntroExporter'
     ),
     wasteReceivedForExportIntro: isAccreditedExporter
       ? localise('reports:wasteReceivedForExportIntro')
@@ -112,6 +109,8 @@ function buildViewData(
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
+  const isAccreditedReprocessor =
+    isReprocessorRegistration(registration) && !!accreditation
   const { wasteActionGerund } = getNoteTypeDisplayNames(registration)
 
   return {
@@ -156,7 +155,11 @@ function buildViewData(
       toOtherSites: wasteSent.tonnageSentToAnotherSite,
       destinationRows: buildDestinationRows(wasteSent.finalDestinations)
     },
-    ...buildSectionIntros(isAccreditedExporter, isExporter, localise)
+    ...buildSectionIntros(
+      isAccreditedExporter,
+      isAccreditedReprocessor,
+      localise
+    )
   }
 }
 

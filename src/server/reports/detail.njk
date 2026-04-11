@@ -127,7 +127,11 @@
       {% endif %}
 
       <h2 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h2>
-      <p class="govuk-body">{{ wasteSentOnIntro }}</p>
+      {% if isExporter %}
+        <p class="govuk-body">{{ wasteSentOnIntroExporter }}</p>
+      {% else %}
+        <p class="govuk-body">{{ wasteSentOnIntroReprocessor }}</p>
+      {% endif %}
 
       <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
       <p class="govuk-heading-l">{{ wasteSentOn.totalTonnage | formatTonnage }}</p>
