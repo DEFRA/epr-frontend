@@ -977,7 +977,7 @@ describe('#detailReportsController', () => {
         ).toBeNull()
       })
 
-      it('should display section 2 intro text for waste sent on', async ({
+      it('should display sections 5 and 6 intro text for waste sent on', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -990,7 +990,7 @@ describe('#detailReportsController', () => {
         const { body } = dom.window.document
 
         expect(body.textContent).toContain(
-          'This data comes from section 2 of your summary log'
+          'This data comes from sections 5 and 6 of your summary log.'
         )
       })
     })
