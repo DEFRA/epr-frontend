@@ -13,6 +13,7 @@ import {
   buildDestinationDetailRows,
   buildOverseasSiteRows,
   buildSupplierDetailRows,
+  buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
@@ -54,9 +55,10 @@ const defaultExportActivity = {
 /**
  * @param {object|null|undefined} exportActivity
  * @param {boolean} isExporter
+ * @param {boolean} isAccreditedExporter
  * @returns {object|null}
  */
-function buildWasteExported(exportActivity, isExporter) {
+function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
   if (!isExporter) {
     return null
   }
@@ -64,7 +66,12 @@ function buildWasteExported(exportActivity, isExporter) {
   const activity = exportActivity ?? defaultExportActivity
   return {
     totalTonnage: formatTonnage(activity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(activity.overseasSites),
+    overseasSiteRows: buildOverseasSiteRows(activity.overseasSites, {
+      showApprovalColumn: isAccreditedExporter
+    }),
+    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
+      activity.unapprovedOverseasSites ?? []
+    ),
     ...formatExportTonnages(activity)
   }
 }
@@ -171,6 +178,24 @@ function buildPageLabels({
 }
 
 /**
+ * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
+ * @returns {{ totalTonnage: string, supplierDetailRows: Array<Array<{text: string}>> }}
+ */
+const buildWasteReceivedViewData = (recyclingActivity) => ({
+  totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
+  supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+})
+
+/**
+ * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
+ * @returns {{ tonnageRecycled: string, tonnageNotRecycled: string }}
+ */
+const buildRecyclingActivityViewData = (recyclingActivity) => ({
+  tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+  tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
+})
+
+/**
  * @param {{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse, organisationId: string, registrationId: string, year: number, cadence: string, period: number, localise: (key: string, params?: Record<string, string>) => string, localiseUrl: (url: string) => string }} params
  * @returns {object}
  */
@@ -190,6 +215,7 @@ function buildViewData({
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
+  const isAccreditedExporter = isExporter && !!accreditation
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
@@ -211,6 +237,7 @@ function buildViewData({
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
     isExporter,
+    showApprovalColumn: isAccreditedExporter,
     backUrl: localiseUrl(reportsUrl),
 
     // Inset text
@@ -228,13 +255,14 @@ function buildViewData({
     material,
 
     // Waste received
-    wasteReceived: {
-      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-    },
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
 
     // Waste exported (exporters only — always show section with defaults)
-    wasteExported: buildWasteExported(exportActivity, isExporter),
+    wasteExported: buildWasteExported(
+      exportActivity,
+      isExporter,
+      isAccreditedExporter
+    ),
 
     // Waste sent on
     wasteSentOn: buildWasteSentOnViewData(wasteSent),
@@ -248,10 +276,7 @@ function buildViewData({
     },
 
     // Recycling activity
-    recyclingActivity: {
-      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
-      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
-    },
+    recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),
 
     // Supporting information
     supportingInformation:
