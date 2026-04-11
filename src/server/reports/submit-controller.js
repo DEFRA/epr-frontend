@@ -178,6 +178,24 @@ function buildPageLabels({
 }
 
 /**
+ * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
+ * @returns {{ totalTonnage: string, supplierDetailRows: Array<Array<{text: string}>> }}
+ */
+const buildWasteReceivedViewData = (recyclingActivity) => ({
+  totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
+  supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+})
+
+/**
+ * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
+ * @returns {{ tonnageRecycled: string, tonnageNotRecycled: string }}
+ */
+const buildRecyclingActivityViewData = (recyclingActivity) => ({
+  tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+  tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
+})
+
+/**
  * @param {{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse, organisationId: string, registrationId: string, year: number, cadence: string, period: number, localise: (key: string, params?: Record<string, string>) => string, localiseUrl: (url: string) => string }} params
  * @returns {object}
  */
@@ -237,10 +255,7 @@ function buildViewData({
     material,
 
     // Waste received
-    wasteReceived: {
-      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-    },
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
 
     // Waste exported (exporters only — always show section with defaults)
     wasteExported: buildWasteExported(
@@ -261,10 +276,7 @@ function buildViewData({
     },
 
     // Recycling activity
-    recyclingActivity: {
-      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
-      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
-    },
+    recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),
 
     // Supporting information
     supportingInformation:
