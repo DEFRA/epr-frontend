@@ -1,10 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import {
-  extractCookieValues,
-  mergeCookies
-} from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -1273,36 +1269,6 @@ describe('#submitController', () => {
 
           expect(statusCode).toBe(statusCodes.found)
           expect(headers.location).toBe(submittedUrl)
-        })
-
-        it('should set reportSubmitted session data', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const postResponse = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, version: 1 }
-          })
-
-          const postCookieValues = extractCookieValues(
-            postResponse.headers['set-cookie']
-          )
-          const cookies = mergeCookies(cookie, ...postCookieValues)
-
-          // Follow redirect to submitted page — should render (not redirect
-          // to list) because session data was set correctly
-          const { statusCode } = await server.inject({
-            method: 'GET',
-            url: submittedUrl,
-            auth: mockAuth,
-            headers: { cookie: cookies }
-          })
-
-          expect(statusCode).toBe(statusCodes.ok)
         })
       })
     })

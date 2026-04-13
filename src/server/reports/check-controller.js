@@ -242,8 +242,6 @@ export const checkPostController = {
       session.idToken
     )
 
-    request.yar.set('reportCreated', { year, cadence, period })
-
     return h.redirect(
       request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/created`

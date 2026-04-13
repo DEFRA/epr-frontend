@@ -1,9 +1,11 @@
+import Boom from '@hapi/boom'
+
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
+import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
-import { isSessionMatch } from './helpers/is-session-match.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 
 /**
@@ -23,15 +25,6 @@ export const createdController = {
 
     const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
-    const sessionData = request.yar.get('reportCreated')
-    const duration = { year, cadence, period }
-
-    if (!isSessionMatch(sessionData, duration)) {
-      return h.redirect(request.localiseUrl(reportsUrl))
-    }
-
-    request.yar.clear('reportCreated')
-
     const [{ registration }, reportDetail] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
@@ -47,6 +40,12 @@ export const createdController = {
         session.idToken
       )
     ])
+
+    if (
+      reportDetail.status?.currentStatus !== SUBMISSION_STATUS.READY_TO_SUBMIT
+    ) {
+      throw Boom.notFound()
+    }
 
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
