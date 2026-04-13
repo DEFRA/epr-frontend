@@ -1,6 +1,6 @@
 import { fetchReportDetail } from './fetch-report-detail.js'
 import { periodParamsSchema } from './period-params-schema.js'
-import { getRedirectUrl } from './redirect.js'
+import { getContinueRedirectUrl, getSaveRedirectUrl } from './redirect.js'
 import { updateReport } from './update-report.js'
 import { buildValidationErrors } from './validation.js'
 
@@ -142,7 +142,9 @@ function createSimplePostHandler(fieldName, nextPage) {
     )
 
     return h.redirect(
-      getRedirectUrl(request, request.params, request.payload.action, nextPage)
+      request.payload.action === 'continue'
+        ? getContinueRedirectUrl(request, request.params, nextPage)
+        : getSaveRedirectUrl(request, request.params)
     )
   }
 }
@@ -208,7 +210,9 @@ function createTonnagePostHandler(
     )
 
     return h.redirect(
-      getRedirectUrl(request, request.params, request.payload.action, nextPage)
+      request.payload.action === 'continue'
+        ? getContinueRedirectUrl(request, request.params, nextPage)
+        : getSaveRedirectUrl(request, request.params)
     )
   }
 }

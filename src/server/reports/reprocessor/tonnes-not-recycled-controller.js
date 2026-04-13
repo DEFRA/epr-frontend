@@ -1,7 +1,10 @@
 import { CADENCE } from '../constants.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
 import { tonnageNotRecycledPayloadSchema } from '../helpers/validation.js'
-import { getRedirectUrl } from '../helpers/redirect.js'
+import {
+  getContinueRedirectUrl,
+  getSaveRedirectUrl
+} from '../helpers/redirect.js'
 import { updateReport } from '../helpers/update-report.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
@@ -50,7 +53,9 @@ const { getController, postController } = createDataPageControllers({
         cadence === CADENCE.MONTHLY ? 'prn-summary' : 'supporting-information'
 
       return h.redirect(
-        getRedirectUrl(request, request.params, action, nextPage)
+        action === 'continue'
+          ? getContinueRedirectUrl(request, request.params, nextPage)
+          : getSaveRedirectUrl(request, request.params)
       )
     }
   }
