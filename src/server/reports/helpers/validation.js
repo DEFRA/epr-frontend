@@ -107,16 +107,15 @@ export const tonnageNotRecycledPayloadSchema = Joi.object({
 
 const freeTonnageErrors = Object.freeze({
   format: 'reports:freeErrorFormat',
-  integer: 'reports:freeErrorInteger',
   negative: 'reports:freeErrorNegative',
   required: 'reports:freeErrorRequired'
 })
 
 export const freeTonnagePayloadSchema = Joi.object({
-  freeTonnage: Joi.number().integer().min(0).required().messages({
+  freeTonnage: Joi.number().empty('').integer().min(0).required().messages({
     'any.required': freeTonnageErrors.required,
-    'number.base': freeTonnageErrors.required,
-    'number.integer': freeTonnageErrors.integer,
+    'number.base': freeTonnageErrors.format,
+    'number.integer': freeTonnageErrors.format,
     'number.min': freeTonnageErrors.negative,
     'number.unsafe': freeTonnageErrors.format,
     'number.infinity': freeTonnageErrors.format

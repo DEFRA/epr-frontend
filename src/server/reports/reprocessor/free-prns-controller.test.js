@@ -323,7 +323,7 @@ describe('#reprocessorFreePrnsController', () => {
             auth: mockAuth
           })
 
-          const { statusCode, result } = await server.inject({
+          const { result } = await server.inject({
             method: 'POST',
             url: baseUrl,
             auth: mockAuth,
@@ -331,34 +331,18 @@ describe('#reprocessorFreePrnsController', () => {
             payload: { crumb, freeTonnage: '', action: 'continue' }
           })
 
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain(
-            'Enter the total tonnage of free PRNs, even if zero'
-          )
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total tonnage of PRNs issued for free, even if zero/
+            )
+          ).toBeDefined()
         })
 
         it('should show error when tonnage exceeds total PRNs issued', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { statusCode, result } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, freeTonnage: 100, action: 'continue' }
-          })
-
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(result).toContain(
-            'Enter a number less than the total number of PRNs you issued in this period'
-          )
-        })
-
-        it('should show error when tonnage is not a whole number', async ({
           server
         }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -370,16 +354,49 @@ describe('#reprocessorFreePrnsController', () => {
             url: baseUrl,
             auth: mockAuth,
             headers: { cookie },
-            payload: { crumb, freeTonnage: 12.5, action: 'continue' }
+            payload: { crumb, freeTonnage: 100, action: 'continue' }
           })
 
           const { body } = new JSDOM(result).window.document
           const alert = getByRole(body, 'alert')
 
           expect(
-            getByText(alert, /Enter a whole number without decimal places/)
+            getByText(
+              alert,
+              /This number should be less than the total number of PRNs you issued in January 2026/
+            )
           ).toBeDefined()
         })
+
+        it.for([
+          { scenario: 'is not a whole number', value: 12.5 },
+          { scenario: 'is non-numeric', value: 'abc' }
+        ])(
+          'should show digits-only error when tonnage $scenario',
+          async ({ value }, { server }) => {
+            const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+              auth: mockAuth
+            })
+
+            const { result } = await server.inject({
+              method: 'POST',
+              url: baseUrl,
+              auth: mockAuth,
+              headers: { cookie },
+              payload: { crumb, freeTonnage: value, action: 'continue' }
+            })
+
+            const { body } = new JSDOM(result).window.document
+            const alert = getByRole(body, 'alert')
+
+            expect(
+              getByText(
+                alert,
+                /Enter the total tonnage in digits, using only a whole number/
+              )
+            ).toBeDefined()
+          }
+        )
       })
     })
   })
