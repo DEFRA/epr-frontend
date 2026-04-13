@@ -1,10 +1,9 @@
-import { config, isRegisteredOnlyEnabled } from '#config/config.js'
+import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
-import Boom from '@hapi/boom'
 import { capitalize } from 'lodash-es'
 
 /**
@@ -22,10 +21,6 @@ export const controller = {
         registrationId,
         session.idToken
       )
-
-    if (!isRegisteredOnlyEnabled() && !accreditation) {
-      throw Boom.notFound('Registered-only not enabled')
-    }
 
     const wasteBalance = registration.accreditationId
       ? await getWasteBalance(
