@@ -29,7 +29,7 @@ const { getController, postController } = createDataPageControllers({
       caption: localise('reports:noteSummaryCaption'),
       heading: localise('reports:noteSummaryHeading', {
         noteTypePlural,
-        material,
+        material: material.toLowerCase(),
         periodMonth
       }),
       tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),

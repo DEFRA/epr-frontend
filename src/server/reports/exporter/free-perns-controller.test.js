@@ -135,7 +135,7 @@ describe('#freePernController', () => {
         })
 
         const { title } = new JSDOM(result).window.document
-        expect(title).toContain('Free PERNs: plastic: January 2026')
+        expect(title).toContain('Free PERNs: Plastic: January 2026')
       })
 
       it('should display the heading', async ({ server }) => {

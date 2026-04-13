@@ -14,7 +14,7 @@ const { getController, postController } = createDataPageControllers({
       }),
       caption: localise('reports:tonnageRecycledCaption'),
       heading: localise('reports:tonnageRecycledHeading', {
-        material,
+        material: material.toLowerCase(),
         periodMonth
       }),
       hintText: localise('reports:tonnageRecycledHint', { periodLabel }),

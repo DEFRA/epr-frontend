@@ -100,7 +100,7 @@ export async function buildReprocessorViewData(
     ? await fetchGuardedAccreditedReprocessorData(request)
     : await fetchGuardedReprocessorData(request)
 
-  const material = getDisplayMaterial(registration).toLowerCase()
+  const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodMonth = formatPeriodMonth({ year, period }, cadence, localise)
   const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
