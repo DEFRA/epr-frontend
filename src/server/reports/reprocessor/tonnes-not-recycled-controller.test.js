@@ -137,7 +137,7 @@ describe('#tonnesNotRecycledController', () => {
 
         const { body } = new JSDOM(result).window.document
         const headingName =
-          /How many tonnes of plastic packaging waste did you receive in January 2026 but not recycle\?/
+          /How many tonnes of plastic packaging waste did you receive in January but not recycle\?/
 
         expect(
           getByRole(body, 'heading', { level: 1, name: headingName })
