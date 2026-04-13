@@ -7,7 +7,13 @@ const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'freeTonnage',
   payloadSchema: freeTonnagePayloadSchema,
-  pageFields({ periodLabel, periodPath, registration, reportDetail }) {
+  pageFields({
+    periodLabel,
+    periodMonth,
+    periodPath,
+    registration,
+    reportDetail
+  }) {
     const { noteTypePlural } = getNoteTypeDisplayNames(registration)
     return (localise) => ({
       noteTypePlural,
@@ -17,7 +23,7 @@ const { getController, postController } = createDataPageControllers({
         periodLabel
       }),
       caption: localise('reports:freeCaption'),
-      heading: localise('reports:freeHeading', { noteTypePlural, periodLabel }),
+      heading: localise('reports:freeHeading', { noteTypePlural, periodMonth }),
       insetText: localise('reports:freeHint', { noteTypePlural }),
       inputLabel: localise('reports:freeInputLabel', { noteTypePlural }),
       inputHint: localise('reports:freeInputHint'),

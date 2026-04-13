@@ -132,7 +132,7 @@ describe('#reprocessorFreePrnsController', () => {
         expect(
           getByRole(body, 'heading', {
             level: 1,
-            name: /What is the total tonnage of PRNs you issued for free in January 2026\?/
+            name: /What is the total tonnage of PRNs you issued for free in January\?/
           })
         ).toBeDefined()
       })
@@ -363,7 +363,7 @@ describe('#reprocessorFreePrnsController', () => {
           expect(
             getByText(
               alert,
-              /This number should be less than the total number of PRNs you issued in January 2026/
+              /This number should be less than the total number of PRNs you issued in January$/
             )
           ).toBeDefined()
         })

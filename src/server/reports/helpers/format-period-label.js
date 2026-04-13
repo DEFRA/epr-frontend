@@ -1,11 +1,16 @@
 import { CADENCE } from '../constants.js'
 
 /**
+ * @import { ReportingPeriod } from './fetch-reporting-periods.js'
+ * @typedef {(key: string, params?: Record<string, unknown>) => string} Localise
+ */
+
+/**
  * Formats a reporting period into a display label.
  * Monthly: "January 2026", Quarterly: "Quarter 1, 2026"
- * @param {import('./fetch-reporting-periods.js').ReportingPeriod} period
+ * @param {ReportingPeriod} period
  * @param {string} cadence
- * @param {(key: string, params?: Record<string, unknown>) => string} localise
+ * @param {Localise} localise
  * @returns {string}
  */
 export function formatPeriodLabel(period, cadence, localise) {
@@ -17,5 +22,23 @@ export function formatPeriodLabel(period, cadence, localise) {
   return localise('reports:quarterlyPeriod', {
     number: period.period,
     year: period.year
+  })
+}
+
+/**
+ * Formats a reporting period into a shorter display label without the year.
+ * Monthly: "January", Quarterly: "Quarter 1"
+ * @param {ReportingPeriod} period
+ * @param {string} cadence
+ * @param {Localise} localise
+ * @returns {string}
+ */
+export function formatPeriodMonth(period, cadence, localise) {
+  if (cadence === CADENCE.MONTHLY) {
+    return localise(`reports:months.${period.period}`)
+  }
+
+  return localise('reports:quarterlyPeriodShort', {
+    number: period.period
   })
 }

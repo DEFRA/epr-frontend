@@ -1,5 +1,5 @@
 import { fetchReportDetail } from './fetch-report-detail.js'
-import { formatPeriodLabel } from './format-period-label.js'
+import { formatPeriodMonth } from './format-period-label.js'
 import { periodParamsSchema } from './period-params-schema.js'
 import { getRedirectUrl } from './redirect.js'
 import { updateReport } from './update-report.js'
@@ -182,14 +182,14 @@ function createTonnagePostHandler(
 
     if (fieldValue > reportDetail.prn.issuedTonnage) {
       const viewData = await getViewData(request, { value: fieldValue })
-      const periodLabel = formatPeriodLabel(
+      const periodMonth = formatPeriodMonth(
         { year, period },
         cadence,
         request.t
       )
       const message = request.t(errorKey, {
         noteTypePlural: viewData.noteTypePlural,
-        periodLabel
+        periodMonth
       })
 
       return h.view(viewPath, {

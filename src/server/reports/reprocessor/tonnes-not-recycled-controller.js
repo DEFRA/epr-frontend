@@ -9,7 +9,7 @@ const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageNotRecycled',
   payloadSchema: tonnageNotRecycledPayloadSchema,
-  pageFields({ material, periodLabel, periodPath, reportDetail }) {
+  pageFields({ material, periodLabel, periodMonth, periodPath, reportDetail }) {
     return (localise) => ({
       pageTitle: localise('reports:tonnageNotRecycledPageTitle', {
         material,
@@ -18,7 +18,7 @@ const { getController, postController } = createDataPageControllers({
       caption: localise('reports:tonnageNotRecycledCaption'),
       heading: localise('reports:tonnageNotRecycledHeading', {
         material,
-        periodLabel
+        periodMonth
       }),
       hintText: localise('reports:tonnageNotRecycledHint'),
       continueText: localise('reports:tonnageNotRecycledContinue'),

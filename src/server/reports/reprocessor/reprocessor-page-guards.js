@@ -5,7 +5,10 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
 import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE } from '../constants.js'
 import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from '../helpers/format-period-label.js'
+import {
+  formatPeriodLabel,
+  formatPeriodMonth
+} from '../helpers/format-period-label.js'
 
 /**
  * Fetches registration/accreditation and report detail, then enforces the
@@ -99,6 +102,7 @@ export async function buildReprocessorViewData(
 
   const material = getDisplayMaterial(registration).toLowerCase()
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const periodMonth = formatPeriodMonth({ year, period }, cadence, localise)
   const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
   const pageFields = buildPageFields({
@@ -107,6 +111,7 @@ export async function buildReprocessorViewData(
     reportDetail,
     material,
     periodLabel,
+    periodMonth,
     periodPath
   })
 
