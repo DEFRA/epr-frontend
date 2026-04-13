@@ -7,7 +7,7 @@ import { CADENCE } from '../constants.js'
 import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
 import {
   formatPeriodLabel,
-  formatPeriodMonth
+  formatPeriodShort
 } from '../helpers/format-period-label.js'
 
 /**
@@ -83,7 +83,7 @@ export async function buildExporterViewData(
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-  const periodMonth = formatPeriodMonth({ year, period }, cadence, localise)
+  const periodShort = formatPeriodShort({ year, period }, cadence, localise)
   const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
   const pageFields = buildPageFields({
@@ -91,7 +91,7 @@ export async function buildExporterViewData(
     reportDetail,
     material,
     periodLabel,
-    periodMonth,
+    periodShort,
     periodPath
   })
 

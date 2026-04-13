@@ -10,7 +10,7 @@ const { getController, postController } = createDataPageControllers({
   pageFields({
     material,
     periodLabel,
-    periodMonth,
+    periodShort,
     periodPath,
     registration,
     reportDetail
@@ -24,7 +24,7 @@ const { getController, postController } = createDataPageControllers({
         periodLabel
       }),
       caption: localise('reports:freeCaption'),
-      heading: localise('reports:freeHeading', { noteTypePlural, periodMonth }),
+      heading: localise('reports:freeHeading', { noteTypePlural, periodShort }),
       insetText: localise('reports:freeHint', { noteTypePlural }),
       inputLabel: localise('reports:freeInputLabel', { noteTypePlural }),
       inputHint: localise('reports:freeInputHint'),
