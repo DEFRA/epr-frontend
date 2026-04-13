@@ -93,7 +93,7 @@
           {{ govukSummaryList({
             rows: [{
               key: { text: localise("reports:checkTonnageNotExportedLabel") },
-              value: { text: wasteExported.tonnageReceivedNotExported if wasteExported.tonnageReceivedNotExported !== null else "—" },
+              value: { text: wasteExported.tonnageReceivedNotExported },
               actions: { items: [{ href: tonnageNotExportedChangeUrl, text: changeText, visuallyHiddenText: localise("reports:checkTonnageNotExportedLabel") }] }
             }]
           }) }}

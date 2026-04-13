@@ -237,6 +237,7 @@ function buildViewData({
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
     isExporter,
+    isRegisteredOnlyExporter: isExporter && !accreditation,
     showApprovalColumn: isAccreditedExporter,
     backUrl: localiseUrl(reportsUrl),
 

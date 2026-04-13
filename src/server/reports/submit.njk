@@ -98,14 +98,17 @@
           unapprovedIntro: localise("reports:unapprovedOverseasSitesIntro")
         }) }}
 
-        <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
+        {% if isRegisteredOnlyExporter %}
+          <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
 
-        {{ govukSummaryList({
-          rows: [{
-            key: { text: localise("reports:tonnageReceivedNotExportedLabel") },
-            value: { text: wasteExported.tonnageReceivedNotExported }
-          }]
-        }) }}
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
+          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+        {% else %}
+          <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
+
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
+          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+        {% endif %}
 
         <h2 class="govuk-heading-l">{{ localise("reports:tonnageRefusedOrStoppedHeading") }}</h2>
 
