@@ -119,6 +119,17 @@ describe('#reprocessorFreePrnsController', () => {
         expect(statusCode).toBe(statusCodes.ok)
       })
 
+      it('should set the page title', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        const { title } = new JSDOM(result).window.document
+        expect(title).toContain('Free PRNs: plastic: January 2026')
+      })
+
       it('should display PRN heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',

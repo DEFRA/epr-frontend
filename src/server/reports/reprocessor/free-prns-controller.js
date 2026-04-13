@@ -8,6 +8,7 @@ const { getController, postController } = createDataPageControllers({
   fieldName: 'freeTonnage',
   payloadSchema: freeTonnagePayloadSchema,
   pageFields({
+    material,
     periodLabel,
     periodMonth,
     periodPath,
@@ -19,7 +20,7 @@ const { getController, postController } = createDataPageControllers({
       noteTypePlural,
       pageTitle: localise('reports:freePageTitle', {
         noteTypePlural,
-        material: undefined,
+        material,
         periodLabel
       }),
       caption: localise('reports:freeCaption'),
