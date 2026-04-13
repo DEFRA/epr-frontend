@@ -1,4 +1,8 @@
-import { CADENCE, CadenceValue } from '../constants.js'
+import { CADENCE } from '../constants.js'
+
+/**
+ * @import { CadenceValue } from '../constants.js'
+ */
 
 /**
  * @import { ReportingPeriod } from './fetch-reporting-periods.js'
