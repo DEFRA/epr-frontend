@@ -2,11 +2,6 @@ import Joi from 'joi'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import {
-  isExporterRegistration,
-  isReprocessorRegistration
-} from '#server/common/helpers/prns/registration-helpers.js'
-import { CADENCE } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -32,31 +27,20 @@ const payloadSchema = Joi.object({
  * @param {string} basePath
  * @param {object} registration
  * @param {object | null} accreditation
- * @param {string} cadence
  * @returns {string}
  */
-function getBackPage(basePath, registration, accreditation, cadence) {
-  if (
-    accreditation &&
-    isReprocessorRegistration(registration) &&
-    cadence === CADENCE.MONTHLY
-  ) {
-    return `${basePath}/free-prns`
+function getBackPage(basePath, registration, accreditation) {
+  const pages = {
+    reprocessor: {
+      unaccredited: 'tonnes-not-recycled',
+      accredited: 'free-prns'
+    },
+    exporter: { unaccredited: 'tonnes-not-exported', accredited: 'free-perns' }
   }
 
-  if (!accreditation && isReprocessorRegistration(registration)) {
-    return `${basePath}/tonnes-not-recycled`
-  }
-
-  if (
-    accreditation &&
-    isExporterRegistration(registration) &&
-    cadence === CADENCE.MONTHLY
-  ) {
-    return `${basePath}/free-perns`
-  }
-
-  return basePath
+  const { wasteProcessingType } = registration
+  const key = accreditation ? 'accredited' : 'unaccredited'
+  return `${basePath}/${pages[wasteProcessingType][key]}`
 }
 
 /**
@@ -93,7 +77,7 @@ async function buildViewData(request, options = {}) {
 
   const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
-  const backPage = getBackPage(basePath, registration, accreditation, cadence)
+  const backPage = getBackPage(basePath, registration, accreditation)
 
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {

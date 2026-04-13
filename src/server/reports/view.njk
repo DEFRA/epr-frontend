@@ -159,8 +159,12 @@
         <div id="waste-received-but-not-exported">
           <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
 
-          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
-          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+          {{ govukSummaryList({
+            rows: [{
+              key: { text: localise("reports:tonnageReceivedNotExportedLabel") },
+              value: { text: wasteExported.tonnageReceivedNotExported }
+            }]
+          }) }}
         </div>
 
         <div id="packaging-waste-refused-or-stopped-during-export">

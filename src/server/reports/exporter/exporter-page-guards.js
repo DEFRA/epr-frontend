@@ -12,10 +12,10 @@ import {
 
 /**
  * Fetches registration/accreditation and report detail, then enforces the
- * accredited-exporter-monthly guard. Returns the validated data needed by
- * both prn-summary and free-perns pages.
+ * exporter guard (any cadence). Returns validated data for pages available
+ * to all exporters.
  * @param {Request} request
- * @returns {Promise<{ registration: object, reportDetail: object }>}
+ * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: object }>}
  */
 export async function fetchGuardedExporterData(request) {
   const { organisationId, registrationId, year, cadence, period } =
@@ -38,11 +38,7 @@ export async function fetchGuardedExporterData(request) {
     )
   ])
 
-  if (
-    !accreditation ||
-    !isExporterRegistration(registration) ||
-    cadence !== CADENCE.MONTHLY
-  ) {
+  if (!isExporterRegistration(registration)) {
     throw Boom.notFound()
   }
 
@@ -51,20 +47,42 @@ export async function fetchGuardedExporterData(request) {
     throw Boom.notFound()
   }
 
+  return { registration, accreditation, reportDetail }
+}
+
+/**
+ * Fetches registration/accreditation and report detail, then enforces the
+ * accredited-exporter-monthly guard. Returns validated data for pages
+ * available only to accredited exporters (prn-summary, free-perns).
+ * @param {Request} request
+ * @returns {Promise<{ registration: object, accreditation: object, reportDetail: object }>}
+ */
+export async function fetchGuardedAccreditedExporterData(request) {
+  const { registration, accreditation, reportDetail } =
+    await fetchGuardedExporterData(request)
+
+  const { cadence } = request.params
+
+  if (!accreditation || cadence !== CADENCE.MONTHLY) {
+    throw Boom.notFound()
+  }
+
   if (!reportDetail.prn) {
     throw Boom.badImplementation('PRN data missing for accredited report')
   }
 
-  return { registration, reportDetail }
+  return { registration, accreditation, reportDetail }
 }
 
 /**
- * Fetches guarded exporter data and builds the common view data fields shared
- * by prn-summary and free-perns pages. Page-specific fields are merged from
- * the callback return value.
+ * Fetches guarded exporter data and builds the common view data fields
+ * shared by exporter pages. Page-specific fields are merged from the
+ * callback return value.
  * @param {Request} request
- * @param {(ctx: { registration: object, reportDetail: object, material: string, periodLabel: string, periodPath: string }) => object} buildPageFields
+ * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string }) => object} buildPageFields
  * @param {object} [options]
+ * @param {boolean} [options.accreditedOnly] - Use accredited guard (prn-summary, free-perns)
+ * @param {boolean} [options.registeredOnly] - Restrict to registered-only exporters (tonnes-not-exported)
  * @param {unknown} [options.value]
  * @param {object} [options.errors]
  * @param {object} [options.errorSummary]
@@ -79,7 +97,13 @@ export async function buildExporterViewData(
     request.params
   const { t: localise } = request
 
-  const { registration, reportDetail } = await fetchGuardedExporterData(request)
+  const { registration, accreditation, reportDetail } = options.accreditedOnly
+    ? await fetchGuardedAccreditedExporterData(request)
+    : await fetchGuardedExporterData(request)
+
+  if (options.registeredOnly && accreditation) {
+    throw Boom.notFound()
+  }
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
@@ -88,11 +112,13 @@ export async function buildExporterViewData(
 
   const pageFields = buildPageFields({
     registration,
+    accreditation,
     reportDetail,
     material,
     periodLabel,
     periodShort,
-    periodPath
+    periodPath,
+    period
   })
 
   return {

@@ -105,6 +105,31 @@ export const tonnageNotRecycledPayloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
+const tonnageNotExportedErrors = Object.freeze({
+  decimalPlaces: 'reports:tonnageNotExportedErrorDecimalPlaces',
+  format: 'reports:tonnageNotExportedErrorFormat',
+  negative: 'reports:tonnageNotExportedErrorNegative',
+  required: 'reports:tonnageNotExportedErrorRequired'
+})
+
+export const tonnageNotExportedPayloadSchema = Joi.object({
+  tonnageNotExported: Joi.number()
+    .empty('')
+    .min(0)
+    .custom(maxTwoDecimalPlaces)
+    .required()
+    .messages({
+      'any.required': tonnageNotExportedErrors.required,
+      'number.base': tonnageNotExportedErrors.format,
+      'number.min': tonnageNotExportedErrors.negative,
+      'number.unsafe': tonnageNotExportedErrors.format,
+      'number.infinity': tonnageNotExportedErrors.format,
+      'number.maxDecimalPlaces': tonnageNotExportedErrors.decimalPlaces
+    }),
+  action: Joi.string().valid('continue', 'save').required(),
+  crumb: Joi.string()
+})
+
 const freeTonnageErrors = Object.freeze({
   format: 'reports:freeErrorFormat',
   negative: 'reports:freeErrorNegative',

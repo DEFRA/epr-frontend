@@ -345,6 +345,42 @@ describe('#createReportController', () => {
         })
       })
 
+      it('should redirect to tonnes-not-exported', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: detailUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/tonnes-not-exported'
+        )
+      })
+    })
+
+    describe('for unknown wasteProcessingType (fallback branch)', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...registeredOnlyExporterRegistration,
+          registration: {
+            ...registeredOnlyExporterRegistration.registration,
+            wasteProcessingType: 'unknown'
+          }
+        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        vi.mocked(createReport).mockResolvedValue({
+          id: 'report-001',
+          status: 'in_progress'
+        })
+      })
+
       it('should redirect to supporting-information', async ({ server }) => {
         const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
           auth: mockAuth
