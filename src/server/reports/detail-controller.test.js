@@ -804,6 +804,23 @@ describe('#detailReportsController', () => {
           'This data comes from section 2 of your summary log'
         )
       })
+
+      it('should display section 1 intro text for waste received', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from section 1 of your summary log.'
+        )
+      })
     })
 
     describe('when no records match the period', () => {
@@ -991,6 +1008,23 @@ describe('#detailReportsController', () => {
 
         expect(body.textContent).toContain(
           'This data comes from sections 5 and 6 of your summary log.'
+        )
+      })
+
+      it('should display sections 1 and 2 intro text for waste received', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedDetailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain(
+          'This data comes from sections 1 and 2 of your summary log.'
         )
       })
     })
