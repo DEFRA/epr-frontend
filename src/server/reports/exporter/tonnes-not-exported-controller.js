@@ -16,7 +16,7 @@ const { getController, postController } = createDataPageControllers({
       }),
       caption: localise('reports:tonnageNotExportedCaption'),
       heading: localise('reports:tonnageNotExportedHeading', {
-        material,
+        material: material.toLowerCase(),
         quarter: period
       }),
       hintText: localise('reports:tonnageNotExportedHint'),
