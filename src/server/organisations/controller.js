@@ -66,9 +66,9 @@ function createTag(status) {
  * @returns {string}
  */
 const formatWasteBalance = (accreditation, wasteBalance, localise) =>
-  !accreditation
-    ? localise('organisations:table:notApplicable')
-    : formatTonnage(wasteBalance?.availableAmount)
+  accreditation
+    ? formatTonnage(wasteBalance?.availableAmount)
+    : localise('organisations:table:notApplicable')
 
 /**
  * @param {Accreditation} [accreditation]
