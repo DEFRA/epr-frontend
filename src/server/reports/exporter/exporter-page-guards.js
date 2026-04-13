@@ -5,7 +5,10 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE } from '../constants.js'
 import { fetchReportDetail } from '../helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from '../helpers/format-period-label.js'
+import {
+  formatPeriodLabel,
+  formatPeriodShort
+} from '../helpers/format-period-label.js'
 
 /**
  * Fetches registration/accreditation and report detail, then enforces the
@@ -78,8 +81,9 @@ export async function buildExporterViewData(
 
   const { registration, reportDetail } = await fetchGuardedExporterData(request)
 
-  const material = getDisplayMaterial(registration).toLowerCase()
+  const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const periodShort = formatPeriodShort({ year, period }, cadence, localise)
   const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
   const pageFields = buildPageFields({
@@ -87,6 +91,7 @@ export async function buildExporterViewData(
     reportDetail,
     material,
     periodLabel,
+    periodShort,
     periodPath
   })
 

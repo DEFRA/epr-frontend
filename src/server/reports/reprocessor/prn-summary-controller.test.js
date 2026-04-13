@@ -140,11 +140,14 @@ describe('#reprocessorPrnSummaryController', () => {
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        const { body } = new JSDOM(result).window.document
 
-        const heading = getByRole(body, 'heading', { level: 1 })
-        expect(heading.textContent).toContain('PRNs issued')
+        expect(
+          getByRole(body, 'heading', {
+            level: 1,
+            name: /PRNs issued for plastic packaging waste in January$/
+          })
+        ).toBeDefined()
       })
 
       it('should pre-fill revenue if previously saved', async ({ server }) => {
