@@ -88,7 +88,7 @@
   "noteSummaryErrorDecimalPlaces": "Total revenue should only have 2 digits after the decimal point",
   "noteSummaryErrorFormat": "Enter the total revenue in digits, using a decimal point if needed",
   "noteSummaryErrorRequired": "Enter the total revenue of {{noteTypePlural}} issued",
-  "noteSummaryHeading": "{{noteTypePlural}} issued for {{material}} packaging waste in {{periodLabel}}",
+  "noteSummaryHeading": "{{noteTypePlural}} issued for {{material}} packaging waste in {{periodMonth}}",
   "noteSummaryPageTitle": "{{noteTypePlural}} issued: {{material}}: {{periodLabel}}",
   "noteSummaryRevenueHint": "Total revenue should be in pounds and pence",
   "noteSummaryRevenueLabel": "Enter total revenue of {{noteTypePlural}}, excluding VAT",

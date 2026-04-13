@@ -141,14 +141,14 @@ describe('#prnSummaryController', () => {
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        const { body } = new JSDOM(result).window.document
 
-        const heading = getByRole(body, 'heading', {
-          level: 1
-        })
-
-        expect(heading.textContent).toContain('PERNs issued for')
+        expect(
+          getByRole(body, 'heading', {
+            level: 1,
+            name: /PERNs issued for plastic packaging waste in January$/
+          })
+        ).toBeDefined()
       })
 
       it('should display tonnage issued', async ({ server }) => {

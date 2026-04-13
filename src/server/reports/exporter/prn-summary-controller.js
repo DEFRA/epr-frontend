@@ -13,6 +13,7 @@ const { getController, postController } = createDataPageControllers({
   pageFields({
     material,
     periodLabel,
+    periodMonth,
     periodPath,
     registration,
     reportDetail
@@ -29,7 +30,7 @@ const { getController, postController } = createDataPageControllers({
       heading: localise('reports:noteSummaryHeading', {
         noteTypePlural,
         material,
-        periodLabel
+        periodMonth
       }),
       tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
       tonnageIssued: reportDetail.prn.issuedTonnage,
