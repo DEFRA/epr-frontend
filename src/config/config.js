@@ -323,12 +323,6 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_REPORTS'
-    },
-    registeredOnly: {
-      doc: 'Feature Flag: Enable registered only summary log uploads',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_REGISTERED_ONLY'
     }
   }
 })
@@ -336,9 +330,6 @@ export const config = convict({
 config.validate({ allowed: 'strict' })
 
 export const isReportsEnabled = () => config.get('featureFlags.reports')
-
-export const isRegisteredOnlyEnabled = () =>
-  config.get('featureFlags.registeredOnly')
 
 /**
  * @import { Schema, SchemaObj } from 'convict'

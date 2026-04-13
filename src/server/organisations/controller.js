@@ -1,6 +1,5 @@
 import { capitalize } from 'lodash-es'
 
-import { isRegisteredOnlyEnabled } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
@@ -26,12 +25,8 @@ const isExcludedStatus = (status) => !status || EXCLUDED_STATUSES.has(status)
  * @param {Accreditation} [accreditation]
  * @returns {boolean}
  */
-const excludeAccreditation = (accreditation) => {
-  if (isRegisteredOnlyEnabled()) {
-    return accreditation && isExcludedStatus(accreditation.status)
-  }
-  return !accreditation || isExcludedStatus(accreditation.status)
-}
+const excludeAccreditation = (accreditation) =>
+  accreditation && isExcludedStatus(accreditation.status)
 
 /**
  * Determines whether a site should be rendered based on its registration
@@ -71,23 +66,19 @@ function createTag(status) {
  * @returns {string}
  */
 const formatWasteBalance = (accreditation, wasteBalance, localise) =>
-  isRegisteredOnlyEnabled() && !accreditation
-    ? localise('organisations:table:notApplicable')
-    : formatTonnage(wasteBalance?.availableAmount)
+  accreditation
+    ? formatTonnage(wasteBalance?.availableAmount)
+    : localise('organisations:table:notApplicable')
 
 /**
  * @param {Accreditation} [accreditation]
  * @param {(key: string) => string} localise
  * @returns {string}
  */
-const createAccreditationTag = (accreditation, localise) => {
-  if (isRegisteredOnlyEnabled()) {
-    return createTag(
-      accreditation?.status ?? localise('organisations:table:notAccredited')
-    )
-  }
-  return createTag(accreditation.status)
-}
+const createAccreditationTag = (accreditation, localise) =>
+  createTag(
+    accreditation?.status ?? localise('organisations:table:notAccredited')
+  )
 
 /**
  * Creates a row for a given registration

@@ -1,18 +1,12 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import {
-  getAllByRole,
-  getByRole,
-  getByText,
-  queryByText
-} from '@testing-library/dom'
+import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import {DOMWindow} from 'jsdom' */
 
@@ -365,101 +359,65 @@ describe('#organisationController', () => {
         ]
       }
 
-      afterAll(() => {
-        config.reset('featureFlags.registeredOnly')
+      it('should exclude registrations whose accreditation has an excluded status', async ({
+        server
+      }) => {
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue({
+          ...fixtureData,
+          accreditations: [
+            {
+              id: 'acc-excluded-001',
+              status: 'created',
+              wasteProcessingType: 'reprocessor',
+              material: 'plastic'
+            }
+          ],
+          registrations: [
+            {
+              id: 'reg-with-excluded-acc',
+              accreditationId: 'acc-excluded-001',
+              status: 'approved',
+              wasteProcessingType: 'reprocessor',
+              material: 'plastic',
+              site: { address: { line1: 'Test Site' } }
+            }
+          ]
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901',
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(getByText(body, /No sites found/i)).toBeDefined()
       })
 
-      describe('feature flag off', () => {
-        beforeAll(() => {
-          config.set('featureFlags.registeredOnly', false)
+      it('should show registered-only', async ({ server }) => {
+        vi.mocked(
+          fetchOrganisationModule.fetchOrganisationById
+        ).mockResolvedValue(registeredOnlyOrganisation)
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: '/organisations/6507f1f77bcf86cd79943901',
+          auth: mockAuth
         })
 
-        it('should hide registered-only when flag is off', async ({
-          server
-        }) => {
-          vi.mocked(
-            fetchOrganisationModule.fetchOrganisationById
-          ).mockResolvedValue(registeredOnlyOrganisation)
+        const { body } = new JSDOM(result).window.document
+        const cell = cellInColumn(getByRole(body, 'table'))
 
-          const { result, statusCode } = await server.inject({
-            method: 'GET',
-            url: '/organisations/6507f1f77bcf86cd79943901',
-            auth: mockAuth
-          })
-
-          const { body } = new JSDOM(result).window.document
-
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(getByText(body, /No sites found/i)).toBeDefined()
-          expect(queryByText(body, /Not accredited/i)).toBeNull()
-        })
-      })
-
-      describe('feature flag on', () => {
-        beforeAll(() => {
-          config.set('featureFlags.registeredOnly', true)
-        })
-
-        it('should exclude registrations whose accreditation has an excluded status', async ({
-          server
-        }) => {
-          vi.mocked(
-            fetchOrganisationModule.fetchOrganisationById
-          ).mockResolvedValue({
-            ...fixtureData,
-            accreditations: [
-              {
-                id: 'acc-excluded-001',
-                status: 'created',
-                wasteProcessingType: 'reprocessor',
-                material: 'plastic'
-              }
-            ],
-            registrations: [
-              {
-                id: 'reg-with-excluded-acc',
-                accreditationId: 'acc-excluded-001',
-                status: 'approved',
-                wasteProcessingType: 'reprocessor',
-                material: 'plastic',
-                site: { address: { line1: 'Test Site' } }
-              }
-            ]
-          })
-
-          const { result, statusCode } = await server.inject({
-            method: 'GET',
-            url: '/organisations/6507f1f77bcf86cd79943901',
-            auth: mockAuth
-          })
-
-          const { body } = new JSDOM(result).window.document
-
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(getByText(body, /No sites found/i)).toBeDefined()
-        })
-
-        it('should show registered-only', async ({ server }) => {
-          vi.mocked(
-            fetchOrganisationModule.fetchOrganisationById
-          ).mockResolvedValue(registeredOnlyOrganisation)
-
-          const { result, statusCode } = await server.inject({
-            method: 'GET',
-            url: '/organisations/6507f1f77bcf86cd79943901',
-            auth: mockAuth
-          })
-
-          const { body } = new JSDOM(result).window.document
-          const cell = cellInColumn(getByRole(body, 'table'))
-
-          expect(statusCode).toBe(statusCodes.ok)
-          expect(cell('Material')).toHaveTextContent(/Plastic/i)
-          expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
-          expect(cell(/Available waste balance/)).toHaveTextContent(
-            'Not applicable'
-          )
-        })
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(cell('Material')).toHaveTextContent(/Plastic/i)
+        expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
+        expect(cell(/Available waste balance/)).toHaveTextContent(
+          'Not applicable'
+        )
       })
     })
 
