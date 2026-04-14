@@ -105,6 +105,7 @@ function buildCheckViewData({
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
+  const isRegisteredOnlyExporter = isExporter && !accreditation
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
@@ -121,6 +122,8 @@ function buildCheckViewData({
     isExporter,
     isReprocessor,
     isAccredited: !!accreditation,
+    isRegisteredOnlyExporter,
+    tonnageNotExportedChangeUrl: localiseUrl(`${basePath}/tonnes-not-exported`),
     showApprovalColumn: isAccreditedExporter,
     wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
       wasteActionGerund
@@ -241,8 +244,6 @@ export const checkPostController = {
       transition,
       session.idToken
     )
-
-    request.yar.set('reportCreated', { year, cadence, period })
 
     return h.redirect(
       request.localiseUrl(

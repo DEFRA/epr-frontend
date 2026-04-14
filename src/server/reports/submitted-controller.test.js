@@ -1,10 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import {
-  extractCookieValues,
-  mergeCookies
-} from '#server/common/test-helpers/cookie-helper.js'
+import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -13,6 +10,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
+vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = {
   strategy: 'session',
@@ -33,39 +31,40 @@ const mockRegistration = {
   accreditation: undefined
 }
 
+const mockReportDetail = {
+  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+  cadence: 'quarterly',
+  year: 2026,
+  period: 1,
+  startDate: '2026-01-01',
+  endDate: '2026-03-31',
+  dueDate: '2026-04-20',
+  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
+  details: { material: 'plastic' },
+  id: 'report-001',
+  version: 1,
+  status: { currentStatus: 'submitted' },
+  supportingInformation: null,
+  recyclingActivity: {
+    totalTonnageReceived: 80.25,
+    suppliers: [],
+    tonnageRecycled: null,
+    tonnageNotRecycled: null
+  },
+  exportActivity: null,
+  wasteSent: {
+    tonnageSentToReprocessor: 0,
+    tonnageSentToExporter: 0,
+    tonnageSentToAnotherSite: 0,
+    finalDestinations: []
+  }
+}
+
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const submittedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submitted`
+const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1`
+const submittedUrl = `${basePeriodPath}/submitted`
 const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-
-const sessionPayload = { year: 2026, cadence: 'quarterly', period: 1 }
-
-/**
- * Set reportSubmitted session data via a temporary test route,
- * then return cookies for subsequent requests.
- * The submit POST handler (Item 3) will do this in production.
- */
-async function setSubmittedSession(server) {
-  const helperPath = '/__test/set-report-submitted'
-
-  server.route({
-    method: 'GET',
-    path: helperPath,
-    options: { auth: false },
-    handler(request, h) {
-      request.yar.set('reportSubmitted', sessionPayload)
-      return h.response('ok')
-    }
-  })
-
-  const response = await server.inject({
-    method: 'GET',
-    url: helperPath
-  })
-
-  const cookieValues = extractCookieValues(response.headers['set-cookie'])
-  return { cookies: mergeCookies(...cookieValues) }
-}
 
 describe('#submittedController', () => {
   beforeEach(() => {
@@ -73,6 +72,7 @@ describe('#submittedController', () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       mockRegistration
     )
+    vi.mocked(fetchReportDetail).mockResolvedValue(mockReportDetail)
   })
 
   describe('when feature flag is enabled', () => {
@@ -84,15 +84,12 @@ describe('#submittedController', () => {
       config.reset('featureFlags.reports')
     })
 
-    describe('after report submission', () => {
+    describe('when report status is submitted', () => {
       it('should return 200', async ({ server }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { statusCode } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -101,13 +98,10 @@ describe('#submittedController', () => {
       it('should display confirmation panel with submitted heading', async ({
         server
       }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -123,13 +117,10 @@ describe('#submittedController', () => {
       it('should not display status in confirmation panel', async ({
         server
       }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -142,13 +133,10 @@ describe('#submittedController', () => {
       it('should display future changes guidance as inset text', async ({
         server
       }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -162,13 +150,10 @@ describe('#submittedController', () => {
       })
 
       it('should display Details heading', async ({ server }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -183,13 +168,10 @@ describe('#submittedController', () => {
       })
 
       it('should display registration number', async ({ server }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -200,13 +182,10 @@ describe('#submittedController', () => {
       })
 
       it('should display material', async ({ server }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -219,13 +198,10 @@ describe('#submittedController', () => {
       it('should display View report button linking to view page in new tab', async ({
         server
       }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -238,20 +214,15 @@ describe('#submittedController', () => {
         expect(viewButton.textContent?.trim()).toBe(
           'View report (Opens in a new tab)'
         )
-        expect(viewButton.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/view`
-        )
+        expect(viewButton.getAttribute('href')).toBe(`${basePeriodPath}/view`)
         expect(viewButton.getAttribute('target')).toBe('_blank')
       })
 
       it('should display Return to reports link', async ({ server }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -264,13 +235,10 @@ describe('#submittedController', () => {
       })
 
       it('should not display back link', async ({ server }) => {
-        const { cookies } = await setSubmittedSession(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -278,50 +246,70 @@ describe('#submittedController', () => {
 
         expect(body.querySelector('.govuk-back-link')).toBeNull()
       })
-    })
 
-    describe('session guard', () => {
-      it('should redirect to reports list when no session data', async ({
-        server
-      }) => {
-        const { statusCode, headers } = await server.inject({
+      it('should return 200 on refresh (repeated GET)', async ({ server }) => {
+        const first = await server.inject({
+          method: 'GET',
+          url: submittedUrl,
+          auth: mockAuth
+        })
+        const second = await server.inject({
           method: 'GET',
           url: submittedUrl,
           auth: mockAuth
         })
 
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(reportsUrl)
+        expect(first.statusCode).toBe(statusCodes.ok)
+        expect(second.statusCode).toBe(statusCodes.ok)
       })
+    })
 
-      it('should redirect on second visit after session is cleared', async ({
+    describe('status guard', () => {
+      it('should return 404 when status is ready_to_submit', async ({
         server
       }) => {
-        const { cookies } = await setSubmittedSession(server)
-
-        const firstVisit = await server.inject({
-          method: 'GET',
-          url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...mockReportDetail,
+          status: { currentStatus: 'ready_to_submit' }
         })
 
-        expect(firstVisit.statusCode).toBe(statusCodes.ok)
-
-        const updatedCookieValues = extractCookieValues(
-          firstVisit.headers['set-cookie']
-        )
-        const updatedCookies = mergeCookies(cookies, ...updatedCookieValues)
-
-        const { statusCode, headers } = await server.inject({
+        const { statusCode } = await server.inject({
           method: 'GET',
           url: submittedUrl,
-          auth: mockAuth,
-          headers: { cookie: updatedCookies }
+          auth: mockAuth
         })
 
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(reportsUrl)
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      it('should return 404 when status is in_progress', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...mockReportDetail,
+          status: { currentStatus: 'in_progress' }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: submittedUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      it('should return 404 when status is due', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...mockReportDetail,
+          status: { currentStatus: 'due' }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: submittedUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
       })
     })
 

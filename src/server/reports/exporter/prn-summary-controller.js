@@ -45,6 +45,7 @@ const { getController, postController } = createDataPageControllers({
     })
   },
   guardFn: buildExporterViewData,
+  guardOptions: { accreditedOnly: true },
   nextPage: 'free-perns'
 })
 

@@ -57,11 +57,16 @@ export const createController = {
       isExporterRegistration(registration) &&
       cadence === CADENCE.MONTHLY
 
+    const isRegisteredOnlyExporter =
+      !accreditation && isExporterRegistration(registration)
+
     let nextPage
     if (isAccreditedExporter) {
       nextPage = `${basePath}/prn-summary`
     } else if (isReprocessorRegistration(registration)) {
       nextPage = `${basePath}/tonnes-recycled`
+    } else if (isRegisteredOnlyExporter) {
+      nextPage = `${basePath}/tonnes-not-exported`
     } else {
       nextPage = `${basePath}/supporting-information`
     }

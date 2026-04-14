@@ -124,6 +124,7 @@ function buildViewData(
     material,
     periodLabel,
     isExporter,
+    isRegisteredOnlyExporter: isExporter && !accreditation,
     wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
       wasteActionGerund
     }),

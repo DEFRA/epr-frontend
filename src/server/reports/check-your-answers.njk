@@ -89,8 +89,18 @@
 
         <h3 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h3>
 
-        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
-        <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+        {% if isRegisteredOnlyExporter %}
+          {{ govukSummaryList({
+            rows: [{
+              key: { text: localise("reports:checkTonnageNotExportedLabel") },
+              value: { text: wasteExported.tonnageReceivedNotExported },
+              actions: { items: [{ href: tonnageNotExportedChangeUrl, text: changeText, visuallyHiddenText: localise("reports:checkTonnageNotExportedLabel") }] }
+            }]
+          }) }}
+        {% else %}
+          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
+          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+        {% endif %}
 
         <h3 class="govuk-heading-l">{{ localise("reports:tonnageRefusedOrStoppedHeading") }}</h3>
 
