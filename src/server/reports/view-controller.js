@@ -139,7 +139,6 @@ function buildViewData({
     isAccredited,
     isExporter,
     isReprocessor,
-    isRegisteredOnlyExporter: isExporter && !accreditation,
 
     prn: {
       issuedTonnage: reportDetail.prn?.issuedTonnage,
