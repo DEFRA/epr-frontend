@@ -24,6 +24,10 @@ import {
   tonnesNotRecycledPostController
 } from './reprocessor/tonnes-not-recycled-controller.js'
 import {
+  tonnesNotExportedGetController,
+  tonnesNotExportedPostController
+} from './exporter/tonnes-not-exported-controller.js'
+import {
   reprocessorFreePrnsGetController,
   reprocessorFreePrnsPostController
 } from './reprocessor/free-prns-controller.js'
@@ -115,6 +119,16 @@ export const reports = {
           ...tonnesNotRecycledPostController,
           method: 'POST',
           path: `${periodPath}/tonnes-not-recycled`
+        },
+        {
+          ...tonnesNotExportedGetController,
+          method: 'GET',
+          path: `${periodPath}/tonnes-not-exported`
+        },
+        {
+          ...tonnesNotExportedPostController,
+          method: 'POST',
+          path: `${periodPath}/tonnes-not-exported`
         },
         {
           ...supportingInformationGetController,

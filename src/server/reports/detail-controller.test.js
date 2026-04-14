@@ -1230,7 +1230,7 @@ describe('#detailReportsController', () => {
         )
       })
 
-      it('should display section 1 intro text for tonnage received not exported', async ({
+      it('should not display tonnage received not exported section', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -1242,8 +1242,8 @@ describe('#detailReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        expect(body.textContent).toContain(
-          'This data comes from section 1 of your summary log'
+        expect(body.textContent).not.toContain(
+          'Packaging waste received but not exported'
         )
       })
 
@@ -1426,7 +1426,7 @@ describe('#detailReportsController', () => {
         expect(heading).toBeDefined()
       })
 
-      it('should still render tonnage received not exported heading', async ({
+      it('should not render tonnage received not exported heading', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -1438,12 +1438,9 @@ describe('#detailReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const heading = getByRole(body, 'heading', {
-          name: /Packaging waste received but not exported/,
-          level: 2
-        })
-
-        expect(heading).toBeDefined()
+        expect(body.textContent).not.toContain(
+          'Packaging waste received but not exported'
+        )
       })
 
       it('should still render tonnage refused or stopped heading', async ({
