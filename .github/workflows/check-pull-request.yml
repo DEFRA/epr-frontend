@@ -44,7 +44,6 @@ jobs:
   type-check:
     name: Lint Types (advisory)
     runs-on: ubuntu-latest
-    continue-on-error: true
     needs: pr-prep
     steps:
       - name: Checkout code
@@ -63,7 +62,12 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Lint types
-        run: npm run lint:types
+        run: |
+          if npm run lint:types; then
+            echo "::notice::Type check passed"
+          else
+            echo "::warning::Type check found errors (advisory — not blocking)"
+          fi
 
   test-journey:
     name: Run Journey Tests
