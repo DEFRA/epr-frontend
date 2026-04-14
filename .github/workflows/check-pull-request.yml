@@ -41,6 +41,34 @@ jobs:
         run: npm run check:i18n
         continue-on-error: true #FIXME: 🚨 Make this a blocking step after translations are available
 
+  type-check:
+    name: Lint Types (advisory)
+    runs-on: ubuntu-latest
+    needs: pr-prep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Upgrade npm
+        run: npm install -g npm@11.12.1
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Lint types
+        run: |
+          if npm run lint:types; then
+            echo "::notice::Type check passed"
+          else
+            echo "::warning::Type check found errors (advisory — not blocking)"
+          fi
+
   test-journey:
     name: Run Journey Tests
     runs-on: ubuntu-latest
