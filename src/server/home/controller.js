@@ -34,7 +34,7 @@ async function getStartNowHref(request) {
 export const controller = {
   /**
    * @param {HapiRequest} request
-   * @param {import('@hapi/hapi').ResponseToolkit} h
+   * @param {ResponseToolkit} h
    */
   handler: async (request, h) => {
     const { t: localise } = request
@@ -57,7 +57,7 @@ export const controller = {
 export const redirectToStart = {
   /**
    * @param {HapiRequest} request
-   * @param {import('@hapi/hapi').ResponseToolkit} h
+   * @param {ResponseToolkit} h
    */
   handler(request, h) {
     return h.redirect(request.localiseUrl('/start'))
@@ -65,6 +65,6 @@ export const redirectToStart = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

@@ -9,7 +9,7 @@
 /**
  * @typedef {{
  *   set: (session: object) => void,
- *   clear: (key?: string) => void,
+ *   clear: () => void,
  *   ttl: (msecs: number) => void
  * }} CookieAuth
  */
@@ -17,6 +17,12 @@
 /**
  * Authenticated request auth data. `credentials` holds the UserSession
  * populated by @hapi/cookie on behalf of our Defra ID bell strategy.
+ *
+ * Note: Hapi's own `RequestAuth.credentials` is non-nullable regardless of
+ * route auth mode. Routes that register with `auth: { mode: 'try' }` or
+ * `auth: false` should still keep their runtime `if (!credentials)` guards;
+ * this type follows Hapi's convention rather than modelling the 'try'-mode
+ * nuance in the type system.
  * @typedef {Omit<Request['auth'], 'credentials'> & {
  *   credentials: UserSession
  * }} RequestAuth
@@ -30,10 +36,7 @@
  *   - `wasteOrganisationsService` from the waste organisations plugin
  *   - `metrics` from @defra/cdp-metrics
  *   - `cookieAuth` from @hapi/cookie
- *   - `auth.credentials` narrowed to UserSession (populated by the Defra ID
- *     bell strategy)
- *
- * Mirrors the pattern used in epr-backend/src/common/hapi-types.js.
+ *   - `auth.credentials` narrowed to `UserSession`
  * @typedef {Omit<Request, 'auth'> & {
  *   auth: RequestAuth,
  *   t: TFunction,
