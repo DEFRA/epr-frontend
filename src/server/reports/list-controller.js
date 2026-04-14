@@ -23,6 +23,7 @@ import {
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {boolean} options.isAccreditedExporter
+ * @param {boolean} options.isRegisteredOnlyExporter
  * @param {boolean} options.isReprocessor
  * @param {(url: string) => string} options.localiseUrl
  * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
@@ -34,6 +35,7 @@ function buildTableRows({
   organisationId,
   registrationId,
   isAccreditedExporter,
+  isRegisteredOnlyExporter,
   isReprocessor,
   localiseUrl,
   localise
@@ -46,13 +48,13 @@ function buildTableRows({
     const status = deriveSubmissionStatus(period.endDate, period.report)
     const statusLabel = getStatusLabel(status, localise)
 
-    let inProgressSuffix
+    let inProgressSuffix = '/supporting-information'
     if (isAccreditedExporter && cadence === CADENCE.MONTHLY) {
       inProgressSuffix = '/prn-summary'
     } else if (isReprocessor) {
       inProgressSuffix = '/tonnes-recycled'
-    } else {
-      inProgressSuffix = '/supporting-information'
+    } else if (isRegisteredOnlyExporter) {
+      inProgressSuffix = '/tonnes-not-exported'
     }
 
     const suffixByStatus = {
@@ -92,9 +94,13 @@ export const listController = {
       ])
 
     const material = getDisplayMaterial(registration)
-    const isAccreditedExporter =
-      !!accreditation && isExporterRegistration(registration)
+
+    const isExporter = isExporterRegistration(registration)
     const isReprocessor = isReprocessorRegistration(registration)
+
+    const hasAccreditation = !!accreditation
+    const isAccreditedExporter = hasAccreditation && isExporter
+    const isRegisteredOnlyExporter = !hasAccreditation && isExporter
 
     const isMonthly = cadence === CADENCE.MONTHLY
     const isQuarterly = cadence === CADENCE.QUARTERLY
@@ -110,6 +116,7 @@ export const listController = {
       organisationId,
       registrationId,
       isAccreditedExporter,
+      isRegisteredOnlyExporter,
       isReprocessor,
       localiseUrl: (url) => request.localiseUrl(url),
       localise

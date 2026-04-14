@@ -52,18 +52,17 @@ export const createController = {
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
-    const isAccreditedExporter =
-      accreditation &&
-      isExporterRegistration(registration) &&
-      cadence === CADENCE.MONTHLY
+    const isExporter = isExporterRegistration(registration)
+    const isReprocessor = isReprocessorRegistration(registration)
 
-    const isRegisteredOnlyExporter =
-      !accreditation && isExporterRegistration(registration)
+    const hasAccreditation = !!accreditation
+    const isAccreditedExporter = hasAccreditation && isExporter
+    const isRegisteredOnlyExporter = !hasAccreditation && isExporter
 
     let nextPage
-    if (isAccreditedExporter) {
+    if (isAccreditedExporter && cadence === CADENCE.MONTHLY) {
       nextPage = `${basePath}/prn-summary`
-    } else if (isReprocessorRegistration(registration)) {
+    } else if (isReprocessor) {
       nextPage = `${basePath}/tonnes-recycled`
     } else if (isRegisteredOnlyExporter) {
       nextPage = `${basePath}/tonnes-not-exported`
