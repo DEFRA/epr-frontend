@@ -146,7 +146,7 @@ describe('#tonnesNotExportedController', () => {
         )
       })
 
-      it('should have back link to detail page', async ({ server }) => {
+      it('should have back link to reports list', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: quarterlyUrl,
@@ -154,7 +154,7 @@ describe('#tonnesNotExportedController', () => {
         })
 
         expect(result).toContain(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1"`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports"`
         )
       })
 
