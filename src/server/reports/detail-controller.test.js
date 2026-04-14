@@ -1713,6 +1713,39 @@ describe('#detailReportsController', () => {
       })
     })
 
+    describe('when report already exists', () => {
+      it('should redirect to reports landing page instead of rendering', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          reprocessorRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...reprocessorReportDetail,
+          id: 'report-existing-001',
+          status: {
+            currentStatus: 'in_progress',
+            currentStatusAt: '2026-02-10T09:00:00.000Z',
+            created: {
+              at: '2026-02-10T09:00:00.000Z',
+              by: { id: 'user-1', name: 'Test User', position: 'Manager' }
+            }
+          }
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          '/organisations/org-123/registrations/reg-001/reports'
+        )
+      })
+    })
+
     describe('cadence validation', () => {
       it('should return 404 when accredited registration uses quarterly cadence', async ({
         server
