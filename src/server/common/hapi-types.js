@@ -16,7 +16,7 @@
 
 /**
  * Authenticated request auth data. `credentials` holds the UserSession
- * populated by @hapi/cookie on behalf of our Defra ID bell strategy.
+ * populated by `@hapi/cookie` on behalf of our Defra ID bell strategy.
  *
  * Note: Hapi's own `RequestAuth.credentials` is non-nullable regardless of
  * route auth mode. Routes that register with `auth: { mode: 'try' }` or
@@ -34,8 +34,8 @@
  *   - `t`, `i18n` from i18next-http-middleware
  *   - `localiseUrl` from src/server/common/helpers/i18next.js
  *   - `wasteOrganisationsService` from the waste organisations plugin
- *   - `metrics` from @defra/cdp-metrics
- *   - `cookieAuth` from @hapi/cookie
+ *   - `metrics` from `@defra/cdp-metrics`
+ *   - `cookieAuth` from `@hapi/cookie`
  *   - `auth.credentials` narrowed to `UserSession`
  * @typedef {Omit<Request, 'auth'> & {
  *   auth: RequestAuth,
