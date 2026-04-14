@@ -10,7 +10,7 @@ const SUMMARY_LOGS_OVERVIEW_URL =
 
 /**
  * Determines the appropriate href for the "Start now" button based on auth state
- * @param {Request} request - Hapi request object
+ * @param {HapiRequest} request - Hapi request object
  * @returns {Promise<string>} The href for the start button
  */
 async function getStartNowHref(request) {
@@ -32,6 +32,10 @@ async function getStartNowHref(request) {
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
+  /**
+   * @param {HapiRequest} request
+   * @param {import('@hapi/hapi').ResponseToolkit} h
+   */
   handler: async (request, h) => {
     const { t: localise } = request
     const startNowHref = await getStartNowHref(request)
@@ -51,11 +55,16 @@ export const controller = {
  * @satisfies {Partial<ServerRoute>}
  */
 export const redirectToStart = {
+  /**
+   * @param {HapiRequest} request
+   * @param {import('@hapi/hapi').ResponseToolkit} h
+   */
   handler(request, h) {
     return h.redirect(request.localiseUrl('/start'))
   }
 }
 
 /**
- * @import { ServerRoute, Request } from '@hapi/hapi'
+ * @import { ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

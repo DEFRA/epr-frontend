@@ -4,7 +4,10 @@ import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
-/** @import { ServerRoute } from '@hapi/hapi' */
+/**
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
 
 /**
  * Logout controller
@@ -12,6 +15,10 @@ import { metrics } from '#server/common/helpers/metrics/index.js'
  * @satisfies {Partial<ServerRoute>}
  */
 const logoutController = {
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   handler: async (request, h) => {
     const session = request.auth.credentials
 
