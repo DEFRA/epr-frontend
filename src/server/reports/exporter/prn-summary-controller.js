@@ -14,7 +14,7 @@ const { getController, postController } = createDataPageControllers({
     material,
     periodLabel,
     periodShort,
-    periodPath,
+    reportsListPath,
     registration,
     reportDetail
   }) {
@@ -40,7 +40,7 @@ const { getController, postController } = createDataPageControllers({
       revenueHint: localise('reports:noteSummaryRevenueHint'),
       continueText: localise('reports:noteSummaryContinue'),
       saveText: localise('reports:noteSummarySave'),
-      backUrl: periodPath,
+      backUrl: reportsListPath,
       defaultValue: padToTwoDecimalPlaces(reportDetail.prn.totalRevenue)
     })
   },

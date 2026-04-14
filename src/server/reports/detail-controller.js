@@ -202,6 +202,14 @@ export const detailController = {
       session.idToken
     )
 
+    if (reportDetail.id) {
+      return h.redirect(
+        request.localiseUrl(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      )
+    }
+
     const viewData = buildViewData(
       { organisationId, registrationId },
       registration,

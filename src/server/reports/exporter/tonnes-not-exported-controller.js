@@ -8,7 +8,7 @@ const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageNotExported',
   payloadSchema: tonnageNotExportedPayloadSchema,
-  pageFields({ material, periodLabel, periodPath, period, reportDetail }) {
+  pageFields({ material, periodLabel, reportsListPath, period, reportDetail }) {
     return (localise) => ({
       pageTitle: localise('reports:tonnageNotExportedPageTitle', {
         material,
@@ -23,7 +23,7 @@ const { getController, postController } = createDataPageControllers({
       continueText: localise('reports:tonnageNotExportedContinue'),
       saveText: localise('reports:tonnageNotExportedSave'),
       fieldName: 'tonnageNotExported',
-      backUrl: periodPath,
+      backUrl: reportsListPath,
       defaultValue: reportDetail.exportActivity?.tonnageReceivedNotExported
     })
   },

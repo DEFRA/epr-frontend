@@ -79,7 +79,7 @@ export async function fetchGuardedAccreditedExporterData(request) {
  * shared by exporter pages. Page-specific fields are merged from the
  * callback return value.
  * @param {Request} request
- * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string }) => object} buildPageFields
+ * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string, reportsListPath: string }) => object} buildPageFields
  * @param {object} [options]
  * @param {boolean} [options.accreditedOnly] - Use accredited guard (prn-summary, free-perns)
  * @param {boolean} [options.registeredOnly] - Restrict to registered-only exporters (tonnes-not-exported)
@@ -108,7 +108,8 @@ export async function buildExporterViewData(
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodShort = formatPeriodShort({ year, period }, cadence, localise)
-  const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+  const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}`
 
   const pageFields = buildPageFields({
     registration,
@@ -118,6 +119,7 @@ export async function buildExporterViewData(
     periodLabel,
     periodShort,
     periodPath,
+    reportsListPath,
     period
   })
 

@@ -652,6 +652,79 @@ describe('#listReportsController', () => {
         expect(selectLinks[0]?.textContent).toContain('Select')
       })
 
+      it('should link Continue to tonnes-not-exported for in-progress report', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportingPeriods).mockResolvedValue({
+          cadence: 'quarterly',
+          reportingPeriods: [
+            {
+              year: 2026,
+              period: 1,
+              startDate: '2026-01-01',
+              endDate: '2026-03-31',
+              dueDate: '2026-04-20',
+              report: { id: 'report-003', status: 'in_progress' }
+            }
+          ]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = body.querySelector('.govuk-table a.govuk-link')
+
+        expect(link?.getAttribute('href')).toBe(
+          '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/tonnes-not-exported'
+        )
+      })
+
+      it('should default Continue link to supporting-information for unknown processing type', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+          ...registeredOnlyExporter,
+          registration: {
+            ...registeredOnlyExporter.registration,
+            wasteProcessingType: 'unknown'
+          }
+        })
+        vi.mocked(fetchReportingPeriods).mockResolvedValue({
+          cadence: 'quarterly',
+          reportingPeriods: [
+            {
+              year: 2026,
+              period: 1,
+              startDate: '2026-01-01',
+              endDate: '2026-03-31',
+              dueDate: '2026-04-20',
+              report: { id: 'report-004', status: 'in_progress' }
+            }
+          ]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = body.querySelector('.govuk-table a.govuk-link')
+
+        expect(link?.getAttribute('href')).toBe(
+          '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/supporting-information'
+        )
+      })
+
       it('should not display Monthly subheading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',

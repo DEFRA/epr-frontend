@@ -79,7 +79,7 @@ export async function fetchGuardedAccreditedReprocessorData(request) {
  * shared by reprocessor pages. Page-specific fields are merged from the
  * callback return value.
  * @param {Request} request
- * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string }) => object} buildPageFields
+ * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string, reportsListPath: string }) => object} buildPageFields
  * @param {object} [options]
  * @param {unknown} [options.value]
  * @param {object} [options.errors]
@@ -103,7 +103,8 @@ export async function buildReprocessorViewData(
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodShort = formatPeriodShort({ year, period }, cadence, localise)
-  const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+  const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}`
 
   const pageFields = buildPageFields({
     registration,
@@ -112,7 +113,8 @@ export async function buildReprocessorViewData(
     material,
     periodLabel,
     periodShort,
-    periodPath
+    periodPath,
+    reportsListPath
   })
 
   return {
