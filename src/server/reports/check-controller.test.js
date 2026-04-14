@@ -70,7 +70,7 @@ const exporterReportDetail = {
   details: { material: 'plastic' },
   id: 'report-001',
   version: 1,
-  status: 'in_progress',
+  status: { currentStatus: 'in_progress' },
   supportingInformation: 'Supply chain disruption in February',
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -148,7 +148,7 @@ const reprocessorReportDetail = {
   },
   id: 'report-001',
   version: 1,
-  status: 'in_progress',
+  status: { currentStatus: 'in_progress' },
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -1671,6 +1671,31 @@ describe('#checkController', () => {
 
           expect(body.textContent).toContain('Average price per tonne')
           expect(body.textContent).toContain('£0.00')
+        })
+      })
+
+      describe('when report status is not in_progress', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            exporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            status: { currentStatus: 'ready_to_submit' }
+          })
+        })
+
+        it('should redirect to reports list', async ({ server }) => {
+          const { statusCode, headers } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          expect(statusCode).toBe(statusCodes.found)
+          expect(headers.location).toContain(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          )
         })
       })
     })

@@ -196,6 +196,14 @@ export const checkGetController = {
       session.idToken
     )
 
+    if (reportDetail.status.currentStatus !== SUBMISSION_STATUS.IN_PROGRESS) {
+      return h.redirect(
+        request.localiseUrl(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      )
+    }
+
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
