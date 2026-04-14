@@ -37,6 +37,7 @@ const { getController, postController } = createDataPageControllers({
     })
   },
   guardFn: buildExporterViewData,
+  guardOptions: { accreditedOnly: true },
   nextPage: 'supporting-information',
   exceedsTotalErrorKey: 'reports:freeErrorExceedsTotal'
 })
