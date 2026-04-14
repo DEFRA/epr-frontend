@@ -1,7 +1,10 @@
+import Boom from '@hapi/boom'
+
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { SUBMISSION_STATUS } from './constants.js'
+import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
-import { isSessionMatch } from './helpers/is-session-match.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 
 /**
@@ -21,20 +24,25 @@ export const submittedController = {
 
     const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
-    const sessionData = request.yar.get('reportSubmitted')
-    const duration = { year, cadence, period }
+    const [{ registration }, reportDetail] = await Promise.all([
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        session.idToken
+      ),
+      fetchReportDetail(
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        session.idToken
+      )
+    ])
 
-    if (!isSessionMatch(sessionData, duration)) {
-      return h.redirect(request.localiseUrl(reportsUrl))
+    if (reportDetail.status?.currentStatus !== SUBMISSION_STATUS.SUBMITTED) {
+      throw Boom.notFound()
     }
-
-    request.yar.clear('reportSubmitted')
-
-    const { registration } = await fetchRegistrationAndAccreditation(
-      organisationId,
-      registrationId,
-      session.idToken
-    )
 
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
