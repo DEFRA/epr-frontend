@@ -41,6 +41,27 @@ jobs:
         run: npm run check:i18n
         continue-on-error: true #FIXME: 🚨 Make this a blocking step after translations are available
 
+  type-check:
+    name: Type Check (advisory)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    needs: pr-prep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Type check
+        run: npm run lint:types
+
   test-journey:
     name: Run Journey Tests
     runs-on: ubuntu-latest
