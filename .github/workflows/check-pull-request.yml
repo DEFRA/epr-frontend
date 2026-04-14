@@ -63,11 +63,29 @@ jobs:
 
       - name: Lint types
         run: |
-          if npm run lint:types; then
-            echo "::notice::Type check passed"
-          else
-            echo "::warning::Type check found errors (advisory — not blocking)"
-          fi
+          OUTPUT=$(npm run lint:types 2>&1) && STATUS=0 || STATUS=$?
+          echo "$OUTPUT"
+
+          ERRORS=$(echo "$OUTPUT" | grep -c "^src/" || true)
+
+          {
+            if [ "$STATUS" -eq 0 ]; then
+              echo "## Lint Types"
+              echo ""
+              echo ":white_check_mark: Type check passed"
+            else
+              echo "## Lint Types"
+              echo ""
+              echo ":warning: **${ERRORS} type errors found** (advisory — not blocking)"
+              echo ""
+              echo "<details><summary>Errors by file</summary>"
+              echo ""
+              echo '```'
+              echo "$OUTPUT" | grep "^src/" | sed 's/(.*/:/' | sort | uniq -c | sort -rn
+              echo '```'
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   test-journey:
     name: Run Journey Tests
