@@ -819,9 +819,9 @@ describe('#checkController', () => {
           const dom = new JSDOM(result)
           const { body } = dom.window.document
 
-          const changeLink = body.querySelector(
-            '.govuk-summary-list a.govuk-link'
-          )
+          const summaryLists = body.querySelectorAll('.govuk-summary-list')
+          const supportingInfoList = summaryLists[summaryLists.length - 1]
+          const changeLink = supportingInfoList?.querySelector('a.govuk-link')
 
           expect(changeLink).not.toBeNull()
           expect(changeLink?.textContent).toContain('Change')

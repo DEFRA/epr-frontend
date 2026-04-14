@@ -271,7 +271,9 @@ describe('#supportingInformationController', () => {
           )
         })
 
-        it('should display back link to detail page', async ({ server }) => {
+        it('should display back link to tonnes-not-exported for registered-only exporter', async ({
+          server
+        }) => {
           const { result } = await server.inject({
             method: 'GET',
             url: baseUrl,
@@ -285,7 +287,7 @@ describe('#supportingInformationController', () => {
 
           expect(backLink).not.toBeNull()
           expect(backLink?.getAttribute('href')).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1`
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-not-exported`
           )
         })
 

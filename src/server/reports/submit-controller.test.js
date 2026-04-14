@@ -948,6 +948,27 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Average price per tonne of PERNs')
           expect(body.textContent).toContain('£200.00')
         })
+
+        it('should display received but not exported heading', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(
+            getByRole(body, 'heading', {
+              name: /Packaging waste received but not exported/i,
+              level: 2
+            })
+          ).toBeDefined()
+        })
+
+        it('should display received but not exported tonnage', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('12.5')
+        })
       })
 
       describe('for reprocessor without supporting information', () => {
