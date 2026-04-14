@@ -1,11 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import {
-  extractCookieValues,
-  mergeCookies
-} from '#server/common/test-helpers/cookie-helper.js'
-import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -16,9 +11,6 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
-vi.mock(import('./helpers/update-report-status.js'))
-
-const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
 const mockAuth = {
   strategy: 'session',
@@ -51,7 +43,7 @@ const mockReportDetail = {
   details: { material: 'plastic' },
   id: 'report-001',
   version: 1,
-  status: 'in_progress',
+  status: { currentStatus: 'ready_to_submit' },
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -71,34 +63,8 @@ const mockReportDetail = {
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1`
-const checkUrl = `${basePeriodPath}/check-your-answers`
 const createdUrl = `${basePeriodPath}/created`
 const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-
-/**
- * Go through the check-your-answers POST flow to establish reportCreated
- * session data, then return cookies for the subsequent GET to /created.
- */
-async function createReportFlow(server) {
-  const { cookie, crumb } = await getCsrfToken(server, checkUrl, {
-    auth: mockAuth
-  })
-
-  const postResponse = await server.inject({
-    method: 'POST',
-    url: checkUrl,
-    auth: mockAuth,
-    headers: { cookie },
-    payload: { crumb, version: 1 }
-  })
-
-  const postCookieValues = extractCookieValues(
-    postResponse.headers['set-cookie']
-  )
-  const cookies = mergeCookies(cookie, ...postCookieValues)
-
-  return { cookies }
-}
 
 describe('#createdController', () => {
   beforeEach(() => {
@@ -107,7 +73,6 @@ describe('#createdController', () => {
       mockRegistration
     )
     vi.mocked(fetchReportDetail).mockResolvedValue(mockReportDetail)
-    vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
   })
 
   describe('when feature flag is enabled', () => {
@@ -119,15 +84,12 @@ describe('#createdController', () => {
       config.reset('featureFlags.reports')
     })
 
-    describe('after report creation', () => {
+    describe('when report status is ready_to_submit', () => {
       it('should return 200', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { statusCode } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -136,13 +98,10 @@ describe('#createdController', () => {
       it('should display confirmation panel with period heading', async ({
         server
       }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -154,13 +113,10 @@ describe('#createdController', () => {
       })
 
       it('should display status in confirmation panel', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -172,13 +128,10 @@ describe('#createdController', () => {
       })
 
       it('should display Details heading', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -193,13 +146,10 @@ describe('#createdController', () => {
       })
 
       it('should display registration number', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -210,13 +160,10 @@ describe('#createdController', () => {
       })
 
       it('should display material', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -227,13 +174,10 @@ describe('#createdController', () => {
       })
 
       it('should display What happens next heading', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -248,13 +192,10 @@ describe('#createdController', () => {
       })
 
       it('should display guidance with due date', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -266,13 +207,10 @@ describe('#createdController', () => {
       })
 
       it('should display self-submission guidance', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -286,13 +224,10 @@ describe('#createdController', () => {
       it('should display Go to reports button linking to list', async ({
         server
       }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -307,13 +242,10 @@ describe('#createdController', () => {
       it('should display View draft report link that opens in new tab', async ({
         server
       }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -332,13 +264,10 @@ describe('#createdController', () => {
       })
 
       it('should display Return to home link', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -353,13 +282,10 @@ describe('#createdController', () => {
       })
 
       it('should not display back link', async ({ server }) => {
-        const { cookies } = await createReportFlow(server)
-
         const { result } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+          auth: mockAuth
         })
 
         const dom = new JSDOM(result)
@@ -367,59 +293,68 @@ describe('#createdController', () => {
 
         expect(body.querySelector('.govuk-back-link')).toBeNull()
       })
-    })
 
-    describe('session guard', () => {
-      it('should redirect to reports list when no session data', async ({
-        server
-      }) => {
-        // Get valid cookies without going through the POST flow
-        const { cookie } = await getCsrfToken(server, checkUrl, {
+      it('should return 200 on refresh (repeated GET)', async ({ server }) => {
+        const first = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth
+        })
+        const second = await server.inject({
+          method: 'GET',
+          url: createdUrl,
           auth: mockAuth
         })
 
-        const { statusCode, headers } = await server.inject({
-          method: 'GET',
-          url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie }
+        expect(first.statusCode).toBe(statusCodes.ok)
+        expect(second.statusCode).toBe(statusCodes.ok)
+      })
+    })
+
+    describe('status guard', () => {
+      it('should return 404 when status is in_progress', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...mockReportDetail,
+          status: { currentStatus: 'in_progress' }
         })
 
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(listUrl)
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
       })
 
-      it('should redirect on second visit after session is cleared', async ({
-        server
-      }) => {
-        const { cookies } = await createReportFlow(server)
-
-        // First visit renders the page and clears session
-        const firstVisit = await server.inject({
-          method: 'GET',
-          url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: cookies }
+      it('should return 404 when status is submitted', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...mockReportDetail,
+          status: { currentStatus: 'submitted' }
         })
 
-        expect(firstVisit.statusCode).toBe(statusCodes.ok)
-
-        // Extract updated cookies (session may have changed)
-        const updatedCookieValues = extractCookieValues(
-          firstVisit.headers['set-cookie']
-        )
-        const updatedCookies = mergeCookies(cookies, ...updatedCookieValues)
-
-        // Second visit — session data gone, should redirect
-        const { statusCode, headers } = await server.inject({
+        const { statusCode } = await server.inject({
           method: 'GET',
           url: createdUrl,
-          auth: mockAuth,
-          headers: { cookie: updatedCookies }
+          auth: mockAuth
         })
 
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(listUrl)
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      it('should return 404 when status is due', async ({ server }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...mockReportDetail,
+          status: { currentStatus: 'due' }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: createdUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
       })
     })
 

@@ -325,8 +325,6 @@ export const submitPostController = {
       session.idToken
     )
 
-    request.yar.set('reportSubmitted', { year, cadence, period })
-
     return h.redirect(
       request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submitted`
