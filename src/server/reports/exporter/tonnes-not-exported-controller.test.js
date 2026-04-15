@@ -260,6 +260,68 @@ describe('#tonnesNotExportedController', () => {
         )
       })
 
+      it('should redirect to reports list when save is clicked with empty tonnage', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, quarterlyUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: quarterlyUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageNotExported: '', action: 'save' }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      })
+
+      it('should not call updateReport when save is clicked with empty tonnage', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, quarterlyUrl, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url: quarterlyUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageNotExported: '', action: 'save' }
+        })
+
+        expect(updateReport).not.toHaveBeenCalled()
+      })
+
+      it('should show error when save is clicked with non-numeric tonnage', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, quarterlyUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: quarterlyUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageNotExported: 'abc', action: 'save' }
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(alert.textContent).toContain(
+          'Enter the total tonnage in digits, using a decimal point if needed'
+        )
+      })
+
       it('should call updateReport with tonnageNotExported', async ({
         server
       }) => {

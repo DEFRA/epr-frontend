@@ -42,7 +42,7 @@ export const revenuePayloadSchema = Joi.object({
     .empty('')
     .min(0)
     .custom(maxTwoDecimalPlaces)
-    .required()
+    .when('action', { is: 'continue', then: Joi.required() })
     .messages({
       'any.required': revenueErrors.required,
       'number.base': revenueErrors.format,
@@ -67,7 +67,7 @@ export const tonnageRecycledPayloadSchema = Joi.object({
     .empty('')
     .min(0)
     .custom(maxTwoDecimalPlaces)
-    .required()
+    .when('action', { is: 'continue', then: Joi.required() })
     .messages({
       'any.required': tonnageRecycledErrors.required,
       'number.base': tonnageRecycledErrors.format,
@@ -92,7 +92,7 @@ export const tonnageNotRecycledPayloadSchema = Joi.object({
     .empty('')
     .min(0)
     .custom(maxTwoDecimalPlaces)
-    .required()
+    .when('action', { is: 'continue', then: Joi.required() })
     .messages({
       'any.required': tonnageNotRecycledErrors.required,
       'number.base': tonnageNotRecycledErrors.format,
@@ -117,7 +117,7 @@ export const tonnageNotExportedPayloadSchema = Joi.object({
     .empty('')
     .min(0)
     .custom(maxTwoDecimalPlaces)
-    .required()
+    .when('action', { is: 'continue', then: Joi.required() })
     .messages({
       'any.required': tonnageNotExportedErrors.required,
       'number.base': tonnageNotExportedErrors.format,
@@ -137,14 +137,19 @@ const freeTonnageErrors = Object.freeze({
 })
 
 export const freeTonnagePayloadSchema = Joi.object({
-  freeTonnage: Joi.number().empty('').integer().min(0).required().messages({
-    'any.required': freeTonnageErrors.required,
-    'number.base': freeTonnageErrors.format,
-    'number.integer': freeTonnageErrors.format,
-    'number.min': freeTonnageErrors.negative,
-    'number.unsafe': freeTonnageErrors.format,
-    'number.infinity': freeTonnageErrors.format
-  }),
+  freeTonnage: Joi.number()
+    .empty('')
+    .integer()
+    .min(0)
+    .when('action', { is: 'continue', then: Joi.required() })
+    .messages({
+      'any.required': freeTonnageErrors.required,
+      'number.base': freeTonnageErrors.format,
+      'number.integer': freeTonnageErrors.format,
+      'number.min': freeTonnageErrors.negative,
+      'number.unsafe': freeTonnageErrors.format,
+      'number.infinity': freeTonnageErrors.format
+    }),
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
 })

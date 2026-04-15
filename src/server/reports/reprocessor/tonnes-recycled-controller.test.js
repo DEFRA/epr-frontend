@@ -292,6 +292,71 @@ describe('#tonnesRecycledController', () => {
             `/organisations/${organisationId}/registrations/${registrationId}/reports`
           )
         })
+
+        it('should redirect to reports list when tonnage is empty', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          const { statusCode, headers } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, tonnageRecycled: '', action: 'save' }
+          })
+
+          expect(statusCode).toBe(statusCodes.found)
+          expect(headers.location).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports`
+          )
+        })
+
+        it('should not call updateReport when tonnage is empty', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, tonnageRecycled: '', action: 'save' }
+          })
+
+          expect(updateReport).not.toHaveBeenCalled()
+        })
+
+        it('should show error when tonnage is non-numeric', async ({
+          server
+        }) => {
+          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+            auth: mockAuth
+          })
+
+          const { result } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { cookie },
+            payload: { crumb, tonnageRecycled: 'abc', action: 'save' }
+          })
+
+          const { body } = new JSDOM(result).window.document
+          const alert = getByRole(body, 'alert')
+
+          expect(
+            getByText(
+              alert,
+              /Enter the total tonnage in digits, using a decimal point if needed/
+            )
+          ).toBeDefined()
+        })
       })
 
       describe('validation errors', () => {

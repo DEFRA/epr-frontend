@@ -130,17 +130,20 @@ function createSimplePostHandler(fieldName, nextPage) {
   return async (request, h) => {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
+    const fieldValue = request.payload[fieldName]
     const session = request.auth.credentials
 
-    await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      { [fieldName]: request.payload[fieldName] },
-      session.idToken
-    )
+    if (fieldValue !== undefined) {
+      await updateReport(
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        { [fieldName]: fieldValue },
+        session.idToken
+      )
+    }
 
     return h.redirect(
       getRedirectUrl(request, request.params, request.payload.action, nextPage)
@@ -170,6 +173,17 @@ function createTonnagePostHandler(
       request.params
     const fieldValue = request.payload[fieldName]
     const session = request.auth.credentials
+
+    if (fieldValue === undefined) {
+      return h.redirect(
+        getRedirectUrl(
+          request,
+          request.params,
+          request.payload.action,
+          nextPage
+        )
+      )
+    }
 
     const reportDetail = await fetchReportDetail(
       organisationId,

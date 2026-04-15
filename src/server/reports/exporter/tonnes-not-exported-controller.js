@@ -36,15 +36,17 @@ const { getController, postController } = createDataPageControllers({
       const { tonnageNotExported, action } = request.payload
       const session = request.auth.credentials
 
-      await updateReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        { tonnageNotExported },
-        session.idToken
-      )
+      if (tonnageNotExported !== undefined) {
+        await updateReport(
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          { tonnageNotExported },
+          session.idToken
+        )
+      }
 
       return h.redirect(
         getRedirectUrl(

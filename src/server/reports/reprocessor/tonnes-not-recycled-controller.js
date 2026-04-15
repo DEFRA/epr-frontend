@@ -36,15 +36,17 @@ const { getController, postController } = createDataPageControllers({
       const { tonnageNotRecycled, action } = request.payload
       const session = request.auth.credentials
 
-      await updateReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        { tonnageNotRecycled },
-        session.idToken
-      )
+      if (tonnageNotRecycled !== undefined) {
+        await updateReport(
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          { tonnageNotRecycled },
+          session.idToken
+        )
+      }
 
       const nextPage =
         cadence === CADENCE.MONTHLY ? 'prn-summary' : 'supporting-information'
