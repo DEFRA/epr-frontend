@@ -380,6 +380,19 @@ describe('#submitController', () => {
           expect(body.textContent).toContain('Plastic')
         })
 
+        it('should not display site row when no site present', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          const summaryKeys = [
+            ...body.querySelectorAll('.govuk-summary-list__key')
+          ]
+          expect(summaryKeys.some((k) => k.textContent.includes('Site'))).toBe(
+            false
+          )
+        })
+
         // Waste received section
 
         it('should display Packaging waste received for exporting heading', async ({
@@ -1080,6 +1093,15 @@ describe('#submitController', () => {
           expect(
             queryByRole(body, 'heading', { name: /^PRNs$/i, level: 2 })
           ).toBeNull()
+        })
+
+        it('should display site address in Your report summary list', async ({
+          server
+        }) => {
+          const body = await getBody(server)
+
+          expect(body.textContent).toContain('Site')
+          expect(body.textContent).toContain('North Road')
         })
       })
 

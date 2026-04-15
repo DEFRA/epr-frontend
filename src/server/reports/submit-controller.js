@@ -253,6 +253,7 @@ function buildViewData({
     // Your report summary list
     periodLabel,
     material,
+    site: reportDetail.details.site,
 
     // Waste received
     wasteReceived: buildWasteReceivedViewData(recyclingActivity),
