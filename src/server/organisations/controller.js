@@ -8,9 +8,19 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 import { getStatusClass } from './helpers/status-helpers.js'
 
 /**
- * @import { Request, ServerRoute } from '@hapi/hapi'
- * @import { Accreditation, Registration } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
+ */
+
+/**
+ * @typedef {{ organisationId: string }} OrganisationParams
+ */
+
+/**
+ * @typedef {{ text: string, classes?: string, format?: string } | { html: string, classes?: string }} TableCell
  */
 
 const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
@@ -22,17 +32,17 @@ const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
 const isExcludedStatus = (status) => !status || EXCLUDED_STATUSES.has(status)
 
 /**
- * @param {Accreditation} [accreditation]
+ * @param {Accreditation | undefined} accreditation
  * @returns {boolean}
  */
 const excludeAccreditation = (accreditation) =>
-  accreditation && isExcludedStatus(accreditation.status)
+  accreditation !== undefined && isExcludedStatus(accreditation.status)
 
 /**
  * Determines whether a site should be rendered based on its registration
  * and accreditation statuses
  * @param {Registration} registration - Registration data
- * @param {Accreditation} [accreditation] - Accreditation data
+ * @param {Accreditation | undefined} accreditation - Accreditation data (may be absent)
  * @param {string} wasteProcessingType - The waste processing type to filter by
  * @returns {boolean} Whether the site should be rendered
  */
@@ -60,8 +70,8 @@ function createTag(status) {
 }
 
 /**
- * @param {Accreditation} [accreditation]
- * @param {object} [wasteBalance]
+ * @param {Accreditation | undefined} accreditation
+ * @param {{ availableAmount?: number } | undefined} wasteBalance
  * @param {(key: string) => string} localise
  * @returns {string}
  */
@@ -71,7 +81,7 @@ const formatWasteBalance = (accreditation, wasteBalance, localise) =>
     : localise('organisations:table:notApplicable')
 
 /**
- * @param {Accreditation} [accreditation]
+ * @param {Accreditation | undefined} accreditation
  * @param {(key: string) => string} localise
  * @returns {string}
  */
@@ -82,12 +92,12 @@ const createAccreditationTag = (accreditation, localise) =>
 
 /**
  * Creates a row for a given registration
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {string} id - Organisation ID
  * @param {Registration} registration - Registration data
- * @param {Accreditation} [accreditation] - Accreditation data
+ * @param {Accreditation | undefined} accreditation - Accreditation data (may be absent)
  * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditationId to balance data
- * @returns {Array<{text?: string, html?: string, classes?: string}>} - Array of table cells
+ * @returns {TableCell[]} - Array of table cells
  */
 function createRow(request, id, registration, accreditation, wasteBalanceMap) {
   const { t: localise } = request
@@ -96,8 +106,12 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
   )
 
   const accreditationId = registration.accreditationId
-  const wasteBalance = wasteBalanceMap?.[accreditationId]
+  const wasteBalance =
+    accreditationId === undefined
+      ? undefined
+      : wasteBalanceMap?.[accreditationId]
 
+  /** @type {TableCell[]} */
   const cells = [
     {
       text: getDisplayMaterial(registration),
@@ -108,10 +122,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
     },
     {
       html: createAccreditationTag(accreditation, localise)
-    }
-  ]
-
-  cells.push(
+    },
     {
       text: formatWasteBalance(accreditation, wasteBalance, localise),
       format: 'numeric'
@@ -120,7 +131,7 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
       html: `<a href="${registrationUrl}" class="govuk-link">${localise('organisations:table:site:actions:select')}</a>`,
       classes: 'govuk-!-text-align-right govuk-!-padding-right-2'
     }
-  )
+  ]
 
   return cells
 }
@@ -201,9 +212,9 @@ function addRowToSites(sites, registration, row, localise) {
 
 /**
  * Organises registrations by site for a given waste processing type
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {string} organisationId - The organisation ID
- * @param {Array<{registration: object, accreditation: object | undefined}>} registrationsWithAccreditations - Pre-joined registration and accreditation data
+ * @param {Array<{registration: Registration, accreditation: Accreditation | undefined}>} registrationsWithAccreditations - Pre-joined registration and accreditation data
  * @param {string} wasteProcessingType - Either 'reprocessor' or 'exporter'
  * @param {WasteBalanceMap} wasteBalanceMap - Map of accreditationId to balance data
  * @returns {Array} Array of sites with their materials
@@ -337,6 +348,10 @@ function getActiveSitesAndTitle({
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
+  /**
+   * @param {HapiRequest & { params: OrganisationParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { t: localise } = request
     const { organisationId } = request.params

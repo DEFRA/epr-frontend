@@ -52,9 +52,8 @@ describe('#logoutController - integration', () => {
 
       expect(response.statusCode).toBe(statusCodes.found)
 
-      const redirectUrl = response.headers.location
+      const redirectUrl = new URL(response.headers.location)
 
-      expect(redirectUrl).toBeInstanceOf(URL)
       expect(redirectUrl.host).toBe('defra-id.auth')
       expect(redirectUrl.pathname).toBe('/logout')
       expect(redirectUrl.searchParams.get('post_logout_redirect_uri')).toBe(

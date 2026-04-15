@@ -2,6 +2,10 @@
  * @satisfies {Partial<ServerRoute>}
  */
 export const errorController = {
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   handler(request, h) {
     const { organisationId } = request.params
     const { t: localise } = request
@@ -36,5 +40,6 @@ export const errorController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

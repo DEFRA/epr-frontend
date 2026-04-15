@@ -40,7 +40,7 @@ const logoutController = {
       getRedirectUrl(request, paths.auth.logout)
     )
 
-    return h.redirect(logoutUrl)
+    return h.redirect(logoutUrl.toString())
   }
 }
 

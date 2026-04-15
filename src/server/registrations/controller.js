@@ -7,9 +7,17 @@ import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
 
 /**
+ * @typedef {{ organisationId: string, registrationId: string }} RegistrationParams
+ */
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
+  /**
+   * @param {HapiRequest & { params: RegistrationParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
@@ -106,10 +114,10 @@ const buildMaybeTaggedReference = ({ reference, status }) => {
 /**
  * Build view model for accreditation dashboard
  * @param {{
- *   request: Request;
+ *   request: HapiRequest;
  *   organisationId: string;
  *   registration: Registration;
- *   accreditation?: Accreditation;
+ *   accreditation: Accreditation | undefined;
  *   wasteBalance: WasteBalance | null;
  * }} params
  * @returns {RegistrationViewModel}
@@ -158,7 +166,7 @@ function buildViewModel({
     ),
     reports: getReportsViewData(request, organisationId, registration.id),
     registration: buildTaggedReference({
-      reference: registration.registrationNumber,
+      reference: registration.registrationNumber ?? '',
       status: registration.status
     }),
     siteName,
@@ -171,7 +179,7 @@ function buildViewModel({
 
 /**
  * Get reports view data for the dashboard tile
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {string} organisationId
  * @param {string} registrationId
  */
@@ -191,7 +199,7 @@ function getReportsViewData(request, organisationId, registrationId) {
 
 /**
  * Get PRN/PERN view data based on registration type
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {{noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs'}} noteTypes
  * @param {string} organisationId
  * @param {string} registrationId
@@ -238,8 +246,9 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
 }
 
 /**
- * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */
