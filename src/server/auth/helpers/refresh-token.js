@@ -5,12 +5,12 @@ import { withTraceId } from '@defra/hapi-tracing'
 import { getUserSession } from './get-user-session.js'
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
 /**
  * Refresh id token using refresh token
- * @param {Request} request - Hapi request object
+ * @param {HapiRequest} request - Hapi request object
  * @returns {Promise<Response>}
  */
 async function refreshIdToken(request) {

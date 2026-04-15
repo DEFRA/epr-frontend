@@ -3,14 +3,14 @@ import { dropUserSession } from './drop-user-session.js'
 
 /**
  * @import { RefreshedTokens } from '../types/tokens.js'
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest, SessionCookieState } from '#server/common/hapi-types.js'
  * @import { UserSession } from '../types/session.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
 /**
  * Remove user session from cache and clear cookies
- * @param {Request} request - Hapi request object
+ * @param {HapiRequest} request - Hapi request object
  * @returns {Promise<void>}
  */
 async function removeUserSession(request) {
@@ -21,12 +21,15 @@ async function removeUserSession(request) {
 
 /**
  * Update user session to flag that an id token refresh is in progress
- * @param {Request} request - Hapi request object
+ * @param {HapiRequest} request - Hapi request object
  * @param {UserSession} userSession - Current user session
  * @returns {Promise<void>}
  */
 async function markSessionAsIdTokenRefreshInProgress(request, userSession) {
-  await request.server.app.cache.set(request.state.userSession.sessionId, {
+  const sessionState = /** @type {SessionCookieState} */ (
+    request.state.userSession
+  )
+  await request.server.app.cache.set(sessionState.sessionId, {
     ...userSession,
     idTokenRefreshInProgress: true
   })
@@ -35,7 +38,7 @@ async function markSessionAsIdTokenRefreshInProgress(request, userSession) {
 /**
  * Update user session with refreshed tokens
  * @param {VerifyToken} verifyToken - Token verification function
- * @param {Request} request - Hapi request object
+ * @param {HapiRequest} request - Hapi request object
  * @param {UserSession} existingSession - Current user session
  * @param {RefreshedTokens} refreshedTokens - Refreshed tokens from OIDC provider
  * @returns {Promise<UserSession>}
@@ -61,10 +64,10 @@ async function updateUserSession(
     idTokenRefreshInProgress: false
   }
 
-  await request.server.app.cache.set(
-    request.state.userSession.sessionId,
-    session
+  const sessionState = /** @type {SessionCookieState} */ (
+    request.state.userSession
   )
+  await request.server.app.cache.set(sessionState.sessionId, session)
 
   return session
 }

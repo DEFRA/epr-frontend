@@ -1,14 +1,14 @@
 import { err, ok } from '#server/common/helpers/result.js'
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { UserSession } from '../types/session.js'
  * @import { Result } from '#server/common/helpers/result.js'
  */
 
 /**
  * Get user session from cache
- * @param {Request} request - Hapi request object
+ * @param {HapiRequest} request - Hapi request object
  * @returns {Promise<Result<UserSession>>}
  */
 async function getUserSession(request) {

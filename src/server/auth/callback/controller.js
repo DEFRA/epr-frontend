@@ -6,7 +6,10 @@ import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID, createHash } from 'node:crypto'
 
-/** @import { ServerRoute } from '@hapi/hapi' */
+/**
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
 
 /**
  * Hashes a user ID to avoid logging PII while preserving uniqueness for metrics
@@ -32,6 +35,10 @@ const controller = {
   options: {
     auth: { strategy: 'defra-id', mode: 'try' }
   },
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   handler: async (request, h) => {
     if (request.auth?.error) {
       await metrics.signInFailure()
@@ -79,7 +86,8 @@ const controller = {
         ...withWelsh(paths.start),
         ...withWelsh(paths.loggedOut)
       ]
-      const shouldSkipReferrer = skipReferrers.includes(referrer)
+      const shouldSkipReferrer =
+        referrer !== undefined && skipReferrers.includes(referrer)
 
       // Don't redirect linked users back to start or logged-out pages - take them to dashboard
       if (referrer && !shouldSkipReferrer) {
