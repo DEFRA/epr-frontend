@@ -14,8 +14,8 @@ import {
  * Fetches registration/accreditation and report detail, then enforces the
  * reprocessor guard (any cadence). Returns validated data for pages available
  * to all reprocessors (tonnes-recycled, tonnes-not-recycled).
- * @param {Request} request
- * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: object }>}
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse }>}
  */
 export async function fetchGuardedReprocessorData(request) {
   const { organisationId, registrationId, year, cadence, period } =
@@ -54,8 +54,8 @@ export async function fetchGuardedReprocessorData(request) {
  * Fetches registration/accreditation and report detail, then enforces the
  * accredited-reprocessor-monthly guard. Returns validated data for pages
  * available only to accredited reprocessors (prn-summary, free-prns).
- * @param {Request} request
- * @returns {Promise<{ registration: object, accreditation: object, reportDetail: object }>}
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @returns {Promise<{ registration: object, accreditation: object, reportDetail: ReportDetailResponse }>}
  */
 export async function fetchGuardedAccreditedReprocessorData(request) {
   const { registration, accreditation, reportDetail } =
@@ -78,8 +78,17 @@ export async function fetchGuardedAccreditedReprocessorData(request) {
  * Fetches guarded reprocessor data and builds the common view data fields
  * shared by reprocessor pages. Page-specific fields are merged from the
  * callback return value.
- * @param {Request} request
- * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string, reportsListPath: string }) => object} buildPageFields
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @param {(ctx: {
+ *   registration: object,
+ *   accreditation: object | undefined,
+ *   reportDetail: ReportDetailResponse,
+ *   material: string,
+ *   periodLabel: string,
+ *   periodShort: string,
+ *   periodPath: string,
+ *   reportsListPath: string
+ * }) => { backUrl?: string, defaultValue?: unknown, [key: string]: unknown }} buildPageFields
  * @param {object} [options]
  * @param {unknown} [options.value]
  * @param {object} [options.errors]
@@ -127,5 +136,7 @@ export async function buildReprocessorViewData(
 }
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from '../helpers/period-params-schema.js'
+ * @import { ReportDetailResponse } from '../helpers/fetch-report-detail.js'
  */

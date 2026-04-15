@@ -29,8 +29,8 @@ export function buildSupplierRows(suppliers) {
 /**
  * Build govukTable rows for supplier details with contact information.
  * Used on review/submit pages where contact details replace tonnage.
- * @param {Array<{supplierName: string, facilityType: string, supplierAddress: string, supplierPhone: string|null, supplierEmail: string|null}>} suppliers
- * @returns {Array<Array<{text: string}>>}
+ * @param {Array<{supplierName: string, facilityType: string, supplierAddress: string | null, supplierPhone: string | null, supplierEmail: string | null}>} suppliers
+ * @returns {Array<Array<{text: string | null}>>}
  */
 export function buildSupplierDetailRows(suppliers) {
   return suppliers.map((supplier) => [
@@ -45,7 +45,7 @@ export function buildSupplierDetailRows(suppliers) {
 /**
  * Build govukTable rows for destination details.
  * @param {Array<{recipientName: string, facilityType: string, tonnageSentOn: number}>} finalDestinations
- * @returns {Array<Array<{text: string | number}>>}
+ * @returns {Array<Array<{text: string}>>}
  */
 export function buildDestinationRows(finalDestinations) {
   return finalDestinations.map((finalDestination) => [
@@ -58,7 +58,7 @@ export function buildDestinationRows(finalDestinations) {
 /**
  * Build govukTable rows for destinations with address.
  * @param {Array<{recipientName: string, facilityType: string, address: string, tonnageSentOn: number}>} finalDestinations
- * @returns {Array<Array<{text: string | number}>>}
+ * @returns {Array<Array<{text: string}>>}
  */
 export function buildDestinationDetailRows(finalDestinations) {
   return finalDestinations.map((destination) => [
@@ -73,7 +73,7 @@ export function buildDestinationDetailRows(finalDestinations) {
  * Build govukTable rows for overseas reprocessing sites.
  * @param {Array<{siteName: string, orsId: string, country: string|null, approved: boolean}>} overseasSites
  * @param {{ showApprovalColumn?: boolean }} [options]
- * @returns {Array<Array<{text: string}>>}
+ * @returns {Array<Array<{text: string | null}>>}
  */
 export function buildOverseasSiteRows(overseasSites, options) {
   return overseasSites.map((overseasSite) => {
@@ -95,7 +95,7 @@ export function buildOverseasSiteRows(overseasSites, options) {
  * Build govukTable rows for overseas sites with tonnage exported and country.
  * @param {Array<{siteName: string, tonnageExported: number, orsId: string, country: string|null, approved: boolean}>} overseasSites
  * @param {{ showApprovalColumn?: boolean }} [options]
- * @returns {Array<Array<{text: string | number}>>}
+ * @returns {Array<Array<{text: string | null}>>}
  */
 export function buildOverseasSiteDetailRows(overseasSites, options) {
   return overseasSites.map((overseasSite) => {

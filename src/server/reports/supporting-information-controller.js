@@ -24,6 +24,17 @@ const payloadSchema = Joi.object({
 })
 
 /**
+ * Supporting-information form payload after Joi validation. `failAction`
+ * runs before Joi coercion, so for failAction we narrow the pre-coerced
+ * shape to the subset we read back.
+ * @typedef {{
+ *   supportingInformation: string,
+ *   action: 'continue' | 'save',
+ *   crumb?: string
+ * }} SupportingInformationPayload
+ */
+
+/**
  * @param {string} basePath
  * @param {object} registration
  * @param {object | null} accreditation
@@ -44,7 +55,7 @@ function getBackPage(basePath, registration, accreditation) {
 }
 
 /**
- * @param {Request} request
+ * @param {HapiRequest & { params: PeriodParams }} request
  * @param {object} [options]
  * @param {string} [options.value] - Pre-fill value for textarea
  * @param {object} [options.errors] - Validation errors
@@ -106,6 +117,10 @@ export const supportingInformationGetController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const viewData = await buildViewData(request)
 
@@ -121,8 +136,17 @@ export const supportingInformationPostController = {
     validate: {
       params: periodParamsSchema,
       payload: payloadSchema,
+      /**
+       * @param {HapiRequest & { params: PeriodParams, payload: SupportingInformationPayload }} request
+       * @param {ResponseToolkit} h
+       * @param {Error | undefined} error Hapi's failAction contract — with
+       *   payload validation configured this is always the Joi ValidationError.
+       */
       async failAction(request, h, error) {
-        const { errors, errorSummary } = buildValidationErrors(request, error)
+        const { errors, errorSummary } = buildValidationErrors(
+          request,
+          /** @type {Joi.ValidationError} */ (error)
+        )
 
         const viewData = await buildViewData(request, {
           value: request.payload.supportingInformation,
@@ -134,6 +158,10 @@ export const supportingInformationPostController = {
       }
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams, payload: SupportingInformationPayload }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -165,5 +193,7 @@ export const supportingInformationPostController = {
 }
 
 /**
- * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

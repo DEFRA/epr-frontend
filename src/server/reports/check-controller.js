@@ -87,7 +87,17 @@ function buildWasteSentOn(wasteSent) {
 }
 
 /**
- * @param {{ registration: object, accreditation: object|undefined, reportDetail: object, basePath: string, localise: (key: string, params?: object) => string, localiseUrl: (path: string) => string }} params
+ * @param {{
+ *   registration: object,
+ *   accreditation: object|undefined,
+ *   reportDetail: ReportDetailResponse,
+ *   basePath: string,
+ *   localise: (key: string, params?: object) => string,
+ *   localiseUrl: (path: string) => string,
+ *   material: string,
+ *   periodLabel: string,
+ *   cadenceLabel: string
+ * }} params
  * @returns {object}
  */
 function buildCheckViewData({
@@ -174,6 +184,10 @@ export const checkGetController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -196,7 +210,7 @@ export const checkGetController = {
       session.idToken
     )
 
-    if (reportDetail.status.currentStatus !== SUBMISSION_STATUS.IN_PROGRESS) {
+    if (reportDetail.status?.currentStatus !== SUBMISSION_STATUS.IN_PROGRESS) {
       return h.redirect(
         request.localiseUrl(
           `/organisations/${organisationId}/registrations/${registrationId}/reports`
@@ -235,6 +249,13 @@ export const checkPostController = {
       payload: versionedPayloadSchema
     }
   },
+  /**
+   * @param {HapiRequest & {
+   *   params: PeriodParams,
+   *   payload: VersionedPayload
+   * }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -262,5 +283,9 @@ export const checkPostController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './helpers/period-params-schema.js'
+ * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'
+ * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
  */

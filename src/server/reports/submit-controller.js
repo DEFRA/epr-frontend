@@ -23,7 +23,14 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
-/** @import { ReportDetailResponse } from './helpers/fetch-report-detail.js' */
+/**
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { CadenceValue } from './constants.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './helpers/period-params-schema.js'
+ * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
+ * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'
+ */
 
 /**
  * @param {{ at: string, by: { name: string } }} statusCreated
@@ -109,6 +116,10 @@ export const submitGetController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -131,10 +142,15 @@ export const submitGetController = {
       )
     ])
 
+    const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
+      reportDetail.status
+    )
+
     const viewData = buildViewData({
       registration,
       accreditation,
       reportDetail,
+      status,
       organisationId,
       registrationId,
       year,
@@ -179,7 +195,7 @@ function buildPageLabels({
 
 /**
  * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
- * @returns {{ totalTonnage: string, supplierDetailRows: Array<Array<{text: string}>> }}
+ * @returns {{ totalTonnage: string, supplierDetailRows: Array<Array<{text: string | null}>> }}
  */
 const buildWasteReceivedViewData = (recyclingActivity) => ({
   totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
@@ -196,13 +212,26 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 })
 
 /**
- * @param {{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse, organisationId: string, registrationId: string, year: number, cadence: string, period: number, localise: (key: string, params?: Record<string, string>) => string, localiseUrl: (url: string) => string }} params
+ * @param {{
+ *   registration: object,
+ *   accreditation: object | undefined,
+ *   reportDetail: ReportDetailResponse,
+ *   status: NonNullable<ReportDetailResponse['status']>,
+ *   organisationId: string,
+ *   registrationId: string,
+ *   year: number,
+ *   cadence: CadenceValue,
+ *   period: number,
+ *   localise: (key: string, params?: Record<string, string>) => string,
+ *   localiseUrl: (url: string) => string
+ * }} params
  * @returns {object}
  */
 function buildViewData({
   registration,
   accreditation,
   reportDetail,
+  status,
   organisationId,
   registrationId,
   year,
@@ -219,10 +248,7 @@ function buildViewData({
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
-  const { createdBy, createdOn } = getCreationDetails(
-    reportDetail.status.created,
-    localise
-  )
+  const { createdBy, createdOn } = getCreationDetails(status.created, localise)
 
   const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
@@ -308,6 +334,13 @@ export const submitPostController = {
       payload: versionedPayloadSchema
     }
   },
+  /**
+   * @param {HapiRequest & {
+   *   params: PeriodParams,
+   *   payload: VersionedPayload
+   * }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -333,7 +366,3 @@ export const submitPostController = {
     )
   }
 }
-
-/**
- * @import { ServerRoute } from '@hapi/hapi'
- */

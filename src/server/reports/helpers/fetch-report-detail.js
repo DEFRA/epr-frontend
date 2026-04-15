@@ -41,6 +41,7 @@ export async function fetchReportDetail(
  * @typedef {{
  *   recipientName: string,
  *   facilityType: string,
+ *   address: string,
  *   tonnageSentOn: number
  * }} FinalDestinationEntry
  */
@@ -86,6 +87,12 @@ export async function fetchReportDetail(
  *     submitted?: { at: string, by: { id: string, name: string, position: string } }
  *   },
  *   supportingInformation?: string,
+ *   prn?: {
+ *     issuedTonnage: number,
+ *     freeTonnage: number,
+ *     totalRevenue: number,
+ *     averagePricePerTonne: number
+ *   },
  *   recyclingActivity: {
  *     suppliers: SupplierEntry[],
  *     totalTonnageReceived: number,

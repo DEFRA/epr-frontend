@@ -1,5 +1,10 @@
 import Joi from 'joi'
 
+/**
+ * Shape produced by `versionedPayloadSchema` after Joi validation.
+ * @typedef {{ version: number, crumb?: string }} VersionedPayload
+ */
+
 export const versionedPayloadSchema = Joi.object({
   version: Joi.number().integer().min(1).required(),
   crumb: Joi.string()

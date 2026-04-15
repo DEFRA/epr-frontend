@@ -14,8 +14,8 @@ import {
  * Fetches registration/accreditation and report detail, then enforces the
  * exporter guard (any cadence). Returns validated data for pages available
  * to all exporters.
- * @param {Request} request
- * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: object }>}
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse }>}
  */
 export async function fetchGuardedExporterData(request) {
   const { organisationId, registrationId, year, cadence, period } =
@@ -54,8 +54,8 @@ export async function fetchGuardedExporterData(request) {
  * Fetches registration/accreditation and report detail, then enforces the
  * accredited-exporter-monthly guard. Returns validated data for pages
  * available only to accredited exporters (prn-summary, free-perns).
- * @param {Request} request
- * @returns {Promise<{ registration: object, accreditation: object, reportDetail: object }>}
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @returns {Promise<{ registration: object, accreditation: object, reportDetail: ReportDetailResponse }>}
  */
 export async function fetchGuardedAccreditedExporterData(request) {
   const { registration, accreditation, reportDetail } =
@@ -78,8 +78,18 @@ export async function fetchGuardedAccreditedExporterData(request) {
  * Fetches guarded exporter data and builds the common view data fields
  * shared by exporter pages. Page-specific fields are merged from the
  * callback return value.
- * @param {Request} request
- * @param {(ctx: { registration: object, accreditation: object | undefined, reportDetail: object, material: string, periodLabel: string, periodPath: string, reportsListPath: string }) => object} buildPageFields
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @param {(ctx: {
+ *   registration: object,
+ *   accreditation: object | undefined,
+ *   reportDetail: ReportDetailResponse,
+ *   material: string,
+ *   periodLabel: string,
+ *   periodShort: string,
+ *   periodPath: string,
+ *   reportsListPath: string,
+ *   period: number
+ * }) => { backUrl?: string, defaultValue?: unknown, [key: string]: unknown }} buildPageFields
  * @param {object} [options]
  * @param {boolean} [options.accreditedOnly] - Use accredited guard (prn-summary, free-perns)
  * @param {boolean} [options.registeredOnly] - Restrict to registered-only exporters (tonnes-not-exported)
@@ -133,5 +143,7 @@ export async function buildExporterViewData(
 }
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from '../helpers/period-params-schema.js'
+ * @import { ReportDetailResponse } from '../helpers/fetch-report-detail.js'
  */
