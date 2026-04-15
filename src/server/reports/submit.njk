@@ -41,18 +41,17 @@
 
       <h2 class="govuk-heading-l">{{ localise("reports:submitYourReportHeading") }}</h2>
 
-      {{ govukSummaryList({
-        rows: [
-          {
-            key: { text: localise("reports:periodColumn") },
-            value: { text: periodLabel }
-          },
-          {
-            key: { text: localise("reports:materialLabel") },
-            value: { text: material }
-          }
-        ]
-      }) }}
+      {% set yourReportRows = [
+        { key: { text: localise("reports:periodColumn") }, value: { text: periodLabel } },
+        { key: { text: localise("reports:materialLabel") }, value: { text: material } }
+      ] %}
+      {% if site %}
+        {% set yourReportRows = yourReportRows.concat([{
+          key: { text: localise("reports:siteLabel") },
+          value: { text: site.address.line1 }
+        }]) %}
+      {% endif %}
+      {{ govukSummaryList({ rows: yourReportRows }) }}
 
       <h2 class="govuk-heading-l">{{ wasteReceivedHeading }}</h2>
 

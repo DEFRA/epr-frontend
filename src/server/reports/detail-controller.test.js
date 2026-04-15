@@ -601,6 +601,37 @@ describe('#detailReportsController', () => {
         expect(body.textContent).toContain('North Road')
       })
 
+      it('should display registration number in details section', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(body.textContent).toContain('Registration:')
+        expect(body.textContent).toContain('REG001234')
+      })
+
+      it('should display details heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: detailUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          getByRole(body, 'heading', { name: /Details/, level: 2 })
+        ).toBeDefined()
+      })
+
       it('should display waste received heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
@@ -946,6 +977,7 @@ describe('#detailReportsController', () => {
 
         expect(body.textContent).toContain('Accreditation:')
         expect(body.textContent).toContain('ER992415095748M')
+        expect(body.textContent).not.toContain('Registration:')
       })
 
       it('should display site details', async ({ server }) => {
@@ -1055,7 +1087,9 @@ describe('#detailReportsController', () => {
         expect(heading).toBeDefined()
       })
 
-      it('should not display details section', async ({ server }) => {
+      it('should display registration number in details section', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: exporterDetailUrl,
@@ -1066,11 +1100,10 @@ describe('#detailReportsController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'heading', {
-            name: /Details/,
-            level: 2
-          })
-        ).toBeNull()
+          getByRole(body, 'heading', { name: /Details/, level: 2 })
+        ).toBeDefined()
+        expect(body.textContent).toContain('Registration:')
+        expect(body.textContent).toContain('REG002345')
       })
 
       it('should display waste received for export heading', async ({

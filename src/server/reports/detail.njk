@@ -35,17 +35,16 @@
 
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
-      {% if accreditation or site %}
-        <h2 class="govuk-heading-l">{{ localise("reports:detailsHeading") }}</h2>
-        {% if accreditation %}
-          <p class="govuk-body"><strong>{{ localise("reports:accreditationLabel") }}:</strong> {{ accreditation }}</p>
-        {% endif %}
-        <p class="govuk-body"><strong>{{ localise("reports:materialLabel") }}:</strong> {{ material }}</p>
-        {% if site %}
-          <p class="govuk-body"><strong>{{ localise("reports:siteLabel") }}:</strong> {{ site.address.line1 }}</p>
-        {% endif %}
-        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+      <h2 class="govuk-heading-l">{{ localise("reports:detailsHeading") }}</h2>
+      <p class="govuk-body">
+        <strong>{{ localise("reports:accreditationLabel") if accreditation else localise("reports:registrationLabel") }}:</strong>
+        {{ accreditation if accreditation else registrationNumber }}
+      </p>
+      <p class="govuk-body"><strong>{{ localise("reports:materialLabel") }}:</strong> {{ material }}</p>
+      {% if site %}
+        <p class="govuk-body"><strong>{{ localise("reports:siteLabel") }}:</strong> {{ site.address.line1 }}</p>
       {% endif %}
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
       <h2 class="govuk-heading-l">{{ wasteReceivedHeading }}</h2>
       {% if isExporter %}
