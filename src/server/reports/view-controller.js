@@ -111,6 +111,7 @@ function buildViewData({
   const isAccredited = !!accreditation
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
+  const isRegisteredOnlyExporter = isExporter && !isAccredited
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
@@ -145,6 +146,7 @@ function buildViewData({
     isAccredited,
     isExporter,
     isReprocessor,
+    isRegisteredOnlyExporter,
 
     prn: {
       issuedTonnage: reportDetail.prn?.issuedTonnage,

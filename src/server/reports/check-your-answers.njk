@@ -87,17 +87,9 @@
           unapprovedIntro: localise("reports:unapprovedOverseasSitesIntro")
         }) }}
 
-        <h3 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h3>
+        {% if isAccredited %}
+          <h3 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h3>
 
-        {% if isRegisteredOnlyExporter %}
-          {{ govukSummaryList({
-            rows: [{
-              key: { text: localise("reports:checkTonnageNotExportedLabel") },
-              value: { text: wasteExported.tonnageReceivedNotExported },
-              actions: { items: [{ href: tonnageNotExportedChangeUrl, text: changeText, visuallyHiddenText: localise("reports:checkTonnageNotExportedLabel") }] }
-            }]
-          }) }}
-        {% else %}
           <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
           <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
         {% endif %}
@@ -139,6 +131,18 @@
             ],
             rows: wasteSentOn.destinationDetailRows
           }) }}
+      {% endif %}
+
+      {% if isRegisteredOnlyExporter %}
+        <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
+
+        {{ govukSummaryList({
+          rows: [{
+            key: { text: localise("reports:tonnageReceivedNotExportedRegOnlyLabel") },
+            value: { text: wasteExported.tonnageReceivedNotExported },
+            actions: { items: [{ href: tonnageNotExportedChangeUrl, text: changeText, visuallyHiddenText: localise("reports:tonnageReceivedNotExportedRegOnlyLabel") }] }
+          }]
+        }) }}
       {% endif %}
 
       {% if isReprocessor %}

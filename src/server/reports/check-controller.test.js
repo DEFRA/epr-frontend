@@ -608,7 +608,7 @@ describe('#checkController', () => {
           expect(
             getByRole(body, 'heading', {
               name: /Packaging waste received but not exported/,
-              level: 3
+              level: 2
             })
           ).toBeDefined()
         })
@@ -1014,7 +1014,7 @@ describe('#checkController', () => {
           expect(
             getByRole(body, 'heading', {
               name: /Packaging waste received but not exported/i,
-              level: 3
+              level: 2
             })
           ).toBeDefined()
         })

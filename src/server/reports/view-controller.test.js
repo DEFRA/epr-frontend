@@ -1187,8 +1187,13 @@ describe('#viewController', () => {
           }
         )
 
-        it.for(exporters)(
-          '($scenario) renders the tonnage received but not exported',
+        it.for([
+          {
+            scenario: 'Accredited Exporter',
+            registrationAndAccreditation: mockAccreditedExporter
+          }
+        ])(
+          '($scenario) renders label as "Total tonnage not exported"',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -1196,6 +1201,26 @@ describe('#viewController', () => {
             })
 
             expect(section.textContent).toContain('Total tonnage not exported')
+            expect(section.textContent).toContain('4.50')
+          }
+        )
+
+        it.for([
+          {
+            scenario: 'Registered Only Exporter',
+            registrationAndAccreditation: mockRegisteredOnlyExporter
+          }
+        ])(
+          '($scenario) renders label as "Total tonnage received but not exported"',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section.textContent).toContain(
+              'Total tonnage received but not exported'
+            )
             expect(section.textContent).toContain('4.50')
           }
         )

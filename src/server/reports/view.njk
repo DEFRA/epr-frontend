@@ -156,12 +156,14 @@
           }) }}
         </div>
 
-        <div id="waste-received-but-not-exported">
-          <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
+        {% if isAccredited %}
+          <div id="waste-received-but-not-exported">
+            <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
 
-          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
-          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
-        </div>
+            <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
+            <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+          </div>
+        {% endif %}
 
         <div id="packaging-waste-refused-or-stopped-during-export">
           <h2 class="govuk-heading-l">{{ localise("reports:tonnageRefusedOrStoppedHeading") }}</h2>
@@ -216,6 +218,19 @@
           }) }}
         {% endif %}
       </div>
+
+      {% if isRegisteredOnlyExporter %}
+        <div id="waste-received-but-not-exported">
+          <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
+
+          {{ govukSummaryList({
+            rows: [{
+              key: { text: localise("reports:tonnageReceivedNotExportedRegOnlyLabel") },
+              value: { text: wasteExported.tonnageReceivedNotExported }
+            }]
+          }) }}
+        </div>
+      {% endif %}
 
       {% if isAccredited %}
         <div id="prns">
