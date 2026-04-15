@@ -54,8 +54,12 @@ export const controller = {
 /** @typedef {{ href: string; text: string }} Link */
 
 /**
+ * Reference text may be absent for a `RegistrationOther` (created / rejected
+ * / archived) whose `registrationNumber` is optional in the domain model.
+ * The template renders it verbatim, so `undefined` renders as empty — which
+ * is fine. Callers pass the optional value through untouched.
  * @typedef {{
- *   reference: string;
+ *   reference: string | undefined;
  *   status: string;
  *   class: string;
  * }} TaggedReference
@@ -87,7 +91,7 @@ export const controller = {
  */
 
 /**
- * @param {{ reference: string; status: string }} params
+ * @param {{ reference: string | undefined; status: string }} params
  * @returns {TaggedReference}
  */
 const buildTaggedReference = ({ reference, status }) => ({
@@ -166,7 +170,7 @@ function buildViewModel({
     ),
     reports: getReportsViewData(request, organisationId, registration.id),
     registration: buildTaggedReference({
-      reference: registration.registrationNumber ?? '',
+      reference: registration.registrationNumber,
       status: registration.status
     }),
     siteName,

@@ -106,10 +106,9 @@ function createRow(request, id, registration, accreditation, wasteBalanceMap) {
   )
 
   const accreditationId = registration.accreditationId
-  const wasteBalance =
-    accreditationId === undefined
-      ? undefined
-      : wasteBalanceMap?.[accreditationId]
+  const wasteBalance = accreditationId
+    ? wasteBalanceMap?.[accreditationId]
+    : undefined
 
   /** @type {TableCell[]} */
   const cells = [
