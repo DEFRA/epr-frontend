@@ -16,6 +16,10 @@ export const submittedController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -74,5 +78,7 @@ export const submittedController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

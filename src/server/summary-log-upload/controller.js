@@ -7,6 +7,10 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
  * @satisfies {Partial<ServerRoute>}
  */
 export const summaryLogUploadController = {
+  /**
+   * @param {HapiRequest & { params: { organisationId: string, registrationId: string } }} request
+   * @param {ResponseToolkit} h
+   */
   handler: async (request, h) => {
     const localise = request.t
     const { organisationId, registrationId } = request.params
@@ -68,5 +72,6 @@ export const summaryLogUploadController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
