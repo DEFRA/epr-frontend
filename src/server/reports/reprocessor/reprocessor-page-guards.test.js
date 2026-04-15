@@ -34,7 +34,7 @@ const accreditation = {
 const reportDetail = {
   id: 'report-001',
   version: 1,
-  status: 'in_progress',
+  status: { currentStatus: 'in_progress' },
   cadence: 'monthly',
   year: 2026,
   period: 1,
@@ -133,7 +133,7 @@ describe('#fetchGuardedReprocessorData', () => {
     })
     vi.mocked(fetchReportDetail).mockResolvedValue({
       ...reportDetail,
-      status: 'ready_to_submit'
+      status: { currentStatus: 'ready_to_submit' }
     })
 
     await expect(fetchGuardedReprocessorData(mockRequest)).rejects.toThrow(

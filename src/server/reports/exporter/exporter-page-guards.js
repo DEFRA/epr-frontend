@@ -42,8 +42,10 @@ export async function fetchGuardedExporterData(request) {
     throw Boom.notFound()
   }
 
-  const status = reportDetail.status?.currentStatus ?? reportDetail.status
-  if (!reportDetail.id || status !== 'in_progress') {
+  if (
+    !reportDetail.id ||
+    reportDetail.status?.currentStatus !== 'in_progress'
+  ) {
     throw Boom.notFound()
   }
 

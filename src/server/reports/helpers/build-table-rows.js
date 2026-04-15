@@ -44,8 +44,8 @@ export function buildSupplierDetailRows(suppliers) {
 
 /**
  * Build govukTable rows for destination details.
- * @param {Array<{recipientName: string, facilityType: string, tonnageSentOn: number}>} finalDestinations
- * @returns {Array<Array<{text: string}>>}
+ * @param {Array<{recipientName: string | null, facilityType: string | null, tonnageSentOn: number}>} finalDestinations
+ * @returns {Array<Array<{text: string | null}>>}
  */
 export function buildDestinationRows(finalDestinations) {
   return finalDestinations.map((finalDestination) => [
@@ -57,8 +57,8 @@ export function buildDestinationRows(finalDestinations) {
 
 /**
  * Build govukTable rows for destinations with address.
- * @param {Array<{recipientName: string, facilityType: string, address: string, tonnageSentOn: number}>} finalDestinations
- * @returns {Array<Array<{text: string}>>}
+ * @param {Array<{recipientName: string | null, facilityType: string | null, address: string | null, tonnageSentOn: number}>} finalDestinations
+ * @returns {Array<Array<{text: string | null}>>}
  */
 export function buildDestinationDetailRows(finalDestinations) {
   return finalDestinations.map((destination) => [

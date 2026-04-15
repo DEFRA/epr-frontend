@@ -44,7 +44,7 @@ const reprocessorRegistration = {
 const reportDetail = {
   id: 'report-001',
   version: 1,
-  status: 'in_progress',
+  status: { currentStatus: 'in_progress' },
   prn: {
     issuedTonnage: 91,
     totalRevenue: null,

@@ -85,7 +85,7 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
 
 /**
  * @typedef {{
- *   destinationDetailRows: Array<Array<{text: string}>>,
+ *   destinationDetailRows: Array<Array<{text: string | null}>>,
  *   toExporters: string,
  *   toOtherSites: string,
  *   toReprocessors: string,
