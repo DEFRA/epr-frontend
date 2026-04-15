@@ -19,9 +19,14 @@
  * Session data written after a draft PRN is confirmed
  * (status transitions to awaiting_authorisation). Read by
  * createdController to render the success page.
+ *
+ * `prnNumber` is optional because the current writer in viewPostController
+ * does not set it — the backend returns it, but the writer omits it. The
+ * created page therefore renders without a PRN number today. Tracked as a
+ * separate fix; the typedef reflects runtime reality.
  * @typedef {{
  *   id: string,
- *   prnNumber: string | null,
+ *   prnNumber?: string | null,
  *   tonnage: number,
  *   material: string,
  *   status: string,
