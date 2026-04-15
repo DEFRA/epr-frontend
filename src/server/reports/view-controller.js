@@ -22,6 +22,12 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
 /**
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './helpers/period-params-schema.js'
+ */
+
+/**
  * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: import('./constants.js').SubmissionStatusValue }} params
  * @returns {object}
  */
@@ -198,7 +204,7 @@ function buildWasteExported(exportActivity, isExporter, isAccredited) {
 }
 
 /**
- * @satisfies {Partial<import('@hapi/hapi').ServerRoute>}
+ * @satisfies {Partial<ServerRoute>}
  */
 export const viewGetController = {
   options: {
@@ -206,6 +212,10 @@ export const viewGetController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params

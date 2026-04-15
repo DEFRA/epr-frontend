@@ -7,10 +7,10 @@ import { buildValidationErrors } from './validation.js'
 
 /**
  * Builds view data by calling the guard function with a page-fields callback.
- * @param {(request: Request, buildPageFields: (ctx: object) => object, options: object) => Promise<object>} guardFn
+ * @param {(request: HapiRequest, buildPageFields: (ctx: object) => object, options: object) => Promise<object>} guardFn
  * @param {(ctx: object) => (localise: (key: string, params?: object) => string) => object} pageFields
  * @param {object} guardOptions
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {object} [options]
  * @returns {Promise<object>}
  */
@@ -42,12 +42,12 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  * @param {string} config.fieldName - Payload field name
  * @param {import('joi').Schema} config.payloadSchema - Joi schema for POST payload
  * @param {(ctx: object) => (localise: (key: string, params?: object) => string) => object} config.pageFields - Returns localised page fields from context
- * @param {(request: Request, buildPageFields: (ctx: object) => object, options: object) => Promise<object>} config.guardFn - Guard function (buildExporterViewData or buildReprocessorViewData)
+ * @param {(request: HapiRequest, buildPageFields: (ctx: object) => object, options: object) => Promise<object>} config.guardFn - Guard function (buildExporterViewData or buildReprocessorViewData)
  * @param {object} [config.guardOptions] - Extra options passed to guardFn (e.g. { accreditedOnly: true })
  * @param {string} [config.nextPage] - Redirect target after saving
  * @param {string} [config.exceedsTotalErrorKey] - i18n key for the exceeds-total error (enables tonnage validation)
- * @param {(deps: { getViewData: (request: Request, options?: object) => Promise<object>, viewPath: string }) => (request: Request, h: ResponseToolkit) => Promise<ResponseObject>} [config.createPostHandler] - Factory for custom POST handler
- * @returns {{ getController: Partial<ServerRoute>, postController: Partial<ServerRoute> }}
+ * @param {(deps: { getViewData: (request: HapiRequest, options?: object) => Promise<object>, viewPath: string }) => (request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }, h: ResponseToolkit) => Promise<ResponseObject>} [config.createPostHandler] - Factory for custom POST handler
+ * @returns {{ getController: DataPageController, postController: DataPagePostController }}
  */
 export function createDataPageControllers({
   viewPath,
@@ -60,7 +60,10 @@ export function createDataPageControllers({
   exceedsTotalErrorKey,
   createPostHandler
 }) {
-  /** @param {Request} request */
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {object} [options]
+   */
   const getViewData = (request, options = {}) =>
     buildViewData(guardFn, pageFields, guardOptions, request, options)
 
@@ -71,6 +74,10 @@ export function createDataPageControllers({
         params: periodParamsSchema
       }
     },
+    /**
+     * @param {HapiRequest & { params: PeriodParams }} request
+     * @param {ResponseToolkit} h
+     */
     async handler(request, h) {
       const viewData = await getViewData(request)
       return h.view(viewPath, viewData)
@@ -83,13 +90,16 @@ export function createDataPageControllers({
   } else if (exceedsTotalErrorKey) {
     postHandler = createTonnagePostHandler(
       fieldName,
-      nextPage,
+      /** @type {string} */ (nextPage),
       exceedsTotalErrorKey,
       getViewData,
       viewPath
     )
   } else {
-    postHandler = createSimplePostHandler(fieldName, nextPage)
+    postHandler = createSimplePostHandler(
+      fieldName,
+      /** @type {string} */ (nextPage)
+    )
   }
 
   /** @satisfies {Partial<ServerRoute>} */
@@ -98,6 +108,12 @@ export function createDataPageControllers({
       validate: {
         params: periodParamsSchema,
         payload: payloadSchema,
+        /**
+         * @param {HapiRequest & { params: PeriodParams, payload: DataPagePayload }} request
+         * @param {ResponseToolkit} h
+         * @param {Error | undefined} error Hapi's failAction contract — with
+         *   payload validation configured this is always the Joi ValidationError.
+         */
         async failAction(request, h, error) {
           const viewData = await getViewData(request, {
             value: request.payload[fieldName]
@@ -105,7 +121,7 @@ export function createDataPageControllers({
 
           const { errors, errorSummary } = buildValidationErrors(
             request,
-            error,
+            /** @type {import('joi').ValidationError} */ (error),
             { noteTypePlural: viewData.noteTypePlural }
           )
 
@@ -124,7 +140,7 @@ export function createDataPageControllers({
 /**
  * @param {string} fieldName
  * @param {string} nextPage
- * @returns {(request: Request, h: ResponseToolkit) => Promise<ResponseObject>}
+ * @returns {(request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }, h: ResponseToolkit) => Promise<ResponseObject>}
  */
 function createSimplePostHandler(fieldName, nextPage) {
   return async (request, h) => {
@@ -154,9 +170,9 @@ function createSimplePostHandler(fieldName, nextPage) {
  * @param {string} fieldName
  * @param {string} nextPage
  * @param {string} errorKey - i18n key for the exceeds-total error message
- * @param {(request: Request, options?: object) => Promise<object>} getViewData
+ * @param {(request: HapiRequest & { params: PeriodParams }, options?: object) => Promise<object>} getViewData
  * @param {string} viewPath
- * @returns {(request: Request, h: ResponseToolkit) => Promise<ResponseObject>}
+ * @returns {(request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }, h: ResponseToolkit) => Promise<ResponseObject>}
  */
 function createTonnagePostHandler(
   fieldName,
@@ -168,7 +184,7 @@ function createTonnagePostHandler(
   return async (request, h) => {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
-    const fieldValue = request.payload[fieldName]
+    const fieldValue = /** @type {number} */ (request.payload[fieldName])
     const session = request.auth.credentials
 
     const reportDetail = await fetchReportDetail(
@@ -180,7 +196,11 @@ function createTonnagePostHandler(
       session.idToken
     )
 
-    if (fieldValue > reportDetail.prn.issuedTonnage) {
+    const prn = /** @type {NonNullable<typeof reportDetail.prn>} */ (
+      reportDetail.prn
+    )
+
+    if (fieldValue > prn.issuedTonnage) {
       const viewData = await getViewData(request, { value: fieldValue })
       const periodShort = formatPeriodShort(
         { year, period },
@@ -221,5 +241,37 @@ function createTonnagePostHandler(
 }
 
 /**
- * @import { Request, ResponseObject, ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * Payload shape shared by every page built via `createDataPageControllers`.
+ * The `fieldName` key is validated by the page-specific payloadSchema.
+ * @typedef {{
+ *   action: 'continue' | 'save',
+ *   crumb?: string,
+ *   [field: string]: unknown
+ * }} DataPagePayload
+ */
+
+/**
+ * @typedef {{
+ *   options: { validate: { params: import('joi').Schema } },
+ *   handler: (request: HapiRequest & { params: PeriodParams }, h: ResponseToolkit) => Promise<ResponseObject>
+ * }} DataPageController
+ */
+
+/**
+ * @typedef {{
+ *   options: {
+ *     validate: {
+ *       params: import('joi').Schema,
+ *       payload: import('joi').Schema,
+ *       failAction: (request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }, h: ResponseToolkit, error: Error | undefined) => Promise<ResponseObject>
+ *     }
+ *   },
+ *   handler: (request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }, h: ResponseToolkit) => Promise<ResponseObject>
+ * }} DataPagePostController
+ */
+
+/**
+ * @import { ResponseObject, ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './period-params-schema.js'
  */
