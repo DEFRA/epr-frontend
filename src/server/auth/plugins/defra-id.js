@@ -9,7 +9,7 @@ import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 import { getRedirectUrl } from '../helpers/get-redirect-url.js'
 
 /**
- * @import { AzureB2CTokenParams, AzureB2CBellCredentials, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
+ * @import { AzureB2CTokenParams, AzureB2CBellCredentials, BellProfileTarget, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
@@ -68,8 +68,11 @@ const createDefraId = (verifyToken) => ({
           token: oidcConf.token_endpoint,
           scope: ['openid', 'offline_access'],
           /**
-           * Extract user profile from OIDC ID token and populate credentials
-           * @param {OAuthBellCredentials | AzureB2CBellCredentials} credentials
+           * Extract user profile from OIDC ID token and populate credentials.
+           * Bell gives us a plain `BellCredentials` object which we mutate
+           * into a `UserSession` by attaching the profile, token expiry, id
+           * token and OIDC URLs.
+           * @param {BellProfileTarget} credentials
            * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
            */

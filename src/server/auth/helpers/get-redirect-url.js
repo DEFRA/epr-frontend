@@ -18,9 +18,10 @@ const getRedirectUrl = (request, path) => {
   const allowedOrigins = new Set([appBaseUrl, PRODUCTION_SERVICE_URL])
 
   const forwardedProto = request.headers['x-forwarded-proto']
-  const protocol = VALID_PROTOCOLS.has(forwardedProto)
-    ? forwardedProto
-    : request.server.info.protocol
+  const protocol =
+    typeof forwardedProto === 'string' && VALID_PROTOCOLS.has(forwardedProto)
+      ? forwardedProto
+      : request.server.info.protocol
 
   const requestUrl = new URL(appBaseUrl)
   requestUrl.protocol = protocol

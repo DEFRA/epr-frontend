@@ -7,6 +7,10 @@ const controller = {
   options: {
     auth: 'defra-id'
   },
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   handler: async function (request, h) {
     // Should never be called as the user should no longer be authenticated with `defra-id` after initial sign in
     // The strategy should redirect the user to the sign in page and they will rejoin the service at the /auth/callback route
@@ -22,5 +26,6 @@ const controller = {
 export { controller }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

@@ -1,6 +1,6 @@
 /**
  * Drop user session from cache
- * @param {Request} request - Hapi request object
+ * @param {HapiRequest} request - Hapi request object
  * @returns {Promise<void>}
  */
 async function dropUserSession(request) {
@@ -12,5 +12,5 @@ async function dropUserSession(request) {
 export { dropUserSession }
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

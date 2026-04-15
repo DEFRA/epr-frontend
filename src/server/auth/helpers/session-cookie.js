@@ -10,7 +10,9 @@ import { getUserSession } from './get-user-session.js'
 import { refreshIdToken } from './refresh-token.js'
 
 /**
- * @import { Request, ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { RefreshedTokens } from '../types/tokens.js'
  * @import { UserSession } from '../types/session.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
@@ -42,7 +44,7 @@ function inNext5Minutes(date) {
 /**
  * Refreshes id token and updates session with refreshed tokens. If the refresh fails, the session is removed.
  * @param {VerifyToken} verifyToken
- * @returns {(request: Request, userSession: UserSession) => Promise<UserSession | null>}
+ * @returns {(request: HapiRequest, userSession: UserSession) => Promise<UserSession | null>}
  */
 const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
   /** @type {ReturnType<typeof createRefreshIdTokenAndUpdateSession>} */
@@ -61,7 +63,9 @@ const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
         throw new Error(errorBody)
       }
 
-      const refreshedTokens = await response.json()
+      const refreshedTokens = /** @type {RefreshedTokens} */ (
+        await response.json()
+      )
       const { ok: sessionStillExists, value: latestSession } =
         await getUserSession(request)
 
@@ -87,7 +91,7 @@ const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
 
 /**
  * @param {VerifyToken} verifyToken
- * @returns {(request: Request, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
+ * @returns {(request: HapiRequest, userSession: UserSession) => Promise<{isValid: boolean, credentials?: UserSession}>}
  */
 const createBlockingRefresh = (verifyToken) => {
   const refreshIdTokenAndUpdateSession =
@@ -122,7 +126,7 @@ const createBlockingRefresh = (verifyToken) => {
 
 /**
  * @param {VerifyToken} verifyToken
- * @returns {(request: Request, userSession: UserSession) => void}
+ * @returns {(request: HapiRequest, userSession: UserSession) => void}
  */
 const createBackgroundRefresh = (verifyToken) => {
   const refreshIdTokenAndUpdateSession =
@@ -185,7 +189,7 @@ const createSessionCookie = (verifyToken) => {
           keepAlive: true,
           /**
            * Validates the session cookie on each request
-           * @param {Request} request - Hapi request object
+           * @param {HapiRequest} request - Hapi request object
            * @returns {Promise<{isValid: boolean, credentials?: UserSession}>} Validation result
            */
           validate: async (request) => {
