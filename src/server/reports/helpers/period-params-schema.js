@@ -2,6 +2,21 @@ import Joi from 'joi'
 
 import { CADENCE } from '../constants.js'
 
+/**
+ * @import { CadenceValue } from '../constants.js'
+ */
+
+/**
+ * Shape produced by `periodParamsSchema` after Joi validation.
+ * @typedef {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   year: number,
+ *   cadence: CadenceValue,
+ *   period: number
+ * }} PeriodParams
+ */
+
 const MIN_YEAR = 2024
 const MAX_YEAR = 2100
 const MAX_PERIOD = 12

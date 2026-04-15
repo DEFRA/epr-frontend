@@ -2,17 +2,18 @@ import { CADENCE } from '../constants.js'
 
 /**
  * @import { CadenceValue } from '../constants.js'
+ * @import { ReportingPeriod } from './fetch-reporting-periods.js'
  */
 
 /**
- * @import { ReportingPeriod } from './fetch-reporting-periods.js'
+ * @typedef {Pick<ReportingPeriod, 'year' | 'period'>} PeriodRef
  * @typedef {(key: string, params?: Record<string, unknown>) => string} Localise
  */
 
 /**
  * Formats a reporting period into a display label.
  * Monthly: "January 2026", Quarterly: "Quarter 1, 2026"
- * @param {ReportingPeriod} period
+ * @param {PeriodRef} period
  * @param {CadenceValue} cadence
  * @param {Localise} localise
  * @returns {string}
@@ -32,7 +33,7 @@ export function formatPeriodLabel(period, cadence, localise) {
 /**
  * Formats a reporting period into a shorter display label without the year.
  * Monthly: "January", Quarterly: "Quarter 1"
- * @param {ReportingPeriod} period
+ * @param {PeriodRef} period
  * @param {CadenceValue} cadence
  * @param {Localise} localise
  * @returns {string}
