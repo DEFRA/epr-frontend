@@ -10,6 +10,35 @@ const payloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
+function resolveBackUrl(request) {
+  const { organisationId, registrationId } = request.params
+  const fallback = request.localiseUrl(
+    `/organisations/${organisationId}/registrations/${registrationId}/reports`
+  )
+
+  const { referrer } = request.info
+  if (!referrer) {
+    return fallback
+  }
+
+  let refererUrl
+  try {
+    refererUrl = new URL(referrer)
+  } catch {
+    return fallback
+  }
+
+  if (refererUrl.host !== request.info.host) {
+    return fallback
+  }
+
+  if (refererUrl.pathname === request.path) {
+    return fallback
+  }
+
+  return refererUrl.pathname + refererUrl.search
+}
+
 /**
  * @satisfies {Partial<ServerRoute>}
  */
@@ -40,9 +69,7 @@ export const deleteGetController = {
       bodyWarning: localise('reports:deleteBodyWarning'),
       bodyGuidance: localise('reports:deleteBodyGuidance'),
       confirmButtonText: localise('reports:deleteConfirmButton'),
-      backUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/supporting-information`
-      )
+      backUrl: resolveBackUrl(request)
     }
 
     return h.view('reports/confirm-delete', viewData)

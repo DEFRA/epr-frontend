@@ -107,24 +107,114 @@ describe('#deleteController', () => {
         expect(button?.textContent?.trim()).toContain('Confirm deletion')
       })
 
-      it('should display back link to supporting information page', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
+      describe('back link', () => {
+        const host = 'localhost'
+        const refererFor = (path) => `http://${host}${path}`
+        const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        const periodPrefix = `${reportsListPath}/2026/quarterly/1`
+
+        it('should fall back to the reports list when no referer header is present', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { host }
+          })
+
+          const dom = new JSDOM(result)
+          const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        it('should use the referer pathname as the back link when the referer is same-origin', async ({
+          server
+        }) => {
+          const checkYourAnswersPath = `${periodPrefix}/check-your-answers`
 
-        const backLink = body.querySelector('.govuk-back-link')
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { host, referer: refererFor(checkYourAnswersPath) }
+          })
 
-        expect(backLink).not.toBeNull()
-        expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
-        )
+          const dom = new JSDOM(result)
+          const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(checkYourAnswersPath)
+        })
+
+        it('should preserve the query string from the referer', async ({
+          server
+        }) => {
+          const refererPath = `${periodPrefix}/tonnage-input?step=2`
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { host, referer: refererFor(refererPath) }
+          })
+
+          const dom = new JSDOM(result)
+          const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(refererPath)
+        })
+
+        it('should fall back to the reports list when the referer is cross-origin', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: {
+              host,
+              referer: 'https://evil.example.com/stolen'
+            }
+          })
+
+          const dom = new JSDOM(result)
+          const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+        })
+
+        it('should fall back to the reports list when the referer is malformed', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { host, referer: 'not-a-valid-url' }
+          })
+
+          const dom = new JSDOM(result)
+          const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+        })
+
+        it('should fall back to the reports list when the referer points to the delete page itself', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth,
+            headers: { host, referer: refererFor(baseUrl) }
+          })
+
+          const dom = new JSDOM(result)
+          const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+        })
       })
 
       it('should display the warning and guidance text', async ({ server }) => {
