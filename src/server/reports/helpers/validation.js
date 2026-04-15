@@ -1,4 +1,4 @@
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import Joi from 'joi'
 
 const TWO_DECIMAL_PLACES = 2
@@ -152,12 +152,13 @@ export const freeTonnagePayloadSchema = Joi.object({
 /**
  * Builds validation error objects from Joi error details, suitable for
  * govukErrorSummary and inline error display.
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {import('joi').ValidationError} error
  * @param {Record<string, unknown>} [interpolation] - Placeholder values for i18n message keys
  * @returns {{ errors: Record<string, { text: string }>, errorSummary: { titleText: string, errorList: Array<{ text: string, href: string }> } }}
  */
 export function buildValidationErrors(request, error, interpolation = {}) {
+  /** @type {Record<string, { text: string }>} */
   const errors = {}
   const errorList = []
 
@@ -178,5 +179,5 @@ export function buildValidationErrors(request, error, interpolation = {}) {
 }
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

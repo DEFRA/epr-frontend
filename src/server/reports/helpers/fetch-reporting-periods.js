@@ -27,7 +27,7 @@ export async function fetchReportingPeriods(
  *   startDate: string,
  *   endDate: string,
  *   dueDate: string,
- *   report: { id: string, status: string } | null
+ *   report: { id: string, status: import('../constants.js').SubmissionStatusValue } | null
  * }} ReportingPeriod
  */
 
