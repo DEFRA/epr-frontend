@@ -5,6 +5,10 @@
  */
 
 const controller = {
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
   handler(request, h) {
     if (request.auth.credentials) {
       // If user is not logged out, redirect to home page
@@ -22,5 +26,6 @@ const controller = {
 export { controller }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
