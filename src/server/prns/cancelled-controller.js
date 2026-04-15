@@ -8,6 +8,10 @@ import {
  * @satisfies {Partial<ServerRoute>}
  */
 export const cancelledController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, registration, prn, basePath } =
       await fetchPrnContext(request)
@@ -42,5 +46,7 @@ export const cancelledController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnDetailParams } from './helpers/session-types.js'
  */

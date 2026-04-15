@@ -42,6 +42,20 @@ const payloadSchema = Joi.object({
 })
 
 /**
+ * Create-PRN form payload after Joi validation. `tonnage` arrives as a
+ * string from the form and is coerced to a number when calling createPrn.
+ * `failAction` runs before Joi coercion too, so the typing on failAction's
+ * payload is intentionally the unvalidated shape.
+ * @typedef {{
+ *   tonnage: string,
+ *   recipient: string,
+ *   notes?: string,
+ *   nation: string,
+ *   wasteProcessingType: string
+ * }} CreatePrnPayload
+ */
+
+/**
  * @param {import('joi').ValidationErrorItem} detail
  * @returns {string}
  */
@@ -101,9 +115,9 @@ function buildValidationErrors(validationError, localise, wasteProcessingType) {
 }
 
 /**
- * @param {object} result - The created PRN draft from the backend
+ * @param {CreatePrnResponse} result - The created PRN draft from the backend
  * @param {string} recipientDisplayName - The resolved display name for the recipient
- * @param {string} notes - Issuer notes
+ * @param {string | undefined} notes - Issuer notes
  */
 function buildPrnDraftSession(result, recipientDisplayName, notes) {
   return {
@@ -123,6 +137,9 @@ function buildPrnDraftSession(result, recipientDisplayName, notes) {
 /**
  * Re-render the create form when the selected recipient is not
  * found in the organisations list.
+ * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
+ * @param {ResponseToolkit} h
+ * @param {Array<WasteOrganisation>} organisations
  */
 async function handleInvalidRecipient(request, h, organisations) {
   const { organisationId, registrationId, accreditationId } = request.params
@@ -179,6 +196,12 @@ export const postController = {
   options: {
     validate: {
       payload: payloadSchema,
+      /**
+       * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
+       * @param {ResponseToolkit} h
+       * @param {Error | undefined} error Hapi's failAction contract — with
+       *   payload validation configured this is always the Joi ValidationError.
+       */
       failAction: async (request, h, error) => {
         const { organisationId, registrationId, accreditationId } =
           request.params
@@ -186,7 +209,7 @@ export const postController = {
 
         const { t: localise } = request
         const { errors, errorSummary } = buildValidationErrors(
-          error,
+          /** @type {Joi.ValidationError} */ (error),
           localise,
           request.payload.wasteProcessingType
         )
@@ -228,6 +251,10 @@ export const postController = {
       }
     }
   },
+  /**
+   * @param {HapiRequest & { params: PrnListParams, payload: CreatePrnPayload }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
@@ -288,5 +315,9 @@ export const postController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
+ * @import { CreatePrnResponse } from './helpers/create-prn.js'
+ * @import { PrnListParams } from './helpers/session-types.js'
  */

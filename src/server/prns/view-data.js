@@ -5,7 +5,7 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
 
 /**
  * Build view data for the create PRN/PERN page
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
@@ -73,5 +73,5 @@ export function buildCreatePrnViewData(
 }
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

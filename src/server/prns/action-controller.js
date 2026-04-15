@@ -16,6 +16,10 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
  * @satisfies {Partial<ServerRoute>}
  */
 export const actionController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
@@ -67,7 +71,7 @@ export const actionController = {
  * @param {{
  *   accreditation: RegistrationWithAccreditation['accreditation'],
  *   accreditationId: string,
- *   localise: (key: string, params?: object) => string,
+ *   localise: TFunction,
  *   organisationData: RegistrationWithAccreditation['organisationData'],
  *   organisationId: string,
  *   prn: PackagingRecyclingNote,
@@ -75,7 +79,7 @@ export const actionController = {
  *   recipientDisplayName: string,
  *   registration: RegistrationWithAccreditation['registration'],
  *   registrationId: string,
- *   request: Request
+ *   request: HapiRequest
  * }} params
  */
 function buildActionViewData({
@@ -237,7 +241,10 @@ function buildActionPrnDetailRows({
 }
 
 /**
- * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { TFunction } from 'i18next'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ * @import { PrnDetailParams } from './helpers/session-types.js'
  */
