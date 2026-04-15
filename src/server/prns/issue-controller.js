@@ -5,6 +5,10 @@ import { updatePrnStatus } from './helpers/update-prn-status.js'
  * @satisfies {Partial<ServerRoute>}
  */
 export const issueController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
@@ -47,5 +51,7 @@ export const issueController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnDetailParams } from './helpers/session-types.js'
  */

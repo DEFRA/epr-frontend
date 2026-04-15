@@ -4,12 +4,17 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
  * @satisfies {Partial<ServerRoute>}
  */
 export const createdController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const { t: localise } = request
 
     // Check for success session data
+    /** @type {PrnCreatedSession | null} */
     const prnCreated = request.yar.get('prnCreated')
 
     if (prnCreated?.id !== prnId) {
@@ -63,5 +68,7 @@ export const createdController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnCreatedSession, PrnDetailParams } from './helpers/session-types.js'
  */

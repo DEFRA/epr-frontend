@@ -4,7 +4,11 @@
  * Compliance schemes show tradingName (the scheme name), large producers
  * show name (the legal/registered name). When registrationType is absent,
  * falls back to preferring tradingName over name.
- * @param {Pick<import('./types.js').WasteOrganisation, 'name' | 'tradingName'> & { registrationType?: string }} organisation
+ *
+ * `tradingName` is `?: string | null` to accept both the backend's nullable
+ * shape (WasteOrganisation) and the PRN response's optional shape
+ * (IssuedToOrganisation). The `|| name` fallback handles both cases.
+ * @param {{ name: string, tradingName?: string | null, registrationType?: string }} organisation
  * @returns {string}
  */
 export const getIssuedToOrgDisplayName = (organisation) => {

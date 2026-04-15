@@ -7,6 +7,10 @@ import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling
  * @satisfies {Partial<ServerRoute>}
  */
 export const issuedController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
@@ -16,6 +20,7 @@ export const issuedController = {
     // Read and clear session data stored by issue controller.
     // This mitigates a MongoDB replication lag race condition where the
     // freshly-issued prnNumber may not yet be available via the fetch below.
+    /** @type {PrnIssuedSession | null} */
     const prnIssued = request.yar.get('prnIssued')
     if (prnIssued) {
       request.yar.clear('prnIssued')
@@ -87,5 +92,7 @@ export const issuedController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnDetailParams, PrnIssuedSession } from './helpers/session-types.js'
  */

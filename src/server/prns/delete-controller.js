@@ -12,6 +12,10 @@ import { updatePrnStatus } from './helpers/update-prn-status.js'
  * @satisfies {Partial<ServerRoute>}
  */
 export const deleteGetController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { registration, prn, basePath, prnId } =
       await fetchPrnContext(request)
@@ -38,6 +42,10 @@ export const deleteGetController = {
  * @satisfies {Partial<ServerRoute>}
  */
 export const deletePostController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const {
       organisationId,
@@ -77,5 +85,7 @@ export const deletePostController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnDetailParams } from './helpers/session-types.js'
  */
