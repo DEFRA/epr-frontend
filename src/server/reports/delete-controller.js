@@ -10,6 +10,9 @@ const payloadSchema = Joi.object({
   crumb: Joi.string()
 })
 
+/**
+ * @param {HapiRequest} request
+ */
 function resolveBackUrl(request) {
   const { organisationId, registrationId } = request.params
   const fallback = request.localiseUrl(
@@ -48,6 +51,10 @@ export const deleteGetController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -86,6 +93,10 @@ export const deletePostController = {
       payload: payloadSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
@@ -109,5 +120,7 @@ export const deletePostController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

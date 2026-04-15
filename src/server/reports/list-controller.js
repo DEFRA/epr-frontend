@@ -19,7 +19,7 @@ import {
  * Each row is an array of cell objects ({ text } or { html }).
  * @param {object} options
  * @param {import('./helpers/fetch-reporting-periods.js').ReportingPeriod[]} options.reportingPeriods
- * @param {string} options.cadence
+ * @param {CadenceValue} options.cadence
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {boolean} options.isAccreditedExporter
@@ -80,6 +80,12 @@ function buildTableRows({
  * @satisfies {Partial<ServerRoute>}
  */
 export const listController = {
+  /**
+   * @param {HapiRequest & {
+   *   params: { organisationId: string, registrationId: string }
+   * }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
     const session = request.auth.credentials
@@ -146,5 +152,7 @@ export const listController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { CadenceValue } from './constants.js'
  */

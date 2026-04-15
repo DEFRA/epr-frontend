@@ -143,6 +143,7 @@ function buildViewData(
         }
       : null,
     accreditation: accreditation?.accreditationNumber,
+    registrationNumber: registration.registrationNumber,
     site: reportDetail.details.site,
     wasteReceived: {
       totalTonnage: recyclingActivity.totalTonnageReceived,
