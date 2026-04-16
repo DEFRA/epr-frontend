@@ -245,6 +245,7 @@ function buildViewData({
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
+  const isRegisteredOnlyExporter = isExporter && !accreditation
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
@@ -263,6 +264,7 @@ function buildViewData({
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
     isExporter,
+    isRegisteredOnlyExporter,
     showApprovalColumn: isAccreditedExporter,
     backUrl: localiseUrl(reportsUrl),
 
