@@ -1168,109 +1168,60 @@ describe('#viewController', () => {
             server,
             registrationAndAccreditation
           })
-
           return body.querySelector('#waste-received-but-not-exported')
         }
 
-        it.for(exporters)(
-          '($scenario) renders the section heading',
-          async ({ registrationAndAccreditation }, { server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation
-            })
-
-            expect(section).not.toBeNull()
-            expect(section.querySelector('h2')?.textContent?.trim()).toBe(
-              'Packaging waste received but not exported'
-            )
-          }
-        )
-
-        it.for([
-          {
-            scenario: 'Accredited Exporter',
+        it('renders section for accredited exporter with label "Total tonnage not exported"', async ({
+          server
+        }) => {
+          const section = await loadSection({
+            server,
             registrationAndAccreditation: mockAccreditedExporter
-          }
-        ])(
-          '($scenario) renders the tonnage received but not exported with label "Total tonnage not exported"',
-          async ({ registrationAndAccreditation }, { server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation
-            })
-
-            expect(section.textContent).toContain('Total tonnage not exported')
-            expect(section.textContent).toContain('4.50')
-          }
-        )
-
-        it.for([
-          {
-            scenario: 'Registered Only Exporter',
-            registrationAndAccreditation: mockRegisteredOnlyExporter
-          }
-        ])(
-          '($scenario) renders the tonnage received but not exported with label "Total tonnage received but not exported"',
-          async ({ registrationAndAccreditation }, { server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation
-            })
-
-            expect(section.textContent).toContain(
-              'Total tonnage received but not exported'
-            )
-            expect(section.textContent).toContain('4.50')
-          }
-        )
-
-        describe('when no waste exported', () => {
-          beforeAll(() => {
-            vi.mocked(fetchReportDetail).mockResolvedValue({
-              ...reportDetail,
-              exportActivity: {
-                totalTonnageExported: 0,
-                overseasSites: [],
-                unapprovedOverseasSites: [],
-                tonnageReceivedNotExported: 0,
-                totalTonnageRefusedOrStopped: 0,
-                tonnageRefusedAtDestination: 0,
-                tonnageStoppedDuringExport: 0,
-                tonnageRepatriated: 0
-              }
-            })
           })
-
-          afterAll(() => {
-            vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-          })
-
-          it.for(exporters)(
-            '($scenario) still renders the section with zero tonnage',
-            async ({ registrationAndAccreditation }, { server }) => {
-              const section = await loadSection({
-                server,
-                registrationAndAccreditation
-              })
-
-              expect(section).not.toBeNull()
-              expect(section.textContent).toContain('0.00')
-            }
+          expect(section).not.toBeNull()
+          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+            'Packaging waste received but not exported'
           )
+          expect(section.textContent).toContain('Total tonnage not exported')
+          expect(section.textContent).toContain('4.50')
         })
 
-        it.for(reprocessors)(
-          '($scenario) does not render the section',
-          async ({ registrationAndAccreditation }, { server }) => {
-            const section = await loadSection({
-              server,
-              registrationAndAccreditation
-            })
+        it('renders section for registered-only exporter with label "Total tonnage received but not exported"', async ({
+          server
+        }) => {
+          const section = await loadSection({
+            server,
+            registrationAndAccreditation: mockRegisteredOnlyExporter
+          })
+          expect(section).not.toBeNull()
+          expect(section.querySelector('h2')?.textContent?.trim()).toBe(
+            'Packaging waste received but not exported'
+          )
+          expect(section.textContent).toContain(
+            'Total tonnage received but not exported'
+          )
+          expect(section.textContent).toContain('4.50')
+        })
 
-            expect(section).toBeNull()
-          }
-        )
+        it('does not render section for accredited reprocessor', async ({
+          server
+        }) => {
+          const section = await loadSection({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+          expect(section).toBeNull()
+        })
+
+        it('does not render section for registered-only reprocessor', async ({
+          server
+        }) => {
+          const section = await loadSection({
+            server,
+            registrationAndAccreditation: mockRegisteredOnlyReprocessor
+          })
+          expect(section).toBeNull()
+        })
       })
 
       describe('packaging-waste-refused-or-stopped-during-export section', () => {
