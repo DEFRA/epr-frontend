@@ -187,7 +187,9 @@ function createTonnagePostHandler(
   return async (request, h) => {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
-    const fieldValue = /** @type {number} */ (request.payload[fieldName])
+    const fieldValue = /** @type {number | undefined} */ (
+      request.payload[fieldName]
+    )
     const session = request.auth.credentials
 
     if (fieldValue === undefined) {
