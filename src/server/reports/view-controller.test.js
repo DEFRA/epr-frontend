@@ -1193,7 +1193,7 @@ describe('#viewController', () => {
             registrationAndAccreditation: mockAccreditedExporter
           }
         ])(
-          '($scenario) renders label as "Total tonnage not exported"',
+          '($scenario) renders the tonnage received but not exported with label "Total tonnage not exported"',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
@@ -1211,7 +1211,7 @@ describe('#viewController', () => {
             registrationAndAccreditation: mockRegisteredOnlyExporter
           }
         ])(
-          '($scenario) renders label as "Total tonnage received but not exported"',
+          '($scenario) renders the tonnage received but not exported with label "Total tonnage received but not exported"',
           async ({ registrationAndAccreditation }, { server }) => {
             const section = await loadSection({
               server,
