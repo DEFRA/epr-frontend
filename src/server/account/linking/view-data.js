@@ -1,14 +1,17 @@
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { UserOrganisations } from '#server/auth/types/organisations.js'
  */
 
 /**
+ * @typedef {{ text: string }} FieldError
+ */
+
+/**
  * Build view data for the account linking page
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {UserOrganisations} organisations
- * @param {object} [options]
- * @param {object} [options.errors]
+ * @param {{ errors?: Record<string, FieldError> }} [options]
  * @returns {object}
  */
 export function buildLinkingViewData(request, organisations, options = {}) {

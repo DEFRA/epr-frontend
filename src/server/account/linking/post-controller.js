@@ -5,6 +5,11 @@ import { provideUserOrganisations } from './prerequisites/provide-user-organisat
 import { buildLinkingViewData } from './view-data.js'
 
 /**
+ * Payload for POST /account/linking, validated by the Joi schema below.
+ * @typedef {{ organisationId: string }} LinkingPayload
+ */
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
@@ -14,6 +19,10 @@ export const controller = {
       payload: Joi.object({
         organisationId: Joi.string().required()
       }),
+      /**
+       * @param {HapiRequest} request
+       * @param {ResponseToolkit} h
+       */
       failAction: async (request, h) => {
         const session = request.auth.credentials
 
@@ -31,6 +40,10 @@ export const controller = {
       }
     }
   },
+  /**
+   * @param {HapiRequest & { payload: LinkingPayload }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId } = request.payload
 
@@ -50,5 +63,6 @@ export const controller = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

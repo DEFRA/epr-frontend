@@ -7,9 +7,17 @@ import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
 
 /**
+ * @typedef {{ organisationId: string, registrationId: string }} RegistrationParams
+ */
+
+/**
  * @satisfies {Partial<ServerRoute>}
  */
 export const controller = {
+  /**
+   * @param {HapiRequest & { params: RegistrationParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
 
@@ -46,8 +54,12 @@ export const controller = {
 /** @typedef {{ href: string; text: string }} Link */
 
 /**
+ * Reference text may be absent for a `RegistrationOther` (created / rejected
+ * / archived) whose `registrationNumber` is optional in the domain model.
+ * The template renders it verbatim, so `undefined` renders as empty — which
+ * is fine. Callers pass the optional value through untouched.
  * @typedef {{
- *   reference: string;
+ *   reference: string | undefined;
  *   status: string;
  *   class: string;
  * }} TaggedReference
@@ -79,7 +91,7 @@ export const controller = {
  */
 
 /**
- * @param {{ reference: string; status: string }} params
+ * @param {{ reference: string | undefined; status: string }} params
  * @returns {TaggedReference}
  */
 const buildTaggedReference = ({ reference, status }) => ({
@@ -106,10 +118,10 @@ const buildMaybeTaggedReference = ({ reference, status }) => {
 /**
  * Build view model for accreditation dashboard
  * @param {{
- *   request: Request;
+ *   request: HapiRequest;
  *   organisationId: string;
  *   registration: Registration;
- *   accreditation?: Accreditation;
+ *   accreditation: Accreditation | undefined;
  *   wasteBalance: WasteBalance | null;
  * }} params
  * @returns {RegistrationViewModel}
@@ -171,7 +183,7 @@ function buildViewModel({
 
 /**
  * Get reports view data for the dashboard tile
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {string} organisationId
  * @param {string} registrationId
  */
@@ -191,7 +203,7 @@ function getReportsViewData(request, organisationId, registrationId) {
 
 /**
  * Get PRN/PERN view data based on registration type
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {{noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs'}} noteTypes
  * @param {string} organisationId
  * @param {string} registrationId
@@ -238,8 +250,9 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
 }
 
 /**
- * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */
