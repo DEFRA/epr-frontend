@@ -1,10 +1,13 @@
 import assert from 'node:assert'
 
 /**
- * Generic result wrapper for operations that may or may not succeed
+ * Generic result wrapper for operations that may or may not succeed.
+ * Both variants carry `value` and `error` so `const { value } = result`
+ * destructuring type-checks; consumers should gate on `ok` before using
+ * `value`.
  * @template T - The success value type (must be non-nullable)
- * @template E - The error type (optional)
- * @typedef {{ ok: true, value: NonNullable<T> } | { ok: false, error?: E }} Result
+ * @template [E=unknown] - The error type (defaults to `unknown` when omitted)
+ * @typedef {{ ok: true, value: NonNullable<T>, error?: undefined } | { ok: false, value?: undefined, error?: E }} Result
  */
 
 /**
@@ -21,16 +24,16 @@ const ok = (value) => {
 
 /**
  * Error/not found result
- * @template T, E
+ * @template T
+ * @template [E=unknown]
  * @param {E} [error] - Optional error information
  * @returns {Result<T, E>}
  */
 const err = (error) => {
-  const result = { ok: false }
-  if (error) {
-    result.error = error
+  if (!error) {
+    return { ok: false }
   }
-  return result
+  return { ok: false, error }
 }
 
 export { err, ok }

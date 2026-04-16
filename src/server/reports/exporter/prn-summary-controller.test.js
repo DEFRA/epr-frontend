@@ -67,7 +67,7 @@ const reportDetail = {
   details: { material: 'plastic' },
   id: 'report-001',
   version: 1,
-  status: 'in_progress',
+  status: { currentStatus: 'in_progress' },
   supportingInformation: null,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -269,7 +269,7 @@ describe('#prnSummaryController', () => {
       }) => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...reportDetail,
-          status: 'ready_to_submit'
+          status: { currentStatus: 'ready_to_submit' }
         })
 
         const { statusCode } = await server.inject({

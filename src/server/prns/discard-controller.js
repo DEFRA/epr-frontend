@@ -8,12 +8,17 @@ import { updatePrnStatus } from './helpers/update-prn-status.js'
  * @satisfies {Partial<ServerRoute>}
  */
 export const discardGetController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const { t: localise } = request
     const session = request.auth.credentials
 
+    /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
@@ -48,6 +53,10 @@ export const discardGetController = {
  * @satisfies {Partial<ServerRoute>}
  */
 export const discardPostController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
@@ -55,6 +64,7 @@ export const discardPostController = {
 
     const createUrl = `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/create`
 
+    /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
@@ -87,5 +97,7 @@ export const discardPostController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

@@ -17,7 +17,7 @@ export const isReprocessorRegistration = (registration) =>
 /**
  * Get display names for PRN/PERN based on waste processing type
  * @param {{wasteProcessingType: string}} registration
- * @returns {{isExporter: boolean, noteType: 'PRN' | 'PERN', noteTypePlural: 'PRNs' | 'PERNs', wasteAction: 'export' | 'reprocessing', wasteActionGerund: 'exporting' | 'reprocessing'}}
+ * @returns {{isExporter: boolean, noteType: 'PRN' | 'PERN', noteTypeFull: 'Packaging Waste Export Recycling Note' | 'Packaging Waste Recycling Note', noteTypePlural: 'PRNs' | 'PERNs', wasteAction: 'export' | 'reprocessing', wasteActionGerund: 'exporting' | 'reprocessing'}}
  */
 export const getNoteTypeDisplayNames = (registration) => {
   const isExporter = isExporterRegistration(registration)

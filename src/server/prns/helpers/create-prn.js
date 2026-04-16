@@ -4,7 +4,8 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @typedef {object} IssuedToOrganisation
  * @property {string} id - The recipient organisation ID
  * @property {string} name - The recipient organisation name
- * @property {string} [tradingName] - The recipient organisation trading name
+ * @property {string | null} [tradingName] - The recipient organisation trading name
+ * @property {string} [registrationType] - Producer/compliance scheme classification
  */
 
 /**

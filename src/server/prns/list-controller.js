@@ -31,6 +31,10 @@ const filterPrnsByStatuses = (prns, statuses) =>
  * @satisfies {Partial<ServerRoute>}
  */
 export const listController = {
+  /**
+   * @param {HapiRequest & { params: PrnListParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId } = request.params
     const session = request.auth.credentials
@@ -83,5 +87,7 @@ export const listController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnListParams } from './helpers/session-types.js'
  */

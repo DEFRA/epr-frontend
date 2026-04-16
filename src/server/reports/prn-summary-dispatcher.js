@@ -11,7 +11,7 @@ import {
 } from './reprocessor/prn-summary-controller.js'
 
 /**
- * @param {Request} request
+ * @param {HapiRequest & { params: PeriodParams }} request
  * @returns {Promise<boolean>}
  */
 async function isReprocessor(request) {
@@ -36,6 +36,10 @@ export const prnSummaryDispatchGetController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const reprocessor = await isReprocessor(request)
     const controller = reprocessor
@@ -58,6 +62,10 @@ export const prnSummaryDispatchPostController = {
       params: periodParamsSchema
     }
   },
+  /**
+   * @param {HapiRequest & { params: PeriodParams, payload: DataPagePayload }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const reprocessor = await isReprocessor(request)
     const controller = reprocessor
@@ -88,5 +96,8 @@ export const prnSummaryDispatchPostController = {
 }
 
 /**
- * @import { Request, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PeriodParams } from './helpers/period-params-schema.js'
+ * @import { DataPagePayload } from './helpers/create-data-page-controllers.js'
  */

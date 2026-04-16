@@ -20,6 +20,10 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
  * @satisfies {Partial<ServerRoute>}
  */
 export const viewController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
@@ -27,6 +31,7 @@ export const viewController = {
     const session = request.auth.credentials
 
     // Check for draft PRN data in session (creation flow)
+    /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id === prnId) {
@@ -57,12 +62,17 @@ export const viewController = {
  * @satisfies {Partial<ServerRoute>}
  */
 export const viewPostController = {
+  /**
+   * @param {HapiRequest & { params: PrnDetailParams }} request
+   * @param {ResponseToolkit} h
+   */
   async handler(request, h) {
     const { organisationId, registrationId, accreditationId, prnId } =
       request.params
     const session = request.auth.credentials
 
     // Retrieve draft PRN data from session
+    /** @type {PrnDraftSession | null} */
     const prnDraft = request.yar.get('prnDraft')
 
     if (prnDraft?.id !== prnId) {
@@ -146,15 +156,16 @@ export const viewPostController = {
 
 /**
  * Handle viewing a draft PRN (creation flow)
- * @param {object} request
- * @param {object} h
- * @param {object} params
- * @param {string} params.organisationId
- * @param {string} params.registrationId
- * @param {string} params.accreditationId
- * @param {object} params.prnDraft
- * @param {(key: string) => string} params.localise
- * @param {object} params.session
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string,
+ *   prnDraft: PrnDraftSession,
+ *   localise: TFunction,
+ *   session: UserSession
+ * }} params
  */
 async function handleDraftView(
   request,
@@ -223,15 +234,16 @@ async function handleDraftView(
 
 /**
  * Handle viewing an existing PRN (from backend)
- * @param {object} request
- * @param {object} h
- * @param {object} params
- * @param {string} params.organisationId
- * @param {string} params.registrationId
- * @param {string} params.accreditationId
- * @param {string} params.prnId
- * @param {(key: string) => string} params.localise
- * @param {object} params.session
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string,
+ *   prnId: string,
+ *   localise: TFunction,
+ *   session: UserSession
+ * }} params
  */
 async function handleExistingView(
   request,
@@ -312,19 +324,21 @@ async function handleExistingView(
 
 /**
  * Builds the view data object for an existing PRN
- * @param {object} params
- * @param {object} params.prn - PRN data from backend
- * @param {string} params.noteType - 'PRN' or 'PERN'
- * @param {string} params.wasteAction - 'export' or 'reprocessing'
- * @param {boolean} params.isNotDraft - Whether the PRN is not a draft
- * @param {Array} params.prnDetailRows - PRN detail summary rows
- * @param {Array} params.accreditationRows - Accreditation summary rows
- * @param {string} params.backUrl - Back link URL
- * @param {(key: string, params?: object) => string} params.localise - Translation function
- * @param {object} params.request - Hapi request object
- * @param {string} params.organisationId
- * @param {string} params.registrationId
- * @param {string} params.accreditationId
+ * @param {{
+ *   prn: PackagingRecyclingNote,
+ *   noteType: string,
+ *   noteTypeFull: string,
+ *   wasteAction: string,
+ *   isNotDraft: boolean,
+ *   prnDetailRows: Array<object>,
+ *   accreditationRows: Array<object>,
+ *   backUrl: string,
+ *   localise: TFunction,
+ *   request: HapiRequest,
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string
+ * }} params
  * @returns {object} View data object
  */
 function buildExistingPrnViewData({
@@ -370,10 +384,11 @@ function buildExistingPrnViewData({
 
 /**
  * Builds the PRN/PERN details rows for a draft PRN (creation flow)
- * @param {object} params
- * @param {object} params.prnDraft - Draft PRN data from session
- * @param {(key: string) => string} params.localise - Translation function
- * @param {object} params.organisationData - Organisation data
+ * @param {{
+ *   prnDraft: PrnDraftSession,
+ *   localise: TFunction,
+ *   organisationData: { companyDetails?: { name: string, tradingName?: string | null, registrationType?: string } }
+ * }} params
  * @returns {Array} Summary list rows
  */
 function buildDraftPrnDetailRows({ prnDraft, localise, organisationData }) {
@@ -465,5 +480,10 @@ function buildExistingPrnDetailRows({
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { TFunction } from 'i18next'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
+ * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */
