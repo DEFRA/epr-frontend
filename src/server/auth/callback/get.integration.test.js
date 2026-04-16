@@ -68,6 +68,26 @@ const performSignInFlow = async (server, mswServer, { idToken, publicKey }) => {
   })
 }
 
+const baseDefraIdPayload = {
+  correlationId: 'corr-id',
+  sessionId: 'sess-id',
+  contactId: 'contact-id',
+  serviceId: 'service-id',
+  firstName: 'Test',
+  lastName: 'User',
+  uniqueReference: 'ref-id',
+  loa: 2,
+  aal: 'aal2',
+  enrolmentCount: 1,
+  enrolmentRequestCount: 0,
+  currentRelationshipId: 'rel-id',
+  relationships: ['rel-1'],
+  iss: 'http://defra-id.auth',
+  aud: 'test-client-id',
+  iat: 1735686000,
+  nbf: 1735686000
+}
+
 async function generateIdToken(payload) {
   const { privateKey, publicKey } = generateKeyPairSync('rsa', {
     modulusLength: 4096,
@@ -81,7 +101,7 @@ async function generateIdToken(payload) {
     }
   })
 
-  const jwt = await new jose.SignJWT(payload)
+  const jwt = await new jose.SignJWT({ ...baseDefraIdPayload, ...payload })
     .setProtectedHeader({ alg: 'RS256', kid: 'test-key-id' })
     .setExpirationTime('2h')
     .sign(createPrivateKey(privateKey))
