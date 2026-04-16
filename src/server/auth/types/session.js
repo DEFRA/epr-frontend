@@ -7,9 +7,12 @@
  *
  * Only includes fields actually used in production (for audit logging).
  * Other JWT claims are available but not stored as they're unused.
+ *
+ * `email` is optional because the Defra ID id_token doesn't guarantee its
+ * presence (the `email` scope isn't requested — see DefraIdJwtPayload).
  * @typedef {{
  *   id: string
- *   email: string
+ *   email?: string
  * }} UserProfile
  */
 

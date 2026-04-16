@@ -6,7 +6,7 @@ import Joi from 'joi'
 
 export const defraIdJwtPayloadSchema = Joi.object({
   sub: Joi.string().required(),
-  email: Joi.string().required(),
+  email: Joi.string().optional(),
   exp: Joi.number().required()
 }).unknown(true)
 

@@ -54,9 +54,14 @@
  * declared here so the type contract reflects what the codebase actually uses.
  * Add a field here only when adding code that reads it, and validate it at the
  * `verify-token` boundary at the same time.
+ *
+ * `email` is optional because the OIDC scope we request (`openid`,
+ * `offline_access` — see src/server/auth/plugins/defra-id.js) does not include
+ * `email`. Defra ID's B2C policy currently maps it into the id_token by
+ * default, but that's a policy decision; downstream consumers handle absence.
  * @typedef {{
  *   sub: string
- *   email: string
+ *   email?: string
  *   exp: number
  * }} DefraIdJwtPayload
  */

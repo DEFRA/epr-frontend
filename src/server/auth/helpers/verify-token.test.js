@@ -56,7 +56,21 @@ describe(getVerifyToken, () => {
     expect(result).toStrictEqual(payload)
   })
 
-  it('should throw when payload is missing a consumed claim', async () => {
+  it('should accept a payload with no email claim', async () => {
+    mockJose.createRemoteJWKSet.mockReturnValue({})
+    const payload = { sub: 'user-123', exp: 1735689600 }
+    mockJose.jwtVerify.mockResolvedValue({ payload })
+
+    const verifyToken = await getVerifyToken({
+      jwks_uri: 'https://test.auth/.well-known/jwks.json'
+    })
+
+    const result = await verifyToken('mock.jwt.token')
+
+    expect(result).toStrictEqual(payload)
+  })
+
+  it('should throw when payload is missing a required claim', async () => {
     mockJose.createRemoteJWKSet.mockReturnValue({})
     mockJose.jwtVerify.mockResolvedValue({
       payload: { sub: 'user-123', email: 'test@example.com' }
