@@ -279,6 +279,71 @@ describe('#reprocessorPrnSummaryController', () => {
         )
       })
 
+      it('should redirect to reports list when save is clicked with empty revenue', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, prnRevenue: '', action: 'save' }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      })
+
+      it('should not call updateReport when save is clicked with empty revenue', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, prnRevenue: '', action: 'save' }
+        })
+
+        expect(updateReport).not.toHaveBeenCalled()
+      })
+
+      it('should show error when save is clicked with non-numeric revenue', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, prnRevenue: 'abc', action: 'save' }
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(
+            alert,
+            /Enter the total revenue in digits, using a decimal point if needed/
+          )
+        ).toBeDefined()
+      })
+
       it('should show error when revenue has more than 2 decimal places', async ({
         server
       }) => {
