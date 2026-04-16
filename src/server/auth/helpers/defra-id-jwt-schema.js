@@ -71,7 +71,10 @@ export const validateDefraIdJwtPayload = (payload) => {
     abortEarly: false
   })
   if (error) {
-    throw error
+    const details = error.details
+      .map((d) => `${d.path.join('.')}: ${d.message}`)
+      .join('; ')
+    throw new Error(`Invalid Defra ID JWT payload: ${details}`)
   }
   return value
 }

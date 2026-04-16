@@ -121,7 +121,7 @@ describe(getVerifyToken, () => {
     })
 
     await expect(verifyToken('mock.jwt.token')).rejects.toThrow(
-      /does not match any of the allowed types/
+      /Invalid Defra ID JWT payload/
     )
   })
 
