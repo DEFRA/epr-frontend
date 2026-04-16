@@ -77,7 +77,7 @@ export const prnSummaryDispatchPostController = {
       'prn-summary dispatch POST'
     )
 
-    const { error } = controller.options.validate.payload.validate(
+    const { error, value } = controller.options.validate.payload.validate(
       request.payload,
       { abortEarly: false }
     )
@@ -90,6 +90,7 @@ export const prnSummaryDispatchPostController = {
       return controller.options.validate.failAction(request, h, error)
     }
 
+    request.payload = value
     return controller.handler(request, h)
   }
 }
