@@ -47,68 +47,18 @@
  */
 
 /**
- * Defra ID JWT payload structure from Azure B2C (production/test environments)
+ * Defra ID JWT payload, narrowed to the claims we consume.
+ *
+ * Real tokens carry many more claims (Azure B2C policy fields,
+ * `iss`/`aud`/`nbf`/`iat`, etc.); they're allowed through validation but not
+ * declared here so the type contract reflects what the codebase actually uses.
+ * Add a field here only when adding code that reads it, and validate it at the
+ * `verify-token` boundary at the same time.
  * @typedef {{
  *   sub: string
  *   email: string
- *   correlationId: string
- *   sessionId: string
- *   contactId: string
- *   serviceId: string
- *   firstName: string
- *   lastName: string
- *   uniqueReference: string
- *   loa: number
- *   aal: string
- *   enrolmentCount: number
- *   enrolmentRequestCount: number
- *   currentRelationshipId: string
- *   relationships: string[]
- *   roles?: string[]
  *   exp: number
- *   iat: number
- *   nbf: number
- *   iss: string
- *   aud: string
- *   ver?: string
- *   acr?: string
- *   auth_time?: number
- *   amr?: string
- * }} AzureB2CJwtPayload
- */
-
-/**
- * Defra ID JWT payload structure from stub (local development)
- * @typedef {{
- *   id: string
- *   sub: string
- *   aud: string
- *   iss: string
- *   nbf: number
- *   exp: number
- *   iat: number
- *   email: string
- *   correlationId: string
- *   sessionId: string
- *   contactId: string
- *   serviceId: string
- *   firstName: string
- *   lastName: string
- *   uniqueReference: string
- *   loa: string
- *   aal: string
- *   enrolmentCount: string
- *   enrolmentRequestCount: string
- *   currentRelationshipId: string
- *   relationships: string[]
- *   roles: string[]
- * }} StubJwtPayload
- */
-
-/**
- * Union type for all Defra ID JWT payload formats
- * Supports both Azure B2C (production) and stub (local dev) token structures
- * @typedef {AzureB2CJwtPayload | StubJwtPayload} DefraIdJwtPayload
+ * }} DefraIdJwtPayload
  */
 
 /**
