@@ -111,6 +111,7 @@ function buildViewData({
   const isAccredited = !!accreditation
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
+  const isRegisteredOnlyExporter = isExporter && !isAccredited
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
 
@@ -145,23 +146,11 @@ function buildViewData({
     isAccredited,
     isExporter,
     isReprocessor,
+    isRegisteredOnlyExporter,
 
-    prn: {
-      issuedTonnage: reportDetail.prn?.issuedTonnage,
-      freeTonnage: reportDetail.prn?.freeTonnage,
-      totalRevenue: reportDetail.prn?.totalRevenue,
-      averagePricePerTonne: reportDetail.prn?.averagePricePerTonne
-    },
+    prn: buildPrn(reportDetail.prn),
 
-    wasteSentOn: {
-      totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-      toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-      toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-      toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-      destinationDetailRows: buildDestinationDetailRows(
-        wasteSent.finalDestinations
-      )
-    },
+    wasteSentOn: buildWasteSentOn(wasteSent),
 
     supportingInformation:
       reportDetail.supportingInformation ||
@@ -176,6 +165,35 @@ function buildViewData({
   }
 
   return viewData
+}
+
+/**
+ * @param {object} wasteSent
+ * @returns {object}
+ */
+function buildWasteSentOn(wasteSent) {
+  return {
+    totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
+    toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+    toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
+    toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
+    destinationDetailRows: buildDestinationDetailRows(
+      wasteSent.finalDestinations
+    )
+  }
+}
+
+/**
+ * @param {object|undefined} prn
+ * @returns {object}
+ */
+function buildPrn(prn) {
+  return {
+    issuedTonnage: prn?.issuedTonnage,
+    freeTonnage: prn?.freeTonnage,
+    totalRevenue: prn?.totalRevenue,
+    averagePricePerTonne: prn?.averagePricePerTonne
+  }
 }
 
 function buildWasteExported(exportActivity, isExporter, isAccredited) {
