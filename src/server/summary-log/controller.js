@@ -1,7 +1,4 @@
-import {
-  PROCESSING_TYPES,
-  REGISTERED_ONLY_PROCESSING_TYPES
-} from '#domain/summary-logs/meta-fields.js'
+import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
@@ -124,8 +121,8 @@ export const getWasteRecordSectionNumber = (processingType) => {
  * @returns {processingType is RegisteredOnlyProcessingType}
  */
 const isRegisteredOnlyProcessingType = (processingType) =>
-  processingType !== undefined &&
-  REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
+  processingType === PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY ||
+  processingType === PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
@@ -264,7 +261,8 @@ const getStatusData = async (
   /** @type {SummaryLogsSession | null} */
   const storedSession = request.yar.get(sessionNames.summaryLogs)
   const summaryLogsSession = storedSession ?? {}
-  const freshData = summaryLogsSession.freshDataMap?.[summaryLogId]
+  const freshDataMap = summaryLogsSession.freshDataMap
+  const freshData = freshDataMap?.[summaryLogId]
 
   const data =
     freshData ??
@@ -272,10 +270,9 @@ const getStatusData = async (
       idToken
     }))
 
-  if (freshData && summaryLogsSession.freshDataMap) {
+  if (freshDataMap !== undefined && summaryLogId in freshDataMap) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { [summaryLogId]: _, ...remainingMap } =
-      summaryLogsSession.freshDataMap
+    const { [summaryLogId]: _, ...remainingMap } = freshDataMap
     request.yar.set(sessionNames.summaryLogs, {
       ...summaryLogsSession,
       freshDataMap: remainingMap
@@ -302,17 +299,15 @@ const getStatusData = async (
 }
 
 /**
- * Renders the check page for validated summary logs.
- *
- * The registered-only branch requires both a registered-only processing
- * type and a populated loadsByWasteRecordType. Both are guaranteed to be
- * present together once the backend has validated a registered-only
- * submission; the guard below protects against partial data from the
- * validated-state fetch while keeping types honest.
+ * Renders the check page for validated summary logs. A registered-only
+ * processing type is always paired with loadsByWasteRecordType by the
+ * backend; if that invariant breaks we throw rather than silently
+ * falling through to the non-registered view, which would render a
+ * misleading empty page.
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
- * @returns {ReturnType<ResponseToolkit['view']>} Hapi view response
+ * @returns {ResponseObject} Hapi view response
  */
 const renderCheckView = (
   h,
@@ -326,10 +321,12 @@ const renderCheckView = (
     processingType
   }
 ) => {
-  if (
-    isRegisteredOnlyProcessingType(processingType) &&
-    loadsByWasteRecordType !== undefined
-  ) {
+  if (isRegisteredOnlyProcessingType(processingType)) {
+    if (loadsByWasteRecordType === undefined) {
+      throw new Error(
+        `Expected loadsByWasteRecordType for registered-only processing type ${processingType}`
+      )
+    }
     return h.view('summary-log/check-registered-only', {
       pageTitle: localise('summary-log:checkPageTitle'),
       organisationId,
@@ -361,7 +358,7 @@ const renderCheckView = (
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
- * @returns {ReturnType<ResponseToolkit['view']>} Hapi view response
+ * @returns {ResponseObject} Hapi view response
  */
 const renderSubmittingView = (h, localise, { pollUrl }) => {
   return h.view(SUBMITTING_VIEW_NAME, {
@@ -379,7 +376,7 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
- * @returns {ReturnType<ResponseToolkit['view']>} Hapi view response
+ * @returns {ResponseObject} Hapi view response
  */
 const renderSuccessView = (h, localise, { organisationId, wasteBalance }) => {
   return h.view(SUCCESS_VIEW_NAME, {
@@ -394,7 +391,7 @@ const renderSuccessView = (h, localise, { organisationId, wasteBalance }) => {
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
- * @returns {ReturnType<ResponseToolkit['view']>} Hapi view response
+ * @returns {ResponseObject} Hapi view response
  */
 const renderSupersededView = (
   h,
@@ -413,7 +410,7 @@ const renderSupersededView = (
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
- * @returns {ReturnType<ResponseToolkit['view']>} Hapi view response
+ * @returns {ResponseObject} Hapi view response
  */
 const renderValidationFailuresView = (
   h,
@@ -476,7 +473,7 @@ const renderValidationFailuresView = (
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
  * @param {RenderContext} context - View context
- * @returns {ReturnType<ResponseToolkit['view']>} Hapi view response
+ * @returns {ResponseObject} Hapi view response
  */
 const renderProgressView = (h, localise, { status, pollUrl }) => {
   const viewData = getProgressViewData(localise, status)
@@ -495,7 +492,7 @@ const renderProgressView = (h, localise, { status, pollUrl }) => {
  *   h: ResponseToolkit,
  *   localise: (key: string, params?: object) => string,
  *   context: RenderContext
- * ) => ReturnType<ResponseToolkit['view']>>}
+ * ) => ResponseObject>}
  */
 const viewResolvers = {
   [summaryLogStatuses.validated]: renderCheckView,
@@ -514,7 +511,7 @@ const viewResolvers = {
  *   h: ResponseToolkit,
  *   localise: (key: string, params?: object) => string
  * } & RenderContext} options - Rendering options
- * @returns {ReturnType<ResponseToolkit['view']>} Hapi view response
+ * @returns {ResponseObject} Hapi view response
  */
 const renderViewForStatus = (options) => {
   const { h, localise, status } = options
@@ -677,6 +674,6 @@ export const summaryLogUploadProgressController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseObject, ResponseToolkit, ServerRoute } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

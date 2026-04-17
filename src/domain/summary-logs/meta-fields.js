@@ -13,7 +13,6 @@ export const PROCESSING_TYPES = Object.freeze({
 
 /** @typedef {typeof PROCESSING_TYPES[keyof typeof PROCESSING_TYPES]} ProcessingType */
 
-/** @type {Set<ProcessingType>} */
 export const REGISTERED_ONLY_PROCESSING_TYPES = new Set([
   PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY,
   PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
