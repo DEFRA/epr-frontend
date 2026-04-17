@@ -37,6 +37,7 @@ export default [
     rules: {
       '@typescript-eslint/no-floating-promises': ['error'],
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
+      eqeqeq: ['error', 'always'],
       'no-console': 'error',
       'object-shorthand': ['error', 'properties'],
       // Turn off strict type checking rules
