@@ -8,11 +8,11 @@ import authCookie from '@hapi/cookie'
 import { isPast, parseISO, subMinutes, subSeconds } from 'date-fns'
 import { getUserSession } from './get-user-session.js'
 import { refreshIdToken } from './refresh-token.js'
+import { validateRefreshedTokens } from './refreshed-tokens-schema.js'
 
 /**
  * @import { ServerRegisterPluginObject } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { RefreshedTokens } from '../types/tokens.js'
  * @import { UserSession } from '../types/session.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
@@ -63,9 +63,7 @@ const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
         throw new Error(errorBody)
       }
 
-      const refreshedTokens = /** @type {RefreshedTokens} */ (
-        await response.json()
-      )
+      const refreshedTokens = validateRefreshedTokens(await response.json())
       const { ok: sessionStillExists, value: latestSession } =
         await getUserSession(request)
 

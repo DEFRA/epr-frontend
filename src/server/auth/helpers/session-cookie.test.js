@@ -589,5 +589,50 @@ describe('#sessionCookie - integration', () => {
         { type: 'blocking' }
       )
     })
+
+    it('should drop session when OIDC token response fails Joi validation', async ({
+      server,
+      msw
+    }) => {
+      msw.use(
+        http.post('http://defra-id.auth/token', () =>
+          HttpResponse.json({
+            // Malformed response: missing id_token and refresh_token
+            expires_in: 3600,
+            token_type: 'Bearer'
+          })
+        )
+      )
+
+      // Expires in 5 seconds: within the 10-second awaited-refresh window
+      const expiresAt = addSeconds(new Date(), 5).toISOString()
+      const { sessionId, sessionData } = createExpiredRefreshSessionData(
+        'user-invalid-payload',
+        expiresAt
+      )
+
+      await server.app.cache.set(sessionId, sessionData)
+
+      const cookiePassword = config.get('session.cookie.password')
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        cookiePassword,
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
+
+      const removedSession = await server.app.cache.get(sessionId)
+      expect(removedSession).toBeNull()
+    })
   })
 })
