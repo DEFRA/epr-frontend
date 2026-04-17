@@ -1,7 +1,19 @@
 import Joi from 'joi'
 
 /**
- * @import { RefreshedTokens } from '../types/tokens.js'
+ * OIDC token endpoint response, narrowed to the fields the codebase consumes.
+ *
+ * Additional fields the provider returns (eg `access_token`, `expires_in`,
+ * `token_type`) are allowed through by the schema below but not declared here
+ * so the type contract reflects what we read. Session expiry is derived from
+ * the JWT `exp` claim, not from `expires_in`.
+ *
+ * Add a field to the typedef and schema together — they are kept in this file
+ * precisely to make that coupling structural.
+ * @typedef {{
+ *   id_token: string
+ *   refresh_token: string
+ * }} RefreshedTokens
  */
 
 export const refreshedTokensSchema = Joi.object({
