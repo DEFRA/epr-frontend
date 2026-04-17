@@ -2883,4 +2883,24 @@ describe('registered-only check view', () => {
       )
     ).toBeDefined()
   })
+
+  it('status: validated with registered-only processing type but missing loadsByWasteRecordType - should surface an error rather than silently render an empty page', async ({
+    server
+  }) => {
+    fetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY'
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toStrictEqual(
+      expect.stringContaining('Something went wrong')
+    )
+  })
 })

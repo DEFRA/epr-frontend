@@ -36,7 +36,7 @@ function statusCodeMessage(statusCode, localise) {
 }
 
 /**
- * @param { Request } request
+ * @param { HapiRequest } request
  * @param { ResponseToolkit } h
  */
 export async function catchAll(request, h) {
@@ -70,5 +70,6 @@ export async function catchAll(request, h) {
 }
 
 /**
- * @import { Request, ResponseToolkit } from '@hapi/hapi'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

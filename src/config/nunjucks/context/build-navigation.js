@@ -1,24 +1,12 @@
 import { config } from '#config/config.js'
 
 /**
- * @import { UserSession } from '#server/auth/types/session.js'
- */
-
-/**
- * I18nRequest - Request object with i18n helpers
- * @typedef {Partial<Request> & {
- *  localiseUrl: (url: string) => string;
- *  t: (key: string) => string
- * }} I18nRequest
- */
-
-/**
  * Navigation item
  * @typedef {{active?: boolean, href: string, text: string}} NavigationItem
  */
 
 /**
- * @param {I18nRequest} request
+ * @param {HapiRequest} request
  * @param {UserSession} session
  * @returns {NavigationItem[]}
  */
@@ -35,7 +23,7 @@ const home = ({ localiseUrl, t: localise }, session) => {
 }
 
 /**
- * @param {I18nRequest} request
+ * @param {HapiRequest} request
  * @returns {NavigationItem[]}
  */
 const manageAccount = ({ t: localise }) => {
@@ -48,7 +36,7 @@ const manageAccount = ({ t: localise }) => {
 }
 
 /**
- * @param {I18nRequest} request
+ * @param {HapiRequest} request
  * @returns {NavigationItem[]}
  */
 const signOut = ({ localiseUrl, t: localise }) => {
@@ -61,7 +49,7 @@ const signOut = ({ localiseUrl, t: localise }) => {
 }
 
 /**
- * @param {I18nRequest | null} request
+ * @param {HapiRequest | null} request
  */
 export function buildNavigation(request) {
   if (!request) {
@@ -82,5 +70,6 @@ export function buildNavigation(request) {
 }
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
  */
