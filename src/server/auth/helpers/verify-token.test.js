@@ -30,16 +30,17 @@ describe(getVerifyToken, () => {
     expect(verifyToken).toBeInstanceOf(Function)
   })
 
-  it('should verify token and return payload', async () => {
+  it('should return payload with consumed claims and pass through extras', async () => {
     const mockJWKS = {}
-    const mockPayload = {
+    const payload = {
       sub: 'user-123',
       email: 'test@example.com',
-      exp: 1234567890
+      exp: 1735689600,
+      correlationId: 'corr-123',
+      relationships: ['rel-1']
     }
-
     mockJose.createRemoteJWKSet.mockReturnValue(mockJWKS)
-    mockJose.jwtVerify.mockResolvedValue({ payload: mockPayload })
+    mockJose.jwtVerify.mockResolvedValue({ payload })
 
     const verifyToken = await getVerifyToken({
       jwks_uri: 'https://test.auth/.well-known/jwks.json'
@@ -52,7 +53,36 @@ describe(getVerifyToken, () => {
       mockJWKS,
       { algorithms: ['RS256'] }
     )
-    expect(result).toStrictEqual(mockPayload)
+    expect(result).toStrictEqual(payload)
+  })
+
+  it('should accept a payload with no email claim', async () => {
+    mockJose.createRemoteJWKSet.mockReturnValue({})
+    const payload = { sub: 'user-123', exp: 1735689600 }
+    mockJose.jwtVerify.mockResolvedValue({ payload })
+
+    const verifyToken = await getVerifyToken({
+      jwks_uri: 'https://test.auth/.well-known/jwks.json'
+    })
+
+    const result = await verifyToken('mock.jwt.token')
+
+    expect(result).toStrictEqual(payload)
+  })
+
+  it('should throw when payload is missing a required claim', async () => {
+    mockJose.createRemoteJWKSet.mockReturnValue({})
+    mockJose.jwtVerify.mockResolvedValue({
+      payload: { sub: 'user-123', email: 'test@example.com' }
+    })
+
+    const verifyToken = await getVerifyToken({
+      jwks_uri: 'https://test.auth/.well-known/jwks.json'
+    })
+
+    await expect(verifyToken('mock.jwt.token')).rejects.toThrow(
+      /Invalid Defra ID JWT payload.*exp/
+    )
   })
 
   it('should throw error when verification fails', async () => {
@@ -80,31 +110,5 @@ describe(getVerifyToken, () => {
         jwks_uri: 'https://test.auth/.well-known/jwks.json'
       })
     ).rejects.toThrow('Invalid URL')
-  })
-
-  it('should handle kid matching automatically via jose', async () => {
-    // This test verifies that jose handles kid matching
-    const mockJWKS = {}
-    const mockPayload = {
-      sub: 'user-456',
-      email: 'test2@example.com'
-    }
-
-    mockJose.createRemoteJWKSet.mockReturnValue(mockJWKS)
-    mockJose.jwtVerify.mockResolvedValue({ payload: mockPayload })
-
-    const verifyToken = await getVerifyToken({
-      jwks_uri: 'https://test.auth/.well-known/jwks.json'
-    })
-
-    const result = await verifyToken('token.with.kid2')
-
-    // jose.jwtVerify handles kid matching internally
-    expect(mockJose.jwtVerify).toHaveBeenCalledWith(
-      'token.with.kid2',
-      mockJWKS,
-      { algorithms: ['RS256'] }
-    )
-    expect(result).toStrictEqual(mockPayload)
   })
 })
