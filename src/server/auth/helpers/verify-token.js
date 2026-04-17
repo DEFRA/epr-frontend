@@ -1,4 +1,5 @@
 import * as jose from 'jose'
+import { validateDefraIdJwtPayload } from './defra-id-jwt-schema.js'
 
 /**
  * @import { VerifyToken } from '../types/verify-token.js'
@@ -21,6 +22,6 @@ export const getVerifyToken = async ({ jwks_uri: url }) => {
       algorithms: ['RS256']
     })
 
-    return payload
+    return validateDefraIdJwtPayload(payload)
   }
 }

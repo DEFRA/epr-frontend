@@ -47,68 +47,31 @@
  */
 
 /**
- * Defra ID JWT payload structure from Azure B2C (production/test environments)
+ * Defra ID JWT payload, narrowed to the claims we consume.
+ *
+ * Real tokens carry many more claims (Azure B2C policy fields,
+ * `iss`/`aud`/`nbf`/`iat`, etc.); they're allowed through validation but not
+ * declared here so the type contract reflects what the codebase actually uses.
+ * Add a field here only when adding code that reads it, and validate it at the
+ * `verify-token` boundary at the same time.
+ *
+ * For the full production payload shape, the authoritative reference is the
+ * Defra ID team's Confluence space:
+ * https://eaflood.atlassian.net/wiki/spaces/MWR/pages/5952995350/Defra+ID
+ *
+ * For a local, inspectable mirror of that shape, see `generateDefraIdToken`
+ * in cdp-defra-id-stub:
+ * https://github.com/DEFRA/cdp-defra-id-stub/blob/main/src/server/oidc/helpers/generate-defraid-token.js
+ *
+ * `email` is optional because the OIDC scope we request (`openid`,
+ * `offline_access` — see src/server/auth/plugins/defra-id.js) does not include
+ * `email`. Defra ID's B2C policy currently maps it into the id_token by
+ * default, but that's a policy decision; downstream consumers handle absence.
  * @typedef {{
  *   sub: string
- *   email: string
- *   correlationId: string
- *   sessionId: string
- *   contactId: string
- *   serviceId: string
- *   firstName: string
- *   lastName: string
- *   uniqueReference: string
- *   loa: number
- *   aal: string
- *   enrolmentCount: number
- *   enrolmentRequestCount: number
- *   currentRelationshipId: string
- *   relationships: string[]
- *   roles?: string[]
+ *   email?: string
  *   exp: number
- *   iat: number
- *   nbf: number
- *   iss: string
- *   aud: string
- *   ver?: string
- *   acr?: string
- *   auth_time?: number
- *   amr?: string
- * }} AzureB2CJwtPayload
- */
-
-/**
- * Defra ID JWT payload structure from stub (local development)
- * @typedef {{
- *   id: string
- *   sub: string
- *   aud: string
- *   iss: string
- *   nbf: number
- *   exp: number
- *   iat: number
- *   email: string
- *   correlationId: string
- *   sessionId: string
- *   contactId: string
- *   serviceId: string
- *   firstName: string
- *   lastName: string
- *   uniqueReference: string
- *   loa: string
- *   aal: string
- *   enrolmentCount: string
- *   enrolmentRequestCount: string
- *   currentRelationshipId: string
- *   relationships: string[]
- *   roles: string[]
- * }} StubJwtPayload
- */
-
-/**
- * Union type for all Defra ID JWT payload formats
- * Supports both Azure B2C (production) and stub (local dev) token structures
- * @typedef {AzureB2CJwtPayload | StubJwtPayload} DefraIdJwtPayload
+ * }} DefraIdJwtPayload
  */
 
 /**
