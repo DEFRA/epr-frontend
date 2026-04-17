@@ -143,3 +143,4 @@ runs:
       with:
         args: >
           -Dsonar.qualitygate.wait=true
+          ${{ github.event_name == 'push' && format('-Dsonar.branch.name={0}', github.ref_name) || '' }}
