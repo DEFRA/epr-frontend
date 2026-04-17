@@ -55,6 +55,10 @@
  * Add a field here only when adding code that reads it, and validate it at the
  * `verify-token` boundary at the same time.
  *
+ * For the full shape emitted by the local stub (the closest thing to an
+ * executable spec), see `generateDefraIdToken` in cdp-defra-id-stub:
+ * https://github.com/DEFRA/cdp-defra-id-stub/blob/main/src/server/oidc/helpers/generate-defraid-token.js
+ *
  * `email` is optional because the OIDC scope we request (`openid`,
  * `offline_access` — see src/server/auth/plugins/defra-id.js) does not include
  * `email`. Defra ID's B2C policy currently maps it into the id_token by
