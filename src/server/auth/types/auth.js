@@ -55,8 +55,12 @@
  * Add a field here only when adding code that reads it, and validate it at the
  * `verify-token` boundary at the same time.
  *
- * For the full shape emitted by the local stub (the closest thing to an
- * executable spec), see `generateDefraIdToken` in cdp-defra-id-stub:
+ * For the full production payload shape, the authoritative reference is the
+ * Defra ID team's Confluence space:
+ * https://eaflood.atlassian.net/wiki/spaces/MWR/pages/5952995350/Defra+ID
+ *
+ * For a local, inspectable mirror of that shape, see `generateDefraIdToken`
+ * in cdp-defra-id-stub:
  * https://github.com/DEFRA/cdp-defra-id-stub/blob/main/src/server/oidc/helpers/generate-defraid-token.js
  *
  * `email` is optional because the OIDC scope we request (`openid`,
