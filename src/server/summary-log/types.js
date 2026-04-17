@@ -95,4 +95,23 @@
  * }} SummaryLogStatusResponse
  */
 
+/**
+ * Route params for summary-log controllers.
+ * @typedef {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   summaryLogId: string
+ * }} SummaryLogParams
+ */
+
+/**
+ * Session data persisted under `sessionNames.summaryLogs`. `freshDataMap`
+ * holds status responses written by submitSummaryLogController that
+ * summaryLogUploadProgressController reads on the next request to bridge
+ * backend replication lag.
+ * @typedef {{
+ *   freshDataMap?: Record<string, SummaryLogStatusResponse>
+ * }} SummaryLogsSession
+ */
+
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import
