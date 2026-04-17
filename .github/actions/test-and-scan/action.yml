@@ -136,11 +136,10 @@ runs:
 
     - name: SonarCloud Scan
       if: ${{ github.actor != 'dependabot[bot]' }}
-      uses: SonarSource/sonarqube-scan-action@v7
+      uses: SonarSource/sonarqube-scan-action@v6
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}
       with:
         args: >
           -Dsonar.qualitygate.wait=true
-          ${{ github.event_name != 'pull_request' && format('-Dsonar.branch.name={0}', github.ref_name) || '' }}
