@@ -1,6 +1,8 @@
 import { Decimal } from 'decimal.js'
 import Joi from 'joi'
 
+import { isNil } from '#server/common/helpers/is-nil.js'
+
 const TWO_DECIMAL_PLACES = 2
 
 /**
@@ -9,7 +11,7 @@ const TWO_DECIMAL_PLACES = 2
  * @returns {string}
  */
 export const padToTwoDecimalPlaces = (value) => {
-  if (value !== null && value !== undefined) {
+  if (!isNil(value)) {
     return Number.isInteger(value)
       ? String(value)
       : value.toFixed(TWO_DECIMAL_PLACES)
