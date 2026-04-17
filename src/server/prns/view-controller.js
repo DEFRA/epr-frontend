@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { isNil } from '#server/common/helpers/is-nil.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -363,7 +364,7 @@ function buildExistingPrnViewData({
     heading: noteTypeFull,
     showRegulatorLogos: isNotDraft,
     complianceYearText:
-      isNotDraft && prn.accreditationYear != null
+      isNotDraft && !isNil(prn.accreditationYear)
         ? localise('prns:view:complianceYearText', {
             noteType,
             wasteAction,
