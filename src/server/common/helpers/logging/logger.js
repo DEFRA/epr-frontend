@@ -23,13 +23,20 @@ import { loggerOptions } from '#server/common/helpers/logging/logger-options.js'
  */
 
 /**
+ * Pino's log methods accept either a message string or an indexed-properties
+ * object (optionally followed by a message). Expressed as an intersection of
+ * call signatures so both overloads are visible to the type checker.
+ * @typedef {((msg: string) => void) & ((obj: IndexedLogProperties, msg?: string) => void)} LogMethod
+ */
+
+/**
  * @typedef {object} TypedLogger
- * @property {(obj: IndexedLogProperties, msg?: string) => void} info
- * @property {(obj: IndexedLogProperties, msg?: string) => void} error
- * @property {(obj: IndexedLogProperties, msg?: string) => void} warn
- * @property {(obj: IndexedLogProperties, msg?: string) => void} debug
- * @property {(obj: IndexedLogProperties, msg?: string) => void} trace
- * @property {(obj: IndexedLogProperties, msg?: string) => void} fatal
+ * @property {LogMethod} info
+ * @property {LogMethod} error
+ * @property {LogMethod} warn
+ * @property {LogMethod} debug
+ * @property {LogMethod} trace
+ * @property {LogMethod} fatal
  */
 
 /**
