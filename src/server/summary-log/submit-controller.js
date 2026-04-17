@@ -9,13 +9,19 @@ const PAGE_TITLE_KEY = 'summary-log:pageTitle'
  * @satisfies {Partial<ServerRoute>}
  */
 export const submitSummaryLogController = {
+  /**
+   * @param {HapiRequest & { params: SummaryLogParams }} request
+   * @param {ResponseToolkit} h
+   */
   handler: async (request, h) => {
     const localise = request.t
     const { organisationId, registrationId, summaryLogId } = request.params
 
     const redirectUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
 
-    const summaryLogsSession = request.yar.get(sessionNames.summaryLogs) || {}
+    /** @type {SummaryLogsSession | null} */
+    const storedSession = request.yar.get(sessionNames.summaryLogs)
+    const summaryLogsSession = storedSession ?? {}
 
     if (summaryLogsSession.freshDataMap?.[summaryLogId]) {
       return h.redirect(redirectUrl)
@@ -54,5 +60,7 @@ export const submitSummaryLogController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { SummaryLogParams, SummaryLogsSession } from './types.js'
  */

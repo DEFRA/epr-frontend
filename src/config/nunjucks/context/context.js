@@ -17,7 +17,7 @@ let webpackManifest
 /**
  * Extract i18n properties from request for template context
  * Only includes properties if i18n is available on the request
- * @param {Request | null} request
+ * @param {HapiRequest | null} request
  */
 const getI18nContext = (request) => {
   if (!request?.i18n) {
@@ -41,7 +41,7 @@ const getI18nContext = (request) => {
 }
 
 /**
- * @param {Request | null} request
+ * @param {HapiRequest | null} request
  */
 export function context(request) {
   if (!webpackManifest) {
@@ -73,5 +73,5 @@ export function context(request) {
 }
 
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
