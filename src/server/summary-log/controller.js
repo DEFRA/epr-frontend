@@ -371,6 +371,60 @@ const renderSupersededView = (
   })
 }
 
+const buildRowRemovedIssue = (rowRemovedFailures, localise) => {
+  if (rowRemovedFailures.length === 0) {
+    return []
+  }
+
+  const sheets = [
+    ...new Set(
+      rowRemovedFailures.map(({ location }) => location?.sheet ?? 'Unknown')
+    )
+  ]
+
+  return [
+    {
+      type: 'sequentialRowRemoved',
+      preamble: localise('summary-log:failure.SEQUENTIAL_ROW_REMOVED_PREAMBLE'),
+      sheets,
+      closing: localise('summary-log:failure.SEQUENTIAL_ROW_REMOVED_CLOSING')
+    }
+  ]
+}
+
+const buildOtherIssueMessages = (otherFailures, localise, fallbackMessage) => {
+  if (otherFailures.length === 0) {
+    return []
+  }
+
+  return [
+    ...new Set(
+      otherFailures.map(({ errorCode, location }) => {
+        const displayCode = getDisplayCodeFromErrorCode(
+          errorCode,
+          location?.header
+        )
+        return localise(`summary-log:failure.${displayCode}`, {
+          defaultValue: fallbackMessage,
+          maxSize: MAX_FILE_SIZE_MB
+        })
+      })
+    )
+  ]
+}
+
+const applyFallback = (combinedIssues, fallbackMessage) => {
+  if (combinedIssues.length === 0) {
+    return [fallbackMessage]
+  }
+
+  if (combinedIssues.length > 1) {
+    return combinedIssues.filter((issue) => issue !== fallbackMessage)
+  }
+
+  return combinedIssues
+}
+
 /**
  * Renders the validation failures page for invalid summary logs
  * @param {object} h - Hapi response toolkit
@@ -392,30 +446,19 @@ const renderValidationFailuresView = (
     `summary-log:failure.${TECHNICAL_ERROR_DISPLAY_CODE}`
   )
 
-  // Related codes are grouped into single user-friendly messages
-  const dedupedMessages =
-    failures.length > 0
-      ? [
-          ...new Set(
-            failures.map(({ errorCode, location }) => {
-              const displayCode = getDisplayCodeFromErrorCode(
-                errorCode,
-                location?.header
-              )
-              return localise(`summary-log:failure.${displayCode}`, {
-                defaultValue: fallbackMessage,
-                maxSize: MAX_FILE_SIZE_MB
-              })
-            })
-          )
-        ]
-      : [fallbackMessage]
+  const rowRemovedFailures = failures.filter(
+    ({ errorCode }) => errorCode === 'SEQUENTIAL_ROW_REMOVED'
+  )
+  const otherFailures = failures.filter(
+    ({ errorCode }) => errorCode !== 'SEQUENTIAL_ROW_REMOVED'
+  )
 
-  // The fallback message must be a single entry...
-  const issues =
-    dedupedMessages.length > 1
-      ? dedupedMessages.filter((message) => message !== fallbackMessage)
-      : dedupedMessages
+  const combinedIssues = [
+    ...buildRowRemovedIssue(rowRemovedFailures, localise),
+    ...buildOtherIssueMessages(otherFailures, localise, fallbackMessage)
+  ]
+
+  const issues = applyFallback(combinedIssues, fallbackMessage)
 
   const issueCount = issues.length
 

@@ -1352,15 +1352,47 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
-    it('status: invalid with multiple validation failures - should show all failures', async ({
+    it('status: invalid with SEQUENTIAL_ROW_REMOVED alongside another failure - should render both the composite block and the other failure message', async ({
       server
     }) => {
       fetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
-            { errorCode: 'SEQUENTIAL_ROW_REMOVED' },
+            {
+              errorCode: 'SEQUENTIAL_ROW_REMOVED',
+              location: { sheet: 'Received' }
+            },
             { errorCode: 'HEADER_REQUIRED' }
+          ]
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toContain(
+        'Since your summary log was last submitted, rows have been removed from:'
+      )
+      expect(result).toContain(
+        'The columns in the file you selected have been changed'
+      )
+    })
+
+    it('status: invalid with SEQUENTIAL_ROW_REMOVED for one sheet - should show preamble, sheet name bullet, and closing', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'SEQUENTIAL_ROW_REMOVED',
+              location: { sheet: 'Exported (sections 1, 2 and 3)' }
+            }
           ]
         }
       })
@@ -1371,14 +1403,136 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
-      expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain(
-        'Rows have been removed since your summary log was last submitted'
-      )
-      expect(result).toContain(
-        'The columns in the file you selected have been changed'
-      )
       expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'Since your summary log was last submitted, rows have been removed from:'
+      )
+      expect(result).toContain(
+        'The rows must be re-added before you can submit your file.'
+      )
+
+      const $ = load(result)
+      const bullets = $(
+        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
+      )
+        .map((_, el) => $(el).text().trim())
+        .get()
+      expect(bullets).toStrictEqual(['Exported (sections 1, 2 and 3)'])
+
+      expect(result).toContain(
+        'We&#39;ve found the following issue with the file you selected'
+      )
+    })
+
+    it('status: invalid with SEQUENTIAL_ROW_REMOVED for multiple sheets - should list each affected sheet once', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'SEQUENTIAL_ROW_REMOVED',
+              location: { sheet: 'Exported (sections 1, 2 and 3)' }
+            },
+            {
+              errorCode: 'SEQUENTIAL_ROW_REMOVED',
+              location: { sheet: 'Sent on (sections 4 and 5)' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = load(result)
+      const bullets = $(
+        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
+      )
+        .map((_, el) => $(el).text().trim())
+        .get()
+      expect(bullets).toStrictEqual([
+        'Exported (sections 1, 2 and 3)',
+        'Sent on (sections 4 and 5)'
+      ])
+
+      const preambleMatches = result.match(
+        /Since your summary log was last submitted, rows have been removed from:/g
+      )
+      expect(preambleMatches).toHaveLength(1)
+
+      expect(result).toContain(
+        'We&#39;ve found the following issue with the file you selected'
+      )
+    })
+
+    it('status: invalid with duplicate SEQUENTIAL_ROW_REMOVED for same sheet - should dedupe to a single bullet', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [
+            {
+              errorCode: 'SEQUENTIAL_ROW_REMOVED',
+              location: { sheet: 'Exported (sections 1, 2 and 3)' }
+            },
+            {
+              errorCode: 'SEQUENTIAL_ROW_REMOVED',
+              location: { sheet: 'Exported (sections 1, 2 and 3)' }
+            }
+          ]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = load(result)
+      const bullets = $(
+        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
+      )
+        .map((_, el) => $(el).text().trim())
+        .get()
+      expect(bullets).toStrictEqual(['Exported (sections 1, 2 and 3)'])
+    })
+
+    it('status: invalid with SEQUENTIAL_ROW_REMOVED missing sheet - should fall back to Unknown', async ({
+      server
+    }) => {
+      fetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.invalid,
+        validation: {
+          failures: [{ errorCode: 'SEQUENTIAL_ROW_REMOVED' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const $ = load(result)
+      const bullets = $(
+        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
+      )
+        .map((_, el) => $(el).text().trim())
+        .get()
+      expect(bullets).toStrictEqual(['Unknown'])
     })
 
     it('status: invalid with unknown failure code - should show technical error message', async ({
