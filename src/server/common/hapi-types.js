@@ -4,6 +4,7 @@
  * @import {Policy, PolicyOptions} from '@hapi/catbox'
  * @import {TFunction, i18n} from 'i18next'
  * @import {Metrics} from '@defra/cdp-metrics'
+ * @import {TypedLogger} from './helpers/logging/logger.js'
  * @import {WasteOrganisationsService} from './helpers/waste-organisations/port.js'
  * @import {UserSession} from '../auth/types/session.js'
  */
@@ -47,8 +48,18 @@
  */
 
 /**
- * Hapi server with our application state typed.
- * @typedef {Omit<Server, 'app'> & { app: AppState }} HapiServer
+ * Hapi server with our application state and the CDP-compliant typed logger.
+ * Intersecting `logger` with `TypedLogger` advertises the
+ * `IndexedLogProperties` shape alongside the broader `pino.Logger` that
+ * hapi-pino contributes, so `server.logger.*` call-sites get the CDP
+ * Elasticsearch allow-list surfaced in IDE hints. It does not hard-enforce
+ * the allow-list — pino's `(obj: object, msg?) => void` overload remains
+ * reachable through the intersection. Use `createLogger()` directly where
+ * strict narrowing is required.
+ * @typedef {Omit<Server, 'app'> & {
+ *   app: AppState,
+ *   logger: TypedLogger
+ * }} HapiServer
  */
 
 /**
@@ -78,8 +89,15 @@
  *   - `state.userSession` narrowed to the cookie state written by the
  *     session strategy
  *   - `yar.flash` extended with the flash keys the app uses
+ *   - `logger` intersected with `TypedLogger` so object-form log calls get
+ *     the CDP `IndexedLogProperties` shape advertised in IDE hints without
+ *     losing the rest of the pino logger surface hapi-pino contributes.
+ *     The intersection does not hard-enforce the allow-list — pino's
+ *     `(obj: object, msg?) => void` overload remains reachable. Use
+ *     `createLogger()` directly where strict narrowing is required.
  * @typedef {Omit<Request, 'auth' | 'server' | 'state' | 'yar'> & {
  *   auth: RequestAuth,
+ *   logger: TypedLogger,
  *   server: HapiServer,
  *   state: Request['state'] & { userSession?: SessionCookieState },
  *   yar: HapiYar,
