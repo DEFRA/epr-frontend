@@ -18,7 +18,17 @@
 
       {% for issue in issues %}
         <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-        <p class="govuk-body govuk-!-font-weight-bold">{{ issue }}</p>
+        {% if issue.type == 'sequentialRowRemoved' %}
+          <p class="govuk-body govuk-!-font-weight-bold">{{ issue.preamble }}</p>
+          <ul class="govuk-list govuk-list--bullet govuk-!-font-weight-bold">
+            {% for sheet in issue.sheets %}
+              <li>{{ sheet }}</li>
+            {% endfor %}
+          </ul>
+          <p class="govuk-body govuk-!-font-weight-bold">{{ issue.closing }}</p>
+        {% else %}
+          <p class="govuk-body govuk-!-font-weight-bold">{{ issue }}</p>
+        {% endif %}
       {% endfor %}
 
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
