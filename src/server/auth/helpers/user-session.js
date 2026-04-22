@@ -2,7 +2,7 @@ import { buildUserProfile, getTokenExpiresAt } from './build-session.js'
 import { dropUserSession } from './drop-user-session.js'
 
 /**
- * @import { RefreshedTokens } from '../types/tokens.js'
+ * @import { RefreshedTokens } from './refreshed-tokens-schema.js'
  * @import { HapiRequest, SessionCookieState } from '#server/common/hapi-types.js'
  * @import { UserSession } from '../types/session.js'
  * @import { VerifyToken } from '../types/verify-token.js'
