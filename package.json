@@ -152,6 +152,7 @@
     },
     "stylelint-config-gds": {
       "stylelint": "$stylelint"
-    }
+    },
+    "uuid": "14.0.0"
   }
 }
