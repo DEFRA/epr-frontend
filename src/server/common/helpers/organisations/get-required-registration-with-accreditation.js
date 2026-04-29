@@ -1,5 +1,5 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { LOGGING_EVENT_ACTIONS } from '#server/common/enums/event.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 
@@ -31,7 +31,7 @@ export async function getRequiredRegistrationWithAccreditation({
     logger.warn({
       message: 'Not accredited for this registration',
       event: {
-        action: LOGGING_EVENT_ACTIONS.CHECK_ACCREDITATION,
+        action: loggingEventActions.checkAccreditation,
         reason: `registrationId=${registrationId}`
       }
     })
@@ -40,7 +40,7 @@ export async function getRequiredRegistrationWithAccreditation({
       errorCodes.notAccredited,
       {
         event: {
-          action: LOGGING_EVENT_ACTIONS.CHECK_ACCREDITATION,
+          action: loggingEventActions.checkAccreditation,
           reason: `registrationId=${registrationId}`
         }
       }
@@ -51,7 +51,7 @@ export async function getRequiredRegistrationWithAccreditation({
     logger.warn({
       message: 'Accreditation ID mismatch',
       event: {
-        action: LOGGING_EVENT_ACTIONS.CHECK_ACCREDITATION,
+        action: loggingEventActions.checkAccreditation,
         reason: `registrationId=${registrationId} accreditationId=${accreditationId}`
       }
     })
@@ -60,7 +60,7 @@ export async function getRequiredRegistrationWithAccreditation({
       errorCodes.accreditationIdMismatch,
       {
         event: {
-          action: LOGGING_EVENT_ACTIONS.CHECK_ACCREDITATION,
+          action: loggingEventActions.checkAccreditation,
           reason: `registrationId=${registrationId} accreditationId=${accreditationId}`
         }
       }

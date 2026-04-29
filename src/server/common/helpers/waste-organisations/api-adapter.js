@@ -3,7 +3,7 @@
 import { getYear } from 'date-fns'
 
 import { config } from '#config/config.js'
-import { LOGGING_EVENT_ACTIONS } from '#server/common/enums/event.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
 import { fetchJson } from '../fetch-json.js'
 
 const PRODUCER_TYPES = new Set(['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'])
@@ -32,7 +32,7 @@ function extractRegistrationTypes(organisations, logger) {
         message:
           'Waste organisation has no producer registration for the current year — display name will fall back to tradingName preference',
         event: {
-          action: LOGGING_EVENT_ACTIONS.EXTRACT_REGISTRATION_TYPES,
+          action: loggingEventActions.extractRegistrationTypes,
           reason: `organisationId=${org.id} organisationName=${org.name}`
         }
       })
@@ -45,7 +45,7 @@ function extractRegistrationTypes(organisations, logger) {
         message:
           'Waste organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME registrations for the current year — likely bad data from RPD',
         event: {
-          action: LOGGING_EVENT_ACTIONS.EXTRACT_REGISTRATION_TYPES,
+          action: loggingEventActions.extractRegistrationTypes,
           reason: `organisationId=${org.id} organisationName=${org.name}`
         }
       })
