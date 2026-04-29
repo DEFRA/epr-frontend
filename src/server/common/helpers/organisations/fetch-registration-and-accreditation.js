@@ -1,5 +1,6 @@
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
-import Boom from '@hapi/boom'
 
 /**
  * @import {Accreditation} from '#domain/organisations/accreditation.js'
@@ -34,7 +35,12 @@ async function fetchRegistrationAndAccreditation(
   )
 
   if (!registration) {
-    throw Boom.notFound('Registration not found')
+    throw notFound('Registration not found', errorCodes.registrationNotFound, {
+      event: {
+        action: 'fetch_registration',
+        reason: `organisationId=${organisationId} registrationId=${registrationId}`
+      }
+    })
   }
 
   const accreditation = organisationData.accreditations.find(

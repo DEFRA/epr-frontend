@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { badImplementation } from '#server/common/helpers/logging/cdp-boom.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE } from '../constants.js'
@@ -70,7 +72,16 @@ export async function fetchGuardedAccreditedReprocessorData(request) {
   }
 
   if (!reportDetail.prn) {
-    throw Boom.badImplementation('PRN data missing for accredited report')
+    throw badImplementation(
+      'PRN data missing for accredited report',
+      errorCodes.prnDataMissing,
+      {
+        event: {
+          action: 'load_accredited_report',
+          reason: `cadence=${request.params.cadence} reportType=reprocessor`
+        }
+      }
+    )
   }
 
   return { registration, accreditation, reportDetail }

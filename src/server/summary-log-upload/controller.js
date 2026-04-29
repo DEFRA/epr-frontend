@@ -1,7 +1,7 @@
-import Boom from '@hapi/boom'
-
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
  * @satisfies {Partial<ServerRoute>}
@@ -27,8 +27,23 @@ export const summaryLogUploadController = {
     )
 
     if (!registration) {
-      request.logger.warn({ registrationId }, 'Registration not found')
-      throw Boom.notFound('Registration not found')
+      request.logger.warn({
+        message: 'Registration not found',
+        event: {
+          action: 'fetch_registration',
+          reason: `organisationId=${organisationId} registrationId=${registrationId}`
+        }
+      })
+      throw notFound(
+        'Registration not found',
+        errorCodes.registrationNotFound,
+        {
+          event: {
+            action: 'fetch_registration',
+            reason: `organisationId=${organisationId} registrationId=${registrationId}`
+          }
+        }
+      )
     }
 
     try {

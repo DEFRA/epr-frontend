@@ -1,6 +1,9 @@
-import Boom from '@hapi/boom'
-
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import {
   buildPrnBasePath,
   fetchPrnContext,
@@ -73,13 +76,22 @@ export const deletePostController = {
 
       return h.redirect(redirectBasePath)
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to delete PRN')
+      request.logger.error({ message: 'Failed to delete PRN', err: error })
 
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to delete PRN')
+      throw badImplementation(
+        'Failed to delete PRN',
+        errorCodes.prnDeleteFailed,
+        {
+          event: {
+            action: 'delete_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }

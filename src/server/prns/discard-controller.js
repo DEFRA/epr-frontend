@@ -1,6 +1,9 @@
-import Boom from '@hapi/boom'
-
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
@@ -85,13 +88,22 @@ export const discardPostController = {
 
       return h.redirect(createUrl)
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to discard PRN')
+      request.logger.error({ message: 'Failed to discard PRN', err: error })
 
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to discard PRN')
+      throw badImplementation(
+        'Failed to discard PRN',
+        errorCodes.prnDiscardFailed,
+        {
+          event: {
+            action: 'discard_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }

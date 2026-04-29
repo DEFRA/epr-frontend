@@ -1,4 +1,5 @@
-import Boom from '@hapi/boom'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { internal } from '#server/common/helpers/logging/cdp-boom.js'
 
 const MATERIAL_DISPLAY_NAMES = Object.freeze({
   aluminium: 'Aluminium',
@@ -28,7 +29,16 @@ export function getDisplayMaterial(registration) {
     const displayName = MATERIAL_DISPLAY_NAMES[material]
 
     if (!displayName) {
-      throw Boom.internal(`Unknown material: ${material}`)
+      throw internal(
+        `Unknown material: ${material}`,
+        errorCodes.unknownMaterial,
+        {
+          event: {
+            action: 'lookup_material',
+            reason: `material=${material}`
+          }
+        }
+      )
     }
 
     return displayName

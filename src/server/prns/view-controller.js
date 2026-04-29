@@ -1,6 +1,9 @@
-import Boom from '@hapi/boom'
-
 import { isNil } from '#server/common/helpers/is-nil.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -144,13 +147,25 @@ export const viewPostController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
       )
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to update PRN status')
+      request.logger.error({
+        message: 'Failed to update PRN status',
+        err: error
+      })
 
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to confirm PRN')
+      throw badImplementation(
+        'Failed to confirm PRN',
+        errorCodes.prnConfirmFailed,
+        {
+          event: {
+            action: 'confirm_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }

@@ -2,7 +2,11 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
-import Boom from '@hapi/boom'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
@@ -303,13 +307,25 @@ export const postController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to create PRN draft')
+      request.logger.error({
+        message: 'Failed to create PRN draft',
+        err: error
+      })
 
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to create PRN')
+      throw badImplementation(
+        'Failed to create PRN',
+        errorCodes.prnCreateFailed,
+        {
+          event: {
+            action: 'create_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }

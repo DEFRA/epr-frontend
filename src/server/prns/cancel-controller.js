@@ -1,5 +1,8 @@
-import Boom from '@hapi/boom'
-
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import {
   buildPrnBasePath,
@@ -82,13 +85,22 @@ export const cancelPostController = {
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
       )
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to cancel PRN')
+      request.logger.error({ message: 'Failed to cancel PRN', err: error })
 
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to cancel PRN')
+      throw badImplementation(
+        'Failed to cancel PRN',
+        errorCodes.prnCancelFailed,
+        {
+          event: {
+            action: 'cancel_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }
