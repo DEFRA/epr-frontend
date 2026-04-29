@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { LOGGING_EVENT_ACTIONS } from '#server/common/enums/event.js'
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 
 /**
@@ -27,15 +28,24 @@ export async function getRequiredRegistrationWithAccreditation({
     )
 
   if (!accreditation) {
-    logger.warn({ registrationId }, 'Not accredited for this registration')
+    logger.warn({
+      message: 'Not accredited for this registration',
+      event: {
+        action: LOGGING_EVENT_ACTIONS.CHECK_ACCREDITATION,
+        reason: `registrationId=${registrationId}`
+      }
+    })
     throw Boom.notFound('Not accredited for this registration')
   }
 
   if (accreditation.id !== accreditationId) {
-    logger.warn(
-      { registrationId, accreditationId },
-      'Accreditation ID mismatch'
-    )
+    logger.warn({
+      message: 'Accreditation ID mismatch',
+      event: {
+        action: LOGGING_EVENT_ACTIONS.CHECK_ACCREDITATION,
+        reason: `registrationId=${registrationId} accreditationId=${accreditationId}`
+      }
+    })
     throw Boom.notFound('Accreditation ID mismatch')
   }
 

@@ -36,9 +36,9 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log expected Redis message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
-        'Using Redis session cache'
-      )
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+        message: 'Using Redis session cache'
+      })
     })
   })
 
@@ -52,9 +52,9 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log expected CatBox memory message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
-        'Using Catbox Memory session cache'
-      )
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+        message: 'Using Catbox Memory session cache'
+      })
     })
   })
 
@@ -65,9 +65,10 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log Production warning message', () => {
-      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith(
-        'Catbox Memory is for local development only, it should not be used in production!'
-      )
+      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith({
+        message:
+          'Catbox Memory is for local development only, it should not be used in production!'
+      })
     })
 
     test('should setup In memory cache', () => {
@@ -75,9 +76,9 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log expected message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
-        'Using Catbox Memory session cache'
-      )
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+        message: 'Using Catbox Memory session cache'
+      })
     })
   })
 })

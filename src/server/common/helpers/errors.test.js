@@ -74,10 +74,10 @@ describe(catchAll, () => {
     const req = makeRequest(statusCodes.internalServerError)
     await catchAll(req, mockToolkit)
 
-    expect(mockErrorLogger).toHaveBeenCalledWith(
-      { err: req.response },
-      'Unhandled server error'
-    )
+    expect(mockErrorLogger).toHaveBeenCalledWith({
+      message: 'Unhandled server error',
+      err: req.response
+    })
   })
 
   it('should use fallback message when localise function not available', async () => {

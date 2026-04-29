@@ -57,9 +57,9 @@ describe('#startServer', () => {
 
       expect(createServerSpy).toHaveBeenCalledExactlyOnceWith()
       expect(hapiServerSpy).toHaveBeenCalledExactlyOnceWith(expect.any(Object))
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
-        'Using Catbox Memory session cache'
-      )
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+        message: 'Using Catbox Memory session cache'
+      })
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
         1,
         'Custom secure context is disabled'

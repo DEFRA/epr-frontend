@@ -81,10 +81,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       output: { statusCode: 404 }
     })
 
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      { registrationId: 'reg-001' },
-      'Not accredited for this registration'
-    )
+    expect(mockLogger.warn).toHaveBeenCalledWith({
+      message: 'Not accredited for this registration',
+      event: {
+        action: 'check_accreditation',
+        reason: 'registrationId=reg-001'
+      }
+    })
   })
 
   it('should return when accreditationId is provided and matches', async () => {
@@ -132,10 +135,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       output: { statusCode: 404 }
     })
 
-    expect(mockLogger.warn).toHaveBeenCalledWith(
-      { registrationId: 'reg-001', accreditationId: 'acc-wrong' },
-      'Accreditation ID mismatch'
-    )
+    expect(mockLogger.warn).toHaveBeenCalledWith({
+      message: 'Accreditation ID mismatch',
+      event: {
+        action: 'check_accreditation',
+        reason: 'registrationId=reg-001 accreditationId=acc-wrong'
+      }
+    })
   })
 
   it('should pass correct parameters to fetchRegistrationAndAccreditation', async () => {
