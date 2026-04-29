@@ -661,8 +661,7 @@ export const summaryLogUploadProgressController = {
     const session = request.auth.credentials
 
     request.logger.info(
-      { organisationId, registrationId, summaryLogId },
-      'Rendering summary log progress page - data load started'
+      `Rendering summary log progress page for ${summaryLogId} - status load started`
     )
 
     const {
@@ -681,8 +680,7 @@ export const summaryLogUploadProgressController = {
     )
 
     request.logger.info(
-      { organisationId, registrationId, summaryLogId },
-      'Rendering summary log progress page - data load completed'
+      `Rendering summary log progress page for ${summaryLogId} - status load completed`
     )
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
