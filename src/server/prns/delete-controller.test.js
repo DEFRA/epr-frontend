@@ -295,6 +295,19 @@ describe('#deleteController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(server.loggerMocks.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Failed to delete PRN',
+            error: expect.objectContaining({
+              code: 'prn_delete_failed'
+            }),
+            event: expect.objectContaining({
+              action: 'delete_prn',
+              outcome: 'failure'
+            }),
+            http: { response: { status_code: 500 } }
+          })
+        )
       })
 
       it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {

@@ -613,6 +613,19 @@ describe('#postCreatePrnController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(server.loggerMocks.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Failed to create PRN',
+            error: expect.objectContaining({
+              code: 'prn_create_failed'
+            }),
+            event: expect.objectContaining({
+              action: 'create_prn',
+              outcome: 'failure'
+            }),
+            http: { response: { status_code: 500 } }
+          })
+        )
       })
 
       it('rethrows Boom errors from createPrn', async ({ server }) => {

@@ -314,6 +314,19 @@ describe('#cancelController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(server.loggerMocks.error).toHaveBeenCalledWith(
+          expect.objectContaining({
+            message: 'Failed to cancel PRN',
+            error: expect.objectContaining({
+              code: 'prn_cancel_failed'
+            }),
+            event: expect.objectContaining({
+              action: 'cancel_prn',
+              outcome: 'failure'
+            }),
+            http: { response: { status_code: 500 } }
+          })
+        )
       })
 
       it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {

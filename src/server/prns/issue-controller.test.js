@@ -112,9 +112,8 @@ describe('#issueController', () => {
     it('redirects to action page with issue_failed error when updatePrnStatus fails', async ({
       server
     }) => {
-      vi.mocked(updatePrnStatus).mockRejectedValueOnce(
-        new Error('Backend error')
-      )
+      const backendError = new Error('Backend error')
+      vi.mocked(updatePrnStatus).mockRejectedValueOnce(backendError)
 
       const { cookie: csrfCookie, crumb } = await getCsrfToken(
         server,
@@ -132,6 +131,10 @@ describe('#issueController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(`${actionUrl}?error=issue_failed`)
+      expect(server.loggerMocks.error).toHaveBeenCalledWith({
+        message: 'Failed to issue PRN',
+        err: backendError
+      })
     })
 
     it('redirects to error page when backend returns 409 conflict', async ({
