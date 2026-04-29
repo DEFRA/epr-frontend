@@ -1573,19 +1573,23 @@ describe('#viewController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)
-        expect(server.loggerMocks.error).toHaveBeenCalledWith(
-          expect.objectContaining({
+        expect(server.loggerMocks.error).toHaveBeenCalledWith({
+          message: 'Failed to confirm PRN',
+          error: {
+            code: 'prn_confirm_failed',
+            id: expect.any(String),
             message: 'Failed to confirm PRN',
-            error: expect.objectContaining({
-              code: 'prn_confirm_failed'
-            }),
-            event: expect.objectContaining({
-              action: 'confirm_prn',
-              outcome: 'failure'
-            }),
-            http: { response: { status_code: 500 } }
-          })
-        )
+            type: 'Internal Server Error'
+          },
+          event: {
+            category: 'http',
+            action: 'confirm_prn',
+            kind: 'event',
+            outcome: 'failure',
+            reason: 'type=Error code=unknown'
+          },
+          http: { response: { status_code: 500 } }
+        })
       })
 
       it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
