@@ -147,11 +147,6 @@ export const viewPostController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
       )
     } catch (error) {
-      request.logger.error({
-        message: 'Failed to update PRN status',
-        err: error
-      })
-
       if (error.isBoom) {
         throw error
       }

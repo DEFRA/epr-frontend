@@ -305,11 +305,6 @@ export const postController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
-      request.logger.error({
-        message: 'Failed to create PRN draft',
-        err: error
-      })
-
       if (error.isBoom) {
         throw error
       }

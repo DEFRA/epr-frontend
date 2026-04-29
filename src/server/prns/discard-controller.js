@@ -87,8 +87,6 @@ export const discardPostController = {
 
       return h.redirect(createUrl)
     } catch (error) {
-      request.logger.error({ message: 'Failed to discard PRN', err: error })
-
       if (error.isBoom) {
         throw error
       }
