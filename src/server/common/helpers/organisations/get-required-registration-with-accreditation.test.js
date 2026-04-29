@@ -5,12 +5,6 @@ import { getRequiredRegistrationWithAccreditation } from './get-required-registr
 
 vi.mock(import('./fetch-registration-and-accreditation.js'))
 
-const mockLogger = {
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn()
-}
-
 describe('#getRequiredRegistrationWithAccreditation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -33,7 +27,6 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       organisationId: 'org-123',
       registrationId: 'reg-001',
       idToken: 'mock-token',
-      logger: mockLogger,
       accreditationId: 'acc-001'
     })
 
@@ -53,8 +46,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       getRequiredRegistrationWithAccreditation({
         organisationId: 'org-123',
         registrationId: 'reg-nonexistent',
-        idToken: 'mock-token',
-        logger: mockLogger
+        idToken: 'mock-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,
@@ -62,7 +54,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     })
   })
 
-  it('should throw 404 when accreditation is not found', async () => {
+  it('should throw an enriched 404 when accreditation is not found', async () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
       organisationData: { id: 'org-123' },
       registration: { id: 'reg-001' },
@@ -73,16 +65,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       getRequiredRegistrationWithAccreditation({
         organisationId: 'org-123',
         registrationId: 'reg-001',
-        idToken: 'mock-token',
-        logger: mockLogger
+        idToken: 'mock-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,
-      output: { statusCode: 404 }
-    })
-
-    expect(mockLogger.warn).toHaveBeenCalledWith({
+      output: { statusCode: 404 },
       message: 'Not accredited for this registration',
+      code: 'not_accredited',
       event: {
         action: 'check_accreditation',
         reason: 'registrationId=reg-001'
@@ -104,7 +93,6 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       organisationId: 'org-123',
       registrationId: 'reg-001',
       idToken: 'mock-token',
-      logger: mockLogger,
       accreditationId: 'acc-001'
     })
 
@@ -115,7 +103,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     })
   })
 
-  it('should throw 404 when accreditationId does not match', async () => {
+  it('should throw an enriched 404 when accreditationId does not match', async () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
       organisationData: { id: 'org-123' },
       registration: { id: 'reg-001' },
@@ -127,16 +115,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
         organisationId: 'org-123',
         registrationId: 'reg-001',
         idToken: 'mock-token',
-        logger: mockLogger,
         accreditationId: 'acc-wrong'
       })
     ).rejects.toMatchObject({
       isBoom: true,
-      output: { statusCode: 404 }
-    })
-
-    expect(mockLogger.warn).toHaveBeenCalledWith({
+      output: { statusCode: 404 },
       message: 'Accreditation ID mismatch',
+      code: 'accreditation_id_mismatch',
       event: {
         action: 'check_accreditation',
         reason: 'registrationId=reg-001 accreditationId=acc-wrong'
@@ -155,7 +140,6 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
       organisationId: 'org-123',
       registrationId: 'reg-001',
       idToken: 'mock-token',
-      logger: mockLogger,
       accreditationId: 'acc-001'
     })
 

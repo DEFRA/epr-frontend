@@ -5,20 +5,18 @@ import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accr
 
 /**
  * @import {RegistrationWithAccreditation} from './fetch-registration-and-accreditation.js'
- * @import {TypedLogger} from '#server/common/helpers/logging/logger.js'
  */
 
 /**
  * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, idToken: string, logger: TypedLogger, accreditationId?: string }} params
+ * @param {{ organisationId: string, registrationId: string, idToken: string, accreditationId?: string }} params
  * @returns {Promise<Required<RegistrationWithAccreditation>>}
  */
 export async function getRequiredRegistrationWithAccreditation({
   organisationId,
   registrationId,
   accreditationId,
-  idToken,
-  logger
+  idToken
 }) {
   const { registration, accreditation, organisationData } =
     await fetchRegistrationAndAccreditation(
@@ -28,13 +26,6 @@ export async function getRequiredRegistrationWithAccreditation({
     )
 
   if (!accreditation) {
-    logger.warn({
-      message: 'Not accredited for this registration',
-      event: {
-        action: loggingEventActions.checkAccreditation,
-        reason: `registrationId=${registrationId}`
-      }
-    })
     throw notFound(
       'Not accredited for this registration',
       errorCodes.notAccredited,
@@ -48,13 +39,6 @@ export async function getRequiredRegistrationWithAccreditation({
   }
 
   if (accreditation.id !== accreditationId) {
-    logger.warn({
-      message: 'Accreditation ID mismatch',
-      event: {
-        action: loggingEventActions.checkAccreditation,
-        reason: `registrationId=${registrationId} accreditationId=${accreditationId}`
-      }
-    })
     throw notFound(
       'Accreditation ID mismatch',
       errorCodes.accreditationIdMismatch,

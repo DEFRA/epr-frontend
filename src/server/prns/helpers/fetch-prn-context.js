@@ -59,7 +59,6 @@ async function fetchPrnContext(request) {
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     }),
     fetchPackagingRecyclingNote(

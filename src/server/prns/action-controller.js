@@ -32,7 +32,6 @@ export const actionController = {
           organisationId,
           registrationId,
           idToken: session.idToken,
-          logger: request.logger,
           accreditationId
         }),
         fetchPackagingRecyclingNote(

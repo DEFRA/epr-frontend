@@ -3,6 +3,8 @@ import hapiPino from 'hapi-pino'
 import { pino } from 'pino'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { boomErrorLogger } from '#server/plugins/boom-error-logger.js'
+
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 import { getRequiredRegistrationWithAccreditation } from './get-required-registration-with-accreditation.js'
 
@@ -10,8 +12,8 @@ vi.mock(import('./fetch-registration-and-accreditation.js'))
 
 /**
  * Captures every line pino emits to a single in-memory buffer so we can
- * inspect both the explicit `logger.warn(...)` call and any auto-log
- * hapi-pino emits in response to the thrown boom.
+ * inspect the plugin-emitted log alongside the auto-logs hapi-pino emits
+ * for request lifecycle events.
  */
 const captureLogs = () => {
   /** @type {Array<Record<string, unknown>>} */
@@ -25,12 +27,12 @@ const captureLogs = () => {
   return { instance, lines }
 }
 
-describe('getRequiredRegistrationWithAccreditation - hapi log lifecycle', () => {
+describe('getRequiredRegistrationWithAccreditation - boom-error-logger integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('emits exactly one log entry containing the not-accredited message — hapi-pino does not duplicate the boom message in its request-completion log', async () => {
+  it('the not-accredited boom is logged exactly once via the plugin (no warn-then-throw duplication)', async () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
       organisationData: { id: 'org-123' },
       registration: { id: 'reg-001' },
@@ -40,20 +42,19 @@ describe('getRequiredRegistrationWithAccreditation - hapi log lifecycle', () => 
     const { instance, lines } = captureLogs()
     const server = hapi.server()
 
-    await server.register({
-      plugin: hapiPino,
-      options: { instance, logRequestStart: true }
-    })
+    await server.register([
+      { plugin: hapiPino, options: { instance, logRequestStart: true } },
+      boomErrorLogger
+    ])
 
     server.route({
       method: 'GET',
       path: '/check',
-      handler: (request) =>
+      handler: () =>
         getRequiredRegistrationWithAccreditation({
           organisationId: 'org-123',
           registrationId: 'reg-001',
           idToken: 'token',
-          logger: request.logger,
           accreditationId: 'acc-001'
         })
     })
@@ -75,10 +76,19 @@ describe('getRequiredRegistrationWithAccreditation - hapi log lifecycle', () => 
       expect.objectContaining({
         level: 40,
         message: 'Not accredited for this registration',
+        error: expect.objectContaining({
+          code: 'not_accredited',
+          message: 'Not accredited for this registration',
+          type: 'Not Found'
+        }),
         event: {
+          category: 'http',
           action: 'check_accreditation',
+          kind: 'event',
+          outcome: 'failure',
           reason: 'registrationId=reg-001'
-        }
+        },
+        http: { response: { status_code: 404 } }
       })
     )
 

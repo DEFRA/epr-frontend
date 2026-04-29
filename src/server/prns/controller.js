@@ -35,7 +35,6 @@ export const controller = {
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     })
 

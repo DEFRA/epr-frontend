@@ -43,7 +43,6 @@ export const listController = {
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     })
 

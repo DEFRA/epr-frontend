@@ -200,7 +200,6 @@ async function handleDraftView(
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     })
 
@@ -273,7 +272,6 @@ async function handleExistingView(
         organisationId,
         registrationId,
         idToken: session.idToken,
-        logger: request.logger,
         accreditationId
       }),
       fetchPackagingRecyclingNote(
