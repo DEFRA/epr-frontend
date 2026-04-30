@@ -12,82 +12,98 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
-vi.mock(import('../helpers/update-report.js'))
+vi.mock(import('./update-report.js'))
 
-const { updateReport } = await import('../helpers/update-report.js')
+const { updateReport } = await import('./update-report.js')
+
+const subtrees = [
+  {
+    name: 'exporter',
+    urlSlug: 'free-perns',
+    registrationType: 'exporter',
+    operatorCategory: 'EXPORTER_ACCREDITED',
+    notePlural: 'PERNs',
+    accreditedDescription: 'accredited operator',
+    registeredOnlyDescription: 'non-accredited operator'
+  },
+  {
+    name: 'reprocessor',
+    urlSlug: 'free-prns',
+    registrationType: 'reprocessor',
+    operatorCategory: 'REPROCESSOR_ACCREDITED',
+    notePlural: 'PRNs',
+    accreditedDescription: 'accredited operator',
+    registeredOnlyDescription: 'registered-only operator'
+  }
+]
 
 const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
+  profile: { id: 'user-123', email: 'test@example.com' },
   idToken: 'mock-id-token'
 }
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
-
-const accreditedReprocessor = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ER992415095748M'
-  }
-}
-
-const registeredOnlyReprocessor = {
-  ...accreditedReprocessor,
-  accreditation: undefined
-}
-
-const reportDetail = {
-  operatorCategory: 'REPROCESSOR_ACCREDITED',
-  cadence: 'monthly',
-  year: 2026,
-  period: 1,
-  startDate: '2026-01-01',
-  endDate: '2026-01-31',
-  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: { material: 'plastic' },
-  id: 'report-001',
-  version: 1,
-  status: { currentStatus: 'in_progress' },
-  supportingInformation: null,
-  recyclingActivity: {
-    totalTonnageReceived: 200,
-    suppliers: [],
-    tonnageRecycled: null,
-    tonnageNotRecycled: null
-  },
-  prn: {
-    issuedTonnage: 91,
-    totalRevenue: 1576.12,
-    averagePricePerTonne: 17.32,
-    freeTonnage: null
-  }
-}
-
-const reportDetailWithFreeTonnage = {
-  ...reportDetail,
-  prn: {
-    ...reportDetail.prn,
-    freeTonnage: 5
-  }
-}
+const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-prns`
 
-describe('#reprocessorFreePrnsController', () => {
+describe.each(subtrees)('$name free tonnage page', (subtree) => {
+  const accreditedOperator = {
+    organisationData: { id: organisationId },
+    registration: {
+      id: registrationId,
+      material: 'plastic',
+      wasteProcessingType: subtree.registrationType,
+      registrationNumber: 'REG001234'
+    },
+    accreditation: {
+      id: 'acc-001',
+      accreditationNumber: 'ER992415095748M'
+    }
+  }
+
+  const registeredOnlyOperator = {
+    ...accreditedOperator,
+    accreditation: undefined
+  }
+
+  const reportDetail = {
+    operatorCategory: subtree.operatorCategory,
+    cadence: 'monthly',
+    year: 2026,
+    period: 1,
+    startDate: '2026-01-01',
+    endDate: '2026-01-31',
+    source: {
+      summaryLogId: 'sl-1',
+      lastUploadedAt: '2026-02-15T15:09:00.000Z'
+    },
+    details: { material: 'plastic' },
+    id: 'report-001',
+    version: 1,
+    status: { currentStatus: 'in_progress' },
+    supportingInformation: null,
+    recyclingActivity: {
+      totalTonnageReceived: 200,
+      suppliers: [],
+      tonnageRecycled: null,
+      tonnageNotRecycled: null
+    },
+    prn: {
+      issuedTonnage: 91,
+      totalRevenue: 1576.12,
+      averagePricePerTonne: 17.32,
+      freeTonnage: null
+    }
+  }
+
+  const reportDetailWithFreeTonnage = {
+    ...reportDetail,
+    prn: { ...reportDetail.prn, freeTonnage: 5 }
+  }
+
+  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/${subtree.urlSlug}`
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -104,12 +120,14 @@ describe('#reprocessorFreePrnsController', () => {
     describe('GET', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedReprocessor
+          accreditedOperator
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
       })
 
-      it('should return 200 for accredited reprocessor', async ({ server }) => {
+      it(`should return 200 for ${subtree.accreditedDescription}`, async ({
+        server
+      }) => {
         const { statusCode } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -127,23 +145,26 @@ describe('#reprocessorFreePrnsController', () => {
         })
 
         const { title } = new JSDOM(result).window.document
-        expect(title).toContain('Free PRNs: Plastic: January 2026')
+        expect(title).toContain(
+          `Free ${subtree.notePlural}: Plastic: January 2026`
+        )
       })
 
-      it('should display PRN heading', async ({ server }) => {
+      it('should display the heading', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
           auth: mockAuth
         })
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+        const { body } = new JSDOM(result).window.document
 
         expect(
           getByRole(body, 'heading', {
             level: 1,
-            name: /What is the total tonnage of PRNs you issued for free in January\?/
+            name: new RegExp(
+              `What is the total tonnage of ${subtree.notePlural} you issued for free in January\\?`
+            )
           })
         ).toBeDefined()
       })
@@ -164,11 +185,18 @@ describe('#reprocessorFreePrnsController', () => {
         expect(
           getByText(
             inset,
-            /you may have issued PRNs to your own company for no charge/
+            new RegExp(
+              `you may have issued ${subtree.notePlural} to your own company for no charge`
+            )
           )
         ).toBeDefined()
         expect(
-          getByText(body, /Enter total tonnage of PRNs issued for free/)
+          getByText(
+            body,
+            new RegExp(
+              `Enter total tonnage of ${subtree.notePlural} issued for free`
+            )
+          )
         ).toBeDefined()
         expect(
           getByText(
@@ -192,11 +220,11 @@ describe('#reprocessorFreePrnsController', () => {
         expect(result).toContain('value="5"')
       })
 
-      it('should return 404 for registered-only reprocessor', async ({
+      it(`should return 404 for ${subtree.registeredOnlyDescription}`, async ({
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyReprocessor
+          registeredOnlyOperator
         )
 
         const { statusCode } = await server.inject({
@@ -209,7 +237,7 @@ describe('#reprocessorFreePrnsController', () => {
       })
 
       it('should return 404 for quarterly cadence', async ({ server }) => {
-        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/free-prns`
+        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/${subtree.urlSlug}`
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -256,10 +284,23 @@ describe('#reprocessorFreePrnsController', () => {
     describe('POST', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedReprocessor
+          accreditedOperator
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         vi.mocked(updateReport).mockResolvedValue(undefined)
+      })
+
+      describe('csrf protection', () => {
+        it('should reject POST without CSRF token', async ({ server }) => {
+          const { statusCode } = await server.inject({
+            method: 'POST',
+            url: baseUrl,
+            auth: mockAuth,
+            payload: {}
+          })
+
+          expect(statusCode).toBe(statusCodes.forbidden)
+        })
       })
 
       describe('when continue is clicked with valid tonnage', () => {
@@ -413,12 +454,14 @@ describe('#reprocessorFreePrnsController', () => {
           expect(
             getByText(
               alert,
-              /Enter the total tonnage of PRNs issued for free, even if zero/
+              new RegExp(
+                `Enter the total tonnage of ${subtree.notePlural} issued for free, even if zero`
+              )
             )
           ).toBeDefined()
         })
 
-        it('should show error when tonnage exceeds total PRNs issued', async ({
+        it('should show error when tonnage exceeds total issued', async ({
           server
         }) => {
           const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -439,7 +482,9 @@ describe('#reprocessorFreePrnsController', () => {
           expect(
             getByText(
               alert,
-              /This number should be less than the total number of PRNs you issued in January$/
+              new RegExp(
+                `This number should be less than the total number of ${subtree.notePlural} you issued in January$`
+              )
             )
           ).toBeDefined()
         })
