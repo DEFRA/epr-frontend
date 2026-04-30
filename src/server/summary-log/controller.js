@@ -271,7 +271,7 @@ const getStatusData = async (
     }))
 
   if (freshDataMap !== undefined && summaryLogId in freshDataMap) {
-    const { [summaryLogId]: _, ...remainingMap } = freshDataMap
+    const { [summaryLogId]: _, ...remainingMap } = freshDataMap // NOSONAR(javascript:S1481) intentional discard via destructure-rest
     request.yar.set(sessionNames.summaryLogs, {
       ...summaryLogsSession,
       freshDataMap: remainingMap

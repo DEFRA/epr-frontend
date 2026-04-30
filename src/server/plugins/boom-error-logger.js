@@ -68,7 +68,7 @@ export const boomErrorLogger = {
               action: defaultAction,
               kind: 'event',
               outcome: 'failure',
-              ...(boom.event ?? {})
+              ...boom.event
             },
             http: {
               response: {
