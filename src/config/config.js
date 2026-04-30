@@ -5,6 +5,11 @@ import { fileURLToPath } from 'node:url'
 import { getLogFormatType, getLogRedactType } from './utils/log.js'
 import { getSessionCacheEngineType } from './utils/session.js'
 
+/**
+ * @import { Schema, SchemaObj } from 'convict'
+ * @import { RedisConfig } from '#server/common/helpers/redis-client.js'
+ */
+
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
@@ -333,8 +338,3 @@ export const isReportsEnabled = () => config.get('featureFlags.reports')
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
-
-/**
- * @import { Schema, SchemaObj } from 'convict'
- * @import { RedisConfig } from '#server/common/helpers/redis-client.js'
- */

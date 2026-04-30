@@ -3,6 +3,11 @@ import { config, isProductionEnvironment } from '#config/config.js'
 import { getTraceId } from '@defra/hapi-tracing'
 
 /**
+ * @import { Options } from 'hapi-pino'
+ * @import { LoggerOptions } from 'pino'
+ */
+
+/**
  * @typedef {Error & {isBoom: true, output: {statusCode: number, payload: object}, data?: object}} BoomError
  */
 
@@ -82,8 +87,3 @@ export const loggerOptions = {
     return mixinValues
   }
 }
-
-/**
- * @import { Options } from 'hapi-pino'
- * @import { LoggerOptions } from 'pino'
- */
