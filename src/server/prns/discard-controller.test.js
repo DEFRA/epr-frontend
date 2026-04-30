@@ -508,6 +508,7 @@ describe('#discardController', () => {
             code: 'prn_discard_failed',
             id: expect.any(String),
             message: 'Failed to discard PRN',
+            stack_trace: expect.any(String),
             type: 'Internal Server Error'
           },
           event: {

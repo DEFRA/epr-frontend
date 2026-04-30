@@ -619,6 +619,7 @@ describe('#postCreatePrnController', () => {
             code: 'prn_create_failed',
             id: expect.any(String),
             message: 'Failed to create PRN',
+            stack_trace: expect.any(String),
             type: 'Internal Server Error'
           },
           event: {

@@ -1579,6 +1579,7 @@ describe('#viewController', () => {
             code: 'prn_confirm_failed',
             id: expect.any(String),
             message: 'Failed to confirm PRN',
+            stack_trace: expect.any(String),
             type: 'Internal Server Error'
           },
           event: {

@@ -320,6 +320,7 @@ describe('#cancelController', () => {
             code: 'prn_cancel_failed',
             id: expect.any(String),
             message: 'Failed to cancel PRN',
+            stack_trace: expect.any(String),
             type: 'Internal Server Error'
           },
           event: {

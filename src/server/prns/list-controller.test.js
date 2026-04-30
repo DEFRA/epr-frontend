@@ -1011,6 +1011,7 @@ describe('#listPrnsController', () => {
             code: 'accreditation_id_mismatch',
             id: expect.any(String),
             message: 'Accreditation ID mismatch',
+            stack_trace: expect.any(String),
             type: 'Not Found'
           },
           event: {
@@ -1045,6 +1046,7 @@ describe('#listPrnsController', () => {
             code: 'not_accredited',
             id: expect.any(String),
             message: 'Not accredited for this registration',
+            stack_trace: expect.any(String),
             type: 'Not Found'
           },
           event: {

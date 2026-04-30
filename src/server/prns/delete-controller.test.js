@@ -301,6 +301,7 @@ describe('#deleteController', () => {
             code: 'prn_delete_failed',
             id: expect.any(String),
             message: 'Failed to delete PRN',
+            stack_trace: expect.any(String),
             type: 'Internal Server Error'
           },
           event: {

@@ -47,10 +47,10 @@ export const boomErrorLogger = {
             : loggingEventActions.requestFailure
 
           // Boom messages are PII-safe by convention. We do not read
-          // boom.output.payload (Joi validation echoes input), boom.data
-          // (arbitrary developer-attached payload), or boom.stack (the first
-          // line of a stack trace echoes the error message, which can leak
-          // PII when an upstream Error was constructed from user input).
+          // boom.output.payload (Joi validation echoes input) or boom.data
+          // (arbitrary developer-attached payload). boom.stack is included
+          // here so non-prod debugging has frame info; the logger-options
+          // formatter strips error.stack_trace when cdpEnvironment is prod.
           //
           // Helpers may enrich a Boom with `code` (semantic classifier) and
           // `event` fields (action/reason/reference) for indexed search — see
@@ -61,6 +61,7 @@ export const boomErrorLogger = {
               code: boom.code ?? String(statusCode),
               id: request.info.id,
               message: boom.message,
+              stack_trace: boom.stack,
               type: boom.output.payload.error
             },
             event: {
