@@ -7,8 +7,8 @@ import {
 } from './delete-controller.js'
 import { detailController } from './detail-controller.js'
 import {
-  freePernGetController,
-  freePernPostController
+  exporterFreePernGetController,
+  exporterFreePernPostController
 } from './exporter/free-perns-controller.js'
 import {
   prnSummaryDispatchGetController,
@@ -81,12 +81,12 @@ export const reports = {
           path: `${periodPath}/prn-summary`
         },
         {
-          ...freePernGetController,
+          ...exporterFreePernGetController,
           method: 'GET',
           path: `${periodPath}/free-perns`
         },
         {
-          ...freePernPostController,
+          ...exporterFreePernPostController,
           method: 'POST',
           path: `${periodPath}/free-perns`
         },
