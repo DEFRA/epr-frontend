@@ -331,6 +331,9 @@ config.validate({ allowed: 'strict' })
 
 export const isReportsEnabled = () => config.get('featureFlags.reports')
 
+export const isProductionEnvironment = () =>
+  config.get('cdpEnvironment') === 'prod'
+
 /**
  * @import { Schema, SchemaObj } from 'convict'
  * @import { RedisConfig } from '#server/common/helpers/redis-client.js'

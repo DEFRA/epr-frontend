@@ -1,24 +1,7 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest'
-import { loggerOptions } from './logger-options.js'
+import { describe, test, expect, afterEach } from 'vitest'
 
-vi.mock(import('#config/config.js'), () => ({
-  config: {
-    get: vi.fn((key) => {
-      const values = {
-        log: {
-          enabled: true,
-          level: 'info',
-          format: 'pino-pretty',
-          redact: []
-        },
-        serviceName: 'test-service',
-        serviceVersion: '1.0.0',
-        cdpEnvironment: 'test'
-      }
-      return values[key]
-    })
-  }
-}))
+import { loggerOptions } from './logger-options.js'
+import { config } from '#config/config.js'
 
 describe('loggerOptions.serializers.err', () => {
   const { err: errorSerializer } = loggerOptions.serializers
@@ -103,33 +86,13 @@ describe('loggerOptions.serializers.err', () => {
 })
 
 describe('loggerOptions in production environment', () => {
-  beforeEach(() => {
-    vi.resetModules()
+  afterEach(() => {
+    config.reset('cdpEnvironment')
   })
 
-  test('excludes Boom error details in prod environment', async () => {
-    vi.doMock(import('#config/config.js'), () => ({
-      config: {
-        get: vi.fn((key) => {
-          const values = {
-            log: {
-              enabled: true,
-              level: 'info',
-              format: 'ecs',
-              redact: []
-            },
-            serviceName: 'test-service',
-            serviceVersion: '1.0.0',
-            cdpEnvironment: 'prod'
-          }
-          return values[key]
-        })
-      }
-    }))
-
-    const { loggerOptions: prodLoggerOptions } =
-      await import('./logger-options.js')
-    const { err: errorSerializer } = prodLoggerOptions.serializers
+  test('excludes Boom error details in prod environment', () => {
+    config.set('cdpEnvironment', 'prod')
+    const { err: errorSerializer } = loggerOptions.serializers
 
     const boomError = new Error('Validation failed')
     boomError.isBoom = true
