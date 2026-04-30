@@ -1,6 +1,11 @@
 import { ecsFormat } from '@elastic/ecs-pino-format'
-import { config } from '#config/config.js'
+import { config, isProductionEnvironment } from '#config/config.js'
 import { getTraceId } from '@defra/hapi-tracing'
+
+/**
+ * @import { Options } from 'hapi-pino'
+ * @import { LoggerOptions } from 'pino'
+ */
 
 /**
  * @typedef {Error & {isBoom: true, output: {statusCode: number, payload: object}, data?: object}} BoomError
@@ -9,8 +14,6 @@ import { getTraceId } from '@defra/hapi-tracing'
 const logConfig = config.get('log')
 const serviceName = config.get('serviceName')
 const serviceVersion = config.get('serviceVersion')
-const cdpEnvironment = config.get('cdpEnvironment')
-const isProductionEnvironment = cdpEnvironment === 'prod'
 
 /**
  * @type {{ecs: Omit<LoggerOptions, "mixin"|"transport">, "pino-pretty": {transport: {target: string}}}}
@@ -55,7 +58,7 @@ export const loggerOptions = {
 
       // Include Boom error details for better debugging (non-prod only)
       // @ts-expect-error - check for Boom error before casting
-      if (!isProductionEnvironment && err.isBoom && err.output) {
+      if (!isProductionEnvironment() && err.isBoom && err.output) {
         /** @type {BoomError} */
         const boomErr = /** @type {BoomError} */ (err)
         errorObj.statusCode = boomErr.output.statusCode
@@ -84,8 +87,3 @@ export const loggerOptions = {
     return mixinValues
   }
 }
-
-/**
- * @import { Options } from 'hapi-pino'
- * @import { LoggerOptions } from 'pino'
- */
