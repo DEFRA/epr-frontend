@@ -40,7 +40,7 @@ export const viewController = {
 
     if (prnDraft?.id === prnId) {
       // Creation flow - show check page with draft data
-      return handleDraftView(request, h, {
+      return handleDraftView(h, {
         organisationId,
         registrationId,
         accreditationId,
@@ -167,7 +167,6 @@ export const viewPostController = {
 
 /**
  * Handle viewing a draft PRN (creation flow)
- * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  * @param {{
  *   organisationId: string,
@@ -179,7 +178,6 @@ export const viewPostController = {
  * }} params
  */
 async function handleDraftView(
-  request,
   h,
   {
     organisationId,

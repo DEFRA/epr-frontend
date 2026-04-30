@@ -271,7 +271,6 @@ const getStatusData = async (
     }))
 
   if (freshDataMap !== undefined && summaryLogId in freshDataMap) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [summaryLogId]: _, ...remainingMap } = freshDataMap
     request.yar.set(sessionNames.summaryLogs, {
       ...summaryLogsSession,

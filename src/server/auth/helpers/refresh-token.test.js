@@ -8,7 +8,7 @@ import { describe, expect, vi } from 'vitest'
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#config/config.js'))
 vi.mock(import('@defra/hapi-tracing'), () => ({
-  withTraceId: vi.fn((headerName, headers = {}) => headers),
+  withTraceId: vi.fn((_headerName, headers = {}) => headers),
   tracing: { plugin: {} }
 }))
 
