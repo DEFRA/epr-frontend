@@ -296,7 +296,7 @@ async function getWasteBalanceMap(
   try {
     return await fetchWasteBalances(organisationId, accreditationIds, idToken)
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch waste balances')
+    logger.error({ message: 'Failed to fetch waste balances', err: error })
     return {}
   }
 }
