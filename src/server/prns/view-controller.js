@@ -98,14 +98,14 @@ export const viewPostController = {
 
       if (prnDraft.tonnage > availableAmount) {
         // Tonnage exceeds available balance - cancel draft and redirect with error
-        request.logger.warn(
-          {
-            tonnage: prnDraft.tonnage,
-            availableAmount,
-            prnId
-          },
-          'PRN tonnage exceeds available waste balance'
-        )
+        request.logger.warn({
+          message: 'PRN tonnage exceeds available waste balance',
+          event: {
+            action: 'prn_tonnage_exceeds_balance',
+            reference: prnId,
+            reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
+          }
+        })
 
         await updatePrnStatus(
           organisationId,

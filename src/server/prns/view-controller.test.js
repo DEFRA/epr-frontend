@@ -1674,6 +1674,15 @@ describe('#viewController', () => {
           { status: 'discarded' },
           mockCredentials.idToken
         )
+
+        expect(server.loggerMocks.warn).toHaveBeenCalledWith({
+          message: 'PRN tonnage exceeds available waste balance',
+          event: {
+            action: 'prn_tonnage_exceeds_balance',
+            reference: prnId,
+            reason: 'tonnage=100 availableAmount=50'
+          }
+        })
       })
 
       it('proceeds when tonnage is within available waste balance', async ({
