@@ -117,6 +117,27 @@ describe('#summaryLogUploadProgressController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
+  it('should log render-progress events with canonical structural shape', async ({
+    server
+  }) => {
+    await server.inject({ method: 'GET', url, auth: mockAuth })
+
+    expect(server.loggerMocks.info).toHaveBeenCalledWith({
+      message: 'Rendering summary log progress page',
+      event: {
+        action: 'summary_log_progress_render_start',
+        reference: summaryLogId
+      }
+    })
+    expect(server.loggerMocks.info).toHaveBeenCalledWith({
+      message: 'Rendering summary log progress page',
+      event: {
+        action: 'summary_log_progress_render_complete',
+        reference: summaryLogId
+      }
+    })
+  })
+
   describe('processing states', () => {
     it('status: preprocessing - should show processing message and poll', async ({
       server
