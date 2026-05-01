@@ -11,13 +11,17 @@ import { loggerOptions } from '#server/common/helpers/logging/logger-options.js'
  */
 
 /**
+ * @typedef {(obj: IndexedLogProperties) => void} LogMethod
+ */
+
+/**
  * @typedef {object} TypedLogger
- * @property {(obj: IndexedLogProperties, msg?: string, ...args: unknown[]) => void} info
- * @property {(obj: IndexedLogProperties, msg?: string, ...args: unknown[]) => void} error
- * @property {(obj: IndexedLogProperties, msg?: string, ...args: unknown[]) => void} warn
- * @property {(obj: IndexedLogProperties, msg?: string, ...args: unknown[]) => void} debug
- * @property {(obj: IndexedLogProperties, msg?: string, ...args: unknown[]) => void} trace
- * @property {(obj: IndexedLogProperties, msg?: string, ...args: unknown[]) => void} fatal
+ * @property {LogMethod} info
+ * @property {LogMethod} error
+ * @property {LogMethod} warn
+ * @property {LogMethod} debug
+ * @property {LogMethod} trace
+ * @property {LogMethod} fatal
  */
 
 /**
