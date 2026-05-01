@@ -68,10 +68,13 @@ export const prnSummaryDispatchPostController = {
       ? reprocessorPrnSummaryPostController
       : prnSummaryPostController
 
-    request.logger.info(
-      { payload: request.payload, reprocessor },
-      'prn-summary dispatch POST'
-    )
+    request.logger.info({
+      message: 'prn-summary dispatch POST',
+      event: {
+        action: 'prn_summary_dispatch_post',
+        reason: `reprocessor=${reprocessor}`
+      }
+    })
 
     const { error, value } = controller.options.validate.payload.validate(
       request.payload,
@@ -79,10 +82,13 @@ export const prnSummaryDispatchPostController = {
     )
 
     if (error) {
-      request.logger.error(
-        { validationError: error.message, payload: request.payload },
-        'prn-summary dispatch validation failed'
-      )
+      request.logger.error({
+        message: 'prn-summary dispatch validation failed',
+        event: {
+          action: 'prn_summary_dispatch_validation_failed',
+          reason: error.message
+        }
+      })
       return controller.options.validate.failAction(request, h, error)
     }
 
