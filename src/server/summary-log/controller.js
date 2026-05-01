@@ -640,7 +640,7 @@ const getWasteBalanceData = async (
     if (error.isBoom) {
       throw error
     }
-    logger.error({ err: error }, 'Failed to fetch waste balance data')
+    logger.error({ message: 'Failed to fetch waste balance data', err: error })
     return {}
   }
 }

@@ -1047,6 +1047,7 @@ describe('#summaryLogUploadProgressController', () => {
         server
       }) => {
         const accreditationId = 'accreditation-id-456'
+        const fetchError = new Error('Waste balance service unavailable')
 
         fetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
@@ -1062,9 +1063,7 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        fetchWasteBalances.mockRejectedValueOnce(
-          new Error('Waste balance service unavailable')
-        )
+        fetchWasteBalances.mockRejectedValueOnce(fetchError)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1075,6 +1074,11 @@ describe('#summaryLogUploadProgressController', () => {
         expect(statusCode).toBe(statusCodes.ok)
         expect(result).toContain('Summary log uploaded')
         expect(result).not.toContain('Your updated waste balance')
+
+        expect(server.loggerMocks.error).toHaveBeenCalledWith({
+          message: 'Failed to fetch waste balance data',
+          err: fetchError
+        })
       })
 
       it('status: submitted - should display zero waste balance correctly', async ({
