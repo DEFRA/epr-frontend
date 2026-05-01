@@ -57,9 +57,9 @@ describe(secureContext, () => {
     })
 
     test('secureContext decorator should not be available', () => {
-      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith(
-        'Custom secure context is disabled'
-      )
+      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith({
+        message: 'Custom secure context is disabled'
+      })
     })
 
     test('logger should give us disabled message', () => {
@@ -121,9 +121,9 @@ describe(secureContext, () => {
     })
 
     test('should log about not finding any TRUSTSTORE_ certs', () => {
-      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith(
-        'Could not find any TRUSTSTORE_ certificates'
-      )
+      expect(server.logger.info).toHaveBeenCalledExactlyOnceWith({
+        message: 'Could not find any TRUSTSTORE_ certificates'
+      })
     })
   })
 })

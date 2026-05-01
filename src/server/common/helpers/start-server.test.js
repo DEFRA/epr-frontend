@@ -60,10 +60,9 @@ describe('#startServer', () => {
       expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
         message: 'Using Catbox Memory session cache'
       })
-      expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
-        1,
-        'Custom secure context is disabled'
-      )
+      expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(1, {
+        message: 'Custom secure context is disabled'
+      })
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(2, {
         message: 'Server started successfully'
       })
