@@ -65,17 +65,15 @@ export const summaryLogUploadController = {
         backUrl
       })
     } catch (err) {
-      request.logger.error(
-        {
-          err,
-          event: {
-            category: 'upload',
-            action: 'summary-log-upload-failed',
-            reference: `organisationId=${organisationId}, registrationId=${registrationId}`
-          }
-        },
-        'Failed to initiate summary log upload'
-      )
+      request.logger.error({
+        message: 'Failed to initiate summary log upload',
+        err,
+        event: {
+          category: 'upload',
+          action: 'summary-log-upload-failed',
+          reference: `organisationId=${organisationId}, registrationId=${registrationId}`
+        }
+      })
 
       return h.view('error/index', {
         pageTitle: localise('summary-log-upload:errorPageTitle'),
