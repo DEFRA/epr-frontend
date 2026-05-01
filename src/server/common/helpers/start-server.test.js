@@ -64,15 +64,13 @@ describe('#startServer', () => {
         1,
         'Custom secure context is disabled'
       )
-      expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
-        2,
-        'Server started successfully'
-      )
+      expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(2, {
+        message: 'Server started successfully'
+      })
       // eslint-disable-next-line vitest/max-expects
-      expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(
-        3,
-        'Access your frontend on http://localhost:3097'
-      )
+      expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(3, {
+        message: 'Access your frontend on http://localhost:3097'
+      })
     })
   })
 
@@ -84,10 +82,10 @@ describe('#startServer', () => {
     it('should log failed startup message', async () => {
       await startServer()
 
-      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith(
-        { err: Error('Server failed to start') },
-        'Server failed to start :('
-      )
+      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith({
+        message: 'Server failed to start :(',
+        err: Error('Server failed to start')
+      })
     })
   })
 })
