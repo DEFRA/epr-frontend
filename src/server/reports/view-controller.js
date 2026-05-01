@@ -221,9 +221,6 @@ function buildWasteExported(exportActivity, isExporter, isAccredited) {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const viewGetController = {
   options: {
     validate: {

@@ -343,9 +343,6 @@ function getActiveSitesAndTitle({
   return { sites: [], tableTitle: '', shouldRenderTabs }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const controller = {
   /**
    * @param {HapiRequest & { params: OrganisationParams }} request

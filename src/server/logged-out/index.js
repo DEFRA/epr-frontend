@@ -3,7 +3,6 @@ import { controller } from './controller.js'
 /**
  * Sign out confirmation plugin
  * Registers the /logged-out route that displays confirmation after logout
- * @satisfies {ServerRegisterPluginObject<void>}
  */
 const loggedOut = {
   plugin: {

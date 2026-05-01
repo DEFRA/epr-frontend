@@ -6,7 +6,6 @@ const sessionConfig = config.get('session')
 
 /**
  * Set options.maxCookieSize to 0 to always use server-side storage
- * @satisfies {ServerRegisterPluginObject<YarOptions>}
  */
 export const sessionCache = {
   plugin: yar,

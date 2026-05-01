@@ -107,9 +107,6 @@ const buildWasteSentOnViewData = (wasteSent) => ({
   totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
 })
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const submitGetController = {
   options: {
     validate: {
@@ -326,9 +323,6 @@ function buildViewData({
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const submitPostController = {
   options: {
     validate: {

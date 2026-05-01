@@ -7,9 +7,6 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const submittedController = {
   options: {
     validate: {

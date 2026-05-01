@@ -10,9 +10,6 @@ import { capitalize } from 'lodash-es'
  * @typedef {{ organisationId: string, registrationId: string }} RegistrationParams
  */
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const controller = {
   /**
    * @param {HapiRequest & { params: RegistrationParams }} request

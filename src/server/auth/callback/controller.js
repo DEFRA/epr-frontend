@@ -29,7 +29,6 @@ const withWelsh = (path) => [path, `/cy${path}`]
  * Auth callback controller
  * Handles the OAuth2/OIDC callback from Defra ID
  * Creates user session and sets session cookie
- * @satisfies {Partial<ServerRoute>}
  */
 const controller = {
   options: {

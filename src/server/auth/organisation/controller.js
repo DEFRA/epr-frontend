@@ -1,8 +1,5 @@
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 const controller = {
   options: {
     auth: 'defra-id'

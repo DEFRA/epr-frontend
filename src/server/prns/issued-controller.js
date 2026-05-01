@@ -3,9 +3,6 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const issuedController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

@@ -9,9 +9,6 @@ import { createReport } from './helpers/create-report.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const createController = {
   options: {
     validate: {

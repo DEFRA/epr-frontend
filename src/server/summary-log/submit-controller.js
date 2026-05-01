@@ -5,9 +5,6 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const submitSummaryLogController = {
   /**
    * @param {HapiRequest & { params: SummaryLogParams }} request

@@ -49,14 +49,10 @@
 
 /**
  * Hapi server with our application state and the CDP-compliant typed logger.
- * Intersecting `logger` with `TypedLogger` advertises the
- * `IndexedLogProperties` shape alongside the broader `pino.Logger` that
- * hapi-pino contributes, so `server.logger.*` call-sites get the CDP
- * Elasticsearch allow-list surfaced in IDE hints. It does not hard-enforce
- * the allow-list — pino's `(obj: object, msg?) => void` overload remains
- * reachable through the intersection. Use `createLogger()` directly where
- * strict narrowing is required.
- * @typedef {Omit<Server, 'app'> & {
+ * Omitting the base `logger` lets our TypedLogger fully replace hapi-pino's
+ * augmented `pino.Logger` instead of intersecting with it — calls like
+ * `server.logger.warn({ ...non-allowlisted fields })` then fail tsc.
+ * @typedef {Omit<Server, 'app' | 'logger'> & {
  *   app: AppState,
  *   logger: TypedLogger
  * }} HapiServer
@@ -89,13 +85,10 @@
  *   - `state.userSession` narrowed to the cookie state written by the
  *     session strategy
  *   - `yar.flash` extended with the flash keys the app uses
- *   - `logger` intersected with `TypedLogger` so object-form log calls get
- *     the CDP `IndexedLogProperties` shape advertised in IDE hints without
- *     losing the rest of the pino logger surface hapi-pino contributes.
- *     The intersection does not hard-enforce the allow-list — pino's
- *     `(obj: object, msg?) => void` overload remains reachable. Use
- *     `createLogger()` directly where strict narrowing is required.
- * @typedef {Omit<Request, 'auth' | 'server' | 'state' | 'yar'> & {
+ *   - `logger` replaces hapi-pino's augmented `pino.Logger` with our
+ *     TypedLogger; calls like `request.logger.warn({ ...non-allowlisted
+ *     fields })` then fail tsc.
+ * @typedef {Omit<Request, 'auth' | 'logger' | 'server' | 'state' | 'yar'> & {
  *   auth: RequestAuth,
  *   logger: TypedLogger,
  *   server: HapiServer,

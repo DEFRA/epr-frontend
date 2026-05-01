@@ -170,9 +170,6 @@ function buildViewData(
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const detailController = {
   options: {
     validate: {

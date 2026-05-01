@@ -4,9 +4,6 @@ import {
   fetchPrnContext
 } from './helpers/fetch-prn-context.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const cancelledController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

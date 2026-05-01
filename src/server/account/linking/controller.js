@@ -3,9 +3,6 @@ import { buildLinkingViewData } from './view-data.js'
 
 export const ACCOUNT_LINKING_PATH = '/account/linking'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const controller = {
   options: {
     pre: [provideUserOrganisations]

@@ -1,9 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const issueController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

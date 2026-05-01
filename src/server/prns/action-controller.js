@@ -12,9 +12,6 @@ import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const actionController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

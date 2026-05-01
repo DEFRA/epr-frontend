@@ -108,9 +108,6 @@ async function buildViewData(request, options = {}) {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const supportingInformationGetController = {
   options: {
     validate: {
@@ -128,9 +125,6 @@ export const supportingInformationGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const supportingInformationPostController = {
   options: {
     validate: {

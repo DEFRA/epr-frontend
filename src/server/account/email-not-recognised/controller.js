@@ -1,8 +1,5 @@
 export const EMAIL_NOT_RECOGNISED_PATH = '/email-not-recognised'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const controller = {
   /**
    * @param {HapiRequest} request

@@ -11,9 +11,6 @@ import {
 } from './helpers/fetch-prn-context.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const deleteGetController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -41,9 +38,6 @@ export const deleteGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const deletePostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

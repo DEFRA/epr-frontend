@@ -7,9 +7,6 @@ import {
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const discardGetController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -51,9 +48,6 @@ export const discardGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const discardPostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

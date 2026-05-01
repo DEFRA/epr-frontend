@@ -1,8 +1,5 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const createdController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

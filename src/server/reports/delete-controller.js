@@ -42,9 +42,6 @@ function resolveBackUrl(request) {
   return refererUrl.pathname + refererUrl.search
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const deleteGetController = {
   options: {
     validate: {
@@ -83,9 +80,6 @@ export const deleteGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const deletePostController = {
   options: {
     validate: {

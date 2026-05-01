@@ -19,9 +19,6 @@ function buildInsufficientBalanceError(localise) {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const controller = {
   /**
    * @param {HapiRequest & { params: PrnListParams }} request

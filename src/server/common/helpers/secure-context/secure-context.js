@@ -5,7 +5,6 @@ import { getTrustStoreCerts } from '#server/common/helpers/secure-context/get-tr
 
 /**
  * Creates a new secure context loaded from Base64 encoded certs
- * @satisfies {ServerRegisterPluginObject<void>}
  */
 export const secureContext = {
   plugin: {

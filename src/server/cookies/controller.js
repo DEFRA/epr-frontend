@@ -1,6 +1,3 @@
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const controller = {
   /**
    * @param {HapiRequest} request

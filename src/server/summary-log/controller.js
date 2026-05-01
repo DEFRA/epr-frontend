@@ -645,9 +645,6 @@ const getWasteBalanceData = async (
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const summaryLogUploadProgressController = {
   /**
    * @param {HapiRequest & { params: SummaryLogParams }} request

@@ -5,9 +5,6 @@ import { controller, redirectToStart } from './controller.js'
  * These routes are registered in src/server/router.js.
  */
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const home = {
   plugin: {
     name: 'home',

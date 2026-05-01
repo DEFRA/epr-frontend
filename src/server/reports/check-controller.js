@@ -175,9 +175,6 @@ function buildCheckViewData({
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const checkGetController = {
   options: {
     validate: {
@@ -239,9 +236,6 @@ export const checkGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const checkPostController = {
   options: {
     validate: {

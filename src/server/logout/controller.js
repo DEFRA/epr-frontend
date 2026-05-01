@@ -12,7 +12,6 @@ import { metrics } from '#server/common/helpers/metrics/index.js'
 /**
  * Logout controller
  * Clears local session and redirects to Defra ID logout endpoint
- * @satisfies {Partial<ServerRoute>}
  */
 const logoutController = {
   /**

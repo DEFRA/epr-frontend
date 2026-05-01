@@ -1,8 +1,5 @@
 import { summaryLogUploadController } from '#server/summary-log-upload/controller.js'
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const summaryLogUpload = {
   plugin: {
     name: 'summary-log-upload',

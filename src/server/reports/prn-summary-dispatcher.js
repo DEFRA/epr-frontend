@@ -27,9 +27,6 @@ async function isReprocessor(request) {
   return isReprocessorRegistration(registration)
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const prnSummaryDispatchGetController = {
   options: {
     validate: {
@@ -54,7 +51,6 @@ export const prnSummaryDispatchGetController = {
  * Dispatches POST to the correct controller including payload validation.
  * Each controller defines its own schema with appropriate error messages,
  * so we validate manually rather than using Hapi's route-level validation.
- * @satisfies {Partial<ServerRoute>}
  */
 export const prnSummaryDispatchPostController = {
   options: {

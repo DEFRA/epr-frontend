@@ -1,7 +1,6 @@
 /**
  * Logged out confirmation controller
  * Displays confirmation page after user has been logged out
- * @satisfies {Partial<ServerRoute>}
  */
 
 const controller = {

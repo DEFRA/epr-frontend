@@ -67,7 +67,6 @@ export function createDataPageControllers({
   const getViewData = (request, options = {}) =>
     buildViewData(guardFn, pageFields, guardOptions, request, options)
 
-  /** @satisfies {Partial<ServerRoute>} */
   const getController = {
     options: {
       validate: {
@@ -102,7 +101,6 @@ export function createDataPageControllers({
     )
   }
 
-  /** @satisfies {Partial<ServerRoute>} */
   const postController = {
     options: {
       validate: {

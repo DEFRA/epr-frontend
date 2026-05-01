@@ -27,9 +27,6 @@ const filterPrnsByStatuses = (prns, statuses) =>
       status: prn.status
     }))
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const listController = {
   /**
    * @param {HapiRequest & { params: PrnListParams }} request

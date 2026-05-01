@@ -76,9 +76,6 @@ function buildTableRows({
   })
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const listController = {
   /**
    * @param {HapiRequest & {

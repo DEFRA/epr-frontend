@@ -9,9 +9,6 @@ import { buildLinkingViewData } from './view-data.js'
  * @typedef {{ organisationId: string }} LinkingPayload
  */
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const controller = {
   options: {
     pre: [provideUserOrganisations],

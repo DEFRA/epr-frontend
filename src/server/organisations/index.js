@@ -6,9 +6,6 @@ import { errorController } from './error-controller.js'
  * These routes are registered in src/server/router.js.
  */
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const organisations = {
   plugin: {
     name: 'organisations',

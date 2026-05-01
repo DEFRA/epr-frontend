@@ -20,9 +20,6 @@ import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const viewController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -62,9 +59,6 @@ export const viewController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const viewPostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request

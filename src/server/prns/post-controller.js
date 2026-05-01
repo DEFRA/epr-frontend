@@ -192,9 +192,6 @@ async function handleInvalidRecipient(request, h, organisations) {
   })
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
 export const postController = {
   options: {
     validate: {
