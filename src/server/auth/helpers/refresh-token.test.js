@@ -48,17 +48,15 @@ describe('refresh token', () => {
     await refreshIdToken(mockRequest)
 
     expect(getUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
-    expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
-      {
-        event: {
-          action: 'token-refresh-oidc-call',
-          outcome: 'success',
-          kind: 'event'
-        },
-        http: { response: { status_code: 200 } }
+    expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith({
+      message: 'OIDC token endpoint call complete',
+      event: {
+        action: 'token-refresh-oidc-call',
+        outcome: 'success',
+        kind: 'event'
       },
-      'OIDC token endpoint call complete'
-    )
+      http: { response: { status_code: 200 } }
+    })
 
     const params = new URLSearchParams(await capturedRequest.text())
     expect(Object.fromEntries(params)).toStrictEqual({
