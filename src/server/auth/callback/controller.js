@@ -7,8 +7,8 @@ import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID, createHash } from 'node:crypto'
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
 /**
@@ -29,6 +29,7 @@ const withWelsh = (path) => [path, `/cy${path}`]
  * Auth callback controller
  * Handles the OAuth2/OIDC callback from Defra ID
  * Creates user session and sets session cookie
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const controller = {
   options: {

@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 
 /**
  * A generic health-check endpoint. Used by the platform to check if the service is up and handling requests.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const healthController = {
   handler(_request, h) {
@@ -10,5 +11,5 @@ export const healthController = {
 }
 
 /**
- * @import { ServerRoute } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

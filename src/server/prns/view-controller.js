@@ -20,6 +20,7 @@ import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -59,6 +60,7 @@ export const viewController = {
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewPostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -481,9 +483,9 @@ function buildExistingPrnDetailRows({
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { TFunction } from 'i18next'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'

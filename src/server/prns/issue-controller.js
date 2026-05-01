@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issueController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -48,7 +49,7 @@ export const issueController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

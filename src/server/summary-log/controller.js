@@ -645,6 +645,7 @@ const getWasteBalanceData = async (
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadProgressController = {
   /**
    * @param {HapiRequest & { params: SummaryLogParams }} request
@@ -729,6 +730,6 @@ export const summaryLogUploadProgressController = {
 }
 
 /**
- * @import { ResponseObject, ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

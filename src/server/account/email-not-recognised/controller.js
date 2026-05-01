@@ -1,5 +1,6 @@
 export const EMAIL_NOT_RECOGNISED_PATH = '/email-not-recognised'
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
   /**
    * @param {HapiRequest} request
@@ -13,6 +14,6 @@ export const controller = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

@@ -192,6 +192,7 @@ async function handleInvalidRecipient(request, h, organisations) {
   })
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const postController = {
   options: {
     validate: {
@@ -321,8 +322,8 @@ export const postController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
  * @import { CreatePrnResponse } from './helpers/create-prn.js'
  * @import { PrnListParams } from './helpers/session-types.js'

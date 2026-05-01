@@ -285,7 +285,7 @@ function createTonnagePostHandler(
  */
 
 /**
- * @import { ResponseObject, ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './period-params-schema.js'
  */

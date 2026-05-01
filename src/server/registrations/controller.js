@@ -10,6 +10,7 @@ import { capitalize } from 'lodash-es'
  * @typedef {{ organisationId: string, registrationId: string }} RegistrationParams
  */
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
   /**
    * @param {HapiRequest & { params: RegistrationParams }} request
@@ -247,9 +248,9 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */

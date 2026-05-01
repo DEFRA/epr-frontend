@@ -3,6 +3,7 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const issuedController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -88,7 +89,7 @@ export const issuedController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnDetailParams, PrnIssuedSession } from './helpers/session-types.js'
  */

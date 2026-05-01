@@ -24,9 +24,9 @@ import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { CadenceValue } from './constants.js'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
  * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'
@@ -107,6 +107,7 @@ const buildWasteSentOnViewData = (wasteSent) => ({
   totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
 })
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const submitGetController = {
   options: {
     validate: {
@@ -323,6 +324,7 @@ function buildViewData({
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const submitPostController = {
   options: {
     validate: {

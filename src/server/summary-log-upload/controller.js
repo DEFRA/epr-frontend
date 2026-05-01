@@ -3,6 +3,7 @@ import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadController = {
   /**
    * @param {HapiRequest & { params: { organisationId: string, registrationId: string } }} request
@@ -82,6 +83,6 @@ export const summaryLogUploadController = {
 }
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

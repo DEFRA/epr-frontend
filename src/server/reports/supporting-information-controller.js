@@ -108,6 +108,7 @@ async function buildViewData(request, options = {}) {
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const supportingInformationGetController = {
   options: {
     validate: {
@@ -125,6 +126,7 @@ export const supportingInformationGetController = {
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const supportingInformationPostController = {
   options: {
     validate: {
@@ -187,7 +189,7 @@ export const supportingInformationPostController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

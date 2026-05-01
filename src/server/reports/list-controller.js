@@ -76,6 +76,7 @@ function buildTableRows({
   })
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const listController = {
   /**
    * @param {HapiRequest & {
@@ -149,7 +150,7 @@ export const listController = {
 }
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { CadenceValue } from './constants.js'
  */

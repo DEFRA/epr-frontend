@@ -5,13 +5,14 @@ import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */
 
 /**
  * Logout controller
  * Clears local session and redirects to Defra ID logout endpoint
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 const logoutController = {
   /**

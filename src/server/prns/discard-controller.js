@@ -7,6 +7,7 @@ import {
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const discardGetController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -48,6 +49,7 @@ export const discardGetController = {
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const discardPostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -100,7 +102,7 @@ export const discardPostController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

@@ -175,6 +175,7 @@ function buildCheckViewData({
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const checkGetController = {
   options: {
     validate: {
@@ -236,6 +237,7 @@ export const checkGetController = {
   }
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const checkPostController = {
   options: {
     validate: {
@@ -277,8 +279,8 @@ export const checkPostController = {
 }
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'
  * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'

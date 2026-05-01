@@ -9,6 +9,7 @@ import { buildLinkingViewData } from './view-data.js'
  * @typedef {{ organisationId: string }} LinkingPayload
  */
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
   options: {
     pre: [provideUserOrganisations],
@@ -60,6 +61,6 @@ export const controller = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

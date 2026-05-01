@@ -1,5 +1,5 @@
 /**
- * @import {Request, Server} from '@hapi/hapi'
+ * @import {Request, ResponseToolkit, Server} from '@hapi/hapi'
  * @import {Yar} from '@hapi/yar'
  * @import {Policy, PolicyOptions} from '@hapi/catbox'
  * @import {TFunction, i18n} from 'i18next'
@@ -101,6 +101,44 @@
  *   metrics: () => Metrics,
  *   cookieAuth: CookieAuth
  * }} HapiRequest
+ */
+
+/**
+ * Mirror of the bits of `@hapi/hapi`'s `ServerRoute` we use, parameterised
+ * over the request type so handlers and `pre` methods type-check against
+ * our typed request rather than hapi's plain `Request<ReqRefDefaults>`.
+ *
+ * `handler` and `pre[].method` are declared in method-shorthand style so
+ * their parameter types stay bivariant under `strictFunctionTypes` —
+ * controllers may narrow `request` (e.g. `HapiRequest & { params: ... }`)
+ * without breaking the satisfies check.
+ * @template {HapiRequest} TReq
+ * @typedef {{
+ *   method?: string | string[],
+ *   path?: string,
+ *   options?: object,
+ *   handler?(request: TReq, h: ResponseToolkit): unknown,
+ *   pre?: { method(request: TReq): unknown, assign: string }[]
+ * }} HapiServerRoute
+ */
+
+/**
+ * Mirror of `@hapi/hapi`'s plugin shape, parameterised over the options
+ * payload. `register` receives `HapiServer` so `server.logger.X({ ... })`
+ * calls inside `register` get the TypedLogger surface.
+ * @template [TOptions=void]
+ * @typedef {object} HapiPlugin
+ * @property {string} name
+ * @property {string} [version]
+ * @property {(server: HapiServer, options: TOptions) => Promise<void> | void} register
+ */
+
+/**
+ * @template [TOptions=void]
+ * @typedef {{
+ *   plugin: HapiPlugin<TOptions>,
+ *   options?: TOptions
+ * }} HapiServerRegisterPluginObject
  */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import

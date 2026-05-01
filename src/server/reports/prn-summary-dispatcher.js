@@ -27,6 +27,7 @@ async function isReprocessor(request) {
   return isReprocessorRegistration(registration)
 }
 
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const prnSummaryDispatchGetController = {
   options: {
     validate: {
@@ -51,6 +52,7 @@ export const prnSummaryDispatchGetController = {
  * Dispatches POST to the correct controller including payload validation.
  * Each controller defines its own schema with appropriate error messages,
  * so we validate manually rather than using Hapi's route-level validation.
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const prnSummaryDispatchPostController = {
   options: {
@@ -98,8 +100,8 @@ export const prnSummaryDispatchPostController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { DataPagePayload } from './helpers/create-data-page-controllers.js'
  */
