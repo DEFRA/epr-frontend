@@ -107,18 +107,13 @@
  * Mirror of the bits of `@hapi/hapi`'s `ServerRoute` we use, parameterised
  * over the request type so handlers and `pre` methods type-check against
  * our typed request rather than hapi's plain `Request<ReqRefDefaults>`.
- *
- * `handler` and `pre[].method` are declared in method-shorthand style so
- * their parameter types stay bivariant under `strictFunctionTypes` —
- * controllers may narrow `request` (e.g. `HapiRequest & { params: ... }`)
- * without breaking the satisfies check.
  * @template {HapiRequest} TReq
  * @typedef {{
  *   method?: string | string[],
  *   path?: string,
  *   options?: object,
- *   handler?(request: TReq, h: ResponseToolkit): unknown,
- *   pre?: { method(request: TReq): unknown, assign: string }[]
+ *   handler?: (request: TReq, h: ResponseToolkit) => unknown,
+ *   pre?: { method: (request: TReq) => unknown, assign: string }[]
  * }} HapiServerRoute
  */
 
