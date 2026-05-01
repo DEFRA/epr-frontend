@@ -498,12 +498,14 @@ describe('#organisationController', () => {
     it('should handle waste balance fetch failure gracefully and show 0.00', async ({
       server
     }) => {
+      const fetchError = new Error('Waste balance service unavailable')
+
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(fixtureSingleReprocessing)
 
       vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockRejectedValue(
-        new Error('Waste balance service unavailable')
+        fetchError
       )
 
       const { result, statusCode } = await server.inject({
@@ -521,6 +523,11 @@ describe('#organisationController', () => {
         .get()
 
       expect(tableCells).toContain('0.00')
+
+      expect(server.loggerMocks.error).toHaveBeenCalledWith({
+        message: 'Failed to fetch waste balances',
+        err: fetchError
+      })
     })
 
     it('should redirect to logged-out when not authenticated', async ({

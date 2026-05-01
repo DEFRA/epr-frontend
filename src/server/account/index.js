@@ -7,9 +7,6 @@ import { controller as linkingPostController } from './linking/post-controller.j
  * These routes are registered in src/server/router.js.
  */
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const account = {
   plugin: {
     name: 'account',

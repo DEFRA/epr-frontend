@@ -14,6 +14,7 @@ import { secureContext } from '#server/common/helpers/secure-context/index.js'
 import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
 import { sessionCache } from '#server/common/helpers/session-cache/session-cache.js'
 import { userAgentProtection } from '#server/common/helpers/useragent-protection.js'
+import { boomErrorLogger } from '#server/plugins/boom-error-logger.js'
 import wasteOrganisationsFixture from '#server/common/helpers/waste-organisations/fixtures/in-memory.json' with { type: 'json' }
 import { createWasteOrganisationsPlugin } from '#server/common/helpers/waste-organisations/waste-organisations.plugin.js'
 import { metrics } from '@defra/cdp-metrics'
@@ -83,6 +84,7 @@ export async function createServer(options = {}) {
   const plugins = [
     metrics,
     requestLogger,
+    boomErrorLogger,
     requestTracing,
     secureContext,
     pulse,

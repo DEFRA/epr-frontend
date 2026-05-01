@@ -1,5 +1,8 @@
-import Boom from '@hapi/boom'
-
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import {
   buildPrnBasePath,
@@ -8,9 +11,7 @@ import {
 } from './helpers/fetch-prn-context.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelGetController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -39,9 +40,7 @@ export const cancelGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelPostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -82,19 +81,26 @@ export const cancelPostController = {
         `/organisations/${orgId}/registrations/${regId}/accreditations/${accId}/packaging-recycling-notes/${noteId}/cancelled`
       )
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to cancel PRN')
-
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to cancel PRN')
+      throw badImplementation(
+        'Failed to cancel PRN',
+        errorCodes.prnCancelFailed,
+        {
+          event: {
+            action: 'cancel_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

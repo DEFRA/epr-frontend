@@ -1573,6 +1573,24 @@ describe('#viewController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(server.loggerMocks.error).toHaveBeenCalledWith({
+          message: 'Failed to confirm PRN',
+          error: {
+            code: 'prn_confirm_failed',
+            id: expect.any(String),
+            message: 'Failed to confirm PRN',
+            stack_trace: expect.any(String),
+            type: 'Internal Server Error'
+          },
+          event: {
+            category: 'http',
+            action: 'confirm_prn',
+            kind: 'event',
+            outcome: 'failure',
+            reason: 'type=Error code=unknown'
+          },
+          http: { response: { status_code: 500 } }
+        })
       })
 
       it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {
@@ -1656,6 +1674,15 @@ describe('#viewController', () => {
           { status: 'discarded' },
           mockCredentials.idToken
         )
+
+        expect(server.loggerMocks.warn).toHaveBeenCalledWith({
+          message: 'PRN tonnage exceeds available waste balance',
+          event: {
+            action: 'prn_tonnage_exceeds_balance',
+            reference: prnId,
+            reason: 'tonnage=100 availableAmount=50'
+          }
+        })
       })
 
       it('proceeds when tonnage is within available waste balance', async ({

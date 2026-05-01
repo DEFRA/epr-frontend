@@ -64,10 +64,10 @@ describe('#index', () => {
     })
 
     test('should log error with message', () => {
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        { err: mockError },
-        'Unhandled rejection'
-      )
+      expect(mockLoggerError).toHaveBeenCalledWith({
+        message: 'Unhandled rejection',
+        err: mockError
+      })
     })
 
     test('should not log separate info message', () => {

@@ -1,7 +1,7 @@
 /**
  * Logged out confirmation controller
  * Displays confirmation page after user has been logged out
- * @satisfies {Partial<ServerRoute>}
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 
 const controller = {
@@ -26,6 +26,6 @@ const controller = {
 export { controller }
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

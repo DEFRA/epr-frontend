@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 
 import { withTraceId } from '@defra/hapi-tracing'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { classifierTail, internal } from './logging/cdp-boom.js'
 import { getTracingHeaderName } from './request-tracing.js'
 
 /** @import {RequestInit} from 'undici' */
@@ -48,6 +50,15 @@ export const fetchJson = async (url, options) => {
       throw error
     }
 
-    throw Boom.internal(`Failed to fetch from url: ${url}: ${error.message}`)
+    throw internal(
+      `Failed to fetch from url: ${url}`,
+      errorCodes.externalFetchFailed,
+      {
+        event: {
+          action: 'external_fetch',
+          reason: classifierTail(error)
+        }
+      }
+    )
   }
 }

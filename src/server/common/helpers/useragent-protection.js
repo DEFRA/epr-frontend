@@ -19,10 +19,14 @@ export const userAgentProtection = {
           0,
           MAX_USER_AGENT_LENGTH
         )
-        server.log(
-          ['security', 'user-agent'],
-          `Truncated User-Agent from ${userAgent.length} to ${MAX_USER_AGENT_LENGTH} chars`
-        )
+        server.logger.warn({
+          message: 'Truncated User-Agent',
+          event: {
+            action: 'user_agent_truncated',
+            category: 'security',
+            reason: `from=${userAgent.length} to=${MAX_USER_AGENT_LENGTH}`
+          }
+        })
       }
 
       return h.continue

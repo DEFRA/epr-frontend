@@ -1,6 +1,6 @@
-import Boom from '@hapi/boom'
-
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { badRequest } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchPackagingRecyclingNote } from './fetch-packaging-recycling-note.js'
 
 const SAFE_PATH_SEGMENT_PATTERN = /^[A-Za-z0-9._~-]+$/
@@ -16,7 +16,12 @@ function getSafePathSegment(value, fieldName) {
     value.length === 0 ||
     !SAFE_PATH_SEGMENT_PATTERN.test(value)
   ) {
-    throw Boom.badRequest(`Invalid ${fieldName}`)
+    throw badRequest(`Invalid ${fieldName}`, errorCodes.invalidPrnField, {
+      event: {
+        action: 'validate_path_segment',
+        reason: `field=${fieldName}`
+      }
+    })
   }
   return value
 }
@@ -54,7 +59,6 @@ async function fetchPrnContext(request) {
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     }),
     fetchPackagingRecyclingNote(

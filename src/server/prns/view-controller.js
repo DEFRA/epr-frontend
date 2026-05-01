@@ -1,6 +1,9 @@
-import Boom from '@hapi/boom'
-
 import { isNil } from '#server/common/helpers/is-nil.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -17,9 +20,7 @@ import { getStatusConfig } from './helpers/get-status-config.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -37,7 +38,7 @@ export const viewController = {
 
     if (prnDraft?.id === prnId) {
       // Creation flow - show check page with draft data
-      return handleDraftView(request, h, {
+      return handleDraftView(h, {
         organisationId,
         registrationId,
         accreditationId,
@@ -59,9 +60,7 @@ export const viewController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const viewPostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -95,14 +94,14 @@ export const viewPostController = {
 
       if (prnDraft.tonnage > availableAmount) {
         // Tonnage exceeds available balance - cancel draft and redirect with error
-        request.logger.warn(
-          {
-            tonnage: prnDraft.tonnage,
-            availableAmount,
-            prnId
-          },
-          'PRN tonnage exceeds available waste balance'
-        )
+        request.logger.warn({
+          message: 'PRN tonnage exceeds available waste balance',
+          event: {
+            action: 'prn_tonnage_exceeds_balance',
+            reference: prnId,
+            reason: `tonnage=${prnDraft.tonnage} availableAmount=${availableAmount}`
+          }
+        })
 
         await updatePrnStatus(
           organisationId,
@@ -144,20 +143,26 @@ export const viewPostController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${prnId}/created`
       )
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to update PRN status')
-
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to confirm PRN')
+      throw badImplementation(
+        'Failed to confirm PRN',
+        errorCodes.prnConfirmFailed,
+        {
+          event: {
+            action: 'confirm_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }
 
 /**
  * Handle viewing a draft PRN (creation flow)
- * @param {HapiRequest} request
  * @param {ResponseToolkit} h
  * @param {{
  *   organisationId: string,
@@ -169,7 +174,6 @@ export const viewPostController = {
  * }} params
  */
 async function handleDraftView(
-  request,
   h,
   {
     organisationId,
@@ -185,7 +189,6 @@ async function handleDraftView(
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     })
 
@@ -258,7 +261,6 @@ async function handleExistingView(
         organisationId,
         registrationId,
         idToken: session.idToken,
-        logger: request.logger,
         accreditationId
       }),
       fetchPackagingRecyclingNote(
@@ -481,9 +483,9 @@ function buildExistingPrnDetailRows({
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { TFunction } from 'i18next'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'

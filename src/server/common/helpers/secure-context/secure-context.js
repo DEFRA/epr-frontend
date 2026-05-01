@@ -5,7 +5,6 @@ import { getTrustStoreCerts } from '#server/common/helpers/secure-context/get-tr
 
 /**
  * Creates a new secure context loaded from Base64 encoded certs
- * @satisfies {ServerRegisterPluginObject<void>}
  */
 export const secureContext = {
   plugin: {
@@ -18,7 +17,9 @@ export const secureContext = {
           const trustStoreCerts = getTrustStoreCerts(process.env)
 
           if (!trustStoreCerts.length) {
-            server.logger.info('Could not find any TRUSTSTORE_ certificates')
+            server.logger.info({
+              message: 'Could not find any TRUSTSTORE_ certificates'
+            })
           }
 
           const tlsSecureContext = originalTlsCreateSecureContext(options)
@@ -32,7 +33,7 @@ export const secureContext = {
 
         server.decorate('server', 'secureContext', tls.createSecureContext())
       } else {
-        server.logger.info('Custom secure context is disabled')
+        server.logger.info({ message: 'Custom secure context is disabled' })
       }
     }
   }

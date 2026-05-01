@@ -1,6 +1,9 @@
-import Boom from '@hapi/boom'
-
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import {
   buildPrnBasePath,
   fetchPrnContext,
@@ -8,9 +11,7 @@ import {
 } from './helpers/fetch-prn-context.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const deleteGetController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -38,9 +39,7 @@ export const deleteGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const deletePostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -73,19 +72,26 @@ export const deletePostController = {
 
       return h.redirect(redirectBasePath)
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to delete PRN')
-
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to delete PRN')
+      throw badImplementation(
+        'Failed to delete PRN',
+        errorCodes.prnDeleteFailed,
+        {
+          event: {
+            action: 'delete_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

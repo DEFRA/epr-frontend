@@ -17,9 +17,6 @@ import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
 import inert from '@hapi/inert'
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const router = {
   plugin: {
     name: 'router',

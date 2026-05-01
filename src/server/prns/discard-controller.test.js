@@ -502,6 +502,24 @@ describe('#discardController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(server.loggerMocks.error).toHaveBeenCalledWith({
+          message: 'Failed to discard PRN',
+          error: {
+            code: 'prn_discard_failed',
+            id: expect.any(String),
+            message: 'Failed to discard PRN',
+            stack_trace: expect.any(String),
+            type: 'Internal Server Error'
+          },
+          event: {
+            category: 'http',
+            action: 'discard_prn',
+            kind: 'event',
+            outcome: 'failure',
+            reason: 'type=Error code=unknown'
+          },
+          http: { response: { status_code: 500 } }
+        })
       })
 
       it('re-throws Boom errors from updatePrnStatus', async ({ server }) => {

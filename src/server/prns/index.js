@@ -23,9 +23,6 @@ import { viewController, viewPostController } from './view-controller.js'
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/accreditations/{accreditationId}/packaging-recycling-notes'
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const prns = {
   plugin: {
     name: 'prns',

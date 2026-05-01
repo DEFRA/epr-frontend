@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { badImplementation } from '#server/common/helpers/logging/cdp-boom.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { CADENCE } from '../constants.js'
 import { fetchReportDetail } from './fetch-report-detail.js'
@@ -54,10 +56,15 @@ async function fetchGuardedData(isMatchingRegistration, request) {
  * accredited-monthly guard. Returns validated data for pages available
  * only to accredited operators (prn-summary, free-perns/free-prns).
  * @param {(registration: object) => boolean} isMatchingRegistration
+ * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
  * @returns {Promise<{ registration: object, accreditation: object, reportDetail: ReportDetailResponse }>}
  */
-async function fetchGuardedAccreditedData(isMatchingRegistration, request) {
+async function fetchGuardedAccreditedData(
+  isMatchingRegistration,
+  reportType,
+  request
+) {
   const { registration, accreditation, reportDetail } = await fetchGuardedData(
     isMatchingRegistration,
     request
@@ -70,7 +77,16 @@ async function fetchGuardedAccreditedData(isMatchingRegistration, request) {
   }
 
   if (!reportDetail.prn) {
-    throw Boom.badImplementation('PRN data missing for accredited report')
+    throw badImplementation(
+      'PRN data missing for accredited report',
+      errorCodes.prnDataMissing,
+      {
+        event: {
+          action: 'load_accredited_report',
+          reason: `cadence=${cadence} reportType=${reportType}`
+        }
+      }
+    )
   }
 
   return { registration, accreditation, reportDetail }
@@ -80,6 +96,7 @@ async function fetchGuardedAccreditedData(isMatchingRegistration, request) {
  * Fetches guarded data and builds the common view data fields shared by
  * pages. Page-specific fields are merged from the callback return value.
  * @param {(registration: object) => boolean} isMatchingRegistration
+ * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
  * @param {(ctx: {
  *   registration: object,
@@ -102,6 +119,7 @@ async function fetchGuardedAccreditedData(isMatchingRegistration, request) {
  */
 async function buildViewData(
   isMatchingRegistration,
+  reportType,
   request,
   buildPageFields,
   options = {}
@@ -111,7 +129,11 @@ async function buildViewData(
   const { t: localise } = request
 
   const { registration, accreditation, reportDetail } = options.accreditedOnly
-    ? await fetchGuardedAccreditedData(isMatchingRegistration, request)
+    ? await fetchGuardedAccreditedData(
+        isMatchingRegistration,
+        reportType,
+        request
+      )
     : await fetchGuardedData(isMatchingRegistration, request)
 
   if (options.registeredOnly && accreditation) {
@@ -149,14 +171,23 @@ async function buildViewData(
  * Binds a registration-type predicate to the page-guards trio. The exporter
  * and reprocessor subtrees both consume this factory; the only runtime
  * difference is which registration predicate is used.
- * @param {{ isMatchingRegistration: (registration: object) => boolean }} options
+ * @param {{
+ *   isMatchingRegistration: (registration: object) => boolean,
+ *   reportType: string
+ * }} options
  */
-export function createPageGuards({ isMatchingRegistration }) {
+export function createPageGuards({ isMatchingRegistration, reportType }) {
   return {
     fetchGuardedData: (request) =>
       fetchGuardedData(isMatchingRegistration, request),
     buildViewData: (request, buildPageFields, options) =>
-      buildViewData(isMatchingRegistration, request, buildPageFields, options)
+      buildViewData(
+        isMatchingRegistration,
+        reportType,
+        request,
+        buildPageFields,
+        options
+      )
   }
 }
 

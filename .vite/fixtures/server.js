@@ -1,7 +1,7 @@
 /* eslint-disable n/no-unpublished-import */
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { test } from 'vitest'
+import { test, vi } from 'vitest'
 import { organisations } from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
@@ -68,6 +68,36 @@ const createOidcHandlers = (baseUrl) => {
   ]
 }
 
+/**
+ * Attaches a `loggerMocks` triple onto the server and redirects both
+ * `server.logger.{info,warn,error}` and per-request
+ * `request.logger.{info,warn,error}` calls into those mocks. Server-level
+ * spies are installed eagerly so onRequest-time logs from earlier-registered
+ * extensions (e.g. user-agent truncation) are captured. Tests using the
+ * `server` fixture can then assert with
+ * `expect(server.loggerMocks.warn).toHaveBeenCalledWith(...)` — covering
+ * server- and request-level logs uniformly.
+ * @param {import('@hapi/hapi').Server & {
+ *   loggerMocks?: { info: ReturnType<typeof vi.fn>, warn: ReturnType<typeof vi.fn>, error: ReturnType<typeof vi.fn> }
+ * }} server
+ */
+const attachLoggerMocks = (server) => {
+  server.loggerMocks = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+
+  vi.spyOn(server.logger, 'info').mockImplementation(server.loggerMocks.info)
+  vi.spyOn(server.logger, 'warn').mockImplementation(server.loggerMocks.warn)
+  vi.spyOn(server.logger, 'error').mockImplementation(server.loggerMocks.error)
+
+  server.ext('onRequest', (request, h) => {
+    vi.spyOn(request.logger, 'info').mockImplementation(server.loggerMocks.info)
+    vi.spyOn(request.logger, 'warn').mockImplementation(server.loggerMocks.warn)
+    vi.spyOn(request.logger, 'error').mockImplementation(
+      server.loggerMocks.error
+    )
+    return h.continue
+  })
+}
+
 const it = test.extend({
   msw: [
     // eslint-disable-next-line no-empty-pattern
@@ -90,6 +120,9 @@ const it = test.extend({
     async ({}, use) => {
       const { createServer } = await import('#server/index.js')
       const server = await createServer({ wasteOrganisations: organisations })
+
+      attachLoggerMocks(server)
+
       await server.initialize()
 
       await use(server)
