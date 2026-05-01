@@ -1,7 +1,9 @@
 import hapi from '@hapi/hapi'
 import hapiPino from 'hapi-pino'
+import pino from 'pino'
 import { afterEach, describe, expect, it } from 'vitest'
 
+import { createLogger } from './logger.js'
 import { loggerOptions } from './logger-options.js'
 import { config } from '#config/config.js'
 
@@ -94,4 +96,38 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
     expect(out?.error).toBeDefined()
     expect(out?.error).not.toHaveProperty('stack_trace')
   })
+
+  it('should land trace.id on the wire when bound via logger.child (mixin / hapi-tracing pattern)', () => {
+    // Documents the wire shape produced by the trace.id binding emitted by
+    // loggerOptions.mixin() when @defra/hapi-tracing has a trace id. CDP's
+    // indexed-fields allowlist does not include a top-level `trace.id` (only
+    // `amazon/trace.id` which is CDP-reserved), so the trace context emitted
+    // here is dropped at ingest. This test pins the current wire shape so any
+    // future change is visible.
+    const lines = []
+    const stream = { write: (s) => lines.push(s) }
+    const { transport: _transport, ...rest } = loggerOptions
+    const captureLogger = pino(
+      { ...rest, enabled: true, level: 'trace' },
+      stream
+    )
+
+    const child = captureLogger.child({ trace: { id: 'trace-abc' } })
+    child.info({ message: 'queued' })
+
+    const out = JSON.parse(lines[0])
+    expect(out).toMatchObject({
+      message: 'queued',
+      trace: { id: 'trace-abc' }
+    })
+  })
+
+  it.each(['info', 'error', 'warn', 'debug', 'trace', 'fatal'])(
+    'exposes %s on the createLogger surface',
+    (method) => {
+      const log = createLogger()
+
+      expect(log[method]).toBeTypeOf('function')
+    }
+  )
 })
