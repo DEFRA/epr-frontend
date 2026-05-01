@@ -3,13 +3,33 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '#config/config.js'
 import { buildRedisClient } from '#server/common/helpers/redis-client.js'
 
+const mockLoggerError = vi.fn()
+const mockLoggerInfo = vi.fn()
+
+vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
+  createLogger: () => ({
+    error: mockLoggerError,
+    info: mockLoggerInfo
+  })
+}))
+
+const eventHandlers = {}
+
 vi.mock(import('ioredis'), async () => ({
   ...(await vi.importActual('ioredis')),
   Cluster: vi.fn(function () {
-    return { on: () => ({}) }
+    return {
+      on: (event, cb) => {
+        eventHandlers[event] = cb
+      }
+    }
   }),
   Redis: vi.fn(function () {
-    return { on: () => ({}) }
+    return {
+      on: (event, cb) => {
+        eventHandlers[event] = cb
+      }
+    }
   })
 }))
 
@@ -50,6 +70,23 @@ describe('#buildRedisClient', () => {
           slotsRefreshTimeout: 10000
         }
       )
+    })
+  })
+
+  describe('when redis emits an error event', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+      buildRedisClient(config.get('redis'))
+    })
+
+    test('should log the connection error in canonical shape', () => {
+      const error = new Error('redis exploded')
+      eventHandlers.error(error)
+
+      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith({
+        message: 'Redis connection error',
+        err: error
+      })
     })
   })
 })
