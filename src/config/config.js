@@ -63,7 +63,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'Record reprocessed or exported packaging waste'
+    default: 'epr-frontend'
   },
   root: {
     doc: 'Project root',

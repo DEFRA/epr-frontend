@@ -54,6 +54,24 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
     })
   })
 
+  it('should set ECS service.name to the technical service identifier', async () => {
+    config.set('cdpEnvironment', 'dev')
+    const { server, lines } = await newServer()
+    server.route({
+      method: 'GET',
+      path: '/test',
+      handler: (request) => {
+        request.logger.info({ message: 'svc-name-check' })
+        return 'ok'
+      }
+    })
+
+    await server.inject('/test')
+    const out = findLine(lines, (l) => l.message === 'svc-name-check')
+
+    expect(out['service.name']).toBe('epr-frontend')
+  })
+
   it('should bind ECS http.* and url.* on the per-request child logger (no flat req)', async () => {
     config.set('cdpEnvironment', 'dev')
     const { server, lines } = await newServer()
