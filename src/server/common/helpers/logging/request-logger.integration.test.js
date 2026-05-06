@@ -173,4 +173,36 @@ describe('request-logger integration (hapi-pino + pino + ecs format)', () => {
       expect(log[method]).toBeTypeOf('function')
     }
   )
+
+  it('should not emit an access log for /public/* requests', async () => {
+    const { server, findLine } = await createLogCaptureServer()
+    server.route({
+      method: 'GET',
+      path: '/public/{path*}',
+      handler: () => 'ok'
+    })
+
+    await server.inject('/public/stylesheets/application.css')
+    const out = findLine(
+      (l) =>
+        l.url?.path === '/public/stylesheets/application.css' &&
+        l.http?.response
+    )
+
+    expect(out).toBeUndefined()
+  })
+
+  it('should still emit an access log for non-/public requests', async () => {
+    const { server, findLine } = await createLogCaptureServer()
+    server.route({
+      method: 'GET',
+      path: '/visible',
+      handler: () => 'ok'
+    })
+
+    await server.inject('/visible')
+    const out = findLine((l) => l.url?.path === '/visible' && l.http?.response)
+
+    expect(out?.http?.response?.status_code).toBe(200)
+  })
 })
