@@ -338,3 +338,5 @@ export const isReportsEnabled = () => config.get('featureFlags.reports')
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
+
+export const isLocalEnvironment = () => config.get('cdpEnvironment') === 'local'
