@@ -13,7 +13,11 @@ describe(getLogFormatType, () => {
 describe(getLogRedactType, () => {
   it.each([
     [
-      ['req.headers.authorization', 'req.headers.cookie', 'res.headers'],
+      [
+        'http.request.headers.authorization',
+        'http.request.headers.cookie',
+        'http.response.headers'
+      ],
       { isProduction: true }
     ],
     [[], { isProduction: false }]

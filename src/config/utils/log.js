@@ -4,6 +4,10 @@ export function getLogFormatType({ isProduction }) {
 
 export function getLogRedactType({ isProduction }) {
   return isProduction
-    ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
+    ? [
+        'http.request.headers.authorization',
+        'http.request.headers.cookie',
+        'http.response.headers'
+      ]
     : []
 }
