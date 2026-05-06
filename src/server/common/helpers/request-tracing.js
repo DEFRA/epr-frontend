@@ -21,12 +21,16 @@ const localTraceIdFallback = {
    * @param {TracingOptions} options
    */
   register: (server, { tracingHeader }) => {
-    server.ext('onRequest', (request, h) => {
-      if (!request.headers[tracingHeader]) {
-        request.headers[tracingHeader] = randomUUID()
-      }
-      return h.continue
-    })
+    server.ext(
+      'onRequest',
+      (request, h) => {
+        if (!request.headers[tracingHeader]) {
+          request.headers[tracingHeader] = randomUUID()
+        }
+        return h.continue
+      },
+      { before: 'hapi-pino' }
+    )
   }
 }
 
