@@ -7,10 +7,10 @@ import {
 import { buildExporterViewData } from './exporter-page-guards.js'
 
 /**
- * @import { AccreditedPageFieldsCtx, PageFieldsBuilder } from '../helpers/create-page-guards.js'
+ * @import { PageFieldsBuilder } from '../helpers/create-page-guards.js'
  */
 
-/** @type {PageFieldsBuilder<AccreditedPageFieldsCtx>} */
+/** @type {PageFieldsBuilder} */
 const pageFields = ({
   material,
   periodLabel,
@@ -20,6 +20,9 @@ const pageFields = ({
   reportDetail
 }) => {
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+  const prn = /** @type {NonNullable<typeof reportDetail.prn>} */ (
+    reportDetail.prn
+  )
 
   return (localise) => ({
     noteTypePlural,
@@ -35,7 +38,7 @@ const pageFields = ({
       periodShort
     }),
     tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
-    tonnageIssued: reportDetail.prn.issuedTonnage,
+    tonnageIssued: prn.issuedTonnage,
     revenueLabel: localise('reports:noteSummaryRevenueLabel', {
       noteTypePlural
     }),
@@ -43,7 +46,7 @@ const pageFields = ({
     continueText: localise('reports:noteSummaryContinue'),
     saveText: localise('reports:noteSummarySave'),
     backUrl: reportsListPath,
-    defaultValue: padToTwoDecimalPlaces(reportDetail.prn.totalRevenue)
+    defaultValue: padToTwoDecimalPlaces(prn.totalRevenue)
   })
 }
 

@@ -58,13 +58,7 @@ async function fetchGuardedData(isMatchingRegistration, request) {
  * @param {(registration: Registration) => boolean} isMatchingRegistration
  * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
- * @returns {Promise<{
- *   registration: Registration,
- *   accreditation: Accreditation,
- *   reportDetail: ReportDetailResponse & {
- *     prn: NonNullable<ReportDetailResponse['prn']>
- *   }
- * }>}
+ * @returns {Promise<{ registration: Registration, accreditation: Accreditation, reportDetail: ReportDetailResponse }>}
  */
 async function fetchGuardedAccreditedData(
   isMatchingRegistration,
@@ -95,14 +89,7 @@ async function fetchGuardedAccreditedData(
     )
   }
 
-  return {
-    registration,
-    accreditation,
-    reportDetail:
-      /** @type {ReportDetailResponse & { prn: NonNullable<ReportDetailResponse['prn']> }} */ (
-        reportDetail
-      )
-  }
+  return { registration, accreditation, reportDetail }
 }
 
 /**
@@ -117,17 +104,6 @@ async function fetchGuardedAccreditedData(
  *   reportsListPath: string,
  *   period: number
  * }} PageFieldsCtx
- */
-
-/**
- * Pages that opt in via `accreditedOnly: true` get a guarded ctx where the
- * accredited guard has already thrown if `prn` was missing.
- * @typedef {Omit<PageFieldsCtx, 'accreditation' | 'reportDetail'> & {
- *   accreditation: Accreditation,
- *   reportDetail: ReportDetailResponse & {
- *     prn: NonNullable<ReportDetailResponse['prn']>
- *   }
- * }} AccreditedPageFieldsCtx
  */
 
 /**
@@ -151,8 +127,7 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
- * @template {PageFieldsCtx} [TCtx=PageFieldsCtx]
- * @typedef {(ctx: TCtx) => (localise: TFunction) => PageFieldsResult} PageFieldsBuilder
+ * @typedef {(ctx: PageFieldsCtx) => (localise: TFunction) => PageFieldsResult} PageFieldsBuilder
  */
 
 /**

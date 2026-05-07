@@ -5,10 +5,10 @@ import { updateReport } from '../helpers/update-report.js'
 import { buildExporterViewData } from './exporter-page-guards.js'
 
 /**
- * @import { PageFieldsBuilder, PageFieldsCtx } from '../helpers/create-page-guards.js'
+ * @import { PageFieldsBuilder } from '../helpers/create-page-guards.js'
  */
 
-/** @type {PageFieldsBuilder<PageFieldsCtx>} */
+/** @type {PageFieldsBuilder} */
 const pageFields = ({
   material,
   periodLabel,

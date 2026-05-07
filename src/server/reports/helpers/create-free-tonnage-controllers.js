@@ -5,10 +5,10 @@ import { freeTonnagePayloadSchema } from './validation.js'
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { AccreditedPageFieldsCtx, GuardOptions, PageFieldsBuilder, PageFieldsCtx, PageFieldsResult } from './create-page-guards.js'
+ * @import { GuardOptions, PageFieldsBuilder, PageFieldsCtx, PageFieldsResult } from './create-page-guards.js'
  */
 
-/** @type {PageFieldsBuilder<AccreditedPageFieldsCtx>} */
+/** @type {PageFieldsBuilder} */
 const pageFields = ({
   material,
   periodLabel,
@@ -18,6 +18,9 @@ const pageFields = ({
   reportDetail
 }) => {
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+  const prn = /** @type {NonNullable<typeof reportDetail.prn>} */ (
+    reportDetail.prn
+  )
 
   return (localise) => ({
     noteTypePlural,
@@ -38,8 +41,8 @@ const pageFields = ({
     saveText: localise('reports:freeSave'),
     fieldName: 'freeTonnage',
     backUrl: `${periodPath}/prn-summary`,
-    tonnageIssued: reportDetail.prn.issuedTonnage,
-    defaultValue: reportDetail.prn.freeTonnage
+    tonnageIssued: prn.issuedTonnage,
+    defaultValue: prn.freeTonnage
   })
 }
 

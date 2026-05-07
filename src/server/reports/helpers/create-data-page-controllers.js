@@ -6,12 +6,8 @@ import { updateReport } from './update-report.js'
 import { buildValidationErrors } from './validation.js'
 
 /**
- * Guards are typed against base `PageFieldsCtx`; the cast narrows to `TCtx`
- * which is `AccreditedPageFieldsCtx` when callers pass `accreditedOnly: true`
- * (the guard has already thrown if `prn` was missing).
- * @template {PageFieldsCtx} TCtx
  * @param {(request: HapiRequest, buildPageFields: (ctx: PageFieldsCtx) => PageFieldsResult, options: GuardOptions) => Promise<object>} guardFn
- * @param {PageFieldsBuilder<TCtx>} pageFields
+ * @param {PageFieldsBuilder} pageFields
  * @param {GuardOptions} guardOptions
  * @param {HapiRequest} request
  * @param {GuardOptions} [options]
@@ -21,7 +17,7 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
   return guardFn(
     request,
     (ctx) => {
-      const fields = pageFields(/** @type {TCtx} */ (ctx))(request.t)
+      const fields = pageFields(ctx)(request.t)
       fields.backUrl = request.localiseUrl(fields.backUrl)
       return fields
     },
@@ -40,15 +36,11 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  * - `createPostHandler` — full custom handler, receives `{ getViewData, viewPath }`
  * - `exceedsTotalErrorKey` + `nextPage` — validates free tonnage against issued, then saves
  * - `nextPage` alone — simple save-and-redirect
- *
- * `TCtx` is inferred from `pageFields`; pass `AccreditedPageFieldsCtx` to
- * get a non-null `reportDetail.prn` under `guardOptions: { accreditedOnly: true }`.
- * @template {PageFieldsCtx} [TCtx=PageFieldsCtx]
  * @param {object} config
  * @param {string} config.viewPath - Nunjucks template path
  * @param {string} config.fieldName - Payload field name
  * @param {import('joi').Schema} config.payloadSchema - Joi schema for POST payload
- * @param {PageFieldsBuilder<TCtx>} config.pageFields - Returns localised page fields from context
+ * @param {PageFieldsBuilder} config.pageFields - Returns localised page fields from context
  * @param {(request: HapiRequest, buildPageFields: (ctx: PageFieldsCtx) => PageFieldsResult, options: GuardOptions) => Promise<object>} config.guardFn - Guard function (buildExporterViewData or buildReprocessorViewData)
  * @param {GuardOptions} [config.guardOptions] - Extra options passed to guardFn (e.g. { accreditedOnly: true })
  * @param {string} [config.nextPage] - Redirect target after saving

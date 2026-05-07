@@ -3,10 +3,10 @@ import { tonnageRecycledPayloadSchema } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
 /**
- * @import { PageFieldsBuilder, PageFieldsCtx } from '../helpers/create-page-guards.js'
+ * @import { PageFieldsBuilder } from '../helpers/create-page-guards.js'
  */
 
-/** @type {PageFieldsBuilder<PageFieldsCtx>} */
+/** @type {PageFieldsBuilder} */
 const pageFields = ({
   material,
   periodLabel,
