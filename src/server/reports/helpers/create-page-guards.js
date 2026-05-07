@@ -14,7 +14,11 @@ import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
  * available to all matching registrations.
  * @param {(registration: Registration) => boolean} isMatchingRegistration
  * @param {HapiRequest & { params: PeriodParams }} request
- * @returns {Promise<{ registration: Registration, accreditation: Accreditation | undefined, reportDetail: ReportDetailResponse }>}
+ * @returns {Promise<{
+ *   registration: Registration,
+ *   accreditation: Accreditation | undefined,
+ *   reportDetail: ReportDetailResponse
+ * }>}
  */
 async function fetchGuardedData(isMatchingRegistration, request) {
   const { organisationId, registrationId, year, cadence, period } =
@@ -58,7 +62,11 @@ async function fetchGuardedData(isMatchingRegistration, request) {
  * @param {(registration: Registration) => boolean} isMatchingRegistration
  * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
- * @returns {Promise<{ registration: Registration, accreditation: Accreditation, reportDetail: ReportDetailResponse }>}
+ * @returns {Promise<{
+ *   registration: Registration,
+ *   accreditation: Accreditation,
+ *   reportDetail: ReportDetailResponse
+ * }>}
  */
 async function fetchGuardedAccreditedData(
   isMatchingRegistration,
@@ -131,6 +139,19 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
+ * Rendered view data passed to the page's Nunjucks template.
+ * @typedef {PageFieldsResult & {
+ *   deleteUrl: string,
+ *   value: unknown,
+ *   errors: Record<string, { text: string }> | null,
+ *   errorSummary: {
+ *     titleText: string,
+ *     errorList: { text: string, href: string }[]
+ *   } | null
+ * }} ViewData
+ */
+
+/**
  * Fetches guarded data and builds the common view data fields shared by
  * pages. Page-specific fields are merged from the callback return value.
  * @param {(registration: Registration) => boolean} isMatchingRegistration
@@ -138,7 +159,7 @@ async function fetchGuardedAccreditedData(
  * @param {HapiRequest & { params: PeriodParams }} request
  * @param {(ctx: PageFieldsCtx) => PageFieldsResult} buildPageFields
  * @param {GuardOptions} [options]
- * @returns {Promise<object>}
+ * @returns {Promise<ViewData>}
  */
 async function buildViewData(
   isMatchingRegistration,

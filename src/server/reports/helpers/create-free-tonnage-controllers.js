@@ -5,7 +5,7 @@ import { freeTonnagePayloadSchema } from './validation.js'
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { GuardOptions, PageFieldsBuilder, PageFieldsCtx, PageFieldsResult } from './create-page-guards.js'
+ * @import { GuardOptions, PageFieldsBuilder, PageFieldsCtx, PageFieldsResult, ViewData } from './create-page-guards.js'
  */
 
 /** @type {PageFieldsBuilder} */
@@ -55,7 +55,7 @@ const pageFields = ({
  *   request: HapiRequest,
  *   buildPageFields: (ctx: PageFieldsCtx) => PageFieldsResult,
  *   options?: GuardOptions
- * ) => Promise<object>} options.guardFn
+ * ) => Promise<ViewData>} options.guardFn
  */
 export function createFreeTonnageControllers({ guardFn }) {
   return createDataPageControllers({
