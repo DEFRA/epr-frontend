@@ -24,7 +24,7 @@ const subtrees = [
     operatorCategory: 'EXPORTER_ACCREDITED',
     notePlural: 'PERNs',
     accreditedDescription: 'accredited operator',
-    registeredOnlyDescription: 'non-accredited operator'
+    registeredOnlyDescription: 'registered-only operator'
   },
   {
     name: 'reprocessor',
