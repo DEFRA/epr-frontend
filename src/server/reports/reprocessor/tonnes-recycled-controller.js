@@ -2,35 +2,42 @@ import { createDataPageControllers } from '../helpers/create-data-page-controlle
 import { tonnageRecycledPayloadSchema } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
+/**
+ * @import { PageFieldsBuilder, PageFieldsCtx } from '../helpers/create-page-guards.js'
+ */
+
+/** @type {PageFieldsBuilder<PageFieldsCtx>} */
+const pageFields = ({
+  material,
+  periodLabel,
+  periodShort,
+  reportsListPath,
+  reportDetail
+}) => {
+  return (localise) => ({
+    pageTitle: localise('reports:tonnageRecycledPageTitle', {
+      material,
+      periodLabel
+    }),
+    caption: localise('reports:tonnageRecycledCaption'),
+    heading: localise('reports:tonnageRecycledHeading', {
+      material: material.toLowerCase(),
+      periodShort
+    }),
+    hintText: localise('reports:tonnageRecycledHint', { periodLabel }),
+    continueText: localise('reports:tonnageRecycledContinue'),
+    saveText: localise('reports:tonnageRecycledSave'),
+    fieldName: 'tonnageRecycled',
+    backUrl: reportsListPath,
+    defaultValue: reportDetail.recyclingActivity?.tonnageRecycled
+  })
+}
+
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageRecycled',
   payloadSchema: tonnageRecycledPayloadSchema,
-  pageFields({
-    material,
-    periodLabel,
-    periodShort,
-    reportsListPath,
-    reportDetail
-  }) {
-    return (localise) => ({
-      pageTitle: localise('reports:tonnageRecycledPageTitle', {
-        material,
-        periodLabel
-      }),
-      caption: localise('reports:tonnageRecycledCaption'),
-      heading: localise('reports:tonnageRecycledHeading', {
-        material: material.toLowerCase(),
-        periodShort
-      }),
-      hintText: localise('reports:tonnageRecycledHint', { periodLabel }),
-      continueText: localise('reports:tonnageRecycledContinue'),
-      saveText: localise('reports:tonnageRecycledSave'),
-      fieldName: 'tonnageRecycled',
-      backUrl: reportsListPath,
-      defaultValue: reportDetail.recyclingActivity?.tonnageRecycled
-    })
-  },
+  pageFields,
   guardFn: buildReprocessorViewData,
   nextPage: 'tonnes-not-recycled'
 })

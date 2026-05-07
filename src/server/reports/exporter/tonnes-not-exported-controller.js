@@ -4,29 +4,42 @@ import { getRedirectUrl } from '../helpers/redirect.js'
 import { updateReport } from '../helpers/update-report.js'
 import { buildExporterViewData } from './exporter-page-guards.js'
 
+/**
+ * @import { PageFieldsBuilder, PageFieldsCtx } from '../helpers/create-page-guards.js'
+ */
+
+/** @type {PageFieldsBuilder<PageFieldsCtx>} */
+const pageFields = ({
+  material,
+  periodLabel,
+  reportsListPath,
+  period,
+  reportDetail
+}) => {
+  return (localise) => ({
+    pageTitle: localise('reports:tonnageNotExportedPageTitle', {
+      material,
+      periodLabel
+    }),
+    caption: localise('reports:tonnageNotExportedCaption'),
+    heading: localise('reports:tonnageNotExportedHeading', {
+      material: material.toLowerCase(),
+      quarter: period
+    }),
+    hintText: localise('reports:tonnageNotExportedHint'),
+    continueText: localise('reports:tonnageNotExportedContinue'),
+    saveText: localise('reports:tonnageNotExportedSave'),
+    fieldName: 'tonnageNotExported',
+    backUrl: reportsListPath,
+    defaultValue: reportDetail.exportActivity?.tonnageReceivedNotExported
+  })
+}
+
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageNotExported',
   payloadSchema: tonnageNotExportedPayloadSchema,
-  pageFields({ material, periodLabel, reportsListPath, period, reportDetail }) {
-    return (localise) => ({
-      pageTitle: localise('reports:tonnageNotExportedPageTitle', {
-        material,
-        periodLabel
-      }),
-      caption: localise('reports:tonnageNotExportedCaption'),
-      heading: localise('reports:tonnageNotExportedHeading', {
-        material: material.toLowerCase(),
-        quarter: period
-      }),
-      hintText: localise('reports:tonnageNotExportedHint'),
-      continueText: localise('reports:tonnageNotExportedContinue'),
-      saveText: localise('reports:tonnageNotExportedSave'),
-      fieldName: 'tonnageNotExported',
-      backUrl: reportsListPath,
-      defaultValue: reportDetail.exportActivity?.tonnageReceivedNotExported
-    })
-  },
+  pageFields,
   guardFn: buildExporterViewData,
   guardOptions: { registeredOnly: true },
   createPostHandler() {
