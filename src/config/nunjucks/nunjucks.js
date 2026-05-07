@@ -25,9 +25,6 @@ const nunjucksEnvironment = nunjucks.configure(
   }
 )
 
-/**
- * @satisfies {ServerRegisterPluginObject<ServerViewsConfiguration>}
- */
 export const nunjucksConfig = {
   plugin: hapiVision,
   options: {

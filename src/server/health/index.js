@@ -1,8 +1,5 @@
 import { healthController } from '#server/health/controller.js'
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const health = {
   plugin: {
     name: 'health',

@@ -10,9 +10,13 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const { createPageGuards } = await import('./create-page-guards.js')
 
-const guards = createPageGuards({ isMatchingRegistration: () => true })
+const guards = createPageGuards({
+  isMatchingRegistration: () => true,
+  reportType: 'exporter'
+})
 const rejectingGuards = createPageGuards({
-  isMatchingRegistration: () => false
+  isMatchingRegistration: () => false,
+  reportType: 'exporter'
 })
 
 const registration = {

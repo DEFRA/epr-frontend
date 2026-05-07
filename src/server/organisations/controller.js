@@ -8,10 +8,10 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 import { getStatusClass } from './helpers/status-helpers.js'
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
  */
 
@@ -296,7 +296,7 @@ async function getWasteBalanceMap(
   try {
     return await fetchWasteBalances(organisationId, accreditationIds, idToken)
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch waste balances')
+    logger.error({ message: 'Failed to fetch waste balances', err: error })
     return {}
   }
 }
@@ -343,9 +343,7 @@ function getActiveSitesAndTitle({
   return { sites: [], tableTitle: '', shouldRenderTabs }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const controller = {
   /**
    * @param {HapiRequest & { params: OrganisationParams }} request

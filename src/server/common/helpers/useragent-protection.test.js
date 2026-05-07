@@ -35,6 +35,15 @@ describe('user-agent protection', () => {
     expect(longUserAgent.length).toBeGreaterThan(MAX_USER_AGENT_LENGTH)
     expect(expectedTruncated).toHaveLength(MAX_USER_AGENT_LENGTH)
     expect(expectedTruncated).toBe(`Mozilla/5.0 ${'X'.repeat(138)}`)
+
+    expect(server.loggerMocks.warn).toHaveBeenCalledWith({
+      message: 'Truncated User-Agent',
+      event: {
+        action: 'user_agent_truncated',
+        category: 'security',
+        reason: `from=${longUserAgent.length} to=${MAX_USER_AGENT_LENGTH}`
+      }
+    })
   })
 
   it('should truncate User-Agent strings with suspicious patterns (ReDoS PoC)', async ({

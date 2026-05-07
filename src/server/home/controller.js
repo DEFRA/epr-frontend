@@ -29,7 +29,7 @@ async function getStartNowHref(request) {
 }
 
 /**
- * @satisfies {Partial<ServerRoute>}
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const controller = {
   /**
@@ -52,7 +52,7 @@ export const controller = {
 
 /**
  * Redirect handler for / to /start
- * @satisfies {Partial<ServerRoute>}
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
 export const redirectToStart = {
   /**
@@ -65,6 +65,6 @@ export const redirectToStart = {
 }
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

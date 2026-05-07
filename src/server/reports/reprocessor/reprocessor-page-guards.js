@@ -3,7 +3,8 @@ import { isReprocessorRegistration } from '#server/common/helpers/prns/registrat
 import { createPageGuards } from '../helpers/create-page-guards.js'
 
 const { fetchGuardedData, buildViewData } = createPageGuards({
-  isMatchingRegistration: isReprocessorRegistration
+  isMatchingRegistration: isReprocessorRegistration,
+  reportType: 'reprocessor'
 })
 
 export const fetchGuardedReprocessorData = fetchGuardedData

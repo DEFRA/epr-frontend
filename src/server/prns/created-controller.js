@@ -1,8 +1,6 @@
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -68,7 +66,7 @@ export const createdController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnCreatedSession, PrnDetailParams } from './helpers/session-types.js'
  */

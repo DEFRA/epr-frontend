@@ -2,7 +2,11 @@ import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getIssuedToOrgDisplayName } from '#server/common/helpers/waste-organisations/get-issued-to-org-display-name.js'
 import { mapToSelectOptions } from '#server/common/helpers/waste-organisations/map-to-select-options.js'
-import Boom from '@hapi/boom'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import Joi from 'joi'
 import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
@@ -162,7 +166,6 @@ async function handleInvalidRecipient(request, h, organisations) {
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     }),
     getWasteBalance(
@@ -189,9 +192,7 @@ async function handleInvalidRecipient(request, h, organisations) {
   })
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const postController = {
   options: {
     validate: {
@@ -220,7 +221,6 @@ export const postController = {
               organisationId,
               registrationId,
               idToken: session.idToken,
-              logger: request.logger,
               accreditationId
             }),
             request.wasteOrganisationsService.getOrganisations(),
@@ -303,20 +303,27 @@ export const postController = {
         `/organisations/${organisationId}/registrations/${registrationId}/accreditations/${accreditationId}/packaging-recycling-notes/${result.id}/view`
       )
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to create PRN draft')
-
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to create PRN')
+      throw badImplementation(
+        'Failed to create PRN',
+        errorCodes.prnCreateFailed,
+        {
+          event: {
+            action: 'create_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
  * @import { CreatePrnResponse } from './helpers/create-prn.js'
  * @import { PrnListParams } from './helpers/session-types.js'

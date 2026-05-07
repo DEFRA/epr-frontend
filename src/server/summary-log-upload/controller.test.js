@@ -80,11 +80,10 @@ describe('#summaryLogUploadController', () => {
   it('should display error page without leaking backend error details', async ({
     server
   }) => {
-    initiateSummaryLogUpload.mockRejectedValueOnce(
-      Boom.notFound(
-        'Failed to fetch from backend at url: http://backend.url/v1/organisations/123/registrations/456/summary-logs: 404 Not Found'
-      )
+    const uploadError = Boom.notFound(
+      'Failed to fetch from backend at url: http://backend.url/v1/organisations/123/registrations/456/summary-logs: 404 Not Found'
     )
+    initiateSummaryLogUpload.mockRejectedValueOnce(uploadError)
 
     const { result } = await server.inject({
       method: 'GET',
@@ -96,6 +95,16 @@ describe('#summaryLogUploadController', () => {
 
     expect($('main h1').text()).toBe('Summary log upload error')
     expect($('main p').text()).toBe('Failed to initialise upload')
+
+    expect(server.loggerMocks.error).toHaveBeenCalledWith({
+      message: 'Failed to initiate summary log upload',
+      err: uploadError,
+      event: {
+        category: 'upload',
+        action: 'summary-log-upload-failed',
+        reference: `organisationId=${organisationId}, registrationId=${registrationId}`
+      }
+    })
   })
 
   it('should call initiateSummaryLogUpload with organisation, registration and redirectUrl template', async ({

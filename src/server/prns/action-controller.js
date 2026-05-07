@@ -12,9 +12,7 @@ import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling
 import { getStatusConfig } from './helpers/get-status-config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const actionController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -32,7 +30,6 @@ export const actionController = {
           organisationId,
           registrationId,
           idToken: session.idToken,
-          logger: request.logger,
           accreditationId
         }),
         fetchPackagingRecyclingNote(
@@ -241,9 +238,9 @@ function buildActionPrnDetailRows({
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
+ * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { TFunction } from 'i18next'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'

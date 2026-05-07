@@ -47,19 +47,17 @@ async function refreshIdToken(request) {
     body: params
   })
 
-  request.logger.info(
-    {
-      event: {
-        action: 'token-refresh-oidc-call',
-        outcome: response.ok ? 'success' : 'failure',
-        kind: 'event'
-      },
-      http: {
-        response: { status_code: response.status }
-      }
+  request.logger.info({
+    message: 'OIDC token endpoint call complete',
+    event: {
+      action: 'token-refresh-oidc-call',
+      outcome: response.ok ? 'success' : 'failure',
+      kind: 'event'
     },
-    'OIDC token endpoint call complete'
-  )
+    http: {
+      response: { status_code: response.status }
+    }
+  })
 
   return response
 }

@@ -4,9 +4,7 @@ import {
   fetchPrnContext
 } from './helpers/fetch-prn-context.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const cancelledController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -46,7 +44,7 @@ export const cancelledController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

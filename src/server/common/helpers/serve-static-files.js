@@ -1,9 +1,6 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const serveStaticFiles = {
   plugin: {
     name: 'staticFiles',

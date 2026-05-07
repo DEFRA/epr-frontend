@@ -1,23 +1,22 @@
-import Boom from '@hapi/boom'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import { loggingEventActions } from '#server/common/enums/event.js'
+import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 
 /**
  * @import {RegistrationWithAccreditation} from './fetch-registration-and-accreditation.js'
- * @import {TypedLogger} from '#server/common/helpers/logging/logger.js'
  */
 
 /**
  * Fetches registration and accreditation, throwing 404 if either is missing.
- * @param {{ organisationId: string, registrationId: string, idToken: string, logger: TypedLogger, accreditationId?: string }} params
+ * @param {{ organisationId: string, registrationId: string, idToken: string, accreditationId?: string }} params
  * @returns {Promise<Required<RegistrationWithAccreditation>>}
- * @throws {Boom.notFound} When registration or accreditation is not found, or accreditation ID mismatches
  */
 export async function getRequiredRegistrationWithAccreditation({
   organisationId,
   registrationId,
   accreditationId,
-  idToken,
-  logger
+  idToken
 }) {
   const { registration, accreditation, organisationData } =
     await fetchRegistrationAndAccreditation(
@@ -27,16 +26,29 @@ export async function getRequiredRegistrationWithAccreditation({
     )
 
   if (!accreditation) {
-    logger.warn({ registrationId }, 'Not accredited for this registration')
-    throw Boom.notFound('Not accredited for this registration')
+    throw notFound(
+      'Not accredited for this registration',
+      errorCodes.notAccredited,
+      {
+        event: {
+          action: loggingEventActions.checkAccreditation,
+          reason: `registrationId=${registrationId}`
+        }
+      }
+    )
   }
 
   if (accreditation.id !== accreditationId) {
-    logger.warn(
-      { registrationId, accreditationId },
-      'Accreditation ID mismatch'
+    throw notFound(
+      'Accreditation ID mismatch',
+      errorCodes.accreditationIdMismatch,
+      {
+        event: {
+          action: loggingEventActions.checkAccreditation,
+          reason: `registrationId=${registrationId} accreditationId=${accreditationId}`
+        }
+      }
     )
-    throw Boom.notFound('Accreditation ID mismatch')
   }
 
   return { registration, accreditation, organisationData }

@@ -5,9 +5,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 const UPLOAD_CONFLICT_VIEW = 'summary-log/upload-conflict'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const submitSummaryLogController = {
   /**
    * @param {HapiRequest & { params: SummaryLogParams }} request
@@ -60,7 +58,7 @@ export const submitSummaryLogController = {
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { SummaryLogParams, SummaryLogsSession } from './types.js'
  */

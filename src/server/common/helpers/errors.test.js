@@ -70,16 +70,6 @@ describe(catchAll, () => {
     expect(mockTakeover).toHaveBeenCalledWith()
   })
 
-  it('logs error for 500+', async () => {
-    const req = makeRequest(statusCodes.internalServerError)
-    await catchAll(req, mockToolkit)
-
-    expect(mockErrorLogger).toHaveBeenCalledWith(
-      { err: req.response },
-      'Unhandled server error'
-    )
-  })
-
   it('should use fallback message when localise function not available', async () => {
     const request = {
       response: {

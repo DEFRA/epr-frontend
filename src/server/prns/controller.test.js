@@ -254,7 +254,6 @@ describe('#createPrnController', () => {
           organisationId: 'org-123',
           registrationId: 'reg-001',
           idToken: 'mock-id-token',
-          logger: expect.objectContaining({}),
           accreditationId: 'acc-001'
         })
       })

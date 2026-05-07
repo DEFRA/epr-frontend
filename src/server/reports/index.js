@@ -45,9 +45,6 @@ import { viewGetController } from './view-controller.js'
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/reports'
 
-/**
- * @satisfies {ServerRegisterPluginObject<void>}
- */
 export const reports = {
   plugin: {
     name: 'reports',

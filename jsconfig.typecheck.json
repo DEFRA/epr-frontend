@@ -16,7 +16,6 @@
     "strictNullChecks": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "baseUrl": ".",
     "paths": {
       "#client/*": ["./src/client/*"],
       "#config/*": ["./src/config/*"],

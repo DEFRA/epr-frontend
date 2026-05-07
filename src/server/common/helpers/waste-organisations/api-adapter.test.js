@@ -150,10 +150,13 @@ describe('#createApiWasteOrganisationsService', () => {
       const service = createApiWasteOrganisationsService(mockLogger)
       await service.getOrganisations()
 
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { organisationId: 'org-no-regs', organisationName: 'No Regs Ltd' },
-        expect.stringContaining('no producer registration')
-      )
+      expect(mockLogger.warn).toHaveBeenCalledWith({
+        message: expect.stringContaining('no producer registration'),
+        event: {
+          action: 'extract_registration_types',
+          reason: 'organisationId=org-no-regs organisationName=No Regs Ltd'
+        }
+      })
     })
 
     it('warns when an organisation has empty registrations array', async () => {
@@ -224,10 +227,15 @@ describe('#createApiWasteOrganisationsService', () => {
       const service = createApiWasteOrganisationsService(mockLogger)
       await service.getOrganisations()
 
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        { organisationId: 'org-dual', organisationName: 'Dual Type' },
-        expect.stringContaining('both LARGE_PRODUCER and COMPLIANCE_SCHEME')
-      )
+      expect(mockLogger.warn).toHaveBeenCalledWith({
+        message: expect.stringContaining(
+          'both LARGE_PRODUCER and COMPLIANCE_SCHEME'
+        ),
+        event: {
+          action: 'extract_registration_types',
+          reason: 'organisationId=org-dual organisationName=Dual Type'
+        }
+      })
     })
 
     it('does not warn when organisations have valid producer registrations', async () => {

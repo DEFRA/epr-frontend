@@ -322,6 +322,14 @@ describe('#prnSummaryController', () => {
           expect(headers.location).toBe(
             `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-perns`
           )
+
+          expect(server.loggerMocks.info).toHaveBeenCalledWith({
+            message: 'prn-summary dispatch POST',
+            event: {
+              action: 'prn_summary_dispatch_post',
+              reason: 'reprocessor=false'
+            }
+          })
         })
 
         it('should call updateReport with prnRevenue', async ({ server }) => {
@@ -460,6 +468,14 @@ describe('#prnSummaryController', () => {
               /Enter the total revenue in digits, using a decimal point if needed/
             )
           ).toBeDefined()
+
+          expect(server.loggerMocks.error).toHaveBeenCalledWith({
+            message: 'prn-summary dispatch validation failed',
+            event: {
+              action: 'prn_summary_dispatch_validation_failed',
+              reason: expect.any(String)
+            }
+          })
         })
 
         it('should show error when revenue has more than 2 decimal places', async ({

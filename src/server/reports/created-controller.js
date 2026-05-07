@@ -8,9 +8,7 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
   options: {
     validate: {
@@ -93,7 +91,7 @@ export const createdController = {
 }
 
 /**
- * @import { ServerRoute, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

@@ -3,7 +3,8 @@ import { isExporterRegistration } from '#server/common/helpers/prns/registration
 import { createPageGuards } from '../helpers/create-page-guards.js'
 
 const { fetchGuardedData, buildViewData } = createPageGuards({
-  isMatchingRegistration: isExporterRegistration
+  isMatchingRegistration: isExporterRegistration,
+  reportType: 'exporter'
 })
 
 export const fetchGuardedExporterData = fetchGuardedData

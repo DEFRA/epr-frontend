@@ -271,8 +271,7 @@ const getStatusData = async (
     }))
 
   if (freshDataMap !== undefined && summaryLogId in freshDataMap) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { [summaryLogId]: _, ...remainingMap } = freshDataMap
+    const { [summaryLogId]: _, ...remainingMap } = freshDataMap // NOSONAR(javascript:S1481) intentional discard via destructure-rest
     request.yar.set(sessionNames.summaryLogs, {
       ...summaryLogsSession,
       freshDataMap: remainingMap
@@ -641,14 +640,12 @@ const getWasteBalanceData = async (
     if (error.isBoom) {
       throw error
     }
-    logger.error({ err: error }, 'Failed to fetch waste balance data')
+    logger.error({ message: 'Failed to fetch waste balance data', err: error })
     return {}
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const summaryLogUploadProgressController = {
   /**
    * @param {HapiRequest & { params: SummaryLogParams }} request
@@ -660,9 +657,13 @@ export const summaryLogUploadProgressController = {
 
     const session = request.auth.credentials
 
-    request.logger.info(
-      `Rendering summary log progress page for ${summaryLogId} - status load started`
-    )
+    request.logger.info({
+      message: 'Rendering summary log progress page',
+      event: {
+        action: 'summary_log_progress_render_start',
+        reference: summaryLogId
+      }
+    })
 
     const {
       accreditationNumber,
@@ -679,9 +680,13 @@ export const summaryLogUploadProgressController = {
       session.idToken
     )
 
-    request.logger.info(
-      `Rendering summary log progress page for ${summaryLogId} - status load completed`
-    )
+    request.logger.info({
+      message: 'Rendering summary log progress page',
+      event: {
+        action: 'summary_log_progress_render_complete',
+        reference: summaryLogId
+      }
+    })
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
@@ -725,6 +730,6 @@ export const summaryLogUploadProgressController = {
 }
 
 /**
- * @import { ResponseObject, ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  */

@@ -56,10 +56,6 @@ export async function catchAll(request, h) {
 
   const errorMessage = statusCodeMessage(statusCode, request.t)
 
-  if (statusCode >= statusCodes.internalServerError) {
-    request.logger.error({ err: response }, 'Unhandled server error')
-  }
-
   return h
     .view('error/index', {
       pageTitle: errorMessage,

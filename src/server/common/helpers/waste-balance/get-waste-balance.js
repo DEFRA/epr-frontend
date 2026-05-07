@@ -23,7 +23,7 @@ async function getWasteBalance(
 
     return wasteBalanceMap[accreditationId] ?? null
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch waste balance')
+    logger.error({ message: 'Failed to fetch waste balance', err: error })
     return null
   }
 }

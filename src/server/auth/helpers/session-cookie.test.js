@@ -160,6 +160,16 @@ describe('#sessionCookie - integration', () => {
         expect.any(Function),
         { type: 'background' }
       )
+      // eslint-disable-next-line vitest/max-expects
+      expect(server.loggerMocks.info).toHaveBeenCalledWith({
+        message: 'Token refresh complete (background)',
+        event: {
+          action: 'token-refresh',
+          type: 'background',
+          kind: 'event',
+          outcome: 'success'
+        }
+      })
     })
 
     it('should drop session from cache when background refresh fails', async ({
@@ -218,6 +228,20 @@ describe('#sessionCookie - integration', () => {
         expect.any(Function),
         { type: 'background' }
       )
+      expect(server.loggerMocks.error).toHaveBeenCalledWith({
+        message: 'Failed to refresh session',
+        err: expect.any(Error)
+      })
+
+      expect(server.loggerMocks.info).toHaveBeenCalledWith({
+        message: 'Token refresh complete (background)',
+        event: {
+          action: 'token-refresh',
+          type: 'background',
+          kind: 'event',
+          outcome: 'failure'
+        }
+      })
     })
 
     it('should not refresh when token is still valid (expires beyond 5 minutes)', async ({
@@ -480,6 +504,16 @@ describe('#sessionCookie - integration', () => {
         expect.any(Function),
         { type: 'blocking' }
       )
+      // eslint-disable-next-line vitest/max-expects
+      expect(server.loggerMocks.info).toHaveBeenCalledWith({
+        message: 'Token refresh complete (blocking)',
+        event: {
+          action: 'token-refresh',
+          type: 'blocking',
+          kind: 'event',
+          outcome: 'success'
+        }
+      })
     })
 
     it('should drop session synchronously when awaited refresh fails for token expiring within 10 seconds', async ({
@@ -535,6 +569,20 @@ describe('#sessionCookie - integration', () => {
         expect.any(Function),
         { type: 'blocking' }
       )
+      expect(server.loggerMocks.error).toHaveBeenCalledWith({
+        message: 'Failed to refresh session',
+        err: expect.any(Error)
+      })
+      // eslint-disable-next-line vitest/max-expects
+      expect(server.loggerMocks.info).toHaveBeenCalledWith({
+        message: 'Token refresh complete (blocking)',
+        event: {
+          action: 'token-refresh',
+          type: 'blocking',
+          kind: 'event',
+          outcome: 'failure'
+        }
+      })
     })
 
     it('should skip refresh when idTokenRefreshInProgress is already set', async ({

@@ -78,7 +78,7 @@ const createRefreshIdTokenAndUpdateSession = (verifyToken) => {
         refreshedTokens
       )
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to refresh session')
+      request.logger.error({ message: 'Failed to refresh session', err: error })
       await removeUserSession(request)
       return null
     }
@@ -105,14 +105,12 @@ const createBlockingRefresh = (verifyToken) => {
         { type: 'blocking' }
       )
 
-    request.logger.info(
-      {
-        event: tokenRefreshEvent('blocking', {
-          outcome: refreshedSession ? 'success' : 'failure'
-        })
-      },
-      'Token refresh complete (blocking)'
-    )
+    request.logger.info({
+      message: 'Token refresh complete (blocking)',
+      event: tokenRefreshEvent('blocking', {
+        outcome: refreshedSession ? 'success' : 'failure'
+      })
+    })
 
     return refreshedSession
       ? { isValid: true, credentials: refreshedSession }
@@ -141,14 +139,12 @@ const createBackgroundRefresh = (verifyToken) => {
           { type: 'background' }
         )
 
-      request.logger.info(
-        {
-          event: tokenRefreshEvent('background', {
-            outcome: refreshedSession ? 'success' : 'failure'
-          })
-        },
-        'Token refresh complete (background)'
-      )
+      request.logger.info({
+        message: 'Token refresh complete (background)',
+        event: tokenRefreshEvent('background', {
+          outcome: refreshedSession ? 'success' : 'failure'
+        })
+      })
     }
 
     // fire-and-forget: deliberately not awaited so the current request is not delayed

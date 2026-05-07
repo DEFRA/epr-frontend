@@ -170,15 +170,13 @@ describe('#authCallbackController', () => {
 
       await controller.handler(mockRequest, mockH)
 
-      expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith(
-        {
-          event: {
-            action: 'signInSuccess',
-            reference: 'user-456-hashed'
-          }
-        },
-        'User has been successfully authenticated'
-      )
+      expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith({
+        message: 'User has been successfully authenticated',
+        event: {
+          action: 'signInSuccess',
+          reference: 'user-456-hashed'
+        }
+      })
     })
 
     it.each([

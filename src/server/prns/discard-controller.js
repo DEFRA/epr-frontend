@@ -1,12 +1,13 @@
-import Boom from '@hapi/boom'
-
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { errorCodes } from '#server/common/enums/error-codes.js'
+import {
+  badImplementation,
+  classifierTail
+} from '#server/common/helpers/logging/cdp-boom.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { updatePrnStatus } from './helpers/update-prn-status.js'
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const discardGetController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -31,7 +32,6 @@ export const discardGetController = {
       organisationId,
       registrationId,
       idToken: session.idToken,
-      logger: request.logger,
       accreditationId
     })
 
@@ -49,9 +49,7 @@ export const discardGetController = {
   }
 }
 
-/**
- * @satisfies {Partial<ServerRoute>}
- */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const discardPostController = {
   /**
    * @param {HapiRequest & { params: PrnDetailParams }} request
@@ -85,19 +83,26 @@ export const discardPostController = {
 
       return h.redirect(createUrl)
     } catch (error) {
-      request.logger.error({ err: error }, 'Failed to discard PRN')
-
       if (error.isBoom) {
         throw error
       }
 
-      throw Boom.badImplementation('Failed to discard PRN')
+      throw badImplementation(
+        'Failed to discard PRN',
+        errorCodes.prnDiscardFailed,
+        {
+          event: {
+            action: 'discard_prn',
+            reason: classifierTail(error)
+          }
+        }
+      )
     }
   }
 }
 
 /**
- * @import { ResponseToolkit, ServerRoute } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

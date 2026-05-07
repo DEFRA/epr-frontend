@@ -39,6 +39,15 @@ export default [
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
       eqeqeq: ['error', 'always'],
       'no-console': 'error',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'all',
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_'
+        }
+      ],
       'object-shorthand': ['error', 'properties'],
       // Turn off strict type checking rules
       '@typescript-eslint/no-unsafe-argument': 'off',

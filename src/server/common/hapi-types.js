@@ -1,5 +1,5 @@
 /**
- * @import {Request, Server} from '@hapi/hapi'
+ * @import {Request, ResponseToolkit, Server} from '@hapi/hapi'
  * @import {Yar} from '@hapi/yar'
  * @import {Policy, PolicyOptions} from '@hapi/catbox'
  * @import {TFunction, i18n} from 'i18next'
@@ -49,14 +49,10 @@
 
 /**
  * Hapi server with our application state and the CDP-compliant typed logger.
- * Intersecting `logger` with `TypedLogger` advertises the
- * `IndexedLogProperties` shape alongside the broader `pino.Logger` that
- * hapi-pino contributes, so `server.logger.*` call-sites get the CDP
- * Elasticsearch allow-list surfaced in IDE hints. It does not hard-enforce
- * the allow-list — pino's `(obj: object, msg?) => void` overload remains
- * reachable through the intersection. Use `createLogger()` directly where
- * strict narrowing is required.
- * @typedef {Omit<Server, 'app'> & {
+ * Omitting the base `logger` lets our TypedLogger fully replace hapi-pino's
+ * augmented `pino.Logger` instead of intersecting with it — calls like
+ * `server.logger.warn({ ...non-allowlisted fields })` then fail tsc.
+ * @typedef {Omit<Server, 'app' | 'logger'> & {
  *   app: AppState,
  *   logger: TypedLogger
  * }} HapiServer
@@ -89,13 +85,10 @@
  *   - `state.userSession` narrowed to the cookie state written by the
  *     session strategy
  *   - `yar.flash` extended with the flash keys the app uses
- *   - `logger` intersected with `TypedLogger` so object-form log calls get
- *     the CDP `IndexedLogProperties` shape advertised in IDE hints without
- *     losing the rest of the pino logger surface hapi-pino contributes.
- *     The intersection does not hard-enforce the allow-list — pino's
- *     `(obj: object, msg?) => void` overload remains reachable. Use
- *     `createLogger()` directly where strict narrowing is required.
- * @typedef {Omit<Request, 'auth' | 'server' | 'state' | 'yar'> & {
+ *   - `logger` replaces hapi-pino's augmented `pino.Logger` with our
+ *     TypedLogger; calls like `request.logger.warn({ ...non-allowlisted
+ *     fields })` then fail tsc.
+ * @typedef {Omit<Request, 'auth' | 'logger' | 'server' | 'state' | 'yar'> & {
  *   auth: RequestAuth,
  *   logger: TypedLogger,
  *   server: HapiServer,
@@ -108,6 +101,39 @@
  *   metrics: () => Metrics,
  *   cookieAuth: CookieAuth
  * }} HapiRequest
+ */
+
+/**
+ * Mirror of the bits of `@hapi/hapi`'s `ServerRoute` we use, parameterised
+ * over the request type so handlers and `pre` methods type-check against
+ * our typed request rather than hapi's plain `Request<ReqRefDefaults>`.
+ * @template {HapiRequest} TReq
+ * @typedef {{
+ *   method?: string | string[],
+ *   path?: string,
+ *   options?: object,
+ *   handler?: (request: TReq, h: ResponseToolkit) => unknown,
+ *   pre?: { method: (request: TReq) => unknown, assign: string }[]
+ * }} HapiServerRoute
+ */
+
+/**
+ * Mirror of `@hapi/hapi`'s plugin shape, parameterised over the options
+ * payload. `register` receives `HapiServer` so `server.logger.X({ ... })`
+ * calls inside `register` get the TypedLogger surface.
+ * @template [TOptions=void]
+ * @typedef {object} HapiPlugin
+ * @property {string} name
+ * @property {string} [version]
+ * @property {(server: HapiServer, options: TOptions) => Promise<void> | void} register
+ */
+
+/**
+ * @template [TOptions=void]
+ * @typedef {{
+ *   plugin: HapiPlugin<TOptions>,
+ *   options?: TOptions
+ * }} HapiServerRegisterPluginObject
  */
 
 export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import
