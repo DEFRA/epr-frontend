@@ -20,6 +20,7 @@ const pageFields = ({
   reportDetail
 }) => {
   const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+
   return (localise) => ({
     noteTypePlural,
     pageTitle: localise('reports:noteSummaryPageTitle', {
