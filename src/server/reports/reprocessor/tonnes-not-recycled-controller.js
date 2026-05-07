@@ -5,29 +5,42 @@ import { getRedirectUrl } from '../helpers/redirect.js'
 import { updateReport } from '../helpers/update-report.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
+/**
+ * @import { PageFieldsBuilder } from '../helpers/create-page-guards.js'
+ */
+
+/** @type {PageFieldsBuilder} */
+const pageFields = ({
+  material,
+  periodLabel,
+  periodShort,
+  periodPath,
+  reportDetail
+}) => {
+  return (localise) => ({
+    pageTitle: localise('reports:tonnageNotRecycledPageTitle', {
+      material,
+      periodLabel
+    }),
+    caption: localise('reports:tonnageNotRecycledCaption'),
+    heading: localise('reports:tonnageNotRecycledHeading', {
+      material: material.toLowerCase(),
+      periodShort
+    }),
+    hintText: localise('reports:tonnageNotRecycledHint'),
+    continueText: localise('reports:tonnageNotRecycledContinue'),
+    saveText: localise('reports:tonnageNotRecycledSave'),
+    fieldName: 'tonnageNotRecycled',
+    backUrl: `${periodPath}/tonnes-recycled`,
+    defaultValue: reportDetail.recyclingActivity?.tonnageNotRecycled
+  })
+}
+
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageNotRecycled',
   payloadSchema: tonnageNotRecycledPayloadSchema,
-  pageFields({ material, periodLabel, periodShort, periodPath, reportDetail }) {
-    return (localise) => ({
-      pageTitle: localise('reports:tonnageNotRecycledPageTitle', {
-        material,
-        periodLabel
-      }),
-      caption: localise('reports:tonnageNotRecycledCaption'),
-      heading: localise('reports:tonnageNotRecycledHeading', {
-        material: material.toLowerCase(),
-        periodShort
-      }),
-      hintText: localise('reports:tonnageNotRecycledHint'),
-      continueText: localise('reports:tonnageNotRecycledContinue'),
-      saveText: localise('reports:tonnageNotRecycledSave'),
-      fieldName: 'tonnageNotRecycled',
-      backUrl: `${periodPath}/tonnes-recycled`,
-      defaultValue: reportDetail.recyclingActivity?.tonnageNotRecycled
-    })
-  },
+  pageFields,
   guardFn: buildReprocessorViewData,
   createPostHandler() {
     return async (request, h) => {

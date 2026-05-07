@@ -1,45 +1,8 @@
-import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
-import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
-import { freeTonnagePayloadSchema } from '../helpers/validation.js'
+import { createFreeTonnageControllers } from '../helpers/create-free-tonnage-controllers.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
-const { getController, postController } = createDataPageControllers({
-  viewPath: 'reports/tonnage-input',
-  fieldName: 'freeTonnage',
-  payloadSchema: freeTonnagePayloadSchema,
-  pageFields({
-    material,
-    periodLabel,
-    periodShort,
-    periodPath,
-    registration,
-    reportDetail
-  }) {
-    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
-    return (localise) => ({
-      noteTypePlural,
-      pageTitle: localise('reports:freePageTitle', {
-        noteTypePlural,
-        material,
-        periodLabel
-      }),
-      caption: localise('reports:freeCaption'),
-      heading: localise('reports:freeHeading', { noteTypePlural, periodShort }),
-      insetText: localise('reports:freeHint', { noteTypePlural }),
-      inputLabel: localise('reports:freeInputLabel', { noteTypePlural }),
-      inputHint: localise('reports:freeInputHint'),
-      continueText: localise('reports:freeContinue'),
-      saveText: localise('reports:freeSave'),
-      fieldName: 'freeTonnage',
-      backUrl: `${periodPath}/prn-summary`,
-      tonnageIssued: reportDetail.prn.issuedTonnage,
-      defaultValue: reportDetail.prn.freeTonnage
-    })
-  },
-  guardFn: buildReprocessorViewData,
-  guardOptions: { accreditedOnly: true },
-  nextPage: 'supporting-information',
-  exceedsTotalErrorKey: 'reports:freeErrorExceedsTotal'
+const { getController, postController } = createFreeTonnageControllers({
+  guardFn: buildReprocessorViewData
 })
 
 export {
