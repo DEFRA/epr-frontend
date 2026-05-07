@@ -12,9 +12,13 @@ import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
  * Fetches registration/accreditation and report detail, then enforces the
  * registration-type guard (any cadence). Returns validated data for pages
  * available to all matching registrations.
- * @param {(registration: object) => boolean} isMatchingRegistration
+ * @param {(registration: Registration) => boolean} isMatchingRegistration
  * @param {HapiRequest & { params: PeriodParams }} request
- * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse }>}
+ * @returns {Promise<{
+ *   registration: Registration,
+ *   accreditation: Accreditation | undefined,
+ *   reportDetail: ReportDetailResponse
+ * }>}
  */
 async function fetchGuardedData(isMatchingRegistration, request) {
   const { organisationId, registrationId, year, cadence, period } =
@@ -55,10 +59,14 @@ async function fetchGuardedData(isMatchingRegistration, request) {
  * Fetches registration/accreditation and report detail, then enforces the
  * accredited-monthly guard. Returns validated data for pages available
  * only to accredited operators (prn-summary, free-perns/free-prns).
- * @param {(registration: object) => boolean} isMatchingRegistration
+ * @param {(registration: Registration) => boolean} isMatchingRegistration
  * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
- * @returns {Promise<{ registration: object, accreditation: object, reportDetail: ReportDetailResponse }>}
+ * @returns {Promise<{
+ *   registration: Registration,
+ *   accreditation: Accreditation,
+ *   reportDetail: ReportDetailResponse
+ * }>}
  */
 async function fetchGuardedAccreditedData(
   isMatchingRegistration,
@@ -93,14 +101,9 @@ async function fetchGuardedAccreditedData(
 }
 
 /**
- * Fetches guarded data and builds the common view data fields shared by
- * pages. Page-specific fields are merged from the callback return value.
- * @param {(registration: object) => boolean} isMatchingRegistration
- * @param {string} reportType
- * @param {HapiRequest & { params: PeriodParams }} request
- * @param {(ctx: {
- *   registration: object,
- *   accreditation: object | undefined,
+ * @typedef {{
+ *   registration: Registration,
+ *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   material: string,
  *   periodLabel: string,
@@ -108,14 +111,55 @@ async function fetchGuardedAccreditedData(
  *   periodPath: string,
  *   reportsListPath: string,
  *   period: number
- * }) => { backUrl?: string, defaultValue?: unknown, [key: string]: unknown }} buildPageFields
- * @param {object} [options]
- * @param {boolean} [options.accreditedOnly] - Use accredited guard (prn-summary, free-perns/free-prns)
- * @param {boolean} [options.registeredOnly] - Restrict to registered-only operators (tonnes-not-exported)
- * @param {unknown} [options.value]
- * @param {object} [options.errors]
- * @param {object} [options.errorSummary]
- * @returns {Promise<object>}
+ * }} PageFieldsCtx
+ */
+
+/**
+ * @typedef {{
+ *   accreditedOnly?: boolean,
+ *   registeredOnly?: boolean,
+ *   value?: unknown,
+ *   errors?: object | null,
+ *   errorSummary?: object | null
+ * }} GuardOptions
+ */
+
+/**
+ * `backUrl` is consumed by `buildViewData` (localised into the rendered URL);
+ * other keys are forwarded to the template untouched.
+ * @typedef {{
+ *   backUrl: string,
+ *   defaultValue?: unknown,
+ *   [key: string]: unknown
+ * }} PageFieldsResult
+ */
+
+/**
+ * @typedef {(ctx: PageFieldsCtx) => (localise: TFunction) => PageFieldsResult} PageFieldsBuilder
+ */
+
+/**
+ * Rendered view data passed to the page's Nunjucks template.
+ * @typedef {PageFieldsResult & {
+ *   deleteUrl: string,
+ *   value: unknown,
+ *   errors: Record<string, { text: string }> | null,
+ *   errorSummary: {
+ *     titleText: string,
+ *     errorList: { text: string, href: string }[]
+ *   } | null
+ * }} ViewData
+ */
+
+/**
+ * Fetches guarded data and builds the common view data fields shared by
+ * pages. Page-specific fields are merged from the callback return value.
+ * @param {(registration: Registration) => boolean} isMatchingRegistration
+ * @param {string} reportType
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @param {(ctx: PageFieldsCtx) => PageFieldsResult} buildPageFields
+ * @param {GuardOptions} [options]
+ * @returns {Promise<ViewData>}
  */
 async function buildViewData(
   isMatchingRegistration,
@@ -172,7 +216,7 @@ async function buildViewData(
  * and reprocessor subtrees both consume this factory; the only runtime
  * difference is which registration predicate is used.
  * @param {{
- *   isMatchingRegistration: (registration: object) => boolean,
+ *   isMatchingRegistration: (registration: Registration) => boolean,
  *   reportType: string
  * }} options
  */
@@ -192,6 +236,9 @@ export function createPageGuards({ isMatchingRegistration, reportType }) {
 }
 
 /**
+ * @import { TFunction } from 'i18next'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './period-params-schema.js'
  * @import { ReportDetailResponse } from './fetch-report-detail.js'
