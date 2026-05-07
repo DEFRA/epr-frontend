@@ -106,8 +106,6 @@ async function fetchGuardedAccreditedData(
 }
 
 /**
- * Context passed to a page's `buildPageFields` callback after the guard has
- * fetched and validated the registration/accreditation/report data.
  * @typedef {{
  *   registration: Registration,
  *   accreditation: Accreditation | undefined,
@@ -122,9 +120,8 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
- * Narrowed context for pages that opt in via `accreditedOnly: true`. The
- * accredited guard throws if the report has no `prn` data, so consumers can
- * rely on `reportDetail.prn` being present.
+ * Pages that opt in via `accreditedOnly: true` get a guarded ctx where the
+ * accredited guard has already thrown if `prn` was missing.
  * @typedef {Omit<PageFieldsCtx, 'accreditation' | 'reportDetail'> & {
  *   accreditation: Accreditation,
  *   reportDetail: ReportDetailResponse & {
@@ -134,7 +131,6 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
- * Optional inputs threaded through `buildViewData` into the rendered view.
  * @typedef {{
  *   accreditedOnly?: boolean,
  *   registeredOnly?: boolean,
@@ -145,9 +141,8 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
- * Page-specific fields returned by a page's `buildPageFields` callback.
- * `backUrl` is read by `buildViewData` and localised into the rendered URL;
- * everything else is forwarded to the template.
+ * `backUrl` is consumed by `buildViewData` (localised into the rendered URL);
+ * other keys are forwarded to the template untouched.
  * @typedef {{
  *   backUrl: string,
  *   defaultValue?: unknown,
@@ -156,13 +151,8 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
- * Curried page-fields builder used as the `pageFields` config option of
- * `createDataPageControllers`. Takes the resolved context, then the
- * i18n localiser, and returns the rendered fields.
  * @template {PageFieldsCtx} [TCtx=PageFieldsCtx]
- * @typedef {(ctx: TCtx) =>
- *   (localise: (key: string, params?: object) => string) => PageFieldsResult
- * } PageFieldsBuilder
+ * @typedef {(ctx: TCtx) => (localise: TFunction) => PageFieldsResult} PageFieldsBuilder
  */
 
 /**
@@ -250,6 +240,7 @@ export function createPageGuards({ isMatchingRegistration, reportType }) {
 }
 
 /**
+ * @import { TFunction } from 'i18next'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
