@@ -7,11 +7,12 @@ import { buildValidationErrors } from './validation.js'
 
 /**
  * Builds view data by calling the guard function with a page-fields callback.
- * @param {(request: HapiRequest, buildPageFields: (ctx: object) => object, options: object) => Promise<object>} guardFn
- * @param {(ctx: object) => (localise: (key: string, params?: object) => string) => object} pageFields
- * @param {object} guardOptions
+ * @template {PageFieldsCtx} TCtx
+ * @param {(request: HapiRequest, buildPageFields: (ctx: TCtx) => PageFieldsResult, options: GuardOptions) => Promise<object>} guardFn
+ * @param {PageFieldsBuilder<TCtx>} pageFields
+ * @param {GuardOptions} guardOptions
  * @param {HapiRequest} request
- * @param {object} [options]
+ * @param {GuardOptions} [options]
  * @returns {Promise<object>}
  */
 function buildViewData(guardFn, pageFields, guardOptions, request, options) {
@@ -37,16 +38,21 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  * - `createPostHandler` — full custom handler, receives `{ getViewData, viewPath }`
  * - `exceedsTotalErrorKey` + `nextPage` — validates free tonnage against issued, then saves
  * - `nextPage` alone — simple save-and-redirect
+ *
+ * Pages that pass `guardOptions: { accreditedOnly: true }` should annotate
+ * their `pageFields` parameter as `AccreditedPageFieldsCtx` to get a
+ * non-null `reportDetail.prn`; TS infers `TCtx` from that annotation.
+ * @template {PageFieldsCtx} [TCtx=PageFieldsCtx]
  * @param {object} config
  * @param {string} config.viewPath - Nunjucks template path
  * @param {string} config.fieldName - Payload field name
  * @param {import('joi').Schema} config.payloadSchema - Joi schema for POST payload
- * @param {(ctx: object) => (localise: (key: string, params?: object) => string) => object} config.pageFields - Returns localised page fields from context
- * @param {(request: HapiRequest, buildPageFields: (ctx: object) => object, options: object) => Promise<object>} config.guardFn - Guard function (buildExporterViewData or buildReprocessorViewData)
- * @param {object} [config.guardOptions] - Extra options passed to guardFn (e.g. { accreditedOnly: true })
+ * @param {PageFieldsBuilder<TCtx>} config.pageFields - Returns localised page fields from context
+ * @param {(request: HapiRequest, buildPageFields: (ctx: TCtx) => PageFieldsResult, options: GuardOptions) => Promise<object>} config.guardFn - Guard function (buildExporterViewData or buildReprocessorViewData)
+ * @param {GuardOptions} [config.guardOptions] - Extra options passed to guardFn (e.g. { accreditedOnly: true })
  * @param {string} [config.nextPage] - Redirect target after saving
  * @param {string} [config.exceedsTotalErrorKey] - i18n key for the exceeds-total error (enables tonnage validation)
- * @param {(deps: { getViewData: (request: HapiRequest, options?: object) => Promise<object>, viewPath: string }) => (request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }, h: ResponseToolkit) => Promise<ResponseObject>} [config.createPostHandler] - Factory for custom POST handler
+ * @param {(deps: { getViewData: (request: HapiRequest & { params: PeriodParams }, options?: GuardOptions) => Promise<object>, viewPath: string }) => (request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }, h: ResponseToolkit) => Promise<ResponseObject>} [config.createPostHandler] - Factory for custom POST handler
  * @returns {{ getController: DataPageController, postController: DataPagePostController }}
  */
 export function createDataPageControllers({
@@ -62,7 +68,7 @@ export function createDataPageControllers({
 }) {
   /**
    * @param {HapiRequest & { params: PeriodParams }} request
-   * @param {object} [options]
+   * @param {GuardOptions} [options]
    */
   const getViewData = (request, options = {}) =>
     buildViewData(guardFn, pageFields, guardOptions, request, options)
@@ -287,5 +293,6 @@ function createTonnagePostHandler(
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { GuardOptions, PageFieldsBuilder, PageFieldsCtx, PageFieldsResult } from './create-page-guards.js'
  * @import { PeriodParams } from './period-params-schema.js'
  */

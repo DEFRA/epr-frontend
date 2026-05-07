@@ -6,44 +6,52 @@ import {
 } from '../helpers/validation.js'
 import { buildExporterViewData } from './exporter-page-guards.js'
 
+/**
+ * @import { AccreditedPageFieldsCtx, PageFieldsBuilder } from '../helpers/create-page-guards.js'
+ */
+
+/** @type {PageFieldsBuilder<AccreditedPageFieldsCtx>} */
+const pageFields = ({
+  material,
+  periodLabel,
+  periodShort,
+  reportsListPath,
+  registration,
+  reportDetail
+}) => {
+  const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+
+  return (localise) => ({
+    noteTypePlural,
+    pageTitle: localise('reports:noteSummaryPageTitle', {
+      noteTypePlural,
+      material,
+      periodLabel
+    }),
+    caption: localise('reports:noteSummaryCaption'),
+    heading: localise('reports:noteSummaryHeading', {
+      noteTypePlural,
+      material: material.toLowerCase(),
+      periodShort
+    }),
+    tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
+    tonnageIssued: reportDetail.prn.issuedTonnage,
+    revenueLabel: localise('reports:noteSummaryRevenueLabel', {
+      noteTypePlural
+    }),
+    revenueHint: localise('reports:noteSummaryRevenueHint'),
+    continueText: localise('reports:noteSummaryContinue'),
+    saveText: localise('reports:noteSummarySave'),
+    backUrl: reportsListPath,
+    defaultValue: padToTwoDecimalPlaces(reportDetail.prn.totalRevenue)
+  })
+}
+
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/prn-summary',
   fieldName: 'prnRevenue',
   payloadSchema: revenuePayloadSchema,
-  pageFields({
-    material,
-    periodLabel,
-    periodShort,
-    reportsListPath,
-    registration,
-    reportDetail
-  }) {
-    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
-    return (localise) => ({
-      noteTypePlural,
-      pageTitle: localise('reports:noteSummaryPageTitle', {
-        noteTypePlural,
-        material,
-        periodLabel
-      }),
-      caption: localise('reports:noteSummaryCaption'),
-      heading: localise('reports:noteSummaryHeading', {
-        noteTypePlural,
-        material: material.toLowerCase(),
-        periodShort
-      }),
-      tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
-      tonnageIssued: reportDetail.prn.issuedTonnage,
-      revenueLabel: localise('reports:noteSummaryRevenueLabel', {
-        noteTypePlural
-      }),
-      revenueHint: localise('reports:noteSummaryRevenueHint'),
-      continueText: localise('reports:noteSummaryContinue'),
-      saveText: localise('reports:noteSummarySave'),
-      backUrl: reportsListPath,
-      defaultValue: padToTwoDecimalPlaces(reportDetail.prn.totalRevenue)
-    })
-  },
+  pageFields,
   guardFn: buildExporterViewData,
   guardOptions: { accreditedOnly: true },
   nextPage: 'free-perns'

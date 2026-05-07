@@ -12,9 +12,9 @@ import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
  * Fetches registration/accreditation and report detail, then enforces the
  * registration-type guard (any cadence). Returns validated data for pages
  * available to all matching registrations.
- * @param {(registration: object) => boolean} isMatchingRegistration
+ * @param {(registration: Registration) => boolean} isMatchingRegistration
  * @param {HapiRequest & { params: PeriodParams }} request
- * @returns {Promise<{ registration: object, accreditation: object | undefined, reportDetail: ReportDetailResponse }>}
+ * @returns {Promise<{ registration: Registration, accreditation: Accreditation | undefined, reportDetail: ReportDetailResponse }>}
  */
 async function fetchGuardedData(isMatchingRegistration, request) {
   const { organisationId, registrationId, year, cadence, period } =
@@ -55,10 +55,16 @@ async function fetchGuardedData(isMatchingRegistration, request) {
  * Fetches registration/accreditation and report detail, then enforces the
  * accredited-monthly guard. Returns validated data for pages available
  * only to accredited operators (prn-summary, free-perns/free-prns).
- * @param {(registration: object) => boolean} isMatchingRegistration
+ * @param {(registration: Registration) => boolean} isMatchingRegistration
  * @param {string} reportType
  * @param {HapiRequest & { params: PeriodParams }} request
- * @returns {Promise<{ registration: object, accreditation: object, reportDetail: ReportDetailResponse }>}
+ * @returns {Promise<{
+ *   registration: Registration,
+ *   accreditation: Accreditation,
+ *   reportDetail: ReportDetailResponse & {
+ *     prn: NonNullable<ReportDetailResponse['prn']>
+ *   }
+ * }>}
  */
 async function fetchGuardedAccreditedData(
   isMatchingRegistration,
@@ -89,18 +95,22 @@ async function fetchGuardedAccreditedData(
     )
   }
 
-  return { registration, accreditation, reportDetail }
+  return {
+    registration,
+    accreditation,
+    reportDetail:
+      /** @type {ReportDetailResponse & { prn: NonNullable<ReportDetailResponse['prn']> }} */ (
+        reportDetail
+      )
+  }
 }
 
 /**
- * Fetches guarded data and builds the common view data fields shared by
- * pages. Page-specific fields are merged from the callback return value.
- * @param {(registration: object) => boolean} isMatchingRegistration
- * @param {string} reportType
- * @param {HapiRequest & { params: PeriodParams }} request
- * @param {(ctx: {
- *   registration: object,
- *   accreditation: object | undefined,
+ * Context passed to a page's `buildPageFields` callback after the guard has
+ * fetched and validated the registration/accreditation/report data.
+ * @typedef {{
+ *   registration: Registration,
+ *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   material: string,
  *   periodLabel: string,
@@ -108,13 +118,61 @@ async function fetchGuardedAccreditedData(
  *   periodPath: string,
  *   reportsListPath: string,
  *   period: number
- * }) => { backUrl?: string, defaultValue?: unknown, [key: string]: unknown }} buildPageFields
- * @param {object} [options]
- * @param {boolean} [options.accreditedOnly] - Use accredited guard (prn-summary, free-perns/free-prns)
- * @param {boolean} [options.registeredOnly] - Restrict to registered-only operators (tonnes-not-exported)
- * @param {unknown} [options.value]
- * @param {object} [options.errors]
- * @param {object} [options.errorSummary]
+ * }} PageFieldsCtx
+ */
+
+/**
+ * Narrowed context for pages that opt in via `accreditedOnly: true`. The
+ * accredited guard throws if the report has no `prn` data, so consumers can
+ * rely on `reportDetail.prn` being present.
+ * @typedef {Omit<PageFieldsCtx, 'accreditation' | 'reportDetail'> & {
+ *   accreditation: Accreditation,
+ *   reportDetail: ReportDetailResponse & {
+ *     prn: NonNullable<ReportDetailResponse['prn']>
+ *   }
+ * }} AccreditedPageFieldsCtx
+ */
+
+/**
+ * Optional inputs threaded through `buildViewData` into the rendered view.
+ * @typedef {{
+ *   accreditedOnly?: boolean,
+ *   registeredOnly?: boolean,
+ *   value?: unknown,
+ *   errors?: object | null,
+ *   errorSummary?: object | null
+ * }} GuardOptions
+ */
+
+/**
+ * Page-specific fields returned by a page's `buildPageFields` callback.
+ * `backUrl` is read by `buildViewData` and localised into the rendered URL;
+ * everything else is forwarded to the template.
+ * @typedef {{
+ *   backUrl: string,
+ *   defaultValue?: unknown,
+ *   [key: string]: unknown
+ * }} PageFieldsResult
+ */
+
+/**
+ * Curried page-fields builder used as the `pageFields` config option of
+ * `createDataPageControllers`. Takes the resolved context, then the
+ * i18n localiser, and returns the rendered fields.
+ * @template {PageFieldsCtx} [TCtx=PageFieldsCtx]
+ * @typedef {(ctx: TCtx) =>
+ *   (localise: (key: string, params?: object) => string) => PageFieldsResult
+ * } PageFieldsBuilder
+ */
+
+/**
+ * Fetches guarded data and builds the common view data fields shared by
+ * pages. Page-specific fields are merged from the callback return value.
+ * @param {(registration: Registration) => boolean} isMatchingRegistration
+ * @param {string} reportType
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @param {(ctx: PageFieldsCtx) => PageFieldsResult} buildPageFields
+ * @param {GuardOptions} [options]
  * @returns {Promise<object>}
  */
 async function buildViewData(
@@ -172,7 +230,7 @@ async function buildViewData(
  * and reprocessor subtrees both consume this factory; the only runtime
  * difference is which registration predicate is used.
  * @param {{
- *   isMatchingRegistration: (registration: object) => boolean,
+ *   isMatchingRegistration: (registration: Registration) => boolean,
  *   reportType: string
  * }} options
  */
@@ -192,6 +250,8 @@ export function createPageGuards({ isMatchingRegistration, reportType }) {
 }
 
 /**
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './period-params-schema.js'
  * @import { ReportDetailResponse } from './fetch-report-detail.js'

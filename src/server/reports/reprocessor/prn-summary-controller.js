@@ -6,44 +6,51 @@ import {
 } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
+/**
+ * @import { AccreditedPageFieldsCtx, PageFieldsBuilder } from '../helpers/create-page-guards.js'
+ */
+
+/** @type {PageFieldsBuilder<AccreditedPageFieldsCtx>} */
+const pageFields = ({
+  material,
+  periodLabel,
+  periodShort,
+  periodPath,
+  registration,
+  reportDetail
+}) => {
+  const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+  return (localise) => ({
+    noteTypePlural,
+    pageTitle: localise('reports:noteSummaryPageTitle', {
+      noteTypePlural,
+      material,
+      periodLabel
+    }),
+    caption: localise('reports:noteSummaryCaption'),
+    heading: localise('reports:noteSummaryHeading', {
+      noteTypePlural,
+      material: material.toLowerCase(),
+      periodShort
+    }),
+    tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
+    tonnageIssued: reportDetail.prn.issuedTonnage,
+    revenueLabel: localise('reports:noteSummaryRevenueLabel', {
+      noteTypePlural
+    }),
+    revenueHint: localise('reports:noteSummaryRevenueHint'),
+    continueText: localise('reports:noteSummaryContinue'),
+    saveText: localise('reports:noteSummarySave'),
+    backUrl: `${periodPath}/tonnes-not-recycled`,
+    defaultValue: padToTwoDecimalPlaces(reportDetail.prn.totalRevenue)
+  })
+}
+
 const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/prn-summary',
   fieldName: 'prnRevenue',
   payloadSchema: revenuePayloadSchema,
-  pageFields({
-    material,
-    periodLabel,
-    periodShort,
-    periodPath,
-    registration,
-    reportDetail
-  }) {
-    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
-    return (localise) => ({
-      noteTypePlural,
-      pageTitle: localise('reports:noteSummaryPageTitle', {
-        noteTypePlural,
-        material,
-        periodLabel
-      }),
-      caption: localise('reports:noteSummaryCaption'),
-      heading: localise('reports:noteSummaryHeading', {
-        noteTypePlural,
-        material: material.toLowerCase(),
-        periodShort
-      }),
-      tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
-      tonnageIssued: reportDetail.prn.issuedTonnage,
-      revenueLabel: localise('reports:noteSummaryRevenueLabel', {
-        noteTypePlural
-      }),
-      revenueHint: localise('reports:noteSummaryRevenueHint'),
-      continueText: localise('reports:noteSummaryContinue'),
-      saveText: localise('reports:noteSummarySave'),
-      backUrl: `${periodPath}/tonnes-not-recycled`,
-      defaultValue: padToTwoDecimalPlaces(reportDetail.prn.totalRevenue)
-    })
-  },
+  pageFields,
   guardFn: buildReprocessorViewData,
   guardOptions: { accreditedOnly: true },
   nextPage: 'free-prns'
