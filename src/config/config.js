@@ -2,7 +2,7 @@ import convict from 'convict'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { getLogFormatType, getLogRedactType } from './utils/log.js'
+import { getLogFormatType } from './utils/log.js'
 import { getSessionCacheEngineType } from './utils/session.js'
 
 /**
@@ -109,11 +109,6 @@ export const config = convict({
       format: ['ecs', 'pino-pretty'],
       default: getLogFormatType({ isProduction }),
       env: 'LOG_FORMAT'
-    },
-    redact: {
-      doc: 'Log paths to redact',
-      format: Array,
-      default: getLogRedactType({ isProduction })
     }
   },
   httpProxy: /** @type {SchemaObj<string | null>} */ ({
