@@ -109,6 +109,17 @@ export const config = convict({
       format: ['ecs', 'pino-pretty'],
       default: getLogFormatType({ isProduction }),
       env: 'LOG_FORMAT'
+    },
+    redact: {
+      doc: 'Log paths to redact',
+      format: Array,
+      default: isProduction
+        ? [
+            'http.request.headers.authorization',
+            'http.request.headers.cookie',
+            'http.response.headers'
+          ]
+        : []
     }
   },
   httpProxy: /** @type {SchemaObj<string | null>} */ ({
