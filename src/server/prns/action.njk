@@ -56,7 +56,8 @@
 
         <div class="govuk-button-group">
           {{ govukButton({
-            text: issueButton.text
+            text: issueButton.text,
+            preventDoubleClick: true
           }) }}
 
           {% if deleteButton %}

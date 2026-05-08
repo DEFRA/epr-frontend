@@ -149,6 +149,7 @@ describe('#deleteController', () => {
         })
         expect(button).toBeDefined()
         expect(button.classList.contains('govuk-button--warning')).toBe(true)
+        expect(button.getAttribute('data-prevent-double-click')).toBe('true')
       })
 
       it('displays back link to PRN view page', async ({ server }) => {
