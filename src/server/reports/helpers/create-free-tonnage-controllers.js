@@ -4,8 +4,7 @@ import { createDataPageControllers } from './create-data-page-controllers.js'
 import { freeTonnagePayloadSchema } from './validation.js'
 
 /**
- * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { GuardOptions, PageFieldsBuilder, PageFieldsCtx, PageFieldsResult, ViewData } from './create-page-guards.js'
+ * @import { GuardFn, PageFieldsBuilder } from './create-page-guards.js'
  */
 
 /** @type {PageFieldsBuilder} */
@@ -50,12 +49,7 @@ const pageFields = ({
  * Creates the free-tonnage GET/POST controller pair, parameterised by the
  * guard function. The exporter and reprocessor subtrees both consume this
  * factory; the only runtime difference is which guard is used.
- * @param {object} options
- * @param {(
- *   request: HapiRequest,
- *   buildPageFields: (ctx: PageFieldsCtx) => PageFieldsResult,
- *   options?: GuardOptions
- * ) => Promise<ViewData>} options.guardFn
+ * @param {{ guardFn: GuardFn }} options
  */
 export function createFreeTonnageControllers({ guardFn }) {
   return createDataPageControllers({

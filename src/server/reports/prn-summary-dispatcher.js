@@ -2,8 +2,8 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import {
-  prnSummaryGetController,
-  prnSummaryPostController
+  exporterPrnSummaryGetController,
+  exporterPrnSummaryPostController
 } from './exporter/prn-summary-controller.js'
 import {
   reprocessorPrnSummaryGetController,
@@ -42,7 +42,7 @@ export const prnSummaryDispatchGetController = {
     const reprocessor = await isReprocessor(request)
     const controller = reprocessor
       ? reprocessorPrnSummaryGetController
-      : prnSummaryGetController
+      : exporterPrnSummaryGetController
 
     return controller.handler(request, h)
   }
@@ -68,7 +68,7 @@ export const prnSummaryDispatchPostController = {
     const reprocessor = await isReprocessor(request)
     const controller = reprocessor
       ? reprocessorPrnSummaryPostController
-      : prnSummaryPostController
+      : exporterPrnSummaryPostController
 
     request.logger.info({
       message: 'prn-summary dispatch POST',
