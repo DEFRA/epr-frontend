@@ -241,6 +241,26 @@ describe('#createPrnController', () => {
         ).toBeDefined()
       })
 
+      it('should render submit button with double-click prevention', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        const submitButton = getByRole(main, 'button', { name: /Continue/i })
+        expect(submitButton).toBeDefined()
+        expect(submitButton.getAttribute('data-prevent-double-click')).toBe(
+          'true'
+        )
+      })
+
       it('should fetch registration data with correct parameters', async ({
         server
       }) => {
