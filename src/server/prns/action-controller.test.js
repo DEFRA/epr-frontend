@@ -314,7 +314,9 @@ describe('#actionController', () => {
       const { body } = dom.window.document
       const main = getByRole(body, 'main')
 
-      expect(getByRole(main, 'button', { name: /Issue PRN/i })).toBeDefined()
+      const issueButton = getByRole(main, 'button', { name: /Issue PRN/i })
+      expect(issueButton).toBeDefined()
+      expect(issueButton.getAttribute('data-prevent-double-click')).toBe('true')
     })
 
     it('displays Delete PRN button when status is awaiting_authorisation', async ({
