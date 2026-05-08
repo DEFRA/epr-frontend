@@ -118,9 +118,7 @@ async function fetchGuardedAccreditedData(
  * @typedef {{
  *   accreditedOnly?: boolean,
  *   registeredOnly?: boolean,
- *   value?: unknown,
- *   errors?: ValidationErrors | null,
- *   errorSummary?: ErrorSummary | null
+ *   value?: unknown
  * }} GuardOptions
  */
 
@@ -215,8 +213,8 @@ async function buildViewData(
     ...pageFields,
     deleteUrl: request.localiseUrl(`${periodPath}/delete`),
     value: options.value ?? pageFields.defaultValue ?? '',
-    errors: options.errors ?? null,
-    errorSummary: options.errorSummary ?? null
+    errors: null,
+    errorSummary: null
   }
 }
 
