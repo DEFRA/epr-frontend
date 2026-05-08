@@ -1,43 +1,76 @@
 import { afterEach, describe, it, expect } from 'vitest'
-import { config, isProductionEnvironment, isReportsEnabled } from './config.js'
+import {
+  config,
+  isLocalEnvironment,
+  isProductionEnvironment,
+  isReportsEnabled
+} from './config.js'
 
-describe(isReportsEnabled, () => {
-  afterEach(() => {
-    config.reset('featureFlags.reports')
+describe('#config', () => {
+  describe(isReportsEnabled, () => {
+    afterEach(() => {
+      config.reset('featureFlags.reports')
+    })
+
+    it('should return false by default', () => {
+      expect(isReportsEnabled()).toBe(false)
+    })
+
+    it('should return true when flag is enabled', () => {
+      config.set('featureFlags.reports', true)
+      expect(isReportsEnabled()).toBe(true)
+    })
   })
 
-  it('should return false by default', () => {
-    expect(isReportsEnabled()).toBe(false)
+  describe(isProductionEnvironment, () => {
+    afterEach(() => {
+      config.reset('cdpEnvironment')
+    })
+
+    it('should return true when cdpEnvironment is prod', () => {
+      config.set('cdpEnvironment', 'prod')
+
+      expect(isProductionEnvironment()).toBe(true)
+    })
+
+    it.each([
+      'local',
+      'infra-dev',
+      'management',
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test'
+    ])('should return false when cdpEnvironment is %s', (env) => {
+      config.set('cdpEnvironment', env)
+
+      expect(isProductionEnvironment()).toBe(false)
+    })
   })
 
-  it('should return true when flag is enabled', () => {
-    config.set('featureFlags.reports', true)
-    expect(isReportsEnabled()).toBe(true)
-  })
-})
+  describe(isLocalEnvironment, () => {
+    afterEach(() => {
+      config.reset('cdpEnvironment')
+    })
 
-describe(isProductionEnvironment, () => {
-  afterEach(() => {
-    config.reset('cdpEnvironment')
-  })
+    it('should return true when cdpEnvironment is local', () => {
+      config.set('cdpEnvironment', 'local')
 
-  it('should return true when cdpEnvironment is prod', () => {
-    config.set('cdpEnvironment', 'prod')
+      expect(isLocalEnvironment()).toBe(true)
+    })
 
-    expect(isProductionEnvironment()).toBe(true)
-  })
+    it.each([
+      'infra-dev',
+      'management',
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test',
+      'prod'
+    ])('should return false when cdpEnvironment is %s', (env) => {
+      config.set('cdpEnvironment', env)
 
-  it.each([
-    'local',
-    'infra-dev',
-    'management',
-    'dev',
-    'test',
-    'perf-test',
-    'ext-test'
-  ])('should return false when cdpEnvironment is %s', (env) => {
-    config.set('cdpEnvironment', env)
-
-    expect(isProductionEnvironment()).toBe(false)
+      expect(isLocalEnvironment()).toBe(false)
+    })
   })
 })

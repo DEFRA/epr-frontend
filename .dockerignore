@@ -1,3 +1,9 @@
 node_modules
 Dockerfile
 coverage
+
+# Test files
+**/*.test.js
+
+# Test helper files and directories
+**/test-helpers/
