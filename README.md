@@ -113,11 +113,14 @@ return await fetch(url, {
 
 ### Setup
 
-Install application dependencies:
+After cloning, install dependencies and run the project's `postinstall` step (which configures husky and builds the app):
 
 ```bash
-npm install
+npm ci
+npm run postinstall
 ```
+
+`.npmrc` sets `ignore-scripts=true` (per the [Defra Node.js standard](https://defra.github.io/software-development-standards/standards/node_standards/)) to defend against compromised-package supply-chain attacks. That suppresses the project's own `postinstall` step on `npm ci`, so it's invoked explicitly as a second step. Running scripts via `npm run` directly is not affected by `ignore-scripts`.
 
 ### Development
 
