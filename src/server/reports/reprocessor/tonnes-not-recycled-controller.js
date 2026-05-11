@@ -1,8 +1,8 @@
 import { CADENCE } from '../constants.js'
 import { createDataPageControllers } from '../helpers/create-data-page-controllers.js'
-import { tonnageNotRecycledPayloadSchema } from '../helpers/validation.js'
 import { getRedirectUrl } from '../helpers/redirect.js'
 import { updateReport } from '../helpers/update-report.js'
+import { tonnageNotRecycledPayloadSchema } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
 /**
@@ -10,38 +10,32 @@ import { buildReprocessorViewData } from './reprocessor-page-guards.js'
  */
 
 /** @type {PageFieldsBuilder} */
-const pageFields = ({
-  material,
-  periodLabel,
-  periodShort,
-  periodPath,
-  reportDetail
-}) => {
-  return (localise) => ({
-    pageTitle: localise('reports:tonnageNotRecycledPageTitle', {
-      material,
-      periodLabel
-    }),
+const pageFields =
+  ({ material, periodLabel, periodShort, periodPath, reportDetail }) =>
+  (localise) => ({
+    backUrl: `${periodPath}/tonnes-recycled`,
     caption: localise('reports:tonnageNotRecycledCaption'),
+    continueText: localise('reports:tonnageNotRecycledContinue'),
+    defaultValue: reportDetail.recyclingActivity?.tonnageNotRecycled,
+    fieldName: 'tonnageNotRecycled',
     heading: localise('reports:tonnageNotRecycledHeading', {
       material: material.toLowerCase(),
       periodShort
     }),
     hintText: localise('reports:tonnageNotRecycledHint'),
-    continueText: localise('reports:tonnageNotRecycledContinue'),
-    saveText: localise('reports:tonnageNotRecycledSave'),
-    fieldName: 'tonnageNotRecycled',
-    backUrl: `${periodPath}/tonnes-recycled`,
-    defaultValue: reportDetail.recyclingActivity?.tonnageNotRecycled
+    pageTitle: localise('reports:tonnageNotRecycledPageTitle', {
+      material,
+      periodLabel
+    }),
+    saveText: localise('reports:tonnageNotRecycledSave')
   })
-}
 
 const { getController, postController } = createDataPageControllers({
-  viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageNotRecycled',
-  payloadSchema: tonnageNotRecycledPayloadSchema,
-  pageFields,
   guardFn: buildReprocessorViewData,
+  pageFields,
+  payloadSchema: tonnageNotRecycledPayloadSchema,
+  viewPath: 'reports/tonnage-input',
   createPostHandler() {
     return async (request, h) => {
       const { organisationId, registrationId, year, cadence, period } =

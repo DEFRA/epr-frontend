@@ -19,28 +19,28 @@ const createPageFields = (getBackUrl) => (ctx) => {
   )
 
   return (localise) => ({
-    noteTypePlural,
-    pageTitle: localise('reports:noteSummaryPageTitle', {
-      noteTypePlural,
-      material,
-      periodLabel
-    }),
+    backUrl: getBackUrl(ctx),
     caption: localise('reports:noteSummaryCaption'),
+    continueText: localise('reports:noteSummaryContinue'),
+    defaultValue: padToTwoDecimalPlaces(prn.totalRevenue),
     heading: localise('reports:noteSummaryHeading', {
-      noteTypePlural,
       material: material.toLowerCase(),
+      noteTypePlural,
       periodShort
     }),
-    tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural }),
-    tonnageIssued: prn.issuedTonnage,
+    noteTypePlural,
+    pageTitle: localise('reports:noteSummaryPageTitle', {
+      material,
+      noteTypePlural,
+      periodLabel
+    }),
+    revenueHint: localise('reports:noteSummaryRevenueHint'),
     revenueLabel: localise('reports:noteSummaryRevenueLabel', {
       noteTypePlural
     }),
-    revenueHint: localise('reports:noteSummaryRevenueHint'),
-    continueText: localise('reports:noteSummaryContinue'),
     saveText: localise('reports:noteSummarySave'),
-    backUrl: getBackUrl(ctx),
-    defaultValue: padToTwoDecimalPlaces(prn.totalRevenue)
+    tonnageIssued: prn.issuedTonnage,
+    tonnageLabel: localise('reports:totalIssuedTonnage', { noteTypePlural })
   })
 }
 
@@ -49,22 +49,22 @@ const createPageFields = (getBackUrl) => (ctx) => {
  * guard function and the page's back-link target. The exporter and
  * reprocessor subtrees both consume this factory.
  * @param {{
- *   guardFn: GuardFn,
  *   getBackUrl: BackUrlBuilder,
+ *   guardFn: GuardFn,
  *   nextPage: string
  * }} options
  */
 export const createPrnSummaryControllers = ({
-  guardFn,
   getBackUrl,
+  guardFn,
   nextPage
 }) =>
   createDataPageControllers({
-    viewPath: 'reports/prn-summary',
     fieldName: 'prnRevenue',
-    payloadSchema: revenuePayloadSchema,
-    pageFields: createPageFields(getBackUrl),
     guardFn,
     guardOptions: { accreditedOnly: true },
-    nextPage
+    nextPage,
+    pageFields: createPageFields(getBackUrl),
+    payloadSchema: revenuePayloadSchema,
+    viewPath: 'reports/prn-summary'
   })
