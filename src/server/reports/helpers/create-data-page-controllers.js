@@ -80,7 +80,7 @@ export function createDataPageControllers({
   const postHandler = exceedsTotalErrorKey
     ? createTonnagePostHandler(
         fieldName,
-        /** @type {string} */ (nextPage),
+        nextPage,
         exceedsTotalErrorKey,
         getViewData,
         viewPath
@@ -122,6 +122,14 @@ export function createDataPageControllers({
 }
 
 /**
+ * @param {NextPage} nextPage
+ * @param {HapiRequest & { params: PeriodParams, payload: DataPagePayload }} request
+ * @returns {string}
+ */
+const resolveNextPage = (nextPage, request) =>
+  typeof nextPage === 'function' ? nextPage(request) : nextPage
+
+/**
  * @param {string} fieldName
  * @param {NextPage} nextPage
  * @returns {(
@@ -153,7 +161,7 @@ function createSimplePostHandler(fieldName, nextPage) {
         request,
         request.params,
         request.payload.action,
-        typeof nextPage === 'function' ? nextPage(request) : nextPage
+        resolveNextPage(nextPage, request)
       )
     )
   }
@@ -163,7 +171,7 @@ function createSimplePostHandler(fieldName, nextPage) {
  * Creates a POST handler that validates free tonnage does not exceed the
  * total issued tonnage before saving.
  * @param {string} fieldName
- * @param {string} nextPage
+ * @param {NextPage} nextPage
  * @param {string} errorKey - i18n key for the exceeds-total error message
  * @param {GetViewData} getViewData
  * @param {string} viewPath
@@ -193,7 +201,7 @@ function createTonnagePostHandler(
           request,
           request.params,
           request.payload.action,
-          nextPage
+          resolveNextPage(nextPage, request)
         )
       )
     }
@@ -246,7 +254,12 @@ function createTonnagePostHandler(
     )
 
     return h.redirect(
-      getRedirectUrl(request, request.params, request.payload.action, nextPage)
+      getRedirectUrl(
+        request,
+        request.params,
+        request.payload.action,
+        resolveNextPage(nextPage, request)
+      )
     )
   }
 }
