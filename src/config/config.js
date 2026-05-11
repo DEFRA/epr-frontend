@@ -2,7 +2,7 @@ import convict from 'convict'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { getLogFormatType, getLogRedactType } from './utils/log.js'
+import { getLogFormatType } from './utils/log.js'
 import { getSessionCacheEngineType } from './utils/session.js'
 
 /**
@@ -63,7 +63,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'Record reprocessed or exported packaging waste'
+    default: 'epr-frontend'
   },
   root: {
     doc: 'Project root',
@@ -113,7 +113,13 @@ export const config = convict({
     redact: {
       doc: 'Log paths to redact',
       format: Array,
-      default: getLogRedactType({ isProduction })
+      default: isProduction
+        ? [
+            'http.request.headers.authorization',
+            'http.request.headers.cookie',
+            'http.response.headers'
+          ]
+        : []
     }
   },
   httpProxy: /** @type {SchemaObj<string | null>} */ ({
@@ -338,3 +344,5 @@ export const isReportsEnabled = () => config.get('featureFlags.reports')
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
+
+export const isLocalEnvironment = () => config.get('cdpEnvironment') === 'local'

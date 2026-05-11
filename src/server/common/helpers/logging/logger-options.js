@@ -1,12 +1,17 @@
-import { ecsFormat } from '@elastic/ecs-pino-format'
 import { config, isProductionEnvironment } from '#config/config.js'
 import { getTraceId } from '@defra/hapi-tracing'
+import { ecsFormat } from '@elastic/ecs-pino-format'
 
 const logConfig = config.get('log')
 const serviceName = config.get('serviceName')
 const serviceVersion = config.get('serviceVersion')
+const tracingHeader = config.get('tracing.header')
 
-const ecsOptions = ecsFormat({ serviceVersion, serviceName })
+const ecsOptions = ecsFormat({
+  serviceVersion,
+  serviceName,
+  convertReqRes: true
+})
 const ecsLog =
   /** @type {(obj: object) => { error?: { stack_trace?: string } }} */ (
     ecsOptions.formatters?.log
@@ -34,14 +39,31 @@ const formatters = {
   'pino-pretty': { transport: { target: 'pino-pretty' } }
 }
 
+const isAccessLogIgnored = (/** @type {string} */ path) =>
+  path === '/health' || path.startsWith('/public/')
+
 /**
  * @satisfies {Options}
  */
 export const loggerOptions = {
   enabled: logConfig.enabled,
   logRequestStart: true,
-  ignorePaths: ['/health'],
+  ignoreFunc: (_options, /** @type {{ path: string }} */ request) =>
+    isAccessLogIgnored(request.path),
   ignoreTags: ['static'],
+  getChildBindings: (request) => {
+    const traceId = request.headers[tracingHeader]
+    return {
+      http: {
+        request: {
+          id: request.info.id,
+          method: request.method.toUpperCase()
+        }
+      },
+      url: { path: request.path },
+      ...(traceId ? { trace: { id: traceId } } : {})
+    }
+  },
   redact: {
     paths: logConfig.redact,
     remove: true
