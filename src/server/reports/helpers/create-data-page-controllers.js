@@ -145,12 +145,12 @@ export function createDataPageControllers({
  */
 function createSimplePostHandler(fieldName, nextPage) {
   return async (request, h) => {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
     const fieldValue = request.payload[fieldName]
-    const session = request.auth.credentials
 
     if (fieldValue !== undefined) {
+      const { organisationId, registrationId, year, cadence, period } =
+        request.params
+
       await updateReport(
         organisationId,
         registrationId,
@@ -158,7 +158,7 @@ function createSimplePostHandler(fieldName, nextPage) {
         cadence,
         period,
         { [fieldName]: fieldValue },
-        session.idToken
+        request.auth.credentials.idToken
       )
     }
 

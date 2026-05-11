@@ -5,6 +5,7 @@ import { tonnageNotExportedPayloadSchema } from '../helpers/validation.js'
 import { buildExporterViewData } from './exporter-page-guards.js'
 
 /**
+ * @import { DataPagePayload } from '../helpers/create-data-page-controllers.js'
  * @import { PageFieldsBuilder } from '../helpers/create-page-guards.js'
  */
 
@@ -38,12 +39,15 @@ const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   createPostHandler() {
     return async (request, h) => {
-      const { organisationId, registrationId, year, cadence, period } =
-        request.params
-      const { tonnageNotExported, action } = request.payload
-      const session = request.auth.credentials
+      const { tonnageNotExported, action } =
+        /** @type {DataPagePayload & { tonnageNotExported?: number }} */ (
+          request.payload
+        )
 
       if (tonnageNotExported !== undefined) {
+        const { organisationId, registrationId, year, cadence, period } =
+          request.params
+
         await updateReport(
           organisationId,
           registrationId,
@@ -51,7 +55,7 @@ const { getController, postController } = createDataPageControllers({
           cadence,
           period,
           { tonnageNotExported },
-          session.idToken
+          request.auth.credentials.idToken
         )
       }
 

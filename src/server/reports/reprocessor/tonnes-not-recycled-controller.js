@@ -6,6 +6,7 @@ import { tonnageNotRecycledPayloadSchema } from '../helpers/validation.js'
 import { buildReprocessorViewData } from './reprocessor-page-guards.js'
 
 /**
+ * @import { DataPagePayload } from '../helpers/create-data-page-controllers.js'
  * @import { PageFieldsBuilder } from '../helpers/create-page-guards.js'
  */
 
@@ -38,10 +39,12 @@ const { getController, postController } = createDataPageControllers({
   viewPath: 'reports/tonnage-input',
   createPostHandler() {
     return async (request, h) => {
+      const { tonnageNotRecycled, action } =
+        /** @type {DataPagePayload & { tonnageNotRecycled?: number }} */ (
+          request.payload
+        )
       const { organisationId, registrationId, year, cadence, period } =
         request.params
-      const { tonnageNotRecycled, action } = request.payload
-      const session = request.auth.credentials
 
       if (tonnageNotRecycled !== undefined) {
         await updateReport(
@@ -51,7 +54,7 @@ const { getController, postController } = createDataPageControllers({
           cadence,
           period,
           { tonnageNotRecycled },
-          session.idToken
+          request.auth.credentials.idToken
         )
       }
 

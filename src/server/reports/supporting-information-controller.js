@@ -1,7 +1,7 @@
 import Joi from 'joi'
 
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -162,7 +162,6 @@ export const supportingInformationPostController = {
     const { organisationId, registrationId, year, cadence, period } =
       request.params
     const { supportingInformation, action } = request.payload
-    const session = request.auth.credentials
 
     await updateReport(
       organisationId,
@@ -171,7 +170,7 @@ export const supportingInformationPostController = {
       cadence,
       period,
       { supportingInformation },
-      session.idToken
+      request.auth.credentials.idToken
     )
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
