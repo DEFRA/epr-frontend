@@ -1,10 +1,10 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { isReprocessorRegistration } from '#server/common/helpers/prns/registration-helpers.js'
-import { periodParamsSchema } from './helpers/period-params-schema.js'
 import {
   exporterPrnSummaryGetController,
   exporterPrnSummaryPostController
 } from './exporter/prn-summary-controller.js'
+import { periodParamsSchema } from './helpers/period-params-schema.js'
 import {
   reprocessorPrnSummaryGetController,
   reprocessorPrnSummaryPostController
@@ -52,7 +52,7 @@ export const prnSummaryDispatchGetController = {
  * Dispatches POST to the correct controller including payload validation.
  * Each controller defines its own schema with appropriate error messages,
  * so we validate manually rather than using Hapi's route-level validation.
- * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ * @satisfies {Partial<HapiServerRoute<DataPagePostRequest>>}
  */
 export const prnSummaryDispatchPostController = {
   options: {
@@ -60,10 +60,6 @@ export const prnSummaryDispatchPostController = {
       params: periodParamsSchema
     }
   },
-  /**
-   * @param {HapiRequest & { params: PeriodParams, payload: DataPagePayload }} request
-   * @param {ResponseToolkit} h
-   */
   async handler(request, h) {
     const reprocessor = await isReprocessor(request)
     const controller = reprocessor
@@ -103,5 +99,5 @@ export const prnSummaryDispatchPostController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
- * @import { DataPagePayload } from './helpers/create-data-page-controllers.js'
+ * @import { DataPagePostRequest } from './helpers/create-data-page-controllers.js'
  */

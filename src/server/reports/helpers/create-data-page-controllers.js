@@ -93,7 +93,7 @@ export function createDataPageControllers({
         params: periodParamsSchema,
         payload: payloadSchema,
         /**
-         * @param {HapiRequest & { params: PeriodParams, payload: DataPagePayload }} request
+         * @param {DataPagePostRequest} request
          * @param {ResponseToolkit} h
          * @param {Error | undefined} error Hapi's failAction contract — with
          *   payload validation configured this is always the Joi ValidationError.
@@ -123,7 +123,7 @@ export function createDataPageControllers({
 
 /**
  * @param {NextPage} nextPage
- * @param {HapiRequest & { params: PeriodParams, payload: DataPagePayload }} request
+ * @param {DataPagePostRequest} request
  * @returns {string}
  */
 const resolveNextPage = (nextPage, request) =>
@@ -133,7 +133,7 @@ const resolveNextPage = (nextPage, request) =>
  * @param {string} fieldName
  * @param {NextPage} nextPage
  * @returns {(
- *   request: HapiRequest & { params: PeriodParams, payload: DataPagePayload },
+ *   request: DataPagePostRequest,
  *   h: ResponseToolkit
  * ) => Promise<ResponseObject>}
  */
@@ -176,7 +176,7 @@ function createSimplePostHandler(fieldName, nextPage) {
  * @param {GetViewData} getViewData
  * @param {string} viewPath
  * @returns {(
- *   request: HapiRequest & { params: PeriodParams, payload: DataPagePayload },
+ *   request: DataPagePostRequest,
  *   h: ResponseToolkit
  * ) => Promise<ResponseObject>}
  */
@@ -275,9 +275,11 @@ function createTonnagePostHandler(
  */
 
 /**
- * @typedef {string | ((
- *   request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }
- * ) => string)} NextPage
+ * @typedef {HapiRequest & { params: PeriodParams, payload: DataPagePayload }} DataPagePostRequest
+ */
+
+/**
+ * @typedef {string | ((request: DataPagePostRequest) => string)} NextPage
  */
 
 /**
@@ -304,14 +306,14 @@ function createTonnagePostHandler(
  *       params: import('joi').Schema,
  *       payload: import('joi').Schema,
  *       failAction: (
- *         request: HapiRequest & { params: PeriodParams, payload: DataPagePayload },
+ *         request: DataPagePostRequest,
  *         h: ResponseToolkit,
  *         error: Error | undefined
  *       ) => Promise<ResponseObject>
  *     }
  *   },
  *   handler: (
- *     request: HapiRequest & { params: PeriodParams, payload: DataPagePayload },
+ *     request: DataPagePostRequest,
  *     h: ResponseToolkit
  *   ) => Promise<ResponseObject>
  * }} DataPagePostController

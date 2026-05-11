@@ -35,9 +35,13 @@ const payloadSchema = Joi.object({
  */
 
 /**
+ * @typedef {HapiRequest & { params: PeriodParams, payload: SupportingInformationPayload }} SupportingInformationPostRequest
+ */
+
+/**
  * @param {string} basePath
- * @param {object} registration
- * @param {object | null} accreditation
+ * @param {Registration} registration
+ * @param {Accreditation | undefined} accreditation
  * @returns {string}
  */
 function getBackPage(basePath, registration, accreditation) {
@@ -49,7 +53,9 @@ function getBackPage(basePath, registration, accreditation) {
     exporter: { unaccredited: 'tonnes-not-exported', accredited: 'free-perns' }
   }
 
-  const { wasteProcessingType } = registration
+  const wasteProcessingType = /** @type {keyof typeof pages} */ (
+    registration.wasteProcessingType
+  )
   const key = accreditation ? 'accredited' : 'unaccredited'
   return `${basePath}/${pages[wasteProcessingType][key]}`
 }
@@ -133,7 +139,7 @@ export const supportingInformationPostController = {
       params: periodParamsSchema,
       payload: payloadSchema,
       /**
-       * @param {HapiRequest & { params: PeriodParams, payload: SupportingInformationPayload }} request
+       * @param {SupportingInformationPostRequest} request
        * @param {ResponseToolkit} h
        * @param {Error | undefined} error Hapi's failAction contract — with
        *   payload validation configured this is always the Joi ValidationError.
@@ -155,7 +161,7 @@ export const supportingInformationPostController = {
     }
   },
   /**
-   * @param {HapiRequest & { params: PeriodParams, payload: SupportingInformationPayload }} request
+   * @param {SupportingInformationPostRequest} request
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
@@ -190,5 +196,7 @@ export const supportingInformationPostController = {
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */
