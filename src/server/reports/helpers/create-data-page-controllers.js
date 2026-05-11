@@ -168,6 +168,43 @@ function createSimplePostHandler(fieldName, nextPage) {
 }
 
 /**
+ * @param {DataPagePostRequest} request
+ * @param {ResponseToolkit} h
+ * @param {{
+ *   errorKey: string,
+ *   fieldName: string,
+ *   fieldValue: number,
+ *   getViewData: GetViewData,
+ *   viewPath: string
+ * }} options
+ * @returns {Promise<ResponseObject>}
+ */
+const renderExceedsTotalError = async (
+  request,
+  h,
+  { errorKey, fieldName, fieldValue, getViewData, viewPath }
+) => {
+  const { year, cadence, period } = request.params
+  const viewData = await getViewData(request, { value: fieldValue })
+  const periodShort = formatPeriodShort({ year, period }, cadence, request.t)
+  const message = request.t(errorKey, {
+    noteTypePlural: viewData.noteTypePlural,
+    periodShort
+  })
+
+  return h.view(viewPath, {
+    ...viewData,
+    errors: {
+      [fieldName]: { text: message }
+    },
+    errorSummary: {
+      titleText: request.t('common:errorSummaryTitle'),
+      errorList: [{ text: message, href: `#${fieldName}` }]
+    }
+  })
+}
+
+/**
  * Creates a POST handler that validates free tonnage does not exceed the
  * total issued tonnage before saving.
  * @param {string} fieldName
@@ -220,26 +257,12 @@ function createTonnagePostHandler(
     )
 
     if (fieldValue > prn.issuedTonnage) {
-      const viewData = await getViewData(request, { value: fieldValue })
-      const periodShort = formatPeriodShort(
-        { year, period },
-        cadence,
-        request.t
-      )
-      const message = request.t(errorKey, {
-        noteTypePlural: viewData.noteTypePlural,
-        periodShort
-      })
-
-      return h.view(viewPath, {
-        ...viewData,
-        errors: {
-          [fieldName]: { text: message }
-        },
-        errorSummary: {
-          titleText: request.t('common:errorSummaryTitle'),
-          errorList: [{ text: message, href: `#${fieldName}` }]
-        }
+      return renderExceedsTotalError(request, h, {
+        fieldName,
+        errorKey,
+        fieldValue,
+        getViewData,
+        viewPath
       })
     }
 
