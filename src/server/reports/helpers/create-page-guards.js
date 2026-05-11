@@ -118,9 +118,7 @@ async function fetchGuardedAccreditedData(
  * @typedef {{
  *   accreditedOnly?: boolean,
  *   registeredOnly?: boolean,
- *   value?: unknown,
- *   errors?: object | null,
- *   errorSummary?: object | null
+ *   value?: unknown
  * }} GuardOptions
  */
 
@@ -139,15 +137,24 @@ async function fetchGuardedAccreditedData(
  */
 
 /**
+ * @typedef {(ctx: PageFieldsCtx) => string} BackUrlBuilder
+ */
+
+/**
+ * @typedef {(
+ *   request: HapiRequest,
+ *   buildPageFields: (ctx: PageFieldsCtx) => PageFieldsResult,
+ *   options?: GuardOptions
+ * ) => Promise<ViewData>} GuardFn
+ */
+
+/**
  * Rendered view data passed to the page's Nunjucks template.
  * @typedef {PageFieldsResult & {
  *   deleteUrl: string,
  *   value: unknown,
- *   errors: Record<string, { text: string }> | null,
- *   errorSummary: {
- *     titleText: string,
- *     errorList: { text: string, href: string }[]
- *   } | null
+ *   errors: ValidationErrors | null,
+ *   errorSummary: ErrorSummary | null
  * }} ViewData
  */
 
@@ -206,8 +213,8 @@ async function buildViewData(
     ...pageFields,
     deleteUrl: request.localiseUrl(`${periodPath}/delete`),
     value: options.value ?? pageFields.defaultValue ?? '',
-    errors: options.errors ?? null,
-    errorSummary: options.errorSummary ?? null
+    errors: null,
+    errorSummary: null
   }
 }
 
@@ -242,4 +249,5 @@ export function createPageGuards({ isMatchingRegistration, reportType }) {
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './period-params-schema.js'
  * @import { ReportDetailResponse } from './fetch-report-detail.js'
+ * @import { ErrorSummary, ValidationErrors } from './validation.js'
  */

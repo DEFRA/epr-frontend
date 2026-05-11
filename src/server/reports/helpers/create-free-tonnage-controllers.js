@@ -4,8 +4,7 @@ import { createDataPageControllers } from './create-data-page-controllers.js'
 import { freeTonnagePayloadSchema } from './validation.js'
 
 /**
- * @import { HapiRequest } from '#server/common/hapi-types.js'
- * @import { GuardOptions, PageFieldsBuilder, PageFieldsCtx, PageFieldsResult, ViewData } from './create-page-guards.js'
+ * @import { GuardFn, PageFieldsBuilder } from './create-page-guards.js'
  */
 
 /** @type {PageFieldsBuilder} */
@@ -23,26 +22,30 @@ const pageFields = ({
   )
 
   return (localise) => ({
+    backUrl: `${periodPath}/prn-summary`,
+    caption: localise('reports:freeCaption'),
+    continueText: localise('reports:freeContinue'),
+    defaultValue: prn.freeTonnage,
+    fieldName: 'freeTonnage',
+    heading: localise('reports:freeHeading', {
+      noteTypePlural,
+      periodShort
+    }),
+    inputHint: localise('reports:freeInputHint'),
+    inputLabel: localise('reports:freeInputLabel', {
+      noteTypePlural
+    }),
+    insetText: localise('reports:freeHint', {
+      noteTypePlural
+    }),
     noteTypePlural,
     pageTitle: localise('reports:freePageTitle', {
       noteTypePlural,
       material,
       periodLabel
     }),
-    caption: localise('reports:freeCaption'),
-    heading: localise('reports:freeHeading', {
-      noteTypePlural,
-      periodShort
-    }),
-    insetText: localise('reports:freeHint', { noteTypePlural }),
-    inputLabel: localise('reports:freeInputLabel', { noteTypePlural }),
-    inputHint: localise('reports:freeInputHint'),
-    continueText: localise('reports:freeContinue'),
     saveText: localise('reports:freeSave'),
-    fieldName: 'freeTonnage',
-    backUrl: `${periodPath}/prn-summary`,
-    tonnageIssued: prn.issuedTonnage,
-    defaultValue: prn.freeTonnage
+    tonnageIssued: prn.issuedTonnage
   })
 }
 
@@ -50,22 +53,18 @@ const pageFields = ({
  * Creates the free-tonnage GET/POST controller pair, parameterised by the
  * guard function. The exporter and reprocessor subtrees both consume this
  * factory; the only runtime difference is which guard is used.
- * @param {object} options
- * @param {(
- *   request: HapiRequest,
- *   buildPageFields: (ctx: PageFieldsCtx) => PageFieldsResult,
- *   options?: GuardOptions
- * ) => Promise<ViewData>} options.guardFn
+ * @param {{ guardFn: GuardFn }} options
  */
-export function createFreeTonnageControllers({ guardFn }) {
-  return createDataPageControllers({
-    viewPath: 'reports/tonnage-input',
+export const createFreeTonnageControllers = ({ guardFn }) =>
+  createDataPageControllers({
+    exceedsTotalErrorKey: 'reports:freeErrorExceedsTotal',
     fieldName: 'freeTonnage',
-    payloadSchema: freeTonnagePayloadSchema,
-    pageFields,
     guardFn,
-    guardOptions: { accreditedOnly: true },
+    guardOptions: {
+      accreditedOnly: true
+    },
     nextPage: 'supporting-information',
-    exceedsTotalErrorKey: 'reports:freeErrorExceedsTotal'
+    pageFields,
+    payloadSchema: freeTonnagePayloadSchema,
+    viewPath: 'reports/tonnage-input'
   })
-}

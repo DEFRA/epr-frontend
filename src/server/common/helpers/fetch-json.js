@@ -5,8 +5,6 @@ import { errorCodes } from '#server/common/enums/error-codes.js'
 import { classifierTail, internal } from './logging/cdp-boom.js'
 import { getTracingHeaderName } from './request-tracing.js'
 
-/** @import {RequestInit} from 'undici' */
-
 /**
  * Fetch from a given url, returning parsed JSON if the response has a JSON
  * content-type, or undefined for responses with no body (e.g. 204 No Content).
@@ -42,7 +40,7 @@ export const fetchJson = async (url, options) => {
     }
 
     if (response.headers.get('content-type')?.includes('application/json')) {
-      return await response.json()
+      return /** @type {object} */ (await response.json())
     }
     return undefined
   } catch (error) {

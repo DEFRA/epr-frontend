@@ -181,19 +181,6 @@ describe('#buildViewData', () => {
     expect(result.value).toBe(99)
   })
 
-  it('passes errors and errorSummary through from options', async () => {
-    const errors = { field: { text: 'Error' } }
-    const errorSummary = { titleText: 'Error', errorList: [] }
-
-    const result = await guards.buildViewData(mockRequest, () => ({}), {
-      errors,
-      errorSummary
-    })
-
-    expect(result.errors).toStrictEqual(errors)
-    expect(result.errorSummary).toStrictEqual(errorSummary)
-  })
-
   it('uses accredited guard when accreditedOnly option is true', async () => {
     const result = await guards.buildViewData(
       mockRequest,
