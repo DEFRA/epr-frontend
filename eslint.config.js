@@ -72,6 +72,20 @@ export default [
       'jsdoc/require-returns-type': 'off',
       'jsdoc/require-returns': 'off',
 
+      // Web Fetch globals provided by @types/node — recognise without @import
+      'jsdoc/no-undefined-types': [
+        'error',
+        {
+          definedTypes: [
+            'BodyInit',
+            'HeadersInit',
+            'RequestInfo',
+            'RequestInit',
+            'Response'
+          ]
+        }
+      ],
+
       // Check for mandatory file extensions
       // https://nodejs.org/api/esm.html#mandatory-file-extensions
       'import/extensions': ['error', 'always', { ignorePackages: true }],
