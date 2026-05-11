@@ -157,16 +157,28 @@ export const freeTonnagePayloadSchema = Joi.object({
 })
 
 /**
+ * @typedef {Record<string, { text: string }>} ValidationErrors
+ */
+
+/**
+ * @typedef {{
+ *   titleText: string,
+ *   errorList: { text: string, href: string }[]
+ * }} ErrorSummary
+ */
+
+/**
  * Builds validation error objects from Joi error details, suitable for
  * govukErrorSummary and inline error display.
  * @param {HapiRequest} request
  * @param {import('joi').ValidationError} error
  * @param {Record<string, unknown>} [interpolation] - Placeholder values for i18n message keys
- * @returns {{ errors: Record<string, { text: string }>, errorSummary: { titleText: string, errorList: Array<{ text: string, href: string }> } }}
+ * @returns {{ errors: ValidationErrors, errorSummary: ErrorSummary }}
  */
 export function buildValidationErrors(request, error, interpolation = {}) {
-  /** @type {Record<string, { text: string }>} */
+  /** @type {ValidationErrors} */
   const errors = {}
+  /** @type {ErrorSummary['errorList']} */
   const errorList = []
 
   for (const detail of error.details) {

@@ -7,39 +7,33 @@ import { buildReprocessorViewData } from './reprocessor-page-guards.js'
  */
 
 /** @type {PageFieldsBuilder} */
-const pageFields = ({
-  material,
-  periodLabel,
-  periodShort,
-  reportsListPath,
-  reportDetail
-}) => {
-  return (localise) => ({
-    pageTitle: localise('reports:tonnageRecycledPageTitle', {
-      material,
-      periodLabel
-    }),
+const pageFields =
+  ({ material, periodLabel, periodShort, reportsListPath, reportDetail }) =>
+  (localise) => ({
+    backUrl: reportsListPath,
     caption: localise('reports:tonnageRecycledCaption'),
+    continueText: localise('reports:tonnageRecycledContinue'),
+    defaultValue: reportDetail.recyclingActivity?.tonnageRecycled,
+    fieldName: 'tonnageRecycled',
     heading: localise('reports:tonnageRecycledHeading', {
       material: material.toLowerCase(),
       periodShort
     }),
     hintText: localise('reports:tonnageRecycledHint', { periodLabel }),
-    continueText: localise('reports:tonnageRecycledContinue'),
-    saveText: localise('reports:tonnageRecycledSave'),
-    fieldName: 'tonnageRecycled',
-    backUrl: reportsListPath,
-    defaultValue: reportDetail.recyclingActivity?.tonnageRecycled
+    pageTitle: localise('reports:tonnageRecycledPageTitle', {
+      material,
+      periodLabel
+    }),
+    saveText: localise('reports:tonnageRecycledSave')
   })
-}
 
 const { getController, postController } = createDataPageControllers({
-  viewPath: 'reports/tonnage-input',
   fieldName: 'tonnageRecycled',
-  payloadSchema: tonnageRecycledPayloadSchema,
-  pageFields,
   guardFn: buildReprocessorViewData,
-  nextPage: 'tonnes-not-recycled'
+  nextPage: 'tonnes-not-recycled',
+  pageFields,
+  payloadSchema: tonnageRecycledPayloadSchema,
+  viewPath: 'reports/tonnage-input'
 })
 
 export {
