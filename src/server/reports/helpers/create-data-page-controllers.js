@@ -32,8 +32,7 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  * data from a guard function + page fields, render a template. This factory
  * extracts that boilerplate so each page only supplies its unique config.
  *
- * POST handler modes (mutually exclusive, checked in order):
- * - `createPostHandler` — full custom handler, receives `{ getViewData, viewPath }`
+ * POST handler modes:
  * - `exceedsTotalErrorKey` + `nextPage` — validates free tonnage against issued, then saves
  * - `nextPage` alone — simple save-and-redirect
  * @param {{
@@ -43,12 +42,8 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  *   pageFields: PageFieldsBuilder,
  *   guardFn: GuardFn,
  *   guardOptions?: GuardOptions,
- *   nextPage?: string,
- *   exceedsTotalErrorKey?: string,
- *   createPostHandler?: (deps: PostHandlerDeps) => (
- *     request: HapiRequest & { params: PeriodParams, payload: DataPagePayload },
- *     h: ResponseToolkit
- *   ) => Promise<ResponseObject>
+ *   nextPage: NextPage,
+ *   exceedsTotalErrorKey?: string
  * }} config
  * @returns {{ getController: DataPageController, postController: DataPagePostController }}
  */
@@ -60,8 +55,7 @@ export function createDataPageControllers({
   guardFn,
   guardOptions = {},
   nextPage,
-  exceedsTotalErrorKey,
-  createPostHandler
+  exceedsTotalErrorKey
 }) {
   /** @type {GetViewData} */
   const getViewData = (request, options = {}) =>
@@ -83,23 +77,15 @@ export function createDataPageControllers({
     }
   }
 
-  let postHandler
-  if (createPostHandler) {
-    postHandler = createPostHandler({ getViewData, viewPath })
-  } else if (exceedsTotalErrorKey) {
-    postHandler = createTonnagePostHandler(
-      fieldName,
-      /** @type {string} */ (nextPage),
-      exceedsTotalErrorKey,
-      getViewData,
-      viewPath
-    )
-  } else {
-    postHandler = createSimplePostHandler(
-      fieldName,
-      /** @type {string} */ (nextPage)
-    )
-  }
+  const postHandler = exceedsTotalErrorKey
+    ? createTonnagePostHandler(
+        fieldName,
+        /** @type {string} */ (nextPage),
+        exceedsTotalErrorKey,
+        getViewData,
+        viewPath
+      )
+    : createSimplePostHandler(fieldName, nextPage)
 
   const postController = {
     options: {
@@ -137,7 +123,7 @@ export function createDataPageControllers({
 
 /**
  * @param {string} fieldName
- * @param {string} nextPage
+ * @param {NextPage} nextPage
  * @returns {(
  *   request: HapiRequest & { params: PeriodParams, payload: DataPagePayload },
  *   h: ResponseToolkit
@@ -163,7 +149,12 @@ function createSimplePostHandler(fieldName, nextPage) {
     }
 
     return h.redirect(
-      getRedirectUrl(request, request.params, request.payload.action, nextPage)
+      getRedirectUrl(
+        request,
+        request.params,
+        request.payload.action,
+        typeof nextPage === 'function' ? nextPage(request) : nextPage
+      )
     )
   }
 }
@@ -271,17 +262,16 @@ function createTonnagePostHandler(
  */
 
 /**
+ * @typedef {string | ((
+ *   request: HapiRequest & { params: PeriodParams, payload: DataPagePayload }
+ * ) => string)} NextPage
+ */
+
+/**
  * @typedef {(
  *   request: HapiRequest & { params: PeriodParams },
  *   options?: GuardOptions
  * ) => Promise<ViewData>} GetViewData
- */
-
-/**
- * @typedef {{
- *   getViewData: GetViewData,
- *   viewPath: string
- * }} PostHandlerDeps
  */
 
 /**
