@@ -97,7 +97,8 @@ export async function createServer(options = {}) {
     contentSecurityPolicy,
     createWasteOrganisationsPlugin({
       initialOrganisations:
-        options.wasteOrganisations ?? wasteOrganisationsFixture.organisations
+        options.wasteOrganisations ??
+        /** @type {WasteOrganisation[]} */ (wasteOrganisationsFixture.organisations)
     }),
     {
       plugin: i18nPlugin,
