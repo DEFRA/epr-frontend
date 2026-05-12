@@ -29,7 +29,6 @@ const asReport = (/** @type {object} */ value) =>
   /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
 const asServer = (/** @type {object} */ value) =>
   /** @type {Server} */ (/** @type {unknown} */ (value))
-const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const reprocessorRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
@@ -137,7 +136,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         await server.inject({
@@ -164,7 +163,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode, headers } = await server.inject({
@@ -209,7 +208,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           monthlyDetailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode, headers } = await server.inject({
@@ -238,7 +237,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode } = await server.inject({
@@ -262,7 +261,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         await server.inject({
@@ -289,7 +288,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           monthlyUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode } = await server.inject({
@@ -337,7 +336,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           monthlyDetailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode, headers } = await server.inject({
@@ -371,7 +370,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode, headers } = await server.inject({
@@ -411,7 +410,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode, headers } = await server.inject({
@@ -446,7 +445,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode, headers } = await server.inject({
@@ -479,7 +478,7 @@ describe('#createReportController', () => {
         const { cookie, crumb } = await getCsrfToken(
           asServer(server),
           detailUrl,
-          csrfOpts({ auth: mockAuth })
+          { auth: mockAuth }
         )
 
         const { statusCode } = await server.inject({

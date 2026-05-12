@@ -31,7 +31,7 @@ vi.mock(
  * @returns {T}
  */
 const assertPresent = (value) => {
-  if (value == null) {
+  if (value === null || value === undefined) {
     throw new Error('expected value to be present')
   }
   return value

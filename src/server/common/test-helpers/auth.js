@@ -9,7 +9,6 @@
  * so the auth fixture is properly typed without an `any` cast. Exported
  * separately so tests can assert on individual fields (e.g.
  * `mockCredentials.idToken`).
- *
  * @type {UserSession}
  */
 export const mockCredentials = {
@@ -30,7 +29,6 @@ export const mockCredentials = {
 
 /**
  * Build a `server.inject({ ..., auth })` fixture.
- *
  * @param {UserSession} [credentials]
  * @returns {ServerInjectOptions['auth']}
  */

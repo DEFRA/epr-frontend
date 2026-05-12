@@ -23,16 +23,6 @@ vi.mock(import('./update-report.js'))
 
 const { updateReport } = await import('./update-report.js')
 
-const asRegAndAcc = (/** @type {object} */ value) =>
-  /** @type {Required<RegistrationWithAccreditation>} */ (
-    /** @type {unknown} */ (value)
-  )
-const asReport = (/** @type {object} */ value) =>
-  /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
-const asServer = (/** @type {object} */ value) =>
-  /** @type {Server} */ (/** @type {unknown} */ (value))
-const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
-
 const subtrees = [
   {
     name: 'exporter',

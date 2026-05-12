@@ -9,7 +9,9 @@ import wasteOrganisations from '../../fixtures/waste-organisations/organisations
  * @import { TestAPI } from 'vitest'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
- *
+ */
+
+/**
  * @typedef {HapiServer & {
  *   loggerMocks: {
  *     info: ReturnType<typeof vi.fn>,
@@ -17,7 +19,9 @@ import wasteOrganisations from '../../fixtures/waste-organisations/organisations
  *     error: ReturnType<typeof vi.fn>
  *   }
  * }} ServerWithLoggerMocks
- *
+ */
+
+/**
  * @typedef {{ msw: SetupServerApi, server: ServerWithLoggerMocks }} ServerFixtures
  */
 
@@ -107,22 +111,21 @@ const attachLoggerMocks = (server) => {
     error: vi.fn()
   })
 
-  vi.spyOn(mocked.logger, 'info').mockImplementation(/** @type {any} */ (info))
-  vi.spyOn(mocked.logger, 'warn').mockImplementation(/** @type {any} */ (warn))
-  vi.spyOn(mocked.logger, 'error').mockImplementation(
-    /** @type {any} */ (error)
-  )
+  /** @type {(...args: unknown[]) => void} */
+  const infoFn = info
+  /** @type {(...args: unknown[]) => void} */
+  const warnFn = warn
+  /** @type {(...args: unknown[]) => void} */
+  const errorFn = error
+
+  vi.spyOn(mocked.logger, 'info').mockImplementation(infoFn)
+  vi.spyOn(mocked.logger, 'warn').mockImplementation(warnFn)
+  vi.spyOn(mocked.logger, 'error').mockImplementation(errorFn)
 
   mocked.ext('onRequest', (request, h) => {
-    vi.spyOn(request.logger, 'info').mockImplementation(
-      /** @type {any} */ (info)
-    )
-    vi.spyOn(request.logger, 'warn').mockImplementation(
-      /** @type {any} */ (warn)
-    )
-    vi.spyOn(request.logger, 'error').mockImplementation(
-      /** @type {any} */ (error)
-    )
+    vi.spyOn(request.logger, 'info').mockImplementation(infoFn)
+    vi.spyOn(request.logger, 'warn').mockImplementation(warnFn)
+    vi.spyOn(request.logger, 'error').mockImplementation(errorFn)
     return h.continue
   })
 

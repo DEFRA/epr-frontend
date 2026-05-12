@@ -22,7 +22,7 @@ const asMockH = (/** @type {object} */ value) =>
   /** @type {ResponseToolkit} */ (/** @type {unknown} */ (value))
 
 vi.mock(
-  'node:crypto',
+  import('node:crypto'),
   () =>
     /** @type {Partial<typeof import('node:crypto')>} */ ({
       randomUUID: vi.fn(() => 'mock-uuid-1234'),

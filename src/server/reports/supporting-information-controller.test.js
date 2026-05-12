@@ -31,7 +31,6 @@ const asReport = (/** @type {object} */ value) =>
   /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
 const asServer = (/** @type {object} */ value) =>
   /** @type {Server} */ (/** @type {unknown} */ (value))
-const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const registeredOnlyExporter = asRegAndAcc({
   organisationData: { id: 'org-123' },
@@ -446,7 +445,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { statusCode, headers } = await server.inject({
@@ -473,7 +472,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           await server.inject({
@@ -505,7 +504,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           await server.inject({
@@ -539,7 +538,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { statusCode, headers } = await server.inject({
@@ -566,7 +565,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           await server.inject({
@@ -600,7 +599,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const longText = 'a'.repeat(2001)
@@ -632,7 +631,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const longText = 'a'.repeat(2001)
@@ -662,7 +661,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { result } = await server.inject({
@@ -690,7 +689,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           await server.inject({
@@ -712,7 +711,7 @@ describe('#supportingInformationController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { statusCode } = await server.inject({

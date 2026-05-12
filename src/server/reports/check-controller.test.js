@@ -31,7 +31,6 @@ const asReport = (/** @type {object} */ value) =>
   /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
 const asServer = (/** @type {object} */ value) =>
   /** @type {Server} */ (/** @type {unknown} */ (value))
-const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const exporterRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
@@ -1743,7 +1742,7 @@ describe('#checkController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { statusCode, headers } = await server.inject({
@@ -1766,7 +1765,7 @@ describe('#checkController', () => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           await server.inject({

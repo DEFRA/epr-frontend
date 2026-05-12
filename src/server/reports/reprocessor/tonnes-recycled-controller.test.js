@@ -29,11 +29,6 @@ const asRegAndAcc = (/** @type {object} */ value) =>
   )
 const asReport = (/** @type {object} */ value) =>
   /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
-const asServer = (/** @type {object} */ value) =>
-  /** @type {Server} */ (/** @type {unknown} */ (value))
-const csrfOpts = (/** @type {object} */ value) =>
-  /** @type {{ headers?: object }} */ (value)
-
 const reprocessorRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {

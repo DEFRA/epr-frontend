@@ -31,7 +31,6 @@ const asReport = (/** @type {object} */ value) =>
   /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
 const asServer = (/** @type {object} */ value) =>
   /** @type {Server} */ (/** @type {unknown} */ (value))
-const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const subtrees = [
   {
@@ -323,7 +322,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { statusCode, headers } = await server.inject({
@@ -352,7 +351,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           await server.inject({
@@ -380,7 +379,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { statusCode, headers } = await server.inject({
@@ -403,7 +402,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { statusCode, headers } = await server.inject({
@@ -426,7 +425,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           await server.inject({
@@ -446,7 +445,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { result } = await server.inject({
@@ -476,7 +475,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { result } = await server.inject({
@@ -512,7 +511,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { result } = await server.inject({
@@ -538,7 +537,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { cookie, crumb } = await getCsrfToken(
             asServer(server),
             baseUrl,
-            csrfOpts({ auth: mockAuth })
+            { auth: mockAuth }
           )
 
           const { result } = await server.inject({
