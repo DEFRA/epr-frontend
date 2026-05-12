@@ -64,7 +64,7 @@ export async function createServer(options = {}) {
       {
         name: config.get('session.cache.name'),
         engine: getCacheEngine(
-          /** @type {Engine} */ config.get('session.cache.engine')
+          /** @type {Engine} */ (config.get('session.cache.engine'))
         )
       }
     ],
