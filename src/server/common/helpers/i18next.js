@@ -4,7 +4,7 @@ import { localiseUrl } from './i18n/localiseUrl.js'
 
 /**
  * Creates a URL localizer function for the given language
- * @param {string | undefined} locale - The (language code or) locale (e.g., 'en', 'cy', 'en-GB')
+ * @param {string} locale - The (language code or) locale (e.g., 'en', 'cy', 'en-GB')
  * @returns {(path: string) => string} A function to localize URLs
  */
 export const getLocaliseUrl = (locale) => {
