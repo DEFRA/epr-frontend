@@ -1122,7 +1122,6 @@ describe('#viewController', () => {
 
         // Should show create button (draft flow)
         const createButton = main.querySelector('button.govuk-button')
-        expect(createButton).toBeDefined()
         expect(createButton.textContent).toContain('Create PRN')
         expect(createButton.getAttribute('data-prevent-double-click')).toBe(
           'true'
