@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -21,20 +22,6 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mockCdpAuditing(...args)
 }))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-id',
-      email: 'user@email.com'
-    },
-    urls: {
-      logout: 'http://defra-id.auth/logout'
-    }
-  }
-}
-
 describe('#logoutController - integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -54,7 +41,7 @@ describe('#logoutController - integration', () => {
 
       const redirectUrl = new URL(response.headers.location)
 
-      expect(redirectUrl.host).toBe('defra-id.auth')
+      expect(redirectUrl.host).toBe('example.test')
       expect(redirectUrl.pathname).toBe('/logout')
       expect(redirectUrl.searchParams.get('post_logout_redirect_uri')).toBe(
         'http://localhost:3000/auth/logout'
@@ -76,8 +63,8 @@ describe('#logoutController - integration', () => {
         },
         context: {},
         user: {
-          id: 'user-id',
-          email: 'user@email.com'
+          id: 'user-123',
+          email: 'test@example.com'
         }
       })
     })

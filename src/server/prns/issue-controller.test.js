@@ -1,5 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
+  mockAuth,
+  mockCredentials
+} from '#server/common/test-helpers/auth.js'
+import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
@@ -20,19 +24,6 @@ const { getRequiredRegistrationWithAccreditation } =
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
-
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'

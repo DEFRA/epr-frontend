@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
@@ -36,17 +37,6 @@ const cellInColumn = (table) => {
     const colIndex = headers.findIndex((h) => pattern.test(h.textContent))
 
     return getAllByRole(dataRow, 'cell')[colIndex]
-  }
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
   }
 }
 
@@ -325,7 +315,7 @@ describe('#organisationController', () => {
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(organisationId, 'test-id-token')
+      ).toHaveBeenCalledWith(organisationId, 'mock-id-token')
     })
 
     it('should pass JWT token to backend call', async ({ server }) => {
@@ -341,7 +331,7 @@ describe('#organisationController', () => {
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
+      ).toHaveBeenCalledWith(expect.any(String), 'mock-id-token')
     })
 
     describe('registered-only', () => {
@@ -1046,7 +1036,7 @@ describe('#organisationController', () => {
       // Just verify the request succeeded (logging happens internally)
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', 'test-id-token')
+      ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', 'mock-id-token')
     })
 
     it('should handle different status color mappings correctly', async ({

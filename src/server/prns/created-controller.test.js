@@ -1,5 +1,6 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import {
   extractCookieValues,
   mergeCookies
@@ -21,19 +22,6 @@ const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
-
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
 
 const fixtureReprocessor = {
   organisationData: {

@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import * as cheerio from 'cheerio'
@@ -24,17 +25,6 @@ vi.mock(
 const mockOrganisationData = {
   id: '123',
   registrations: [{ id: '456', status: 'approved' }]
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
 }
 
 describe('#summaryLogUploadController', () => {
@@ -121,7 +111,7 @@ describe('#summaryLogUploadController', () => {
       registrationId: '456',
       redirectUrl:
         '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
-      idToken: 'test-id-token'
+      idToken: 'mock-id-token'
     })
   })
 

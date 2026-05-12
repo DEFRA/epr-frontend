@@ -1,20 +1,10 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'mock-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
 
 describe('#homeController', () => {
   describe('redirects', () => {

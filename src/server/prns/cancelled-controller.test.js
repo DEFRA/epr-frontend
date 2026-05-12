@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -14,19 +15,6 @@ const { getRequiredRegistrationWithAccreditation } =
   await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
-
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
 
 const fixtureReprocessor = {
   organisationData: {

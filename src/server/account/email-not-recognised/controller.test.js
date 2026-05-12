@@ -1,18 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { describe, expect } from 'vitest'
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    },
-    idToken: 'mock-id-token'
-  }
-}
 
 describe('#emailNotRecognisedController', () => {
   it('should render email-not-recognised page with correct content', async ({

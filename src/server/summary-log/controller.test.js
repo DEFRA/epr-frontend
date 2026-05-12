@@ -4,6 +4,7 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -65,17 +66,6 @@ vi.mock(
   })
 )
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
-
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
 
@@ -111,7 +101,7 @@ describe('#summaryLogUploadProgressController', () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { idToken: 'mock-id-token' }
     )
     expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -952,12 +942,12 @@ describe('#summaryLogUploadProgressController', () => {
         expect(fetchRegistrationAndAccreditation).toHaveBeenCalledWith(
           organisationId,
           registrationId,
-          'test-id-token'
+          'mock-id-token'
         )
         expect(fetchWasteBalances).toHaveBeenCalledWith(
           organisationId,
           [accreditationId],
-          'test-id-token'
+          'mock-id-token'
         )
       })
 
@@ -1255,7 +1245,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        idToken: 'mock-id-token'
       })
     })
 
@@ -1373,7 +1363,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        idToken: 'mock-id-token'
       })
     })
 
@@ -2271,7 +2261,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        idToken: 'mock-id-token'
       })
     })
 
@@ -2310,7 +2300,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        idToken: 'mock-id-token'
       })
     })
 

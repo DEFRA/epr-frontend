@@ -1,18 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { describe, expect } from 'vitest'
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
 
 describe('logged out controller', () => {
   describe('when navigating to /logged-out', () => {

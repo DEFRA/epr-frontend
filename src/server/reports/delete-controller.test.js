@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
@@ -13,19 +14,6 @@ vi.mock(
 vi.mock(import('./helpers/delete-report.js'))
 
 const { deleteReport } = await import('./helpers/delete-report.js')
-
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
 
 const registeredOnlyExporter = {
   organisationData: { id: 'org-123' },

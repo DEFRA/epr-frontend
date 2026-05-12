@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -9,13 +10,6 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
-
-const mockCredentials = {
-  profile: { id: 'user-123', email: 'test@example.com' },
-  idToken: 'mock-id-token'
-}
-
-const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
 const accreditedReprocessor = {
   organisationData: { id: 'org-123' },
