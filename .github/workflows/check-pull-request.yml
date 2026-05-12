@@ -76,14 +76,12 @@ jobs:
 
       - name: Lint types (tests)
         run: |
-          OUTPUT=$(npm run lint:types:tests 2>&1) && STATUS=0 || STATUS=$?
+          # disable setup-node's tsc problem matcher: we summarise below
+          # rather than wanting per-line pr annotations on every error
+          echo "::remove-matcher owner=tsc::"
 
-          # suppress GitHub's tsc problem matcher: we want the summary, not
-          # per-line annotations on every error
-          TOKEN=$(uuidgen)
-          echo "::stop-commands::${TOKEN}"
+          OUTPUT=$(npm run lint:types:tests 2>&1) && STATUS=0 || STATUS=$?
           echo "$OUTPUT"
-          echo "::${TOKEN}::"
 
           if [ "$STATUS" -eq 0 ]; then
             cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
