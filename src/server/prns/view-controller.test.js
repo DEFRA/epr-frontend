@@ -1124,6 +1124,9 @@ describe('#viewController', () => {
         const createButton = main.querySelector('button.govuk-button')
         expect(createButton).toBeDefined()
         expect(createButton.textContent).toContain('Create PRN')
+        expect(createButton.getAttribute('data-prevent-double-click')).toBe(
+          'true'
+        )
         // Should show check page heading
         expect(getByText(main, /Check before creating PRN/i)).toBeDefined()
         // Should show December waste as Yes
@@ -1472,6 +1475,9 @@ describe('#viewController', () => {
         const createButton = main.querySelector('button.govuk-button')
         expect(createButton).toBeDefined()
         expect(createButton.textContent).toContain('Create PERN')
+        expect(createButton.getAttribute('data-prevent-double-click')).toBe(
+          'true'
+        )
         expect(getByText(main, /Check before creating PERN/i)).toBeDefined()
       })
     })
