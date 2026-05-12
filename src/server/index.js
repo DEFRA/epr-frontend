@@ -98,7 +98,9 @@ export async function createServer(options = {}) {
     createWasteOrganisationsPlugin({
       initialOrganisations:
         options.wasteOrganisations ??
-        /** @type {WasteOrganisation[]} */ (wasteOrganisationsFixture.organisations)
+        /** @type {WasteOrganisation[]} */ (
+          wasteOrganisationsFixture.organisations
+        )
     }),
     {
       plugin: i18nPlugin,
