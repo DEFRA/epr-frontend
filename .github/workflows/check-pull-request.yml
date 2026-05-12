@@ -77,7 +77,13 @@ jobs:
       - name: Lint types (tests)
         run: |
           OUTPUT=$(npm run lint:types:tests 2>&1) && STATUS=0 || STATUS=$?
+
+          # suppress GitHub's tsc problem matcher: we want the summary, not
+          # per-line annotations on every error
+          TOKEN=$(uuidgen)
+          echo "::stop-commands::${TOKEN}"
           echo "$OUTPUT"
+          echo "::${TOKEN}::"
 
           if [ "$STATUS" -eq 0 ]; then
             cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
