@@ -47,9 +47,9 @@ const reprocessorRegistration = asRegAndAcc({
     }
   },
   accreditation: undefined
-}
+})
 
-const registeredOnlyExporterRegistration = {
+const registeredOnlyExporterRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -58,9 +58,9 @@ const registeredOnlyExporterRegistration = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
-const accreditedExporterRegistration = {
+const accreditedExporterRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -72,9 +72,9 @@ const accreditedExporterRegistration = {
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M'
   }
-}
+})
 
-const reportDetail = {
+const reportDetail = asReport({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -100,7 +100,7 @@ const reportDetail = {
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-}
+})
 
 const detailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1'
@@ -134,9 +134,11 @@ describe('#createReportController', () => {
       it('should call createReport with correct params for quarterly', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         await server.inject({
           method: 'POST',
@@ -159,9 +161,11 @@ describe('#createReportController', () => {
       it('should redirect to tonnes-recycled for reprocessor', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
@@ -186,11 +190,13 @@ describe('#createReportController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           accreditedExporterRegistration
         )
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          cadence: 'monthly',
-          period: 1
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReport({
+            ...reportDetail,
+            cadence: 'monthly',
+            period: 1
+          })
+        )
         vi.mocked(createReport).mockResolvedValue({
           id: 'report-001',
           status: 'in_progress'
@@ -200,9 +206,11 @@ describe('#createReportController', () => {
       it('should redirect to prn-summary instead of supporting-information', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, monthlyDetailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          monthlyDetailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
@@ -227,9 +235,11 @@ describe('#createReportController', () => {
           accreditedExporterRegistration
         )
 
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode } = await server.inject({
           method: 'POST',
@@ -249,9 +259,11 @@ describe('#createReportController', () => {
           accreditedExporterRegistration
         )
 
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         await server.inject({
           method: 'POST',
@@ -274,9 +286,11 @@ describe('#createReportController', () => {
           reprocessorRegistration
         )
 
-        const { cookie, crumb } = await getCsrfToken(server, monthlyUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          monthlyUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode } = await server.inject({
           method: 'POST',
@@ -294,23 +308,25 @@ describe('#createReportController', () => {
       const monthlyDetailUrl =
         '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
 
-      const accreditedReprocessorRegistration = {
+      const accreditedReprocessorRegistration = asRegAndAcc({
         ...reprocessorRegistration,
         accreditation: {
           id: 'acc-001',
           accreditationNumber: 'ER992415095748M'
         }
-      }
+      })
 
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           accreditedReprocessorRegistration
         )
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          cadence: 'monthly',
-          period: 1
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReport({
+            ...reportDetail,
+            cadence: 'monthly',
+            period: 1
+          })
+        )
         vi.mocked(createReport).mockResolvedValue({
           id: 'report-001',
           status: 'in_progress'
@@ -318,9 +334,11 @@ describe('#createReportController', () => {
       })
 
       it('should redirect to tonnes-recycled', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, monthlyDetailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          monthlyDetailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
@@ -350,9 +368,11 @@ describe('#createReportController', () => {
       })
 
       it('should redirect to tonnes-not-exported', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
@@ -371,13 +391,15 @@ describe('#createReportController', () => {
 
     describe('for unknown wasteProcessingType (fallback branch)', () => {
       beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...registeredOnlyExporterRegistration,
-          registration: {
-            ...registeredOnlyExporterRegistration.registration,
-            wasteProcessingType: 'unknown'
-          }
-        })
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          asRegAndAcc({
+            ...registeredOnlyExporterRegistration,
+            registration: {
+              ...registeredOnlyExporterRegistration.registration,
+              wasteProcessingType: 'unknown'
+            }
+          })
+        )
         vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         vi.mocked(createReport).mockResolvedValue({
           id: 'report-001',
@@ -386,9 +408,11 @@ describe('#createReportController', () => {
       })
 
       it('should redirect to supporting-information', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
@@ -419,9 +443,11 @@ describe('#createReportController', () => {
       it('should still redirect to tonnes-recycled for reprocessor', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
@@ -450,9 +476,11 @@ describe('#createReportController', () => {
       })
 
       it('should return 500', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, detailUrl, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(
+          asServer(server),
+          detailUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode } = await server.inject({
           method: 'POST',
