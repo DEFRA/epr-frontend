@@ -37,11 +37,11 @@ function statusCodeMessage(statusCode, localise) {
 }
 
 /**
- * @param { Request } rawRequest
+ * @param { Request } r
  * @param { ResponseToolkit } h
  */
-export async function catchAll(rawRequest, h) {
-  const request = asHapiRequest(rawRequest)
+export async function catchAll(r, h) {
+  const request = asHapiRequest(r)
   const { response } = request
 
   if (!('isBoom' in response)) {

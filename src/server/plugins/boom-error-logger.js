@@ -21,11 +21,11 @@ export const boomErrorLogger = {
       server.ext(
         'onPreResponse',
         /**
-         * @param {Request} rawRequest
+         * @param {Request} r
          * @param {ResponseToolkit} h
          */
-        (rawRequest, h) => {
-          const request = asHapiRequest(rawRequest)
+        (r, h) => {
+          const request = asHapiRequest(r)
           const response = request.response
 
           if (!('isBoom' in response) || !response.isBoom) {
