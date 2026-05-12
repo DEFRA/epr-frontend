@@ -9,7 +9,7 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
  * @param {object} options
  * @param {string} options.organisationId
  * @param {string} options.registrationId
- * @param {{wasteProcessingType: string, material: string, nation?: string, glassRecyclingProcess?: string[]}} options.registration
+ * @param {{wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[]}} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {{availableAmount: number} | null} [options.wasteBalance]
  * @returns {object}
@@ -74,4 +74,5 @@ export function buildCreatePrnViewData(
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
  */

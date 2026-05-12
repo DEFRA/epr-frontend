@@ -5,6 +5,8 @@
 export const errorCodes = {
   accreditationIdMismatch: 'accreditation_id_mismatch',
   externalFetchFailed: 'external_fetch_failed',
+  glassRecyclingProcessMissing: 'glass_recycling_process_missing',
+  glassRecyclingProcessUnknown: 'glass_recycling_process_unknown',
   invalidPrnField: 'invalid_prn_field',
   notAccredited: 'not_accredited',
   prnCancelFailed: 'prn_cancel_failed',
