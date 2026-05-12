@@ -9,11 +9,28 @@ import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {PackagingRecyclingNote} from './helpers/fetch-packaging-recycling-note.js'
+ * @import {WasteBalance} from '#server/common/helpers/waste-balance/types.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-notes.js'))
+
+const asRegWithAcc = (/** @type {object} */ value) =>
+  /** @type {RegistrationWithAccreditation} */ (
+    /** @type {unknown} */ (value)
+  )
+const asPrns = (/** @type {object[]} */ value) =>
+  /** @type {PackagingRecyclingNote[]} */ (/** @type {unknown} */ (value))
+const asPrn = (/** @type {object} */ value) =>
+  /** @type {PackagingRecyclingNote} */ (/** @type {unknown} */ (value))
+const asWasteBalance = (/** @type {object} */ value) =>
+  /** @type {WasteBalance} */ (/** @type {unknown} */ (value))
 
 const fixtureReprocessor = {
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
@@ -131,15 +148,15 @@ const exporterListUrl =
 describe('#listPrnsController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getWasteBalance).mockResolvedValue(mockWasteBalance)
-    vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+    vi.mocked(getWasteBalance).mockResolvedValue(asWasteBalance(mockWasteBalance))
+    vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(asPrns(mockPrns))
   })
 
   describe('request handling', () => {
     describe('page rendering', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
       })
 
@@ -412,7 +429,7 @@ describe('#listPrnsController', () => {
     describe('awaiting cancellation section', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancellation
@@ -506,7 +523,7 @@ describe('#listPrnsController', () => {
       it('should not render cancellation section when no awaiting_cancellation PRNs', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(asPrns(mockPrns))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -579,7 +596,7 @@ describe('#listPrnsController', () => {
     describe('cancelled tab', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancelled
@@ -687,7 +704,7 @@ describe('#listPrnsController', () => {
       it('should show empty state message when no cancelled PRNs', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(asPrns(mockPrns))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -725,7 +742,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRegWithAcc(fixtureExporter)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancelled
@@ -750,7 +767,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRegWithAcc(fixtureExporter)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
           mockPrnsWithCancelled
@@ -775,9 +792,9 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRegWithAcc(fixtureExporter)
         )
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(asPrns(mockPrns))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -800,7 +817,7 @@ describe('#listPrnsController', () => {
     describe('conditional tabs', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
       })
 
@@ -829,7 +846,7 @@ describe('#listPrnsController', () => {
       })
 
       it('should render tabs when issued PRNs exist', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(asPrns(mockPrns))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -848,7 +865,7 @@ describe('#listPrnsController', () => {
       it('should render issued tab heading and column headers', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(asPrns(mockPrns))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -872,7 +889,7 @@ describe('#listPrnsController', () => {
       it('should render issued PRN data in issued tab panel', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(mockPrns)
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(asPrns(mockPrns))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1052,7 +1069,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(getWasteBalance).mockResolvedValue(null)
 
@@ -1093,7 +1110,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(getWasteBalance).mockResolvedValue(null)
 
@@ -1108,7 +1125,7 @@ describe('#listPrnsController', () => {
 
       it('should propagate error when PRN fetch fails', async ({ server }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockRejectedValue(
           new Error('Backend unavailable')
@@ -1127,7 +1144,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
 
@@ -1152,7 +1169,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
 
@@ -1173,7 +1190,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
@@ -1208,7 +1225,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
@@ -1238,7 +1255,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRegWithAcc(fixtureReprocessor)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
@@ -1269,7 +1286,7 @@ describe('#listPrnsController', () => {
         server
       }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRegWithAcc(fixtureExporter)
         )
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([])
 
@@ -1305,7 +1322,7 @@ describe('#listPrnsController', () => {
       describe('for reprocessor (PRN)', () => {
         beforeEach(() => {
           vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            fixtureReprocessor
+            asRegWithAcc(fixtureReprocessor)
           )
         })
 
@@ -1345,7 +1362,7 @@ describe('#listPrnsController', () => {
       describe('for exporter (PERN)', () => {
         beforeEach(() => {
           vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            fixtureExporter
+            asRegWithAcc(fixtureExporter)
           )
         })
 

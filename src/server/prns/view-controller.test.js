@@ -15,6 +15,14 @@ import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 
+/**
+ * @import {Server} from '@hapi/hapi'
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {PackagingRecyclingNote} from './helpers/fetch-packaging-recycling-note.js'
+ * @import {CreatePrnResponse} from './helpers/create-prn.js'
+ * @import {UpdatePrnStatusResponse} from './helpers/update-prn-status.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
@@ -27,6 +35,20 @@ const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
+
+const asRequired = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asPrn = (/** @type {object} */ value) =>
+  /** @type {PackagingRecyclingNote} */ (/** @type {unknown} */ (value))
+const asCreatePrnResponse = (/** @type {object} */ value) =>
+  /** @type {CreatePrnResponse} */ (/** @type {unknown} */ (value))
+const asUpdatePrnStatusResponse = (/** @type {object} */ value) =>
+  /** @type {UpdatePrnStatusResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const fixtureReprocessor = {
   organisationData: {
@@ -134,11 +156,13 @@ describe('#viewController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
+      asRequired(fixtureReprocessor)
     )
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
-    vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
-    vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn(mockPrnFromBackend))
+    vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPrnCreated))
+    vi.mocked(updatePrnStatus).mockResolvedValue(
+      asUpdatePrnStatusResponse(mockPrnStatusUpdated)
+    )
     vi.mocked(fetchWasteBalances).mockResolvedValue({
       'acc-001': { amount: 1000, availableAmount: 500 }
     })
@@ -192,7 +216,7 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on certificate page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(asRequired({
           ...fixtureReprocessor,
           organisationData: {
             id: 'org-123',
@@ -201,7 +225,7 @@ describe('#viewController', () => {
               tradingName: 'Reprocessor Trading'
             }
           }
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -222,10 +246,10 @@ describe('#viewController', () => {
       it('displays empty issuer when company details are missing on certificate page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(asRequired({
           ...fixtureReprocessor,
           organisationData: { id: 'org-123', companyDetails: null }
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -253,10 +277,10 @@ describe('#viewController', () => {
       })
 
       it('displays PRN number when provided', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           prnNumber: 'ER2625001A'
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -272,13 +296,13 @@ describe('#viewController', () => {
       })
 
       it('displays recipient name from PRN data', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           issuedToOrganisation: {
             id: 'producer-1',
             name: 'Custom Recipient Ltd'
           }
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -300,14 +324,14 @@ describe('#viewController', () => {
       it('displays tradingName when organisation has no registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           issuedToOrganisation: {
             id: 'producer-1',
             name: 'Legal Name Ltd',
             tradingName: 'Trading Name Ltd'
           }
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -326,7 +350,7 @@ describe('#viewController', () => {
       it('displays legal name for large producers with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           issuedToOrganisation: {
             id: 'producer-1',
@@ -334,7 +358,7 @@ describe('#viewController', () => {
             tradingName: 'Trading Name Ltd',
             registrationType: 'LARGE_PRODUCER'
           }
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -353,7 +377,7 @@ describe('#viewController', () => {
       it('displays tradingName for compliance schemes with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           issuedToOrganisation: {
             id: 'scheme-1',
@@ -361,7 +385,7 @@ describe('#viewController', () => {
             tradingName: 'Scheme Trading Name',
             registrationType: 'COMPLIANCE_SCHEME'
           }
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -398,10 +422,10 @@ describe('#viewController', () => {
       it('displays tonnage in words generated from tonnage value', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           tonnageInWords: undefined
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -421,10 +445,10 @@ describe('#viewController', () => {
       it('displays tonnage in words from backend when provided', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           tonnageInWords: 'One hundred'
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -462,10 +486,10 @@ describe('#viewController', () => {
       it('displays awaiting acceptance status with purple tag', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           status: 'awaiting_acceptance'
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -517,10 +541,10 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          mockPernFromBackend
+          asPrn(mockPernFromBackend)
         )
 
         const { result, statusCode } = await server.inject({
@@ -547,10 +571,10 @@ describe('#viewController', () => {
 
       it('displays issued date for issued PERN', async ({ server }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          mockPernFromBackend
+          asPrn(mockPernFromBackend)
         )
 
         const { result, statusCode } = await server.inject({
@@ -574,10 +598,10 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          mockPernFromBackend
+          asPrn(mockPernFromBackend)
         )
 
         const { result, statusCode } = await server.inject({
@@ -614,7 +638,7 @@ describe('#viewController', () => {
           }
         }
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          reprocessorWithAddress
+          asRequired(reprocessorWithAddress)
         )
 
         const { result, statusCode } = await server.inject({
@@ -646,7 +670,7 @@ describe('#viewController', () => {
           }
         }
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          reprocessorWithoutAddress
+          asRequired(reprocessorWithoutAddress)
         )
 
         const { statusCode } = await server.inject({
@@ -662,10 +686,10 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-          mockPernFromBackend
+          asPrn(mockPernFromBackend)
         )
 
         const { result, statusCode } = await server.inject({
@@ -684,10 +708,10 @@ describe('#viewController', () => {
       })
 
       it('displays accepted status with green tag', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           status: 'accepted'
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -705,10 +729,10 @@ describe('#viewController', () => {
       })
 
       it('displays cancelled status with red tag', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           status: 'cancelled'
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -726,10 +750,10 @@ describe('#viewController', () => {
       })
 
       it('hides status and logos for draft PRN', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           status: 'draft'
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -815,10 +839,10 @@ describe('#viewController', () => {
       })
 
       it('displays December waste as No when false', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           isDecemberWaste: false
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -849,10 +873,10 @@ describe('#viewController', () => {
       })
 
       it('displays "Not provided" when notes are null', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           notes: null
-        })
+        }))
 
         const { result } = await server.inject({
           method: 'GET',
@@ -903,11 +927,11 @@ describe('#viewController', () => {
       it('displays empty values when issue details not present', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           issuedAt: null,
           issuedBy: null
-        })
+        }))
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -919,10 +943,10 @@ describe('#viewController', () => {
       })
 
       it('handles unknown status gracefully', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           status: 'some_unknown_status'
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -941,10 +965,10 @@ describe('#viewController', () => {
       })
 
       it('handles null material gracefully', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           material: null
-        })
+        }))
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -958,10 +982,10 @@ describe('#viewController', () => {
       it('does not display Issue button on certificate page (actions are on action page)', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           status: 'awaiting_authorisation'
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -981,10 +1005,10 @@ describe('#viewController', () => {
       it('should display compliance year text with year in strong tags', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           accreditationYear: 2026
-        })
+        }))
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1028,20 +1052,20 @@ describe('#viewController', () => {
       it('updates PRN status to awaiting_acceptance and redirects to issued page', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockPrnFromBackend,
           status: 'awaiting_authorisation'
-        })
-        vi.mocked(updatePrnStatus).mockResolvedValue({
+        }))
+        vi.mocked(updatePrnStatus).mockResolvedValue(asUpdatePrnStatusResponse({
           ...mockPrnFromBackend,
           status: 'awaiting_acceptance',
           prnNumber: 'ER2625001A'
-        })
+        }))
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           viewUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const { statusCode, headers } = await server.inject({
@@ -1072,16 +1096,16 @@ describe('#viewController', () => {
         server
       }) => {
         // Mock with isDecemberWaste: true to cover that branch
-        vi.mocked(createPrn).mockResolvedValue({
+        vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse({
           ...mockPrnCreated,
           isDecemberWaste: true
-        })
+        }))
 
         // First create a draft by POSTing to create
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -1125,9 +1149,9 @@ describe('#viewController', () => {
         server
       }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -1169,9 +1193,9 @@ describe('#viewController', () => {
         server
       }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         // Create draft without notes
@@ -1209,7 +1233,7 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on check page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(asRequired({
           ...fixtureReprocessor,
           organisationData: {
             id: 'org-123',
@@ -1218,12 +1242,12 @@ describe('#viewController', () => {
               tradingName: 'Reprocessor Trading'
             }
           }
-        })
+        }))
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -1269,15 +1293,15 @@ describe('#viewController', () => {
       it('displays empty issuer when company details are missing', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(asRequired({
           ...fixtureReprocessor,
           organisationData: { id: 'org-123', companyDetails: null }
-        })
+        }))
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -1322,12 +1346,12 @@ describe('#viewController', () => {
       it('displays PRN details rows in correct order per design', async ({
         server
       }) => {
-        vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
+        vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPrnCreated))
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -1378,12 +1402,12 @@ describe('#viewController', () => {
       it('displays tonnage in words generated from tonnage value', async ({
         server
       }) => {
-        vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
+        vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPrnCreated))
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -1419,9 +1443,9 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
-        vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+        vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPernCreated))
 
         const exporterPayload = {
           ...validPayload,
@@ -1429,9 +1453,9 @@ describe('#viewController', () => {
         }
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -1471,9 +1495,9 @@ describe('#viewController', () => {
       it('redirects to created page after confirming', async ({ server }) => {
         // Create draft first
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const createResponse = await server.inject({
@@ -1514,9 +1538,9 @@ describe('#viewController', () => {
 
       it('redirects to create when no draft in session', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const { statusCode, headers } = await server.inject({
@@ -1537,9 +1561,9 @@ describe('#viewController', () => {
         )
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const createResponse = await server.inject({
@@ -1591,9 +1615,9 @@ describe('#viewController', () => {
         )
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const createResponse = await server.inject({
@@ -1628,9 +1652,9 @@ describe('#viewController', () => {
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const createResponse = await server.inject({
@@ -1684,9 +1708,9 @@ describe('#viewController', () => {
         })
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const createResponse = await server.inject({
@@ -1730,9 +1754,9 @@ describe('#viewController', () => {
         vi.mocked(fetchWasteBalances).mockResolvedValue({})
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const createResponse = await server.inject({

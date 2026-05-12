@@ -6,6 +6,12 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import {Server} from '@hapi/hapi'
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {PackagingRecyclingNote} from './helpers/fetch-packaging-recycling-note.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
@@ -15,6 +21,16 @@ const { getRequiredRegistrationWithAccreditation } =
   await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
+
+const asRequired = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asPrn = (/** @type {object} */ value) =>
+  /** @type {PackagingRecyclingNote} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const fixtureReprocessor = {
   organisationData: {
@@ -78,9 +94,9 @@ describe('#issuedController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
+      asRequired(fixtureReprocessor)
     )
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPrn)
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn(mockIssuedPrn))
   })
 
   describe('request handling', () => {
@@ -88,9 +104,11 @@ describe('#issuedController', () => {
       it('displays success page with PRN issued heading and recipient', async ({
         server
       }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -112,17 +130,19 @@ describe('#issuedController', () => {
       it('displays special characters in organisation name without HTML entity encoding', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockIssuedPrn,
           issuedToOrganisation: {
             id: 'producer-1',
             name: "Mackie's Limited"
           }
-        })
+        }))
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -142,18 +162,20 @@ describe('#issuedController', () => {
       it('displays tradingName in heading when organisation has no registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockIssuedPrn,
           issuedToOrganisation: {
             id: 'producer-1',
             name: 'Legal Name Ltd',
             tradingName: 'Trading Name Ltd'
           }
-        })
+        }))
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -173,7 +195,7 @@ describe('#issuedController', () => {
       it('displays legal name for large producers with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockIssuedPrn,
           issuedToOrganisation: {
             id: 'producer-1',
@@ -181,11 +203,13 @@ describe('#issuedController', () => {
             tradingName: 'Trading Name Ltd',
             registrationType: 'LARGE_PRODUCER'
           }
-        })
+        }))
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -205,7 +229,7 @@ describe('#issuedController', () => {
       it('displays tradingName for compliance schemes with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockIssuedPrn,
           issuedToOrganisation: {
             id: 'scheme-1',
@@ -213,11 +237,13 @@ describe('#issuedController', () => {
             tradingName: 'Scheme Trading Name',
             registrationType: 'COMPLIANCE_SCHEME'
           }
-        })
+        }))
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -235,9 +261,11 @@ describe('#issuedController', () => {
       })
 
       it('displays PRN number', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -255,9 +283,11 @@ describe('#issuedController', () => {
       })
 
       it('displays waste balance updated message', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -278,9 +308,11 @@ describe('#issuedController', () => {
       it('displays View PRN button linking to certificate page in new tab', async ({
         server
       }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -305,9 +337,11 @@ describe('#issuedController', () => {
       })
 
       it('displays Issue another PRN link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -328,9 +362,11 @@ describe('#issuedController', () => {
       })
 
       it('displays Manage PRNs link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -351,9 +387,11 @@ describe('#issuedController', () => {
       })
 
       it('displays Return to home link', async ({ server }) => {
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -378,14 +416,16 @@ describe('#issuedController', () => {
       it('redirects to view page if PRN not in awaiting_acceptance status', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
           ...mockIssuedPrn,
           status: 'awaiting_authorisation'
-        })
+        }))
 
-        const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
-          auth: mockAuth
-        })
+        const { cookie: csrfCookie } = await getCsrfToken(
+          asServer(server),
+          issuedUrl,
+          csrfOpts({ auth: mockAuth })
+        )
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
@@ -407,16 +447,14 @@ describe('#issuedController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn(mockIssuedPern))
 
         const { cookie: csrfCookie } = await getCsrfToken(
-          server,
+          asServer(server),
           pernIssuedUrl,
-          {
-            auth: mockAuth
-          }
+          csrfOpts({ auth: mockAuth })
         )
 
         const { result } = await server.inject({
@@ -438,16 +476,14 @@ describe('#issuedController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockIssuedPern)
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn(mockIssuedPern))
 
         const { cookie: csrfCookie } = await getCsrfToken(
-          server,
+          asServer(server),
           pernIssuedUrl,
-          {
-            auth: mockAuth
-          }
+          csrfOpts({ auth: mockAuth })
         )
 
         const { result } = await server.inject({

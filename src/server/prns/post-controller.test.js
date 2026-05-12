@@ -9,6 +9,12 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import {Server} from '@hapi/hapi'
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {CreatePrnResponse} from './helpers/create-prn.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
@@ -16,6 +22,16 @@ vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 
 const { createPrn } = await import('./helpers/create-prn.js')
+
+const asRequired = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asCreatePrnResponse = (/** @type {object} */ value) =>
+  /** @type {CreatePrnResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const fixtureReprocessor = {
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
@@ -60,7 +76,7 @@ describe('#postCreatePrnController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
+      asRequired(fixtureReprocessor)
     )
   })
 
@@ -84,19 +100,19 @@ describe('#postCreatePrnController', () => {
       it('creates PRN draft and redirects to check page', async ({
         server
       }) => {
-        vi.mocked(createPrn).mockResolvedValue({
-          id: 'prn-789',
-          tonnage: 100,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({
+            id: 'prn-789',
+            tonnage: 100,
+            material: 'plastic',
+            status: 'draft',
+            wasteProcessingType: 'reprocessor',
+            processToBeUsed: 'R3',
+            isDecemberWaste: false
+          })
+        )
 
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { statusCode, headers } = await server.inject({
           method: 'POST',
@@ -113,19 +129,19 @@ describe('#postCreatePrnController', () => {
       })
 
       it('calls createPrn with correct parameters', async ({ server }) => {
-        vi.mocked(createPrn).mockResolvedValue({
-          id: 'prn-789',
-          tonnage: 100,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({
+            id: 'prn-789',
+            tonnage: 100,
+            material: 'plastic',
+            status: 'draft',
+            wasteProcessingType: 'reprocessor',
+            processToBeUsed: 'R3',
+            isDecemberWaste: false
+          })
+        )
 
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         await server.inject({
           method: 'POST',
@@ -154,19 +170,19 @@ describe('#postCreatePrnController', () => {
       })
 
       it('omits notes when notes is empty', async ({ server }) => {
-        vi.mocked(createPrn).mockResolvedValue({
-          id: 'prn-789',
-          tonnage: 100,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
+        vi.mocked(createPrn).mockResolvedValue(
+          asCreatePrnResponse({
+            id: 'prn-789',
+            tonnage: 100,
+            material: 'plastic',
+            status: 'draft',
+            wasteProcessingType: 'reprocessor',
+            processToBeUsed: 'R3',
+            isDecemberWaste: false
+          })
+        )
 
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         await server.inject({
           method: 'POST',
@@ -190,9 +206,7 @@ describe('#postCreatePrnController', () => {
       it('should re-render form with inline error when recipient not in organisations list', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const unknownRecipient = 'unknown-recipient-id'
 
@@ -232,9 +246,7 @@ describe('#postCreatePrnController', () => {
       it('shows "Enter PRN tonnage as a whole number" when tonnage is empty', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -258,9 +270,7 @@ describe('#postCreatePrnController', () => {
       it('shows "Enter PRN tonnage as a whole number" when tonnage is not a number', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -284,9 +294,7 @@ describe('#postCreatePrnController', () => {
       it('shows "Enter PRN tonnage as a whole number" when tonnage is a decimal', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -310,9 +318,7 @@ describe('#postCreatePrnController', () => {
       it('shows "Enter PRN tonnage as a whole number greater than zero" when tonnage is zero', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -339,9 +345,7 @@ describe('#postCreatePrnController', () => {
       it('shows "Enter a packaging producer or compliance scheme" when recipient is missing', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -368,9 +372,7 @@ describe('#postCreatePrnController', () => {
       it('shows "Enter a maximum of 200 characters" when notes are too long', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -395,12 +397,10 @@ describe('#postCreatePrnController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRequired(fixtureExporter)
         )
 
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -427,9 +427,7 @@ describe('#postCreatePrnController', () => {
       })
 
       it('shows tonnage error inline next to the field', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result } = await server.inject({
           method: 'POST',
@@ -449,9 +447,7 @@ describe('#postCreatePrnController', () => {
       })
 
       it('preserves form values on validation error', async ({ server }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result } = await server.inject({
           method: 'POST',
@@ -473,9 +469,7 @@ describe('#postCreatePrnController', () => {
       it('should preserve recipient selection on validation error', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result } = await server.inject({
           method: 'POST',
@@ -496,7 +490,7 @@ describe('#postCreatePrnController', () => {
     describe('waste balance on error', () => {
       beforeEach(() => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureReprocessor
+          asRequired(fixtureReprocessor)
         )
         vi.mocked(getWasteBalance).mockResolvedValue({
           amount: 1000,
@@ -507,9 +501,7 @@ describe('#postCreatePrnController', () => {
       it('should display waste balance hint when form fails schema validation', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result } = await server.inject({
           method: 'POST',
@@ -545,9 +537,7 @@ describe('#postCreatePrnController', () => {
       it('should display waste balance hint when recipient not found in organisations list', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { result } = await server.inject({
           method: 'POST',
@@ -588,9 +578,7 @@ describe('#postCreatePrnController', () => {
       it('throws error when createPrn fails', async ({ server }) => {
         vi.mocked(createPrn).mockRejectedValue(new Error('API error'))
 
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { statusCode } = await server.inject({
           method: 'POST',
@@ -624,9 +612,7 @@ describe('#postCreatePrnController', () => {
       it('rethrows Boom errors from createPrn', async ({ server }) => {
         vi.mocked(createPrn).mockRejectedValue(Boom.badRequest('Invalid'))
 
-        const { cookie, crumb } = await getCsrfToken(server, url, {
-          auth: mockAuth
-        })
+        const { cookie, crumb } = await getCsrfToken(asServer(server), url, csrfOpts({ auth: mockAuth }))
 
         const { statusCode } = await server.inject({
           method: 'POST',

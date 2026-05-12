@@ -5,33 +5,40 @@ import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
- * @param {Partial<Request>} [options]
+ * @param {object} [options]
+ * @returns {HapiRequest}
  */
 function mockRequest(options) {
-  return {
-    auth: { credentials: null },
-    t: vi.fn((key) => {
-      const translations = {
-        'common:navigation:home': 'Home',
-        'common:navigation:manageAccount': 'Manage account',
-        'common:navigation:signOut': 'Sign out'
-      }
-      return translations[key] || key
-    }),
-    localiseUrl: vi.fn((path) => path),
-    ...options
-  }
+  return /** @type {HapiRequest} */ (
+    /** @type {unknown} */ ({
+      auth: { credentials: null },
+      t: vi.fn((key) => {
+        const translations = {
+          'common:navigation:home': 'Home',
+          'common:navigation:manageAccount': 'Manage account',
+          'common:navigation:signOut': 'Sign out'
+        }
+        return translations[key] || key
+      }),
+      localiseUrl: vi.fn((path) => path),
+      ...options
+    })
+  )
 }
 
 describe('#buildNavigation', () => {
   const credentials = {
-    authedWithLinkedOrg: {
-      displayName: 'Test User',
-      linkedOrganisationId: 'org-123'
-    },
-    authedWithoutLinkedOrg: {
-      displayName: 'Test User'
-    }
+    authedWithLinkedOrg: /** @type {UserSession} */ (
+      /** @type {unknown} */ ({
+        displayName: 'Test User',
+        linkedOrganisationId: 'org-123'
+      })
+    ),
+    authedWithoutLinkedOrg: /** @type {UserSession} */ (
+      /** @type {unknown} */ ({
+        displayName: 'Test User'
+      })
+    )
   }
 
   beforeEach(() => {
@@ -126,12 +133,12 @@ describe('#buildNavigation', () => {
       const navigation = buildNavigation(request)
       const signOut = navigation.find((item) => item.text === 'Sign out')
 
-      expect(signOut.href).toBe('/cy/logout')
+      expect(signOut?.href).toBe('/cy/logout')
     })
   })
 })
 
 /**
- * @import { Request } from '@hapi/hapi'
- * @import { Server } from '@hapi/hapi'
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
  */

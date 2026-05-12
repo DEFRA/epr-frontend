@@ -10,6 +10,10 @@ import {
   vi
 } from 'vitest'
 
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
 const mockReadFileSync = vi.fn()
 const mockLoggerError = vi.fn()
 
@@ -19,26 +23,36 @@ vi.mock(import('node:fs'), async () => ({
 }))
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
-  createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
+  createLogger: () => ({
+    error: (...args) => mockLoggerError(...args),
+    info: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+    trace: vi.fn(),
+    fatal: vi.fn()
+  })
 }))
 
 /**
- * @param {Partial<Request>} [options]
+ * @param {object} [options]
+ * @returns {HapiRequest}
  */
 function mockRequest(options) {
-  return {
-    auth: { isAuthenticated: false, credentials: null },
-    localiseUrl: vi.fn((path) => path),
-    path: '/',
-    t: vi.fn((key) => {
-      const translations = {
-        'common:navigation:yourSites': 'Your sites',
-        'common:navigation:signOut': 'Sign out'
-      }
-      return translations[key] || key
-    }),
-    ...options
-  }
+  return /** @type {HapiRequest} */ (
+    /** @type {unknown} */ ({
+      auth: { isAuthenticated: false, credentials: null },
+      localiseUrl: vi.fn((path) => path),
+      path: '/',
+      t: vi.fn((key) => {
+        const translations = {
+          'common:navigation:yourSites': 'Your sites',
+          'common:navigation:signOut': 'Sign out'
+        }
+        return translations[key] || key
+      }),
+      ...options
+    })
+  )
 }
 
 describe('#context', () => {

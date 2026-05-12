@@ -1,9 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
-import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
-import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
-import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import * as fetchRegistrationAndAccreditationMod from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import * as submitSummaryLogMod from '#server/common/helpers/summary-log/submit-summary-log.js'
+import * as fetchSummaryLogStatusMod from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import * as initiateSummaryLogUploadMod from '#server/common/helpers/upload/initiate-summary-log-upload.js'
+import * as fetchWasteBalancesMod from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -20,50 +20,61 @@ import {
   getWasteRecordSectionNumber
 } from './controller.js'
 
+/**
+ * @import { Server } from '@hapi/hapi'
+ * @import { RawLoads, RawLoadsByWasteRecordType } from './types.js'
+ */
+
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
-vi.mock(
-  import('#server/common/helpers/upload/fetch-summary-log-status.js'),
-  () => ({
-    fetchSummaryLogStatus: vi.fn().mockResolvedValue({
-      status: 'preprocessing'
-    })
-  })
-)
+const asString = (value) => /** @type {string} */ (value)
 
-vi.mock(
-  import('#server/common/helpers/upload/initiate-summary-log-upload.js'),
-  () => ({
-    initiateSummaryLogUpload: vi.fn().mockResolvedValue({
-      uploadUrl: 'https://storage.example.com/upload?signature=abc123',
-      uploadId: 'new-upload-id-123'
-    })
-  })
-)
+const loadHtml = (result) => load(asString(result))
 
-vi.mock(
-  import('#server/common/helpers/summary-log/submit-summary-log.js'),
-  () => ({
-    submitSummaryLog: vi.fn()
-  })
-)
+const asRawLoads = (loads) =>
+  /** @type {RawLoads | undefined} */ (/** @type {unknown} */ (loads))
 
-vi.mock(
-  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
-  () => ({
-    fetchRegistrationAndAccreditation: vi.fn().mockResolvedValue({
-      organisationData: undefined,
-      registration: undefined,
-      accreditation: undefined
-    })
-  })
-)
+const asRawLoadsByWasteRecordType = (entries) =>
+  /** @type {RawLoadsByWasteRecordType} */ (/** @type {unknown} */ (entries))
 
+const asHapiServer = (server) =>
+  /** @type {Server} */ (/** @type {unknown} */ (server))
+
+vi.mock(import('#server/common/helpers/upload/fetch-summary-log-status.js'))
+vi.mock(import('#server/common/helpers/upload/initiate-summary-log-upload.js'))
+vi.mock(import('#server/common/helpers/summary-log/submit-summary-log.js'))
 vi.mock(
-  import('#server/common/helpers/waste-balance/fetch-waste-balances.js'),
-  () => ({
-    fetchWasteBalances: vi.fn()
-  })
+  import(
+    '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+  )
+)
+vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+
+/**
+ * @typedef {import('vitest').MockedFunction<(...args: unknown[]) => Promise<unknown>>} LooseMockedAsync
+ */
+
+const fetchSummaryLogStatus = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (
+    vi.mocked(fetchSummaryLogStatusMod).fetchSummaryLogStatus
+  )
+)
+const initiateSummaryLogUpload = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (
+    vi.mocked(initiateSummaryLogUploadMod).initiateSummaryLogUpload
+  )
+)
+const submitSummaryLog = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (vi.mocked(submitSummaryLogMod).submitSummaryLog)
+)
+const fetchRegistrationAndAccreditation = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (
+    vi.mocked(fetchRegistrationAndAccreditationMod)
+      .fetchRegistrationAndAccreditation
+  )
+)
+const fetchWasteBalances = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (vi.mocked(fetchWasteBalancesMod).fetchWasteBalances)
 )
 
 const enablesClientSidePolling = () =>
@@ -83,11 +94,16 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     initiateSummaryLogUpload.mockReset().mockResolvedValue({
+      summaryLogId: 'new-summary-log-id',
       uploadUrl: mockUploadUrl,
-      uploadId: 'new-upload-id-123'
+      uploadId: 'new-upload-id-123',
+      statusUrl: 'https://storage.example.com/status'
     })
 
     submitSummaryLog.mockReset()
+
+    fetchRegistrationAndAccreditation.mockReset()
+    fetchWasteBalances.mockReset()
   })
 
   it('should provide expected response', async ({ server }) => {
@@ -142,7 +158,7 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const $body = $('[data-testid="app-page-body"]')
 
       /* eslint-disable vitest/max-expects */
@@ -983,7 +999,7 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = loadHtml(result)
         const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
 
         expect(panelBody).toHaveLength(1)
@@ -1014,7 +1030,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const $ = load(result)
+        const $ = loadHtml(result)
         const panel = $('.govuk-panel--confirmation')
         const panelBody = panel.find('.govuk-panel__body')
 
@@ -1126,7 +1142,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const $ = load(result)
+        const $ = loadHtml(result)
         const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
 
         expect(panelBody).toHaveLength(1)
@@ -1166,9 +1182,11 @@ describe('#summaryLogUploadProgressController', () => {
         accreditationNumber: 'ACC-2025-002'
       })
 
-      const { cookie, crumb } = await getCsrfToken(server, url, {
-        auth: mockAuth
-      })
+      const { cookie, crumb } = await getCsrfToken(
+        asHapiServer(server),
+        url,
+        /** @type {{ headers?: object }} */ ({ auth: mockAuth })
+      )
 
       const postResponse = await server.inject({
         method: 'POST',
@@ -1182,7 +1200,9 @@ describe('#summaryLogUploadProgressController', () => {
 
       const setCookies = postResponse.headers['set-cookie']
       const cookies = Array.isArray(setCookies) ? setCookies : [setCookies]
-      const cookieHeader = cookies.map((c) => c.split(';')[0]).join('; ')
+      const cookieHeader = cookies
+        .map((c) => asString(c).split(';')[0])
+        .join('; ')
 
       const initialCallCount = fetchSummaryLogStatus.mock.calls.length
 
@@ -1426,7 +1446,7 @@ describe('#summaryLogUploadProgressController', () => {
         'The rows must be re-added before you can submit your file.'
       )
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const bullets = $(
         '[data-testid="app-page-body"] ul.govuk-list--bullet li'
       )
@@ -1466,7 +1486,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const bullets = $(
         '[data-testid="app-page-body"] ul.govuk-list--bullet li'
       )
@@ -1477,7 +1497,7 @@ describe('#summaryLogUploadProgressController', () => {
         'Sent on (sections 4 and 5)'
       ])
 
-      const preambleMatches = result.match(
+      const preambleMatches = asString(result).match(
         /Since your summary log was last submitted, rows have been removed from:/g
       )
       expect(preambleMatches).toHaveLength(1)
@@ -1514,7 +1534,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const bullets = $(
         '[data-testid="app-page-body"] ul.govuk-list--bullet li'
       )
@@ -1541,7 +1561,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const bullets = $(
         '[data-testid="app-page-body"] ul.govuk-list--bullet li'
       )
@@ -1599,7 +1619,7 @@ describe('#summaryLogUploadProgressController', () => {
         'The selected file contains data that&#39;s been entered incorrectly'
       )
 
-      const matches = result.match(
+      const matches = asString(result).match(
         /The selected file contains data that&#39;s been entered incorrectly/g
       )
 
@@ -1770,7 +1790,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       // Should only appear once (deduplicated)
-      const matches = result.match(
+      const matches = asString(result).match(
         /The summary log template you&#39;re uploading is incorrect/g
       )
 
@@ -1828,7 +1848,7 @@ describe('#summaryLogUploadProgressController', () => {
         'Sorry, there is a problem with the service - try again later'
       )
 
-      const matches = result.match(
+      const matches = asString(result).match(
         /Sorry, there is a problem with the service - try again later/g
       )
 
@@ -2465,7 +2485,7 @@ describe('#buildLoadsViewModel', () => {
   })
 
   test('returns no rows when loads is null', () => {
-    const result = buildLoadsViewModel(null)
+    const result = buildLoadsViewModel(asRawLoads(null))
 
     expect(result).toStrictEqual({
       added: {
@@ -2482,16 +2502,18 @@ describe('#buildLoadsViewModel', () => {
   })
 
   test('returns empty structure when loads has empty structure', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      },
-      adjusted: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      }
-    })
+    const result = buildLoadsViewModel(
+      asRawLoads({
+        added: {
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        },
+        adjusted: {
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        }
+      })
+    )
 
     expect(result).toStrictEqual({
       added: {
@@ -2508,16 +2530,18 @@ describe('#buildLoadsViewModel', () => {
   })
 
   test('preserves count and rowIds from backend', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 150, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 50, rowIds: [1004, 1005] }
-      },
-      adjusted: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      }
-    })
+    const result = buildLoadsViewModel(
+      asRawLoads({
+        added: {
+          included: { count: 150, rowIds: [1001, 1002, 1003] },
+          excluded: { count: 50, rowIds: [1004, 1005] }
+        },
+        adjusted: {
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        }
+      })
+    )
 
     expect(result.added).toStrictEqual({
       included: { count: 150, rowIds: [1001, 1002, 1003] },
@@ -2527,16 +2551,18 @@ describe('#buildLoadsViewModel', () => {
   })
 
   test('preserves count and rowIds for adjusted loads', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      },
-      adjusted: {
-        included: { count: 120, rowIds: [2001, 2002] },
-        excluded: { count: 30, rowIds: [2003] }
-      }
-    })
+    const result = buildLoadsViewModel(
+      asRawLoads({
+        added: {
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        },
+        adjusted: {
+          included: { count: 120, rowIds: [2001, 2002] },
+          excluded: { count: 30, rowIds: [2003] }
+        }
+      })
+    )
 
     expect(result.adjusted).toStrictEqual({
       included: { count: 120, rowIds: [2001, 2002] },
@@ -2546,13 +2572,15 @@ describe('#buildLoadsViewModel', () => {
   })
 
   test('handles partial loads data gracefully', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 1, rowIds: [1001] }
-        // missing excluded
-      }
-      // missing adjusted
-    })
+    const result = buildLoadsViewModel(
+      asRawLoads({
+        added: {
+          included: { count: 1, rowIds: [1001] }
+          // missing excluded
+        }
+        // missing adjusted
+      })
+    )
 
     expect(result).toStrictEqual({
       added: {
@@ -2569,17 +2597,19 @@ describe('#buildLoadsViewModel', () => {
   })
 
   test('uses included and excluded counts, ignoring valid', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        valid: { count: 10, rowIds: [] },
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 2, rowIds: [1004, 1005] }
-      },
-      adjusted: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      }
-    })
+    const result = buildLoadsViewModel(
+      asRawLoads({
+        added: {
+          valid: { count: 10, rowIds: [] },
+          included: { count: 8, rowIds: [1001, 1002, 1003] },
+          excluded: { count: 2, rowIds: [1004, 1005] }
+        },
+        adjusted: {
+          included: { count: 0, rowIds: [] },
+          excluded: { count: 0, rowIds: [] }
+        }
+      })
+    )
 
     expect(result.added).toStrictEqual({
       included: { count: 8, rowIds: [1001, 1002, 1003] },
@@ -2589,16 +2619,18 @@ describe('#buildLoadsViewModel', () => {
   })
 
   test('calculates total from included + excluded counts', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 7, rowIds: [1004, 1005] }
-      },
-      adjusted: {
-        included: { count: 4, rowIds: [2001, 2002, 2003, 2004] },
-        excluded: { count: 3, rowIds: [2005, 2006, 2007] }
-      }
-    })
+    const result = buildLoadsViewModel(
+      asRawLoads({
+        added: {
+          included: { count: 8, rowIds: [1001, 1002, 1003] },
+          excluded: { count: 7, rowIds: [1004, 1005] }
+        },
+        adjusted: {
+          included: { count: 4, rowIds: [2001, 2002, 2003, 2004] },
+          excluded: { count: 3, rowIds: [2005, 2006, 2007] }
+        }
+      })
+    )
 
     expect(result.added.total).toBe(15)
     expect(result.adjusted.total).toBe(7)
@@ -2623,7 +2655,13 @@ describe('#getWasteRecordSectionNumber', () => {
   })
 
   test('returns undefined for unknown processingType', () => {
-    expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
+    expect(
+      getWasteRecordSectionNumber(
+        /** @type {import('#domain/summary-logs/meta-fields.js').ProcessingType} */ (
+          /** @type {unknown} */ ('UNKNOWN_TYPE')
+        )
+      )
+    ).toBeUndefined()
   })
 })
 
@@ -2662,7 +2700,7 @@ describe('#buildLoadsByWasteRecordTypeViewModel', () => {
     }
     const localise = (key) => sectionRefs[key] ?? key
     const result = buildLoadsByWasteRecordTypeViewModel(
-      mockLoadsByWasteRecordType,
+      asRawLoadsByWasteRecordType(mockLoadsByWasteRecordType),
       'REPROCESSOR_REGISTERED_ONLY',
       localise
     )
