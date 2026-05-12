@@ -136,4 +136,13 @@
  * }} HapiServerRegisterPluginObject
  */
 
-export {} // NOSONAR: javascript:S7787 - Required to make this file a module for JSDoc @import
+/**
+ * Cast Hapi's base Request to our augmented HapiRequest. Safe wherever our
+ * plugins have run (route handlers, server.ext callbacks, Bell strategy
+ * callbacks). Goes through `unknown` because TS treats the structural
+ * narrowing of auth/logger as invariant.
+ * @param {Request} request
+ * @returns {HapiRequest}
+ */
+export const asHapiRequest = (request) =>
+  /** @type {HapiRequest} */ (/** @type {unknown} */ (request))

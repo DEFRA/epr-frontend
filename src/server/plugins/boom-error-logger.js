@@ -3,10 +3,10 @@ import {
   loggingEventActions,
   loggingEventCategories
 } from '#server/common/enums/event.js'
+import { asHapiRequest } from '#server/common/hapi-types.js'
 
 /**
- * @import { ResponseToolkit, Server } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { Request, ResponseToolkit, Server } from '@hapi/hapi'
  * @import { CdpBoom } from '#server/common/helpers/logging/cdp-boom.js'
  */
 
@@ -21,10 +21,11 @@ export const boomErrorLogger = {
       server.ext(
         'onPreResponse',
         /**
-         * @param {HapiRequest} request
+         * @param {Request} rawRequest
          * @param {ResponseToolkit} h
          */
-        (request, h) => {
+        (rawRequest, h) => {
+          const request = asHapiRequest(rawRequest)
           const response = request.response
 
           if (!('isBoom' in response) || !response.isBoom) {

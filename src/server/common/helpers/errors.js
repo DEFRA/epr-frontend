@@ -1,5 +1,6 @@
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { asHapiRequest } from '#server/common/hapi-types.js'
 
 const statusCodeErrors = {
   [statusCodes.notFound]: {
@@ -40,9 +41,7 @@ function statusCodeMessage(statusCode, localise) {
  * @param { ResponseToolkit } h
  */
 export async function catchAll(rawRequest, h) {
-  const request = /** @type {HapiRequest} */ (
-    /** @type {unknown} */ (rawRequest)
-  )
+  const request = asHapiRequest(rawRequest)
   const { response } = request
 
   if (!('isBoom' in response)) {
@@ -70,5 +69,4 @@ export async function catchAll(rawRequest, h) {
 
 /**
  * @import { Request, ResponseToolkit } from '@hapi/hapi'
- * @import { HapiRequest } from '#server/common/hapi-types.js'
  */

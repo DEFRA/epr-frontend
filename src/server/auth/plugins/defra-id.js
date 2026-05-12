@@ -1,3 +1,4 @@
+import { asHapiRequest } from '#server/common/hapi-types.js'
 import { config } from '#config/config.js'
 import { paths } from '#server/paths.js'
 import bell from '@hapi/bell'
@@ -57,7 +58,7 @@ const createDefraId = (verifyToken) => ({
             }
           }
 
-          return getRedirectUrl(request, paths.auth.callback)
+          return getRedirectUrl(asHapiRequest(request), paths.auth.callback)
         },
         password: config.get('session.cookie.password'),
         provider: {
