@@ -2,7 +2,26 @@
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { test, vi } from 'vitest'
-import { organisations } from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+import wasteOrganisations from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+
+/**
+ * @import { SetupServerApi } from 'msw/node'
+ * @import { TestAPI } from 'vitest'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
+ *
+ * @typedef {HapiServer & {
+ *   loggerMocks: {
+ *     info: ReturnType<typeof vi.fn>,
+ *     warn: ReturnType<typeof vi.fn>,
+ *     error: ReturnType<typeof vi.fn>
+ *   }
+ * }} ServerWithLoggerMocks
+ *
+ * @typedef {{ msw: SetupServerApi, server: ServerWithLoggerMocks }} ServerFixtures
+ */
+
+const { organisations } = wasteOrganisations
 
 /**
  * Stub handler for AWS EC2 Instance Metadata Service (IMDS).
@@ -77,28 +96,40 @@ const createOidcHandlers = (baseUrl) => {
  * `server` fixture can then assert with
  * `expect(server.loggerMocks.warn).toHaveBeenCalledWith(...)` — covering
  * server- and request-level logs uniformly.
- * @param {import('@hapi/hapi').Server & {
- *   loggerMocks?: { info: ReturnType<typeof vi.fn>, warn: ReturnType<typeof vi.fn>, error: ReturnType<typeof vi.fn> }
- * }} server
+ * @param {HapiServer} server
+ * @returns {ServerWithLoggerMocks}
  */
 const attachLoggerMocks = (server) => {
-  server.loggerMocks = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  const mocked = /** @type {ServerWithLoggerMocks} */ (server)
+  const { info, warn, error } = (mocked.loggerMocks = {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  })
 
-  vi.spyOn(server.logger, 'info').mockImplementation(server.loggerMocks.info)
-  vi.spyOn(server.logger, 'warn').mockImplementation(server.loggerMocks.warn)
-  vi.spyOn(server.logger, 'error').mockImplementation(server.loggerMocks.error)
+  vi.spyOn(mocked.logger, 'info').mockImplementation(/** @type {any} */ (info))
+  vi.spyOn(mocked.logger, 'warn').mockImplementation(/** @type {any} */ (warn))
+  vi.spyOn(mocked.logger, 'error').mockImplementation(
+    /** @type {any} */ (error)
+  )
 
-  server.ext('onRequest', (request, h) => {
-    vi.spyOn(request.logger, 'info').mockImplementation(server.loggerMocks.info)
-    vi.spyOn(request.logger, 'warn').mockImplementation(server.loggerMocks.warn)
+  mocked.ext('onRequest', (request, h) => {
+    vi.spyOn(request.logger, 'info').mockImplementation(
+      /** @type {any} */ (info)
+    )
+    vi.spyOn(request.logger, 'warn').mockImplementation(
+      /** @type {any} */ (warn)
+    )
     vi.spyOn(request.logger, 'error').mockImplementation(
-      server.loggerMocks.error
+      /** @type {any} */ (error)
     )
     return h.continue
   })
+
+  return mocked
 }
 
-const it = test.extend({
+const it = /** @type {TestAPI<ServerFixtures>} */ (test.extend({
   msw: [
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
@@ -119,9 +150,14 @@ const it = test.extend({
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const { createServer } = await import('#server/index.js')
-      const server = await createServer({ wasteOrganisations: organisations })
-
-      attachLoggerMocks(server)
+      const server = attachLoggerMocks(
+        await createServer({
+          wasteOrganisations:
+            /** @type {WasteOrganisation[]} */ (
+              /** @type {unknown} */ (organisations)
+            )
+        })
+      )
 
       await server.initialize()
 
@@ -131,7 +167,7 @@ const it = test.extend({
     },
     { scope: 'test' }
   ]
-})
+}))
 
 const beforeEach = it.beforeEach
 
