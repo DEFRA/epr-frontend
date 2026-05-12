@@ -260,7 +260,8 @@
         <input type="hidden" name="version" value="{{ version }}" />
 
         {{ govukButton({
-          text: createButtonText
+          text: createButtonText,
+          preventDoubleClick: true
         }) }}
 
         <p class="govuk-body">

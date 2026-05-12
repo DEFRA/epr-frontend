@@ -45,7 +45,8 @@
           }) }}
 
           {{ govukButton({
-            text: localise('account:linking:confirmButton')
+            text: localise('account:linking:confirmButton'),
+            preventDoubleClick: true
           }) }}
 
           {% set unlinkedOrgsList %}

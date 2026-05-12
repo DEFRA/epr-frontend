@@ -170,6 +170,9 @@ describe('#accountLinkingController', () => {
         const submitButton = getByRole(main, 'button', { name: /Confirm/i })
 
         expect(submitButton).toBeDefined()
+        expect(submitButton.getAttribute('data-prevent-double-click')).toBe(
+          'true'
+        )
       })
 
       it('should render radio button for each organisation sorted alphabetically', async ({

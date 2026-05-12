@@ -105,6 +105,7 @@ describe('#deleteController', () => {
 
         expect(button).not.toBeNull()
         expect(button?.textContent?.trim()).toContain('Confirm deletion')
+        expect(button?.getAttribute('data-prevent-double-click')).toBe('true')
       })
 
       describe('back link', () => {

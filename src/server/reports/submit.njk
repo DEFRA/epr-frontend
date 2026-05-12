@@ -225,7 +225,8 @@
 
         <div class="govuk-button-group">
           {{ govukButton({
-            text: localise("reports:submitButton")
+            text: localise("reports:submitButton"),
+            preventDoubleClick: true
           }) }}
 
           {{ govukButton({

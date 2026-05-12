@@ -750,6 +750,7 @@ describe('#submitController', () => {
 
           expect(button).not.toBeNull()
           expect(button.textContent.trim()).toContain('Confirm and submit')
+          expect(button.getAttribute('data-prevent-double-click')).toBe('true')
         })
 
         it('should include report version as hidden form field', async ({
