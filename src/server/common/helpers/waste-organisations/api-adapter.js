@@ -74,7 +74,7 @@ export function createApiWasteOrganisationsService(logger) {
 
       const params = new URLSearchParams({
         registrations: ['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'],
-        registrationYears: [thisYear],
+        registrationYears: [String(thisYear)],
         statuses: ['REGISTERED']
       })
 
