@@ -2,7 +2,7 @@ import { languages } from '#server/common/constants/languages.js'
 import fs from 'fs'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
-import middleware from 'i18next-http-middleware'
+import { LanguageDetector } from 'i18next-http-middleware'
 import path from 'path'
 
 /**
@@ -31,31 +31,30 @@ export async function initI18n() {
   const serverDir = path.resolve('src/server')
   const ns = findNamespaces(serverDir)
 
-  await i18next
-    .use(Backend)
-    .use(middleware.LanguageDetector)
-    .init({
-      lng: languages.ENGLISH,
-      fallbackLng: languages.ENGLISH,
-      preload: [languages.ENGLISH, languages.WELSH],
-      supportedLngs: [languages.ENGLISH, languages.WELSH],
-      ns,
-      defaultNS: 'common',
-      backend: {
-        loadPath: path.resolve('src/server/{{ns}}/{{lng}}.json')
-      },
-      detection: {
-        order: ['path', 'querystring', 'cookie', 'header'],
-        lookupQuerystring: 'lang',
-        lookupCookie: 'i18next',
-        caches: false
-      },
-      interpolation: {
-        escapeValue: false
-      },
-      debug: false,
-      showSupportNotice: false
-    })
+  const initOptions = {
+    lng: languages.ENGLISH,
+    fallbackLng: languages.ENGLISH,
+    preload: [languages.ENGLISH, languages.WELSH],
+    supportedLngs: [languages.ENGLISH, languages.WELSH],
+    ns,
+    defaultNS: 'common',
+    backend: {
+      loadPath: path.resolve('src/server/{{ns}}/{{lng}}.json')
+    },
+    detection: {
+      order: ['path', 'querystring', 'cookie', 'header'],
+      lookupQuerystring: 'lang',
+      lookupCookie: 'i18next',
+      caches: false
+    },
+    interpolation: {
+      escapeValue: false
+    },
+    debug: false,
+    showSupportNotice: false
+  }
+
+  await i18next.use(Backend).use(LanguageDetector).init(initOptions)
 
   return i18next
 }
