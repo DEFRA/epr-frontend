@@ -9,6 +9,12 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import { Server } from '@hapi/hapi'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -17,7 +23,18 @@ vi.mock(import('../helpers/update-report.js'))
 
 const { updateReport } = await import('../helpers/update-report.js')
 
-const reprocessorRegistration = {
+const asRegAndAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asReport = (/** @type {object} */ value) =>
+  /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) =>
+  /** @type {{ headers?: object }} */ (value)
+
+const reprocessorRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -29,22 +46,22 @@ const reprocessorRegistration = {
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M'
   }
-}
+})
 
-const registeredOnlyReprocessor = {
+const registeredOnlyReprocessor = asRegAndAcc({
   ...reprocessorRegistration,
   accreditation: undefined
-}
+})
 
-const exporterRegistration = {
+const exporterRegistration = asRegAndAcc({
   ...reprocessorRegistration,
   registration: {
     ...reprocessorRegistration.registration,
     wasteProcessingType: 'exporter'
   }
-}
+})
 
-const reportDetail = {
+const reportDetail = asReport({
   operatorCategory: 'REPROCESSOR_ACCREDITED',
   cadence: 'monthly',
   year: 2026,
@@ -63,7 +80,7 @@ const reportDetail = {
     tonnageRecycled: null,
     tonnageNotRecycled: null
   }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'

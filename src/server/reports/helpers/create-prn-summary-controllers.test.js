@@ -320,9 +320,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
       describe('when continue is clicked with valid revenue', () => {
         it(`should redirect to ${subtree.redirectSlug}`, async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { statusCode, headers } = await server.inject({
             method: 'POST',
@@ -347,9 +349,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         })
 
         it('should call updateReport with prnRevenue', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           await server.inject({
             method: 'POST',
@@ -373,9 +377,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
       describe('when save is clicked', () => {
         it('should redirect to reports list', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { statusCode, headers } = await server.inject({
             method: 'POST',
@@ -394,9 +400,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         it('should redirect to reports list when revenue is empty', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { statusCode, headers } = await server.inject({
             method: 'POST',
@@ -415,9 +423,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         it('should not call updateReport when revenue is empty', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           await server.inject({
             method: 'POST',
@@ -433,9 +443,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         it('should show error when revenue is non-numeric', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { result } = await server.inject({
             method: 'POST',
@@ -461,9 +473,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         it('should show error when revenue is non-numeric', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { result } = await server.inject({
             method: 'POST',
@@ -495,9 +509,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         it('should show error when revenue has more than 2 decimal places', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { result } = await server.inject({
             method: 'POST',
@@ -519,9 +535,11 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         })
 
         it('should show error when revenue is empty', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { result } = await server.inject({
             method: 'POST',
