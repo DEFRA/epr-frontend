@@ -21,17 +21,21 @@ const asMockRequest = (/** @type {object} */ value) =>
 const asMockH = (/** @type {object} */ value) =>
   /** @type {ResponseToolkit} */ (/** @type {unknown} */ (value))
 
-vi.mock('node:crypto', () =>
-  /** @type {Partial<typeof import('node:crypto')>} */ ({
-    randomUUID: vi.fn(() => 'mock-uuid-1234'),
-    createHash: /** @type {typeof import('node:crypto').createHash} */ (
-      /** @type {unknown} */ (
-        vi.fn(() => ({
-          update: vi.fn((input) => ({ digest: vi.fn(() => `${input}-hashed`) }))
-        }))
+vi.mock(
+  'node:crypto',
+  () =>
+    /** @type {Partial<typeof import('node:crypto')>} */ ({
+      randomUUID: vi.fn(() => 'mock-uuid-1234'),
+      createHash: /** @type {typeof import('node:crypto').createHash} */ (
+        /** @type {unknown} */ (
+          vi.fn(() => ({
+            update: vi.fn((input) => ({
+              digest: vi.fn(() => `${input}-hashed`)
+            }))
+          }))
+        )
       )
-    )
-  })
+    })
 )
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
@@ -114,7 +118,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       // First call stores initial session, second call adds linkedOrganisationId
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledTimes(2)
@@ -367,7 +374,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       expect(mockRequest.localiseUrl).toHaveBeenCalledExactlyOnceWith(
         '/organisations/linked-org-uuid'
@@ -532,7 +542,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-to-linking')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-to-linking')
@@ -567,7 +580,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
@@ -604,7 +620,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
@@ -760,7 +779,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/dashboard')
       expect(result).toBe('redirect-response')
@@ -834,7 +856,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-response')
@@ -897,7 +922,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(asMockRequest(mockRequest), asMockH(mockH))
+      const result = await controller.handler(
+        asMockRequest(mockRequest),
+        asMockH(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-response')
