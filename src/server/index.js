@@ -32,6 +32,7 @@ import { router } from './router.js'
 export async function createServer(options = {}) {
   setupProxy()
 
+  /** @satisfies {RouteOptions} */
   const routes = {
     validate: {
       options: {
@@ -51,7 +52,7 @@ export async function createServer(options = {}) {
       noSniff: true,
       xframe: true
     },
-    auth: { mode: 'required' }
+    auth: { mode: /** @type {const} */ ('required') }
   }
 
   const server = hapi.server({
@@ -144,6 +145,7 @@ export async function createServer(options = {}) {
 }
 
 /**
+ * @import {RouteOptions} from '@hapi/hapi'
  * @import {Engine} from '#server/common/helpers/session-cache/cache-engine.js'
  * @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js'
  */
