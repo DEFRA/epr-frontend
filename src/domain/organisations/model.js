@@ -219,7 +219,7 @@ export const USER_ROLES = Object.freeze({
 /**
  * @typedef {{
  *   name: string;
- *   type: Pick<PartnerType, 'company'|'individual'>;
+ *   type: Extract<PartnerType, 'company' | 'individual'>;
  * }} Partner
  */
 
