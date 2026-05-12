@@ -11,12 +11,32 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import { Server } from '@hapi/hapi'
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {CreatePrnResponse} from './helpers/create-prn.js'
+ * @import {UpdatePrnStatusResponse} from './helpers/update-prn-status.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/create-prn.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+
+const asRegWithAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asCreatePrn = (/** @type {object} */ value) =>
+  /** @type {CreatePrnResponse} */ (/** @type {unknown} */ (value))
+const asUpdatePrn = (/** @type {object} */ value) =>
+  /** @type {UpdatePrnStatusResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) =>
+  /** @type {{ headers?: object }} */ (value)
 
 const { getWasteBalance } =
   await import('#server/common/helpers/waste-balance/get-waste-balance.js')
@@ -87,23 +107,25 @@ describe('#discardController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
+      asRegWithAcc(fixtureReprocessor)
     )
     vi.mocked(getWasteBalance).mockResolvedValue(null)
-    vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
-    vi.mocked(updatePrnStatus).mockResolvedValue({
-      ...mockPrnCreated,
-      status: 'discarded'
-    })
+    vi.mocked(createPrn).mockResolvedValue(asCreatePrn(mockPrnCreated))
+    vi.mocked(updatePrnStatus).mockResolvedValue(
+      asUpdatePrn({
+        ...mockPrnCreated,
+        status: 'discarded'
+      })
+    )
   })
 
   describe('request handling', () => {
     describe('GET /discard (confirmation page)', () => {
       it('displays confirmation heading for PRN', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -139,9 +161,9 @@ describe('#discardController', () => {
 
       it('displays warning text about discarding', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -175,9 +197,9 @@ describe('#discardController', () => {
 
       it('displays confirm discard button', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -214,9 +236,9 @@ describe('#discardController', () => {
 
       it('displays back link to check page', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -251,9 +273,9 @@ describe('#discardController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          fixtureExporter
+          asRegWithAcc(fixtureExporter)
         )
-        vi.mocked(createPrn).mockResolvedValue(mockPernCreated)
+        vi.mocked(createPrn).mockResolvedValue(asCreatePrn(mockPernCreated))
 
         const exporterPayload = {
           ...validPayload,
@@ -261,9 +283,9 @@ describe('#discardController', () => {
         }
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -312,9 +334,9 @@ describe('#discardController', () => {
         server
       }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -350,9 +372,9 @@ describe('#discardController', () => {
         server
       }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -390,9 +412,9 @@ describe('#discardController', () => {
 
       it('clears draft from session after discard', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -438,9 +460,9 @@ describe('#discardController', () => {
 
       it('redirects to create when no draft in session', async ({ server }) => {
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const { statusCode, headers } = await server.inject({
@@ -464,9 +486,9 @@ describe('#discardController', () => {
         )
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -518,9 +540,9 @@ describe('#discardController', () => {
         )
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           createUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({

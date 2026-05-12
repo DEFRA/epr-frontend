@@ -6,10 +6,27 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import { Server } from '@hapi/hapi'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
+
+const asRegWithAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asPrn = (/** @type {object} */ value) =>
+  /** @type {PackagingRecyclingNote} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) =>
+  /** @type {{ headers?: object }} */ (value)
 
 const { getRequiredRegistrationWithAccreditation } =
   await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -80,18 +97,22 @@ describe('#cancelledController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      fixtureReprocessor
+      asRegWithAcc(fixtureReprocessor)
     )
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockCancelledPrn)
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+      asPrn(mockCancelledPrn)
+    )
   })
 
   describe('request handling', () => {
     it('displays green panel with PRN cancelled heading', async ({
       server
     }) => {
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -112,9 +133,11 @@ describe('#cancelledController', () => {
     })
 
     it('displays Status: Cancelled in panel body', async ({ server }) => {
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -132,9 +155,11 @@ describe('#cancelledController', () => {
     })
 
     it('displays What happens next heading', async ({ server }) => {
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -151,9 +176,11 @@ describe('#cancelledController', () => {
     })
 
     it('displays waste balance updated message', async ({ server }) => {
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -172,9 +199,11 @@ describe('#cancelledController', () => {
     })
 
     it('displays link to PRNs page', async ({ server }) => {
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -193,9 +222,11 @@ describe('#cancelledController', () => {
     })
 
     it('displays Return to home link', async ({ server }) => {
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -219,17 +250,19 @@ describe('#cancelledController', () => {
 
     it('displays PERN text for exporter registration', async ({ server }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        fixtureExporter
+        asRegWithAcc(fixtureExporter)
       )
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-        mockCancelledPern
+        asPrn(mockCancelledPern)
       )
 
       const pernCancelledUrl = `${basePath}/pern-123/cancelled`
 
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -249,14 +282,18 @@ describe('#cancelledController', () => {
     it('redirects to list when PRN is not in cancelled status', async ({
       server
     }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockCancelledPrn,
-        status: 'awaiting_cancellation'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPrn({
+          ...mockCancelledPrn,
+          status: 'awaiting_cancellation'
+        })
+      )
 
-      const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
-        auth: mockAuth
-      })
+      const { cookie: csrfCookie } = await getCsrfToken(
+        asServer(server),
+        cancelledUrl,
+        csrfOpts({ auth: mockAuth })
+      )
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',

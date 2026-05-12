@@ -10,11 +10,31 @@ import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import { Server } from '@hapi/hapi'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
+ * @import { UpdatePrnStatusResponse } from './helpers/update-prn-status.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
 vi.mock(import('./helpers/fetch-packaging-recycling-note.js'))
 vi.mock(import('./helpers/update-prn-status.js'))
+
+const asRegWithAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asPrn = (/** @type {object} */ value) =>
+  /** @type {PackagingRecyclingNote} */ (/** @type {unknown} */ (value))
+const asUpdatePrn = (/** @type {object} */ value) =>
+  /** @type {UpdatePrnStatusResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) =>
+  /** @type {{ headers?: object }} */ (value)
 
 const { getRequiredRegistrationWithAccreditation } =
   await import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
@@ -41,30 +61,34 @@ const mockPrnIssued = {
 describe('#issueController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-      organisationData: {
-        id: organisationId,
-        companyDetails: { name: 'Test Org' }
-      },
-      registration: {
-        id: registrationId,
-        wasteProcessingType: 'reprocessor-input',
-        material: 'plastic',
-        nation: 'england',
-        site: { address: { line1: 'Test Site' } },
-        accreditationId
-      },
-      accreditation: { id: accreditationId, status: 'approved' }
-    })
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-      id: prnId,
-      prnNumber: 'ER2625001A',
-      status: 'awaiting_authorisation',
-      issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
-      tonnage: 100,
-      material: 'plastic'
-    })
-    vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnIssued)
+    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+      asRegWithAcc({
+        organisationData: {
+          id: organisationId,
+          companyDetails: { name: 'Test Org' }
+        },
+        registration: {
+          id: registrationId,
+          wasteProcessingType: 'reprocessor-input',
+          material: 'plastic',
+          nation: 'england',
+          site: { address: { line1: 'Test Site' } },
+          accreditationId
+        },
+        accreditation: { id: accreditationId, status: 'approved' }
+      })
+    )
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+      asPrn({
+        id: prnId,
+        prnNumber: 'ER2625001A',
+        status: 'awaiting_authorisation',
+        issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
+        tonnage: 100,
+        material: 'plastic'
+      })
+    )
+    vi.mocked(updatePrnStatus).mockResolvedValue(asUpdatePrn(mockPrnIssued))
   })
 
   describe('request handling', () => {
@@ -72,9 +96,9 @@ describe('#issueController', () => {
       server
     }) => {
       const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
+        asServer(server),
         viewUrl,
-        { auth: mockAuth }
+        csrfOpts({ auth: mockAuth })
       )
 
       const { statusCode, headers } = await server.inject({
@@ -104,9 +128,9 @@ describe('#issueController', () => {
       vi.mocked(updatePrnStatus).mockRejectedValueOnce(backendError)
 
       const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
+        asServer(server),
         viewUrl,
-        { auth: mockAuth }
+        csrfOpts({ auth: mockAuth })
       )
 
       const { statusCode, headers } = await server.inject({
@@ -134,9 +158,9 @@ describe('#issueController', () => {
       )
 
       const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
+        asServer(server),
         viewUrl,
-        { auth: mockAuth }
+        csrfOpts({ auth: mockAuth })
       )
 
       const { statusCode, headers } = await server.inject({
@@ -160,9 +184,9 @@ describe('#issueController', () => {
       )
 
       const { cookie: csrfCookie, crumb } = await getCsrfToken(
-        server,
+        asServer(server),
         viewUrl,
-        { auth: mockAuth }
+        csrfOpts({ auth: mockAuth })
       )
 
       const { statusCode, headers } = await server.inject({
@@ -183,24 +207,28 @@ describe('#issueController', () => {
       }) => {
         // Mock the race condition: updatePrnStatus returns prnNumber,
         // but subsequent fetch returns null (DB hasn't replicated yet)
-        vi.mocked(updatePrnStatus).mockResolvedValue({
-          ...mockPrnIssued,
-          prnNumber: 'ER2625001A'
-        })
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          id: prnId,
-          prnNumber: null,
-          issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
-          tonnage: 100,
-          material: 'plastic',
-          status: 'awaiting_acceptance'
-        })
+        vi.mocked(updatePrnStatus).mockResolvedValue(
+          asUpdatePrn({
+            ...mockPrnIssued,
+            prnNumber: 'ER2625001A'
+          })
+        )
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn({
+            id: prnId,
+            prnNumber: null,
+            issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
+            tonnage: 100,
+            material: 'plastic',
+            status: 'awaiting_acceptance'
+          })
+        )
 
         // Step 1: POST to issue endpoint (stores prnNumber in session)
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           viewUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({
@@ -239,25 +267,29 @@ describe('#issueController', () => {
         server
       }) => {
         // Issue prn-789 (stores session with id: 'prn-789')
-        vi.mocked(updatePrnStatus).mockResolvedValue({
-          ...mockPrnIssued,
-          prnNumber: 'ER2625001A'
-        })
+        vi.mocked(updatePrnStatus).mockResolvedValue(
+          asUpdatePrn({
+            ...mockPrnIssued,
+            prnNumber: 'ER2625001A'
+          })
+        )
         // Fetch for a different PRN returns null prnNumber
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          id: 'different-prn',
-          prnNumber: null,
-          issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
-          tonnage: 100,
-          material: 'plastic',
-          status: 'awaiting_acceptance'
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn({
+            id: 'different-prn',
+            prnNumber: null,
+            issuedToOrganisation: { id: 'producer-1', name: 'Test Producer' },
+            tonnage: 100,
+            material: 'plastic',
+            status: 'awaiting_acceptance'
+          })
+        )
 
         // POST to issue prn-789
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
-          server,
+          asServer(server),
           viewUrl,
-          { auth: mockAuth }
+          csrfOpts({ auth: mockAuth })
         )
 
         const postResponse = await server.inject({

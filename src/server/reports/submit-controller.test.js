@@ -9,6 +9,12 @@ import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import {Server} from '@hapi/hapi'
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {ReportDetailResponse} from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -17,7 +23,17 @@ vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
-const exporterRegistration = {
+const asRegAndAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asReport = (/** @type {object} */ value) =>
+  /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
+
+const exporterRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -26,9 +42,9 @@ const exporterRegistration = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
-const reprocessorRegistration = {
+const reprocessorRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -44,10 +60,9 @@ const reprocessorRegistration = {
     }
   },
   accreditation: undefined
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const exporterReportDetail = {
+const exporterReportDetail = asReport({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -127,15 +142,14 @@ const exporterReportDetail = {
       }
     ]
   }
-}
+})
 
-const accreditedReprocessorRegistration = {
+const accreditedReprocessorRegistration = asRegAndAcc({
   ...reprocessorRegistration,
   accreditation: { id: 'acc-001' }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const reprocessorReportDetail = {
+const reprocessorReportDetail = asReport({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -193,10 +207,9 @@ const reprocessorReportDetail = {
       }
     ]
   }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const accreditedReprocessorReportDetail = {
+const accreditedReprocessorReportDetail = asReport({
   ...reprocessorReportDetail,
   operatorCategory: 'REPROCESSOR_ACCREDITED',
   prn: {
@@ -205,15 +218,14 @@ const accreditedReprocessorReportDetail = {
     issuedTonnage: 50,
     totalRevenue: 7500
   }
-}
+})
 
-const accreditedExporterRegistration = {
+const accreditedExporterRegistration = asRegAndAcc({
   ...exporterRegistration,
   accreditation: { id: 'acc-002' }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const accreditedExporterReportDetail = {
+const accreditedExporterReportDetail = asReport({
   ...exporterReportDetail,
   operatorCategory: 'EXPORTER_ACCREDITED',
   exportActivity: {
@@ -233,7 +245,7 @@ const accreditedExporterReportDetail = {
     issuedTonnage: 100,
     totalRevenue: 20000
   }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -581,16 +593,18 @@ describe('#submitController', () => {
         it('should display dash when refused, stopped and repatriated values are null', async ({
           server
         }) => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...exporterReportDetail,
-            exportActivity: {
-              ...exporterReportDetail.exportActivity,
-              totalTonnageRefusedOrStopped: null,
-              tonnageRefusedAtDestination: null,
-              tonnageStoppedDuringExport: null,
-              tonnageRepatriated: null
-            }
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReport({
+              ...exporterReportDetail,
+              exportActivity: {
+                ...exporterReportDetail.exportActivity,
+                totalTonnageRefusedOrStopped: null,
+                tonnageRefusedAtDestination: null,
+                tonnageStoppedDuringExport: null,
+                tonnageRepatriated: null
+              }
+            })
+          )
 
           const body = await getBody(server)
 
@@ -666,20 +680,22 @@ describe('#submitController', () => {
         it('should display destination tonnageSentOn >= 1000 as formatted number, not NaN', async ({
           server
         }) => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...exporterReportDetail,
-            wasteSent: {
-              ...exporterReportDetail.wasteSent,
-              finalDestinations: [
-                {
-                  recipientName: 'HighLow Limited',
-                  facilityType: 'Exporter',
-                  address: '11 high street, G59NS',
-                  tonnageSentOn: 1000
-                }
-              ]
-            }
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReport({
+              ...exporterReportDetail,
+              wasteSent: {
+                ...exporterReportDetail.wasteSent,
+                finalDestinations: [
+                  {
+                    recipientName: 'HighLow Limited',
+                    facilityType: 'Exporter',
+                    address: '11 high street, G59NS',
+                    tonnageSentOn: 1000
+                  }
+                ]
+              }
+            })
+          )
 
           const body = await getBody(server)
 
@@ -783,10 +799,12 @@ describe('#submitController', () => {
           vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
             exporterRegistration
           )
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...exporterReportDetail,
-            exportActivity: null
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReport({
+              ...exporterReportDetail,
+              exportActivity: null
+            })
+          )
         })
 
         it('should still display waste exported heading', async ({
@@ -1265,9 +1283,11 @@ describe('#submitController', () => {
         it('should call updateReportStatus with submitted status', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           await server.inject({
             method: 'POST',
@@ -1291,9 +1311,11 @@ describe('#submitController', () => {
         it('should redirect to submitted confirmation page', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { statusCode, headers } = await server.inject({
             method: 'POST',

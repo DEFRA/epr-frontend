@@ -15,12 +15,24 @@ import {
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {ReportDetailResponse} from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
-const reprocessorRegistration = {
+const asRegAndAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asReport = (/** @type {object} */ value) =>
+  /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
+
+const reprocessorRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -36,10 +48,9 @@ const reprocessorRegistration = {
     }
   },
   accreditation: undefined
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const reprocessorReportDetail = {
+const reprocessorReportDetail = asReport({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -86,10 +97,9 @@ const reprocessorReportDetail = {
       }
     ]
   }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const emptyReportDetail = {
+const emptyReportDetail = asReport({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -119,9 +129,9 @@ const emptyReportDetail = {
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-}
+})
 
-const accreditedReprocessorRegistration = {
+const accreditedReprocessorRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -142,10 +152,9 @@ const accreditedReprocessorRegistration = {
     accreditationNumber: 'ER992415095748M',
     status: 'approved'
   }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const accreditedReprocessorReportDetail = {
+const accreditedReprocessorReportDetail = asReport({
   operatorCategory: 'REPROCESSOR',
   cadence: 'monthly',
   year: 2026,
@@ -192,9 +201,9 @@ const accreditedReprocessorReportDetail = {
       }
     ]
   }
-}
+})
 
-const exporterRegistration = {
+const exporterRegistration = asRegAndAcc({
   organisationData: { id: 'org-456' },
   registration: {
     id: 'reg-002',
@@ -203,10 +212,9 @@ const exporterRegistration = {
     registrationNumber: 'REG002345'
   },
   accreditation: undefined
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const exporterReportDetail = {
+const exporterReportDetail = asReport({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -271,10 +279,9 @@ const exporterReportDetail = {
       }
     ]
   }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const exporterWithUnapprovedReportDetail = {
+const exporterWithUnapprovedReportDetail = asReport({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -316,10 +323,9 @@ const exporterWithUnapprovedReportDetail = {
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const emptyExporterReportDetail = {
+const emptyExporterReportDetail = asReport({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -352,7 +358,7 @@ const emptyExporterReportDetail = {
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-}
+})
 
 const detailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1'
@@ -361,7 +367,7 @@ const exporterDetailUrl =
 const accreditedDetailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/monthly/2'
 
-const accreditedExporterRegistration = {
+const accreditedExporterRegistration = asRegAndAcc({
   organisationData: { id: 'org-789' },
   registration: {
     id: 'reg-003',
@@ -375,10 +381,9 @@ const accreditedExporterRegistration = {
     accreditationNumber: 'EE992415095748M',
     status: 'approved'
   }
-}
+})
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const accreditedExporterReportDetail = {
+const accreditedExporterReportDetail = asReport({
   operatorCategory: 'EXPORTER',
   cadence: 'monthly',
   year: 2026,
@@ -432,7 +437,7 @@ const accreditedExporterReportDetail = {
       }
     ]
   }
-}
+})
 
 const accreditedExporterDetailUrl =
   '/organisations/org-789/registrations/reg-003/reports/2026/monthly/2'

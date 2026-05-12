@@ -297,7 +297,7 @@ describe('#authCallbackController', () => {
 
         const result = await controller.handler(
           asMockRequest(mockRequest),
-          mockH
+          asMockH(mockH)
         )
 
         const expectedRedirect = isWelsh

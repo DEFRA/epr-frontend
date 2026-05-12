@@ -9,6 +9,12 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import {Server} from '@hapi/hapi'
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {ReportDetailResponse} from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -16,6 +22,16 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./update-report.js'))
 
 const { updateReport } = await import('./update-report.js')
+
+const asRegAndAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asReport = (/** @type {object} */ value) =>
+  /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
 
 const subtrees = [
   {
@@ -42,7 +58,7 @@ const organisationId = 'org-123'
 const registrationId = 'reg-001'
 
 describe.each(subtrees)('$name prn summary page', (subtree) => {
-  const accreditedOperator = {
+  const accreditedOperator = asRegAndAcc({
     organisationData: { id: organisationId },
     registration: {
       id: registrationId,
@@ -54,14 +70,14 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       id: 'acc-001',
       accreditationNumber: 'ER992415095748M'
     }
-  }
+  })
 
-  const registeredOnlyOperator = {
+  const registeredOnlyOperator = asRegAndAcc({
     ...accreditedOperator,
     accreditation: undefined
-  }
+  })
 
-  const reportDetail = {
+  const reportDetail = asReport({
     operatorCategory: subtree.operatorCategory,
     cadence: 'monthly',
     year: 2026,
@@ -89,12 +105,12 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       freeTonnage: null,
       averagePricePerTonne: null
     }
-  }
+  })
 
-  const reportDetailWithRevenue = {
+  const reportDetailWithRevenue = asReport({
     ...reportDetail,
     prn: { ...reportDetail.prn, totalRevenue: 1576.12 }
-  }
+  })
 
   const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/prn-summary`
 
@@ -189,10 +205,12 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       ])(
         'should pre-fill revenue $revenue as $expected',
         async ({ revenue, expected }, { server }) => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            prn: { ...reportDetail.prn, totalRevenue: revenue }
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReport({
+              ...reportDetail,
+              prn: { ...reportDetail.prn, totalRevenue: revenue }
+            })
+          )
 
           const { result } = await server.inject({
             method: 'GET',
@@ -240,10 +258,12 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       })
 
       it('should return 500 when prn data is missing', async ({ server }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          prn: undefined
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReport({
+            ...reportDetail,
+            prn: undefined
+          })
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -257,10 +277,12 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       it('should return 404 when report is not in progress', async ({
         server
       }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          status: { currentStatus: 'ready_to_submit' }
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReport({
+            ...reportDetail,
+            status: { currentStatus: 'ready_to_submit' }
+          })
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',

@@ -3,7 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
 import { getRequiredRegistrationWithAccreditation } from './get-required-registration-with-accreditation.js'
 
+/**
+ * @import { RegistrationWithAccreditation } from './fetch-registration-and-accreditation.js'
+ */
+
 vi.mock(import('./fetch-registration-and-accreditation.js'))
+
+const asRegWithAcc = (/** @type {object} */ value) =>
+  /** @type {RegistrationWithAccreditation} */ (
+    /** @type {unknown} */ (value)
+  )
 
 describe('#getRequiredRegistrationWithAccreditation', () => {
   beforeEach(() => {
@@ -17,11 +26,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     }
     const accreditation = { id: 'acc-001', status: 'approved' }
 
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: { id: 'org-123' },
-      registration,
-      accreditation
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegWithAcc({
+        organisationData: { id: 'org-123' },
+        registration,
+        accreditation
+      })
+    )
 
     const result = await getRequiredRegistrationWithAccreditation({
       organisationId: 'org-123',

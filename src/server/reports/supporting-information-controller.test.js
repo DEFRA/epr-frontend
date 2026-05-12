@@ -9,6 +9,12 @@ import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import {Server} from '@hapi/hapi'
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {ReportDetailResponse} from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -17,7 +23,17 @@ vi.mock(import('./helpers/update-report.js'))
 
 const { updateReport } = await import('./helpers/update-report.js')
 
-const registeredOnlyExporter = {
+const asRegAndAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asReport = (/** @type {object} */ value) =>
+  /** @type {ReportDetailResponse} */ (/** @type {unknown} */ (value))
+const asServer = (/** @type {object} */ value) =>
+  /** @type {Server} */ (/** @type {unknown} */ (value))
+const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
+
+const registeredOnlyExporter = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -26,17 +42,17 @@ const registeredOnlyExporter = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
-const accreditedExporter = {
+const accreditedExporter = asRegAndAcc({
   ...registeredOnlyExporter,
   accreditation: {
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M'
   }
-}
+})
 
-const reportDetailWithoutSupportingInfo = {
+const reportDetailWithoutSupportingInfo = asReport({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -69,12 +85,12 @@ const reportDetailWithoutSupportingInfo = {
     tonnageSentToAnotherSite: 2,
     finalDestinations: []
   }
-}
+})
 
-const reportDetailWithSupportingInfo = {
+const reportDetailWithSupportingInfo = asReport({
   ...reportDetailWithoutSupportingInfo,
   supportingInformation: 'Supply chain disruption in February'
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -282,13 +298,15 @@ describe('#supportingInformationController', () => {
         it('should display back link to free-prns for accredited reprocessor', async ({
           server
         }) => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-            ...accreditedExporter,
-            registration: {
-              ...accreditedExporter.registration,
-              wasteProcessingType: 'reprocessor'
-            }
-          })
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            asRegAndAcc({
+              ...accreditedExporter,
+              registration: {
+                ...accreditedExporter.registration,
+                wasteProcessingType: 'reprocessor'
+              }
+            })
+          )
 
           const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/supporting-information`
 
@@ -311,13 +329,15 @@ describe('#supportingInformationController', () => {
         it('should display back link to tonnes-not-recycled for registered-only reprocessor', async ({
           server
         }) => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-            ...registeredOnlyExporter,
-            registration: {
-              ...registeredOnlyExporter.registration,
-              wasteProcessingType: 'reprocessor'
-            }
-          })
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            asRegAndAcc({
+              ...registeredOnlyExporter,
+              registration: {
+                ...registeredOnlyExporter.registration,
+                wasteProcessingType: 'reprocessor'
+              }
+            })
+          )
 
           const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
 
@@ -423,9 +443,11 @@ describe('#supportingInformationController', () => {
         it('should save supporting information and redirect to check page', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { statusCode, headers } = await server.inject({
             method: 'POST',
@@ -448,9 +470,11 @@ describe('#supportingInformationController', () => {
         it('should call updateReport with correct parameters', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           await server.inject({
             method: 'POST',
@@ -478,9 +502,11 @@ describe('#supportingInformationController', () => {
         it('should save empty string when textarea is blank', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           await server.inject({
             method: 'POST',
@@ -510,9 +536,11 @@ describe('#supportingInformationController', () => {
         it('should save supporting information and redirect to list page', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { statusCode, headers } = await server.inject({
             method: 'POST',
@@ -535,9 +563,11 @@ describe('#supportingInformationController', () => {
         it('should call updateReport with correct parameters', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           await server.inject({
             method: 'POST',
@@ -567,9 +597,11 @@ describe('#supportingInformationController', () => {
         it('should re-render with error when text exceeds 2000 characters', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const longText = 'a'.repeat(2001)
 
@@ -597,9 +629,11 @@ describe('#supportingInformationController', () => {
         it('should preserve entered text when validation fails', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const longText = 'a'.repeat(2001)
 
@@ -625,9 +659,11 @@ describe('#supportingInformationController', () => {
         it('should display inline error on textarea field', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { result } = await server.inject({
             method: 'POST',
@@ -651,9 +687,11 @@ describe('#supportingInformationController', () => {
         it('should not call backend when validation fails', async ({
           server
         }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           await server.inject({
             method: 'POST',
@@ -671,9 +709,11 @@ describe('#supportingInformationController', () => {
         })
 
         it('should accept exactly 2000 characters', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+          const { cookie, crumb } = await getCsrfToken(
+            asServer(server),
+            baseUrl,
+            csrfOpts({ auth: mockAuth })
+          )
 
           const { statusCode } = await server.inject({
             method: 'POST',
