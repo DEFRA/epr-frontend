@@ -459,8 +459,10 @@ describe('#organisationController', () => {
 
   describe('unhappy Paths', () => {
     it('should handle backend fetch failure gracefully', async ({ server }) => {
-      const backendError = Boom.internal('Backend service unavailable')
-      backendError.output.statusCode = 503
+      const backendError = Object.assign(
+        new Error('Backend service unavailable'),
+        { statusCode: 503 }
+      )
 
       fetchOrganisationById.mockRejectedValue(backendError)
 
