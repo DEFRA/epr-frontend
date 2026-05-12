@@ -30,7 +30,8 @@ const asPrn = (/** @type {object} */ value) =>
   /** @type {PackagingRecyclingNote} */ (/** @type {unknown} */ (value))
 const asServer = (/** @type {object} */ value) =>
   /** @type {Server} */ (/** @type {unknown} */ (value))
-const csrfOpts = (/** @type {object} */ value) => /** @type {any} */ (value)
+const csrfOpts = (/** @type {object} */ value) =>
+  /** @type {{ headers?: object }} */ (value)
 
 const fixtureReprocessor = {
   organisationData: {
@@ -96,7 +97,9 @@ describe('#issuedController', () => {
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       asRequired(fixtureReprocessor)
     )
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn(mockIssuedPrn))
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+      asPrn(mockIssuedPrn)
+    )
   })
 
   describe('request handling', () => {
@@ -130,13 +133,15 @@ describe('#issuedController', () => {
       it('displays special characters in organisation name without HTML entity encoding', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
-          ...mockIssuedPrn,
-          issuedToOrganisation: {
-            id: 'producer-1',
-            name: "Mackie's Limited"
-          }
-        }))
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn({
+            ...mockIssuedPrn,
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: "Mackie's Limited"
+            }
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(
           asServer(server),
@@ -162,14 +167,16 @@ describe('#issuedController', () => {
       it('displays tradingName in heading when organisation has no registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
-          ...mockIssuedPrn,
-          issuedToOrganisation: {
-            id: 'producer-1',
-            name: 'Legal Name Ltd',
-            tradingName: 'Trading Name Ltd'
-          }
-        }))
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn({
+            ...mockIssuedPrn,
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: 'Legal Name Ltd',
+              tradingName: 'Trading Name Ltd'
+            }
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(
           asServer(server),
@@ -195,15 +202,17 @@ describe('#issuedController', () => {
       it('displays legal name for large producers with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
-          ...mockIssuedPrn,
-          issuedToOrganisation: {
-            id: 'producer-1',
-            name: 'Legal Name Ltd',
-            tradingName: 'Trading Name Ltd',
-            registrationType: 'LARGE_PRODUCER'
-          }
-        }))
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn({
+            ...mockIssuedPrn,
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: 'Legal Name Ltd',
+              tradingName: 'Trading Name Ltd',
+              registrationType: 'LARGE_PRODUCER'
+            }
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(
           asServer(server),
@@ -229,15 +238,17 @@ describe('#issuedController', () => {
       it('displays tradingName for compliance schemes with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
-          ...mockIssuedPrn,
-          issuedToOrganisation: {
-            id: 'scheme-1',
-            name: 'Scheme Legal Ltd',
-            tradingName: 'Scheme Trading Name',
-            registrationType: 'COMPLIANCE_SCHEME'
-          }
-        }))
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn({
+            ...mockIssuedPrn,
+            issuedToOrganisation: {
+              id: 'scheme-1',
+              name: 'Scheme Legal Ltd',
+              tradingName: 'Scheme Trading Name',
+              registrationType: 'COMPLIANCE_SCHEME'
+            }
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(
           asServer(server),
@@ -416,10 +427,12 @@ describe('#issuedController', () => {
       it('redirects to view page if PRN not in awaiting_acceptance status', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn({
-          ...mockIssuedPrn,
-          status: 'awaiting_authorisation'
-        }))
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn({
+            ...mockIssuedPrn,
+            status: 'awaiting_authorisation'
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(
           asServer(server),
@@ -449,7 +462,9 @@ describe('#issuedController', () => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           asRequired(fixtureExporter)
         )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn(mockIssuedPern))
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn(mockIssuedPern)
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(
           asServer(server),
@@ -478,7 +493,9 @@ describe('#issuedController', () => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
           asRequired(fixtureExporter)
         )
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(asPrn(mockIssuedPern))
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPrn(mockIssuedPern)
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(
           asServer(server),

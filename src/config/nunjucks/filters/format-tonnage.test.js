@@ -61,7 +61,9 @@ describe('#formatWholeNumberTonnage', () => {
 
   test('throws for null', () => {
     expect(() =>
-      formatWholeNumberTonnage(/** @type {number} */ (/** @type {unknown} */ (null)))
+      formatWholeNumberTonnage(
+        /** @type {number} */ (/** @type {unknown} */ (null))
+      )
     ).toThrow(TypeError)
   })
 

@@ -9,12 +9,24 @@ import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import {RegistrationWithAccreditation} from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import {ReportingPeriodsResponse} from '#server/reports/helpers/fetch-reporting-periods.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-reporting-periods.js'))
 
-const accreditedRegistration = {
+const asRegAndAcc = (/** @type {object} */ value) =>
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ (value)
+  )
+const asReportingPeriods = (/** @type {object} */ value) =>
+  /** @type {ReportingPeriodsResponse} */ (/** @type {unknown} */ (value))
+
+const accreditedRegistration = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -35,9 +47,9 @@ const accreditedRegistration = {
     id: 'acc-001',
     status: 'approved'
   }
-}
+})
 
-const accreditedExporter = {
+const accreditedExporter = asRegAndAcc({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -49,9 +61,9 @@ const accreditedExporter = {
     id: 'acc-002',
     status: 'approved'
   }
-}
+})
 
-const registeredOnlyExporter = {
+const registeredOnlyExporter = asRegAndAcc({
   organisationData: { id: 'org-456' },
   registration: {
     id: 'reg-002',
@@ -60,9 +72,9 @@ const registeredOnlyExporter = {
     registrationNumber: 'REG002345'
   },
   accreditation: undefined
-}
+})
 
-const registeredOnlyReprocessor = {
+const registeredOnlyReprocessor = asRegAndAcc({
   organisationData: { id: 'org-789' },
   registration: {
     id: 'reg-003',
@@ -78,9 +90,9 @@ const registeredOnlyReprocessor = {
     }
   },
   accreditation: undefined
-}
+})
 
-const monthlyResponse = {
+const monthlyResponse = asReportingPeriods({
   cadence: 'monthly',
   reportingPeriods: [
     {
@@ -108,9 +120,9 @@ const monthlyResponse = {
       report: null
     }
   ]
-}
+})
 
-const quarterlyResponse = {
+const quarterlyResponse = asReportingPeriods({
   cadence: 'quarterly',
   reportingPeriods: [
     {
@@ -122,9 +134,9 @@ const quarterlyResponse = {
       report: null
     }
   ]
-}
+})
 
-const monthlyWithReportResponse = {
+const monthlyWithReportResponse = asReportingPeriods({
   cadence: 'monthly',
   reportingPeriods: [
     {
@@ -136,9 +148,9 @@ const monthlyWithReportResponse = {
       report: { id: 'report-001', status: 'in_progress' }
     }
   ]
-}
+})
 
-const monthlyWithReadyToSubmitResponse = {
+const monthlyWithReadyToSubmitResponse = asReportingPeriods({
   cadence: 'monthly',
   reportingPeriods: [
     {
@@ -150,9 +162,9 @@ const monthlyWithReadyToSubmitResponse = {
       report: { id: 'report-002', status: 'ready_to_submit' }
     }
   ]
-}
+})
 
-const monthlyWithSubmittedResponse = {
+const monthlyWithSubmittedResponse = asReportingPeriods({
   cadence: 'monthly',
   reportingPeriods: [
     {
@@ -164,12 +176,12 @@ const monthlyWithSubmittedResponse = {
       report: { id: 'report-002', status: 'submitted' }
     }
   ]
-}
+})
 
-const emptyResponse = {
+const emptyResponse = asReportingPeriods({
   cadence: 'monthly',
   reportingPeriods: []
-}
+})
 
 const accreditedUrl = '/organisations/org-123/registrations/reg-001/reports'
 const exporterUrl = '/organisations/org-456/registrations/reg-002/reports'
@@ -643,19 +655,21 @@ describe('#listReportsController', () => {
       it('should link Continue to tonnes-not-exported for in-progress report', async ({
         server
       }) => {
-        vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: 'quarterly',
-          reportingPeriods: [
-            {
-              year: 2026,
-              period: 1,
-              startDate: '2026-01-01',
-              endDate: '2026-03-31',
-              dueDate: '2026-04-20',
-              report: { id: 'report-003', status: 'in_progress' }
-            }
-          ]
-        })
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(
+          asReportingPeriods({
+            cadence: 'quarterly',
+            reportingPeriods: [
+              {
+                year: 2026,
+                period: 1,
+                startDate: '2026-01-01',
+                endDate: '2026-03-31',
+                dueDate: '2026-04-20',
+                report: { id: 'report-003', status: 'in_progress' }
+              }
+            ]
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -676,26 +690,30 @@ describe('#listReportsController', () => {
       it('should default Continue link to supporting-information for unknown processing type', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...registeredOnlyExporter,
-          registration: {
-            ...registeredOnlyExporter.registration,
-            wasteProcessingType: 'unknown'
-          }
-        })
-        vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: 'quarterly',
-          reportingPeriods: [
-            {
-              year: 2026,
-              period: 1,
-              startDate: '2026-01-01',
-              endDate: '2026-03-31',
-              dueDate: '2026-04-20',
-              report: { id: 'report-004', status: 'in_progress' }
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          asRegAndAcc({
+            ...registeredOnlyExporter,
+            registration: {
+              ...registeredOnlyExporter.registration,
+              wasteProcessingType: 'unknown'
             }
-          ]
-        })
+          })
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(
+          asReportingPeriods({
+            cadence: 'quarterly',
+            reportingPeriods: [
+              {
+                year: 2026,
+                period: 1,
+                startDate: '2026-01-01',
+                endDate: '2026-03-31',
+                dueDate: '2026-04-20',
+                report: { id: 'report-004', status: 'in_progress' }
+              }
+            ]
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',

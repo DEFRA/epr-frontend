@@ -1,8 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import {
-  mockAuth,
-  mockCredentials
-} from '#server/common/test-helpers/auth.js'
+import { mockAuth, mockCredentials } from '#server/common/test-helpers/auth.js'
 import {
   extractCookieValues,
   mergeCookies

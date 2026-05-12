@@ -1,9 +1,6 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import {
-  mockAuth,
-  mockCredentials
-} from '#server/common/test-helpers/auth.js'
+import { mockAuth, mockCredentials } from '#server/common/test-helpers/auth.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'

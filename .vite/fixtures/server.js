@@ -129,45 +129,46 @@ const attachLoggerMocks = (server) => {
   return mocked
 }
 
-const it = /** @type {TestAPI<ServerFixtures>} */ (test.extend({
-  msw: [
-    // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
-      const server = setupServer(
-        awsEc2MetadataHandler,
-        ...createOidcHandlers('http://defra-id.auth')
-      )
-      server.listen({ onUnhandledRequest: 'error' })
+const it = /** @type {TestAPI<ServerFixtures>} */ (
+  test.extend({
+    msw: [
+      // eslint-disable-next-line no-empty-pattern
+      async ({}, use) => {
+        const server = setupServer(
+          awsEc2MetadataHandler,
+          ...createOidcHandlers('http://defra-id.auth')
+        )
+        server.listen({ onUnhandledRequest: 'error' })
 
-      await use(server)
+        await use(server)
 
-      server.resetHandlers()
-      server.close()
-    },
-    { auto: true }
-  ],
-  server: [
-    // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
-      const { createServer } = await import('#server/index.js')
-      const server = attachLoggerMocks(
-        await createServer({
-          wasteOrganisations:
-            /** @type {WasteOrganisation[]} */ (
+        server.resetHandlers()
+        server.close()
+      },
+      { auto: true }
+    ],
+    server: [
+      // eslint-disable-next-line no-empty-pattern
+      async ({}, use) => {
+        const { createServer } = await import('#server/index.js')
+        const server = attachLoggerMocks(
+          await createServer({
+            wasteOrganisations: /** @type {WasteOrganisation[]} */ (
               /** @type {unknown} */ (organisations)
             )
-        })
-      )
+          })
+        )
 
-      await server.initialize()
+        await server.initialize()
 
-      await use(server)
+        await use(server)
 
-      await server.stop()
-    },
-    { scope: 'test' }
-  ]
-}))
+        await server.stop()
+      },
+      { scope: 'test' }
+    ]
+  })
+)
 
 const beforeEach = it.beforeEach
 

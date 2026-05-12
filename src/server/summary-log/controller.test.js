@@ -44,9 +44,7 @@ vi.mock(import('#server/common/helpers/upload/fetch-summary-log-status.js'))
 vi.mock(import('#server/common/helpers/upload/initiate-summary-log-upload.js'))
 vi.mock(import('#server/common/helpers/summary-log/submit-summary-log.js'))
 vi.mock(
-  import(
-    '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-  )
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 

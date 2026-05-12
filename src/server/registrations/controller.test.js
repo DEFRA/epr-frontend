@@ -1,6 +1,7 @@
+import '@testing-library/jest-dom/vitest'
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import * as fetchRegistrationAndAccreditationMod from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { mockAuth } from '#server/common/test-helpers/auth.js'
 import { it } from '#vite/fixtures/server.js'
@@ -23,6 +24,26 @@ vi.mock(
 )
 
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
+
+/**
+ * @typedef {import('vitest').MockedFunction<(...args: unknown[]) => Promise<unknown>>} LooseMockedAsync
+ */
+
+const fetchRegistrationAndAccreditation = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (
+    vi.mocked(fetchRegistrationAndAccreditationMod)
+      .fetchRegistrationAndAccreditation
+  )
+)
+const fetchWasteBalances = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (
+    vi.mocked(fetchWasteBalancesModule).fetchWasteBalances
+  )
+)
+
+const asString = (value) => /** @type {string} */ (value)
+
+const loadHtml = (result) => load(asString(result))
 
 function findRegistrationAndAccreditation(fixture, registrationId) {
   const registration = fixture.registrations.find(
@@ -54,16 +75,14 @@ const exporterPlasticApproved = findRegistrationAndAccreditation(
 describe('#accreditationDashboardController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockResolvedValue({})
+    fetchWasteBalances.mockResolvedValue({})
   })
 
   describe('happy path - reprocessor', () => {
     it('should use the Site and Material in the page title', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -71,7 +90,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('title').text()).toMatch(
         /^Manchester Glass Recycling Facility: Glass/
@@ -81,9 +100,7 @@ describe('#accreditationDashboardController', () => {
     it('should display accreditation dashboard for reprocessor', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -91,7 +108,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect($('h1').text()).toContain('Glass')
@@ -103,9 +120,7 @@ describe('#accreditationDashboardController', () => {
     it('should display registration and accreditation status tags', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -113,16 +128,14 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('.govuk-tag--green').length).toBeGreaterThan(0)
       expect(result).toContain('Approved')
     })
 
     it('should display PRNs tile for reprocessor', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -138,9 +151,7 @@ describe('#accreditationDashboardController', () => {
     it('should display registration and accreditation numbers', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -155,9 +166,7 @@ describe('#accreditationDashboardController', () => {
     it('should display upload summary log link with registration ID', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -165,7 +174,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       const uploadLink = $('a[href*="summary-logs/upload"]')
 
@@ -176,9 +185,7 @@ describe('#accreditationDashboardController', () => {
     })
 
     it('should display contact regulator link', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -186,7 +193,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       const contactLink = $('main a[href*="contact"]')
 
@@ -194,9 +201,7 @@ describe('#accreditationDashboardController', () => {
     })
 
     it('should display back link to reprocessing tab', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -204,7 +209,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       const backLink = $('.govuk-back-link')
 
@@ -214,9 +219,7 @@ describe('#accreditationDashboardController', () => {
     })
 
     it('should display all four task tiles', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -233,7 +236,7 @@ describe('#accreditationDashboardController', () => {
 
   describe('happy path - exporter', () => {
     it('should display PERNs tile for exporter', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      fetchRegistrationAndAccreditation.mockResolvedValue(
         exporterPlasticApproved
       )
 
@@ -251,7 +254,7 @@ describe('#accreditationDashboardController', () => {
     it('should display back link to exporting tab for exporter', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      fetchRegistrationAndAccreditation.mockResolvedValue(
         exporterPlasticApproved
       )
 
@@ -261,7 +264,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       const backLink = $('.govuk-back-link')
 
@@ -275,9 +278,7 @@ describe('#accreditationDashboardController', () => {
     it('should return 403 when unauthorised access to an organisation is attempted', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
-        Boom.forbidden()
-      )
+      fetchRegistrationAndAccreditation.mockRejectedValue(Boom.forbidden())
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -289,7 +290,7 @@ describe('#accreditationDashboardController', () => {
     })
 
     it('should return 404 when registration not found', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
+      fetchRegistrationAndAccreditation.mockRejectedValue(
         Boom.notFound('Registration not found')
       )
 
@@ -319,9 +320,7 @@ describe('#accreditationDashboardController', () => {
     it('should display "Glass remelt" in page title for glass_re_melt registration', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -329,7 +328,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('title').text()).toMatch(/Glass remelt/)
     })
@@ -337,9 +336,7 @@ describe('#accreditationDashboardController', () => {
     it('should display "Glass remelt" in heading for glass_re_melt registration', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -347,7 +344,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('h1').text()).toContain('Glass remelt')
     })
@@ -355,9 +352,7 @@ describe('#accreditationDashboardController', () => {
     it('should display "Glass other" in page title for glass_other registration', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassOtherApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassOtherApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -365,7 +360,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('title').text()).toMatch(/Glass other/)
     })
@@ -373,9 +368,7 @@ describe('#accreditationDashboardController', () => {
     it('should display "Glass other" in heading for glass_other registration', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassOtherApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassOtherApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -383,7 +376,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('h1').text()).toContain('Glass other')
     })
@@ -393,7 +386,7 @@ describe('#accreditationDashboardController', () => {
     it('should display Unknown site when site address is missing', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+      fetchRegistrationAndAccreditation.mockResolvedValue({
         registration: {
           id: 'reg-no-site',
           wasteProcessingType: 'reprocessor',
@@ -414,9 +407,7 @@ describe('#accreditationDashboardController', () => {
     })
 
     it('should capitalise material name', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -424,7 +415,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('h1').text().trim()).toMatch(/^[A-Z]/)
     })
@@ -432,9 +423,7 @@ describe('#accreditationDashboardController', () => {
     it('should handle suspended status with correct styling', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        plasticSuspended
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(plasticSuspended)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -442,7 +431,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('.govuk-tag--yellow').length).toBeGreaterThan(0)
       expect(result).toContain('Suspended')
@@ -453,9 +442,7 @@ describe('#accreditationDashboardController', () => {
     it('should display zero balance when no waste balance data is available', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -463,7 +450,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('[data-testid="waste-balance-amount"]').text()).toContain('0.00')
       expect($('[data-testid="waste-balance-amount"]').text()).toContain(
@@ -474,9 +461,7 @@ describe('#accreditationDashboardController', () => {
     it('should apply epr-waste-balance-banner class to waste balance banner', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -484,7 +469,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       const banner = $('.govuk-summary-card.epr-waste-balance-banner')
 
@@ -492,9 +477,7 @@ describe('#accreditationDashboardController', () => {
     })
 
     it('should use govuk-summary-card for task cards', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -502,7 +485,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // 4 task cards + 1 waste balance banner = 5 summary cards total
       const summaryCards = $('.govuk-summary-card')
@@ -514,9 +497,7 @@ describe('#accreditationDashboardController', () => {
       it('should display formatted waste balance for reprocessor with PRNs text', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
+        fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({
@@ -529,7 +510,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '1,030.45'
@@ -551,7 +532,7 @@ describe('#accreditationDashboardController', () => {
       it('should display PERNs text for exporter with waste balance', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        fetchRegistrationAndAccreditation.mockResolvedValue(
           exporterPlasticApproved
         )
         vi.mocked(
@@ -569,7 +550,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         expect($('[data-testid="waste-balance-explanation"]').text()).toContain(
           'PERNs'
@@ -582,9 +563,7 @@ describe('#accreditationDashboardController', () => {
       it('should display zero balance when waste balance fetch fails', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
+        fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockRejectedValue(new Error('Service unavailable'))
@@ -597,7 +576,7 @@ describe('#accreditationDashboardController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'
@@ -610,9 +589,7 @@ describe('#accreditationDashboardController', () => {
       it('should call fetchWasteBalances with correct parameters', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
+        fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({})
@@ -635,7 +612,7 @@ describe('#accreditationDashboardController', () => {
       it('should not call fetchWasteBalances when registration has no accreditationId', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+        fetchRegistrationAndAccreditation.mockResolvedValue({
           registration: {
             id: 'reg-no-accreditation',
             wasteProcessingType: 'reprocessor',
@@ -661,7 +638,7 @@ describe('#accreditationDashboardController', () => {
           fetchWasteBalancesModule.fetchWasteBalances
         ).not.toHaveBeenCalled()
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'
@@ -669,9 +646,7 @@ describe('#accreditationDashboardController', () => {
       })
 
       it('should display zero balance correctly', async ({ server }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
+        fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({
@@ -684,7 +659,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'
@@ -697,9 +672,7 @@ describe('#accreditationDashboardController', () => {
       it('should format large balance with thousands separator', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
+        fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({
@@ -712,7 +685,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '12,345.67'
@@ -722,9 +695,7 @@ describe('#accreditationDashboardController', () => {
       it('should display zero balance when API returns empty object', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          glassApproved
-        )
+        fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
         ).mockResolvedValue({})
@@ -735,7 +706,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'
@@ -754,7 +725,7 @@ describe('#accreditationDashboardController', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      fetchRegistrationAndAccreditation.mockResolvedValue(
         registeredOnlyRegistration
       )
     })
@@ -804,9 +775,7 @@ describe('#accreditationDashboardController', () => {
 
   describe('reports tile', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
     })
 
     describe('when feature flag is enabled', () => {
@@ -920,9 +889,7 @@ describe('#accreditationDashboardController', () => {
 
   describe('packaging-recycling-notes', () => {
     beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        glassApproved
-      )
+      fetchRegistrationAndAccreditation.mockResolvedValue(glassApproved)
     })
 
     describe('request handling', () => {
@@ -968,9 +935,7 @@ describe('#accreditationDashboardController', () => {
           },
           { server }
         ) => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            mockData
-          )
+          fetchRegistrationAndAccreditation.mockResolvedValue(mockData)
 
           const { result } = await server.inject({
             method: 'GET',

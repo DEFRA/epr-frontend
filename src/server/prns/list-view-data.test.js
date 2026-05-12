@@ -1,6 +1,23 @@
 import { describe, expect, it, vi } from 'vitest'
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { buildListViewData } from './list-view-data.js'
+import { buildListViewData as buildListViewDataImpl } from './list-view-data.js'
+
+/**
+ * @import { HapiRequest } from '#server/common/hapi-types.js'
+ */
+
+/**
+ * @typedef {NonNullable<Parameters<typeof buildListViewDataImpl>[1]>} BuildListViewDataParams
+ */
+
+const buildListViewData = (
+  /** @type {object} */ request,
+  /** @type {object} */ params
+) =>
+  buildListViewDataImpl(
+    /** @type {HapiRequest} */ (/** @type {unknown} */ (request)),
+    /** @type {BuildListViewDataParams} */ (/** @type {unknown} */ (params))
+  )
 
 const createMockRequest = () => ({
   t: vi.fn((key, params = {}) => {

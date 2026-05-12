@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -24,6 +25,25 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
 
 /**
+ * @typedef {import('vitest').MockedFunction<(...args: unknown[]) => Promise<unknown>>} LooseMockedAsync
+ */
+
+const fetchOrganisationById = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (
+    vi.mocked(fetchOrganisationModule).fetchOrganisationById
+  )
+)
+const fetchWasteBalances = /** @type {LooseMockedAsync} */ (
+  /** @type {unknown} */ (
+    vi.mocked(fetchWasteBalancesModule).fetchWasteBalances
+  )
+)
+
+const asString = (value) => /** @type {string} */ (value)
+
+const loadHtml = (result) => load(asString(result))
+
+/**
  * @param {InstanceType<DOMWindow['HTMLElement']>} table
  * @returns {(columnName: string | RegExp) => InstanceType<DOMWindow['HTMLElement']>}
  */
@@ -47,9 +67,7 @@ describe('#organisationController', () => {
 
   describe('happy Path', () => {
     it('should use Organisation name in the page title', async ({ server }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -57,7 +75,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('title').text()).toMatch(/^Home: ACME ltd/)
     })
@@ -73,9 +91,7 @@ describe('#organisationController', () => {
         }
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureWithoutTradingName)
+      fetchOrganisationById.mockResolvedValue(fixtureWithoutTradingName)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -83,7 +99,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('title').text()).toMatch(/^Home: ACME ltd/)
       expect($('h1').text()).toMatch(/ACME ltd/)
@@ -100,9 +116,7 @@ describe('#organisationController', () => {
         }
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureWithWhitespaceTradingName)
+      fetchOrganisationById.mockResolvedValue(fixtureWithWhitespaceTradingName)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -110,7 +124,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('title').text()).toMatch(/^Home: ACME ltd/)
       expect($('h1').text()).toMatch(/ACME ltd/)
@@ -119,9 +133,7 @@ describe('#organisationController', () => {
     it('should display organisation page with reprocessing sites on default route', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -129,7 +141,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect($('h1').text()).toMatch(/ACME ltd/)
@@ -159,9 +171,7 @@ describe('#organisationController', () => {
     it('should display organisation page with exporting sites on exporting route', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureExportingOnly)
+      fetchOrganisationById.mockResolvedValue(fixtureExportingOnly)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -169,7 +179,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect($('h1').text()).toMatch(/Global Exports Ltd/)
@@ -189,9 +199,7 @@ describe('#organisationController', () => {
     it('should switch between tabs correctly using URL navigation', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       // Test reprocessing tab
       const reprocessingResponse = await server.inject({
@@ -200,7 +208,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $reprocessing = load(reprocessingResponse.result)
+      const $reprocessing = loadHtml(reprocessingResponse.result)
       const reprocessingTabLink = $reprocessing('.govuk-tabs__list-item')
         .first()
         .find('a')
@@ -217,7 +225,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $exporting = load(exportingResponse.result)
+      const $exporting = loadHtml(exportingResponse.result)
       const exportingTabLink = $exporting('.govuk-tabs__list-item')
         .eq(1)
         .find('a')
@@ -231,9 +239,7 @@ describe('#organisationController', () => {
     it('should display materials with correct capitalization', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureSingleReprocessing)
+      fetchOrganisationById.mockResolvedValue(fixtureSingleReprocessing)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -241,7 +247,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // Check that materials are capitalized (e.g., "aluminium" -> "Aluminium")
       const materialCells = $('tbody td').first().text()
@@ -252,9 +258,7 @@ describe('#organisationController', () => {
     it('should display status tags with correct GOV.UK styling', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -262,7 +266,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // Check for status tags
       const statusTags = $('.govuk-tag')
@@ -276,9 +280,7 @@ describe('#organisationController', () => {
     })
 
     it('should display Select links for each row', async ({ server }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -286,7 +288,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // Check that each row has a Select link
       const selectLinks = $('tbody a.govuk-link')
@@ -303,9 +305,7 @@ describe('#organisationController', () => {
       server
     }) => {
       const organisationId = '6507f1f77bcf86cd79943901'
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       await server.inject({
         method: 'GET',
@@ -319,9 +319,7 @@ describe('#organisationController', () => {
     })
 
     it('should pass JWT token to backend call', async ({ server }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       await server.inject({
         method: 'GET',
@@ -352,9 +350,7 @@ describe('#organisationController', () => {
       it('should exclude registrations whose accreditation has an excluded status', async ({
         server
       }) => {
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue({
+        fetchOrganisationById.mockResolvedValue({
           ...fixtureData,
           accreditations: [
             {
@@ -389,9 +385,7 @@ describe('#organisationController', () => {
       })
 
       it('should show registered-only', async ({ server }) => {
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(registeredOnlyOrganisation)
+        fetchOrganisationById.mockResolvedValue(registeredOnlyOrganisation)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -415,9 +409,7 @@ describe('#organisationController', () => {
       it('should not fetch waste balances when no displayable registrations', async ({
         server
       }) => {
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureEmpty)
+        fetchOrganisationById.mockResolvedValue(fixtureEmpty)
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -434,9 +426,7 @@ describe('#organisationController', () => {
       it('should display formatted waste balance when available', async ({
         server
       }) => {
-        vi.mocked(
-          fetchOrganisationModule.fetchOrganisationById
-        ).mockResolvedValue(fixtureSingleReprocessing)
+        fetchOrganisationById.mockResolvedValue(fixtureSingleReprocessing)
 
         vi.mocked(
           fetchWasteBalancesModule.fetchWasteBalances
@@ -450,7 +440,7 @@ describe('#organisationController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = loadHtml(result)
 
         const tableHeaders = $('thead th')
           .map((_, el) => $(el).text())
@@ -469,12 +459,10 @@ describe('#organisationController', () => {
 
   describe('unhappy Paths', () => {
     it('should handle backend fetch failure gracefully', async ({ server }) => {
-      const backendError = new Error('Backend service unavailable')
-      backendError.statusCode = 503
+      const backendError = Boom.internal('Backend service unavailable')
+      backendError.output.statusCode = 503
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockRejectedValue(backendError)
+      fetchOrganisationById.mockRejectedValue(backendError)
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -490,13 +478,9 @@ describe('#organisationController', () => {
     }) => {
       const fetchError = new Error('Waste balance service unavailable')
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureSingleReprocessing)
+      fetchOrganisationById.mockResolvedValue(fixtureSingleReprocessing)
 
-      vi.mocked(fetchWasteBalancesModule.fetchWasteBalances).mockRejectedValue(
-        fetchError
-      )
+      fetchWasteBalances.mockRejectedValue(fetchError)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -504,7 +488,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
 
@@ -533,9 +517,9 @@ describe('#organisationController', () => {
     })
 
     it('should handle backend 404 error', async ({ server }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockRejectedValue(Boom.notFound('Organisation not found'))
+      fetchOrganisationById.mockRejectedValue(
+        Boom.notFound('Organisation not found')
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -547,12 +531,11 @@ describe('#organisationController', () => {
     })
 
     it('should handle backend timeout error', async ({ server }) => {
-      const timeoutError = new Error('Request timeout')
-      timeoutError.code = 'ETIMEDOUT'
+      const timeoutError = Object.assign(new Error('Request timeout'), {
+        code: 'ETIMEDOUT'
+      })
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockRejectedValue(timeoutError)
+      fetchOrganisationById.mockRejectedValue(timeoutError)
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -565,9 +548,7 @@ describe('#organisationController', () => {
 
     it('should handle malformed backend response', async ({ server }) => {
       // Return invalid data structure
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue({
+      fetchOrganisationById.mockResolvedValue({
         invalidField: 'no company details'
       })
 
@@ -585,9 +566,7 @@ describe('#organisationController', () => {
     it('should display "No sites found" when organisation has no accreditations', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureEmpty)
+      fetchOrganisationById.mockResolvedValue(fixtureEmpty)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -595,7 +574,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect($('h1').text()).toMatch(/Empty Organisation Ltd/)
@@ -605,9 +584,7 @@ describe('#organisationController', () => {
     it('should display "No sites found" when all items have excluded statuses', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureAllExcluded)
+      fetchOrganisationById.mockResolvedValue(fixtureAllExcluded)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -615,7 +592,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('No sites found.')
@@ -644,9 +621,7 @@ describe('#organisationController', () => {
         ]
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithCreatedStatus)
+      fetchOrganisationById.mockResolvedValue(dataWithCreatedStatus)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -676,9 +651,7 @@ describe('#organisationController', () => {
         ]
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithRejectedStatus)
+      fetchOrganisationById.mockResolvedValue(dataWithRejectedStatus)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -693,9 +666,7 @@ describe('#organisationController', () => {
     it('should handle missing site address fields gracefully', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureMissingSiteAddress)
+      fetchOrganisationById.mockResolvedValue(fixtureMissingSiteAddress)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -703,7 +674,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
 
@@ -719,9 +690,7 @@ describe('#organisationController', () => {
     it('should display only exporting sites when no reprocessing sites exist', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureExportingOnly)
+      fetchOrganisationById.mockResolvedValue(fixtureExportingOnly)
 
       const reprocessingResponse = await server.inject({
         method: 'GET',
@@ -737,7 +706,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $exporting = load(exportingResponse.result)
+      const $exporting = loadHtml(exportingResponse.result)
 
       // Exporters have no site headings but should have a single table with materials
       expect($exporting('h3.govuk-heading-m')).toHaveLength(0)
@@ -747,9 +716,7 @@ describe('#organisationController', () => {
     it('should handle organisation with single site and material', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureSingleReprocessing)
+      fetchOrganisationById.mockResolvedValue(fixtureSingleReprocessing)
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -757,7 +724,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect($('h1').text()).toMatch(/Home\n\s+Single Reprocessor Ltd/m)
@@ -827,9 +794,7 @@ describe('#organisationController', () => {
         ]
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithMixedStatuses)
+      fetchOrganisationById.mockResolvedValue(dataWithMixedStatuses)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -837,7 +802,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // Items should be excluded when EITHER has excluded status:
       // - acc-1 has Approved but reg-1 has Created - FILTERED (reg has excluded status)
@@ -853,9 +818,7 @@ describe('#organisationController', () => {
     it('should display "Glass remelt" for registrations with glass_re_melt process', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -863,7 +826,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const materialCells = $('tbody td:first-child')
         .map((_, el) => $(el).text().trim())
         .get()
@@ -874,9 +837,7 @@ describe('#organisationController', () => {
     it('should display "Glass other" for registrations with glass_other process', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -884,7 +845,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const materialCells = $('tbody td:first-child')
         .map((_, el) => $(el).text().trim())
         .get()
@@ -895,9 +856,7 @@ describe('#organisationController', () => {
     it('should display separate rows for remelt and other when organisation has both registration types', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -905,7 +864,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
       const materialCells = $('tbody td:first-child')
         .map((_, el) => $(el).text().trim())
         .get()
@@ -919,9 +878,7 @@ describe('#organisationController', () => {
     it('should group multiple materials by site correctly', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -929,7 +886,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // Check that materials at the same site are grouped under one heading
       const siteHeadings = $('h3.govuk-heading-m')
@@ -996,9 +953,7 @@ describe('#organisationController', () => {
         ]
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithMultipleMaterialsSameSite)
+      fetchOrganisationById.mockResolvedValue(dataWithMultipleMaterialsSameSite)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1006,7 +961,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // Should have one site heading with multiple table rows
       const siteHeadings = $('h3.govuk-heading-m')
@@ -1023,9 +978,7 @@ describe('#organisationController', () => {
     it('should log organisation access with correct metadata', async ({
       server
     }) => {
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(fixtureData)
+      fetchOrganisationById.mockResolvedValue(fixtureData)
 
       await server.inject({
         method: 'GET',
@@ -1097,9 +1050,7 @@ describe('#organisationController', () => {
         ]
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithVariousStatuses)
+      fetchOrganisationById.mockResolvedValue(dataWithVariousStatuses)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1107,7 +1058,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       // Check for different status tag colors
       expect($('.govuk-tag--green').length).toBeGreaterThan(0) // approved
@@ -1139,9 +1090,7 @@ describe('#organisationController', () => {
         ]
       }
 
-      vi.mocked(
-        fetchOrganisationModule.fetchOrganisationById
-      ).mockResolvedValue(dataWithUnknownStatus)
+      fetchOrganisationById.mockResolvedValue(dataWithUnknownStatus)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1149,7 +1098,7 @@ describe('#organisationController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = loadHtml(result)
 
       expect($('.govuk-tag--grey').length).toBeGreaterThan(0)
     })
