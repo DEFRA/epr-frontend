@@ -76,26 +76,28 @@ jobs:
           OUTPUT=$(npm run lint:types:tests 2>&1) && STATUS=0 || STATUS=$?
           echo "$OUTPUT"
 
-          ERRORS=$(echo "$OUTPUT" | grep -c "^src/" || true)
+          if [ "$STATUS" -eq 0 ]; then
+            cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          ## Lint Types - Tests
 
-          {
-            if [ "$STATUS" -eq 0 ]; then
-              echo "## Lint Types - Tests"
-              echo ""
-              echo ":white_check_mark: Test type check passed"
-            else
-              echo "## Lint Types - Tests"
-              echo ""
-              echo ":warning: **${ERRORS} type errors found in tests** (advisory — not blocking)"
-              echo ""
-              echo "<details><summary>Errors by file</summary>"
-              echo ""
-              echo '```'
-              echo "$OUTPUT" | grep "^src/" | sed 's/(.*/:/' | sort | uniq -c | sort -rn
-              echo '```'
-              echo "</details>"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          :white_check_mark: Test type check passed
+          EOF
+          else
+            ERRORS=$(echo "$OUTPUT" | grep -c "^src/" || true)
+            ERRORS_BY_FILE=$(echo "$OUTPUT" | grep "^src/" | sed 's/(.*/:/' | sort | uniq -c | sort -rn)
+            cat <<EOF >> "$GITHUB_STEP_SUMMARY"
+          ## Lint Types - Tests
+
+          :warning: **${ERRORS} type errors found in tests** (advisory — not blocking)
+
+          <details><summary>Errors by file</summary>
+
+          \`\`\`
+          ${ERRORS_BY_FILE}
+          \`\`\`
+          </details>
+          EOF
+          fi
 
   test-journey:
     name: Run Journey Tests
