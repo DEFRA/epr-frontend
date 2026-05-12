@@ -8,7 +8,7 @@ const serviceVersion = config.get('serviceVersion')
 const tracingHeader = config.get('tracing.header')
 
 const ecsOptions = ecsFormat({
-  serviceVersion,
+  serviceVersion: serviceVersion ?? undefined,
   serviceName,
   convertReqRes: true
 })

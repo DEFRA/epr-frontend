@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 
-/** @import { Request } from '@hapi/hapi' */
+/** @import { HapiRequest } from '#server/common/hapi-types.js' */
 
 const PRODUCTION_SERVICE_URL =
   'https://record-reprocessed-exported-packaging-waste.defra.gov.uk'
@@ -9,7 +9,7 @@ const VALID_PROTOCOLS = new Set(['http', 'https'])
 
 /**
  * Gets a redirect URL from the request, restricted to allowed origins
- * @param {Request} request
+ * @param {HapiRequest} request
  * @param {string} path
  * @returns {string}
  */

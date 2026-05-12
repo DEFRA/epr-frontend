@@ -1,7 +1,7 @@
 import { languages } from '#server/common/constants/languages.js'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
-import middleware from 'i18next-http-middleware'
+import { LanguageDetector } from 'i18next-http-middleware'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { initI18n } from './i18n.js'
 
@@ -19,7 +19,7 @@ describe(initI18n, function () {
     await initI18n()
 
     expect(i18next.use).toHaveBeenCalledWith(Backend)
-    expect(i18next.use).toHaveBeenCalledWith(middleware.LanguageDetector)
+    expect(i18next.use).toHaveBeenCalledWith(LanguageDetector)
     expect(i18next.init).toHaveBeenCalledWith(
       expect.objectContaining({
         fallbackLng: languages.ENGLISH,

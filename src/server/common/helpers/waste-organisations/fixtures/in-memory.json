@@ -14,13 +14,7 @@
         "postcode": "CB21 5LD",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "fcdee15c-6f14-41e8-9f4c-ce1288a72b8e",
@@ -36,13 +30,7 @@
         "postcode": "SE15 3EG",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "2a477323-6c7b-46c5-b141-3bf34ac5e030",
@@ -58,13 +46,7 @@
         "postcode": "T1 1TT",
         "country": "United Kingdom"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "7115ae56-9775-4578-bbd5-6e1ec41d892f",
@@ -80,13 +62,7 @@
         "postcode": "UB3 2QD",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "c4622525-9f73-4036-baf7-140fd151841e",
@@ -102,13 +78,7 @@
         "postcode": "N22 8JD",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "6ba78514-6f1e-40fb-99d2-54dbd0b392f4",
@@ -124,13 +94,7 @@
         "postcode": "OL7 0PZ",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "6dc555e6-1113-448a-a34d-660f4a1e6dcc",
@@ -146,13 +110,7 @@
         "postcode": "IP28 7DE",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "17d77872-b61b-463b-824a-12eaa4cf1d20",
@@ -168,13 +126,7 @@
         "postcode": "CV1 2BY",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "e6450e61-6d72-42ee-a493-18a1c9b8e7b4",
@@ -190,13 +142,7 @@
         "postcode": "BL3 2PS",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "03971e82-5233-4b95-900b-25bfdeaed9ab",
@@ -212,13 +158,7 @@
         "postcode": "N1 7GU",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "f8a2d00a-615d-494e-8285-58f0c3dd46fb",
@@ -234,13 +174,7 @@
         "postcode": "W1W 5PF",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "0becf127-3eae-4fd0-adb4-7adeccb459d9",
@@ -256,13 +190,7 @@
         "postcode": "T1 1TT",
         "country": "United Kingdom"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "12a83932-3940-4053-8751-69048a6b118c",
@@ -278,13 +206,7 @@
         "postcode": "S2 2EH",
         "country": "England"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "14c119a1-3bce-42ab-ae89-0c32bfb6dbde",
@@ -300,13 +222,7 @@
         "postcode": "T1 1TT",
         "country": "United Kingdom"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "8075b75e-ea60-44b3-822f-2c822671ee03",
@@ -322,13 +238,7 @@
         "postcode": "T1 1TT",
         "country": "United Kingdom"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "a28954f7-31dc-4770-91a6-ddb468dce306",
@@ -344,13 +254,7 @@
         "postcode": "T1 1TT",
         "country": "United Kingdom"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "f2c22c91-d356-418f-b405-5297304b54ad",
@@ -366,13 +270,7 @@
         "postcode": "T1 1TT",
         "country": "United Kingdom"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "16649f0b-bbc7-4ccb-a67f-aa849180e9a2",
@@ -388,13 +286,7 @@
         "postcode": "T1 1TT",
         "country": "United Kingdom"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "COMPLIANCE_SCHEME",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "1cb3407b-2ccc-42e3-8813-a28301980f5c",
@@ -410,13 +302,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "bbcdfbeb-810d-4dc8-bbf7-3c9735046942",
@@ -432,13 +318,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "252f5876-3ff3-4e44-8457-95854908a376",
@@ -454,13 +334,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "8a7442b2-f48e-457b-aeac-e294cd290f2e",
@@ -476,13 +350,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "a8c9b5d8-4682-4c95-95a1-dbdabfa30c5e",
@@ -498,13 +366,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "b26657e6-c134-4bdd-a0dc-df2defc7dabb",
@@ -520,13 +382,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "df012b42-09fd-4071-b796-715d76606f49",
@@ -542,13 +398,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "777ac30d-e0ab-446f-ace5-4bc70ec051fa",
@@ -564,13 +414,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "40099dde-2856-4e9e-aed2-b68301b29403",
@@ -586,13 +430,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "94cf3ba1-10b9-4e06-8e9f-412de0d4662b",
@@ -608,13 +446,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "c0253b15-896e-4a0d-a505-46fc10fa839f",
@@ -630,13 +462,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "b21bdcc7-3383-4988-a966-b382d788840e",
@@ -652,13 +478,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "4fb2d105-920a-4b9d-a6fb-a5323845f99a",
@@ -674,18 +494,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2025
-        },
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "752c5b71-3119-45b3-8166-b560222ac679",
@@ -701,13 +510,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "014411a3-bc84-4de0-87f5-7b4a961a07da",
@@ -723,13 +526,7 @@
         "postcode": "Essex",
         "country": "CB113DG"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "b79ec09f-6194-484b-a01f-9ffcb4cf17b9",
@@ -745,13 +542,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "01fc15ed-a5e3-4928-a49a-2a2d72e87a41",
@@ -767,13 +558,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "ae902a5f-a443-41d8-91d0-3dd91136b7c5",
@@ -789,13 +574,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "5c80ca58-d3c9-4761-b2e1-fc7ed8c01aac",
@@ -811,13 +590,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "2bb7ab96-8bac-4dfb-967b-21844ddb6ab6",
@@ -833,18 +606,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2025
-        },
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "b769d2fb-21b4-49d3-83b6-38217bb16d25",
@@ -860,13 +622,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "82502a50-72c3-47ec-8da6-b1a59deb55bf",
@@ -882,13 +638,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "2e5ea32a-116b-40f6-97a8-db44273b6d90",
@@ -904,13 +654,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "f73fff19-ea13-4f05-af45-b35aba62f849",
@@ -926,13 +670,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "affb3e5e-8bea-44a4-a855-cf4ac16a031e",
@@ -948,13 +686,7 @@
         "postcode": "Essex",
         "country": "CB113DG"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "c70c300b-2c90-477e-b3b6-76f73fec54cf",
@@ -970,13 +702,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "5d4c194b-6e90-4bf9-935b-ae8c76005312",
@@ -992,13 +718,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "e79e89b5-cb99-46b5-ac64-1d40a79fa71e",
@@ -1014,13 +734,7 @@
         "postcode": "TT1 1TT",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "5512f242-1492-40f7-93df-3123d040fd52",
@@ -1036,13 +750,7 @@
         "postcode": "CB113DG",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "a5537222-2fa8-44a6-ad4e-628a1e33d97e",
@@ -1058,13 +766,7 @@
         "postcode": "AL7 1GA",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "15ba1cb0-ff4a-4470-994f-3599b0bc4072",
@@ -1080,13 +782,7 @@
         "postcode": "CB113DG",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "92462140-4bff-4028-a283-3beec633ee76",
@@ -1102,13 +798,7 @@
         "postcode": "CB113DG",
         "country": "EN"
       },
-      "registrations": [
-        {
-          "status": "REGISTERED",
-          "type": "LARGE_PRODUCER",
-          "registrationYear": 2026
-        }
-      ]
+      "registrationType": "LARGE_PRODUCER"
     }
   ]
 }

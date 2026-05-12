@@ -79,6 +79,7 @@ export default [
           definedTypes: [
             'BodyInit',
             'HeadersInit',
+            'NodeJS',
             'RequestInfo',
             'RequestInit',
             'Response'

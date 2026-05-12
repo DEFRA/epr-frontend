@@ -34,15 +34,41 @@ describe(getDisplayMaterial, () => {
     })
   })
 
-  describe('unknown material', () => {
-    it('should throw for unknown material', () => {
-      const registration = { material: 'unknown' }
-
+  describe('invalid registrations', () => {
+    it.each([
+      [
+        'material is unknown',
+        { material: 'unknown' },
+        {
+          message: 'Unknown material: unknown',
+          code: 'unknown_material',
+          event: { action: 'lookup_material', reason: 'material=unknown' }
+        }
+      ],
+      [
+        'glassRecyclingProcess is missing',
+        { material: 'glass' },
+        {
+          message: 'Missing glassRecyclingProcess for glass material',
+          code: 'glass_recycling_process_missing',
+          event: { action: 'lookup_material', reason: 'material=glass' }
+        }
+      ],
+      [
+        'glassRecyclingProcess value is unknown',
+        { material: 'glass', glassRecyclingProcess: ['glass_invalid'] },
+        {
+          message: 'Unknown glassRecyclingProcess: glass_invalid',
+          code: 'glass_recycling_process_unknown',
+          event: {
+            action: 'lookup_material',
+            reason: 'glassRecyclingProcess=glass_invalid'
+          }
+        }
+      ]
+    ])('should throw when %s', (_label, registration, expected) => {
       expect(() => getDisplayMaterial(registration)).toThrow(
-        expect.objectContaining({
-          isBoom: true,
-          message: 'Unknown material: unknown'
-        })
+        expect.objectContaining({ isBoom: true, ...expected })
       )
     })
   })

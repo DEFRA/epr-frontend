@@ -93,6 +93,7 @@ const ID_ERROR_CODES = new Set(['MUST_BE_3_DIGIT_NUMBER'])
 
 const ID_HEADERS = new Set(['OSR_ID', 'INTERIM_SITE_ID'])
 
+/** @type {Array<[Set<string>, Set<string>, string]>} */
 const FIELD_RULES = [
   [CALCULATED_ERROR_CODES, CALCULATED_HEADERS, 'CALCULATED_FIELD_MISMATCH'],
   [PERCENTAGE_ERROR_CODES, PERCENTAGE_HEADERS, 'PERCENTAGE_FORMAT_INVALID'],
@@ -183,12 +184,15 @@ const GROUP_DISPLAY_CODES = new Map([
  * @returns {string} Display code for translation lookup
  */
 export const getDisplayCodeFromErrorCode = (errorCode, header) => {
-  const fieldMatch = FIELD_RULES.find(
-    ([errorCodes, headers]) => errorCodes.has(errorCode) && headers.has(header)
-  )
+  if (header) {
+    const fieldMatch = FIELD_RULES.find(
+      ([errorCodes, headers]) =>
+        errorCodes.has(errorCode) && headers.has(header)
+    )
 
-  if (fieldMatch) {
-    return fieldMatch[2]
+    if (fieldMatch) {
+      return fieldMatch[2]
+    }
   }
 
   return GROUP_DISPLAY_CODES.get(errorCode) ?? errorCode

@@ -10,7 +10,7 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {string} summaryLogId
- * @param {object} [options]
+ * @param {object} options
  * @param {string} options.idToken - JWT ID token for authorization
  * @returns {Promise<SummaryLogStatusResponse>}
  */
@@ -18,7 +18,7 @@ const fetchSummaryLogStatus = async (
   organisationId,
   registrationId,
   summaryLogId,
-  { idToken } = {}
+  { idToken }
 ) => {
   const data = await fetchJsonFromBackend(
     `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`,

@@ -1,13 +1,35 @@
 import Blankie from 'blankie'
 import { config } from '#config/config.js'
 
+/**
+ * @import { ServerRegisterPluginObject } from '@hapi/hapi'
+ */
+
+/**
+ * @typedef {{
+ *   defaultSrc?: string[]
+ *   fontSrc?: string[]
+ *   connectSrc?: string[]
+ *   mediaSrc?: string[]
+ *   styleSrc?: string[]
+ *   scriptSrc?: string[]
+ *   imgSrc?: string[]
+ *   frameSrc?: string[]
+ *   objectSrc?: string[]
+ *   frameAncestors?: string[]
+ *   formAction?: string[]
+ *   manifestSrc?: string[]
+ *   generateNonces?: boolean
+ * }} BlankieOptions
+ */
+
 export function cspFormAction({ isProduction }) {
   return isProduction ? ['self'] : ['self', 'localhost:*']
 }
 
 /**
  * Manage content security policies.
- * @satisfies {import('@hapi/hapi').Plugin}
+ * @satisfies {ServerRegisterPluginObject<BlankieOptions>}
  */
 const contentSecurityPolicy = {
   plugin: Blankie,

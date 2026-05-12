@@ -32,6 +32,7 @@ import { router } from './router.js'
 export async function createServer(options = {}) {
   setupProxy()
 
+  /** @satisfies {RouteOptions} */
   const routes = {
     validate: {
       options: {
@@ -51,27 +52,29 @@ export async function createServer(options = {}) {
       noSniff: true,
       xframe: true
     },
-    auth: { mode: 'required' }
+    auth: { mode: /** @type {const} */ ('required') }
   }
 
-  const server = hapi.server({
-    port: config.get('port'),
-    routes,
-    router: {
-      stripTrailingSlash: true
-    },
-    cache: [
-      {
-        name: config.get('session.cache.name'),
-        engine: getCacheEngine(
-          /** @type {Engine} */ config.get('session.cache.engine')
-        )
+  const server = /** @type {HapiServer} */ (
+    hapi.server({
+      port: config.get('port'),
+      routes,
+      router: {
+        stripTrailingSlash: true
+      },
+      cache: [
+        {
+          name: config.get('session.cache.name'),
+          engine: getCacheEngine(
+            /** @type {Engine} */ (config.get('session.cache.engine'))
+          )
+        }
+      ],
+      state: {
+        strictHeader: false
       }
-    ],
-    state: {
-      strictHeader: false
-    }
-  })
+    })
+  )
 
   server.app.cache = server.cache({
     cache: config.get('session.cache.name'),
@@ -94,7 +97,10 @@ export async function createServer(options = {}) {
     contentSecurityPolicy,
     createWasteOrganisationsPlugin({
       initialOrganisations:
-        options.wasteOrganisations ?? wasteOrganisationsFixture.organisations
+        options.wasteOrganisations ??
+        /** @type {WasteOrganisation[]} */ (
+          wasteOrganisationsFixture.organisations
+        )
     }),
     {
       plugin: i18nPlugin,
@@ -144,7 +150,9 @@ export async function createServer(options = {}) {
 }
 
 /**
+ * @import {RouteOptions} from '@hapi/hapi'
  * @import {Engine} from '#server/common/helpers/session-cache/cache-engine.js'
+ * @import {HapiServer} from '#server/common/hapi-types.js'
  * @import {WasteOrganisation} from '#server/common/helpers/waste-organisations/types.js'
  */
 
