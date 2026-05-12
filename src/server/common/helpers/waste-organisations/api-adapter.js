@@ -1,19 +1,31 @@
-/** @import {WasteOrganisationsService} from './port.js' */
-
 import { getYear } from 'date-fns'
 
 import { config } from '#config/config.js'
 import { loggingEventActions } from '#server/common/enums/event.js'
 import { fetchJson } from '../fetch-json.js'
 
+/**
+ * @import {TypedLogger} from '#server/common/helpers/logging/logger.js'
+ * @import {WasteOrganisationsService} from './port.js'
+ * @import {WasteOrganisation, WasteOrganisationType} from './types.js'
+ */
+
+/**
+ * Raw upstream shape before registrationType extraction — has the wider
+ * registrations array that we collapse into a single registrationType.
+ * @typedef {Omit<WasteOrganisation, 'registrationType'> & {
+ *   registrations?: Array<{ type: WasteOrganisationType, registrationYear: number | string }>
+ * }} RawWasteOrganisation
+ */
+
 const PRODUCER_TYPES = new Set(['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'])
 
 /**
  * Extracts registrationType from the raw registrations array and warns
  * on missing or ambiguous producer registrations.
- * @param {Array<{ id: string, name: string, registrations?: Array<{ type: string, registrationYear: number | string }>, [key: string]: unknown }>} organisations
- * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger
- * @returns {Array<{ registrationType?: string, [key: string]: unknown }>}
+ * @param {RawWasteOrganisation[]} organisations
+ * @param {TypedLogger} logger
+ * @returns {WasteOrganisation[]}
  */
 function extractRegistrationTypes(organisations, logger) {
   // TODO: should this use the accreditation year instead of current year?
@@ -57,7 +69,7 @@ function extractRegistrationTypes(organisations, logger) {
 
 /**
  * Creates a waste organisations service that fetches from the real API.
- * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger
+ * @param {TypedLogger} logger
  * @returns {WasteOrganisationsService}
  */
 export function createApiWasteOrganisationsService(logger) {
