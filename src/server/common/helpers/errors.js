@@ -36,10 +36,13 @@ function statusCodeMessage(statusCode, localise) {
 }
 
 /**
- * @param { HapiRequest } request
+ * @param { Request } rawRequest
  * @param { ResponseToolkit } h
  */
-export async function catchAll(request, h) {
+export async function catchAll(rawRequest, h) {
+  const request = /** @type {HapiRequest} */ (
+    /** @type {unknown} */ (rawRequest)
+  )
   const { response } = request
 
   if (!('isBoom' in response)) {
@@ -66,6 +69,6 @@ export async function catchAll(request, h) {
 }
 
 /**
- * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Request, ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
