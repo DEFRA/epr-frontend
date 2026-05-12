@@ -8,15 +8,17 @@ import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, vi } from 'vitest'
 
-vi.mock(import('#server/auth/helpers/verify-token.js'), () =>
-  /** @type {Partial<typeof import('#server/auth/helpers/verify-token.js')>} */ ({
-    getVerifyToken:
-      /** @type {typeof import('#server/auth/helpers/verify-token.js').getVerifyToken} */ (
-        /** @type {unknown} */ (
-          vi.fn(async () => (token) => jose.decodeJwt(token))
+vi.mock(
+  import('#server/auth/helpers/verify-token.js'),
+  () =>
+    /** @type {Partial<typeof import('#server/auth/helpers/verify-token.js')>} */ ({
+      getVerifyToken:
+        /** @type {typeof import('#server/auth/helpers/verify-token.js').getVerifyToken} */ (
+          /** @type {unknown} */ (
+            vi.fn(async () => (token) => jose.decodeJwt(token))
+          )
         )
-      )
-  })
+    })
 )
 
 /**
@@ -174,8 +176,8 @@ describe('#sessionCookie - integration', () => {
       // Background refresh updates the cache with the new tokens
       await vi.waitFor(async () => {
         const updatedSession = assertPresent(
-        await server.app.cache.get(sessionId)
-      )
+          await server.app.cache.get(sessionId)
+        )
         expect(updatedSession.refreshToken).toBe('new-refresh-token')
       })
 

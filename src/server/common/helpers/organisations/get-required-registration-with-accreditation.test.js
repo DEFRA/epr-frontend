@@ -10,9 +10,7 @@ import { getRequiredRegistrationWithAccreditation } from './get-required-registr
 vi.mock(import('./fetch-registration-and-accreditation.js'))
 
 const asRegWithAcc = (/** @type {object} */ value) =>
-  /** @type {RegistrationWithAccreditation} */ (
-    /** @type {unknown} */ (value)
-  )
+  /** @type {RegistrationWithAccreditation} */ (/** @type {unknown} */ (value))
 
 describe('#getRequiredRegistrationWithAccreditation', () => {
   beforeEach(() => {
