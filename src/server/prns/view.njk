@@ -69,7 +69,8 @@
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
         {{ govukButton({
-          text: createButton.text
+          text: createButton.text,
+          preventDoubleClick: true
         }) }}
       </form>
 
