@@ -156,7 +156,7 @@ const errorsByFileBlock = (errors) => {
   const counts = [...countByFile(errors).entries()].sort(
     (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
   )
-  return counts.map(([file, count]) => `${count} ${file}:`).join('\n')
+  return counts.map(([file, count]) => `${count} ${file}`).join('\n')
 }
 
 /**

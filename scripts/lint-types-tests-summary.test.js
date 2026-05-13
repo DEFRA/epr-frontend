@@ -224,6 +224,9 @@ describe('lint-types-tests-summary', () => {
         })
 
         expect(markdown).toContain('Errors by file (count)')
+        expect(markdown).toContain('2 src/a.test.js\n')
+        expect(markdown).toContain('1 src/b.test.js\n')
+        expect(markdown).not.toMatch(/src\/[ab]\.test\.js:/)
         expect(markdown.indexOf('src/a.test.js')).toBeLessThan(
           markdown.indexOf('src/b.test.js')
         )
