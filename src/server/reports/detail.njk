@@ -160,7 +160,8 @@
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         {{ govukButton({
-          text: localise("reports:useThisData")
+          text: localise("reports:useThisData"),
+          preventDoubleClick: true
         }) }}
       </form>
 

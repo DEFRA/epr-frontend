@@ -784,6 +784,7 @@ describe('#detailReportsController', () => {
         })
 
         expect(button).toBeDefined()
+        expect(button.getAttribute('data-prevent-double-click')).toBe('true')
       })
 
       it('should not display ORS help text', async ({ server }) => {

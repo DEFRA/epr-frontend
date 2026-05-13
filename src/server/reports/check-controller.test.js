@@ -844,6 +844,7 @@ describe('#checkController', () => {
 
           expect(button).not.toBeNull()
           expect(button?.textContent?.trim()).toContain('Create report')
+          expect(button?.getAttribute('data-prevent-double-click')).toBe('true')
         })
 
         it('should include report version as hidden form field', async ({
