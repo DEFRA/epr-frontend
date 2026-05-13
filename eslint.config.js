@@ -142,6 +142,19 @@ export default [
     }
   },
 
+  // Build-time scripts may import devDependencies
+  {
+    files: ['scripts/**/*.{js,mjs}'],
+    rules: {
+      'n/no-unpublished-import': [
+        'error',
+        {
+          allowModules: ['typescript']
+        }
+      ]
+    }
+  },
+
   // Test files with vitest
   {
     files: ['**/*.test.{cjs,js}', '.vite/setup-files.js'],
