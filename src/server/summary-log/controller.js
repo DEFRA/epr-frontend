@@ -657,14 +657,6 @@ export const summaryLogUploadProgressController = {
 
     const session = request.auth.credentials
 
-    request.logger.info({
-      message: 'Rendering summary log progress page',
-      event: {
-        action: 'summary_log_progress_render_start',
-        reference: summaryLogId
-      }
-    })
-
     const {
       accreditationNumber,
       loads,
@@ -679,14 +671,6 @@ export const summaryLogUploadProgressController = {
       summaryLogId,
       session.idToken
     )
-
-    request.logger.info({
-      message: 'Rendering summary log progress page',
-      event: {
-        action: 'summary_log_progress_render_complete',
-        reference: summaryLogId
-      }
-    })
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`

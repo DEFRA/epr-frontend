@@ -47,7 +47,6 @@ const isAccessLogIgnored = (/** @type {string} */ path) =>
  */
 export const loggerOptions = {
   enabled: logConfig.enabled,
-  logRequestStart: true,
   ignoreFunc: (_options, /** @type {{ path: string }} */ request) =>
     isAccessLogIgnored(request.path),
   ignoreTags: ['static'],
