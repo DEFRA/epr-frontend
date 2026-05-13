@@ -78,7 +78,7 @@ describe('lint-types-tests-summary', () => {
       })
     })
 
-    describe('section 1 - errors in this pr', () => {
+    describe('section 1 - errors in this PR', () => {
       it('should show placeholder when no test files changed', () => {
         const { markdown } = buildSummary({
           tscOutput: '',
@@ -87,7 +87,7 @@ describe('lint-types-tests-summary', () => {
         })
 
         expect(markdown).toContain('### Errors in this PR')
-        expect(markdown).toContain('_no test files changed in this pr_')
+        expect(markdown).toContain('_no test files changed in this PR_')
       })
 
       it('should list each changed file with a green tick when clean', () => {
@@ -145,7 +145,7 @@ describe('lint-types-tests-summary', () => {
         })
 
         expect(markdown).toContain(
-          '**3 type error(s) in test files changed in this pr**'
+          '**3 type error(s) in test files changed in this PR**'
         )
         expect(markdown).not.toContain('advisory')
       })

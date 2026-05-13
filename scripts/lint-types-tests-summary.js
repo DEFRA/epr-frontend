@@ -94,7 +94,7 @@ const errorLinesFor = (errors, file) =>
  */
 const buildPrSection = (changedFiles, errors) => {
   if (changedFiles.length === 0) {
-    return { section: '_no test files changed in this pr_', prErrorTotal: 0 }
+    return { section: '_no test files changed in this PR_', prErrorTotal: 0 }
   }
 
   const blocks = []
@@ -122,9 +122,9 @@ const buildPrSection = (changedFiles, errors) => {
  */
 const prHeader = (prErrorTotal) => {
   if (prErrorTotal === 0) {
-    return ':white_check_mark: no type errors in test files changed in this pr'
+    return ':white_check_mark: no type errors in test files changed in this PR'
   }
-  return `:warning: **${prErrorTotal} type error(s) in test files changed in this pr**`
+  return `:warning: **${prErrorTotal} type error(s) in test files changed in this PR**`
 }
 
 /**
