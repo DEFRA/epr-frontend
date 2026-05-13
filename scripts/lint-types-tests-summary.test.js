@@ -121,7 +121,7 @@ describe('lint-types-tests-summary', () => {
         })
 
         expect(markdown).toContain(
-          '<details><summary>:warning: <code>src/server/foo/foo.test.js</code> (2 errors)</summary>'
+          '<details><summary><code>src/server/foo/foo.test.js</code> (2 errors)</summary>'
         )
         expect(markdown).toContain(
           "error TS2322: Type 'string' is not assignable to type 'number'."

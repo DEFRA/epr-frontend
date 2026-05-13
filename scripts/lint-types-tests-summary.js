@@ -106,7 +106,7 @@ const buildPrSection = (changedFiles, errors) => {
     } else {
       prErrorTotal += lines.length
       blocks.push(
-        `<details><summary>:warning: <code>${file}</code> (${lines.length} errors)</summary>\n\n` +
+        `<details><summary><code>${file}</code> (${lines.length} errors)</summary>\n\n` +
           '```\n' +
           lines.join('\n') +
           '\n```\n\n</details>'
