@@ -4,6 +4,8 @@ import { languages } from '#server/common/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// TODO adding a comment to see the type-check summary output
+
 /**
  * @param {Partial<Request>} [options]
  */
