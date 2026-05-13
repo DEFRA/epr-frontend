@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { buildSummary, filterTestFiles } from './lint-types-tests-summary.js'
 
 describe('lint-types-tests-summary', () => {
-  describe(filterTestFiles, () => {
+  describe('filterTestFiles', () => {
     it('should include .test.js files', () => {
       const result = filterTestFiles([
         'src/server/foo/foo.test.js',
@@ -41,7 +41,7 @@ describe('lint-types-tests-summary', () => {
     })
   })
 
-  describe(buildSummary, () => {
+  describe('buildSummary', () => {
     const noopLookup = () => ''
 
     describe('exit code', () => {
