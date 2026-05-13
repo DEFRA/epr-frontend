@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true #FIXME: 🚨 Make this a blocking step after translations are available
 
   type-check-tests:
-    name: Lint Types - Tests (advisory)
+    name: Lint Types - Tests (advisory - non-blocking)
     runs-on: ubuntu-latest
     needs: pr-prep
     continue-on-error: true

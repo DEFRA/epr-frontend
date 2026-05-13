@@ -124,7 +124,7 @@ const prHeader = (prErrorTotal) => {
   if (prErrorTotal === 0) {
     return ':white_check_mark: no type errors in test files changed in this pr'
   }
-  return `:warning: **${prErrorTotal} type error(s) in test files changed in this pr** (advisory - non-blocking)`
+  return `:warning: **${prErrorTotal} type error(s) in test files changed in this pr**`
 }
 
 /**
@@ -178,7 +178,7 @@ export const buildSummary = ({ tscOutput, changedFiles, tsCodeLookup }) => {
     section2 = [
       '### All errors',
       '',
-      `:warning: **${errors.length} type errors found in tests** (advisory - non-blocking)`,
+      `:warning: **${errors.length} type errors found in tests**`,
       '',
       '#### Top error codes',
       '',

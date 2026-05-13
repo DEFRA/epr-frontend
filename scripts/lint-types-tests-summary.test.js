@@ -145,8 +145,9 @@ describe('lint-types-tests-summary', () => {
         })
 
         expect(markdown).toContain(
-          '**3 type error(s) in test files changed in this pr** (advisory - non-blocking)'
+          '**3 type error(s) in test files changed in this pr**'
         )
+        expect(markdown).not.toContain('advisory')
       })
     })
 
@@ -175,9 +176,8 @@ describe('lint-types-tests-summary', () => {
           tsCodeLookup: noopLookup
         })
 
-        expect(markdown).toContain(
-          '**3 type errors found in tests** (advisory - non-blocking)'
-        )
+        expect(markdown).toContain('**3 type errors found in tests**')
+        expect(markdown).not.toContain('advisory')
       })
 
       it('should include top error codes with description and typescript.tv link', () => {
