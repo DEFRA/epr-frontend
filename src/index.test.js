@@ -8,8 +8,6 @@ import {
   vi
 } from 'vitest'
 
-// TODO adding a comment to see the type-check summary output
-
 const mockStartServer = vi.fn()
 const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()
