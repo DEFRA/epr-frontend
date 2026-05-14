@@ -139,20 +139,25 @@ function buildTableRows({
     )
     const url = localiseUrl(`${periodPath}${actionPath}`)
 
+    const actionCell = {
+      html: buildActionLinkHtml(status, url, label, localise),
+      classes: 'govuk-!-text-align-right'
+    }
+
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([
         { text: label },
         { html: buildStatusTagHtml(status, localise) },
         { text: formatSubmittedDateTime(period.report?.submittedAt) },
         { text: period.report?.submittedBy?.name ?? '' },
-        { html: buildActionLinkHtml(status, url, label, localise) }
+        actionCell
       ])
     } else {
       activeRows.push([
         { text: label },
         { html: buildStatusTagHtml(status, localise) },
         { text: formatDate(period.dueDate) },
-        { html: buildActionLinkHtml(status, url, label, localise) }
+        actionCell
       ])
     }
   }
@@ -192,18 +197,42 @@ export const listController = {
     )
 
     const activeHeader = [
-      { text: localise('reports:periodColumn') },
-      { text: localise('reports:statusColumn') },
-      { text: localise('reports:dateDueColumn') },
-      { text: localise('reports:actionColumn') }
+      {
+        text: localise('reports:periodColumn'),
+        classes: 'govuk-!-width-one-quarter'
+      },
+      {
+        text: localise('reports:statusColumn'),
+        classes: 'govuk-!-width-one-quarter'
+      },
+      {
+        text: localise('reports:dateDueColumn'),
+        classes: 'govuk-!-width-one-quarter'
+      },
+      {
+        text: localise('reports:actionColumn'),
+        classes: 'govuk-!-text-align-right'
+      }
     ]
 
     const submittedHeader = [
-      { text: localise('reports:periodColumn') },
-      { text: localise('reports:statusColumn') },
-      { text: localise('reports:dateAndTimeColumn') },
+      {
+        text: localise('reports:periodColumn'),
+        classes: 'govuk-!-width-one-quarter'
+      },
+      {
+        text: localise('reports:statusColumn'),
+        classes: 'govuk-!-width-one-quarter'
+      },
+      {
+        text: localise('reports:dateAndTimeColumn'),
+        classes: 'govuk-!-width-one-quarter'
+      },
       { text: localise('reports:submittedByColumn') },
-      { text: localise('reports:actionColumn') }
+      {
+        text: localise('reports:actionColumn'),
+        classes: 'govuk-!-text-align-right'
+      }
     ]
 
     const { activeRows, submittedRows } = buildTableRows({

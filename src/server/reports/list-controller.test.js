@@ -145,7 +145,13 @@ const monthlyWithReportResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
-      report: { id: 'report-001', status: 'in_progress' }
+      report: {
+        id: 'report-001',
+        status: 'in_progress',
+        submissionNumber: 1,
+        submittedAt: null,
+        submittedBy: null
+      }
     }
   ]
 }
@@ -159,7 +165,13 @@ const monthlyWithReadyToSubmitResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
-      report: { id: 'report-002', status: 'ready_to_submit' }
+      report: {
+        id: 'report-002',
+        status: 'ready_to_submit',
+        submissionNumber: 1,
+        submittedAt: null,
+        submittedBy: null
+      }
     }
   ]
 }
@@ -215,7 +227,13 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
       dueDate: '2026-03-20',
-      report: { id: 'report-002', status: 'in_progress' }
+      report: {
+        id: 'report-002',
+        status: 'in_progress',
+        submissionNumber: 1,
+        submittedAt: null,
+        submittedBy: null
+      }
     },
     {
       year: 2026,
@@ -914,7 +932,13 @@ describe('#listReportsController', () => {
               startDate: '2026-01-01',
               endDate: '2026-03-31',
               dueDate: '2026-04-20',
-              report: { id: 'report-003', status: 'in_progress' }
+              report: {
+                id: 'report-003',
+                status: 'in_progress',
+                submissionNumber: 1,
+                submittedAt: null,
+                submittedBy: null
+              }
             }
           ]
         })
@@ -954,7 +978,13 @@ describe('#listReportsController', () => {
               startDate: '2026-01-01',
               endDate: '2026-03-31',
               dueDate: '2026-04-20',
-              report: { id: 'report-004', status: 'in_progress' }
+              report: {
+                id: 'report-004',
+                status: 'in_progress',
+                submissionNumber: 1,
+                submittedAt: null,
+                submittedBy: null
+              }
             }
           ]
         })
