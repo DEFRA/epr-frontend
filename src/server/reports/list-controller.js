@@ -56,14 +56,26 @@ const formatSubmittedDateTime = (isoString) => {
 }
 
 /**
- * Resolves the URL suffix that an in-progress report should link to,
- * based on the registration type and reporting cadence.
+ * Resolves the path the action link on a report row should target.
+ * For in-progress reports the destination varies by registration type
+ * and cadence; other statuses map to a fixed page in the report flow.
+ * @param {string | null} status
  * @param {{ wasteProcessingType: string }} registration
  * @param {object | null | undefined} accreditation
  * @param {CadenceValue} cadence
  * @returns {string}
  */
-const getInProgressSuffix = (registration, accreditation, cadence) => {
+const getActionPath = (status, registration, accreditation, cadence) => {
+  if (status === SUBMISSION_STATUS.READY_TO_SUBMIT) {
+    return '/submit'
+  }
+  if (status === SUBMISSION_STATUS.SUBMITTED) {
+    return '/view'
+  }
+  if (status !== SUBMISSION_STATUS.IN_PROGRESS) {
+    return ''
+  }
+
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
   const hasAccreditation = !!accreditation
@@ -88,7 +100,8 @@ const getInProgressSuffix = (registration, accreditation, cadence) => {
  * @param {CadenceValue} options.cadence
  * @param {string} options.organisationId
  * @param {string} options.registrationId
- * @param {string} options.inProgressSuffix
+ * @param {{ wasteProcessingType: string }} options.registration
+ * @param {object | null | undefined} options.accreditation
  * @param {(url: string) => string} options.localiseUrl
  * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
  * @returns {{ activeRows: Array<Array<{text: string} | {html: string}>>, submittedRows: Array<Array<{text: string} | {html: string}>> }}
@@ -98,7 +111,8 @@ function buildTableRows({
   cadence,
   organisationId,
   registrationId,
-  inProgressSuffix,
+  registration,
+  accreditation,
   localiseUrl,
   localise
 }) {
@@ -107,20 +121,6 @@ function buildTableRows({
   /** @type {Array<Array<{text: string} | {html: string}>>} */
   const submittedRows = []
 
-  /** @param {string | null} status */
-  const suffixFor = (status) => {
-    switch (status) {
-      case SUBMISSION_STATUS.READY_TO_SUBMIT:
-        return '/submit'
-      case SUBMISSION_STATUS.IN_PROGRESS:
-        return inProgressSuffix
-      case SUBMISSION_STATUS.SUBMITTED:
-        return '/view'
-      default:
-        return ''
-    }
-  }
-
   for (const period of reportingPeriods) {
     const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
 
@@ -128,7 +128,13 @@ function buildTableRows({
 
     const status = deriveSubmissionStatus(period.endDate, period.report)
 
-    const url = localiseUrl(`${periodPath}${suffixFor(status)}`)
+    const actionPath = getActionPath(
+      status,
+      registration,
+      accreditation,
+      cadence
+    )
+    const url = localiseUrl(`${periodPath}${actionPath}`)
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([
@@ -176,13 +182,10 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
-    const isMonthly = cadence === CADENCE.MONTHLY
-    const isQuarterly = cadence === CADENCE.QUARTERLY
-
-    const inProgressSuffix = getInProgressSuffix(
-      registration,
-      accreditation,
-      cadence
+    const cadenceHeading = localise(
+      cadence === CADENCE.MONTHLY
+        ? 'reports:monthlyHeading'
+        : 'reports:quarterlyHeading'
     )
 
     const activeTableHead = [
@@ -205,32 +208,28 @@ export const listController = {
       cadence,
       organisationId,
       registrationId,
-      inProgressSuffix,
+      registration,
+      accreditation,
       localiseUrl: (url) => request.localiseUrl(url),
       localise
     })
 
     const viewData = {
-      pageTitle: localise('reports:pageTitle', { material }),
-      heading: localise('reports:heading'),
-      material,
+      activeRows,
+      activeTableHead,
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
-      hasMonthlyPeriods: isMonthly && reportingPeriods.length > 0,
-      hasQuarterlyPeriods: isQuarterly && reportingPeriods.length > 0,
-      hasMonthlyActivePeriods: isMonthly && activeRows.length > 0,
-      hasMonthlySubmittedPeriods: isMonthly && submittedRows.length > 0,
-      hasQuarterlyActivePeriods: isQuarterly && activeRows.length > 0,
-      hasQuarterlySubmittedPeriods: isQuarterly && submittedRows.length > 0,
-      activeTableHead,
-      submittedTableHead,
-      monthlyActiveTableRows: isMonthly ? activeRows : [],
-      monthlySubmittedTableRows: isMonthly ? submittedRows : [],
-      quarterlyActiveTableRows: isQuarterly ? activeRows : [],
-      quarterlySubmittedTableRows: isQuarterly ? submittedRows : [],
+      cadenceHeading,
+      emptyStateMessage: localise('reports:emptyState'),
       hasPeriods: reportingPeriods.length > 0,
-      emptyStateMessage: localise('reports:emptyState')
+      heading: localise('reports:heading'),
+      material,
+      pageTitle: localise('reports:pageTitle', {
+        material
+      }),
+      submittedRows,
+      submittedTableHead
     }
 
     return h.view('reports/list', viewData)

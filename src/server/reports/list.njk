@@ -21,43 +21,21 @@
       {% if not hasPeriods %}
         <p class="govuk-body">{{ emptyStateMessage }}</p>
       {% else %}
-
-        {% if hasMonthlyPeriods %}
-          <h2 class="govuk-heading-m">{{ localise("reports:monthlyHeading") }}</h2>
-          {% if hasMonthlyActivePeriods %}
-            <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
-            {{ govukTable({
-              head: activeTableHead,
-              rows: monthlyActiveTableRows
-            }) }}
-          {% endif %}
-          {% if hasMonthlySubmittedPeriods %}
-            <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
-            {{ govukTable({
-              head: submittedTableHead,
-              rows: monthlySubmittedTableRows
-            }) }}
-          {% endif %}
+        <h2 class="govuk-heading-m">{{ cadenceHeading }}</h2>
+        {% if activeRows.length %}
+          <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
+          {{ govukTable({
+            head: activeTableHead,
+            rows: activeRows
+          }) }}
         {% endif %}
-
-        {% if hasQuarterlyPeriods %}
-          <h2 class="govuk-heading-m">{{ localise("reports:quarterlyHeading") }}</h2>
-          {% if hasQuarterlyActivePeriods %}
-            <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
-            {{ govukTable({
-              head: activeTableHead,
-              rows: quarterlyActiveTableRows
-            }) }}
-          {% endif %}
-          {% if hasQuarterlySubmittedPeriods %}
-            <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
-            {{ govukTable({
-              head: submittedTableHead,
-              rows: quarterlySubmittedTableRows
-            }) }}
-          {% endif %}
+        {% if submittedRows.length %}
+          <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
+          {{ govukTable({
+            head: submittedTableHead,
+            rows: submittedRows
+          }) }}
         {% endif %}
-
       {% endif %}
 
     </div>
