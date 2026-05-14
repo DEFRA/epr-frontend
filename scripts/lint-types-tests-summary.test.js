@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildSummary, filterTestFiles } from './lint-types-tests-summary.js'
+import {
+  buildPrComment,
+  buildSummary,
+  filterTestFiles
+} from './lint-types-tests-summary.js'
 
 describe('lint-types-tests-summary', () => {
   describe(filterTestFiles, () => {
@@ -90,22 +94,23 @@ describe('lint-types-tests-summary', () => {
         expect(markdown).toContain('_no test files changed in this PR_')
       })
 
-      it('should list each changed file with a green tick when clean', () => {
+      it('should omit clean files from the section', () => {
+        const tscOutput =
+          "src/server/foo/foo.test.js(1,1): error TS2304: Cannot find name 'a'."
+
         const { markdown } = buildSummary({
-          tscOutput: '',
+          tscOutput,
           changedFiles: [
             'src/server/foo/foo.test.js',
-            'src/server/bar/bar.test.js'
+            'src/server/clean/clean.test.js'
           ],
           tsCodeLookup: noopLookup
         })
 
         expect(markdown).toContain(
-          ':white_check_mark: `src/server/foo/foo.test.js` (0 errors)'
+          '<details><summary><code>src/server/foo/foo.test.js</code>'
         )
-        expect(markdown).toContain(
-          ':white_check_mark: `src/server/bar/bar.test.js` (0 errors)'
-        )
+        expect(markdown).not.toContain('src/server/clean/clean.test.js')
       })
 
       it('should emit collapsible details for files with errors', () => {
@@ -245,6 +250,64 @@ describe('lint-types-tests-summary', () => {
         expect(markdown).toContain('Full error list')
         expect(markdown).toContain(tscOutput)
       })
+    })
+  })
+
+  describe(buildPrComment, () => {
+    it('should include the pr-scope section', () => {
+      const { markdown } = buildPrComment({
+        tscOutput:
+          "src/server/foo/foo.test.js(1,1): error TS2304: Cannot find name 'a'.",
+        changedFiles: ['src/server/foo/foo.test.js']
+      })
+
+      expect(markdown).toContain('Lint Types - Tests')
+      expect(markdown).toContain(
+        '<details><summary><code>src/server/foo/foo.test.js</code> (1 errors)</summary>'
+      )
+    })
+
+    it('should omit the all-errors section', () => {
+      const { markdown } = buildPrComment({
+        tscOutput: 'src/a.test.js(1,1): error TS2304: x.',
+        changedFiles: []
+      })
+
+      expect(markdown).not.toContain('All errors')
+      expect(markdown).not.toContain('Top error codes')
+      expect(markdown).not.toContain('Errors by file (count)')
+      expect(markdown).not.toContain('Full error list')
+    })
+
+    it('should include a link to the run when runUrl is given', () => {
+      const { markdown } = buildPrComment({
+        tscOutput: 'src/a.test.js(1,1): error TS2304: x.',
+        changedFiles: [],
+        runUrl: 'https://github.com/o/r/actions/runs/123'
+      })
+
+      expect(markdown).toContain(
+        '[View full summary](https://github.com/o/r/actions/runs/123)'
+      )
+    })
+
+    it('should not include a run-url link when runUrl is omitted', () => {
+      const { markdown } = buildPrComment({
+        tscOutput: 'src/a.test.js(1,1): error TS2304: x.',
+        changedFiles: []
+      })
+
+      expect(markdown).not.toContain('View full summary')
+    })
+
+    it('should propagate exit code when changed files have errors', () => {
+      const result = buildPrComment({
+        tscOutput:
+          "src/server/foo/foo.test.js(1,1): error TS2304: Cannot find name 'a'.",
+        changedFiles: ['src/server/foo/foo.test.js']
+      })
+
+      expect(result.exitCode).toBe(1)
     })
   })
 })
