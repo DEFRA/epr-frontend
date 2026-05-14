@@ -1,4 +1,3 @@
-// eslint-disable-next-line n/no-unpublished-import
 import { glob } from 'glob'
 import { readFile } from 'node:fs/promises'
 
