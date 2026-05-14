@@ -21,19 +21,37 @@ export async function fetchReportingPeriods(
 }
 
 /**
+ * @typedef {{ name: string }} ReportSubmitter
+ */
+
+/**
+ * @typedef {{
+ *   id: string,
+ *   status: SubmissionStatusValue,
+ *   submissionNumber: number,
+ *   submittedAt: string | null,
+ *   submittedBy: ReportSubmitter | null
+ * }} ReportListItem
+ */
+
+/**
  * @typedef {{
  *   year: number,
  *   period: number,
  *   startDate: string,
  *   endDate: string,
  *   dueDate: string,
- *   report: { id: string, status: import('../constants.js').SubmissionStatusValue } | null
+ *   report: ReportListItem | null
  * }} ReportingPeriod
  */
 
 /**
  * @typedef {{
- *   cadence: import('../constants.js').CadenceValue,
+ *   cadence: CadenceValue,
  *   reportingPeriods: ReportingPeriod[]
  * }} ReportingPeriodsResponse
+ */
+
+/**
+ * @import { CadenceValue, SubmissionStatusValue } from '../constants.js'
  */

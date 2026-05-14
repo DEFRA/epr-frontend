@@ -1,5 +1,6 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
+import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import {
@@ -41,6 +42,17 @@ const buildStatusTagHtml = (status, localise) => {
   const statusTagClass = getStatusTagClass(status)
   const tagClass = statusTagClass ? `govuk-tag ${statusTagClass}` : 'govuk-tag'
   return `<strong class="${tagClass}">${escapeHtml(statusLabel)}</strong>`
+}
+
+/**
+ * @param {string | null | undefined} isoString
+ * @returns {string}
+ */
+const formatSubmittedDateTime = (isoString) => {
+  if (!isoString) {
+    return ''
+  }
+  return `${formatDate(isoString)}, ${formatTime(isoString)}`
 }
 
 /**
@@ -99,17 +111,21 @@ function buildTableRows({
     }
     const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
 
-    const row = [
-      { text: label },
-      { html: buildStatusTagHtml(status, localise) },
-      { text: formatDate(period.dueDate) },
-      { html: buildActionLinkHtml(status, url, label, localise) }
-    ]
-
     if (status === SUBMISSION_STATUS.SUBMITTED) {
-      submittedRows.push(row)
+      submittedRows.push([
+        { text: label },
+        { html: buildStatusTagHtml(status, localise) },
+        { text: formatSubmittedDateTime(period.report?.submittedAt) },
+        { text: period.report?.submittedBy?.name ?? '' },
+        { html: buildActionLinkHtml(status, url, label, localise) }
+      ])
     } else {
-      activeRows.push(row)
+      activeRows.push([
+        { text: label },
+        { html: buildStatusTagHtml(status, localise) },
+        { text: formatDate(period.dueDate) },
+        { html: buildActionLinkHtml(status, url, label, localise) }
+      ])
     }
   }
 
@@ -150,10 +166,18 @@ export const listController = {
 
     const isMonthly = cadence === CADENCE.MONTHLY
     const isQuarterly = cadence === CADENCE.QUARTERLY
-    const tableHead = [
+    const activeTableHead = [
       { text: localise('reports:periodColumn') },
       { text: localise('reports:statusColumn') },
       { text: localise('reports:dateDueColumn') },
+      { text: localise('reports:actionColumn') }
+    ]
+
+    const submittedTableHead = [
+      { text: localise('reports:periodColumn') },
+      { text: localise('reports:statusColumn') },
+      { text: localise('reports:dateAndTimeColumn') },
+      { text: localise('reports:submittedByColumn') },
       { text: localise('reports:actionColumn') }
     ]
 
@@ -182,7 +206,8 @@ export const listController = {
       hasMonthlySubmittedPeriods: isMonthly && submittedRows.length > 0,
       hasQuarterlyActivePeriods: isQuarterly && activeRows.length > 0,
       hasQuarterlySubmittedPeriods: isQuarterly && submittedRows.length > 0,
-      tableHead,
+      activeTableHead,
+      submittedTableHead,
       monthlyActiveTableRows: isMonthly ? activeRows : [],
       monthlySubmittedTableRows: isMonthly ? submittedRows : [],
       quarterlyActiveTableRows: isQuarterly ? activeRows : [],

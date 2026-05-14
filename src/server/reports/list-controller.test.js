@@ -173,7 +173,17 @@ const monthlyWithSubmittedResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
-      report: { id: 'report-002', status: 'submitted' }
+      report: {
+        id: 'report-002',
+        status: 'submitted',
+        submissionNumber: 1,
+        submittedAt: '2026-02-05T18:22:00.000Z',
+        submittedBy: {
+          id: 'user-1',
+          name: 'Matt Davis',
+          position: 'Approved person'
+        }
+      }
     }
   ]
 }
@@ -187,7 +197,17 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
-      report: { id: 'report-001', status: 'submitted' }
+      report: {
+        id: 'report-001',
+        status: 'submitted',
+        submissionNumber: 1,
+        submittedAt: '2026-02-05T18:22:00.000Z',
+        submittedBy: {
+          id: 'user-1',
+          name: 'Matt Davis',
+          position: 'Approved person'
+        }
+      }
     },
     {
       year: 2026,
@@ -698,6 +718,59 @@ describe('#listReportsController', () => {
         expect(periodsByTable).toStrictEqual([
           ['February 2026', 'March 2026'],
           ['January 2026']
+        ])
+      })
+
+      it('should display distinct headers on the submitted table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = body.querySelectorAll('.govuk-table')
+        const submittedHeaders = Array.from(
+          tables[1].querySelectorAll('thead th')
+        ).map((th) => th.textContent?.trim())
+
+        expect(submittedHeaders).toStrictEqual([
+          'Period',
+          'Status',
+          'Date and time',
+          'Submitted by',
+          'Action'
+        ])
+      })
+
+      it('should render submitted row with date+time and submitter name', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = body.querySelectorAll('.govuk-table')
+        const submittedRow = tables[1].querySelector('tbody tr')
+        const cells = Array.from(submittedRow.querySelectorAll('td')).map(
+          (td) => td.textContent?.trim()
+        )
+
+        expect(cells).toStrictEqual([
+          'January 2026',
+          'Submitted',
+          '5 February 2026, 6:22pm',
+          'Matt Davis',
+          'View January 2026'
         ])
       })
     })

@@ -27,14 +27,14 @@
           {% if hasMonthlyActivePeriods %}
             <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
             {{ govukTable({
-              head: tableHead,
+              head: activeTableHead,
               rows: monthlyActiveTableRows
             }) }}
           {% endif %}
           {% if hasMonthlySubmittedPeriods %}
             <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
             {{ govukTable({
-              head: tableHead,
+              head: submittedTableHead,
               rows: monthlySubmittedTableRows
             }) }}
           {% endif %}
@@ -45,14 +45,14 @@
           {% if hasQuarterlyActivePeriods %}
             <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
             {{ govukTable({
-              head: tableHead,
+              head: activeTableHead,
               rows: quarterlyActiveTableRows
             }) }}
           {% endif %}
           {% if hasQuarterlySubmittedPeriods %}
             <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
             {{ govukTable({
-              head: tableHead,
+              head: submittedTableHead,
               rows: quarterlySubmittedTableRows
             }) }}
           {% endif %}
