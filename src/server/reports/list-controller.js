@@ -56,6 +56,31 @@ const formatSubmittedDateTime = (isoString) => {
 }
 
 /**
+ * Resolves the URL suffix that an in-progress report should link to,
+ * based on the registration type and reporting cadence.
+ * @param {{ wasteProcessingType: string }} registration
+ * @param {object | null | undefined} accreditation
+ * @param {CadenceValue} cadence
+ * @returns {string}
+ */
+const getInProgressSuffix = (registration, accreditation, cadence) => {
+  const isExporter = isExporterRegistration(registration)
+  const isReprocessor = isReprocessorRegistration(registration)
+  const hasAccreditation = !!accreditation
+
+  if (hasAccreditation && isExporter && cadence === CADENCE.MONTHLY) {
+    return '/prn-summary'
+  }
+  if (isReprocessor) {
+    return '/tonnes-recycled'
+  }
+  if (!hasAccreditation && isExporter) {
+    return '/tonnes-not-exported'
+  }
+  return '/supporting-information'
+}
+
+/**
  * Build table rows for the govukTable macro, partitioned by submission status.
  * Each row is an array of cell objects ({ text } or { html }).
  * @param {object} options
@@ -63,9 +88,7 @@ const formatSubmittedDateTime = (isoString) => {
  * @param {CadenceValue} options.cadence
  * @param {string} options.organisationId
  * @param {string} options.registrationId
- * @param {boolean} options.isAccreditedExporter
- * @param {boolean} options.isRegisteredOnlyExporter
- * @param {boolean} options.isReprocessor
+ * @param {string} options.inProgressSuffix
  * @param {(url: string) => string} options.localiseUrl
  * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
  * @returns {{ activeRows: Array<Array<{text: string} | {html: string}>>, submittedRows: Array<Array<{text: string} | {html: string}>> }}
@@ -75,9 +98,7 @@ function buildTableRows({
   cadence,
   organisationId,
   registrationId,
-  isAccreditedExporter,
-  isRegisteredOnlyExporter,
-  isReprocessor,
+  inProgressSuffix,
   localiseUrl,
   localise
 }) {
@@ -86,6 +107,20 @@ function buildTableRows({
   /** @type {Array<Array<{text: string} | {html: string}>>} */
   const submittedRows = []
 
+  /** @param {string | null} status */
+  const suffixFor = (status) => {
+    switch (status) {
+      case SUBMISSION_STATUS.READY_TO_SUBMIT:
+        return '/submit'
+      case SUBMISSION_STATUS.IN_PROGRESS:
+        return inProgressSuffix
+      case SUBMISSION_STATUS.SUBMITTED:
+        return '/view'
+      default:
+        return ''
+    }
+  }
+
   for (const period of reportingPeriods) {
     const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
 
@@ -93,23 +128,7 @@ function buildTableRows({
 
     const status = deriveSubmissionStatus(period.endDate, period.report)
 
-    let inProgressSuffix
-    if (isAccreditedExporter && cadence === CADENCE.MONTHLY) {
-      inProgressSuffix = '/prn-summary'
-    } else if (isReprocessor) {
-      inProgressSuffix = '/tonnes-recycled'
-    } else if (isRegisteredOnlyExporter) {
-      inProgressSuffix = '/tonnes-not-exported'
-    } else {
-      inProgressSuffix = '/supporting-information'
-    }
-
-    const suffixByStatus = {
-      [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
-      [SUBMISSION_STATUS.IN_PROGRESS]: inProgressSuffix,
-      [SUBMISSION_STATUS.SUBMITTED]: '/view'
-    }
-    const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
+    const url = localiseUrl(`${periodPath}${suffixFor(status)}`)
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([
@@ -157,15 +176,15 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
-    const isExporter = isExporterRegistration(registration)
-    const isReprocessor = isReprocessorRegistration(registration)
-
-    const hasAccreditation = !!accreditation
-    const isAccreditedExporter = hasAccreditation && isExporter
-    const isRegisteredOnlyExporter = !hasAccreditation && isExporter
-
     const isMonthly = cadence === CADENCE.MONTHLY
     const isQuarterly = cadence === CADENCE.QUARTERLY
+
+    const inProgressSuffix = getInProgressSuffix(
+      registration,
+      accreditation,
+      cadence
+    )
+
     const activeTableHead = [
       { text: localise('reports:periodColumn') },
       { text: localise('reports:statusColumn') },
@@ -186,9 +205,7 @@ export const listController = {
       cadence,
       organisationId,
       registrationId,
-      isAccreditedExporter,
-      isRegisteredOnlyExporter,
-      isReprocessor,
+      inProgressSuffix,
       localiseUrl: (url) => request.localiseUrl(url),
       localise
     })
