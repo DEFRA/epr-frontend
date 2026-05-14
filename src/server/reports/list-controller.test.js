@@ -678,6 +678,50 @@ describe('#listReportsController', () => {
           '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/view'
         )
       })
+
+      it('should render empty Date and time + Submitted by when backend has not supplied them yet', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportingPeriods).mockResolvedValue({
+          cadence: 'monthly',
+          reportingPeriods: [
+            {
+              year: 2026,
+              period: 1,
+              startDate: '2026-01-01',
+              endDate: '2026-01-31',
+              dueDate: '2026-02-20',
+              report: {
+                id: 'report-002',
+                status: 'submitted',
+                submittedAt: null,
+                submittedBy: null
+              }
+            }
+          ]
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const cells = Array.from(
+          body.querySelectorAll('.govuk-table tbody tr td')
+        ).map((td) => td.textContent?.trim())
+
+        expect(cells).toStrictEqual([
+          'January 2026',
+          'Submitted',
+          '',
+          '',
+          'View January 2026'
+        ])
+      })
     })
 
     describe('for mixed-status periods', () => {
