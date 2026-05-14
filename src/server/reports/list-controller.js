@@ -26,7 +26,7 @@ import {
  * @param {string | null} status
  * @param {string} url
  * @param {string} label
- * @param {(key: string) => string} localise
+ * @param {TFunction} localise
  * @returns {string}
  */
 const buildActionLinkHtml = (status, url, label, localise) => {
@@ -36,7 +36,7 @@ const buildActionLinkHtml = (status, url, label, localise) => {
 
 /**
  * @param {string | null} status
- * @param {(key: string) => string} localise
+ * @param {TFunction} localise
  * @returns {string}
  */
 const buildStatusTagHtml = (status, localise) => {
@@ -65,8 +65,8 @@ const formatSubmittedDateTime = (isoString) => {
  * For in-progress reports the destination varies by registration type
  * and cadence; other statuses map to a fixed page in the report flow.
  * @param {string | null} status
- * @param {{ wasteProcessingType: string }} registration
- * @param {object | null | undefined} accreditation
+ * @param {Registration} registration
+ * @param {Accreditation | undefined} accreditation
  * @param {CadenceValue} cadence
  * @returns {string}
  */
@@ -100,13 +100,12 @@ const getActionPath = (status, registration, accreditation, cadence) => {
 /**
  * Build table rows for the govukTable macro, partitioned by submission status.
  * @param {{
- *   accreditation: object | null | undefined,
+ *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
- *   localise: (key: string, params?: Record<string, unknown>) => string,
+ *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
  *   organisationId: string,
- *   registration: { wasteProcessingType: string },
- *   registrationId: string,
+ *   registration: Registration,
  *   reportingPeriods: ReportingPeriod[]
  * }} options
  * @returns {{ activeRows: TableRow[], submittedRows: TableRow[] }}
@@ -118,7 +117,6 @@ function buildTableRows({
   localiseUrl,
   organisationId,
   registration,
-  registrationId,
   reportingPeriods
 }) {
   /** @type {TableRow[]} */
@@ -127,7 +125,7 @@ function buildTableRows({
   const submittedRows = []
 
   for (const period of reportingPeriods) {
-    const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
+    const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}`
 
     const label = formatPeriodLabel(period, cadence, localise)
 
@@ -215,7 +213,6 @@ export const listController = {
       localiseUrl: (url) => request.localiseUrl(url),
       organisationId,
       registration,
-      registrationId,
       reportingPeriods
     })
 
@@ -239,7 +236,10 @@ export const listController = {
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { CadenceValue } from './constants.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  */
