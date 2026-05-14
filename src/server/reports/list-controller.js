@@ -18,6 +18,11 @@ import {
 } from './helpers/format-submission-status.js'
 
 /**
+ * @typedef {{ text: string } | { html: string }} TableCell
+ * @typedef {TableCell[]} TableRow
+ */
+
+/**
  * @param {string | null} status
  * @param {string} url
  * @param {string} label
@@ -94,31 +99,31 @@ const getActionPath = (status, registration, accreditation, cadence) => {
 
 /**
  * Build table rows for the govukTable macro, partitioned by submission status.
- * Each row is an array of cell objects ({ text } or { html }).
- * @param {object} options
- * @param {import('./helpers/fetch-reporting-periods.js').ReportingPeriod[]} options.reportingPeriods
- * @param {CadenceValue} options.cadence
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {{ wasteProcessingType: string }} options.registration
- * @param {object | null | undefined} options.accreditation
- * @param {(url: string) => string} options.localiseUrl
- * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
- * @returns {{ activeRows: Array<Array<{text: string} | {html: string}>>, submittedRows: Array<Array<{text: string} | {html: string}>> }}
+ * @param {{
+ *   accreditation: object | null | undefined,
+ *   cadence: CadenceValue,
+ *   localise: (key: string, params?: Record<string, unknown>) => string,
+ *   localiseUrl: (url: string) => string,
+ *   organisationId: string,
+ *   registration: { wasteProcessingType: string },
+ *   registrationId: string,
+ *   reportingPeriods: ReportingPeriod[]
+ * }} options
+ * @returns {{ activeRows: TableRow[], submittedRows: TableRow[] }}
  */
 function buildTableRows({
-  reportingPeriods,
-  cadence,
-  organisationId,
-  registrationId,
-  registration,
   accreditation,
+  cadence,
+  localise,
   localiseUrl,
-  localise
+  organisationId,
+  registration,
+  registrationId,
+  reportingPeriods
 }) {
-  /** @type {Array<Array<{text: string} | {html: string}>>} */
+  /** @type {TableRow[]} */
   const activeRows = []
-  /** @type {Array<Array<{text: string} | {html: string}>>} */
+  /** @type {TableRow[]} */
   const submittedRows = []
 
   for (const period of reportingPeriods) {
@@ -188,14 +193,14 @@ export const listController = {
         : 'reports:quarterlyHeading'
     )
 
-    const activeTableHead = [
+    const activeHeader = [
       { text: localise('reports:periodColumn') },
       { text: localise('reports:statusColumn') },
       { text: localise('reports:dateDueColumn') },
       { text: localise('reports:actionColumn') }
     ]
 
-    const submittedTableHead = [
+    const submittedHeader = [
       { text: localise('reports:periodColumn') },
       { text: localise('reports:statusColumn') },
       { text: localise('reports:dateAndTimeColumn') },
@@ -204,19 +209,18 @@ export const listController = {
     ]
 
     const { activeRows, submittedRows } = buildTableRows({
-      reportingPeriods,
-      cadence,
-      organisationId,
-      registrationId,
-      registration,
       accreditation,
+      cadence,
+      localise,
       localiseUrl: (url) => request.localiseUrl(url),
-      localise
+      organisationId,
+      registration,
+      registrationId,
+      reportingPeriods
     })
 
     const viewData = {
-      activeRows,
-      activeTableHead,
+      active: { head: activeHeader, rows: activeRows },
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
@@ -225,11 +229,8 @@ export const listController = {
       hasPeriods: reportingPeriods.length > 0,
       heading: localise('reports:heading'),
       material,
-      pageTitle: localise('reports:pageTitle', {
-        material
-      }),
-      submittedRows,
-      submittedTableHead
+      pageTitle: localise('reports:pageTitle', { material }),
+      submitted: { head: submittedHeader, rows: submittedRows }
     }
 
     return h.view('reports/list', viewData)
@@ -240,4 +241,5 @@ export const listController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { CadenceValue } from './constants.js'
+ * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  */

@@ -22,18 +22,18 @@
         <p class="govuk-body">{{ emptyStateMessage }}</p>
       {% else %}
         <h2 class="govuk-heading-m">{{ cadenceHeading }}</h2>
-        {% if activeRows.length %}
+        {% if active.rows.length %}
           <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
           {{ govukTable({
-            head: activeTableHead,
-            rows: activeRows
+            head: active.head,
+            rows: active.rows
           }) }}
         {% endif %}
-        {% if submittedRows.length %}
+        {% if submitted.rows.length %}
           <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
           {{ govukTable({
-            head: submittedTableHead,
-            rows: submittedRows
+            head: submitted.head,
+            rows: submitted.rows
           }) }}
         {% endif %}
       {% endif %}
