@@ -1,4 +1,5 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
+import { formatDate } from '#server/common/helpers/format-date.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import {
@@ -96,6 +97,7 @@ function buildTableRows({
     return [
       { text: label },
       { html: buildStatusTagHtml(status, localise) },
+      { text: formatDate(period.dueDate) },
       { html: buildActionLinkHtml(status, url, label, localise) }
     ]
   })
@@ -138,6 +140,7 @@ export const listController = {
     const tableHead = [
       { text: localise('reports:periodColumn') },
       { text: localise('reports:statusColumn') },
+      { text: localise('reports:dateDueColumn') },
       { text: localise('reports:actionColumn') }
     ]
 

@@ -348,7 +348,7 @@ describe('#listReportsController', () => {
         ).toBeNull()
       })
 
-      it('should display Status column in table header', async ({ server }) => {
+      it('should display column headers in order', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -358,12 +358,37 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const headers = body.querySelectorAll('.govuk-table thead th')
+        const headerTexts = Array.from(
+          body.querySelectorAll('.govuk-table thead th')
+        ).map((th) => th.textContent?.trim())
 
-        expect(headers).toHaveLength(3)
-        expect(headers[0]?.textContent).toContain('Period')
-        expect(headers[1]?.textContent).toContain('Status')
-        expect(headers[2]?.textContent).toContain('Action')
+        expect(headerTexts).toStrictEqual([
+          'Period',
+          'Status',
+          'Date due',
+          'Action'
+        ])
+      })
+
+      it('should display formatted due date per row', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const dueDateCells = Array.from(
+          body.querySelectorAll('.govuk-table tbody tr')
+        ).map((tr) => tr.querySelectorAll('td')[2]?.textContent?.trim())
+
+        expect(dueDateCells).toStrictEqual([
+          '20 February 2026',
+          '20 March 2026',
+          '20 April 2026'
+        ])
       })
 
       it('should display Due tag for ended periods', async ({ server }) => {
