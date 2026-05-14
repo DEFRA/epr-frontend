@@ -1,4 +1,3 @@
-/* eslint-disable n/no-unpublished-import */
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { test, vi } from 'vitest'

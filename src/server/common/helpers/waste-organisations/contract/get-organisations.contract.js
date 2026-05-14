@@ -1,4 +1,3 @@
-// eslint-disable-next-line n/no-unpublished-import
 import { beforeEach, describe, expect } from 'vitest'
 
 export const testGetOrganisationsBehaviour = (it) => {

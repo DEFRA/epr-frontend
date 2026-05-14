@@ -1,6 +1,6 @@
 import { join, dirname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
-// eslint-disable-next-line n/no-unpublished-import
+
 import ExcelJS from 'exceljs'
 
 const currentDir = dirname(fileURLToPath(import.meta.url))
