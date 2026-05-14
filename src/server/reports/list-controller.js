@@ -11,9 +11,9 @@ import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
   getActionLabel,
-  getStatusLabel
+  getStatusLabel,
+  getStatusTagClass
 } from './helpers/format-submission-status.js'
-import { getStatusTagClass } from './helpers/get-status-tag-class.js'
 
 /**
  * @param {string | null} status
