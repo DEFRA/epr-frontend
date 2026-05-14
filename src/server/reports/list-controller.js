@@ -44,7 +44,7 @@ const buildStatusTagHtml = (status, localise) => {
 }
 
 /**
- * Build table rows for the govukTable macro.
+ * Build table rows for the govukTable macro, partitioned by submission status.
  * Each row is an array of cell objects ({ text } or { html }).
  * @param {object} options
  * @param {import('./helpers/fetch-reporting-periods.js').ReportingPeriod[]} options.reportingPeriods
@@ -56,7 +56,7 @@ const buildStatusTagHtml = (status, localise) => {
  * @param {boolean} options.isReprocessor
  * @param {(url: string) => string} options.localiseUrl
  * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
- * @returns {Array<Array<{text: string} | {html: string}>>}
+ * @returns {{ activeRows: Array<Array<{text: string} | {html: string}>>, submittedRows: Array<Array<{text: string} | {html: string}>> }}
  */
 function buildTableRows({
   reportingPeriods,
@@ -69,7 +69,12 @@ function buildTableRows({
   localiseUrl,
   localise
 }) {
-  return reportingPeriods.map((period) => {
+  /** @type {Array<Array<{text: string} | {html: string}>>} */
+  const activeRows = []
+  /** @type {Array<Array<{text: string} | {html: string}>>} */
+  const submittedRows = []
+
+  for (const period of reportingPeriods) {
     const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
 
     const label = formatPeriodLabel(period, cadence, localise)
@@ -94,13 +99,21 @@ function buildTableRows({
     }
     const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
 
-    return [
+    const row = [
       { text: label },
       { html: buildStatusTagHtml(status, localise) },
       { text: formatDate(period.dueDate) },
       { html: buildActionLinkHtml(status, url, label, localise) }
     ]
-  })
+
+    if (status === SUBMISSION_STATUS.SUBMITTED) {
+      submittedRows.push(row)
+    } else {
+      activeRows.push(row)
+    }
+  }
+
+  return { activeRows, submittedRows }
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -144,7 +157,7 @@ export const listController = {
       { text: localise('reports:actionColumn') }
     ]
 
-    const tableRows = buildTableRows({
+    const { activeRows, submittedRows } = buildTableRows({
       reportingPeriods,
       cadence,
       organisationId,
@@ -165,10 +178,15 @@ export const listController = {
       ),
       hasMonthlyPeriods: isMonthly && reportingPeriods.length > 0,
       hasQuarterlyPeriods: isQuarterly && reportingPeriods.length > 0,
-      monthlyTableHead: isMonthly ? tableHead : [],
-      monthlyTableRows: isMonthly ? tableRows : [],
-      quarterlyTableHead: isQuarterly ? tableHead : [],
-      quarterlyTableRows: isQuarterly ? tableRows : [],
+      hasMonthlyActivePeriods: isMonthly && activeRows.length > 0,
+      hasMonthlySubmittedPeriods: isMonthly && submittedRows.length > 0,
+      hasQuarterlyActivePeriods: isQuarterly && activeRows.length > 0,
+      hasQuarterlySubmittedPeriods: isQuarterly && submittedRows.length > 0,
+      tableHead,
+      monthlyActiveTableRows: isMonthly ? activeRows : [],
+      monthlySubmittedTableRows: isMonthly ? submittedRows : [],
+      quarterlyActiveTableRows: isQuarterly ? activeRows : [],
+      quarterlySubmittedTableRows: isQuarterly ? submittedRows : [],
       hasPeriods: reportingPeriods.length > 0,
       emptyStateMessage: localise('reports:emptyState')
     }

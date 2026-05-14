@@ -178,6 +178,36 @@ const monthlyWithSubmittedResponse = {
   ]
 }
 
+const monthlyMixedStatusResponse = {
+  cadence: 'monthly',
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      dueDate: '2026-02-20',
+      report: { id: 'report-001', status: 'submitted' }
+    },
+    {
+      year: 2026,
+      period: 2,
+      startDate: '2026-02-01',
+      endDate: '2026-02-28',
+      dueDate: '2026-03-20',
+      report: { id: 'report-002', status: 'in_progress' }
+    },
+    {
+      year: 2026,
+      period: 3,
+      startDate: '2026-03-01',
+      endDate: '2026-03-31',
+      dueDate: '2026-04-20',
+      report: null
+    }
+  ]
+}
+
 const emptyResponse = {
   cadence: 'monthly',
   reportingPeriods: []
@@ -614,6 +644,117 @@ describe('#listReportsController', () => {
         expect(link?.getAttribute('href')).toBe(
           '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/view'
         )
+      })
+    })
+
+    describe('for mixed-status periods', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedRegistration
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(
+          monthlyMixedStatusResponse
+        )
+      })
+
+      it('should display Action required and Submitted section headings', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const sectionHeadings = Array.from(
+          body.querySelectorAll('h3.govuk-heading-m')
+        ).map((h) => h.textContent?.trim())
+
+        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
+      })
+
+      it('should render two tables: active rows then submitted rows', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const tables = body.querySelectorAll('.govuk-table')
+        const periodsByTable = Array.from(tables).map((table) =>
+          Array.from(table.querySelectorAll('tbody tr')).map((tr) =>
+            tr.querySelector('td')?.textContent?.trim()
+          )
+        )
+
+        expect(periodsByTable).toStrictEqual([
+          ['February 2026', 'March 2026'],
+          ['January 2026']
+        ])
+      })
+    })
+
+    describe('when only active periods exist', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedRegistration
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
+      })
+
+      it('should not display Submitted section heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const sectionHeadings = Array.from(
+          body.querySelectorAll('h3.govuk-heading-m')
+        ).map((h) => h.textContent?.trim())
+
+        expect(sectionHeadings).toStrictEqual(['Action required'])
+      })
+    })
+
+    describe('when only submitted periods exist', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedRegistration
+        )
+        vi.mocked(fetchReportingPeriods).mockResolvedValue(
+          monthlyWithSubmittedResponse
+        )
+      })
+
+      it('should not display Action required section heading', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const sectionHeadings = Array.from(
+          body.querySelectorAll('h3.govuk-heading-m')
+        ).map((h) => h.textContent?.trim())
+
+        expect(sectionHeadings).toStrictEqual(['Submitted'])
       })
     })
 
