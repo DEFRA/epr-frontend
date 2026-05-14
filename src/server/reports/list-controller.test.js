@@ -148,7 +148,6 @@ const monthlyWithReportResponse = {
       report: {
         id: 'report-001',
         status: 'in_progress',
-        submissionNumber: 1,
         submittedAt: null,
         submittedBy: null
       }
@@ -168,7 +167,6 @@ const monthlyWithReadyToSubmitResponse = {
       report: {
         id: 'report-002',
         status: 'ready_to_submit',
-        submissionNumber: 1,
         submittedAt: null,
         submittedBy: null
       }
@@ -188,7 +186,6 @@ const monthlyWithSubmittedResponse = {
       report: {
         id: 'report-002',
         status: 'submitted',
-        submissionNumber: 1,
         submittedAt: '2026-02-05T18:22:00.000Z',
         submittedBy: {
           id: 'user-1',
@@ -212,7 +209,6 @@ const monthlyMixedStatusResponse = {
       report: {
         id: 'report-001',
         status: 'submitted',
-        submissionNumber: 1,
         submittedAt: '2026-02-05T18:22:00.000Z',
         submittedBy: {
           id: 'user-1',
@@ -230,7 +226,6 @@ const monthlyMixedStatusResponse = {
       report: {
         id: 'report-002',
         status: 'in_progress',
-        submissionNumber: 1,
         submittedAt: null,
         submittedBy: null
       }
@@ -935,7 +930,6 @@ describe('#listReportsController', () => {
               report: {
                 id: 'report-003',
                 status: 'in_progress',
-                submissionNumber: 1,
                 submittedAt: null,
                 submittedBy: null
               }
@@ -981,7 +975,6 @@ describe('#listReportsController', () => {
               report: {
                 id: 'report-004',
                 status: 'in_progress',
-                submissionNumber: 1,
                 submittedAt: null,
                 submittedBy: null
               }

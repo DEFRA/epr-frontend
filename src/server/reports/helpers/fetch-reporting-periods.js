@@ -28,7 +28,6 @@ export async function fetchReportingPeriods(
  * @typedef {{
  *   id: string,
  *   status: SubmissionStatusValue,
- *   submissionNumber: number,
  *   submittedAt: string | null,
  *   submittedBy: ReportSubmitter | null
  * }} ReportListItem
