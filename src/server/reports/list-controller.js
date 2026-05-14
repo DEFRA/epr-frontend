@@ -1,6 +1,6 @@
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import {
   isExporterRegistration,
   isReprocessorRegistration
@@ -13,6 +13,34 @@ import {
   getActionLabel,
   getStatusLabel
 } from './helpers/format-submission-status.js'
+import { getStatusTagClass } from './helpers/get-status-tag-class.js'
+
+/**
+ * @param {string | null} status
+ * @param {string} url
+ * @param {string} label
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+const buildActionLinkHtml = (status, url, label, localise) => {
+  const actionLabel = getActionLabel(status, localise)
+  return `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
+}
+
+/**
+ * @param {string | null} status
+ * @param {(key: string) => string} localise
+ * @returns {string}
+ */
+const buildStatusTagHtml = (status, localise) => {
+  const statusLabel = getStatusLabel(status, localise)
+  if (!statusLabel) {
+    return ''
+  }
+  const statusTagClass = getStatusTagClass(status)
+  const tagClass = statusTagClass ? `govuk-tag ${statusTagClass}` : 'govuk-tag'
+  return `<strong class="${tagClass}">${escapeHtml(statusLabel)}</strong>`
+}
 
 /**
  * Build table rows for the govukTable macro.
@@ -46,7 +74,6 @@ function buildTableRows({
     const label = formatPeriodLabel(period, cadence, localise)
 
     const status = deriveSubmissionStatus(period.endDate, period.report)
-    const statusLabel = getStatusLabel(status, localise)
 
     let inProgressSuffix
     if (isAccreditedExporter && cadence === CADENCE.MONTHLY) {
@@ -65,14 +92,12 @@ function buildTableRows({
       [SUBMISSION_STATUS.SUBMITTED]: '/view'
     }
     const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
-    const statusHtml = statusLabel
-      ? `<strong class="govuk-tag">${escapeHtml(statusLabel)}</strong>`
-      : ''
 
-    const actionLabel = getActionLabel(status, localise)
-    const labelHtml = `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
-
-    return [{ text: label }, { html: statusHtml }, { html: labelHtml }]
+    return [
+      { text: label },
+      { html: buildStatusTagHtml(status, localise) },
+      { html: buildActionLinkHtml(status, url, label, localise) }
+    ]
   })
 }
 

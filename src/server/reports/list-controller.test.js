@@ -187,6 +187,13 @@ const accreditedUrl = '/organisations/org-123/registrations/reg-001/reports'
 const exporterUrl = '/organisations/org-456/registrations/reg-002/reports'
 const reprocessorUrl = '/organisations/org-789/registrations/reg-003/reports'
 
+const extractTagData = (body) =>
+  Array.from(body.querySelectorAll('.govuk-table .govuk-tag')).map((tag) => ({
+    text: tag.textContent?.trim(),
+    modifier:
+      Array.from(tag.classList).find((c) => c.startsWith('govuk-tag--')) ?? null
+  }))
+
 describe('#listReportsController', () => {
   beforeAll(() => {
     vi.useFakeTimers({
@@ -369,11 +376,12 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+        const tagData = extractTagData(body)
 
-        expect(tags).toHaveLength(2)
-        expect(tags[0]?.textContent?.trim()).toBe('Due')
-        expect(tags[1]?.textContent?.trim()).toBe('Due')
+        expect(tagData).toStrictEqual([
+          { text: 'Due', modifier: 'govuk-tag--orange' },
+          { text: 'Due', modifier: 'govuk-tag--orange' }
+        ])
       })
 
       it('should not display Due tag for current period', async ({
@@ -416,10 +424,11 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+        const tagData = extractTagData(body)
 
-        expect(tags).toHaveLength(1)
-        expect(tags[0]?.textContent?.trim()).toBe('In progress')
+        expect(tagData).toStrictEqual([
+          { text: 'In progress', modifier: 'govuk-tag--yellow' }
+        ])
       })
 
       it('should display Continue link instead of Select', async ({
@@ -505,10 +514,11 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+        const tagData = extractTagData(body)
 
-        expect(tags).toHaveLength(1)
-        expect(tags[0]?.textContent?.trim()).toBe('Ready to submit')
+        expect(tagData).toStrictEqual([
+          { text: 'Ready to submit', modifier: null }
+        ])
       })
 
       it('should display Review and submit link to submit page', async ({
@@ -553,10 +563,11 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+        const tagData = extractTagData(body)
 
-        expect(tags).toHaveLength(1)
-        expect(tags[0]?.textContent?.trim()).toBe('Submitted')
+        expect(tagData).toStrictEqual([
+          { text: 'Submitted', modifier: 'govuk-tag--green' }
+        ])
       })
 
       it('should display View link to view reports page', async ({
