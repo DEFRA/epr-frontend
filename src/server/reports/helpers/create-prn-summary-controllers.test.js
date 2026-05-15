@@ -209,7 +209,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
           const { body } = new JSDOM(result).window.document
           const input = getByRole(body, 'textbox', {
             name: new RegExp(
-              `Enter total revenue of ${subtree.notePlural}, excluding VAT`
+              `Enter the total revenue that you have received or expect to receive for these ${subtree.notePlural}, excluding VAT`
             )
           })
 
