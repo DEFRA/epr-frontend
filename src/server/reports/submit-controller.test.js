@@ -1245,6 +1245,34 @@ describe('#submitController', () => {
           }
         )
       })
+
+      describe('when report is already submitted', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            exporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            status: {
+              ...exporterReportDetail.status,
+              currentStatus: 'submitted'
+            }
+          })
+        })
+
+        it('should redirect to the submitted confirmation page', async ({
+          server
+        }) => {
+          const { statusCode, headers } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          expect(statusCode).toBe(statusCodes.found)
+          expect(headers.location).toBe(submittedUrl)
+        })
+      })
     })
 
     describe('POST', () => {

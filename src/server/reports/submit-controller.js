@@ -144,6 +144,14 @@ export const submitGetController = {
       reportDetail.status
     )
 
+    if (status.currentStatus === SUBMISSION_STATUS.SUBMITTED) {
+      return h.redirect(
+        request.localiseUrl(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submitted`
+        )
+      )
+    }
+
     const viewData = buildViewData({
       registration,
       accreditation,
