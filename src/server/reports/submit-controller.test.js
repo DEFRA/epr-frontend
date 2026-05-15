@@ -16,16 +16,15 @@ vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
-const mockAuth = /** @type {any} */ ({
+const mockAuth = {
   strategy: 'session',
   credentials: {
     profile: { id: 'user-123', email: 'test@example.com' },
     idToken: 'mock-id-token'
   }
-})
+}
 
-/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
-const exporterRegistration = /** @type {any} */ ({
+const exporterRegistration = {
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -34,10 +33,9 @@ const exporterRegistration = /** @type {any} */ ({
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-})
+}
 
-/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
-const reprocessorRegistration = /** @type {any} */ ({
+const reprocessorRegistration = {
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -53,7 +51,7 @@ const reprocessorRegistration = /** @type {any} */ ({
     }
   },
   accreditation: undefined
-})
+}
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
@@ -140,11 +138,10 @@ const exporterReportDetail = {
   }
 }
 
-/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
-const accreditedReprocessorRegistration = /** @type {any} */ ({
+const accreditedReprocessorRegistration = {
   ...reprocessorRegistration,
   accreditation: { id: 'acc-001' }
-})
+}
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
@@ -219,11 +216,10 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
-const accreditedExporterRegistration = /** @type {any} */ ({
+const accreditedExporterRegistration = {
   ...exporterRegistration,
   accreditation: { id: 'acc-002' }
-})
+}
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
