@@ -16,15 +16,16 @@ vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
-const mockAuth = {
+const mockAuth = /** @type {any} */ ({
   strategy: 'session',
   credentials: {
     profile: { id: 'user-123', email: 'test@example.com' },
     idToken: 'mock-id-token'
   }
-}
+})
 
-const exporterRegistration = {
+/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
+const exporterRegistration = /** @type {any} */ ({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -33,9 +34,10 @@ const exporterRegistration = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
-const reprocessorRegistration = {
+/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
+const reprocessorRegistration = /** @type {any} */ ({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -51,7 +53,7 @@ const reprocessorRegistration = {
     }
   },
   accreditation: undefined
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
@@ -105,12 +107,14 @@ const exporterReportDetail = {
         siteName: 'Brussels Recycling',
         orsId: 'OSR-001',
         country: 'Belgium',
+        tonnageExported: 30,
         approved: false
       },
       {
         siteName: 'RecyclePlast SA',
         orsId: 'OSR-096',
         country: 'France',
+        tonnageExported: 20,
         approved: false
       }
     ],
@@ -136,10 +140,11 @@ const exporterReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = {
+/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
+const accreditedReprocessorRegistration = /** @type {any} */ ({
   ...reprocessorRegistration,
   accreditation: { id: 'acc-001' }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
@@ -171,7 +176,7 @@ const reprocessorReportDetail = {
       by: { id: 'user-789', name: 'Jane Smith', position: 'User' }
     }
   },
-  supportingInformation: null,
+  supportingInformation: undefined,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
@@ -214,22 +219,26 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-const accreditedExporterRegistration = {
+/** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */
+const accreditedExporterRegistration = /** @type {any} */ ({
   ...exporterRegistration,
   accreditation: { id: 'acc-002' }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   operatorCategory: 'EXPORTER_ACCREDITED',
   exportActivity: {
-    ...exporterReportDetail.exportActivity,
+    .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+      exporterReportDetail.exportActivity
+    ),
     overseasSites: [
       {
         siteName: 'Brussels Recycling',
         orsId: 'OSR-001',
         country: 'Belgium',
+        tonnageExported: 50,
         approved: true
       }
     ]
@@ -591,7 +600,9 @@ describe('#submitController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...exporterReportDetail,
             exportActivity: {
-              ...exporterReportDetail.exportActivity,
+              .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+                exporterReportDetail.exportActivity
+              ),
               totalTonnageRefusedOrStopped: null,
               tonnageRefusedAtDestination: null,
               tonnageStoppedDuringExport: null,
@@ -793,7 +804,7 @@ describe('#submitController', () => {
           )
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...exporterReportDetail,
-            exportActivity: null
+            exportActivity: undefined
           })
         })
 
@@ -1254,7 +1265,9 @@ describe('#submitController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...exporterReportDetail,
             status: {
-              ...exporterReportDetail.status,
+              .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['status']>} */ (
+                exporterReportDetail.status
+              ),
               currentStatus: 'submitted'
             }
           })
