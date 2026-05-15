@@ -2,6 +2,8 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { mockAuth } from '#server/common/test-helpers/mock-auth.js'
+import { buildRegistration } from '#server/common/test-helpers/mock-registration.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
@@ -16,42 +18,24 @@ vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
-  }
-}
+const exporterRegistration = buildRegistration({
+  registration: { wasteProcessingType: 'exporter' }
+})
 
-const exporterRegistration = {
-  organisationData: { id: 'org-123' },
+const reprocessorRegistration = buildRegistration({
   registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
-}
-
-const reprocessorRegistration = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
     wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234',
     site: {
       address: {
         line1: 'North Road',
         town: 'Manchester',
         postcode: 'M1 1AA'
-      }
+      },
+      gridReference: 'SJ 000 000',
+      siteCapacity: []
     }
-  },
-  accreditation: undefined
-}
+  }
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
@@ -138,10 +122,13 @@ const exporterReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = {
-  ...reprocessorRegistration,
+const accreditedReprocessorRegistration = buildRegistration({
+  registration: {
+    ...reprocessorRegistration.registration,
+    accreditationId: 'acc-001'
+  },
   accreditation: { id: 'acc-001' }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
@@ -216,10 +203,13 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-const accreditedExporterRegistration = {
-  ...exporterRegistration,
+const accreditedExporterRegistration = buildRegistration({
+  registration: {
+    ...exporterRegistration.registration,
+    accreditationId: 'acc-002'
+  },
   accreditation: { id: 'acc-002' }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
