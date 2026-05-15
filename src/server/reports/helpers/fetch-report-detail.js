@@ -104,10 +104,10 @@ export async function fetchReportDetail(
  *     unapprovedOverseasSites: UnapprovedOverseasSiteEntry[],
  *     totalTonnageExported: number,
  *     tonnageReceivedNotExported: number|null,
- *     totalTonnageRefusedOrStopped: number,
- *     tonnageRefusedAtDestination: number,
- *     tonnageStoppedDuringExport: number,
- *     tonnageRepatriated: number
+ *     totalTonnageRefusedOrStopped: number | null,
+ *     tonnageRefusedAtDestination: number | null,
+ *     tonnageStoppedDuringExport: number | null,
+ *     tonnageRepatriated: number | null
  *   },
  *   wasteSent: {
  *     tonnageSentToReprocessor: number,
