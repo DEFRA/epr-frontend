@@ -2,13 +2,18 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { mockAuth } from '#server/common/test-helpers/mock-auth.js'
-import { buildRegistration } from '#server/common/test-helpers/mock-registration.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+
+/**
+ * @import { Organisation, User } from '#domain/organisations/model.js'
+ * @import { Registration, RegistrationApproved } from '#domain/organisations/registration.js'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
+ */
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -17,6 +22,84 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
+
+/** @type {{ strategy: string, credentials: UserSession }} */
+const mockAuth = {
+  strategy: 'session',
+  credentials: {
+    provider: 'defra-id',
+    query: {},
+    refreshToken: 'mock-refresh-token',
+    profile: { id: 'user-123', email: 'test@example.com' },
+    expiresAt: '2099-01-01T00:00:00.000Z',
+    idToken: 'mock-id-token',
+    urls: {
+      token: 'http://defra-id.auth/token',
+      logout: 'http://defra-id.auth/logout'
+    }
+  }
+}
+
+/** @type {User} */
+const stubUser = {
+  fullName: 'Test User',
+  email: 'test@example.com',
+  phone: '0123 456789'
+}
+
+/** @type {RegistrationApproved} */
+const baseRegistration = {
+  id: 'reg-001',
+  approvedPersons: [],
+  formSubmissionTime: new Date('2026-01-01'),
+  material: 'plastic',
+  orgName: 'Test Organisation',
+  site: {
+    address: {},
+    gridReference: 'SJ 000 000',
+    siteCapacity: []
+  },
+  submittedToRegulator: 'ea',
+  submitterContactDetails: stubUser,
+  wasteProcessingType: 'exporter',
+  registrationNumber: 'REG001234',
+  status: 'approved',
+  validFrom: '2026-01-01',
+  validTo: '2027-01-01'
+}
+
+/** @type {Organisation} */
+const baseOrganisation = {
+  id: 'org-123',
+  accreditations: [],
+  companyDetails: { name: 'Test Organisation' },
+  formSubmissionTime: new Date('2026-01-01'),
+  orgId: 1,
+  registrations: [],
+  schemaVersion: 1,
+  status: 'approved',
+  statusHistory: [],
+  submittedToRegulator: 'ea',
+  submitterContactDetails: stubUser,
+  users: [],
+  version: 1,
+  wasteProcessingTypes: ['exporter']
+}
+
+/**
+ * @param {{ organisationData?: Partial<Organisation>, registration?: Partial<Registration>, accreditation?: object }} [overrides]
+ * @returns {RegistrationWithAccreditation}
+ */
+function buildRegistration(overrides = {}) {
+  return {
+    organisationData: { ...baseOrganisation, ...overrides.organisationData },
+    registration: /** @type {RegistrationApproved} */ ({
+      ...baseRegistration,
+      ...overrides.registration
+    }),
+    accreditation: overrides.accreditation
+  }
+}
 
 const exporterRegistration = buildRegistration({
   registration: { wasteProcessingType: 'exporter' }
