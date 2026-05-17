@@ -19,6 +19,14 @@ describe('#createMockLocalise', () => {
   })
 
   describe('with translations', () => {
+    it('should return translated text for known key to check', () => {
+      const t = createMockLocalise({
+        'prns:create:pageTitle': 'Create a note'
+      })
+
+      expect(t('prns:create:pageTitle')).toBe('Create a note')
+    })
+
     it('should return translated text for known key', () => {
       const t = createMockLocalise({
         'prns:create:pageTitle': 'Create a note'
