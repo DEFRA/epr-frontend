@@ -1,8 +1,8 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
+import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole, queryByRole } from '@testing-library/dom'
@@ -443,12 +443,7 @@ describe('#listReportsController', () => {
           body.querySelectorAll('.govuk-table thead th')
         ).map((th) => th.textContent?.trim())
 
-        expect(headerTexts).toStrictEqual([
-          'Period',
-          'Status',
-          'Date due',
-          'Action'
-        ])
+        expect(headerTexts).toStrictEqual(['Period', 'Status', 'Date due', ''])
       })
 
       it('should display formatted due date per row', async ({ server }) => {
@@ -818,7 +813,7 @@ describe('#listReportsController', () => {
           'Status',
           'Date and time',
           'Submitted by',
-          'Action'
+          ''
         ])
       })
 

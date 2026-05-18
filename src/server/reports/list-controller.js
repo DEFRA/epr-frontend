@@ -186,7 +186,7 @@ const buildHeaders = (localise) => ({
       classes: cssClasses.width.oneQuarter
     },
     {
-      text: localise('reports:actionColumn'),
+      text: '',
       classes: cssClasses.textAlign.right
     }
   ],
@@ -205,7 +205,7 @@ const buildHeaders = (localise) => ({
     },
     { text: localise('reports:submittedByColumn') },
     {
-      text: localise('reports:actionColumn'),
+      text: '',
       classes: cssClasses.textAlign.right
     }
   ]
