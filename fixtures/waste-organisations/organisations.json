@@ -4,31 +4,45 @@
       "id": "9eb099a7-bda0-456c-96ba-e0af3fdb9cde",
       "name": "Looney Tunes",
       "tradingName": "Acme Compliance Scheme",
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "37th Place",
+        "addressLine2": null,
         "town": "Ashfield",
         "county": "Chicago",
-        "postcode": "W1 L3Y"
+        "postcode": "W1 L3Y",
+        "country": null
       },
       "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "dd793573-b218-47a7-be85-1c777ca0d0d8",
       "name": "Bigco Packaging Ltd",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "Zig Zag road",
         "addressLine2": "Box Hill",
         "town": "Tadworth",
-        "postcode": "KT20 7LB"
+        "county": null,
+        "postcode": "KT20 7LB",
+        "country": null
       },
       "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "b7b158e1-c72f-45d4-8868-5c6e14bc10af",
       "name": "Green Waste Solutions",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "1 Worlds End Lane",
+        "addressLine2": null,
         "town": "Green St Green",
+        "county": null,
         "postcode": "BR6 6AG",
         "country": "England"
       },
@@ -37,50 +51,80 @@
     {
       "id": "producer-1",
       "name": "Acme Packaging Ltd",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "123 Industrial Estate",
+        "addressLine2": null,
         "town": "Manchester",
-        "postcode": "M1 1AA"
+        "county": null,
+        "postcode": "M1 1AA",
+        "country": null
       },
       "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "producer-2",
       "name": "BigCo Waste Solutions",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "456 Recycling Road",
+        "addressLine2": null,
         "town": "Birmingham",
-        "postcode": "B1 1BB"
+        "county": null,
+        "postcode": "B1 1BB",
+        "country": null
       },
       "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "producer-3",
       "name": "EcoRecycle Industries",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "789 Green Lane",
+        "addressLine2": null,
         "town": "Leeds",
-        "postcode": "LS1 1CC"
+        "county": null,
+        "postcode": "LS1 1CC",
+        "country": null
       },
       "registrationType": "LARGE_PRODUCER"
     },
     {
       "id": "scheme-1",
       "name": "Green Compliance Scheme",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "10 Compliance Way",
+        "addressLine2": null,
         "town": "London",
-        "postcode": "EC1 1DD"
+        "county": null,
+        "postcode": "EC1 1DD",
+        "country": null
       },
       "registrationType": "COMPLIANCE_SCHEME"
     },
     {
       "id": "scheme-2",
       "name": "National Packaging Scheme",
+      "tradingName": null,
+      "businessCountry": null,
+      "companiesHouseNumber": null,
       "address": {
         "addressLine1": "20 Packaging Plaza",
+        "addressLine2": null,
         "town": "Bristol",
-        "postcode": "BS1 1EE"
+        "county": null,
+        "postcode": "BS1 1EE",
+        "country": null
       },
       "registrationType": "COMPLIANCE_SCHEME"
     }
