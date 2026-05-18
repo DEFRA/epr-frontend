@@ -12,6 +12,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
  * @import { DOMWindow } from 'jsdom'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  */
 
 vi.mock(
@@ -34,71 +35,79 @@ const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
   })
 )
 
-const accreditedRegistration = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'glass',
-    glassRecyclingProcess: ['glass_re_melt'],
-    wasteProcessingType: 'reprocessor',
-    accreditationId: 'acc-001',
-    registrationNumber: 'REG001234',
-    site: {
-      address: {
-        line1: 'Manchester Glass Facility',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
+const accreditedRegistration = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'glass',
+      glassRecyclingProcess: ['glass_re_melt'],
+      wasteProcessingType: 'reprocessor',
+      accreditationId: 'acc-001',
+      registrationNumber: 'REG001234',
+      site: {
+        address: {
+          line1: 'Manchester Glass Facility',
+          town: 'Manchester',
+          postcode: 'M1 1AA'
+        }
       }
+    },
+    accreditation: {
+      id: 'acc-001',
+      status: 'approved'
     }
-  },
-  accreditation: {
-    id: 'acc-001',
-    status: 'approved'
-  }
-}
+  })
+)
 
-const accreditedExporter = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: {
-    id: 'acc-002',
-    status: 'approved'
-  }
-}
+const accreditedExporter = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'exporter',
+      registrationNumber: 'REG001234'
+    },
+    accreditation: {
+      id: 'acc-002',
+      status: 'approved'
+    }
+  })
+)
 
-const registeredOnlyExporter = {
-  organisationData: { id: 'org-456' },
-  registration: {
-    id: 'reg-002',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG002345'
-  },
-  accreditation: undefined
-}
+const registeredOnlyExporter = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-456' },
+    registration: {
+      id: 'reg-002',
+      material: 'plastic',
+      wasteProcessingType: 'exporter',
+      registrationNumber: 'REG002345'
+    },
+    accreditation: undefined
+  })
+)
 
-const registeredOnlyReprocessor = {
-  organisationData: { id: 'org-789' },
-  registration: {
-    id: 'reg-003',
-    material: 'plastic',
-    wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG003456',
-    site: {
-      address: {
-        line1: 'North Road',
-        town: 'Manchester',
-        postcode: 'M1 1AA'
+const registeredOnlyReprocessor = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-789' },
+    registration: {
+      id: 'reg-003',
+      material: 'plastic',
+      wasteProcessingType: 'reprocessor',
+      registrationNumber: 'REG003456',
+      site: {
+        address: {
+          line1: 'North Road',
+          town: 'Manchester',
+          postcode: 'M1 1AA'
+        }
       }
-    }
-  },
-  accreditation: undefined
-}
+    },
+    accreditation: undefined
+  })
+)
 
 const monthlyResponse = {
   cadence: CADENCE.MONTHLY,
