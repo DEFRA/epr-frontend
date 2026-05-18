@@ -5,12 +5,19 @@ import { asHapiRequest } from '#server/common/hapi-types.js'
 import organisationsFixture from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
- * @import { Server } from '@hapi/hapi'
  * @import { SetupServerApi } from 'msw/node'
  * @import { Mock, TestAPI } from 'vitest'
  * @import { HapiServer } from '#server/common/hapi-types.js'
  * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
  * @import { LogMethod } from '#server/common/helpers/logging/logger.js'
+ */
+
+/**
+ * @typedef {{
+ *   info: Mock<LogMethod>,
+ *   warn: Mock<LogMethod>,
+ *   error: Mock<LogMethod>
+ * }} LoggerMocks
  */
 
 /**
@@ -91,9 +98,7 @@ const createOidcHandlers = (baseUrl) => {
  * `server` fixture can then assert with
  * `expect(server.loggerMocks.warn).toHaveBeenCalledWith(...)` — covering
  * server- and request-level logs uniformly.
- * @param {HapiServer & {
- *   loggerMocks?: { info: Mock<LogMethod>, warn: Mock<LogMethod>, error: Mock<LogMethod> }
- * }} server
+ * @param {HapiServer & { loggerMocks?: LoggerMocks }} server
  */
 const attachLoggerMocks = (server) => {
   const loggerMocks = {
@@ -116,46 +121,47 @@ const attachLoggerMocks = (server) => {
   })
 }
 
-const it = /** @type {TestAPI<{ server: Server, msw: SetupServerApi }>} */ (
-  test.extend({
-    msw: [
-      // eslint-disable-next-line no-empty-pattern
-      async ({}, use) => {
-        const server = setupServer(
-          awsEc2MetadataHandler,
-          ...createOidcHandlers('http://defra-id.auth')
-        )
-        server.listen({ onUnhandledRequest: 'error' })
-
-        await use(server)
-
-        server.resetHandlers()
-        server.close()
-      },
-      { auto: true }
-    ],
-    server: [
-      // eslint-disable-next-line no-empty-pattern
-      async ({}, use) => {
-        const { createServer } = await import('#server/index.js')
-        const server = await createServer({
-          wasteOrganisations: /** @type {WasteOrganisation[]} */ (
-            organisationsFixture.organisations
+const it =
+  /** @type {TestAPI<{ server: HapiServer & { loggerMocks: LoggerMocks }, msw: SetupServerApi }>} */ (
+    test.extend({
+      msw: [
+        // eslint-disable-next-line no-empty-pattern
+        async ({}, use) => {
+          const server = setupServer(
+            awsEc2MetadataHandler,
+            ...createOidcHandlers('http://defra-id.auth')
           )
-        })
+          server.listen({ onUnhandledRequest: 'error' })
 
-        attachLoggerMocks(server)
+          await use(server)
 
-        await server.initialize()
+          server.resetHandlers()
+          server.close()
+        },
+        { auto: true }
+      ],
+      server: [
+        // eslint-disable-next-line no-empty-pattern
+        async ({}, use) => {
+          const { createServer } = await import('#server/index.js')
+          const server = await createServer({
+            wasteOrganisations: /** @type {WasteOrganisation[]} */ (
+              organisationsFixture.organisations
+            )
+          })
 
-        await use(server)
+          attachLoggerMocks(server)
 
-        await server.stop()
-      },
-      { scope: 'test' }
-    ]
-  })
-)
+          await server.initialize()
+
+          await use(server)
+
+          await server.stop()
+        },
+        { scope: 'test' }
+      ]
+    })
+  )
 
 const beforeEach = it.beforeEach
 
