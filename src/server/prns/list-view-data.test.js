@@ -50,7 +50,7 @@ const createMockRequest = () => ({
       'prns:list:cancelledTable:actionHeading': 'View in new tab',
       'prns:list:cancelledTable:selectText': 'Select'
     }
-    return translations[key] || key
+    return /** @type {Record<string, string>} */ (translations)[key] || key
   }),
   localiseUrl: vi.fn((url) => url)
 })
