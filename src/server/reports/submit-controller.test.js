@@ -8,6 +8,13 @@ import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import { Organisation, User } from '#domain/organisations/model.js'
+ * @import { Registration, RegistrationApproved } from '#domain/organisations/registration.js'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -16,42 +23,102 @@ vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
+/** @type {{ strategy: string, credentials: UserSession }} */
 const mockAuth = {
   strategy: 'session',
   credentials: {
+    provider: 'defra-id',
+    query: {},
+    refreshToken: 'mock-refresh-token',
     profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
+    expiresAt: '2099-01-01T00:00:00.000Z',
+    idToken: 'mock-id-token',
+    urls: {
+      token: 'http://defra-id.auth/token',
+      logout: 'http://defra-id.auth/logout'
+    }
   }
 }
 
-const exporterRegistration = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
+/** @type {User} */
+const stubUser = {
+  fullName: 'Test User',
+  email: 'test@example.com',
+  phone: '0123 456789'
 }
 
-const reprocessorRegistration = {
-  organisationData: { id: 'org-123' },
+/** @type {RegistrationApproved} */
+const baseRegistration = {
+  id: 'reg-001',
+  approvedPersons: [],
+  formSubmissionTime: new Date('2026-01-01'),
+  material: 'plastic',
+  orgName: 'Test Organisation',
+  site: {
+    address: {},
+    gridReference: 'SJ 000 000',
+    siteCapacity: []
+  },
+  submittedToRegulator: 'ea',
+  submitterContactDetails: stubUser,
+  wasteProcessingType: 'exporter',
+  registrationNumber: 'REG001234',
+  status: 'approved',
+  validFrom: '2026-01-01',
+  validTo: '2027-01-01'
+}
+
+/** @type {Organisation} */
+const baseOrganisation = {
+  id: 'org-123',
+  accreditations: [],
+  companyDetails: { name: 'Test Organisation' },
+  formSubmissionTime: new Date('2026-01-01'),
+  orgId: 1,
+  registrations: [],
+  schemaVersion: 1,
+  status: 'approved',
+  statusHistory: [],
+  submittedToRegulator: 'ea',
+  submitterContactDetails: stubUser,
+  users: [],
+  version: 1,
+  wasteProcessingTypes: ['exporter']
+}
+
+/**
+ * @param {{ organisationData?: Partial<Organisation>, registration?: Partial<Registration>, accreditation?: object }} [overrides]
+ * @returns {RegistrationWithAccreditation}
+ */
+function buildRegistration(overrides = {}) {
+  return {
+    organisationData: { ...baseOrganisation, ...overrides.organisationData },
+    registration: /** @type {RegistrationApproved} */ ({
+      ...baseRegistration,
+      ...overrides.registration
+    }),
+    accreditation: overrides.accreditation
+  }
+}
+
+const exporterRegistration = buildRegistration({
+  registration: { wasteProcessingType: 'exporter' }
+})
+
+const reprocessorRegistration = buildRegistration({
   registration: {
-    id: 'reg-001',
-    material: 'plastic',
     wasteProcessingType: 'reprocessor',
-    registrationNumber: 'REG001234',
     site: {
       address: {
         line1: 'North Road',
         town: 'Manchester',
         postcode: 'M1 1AA'
-      }
+      },
+      gridReference: 'SJ 000 000',
+      siteCapacity: []
     }
-  },
-  accreditation: undefined
-}
+  }
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
@@ -105,12 +172,14 @@ const exporterReportDetail = {
         siteName: 'Brussels Recycling',
         orsId: 'OSR-001',
         country: 'Belgium',
+        tonnageExported: 30,
         approved: false
       },
       {
         siteName: 'RecyclePlast SA',
         orsId: 'OSR-096',
         country: 'France',
+        tonnageExported: 20,
         approved: false
       }
     ],
@@ -136,10 +205,13 @@ const exporterReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = {
-  ...reprocessorRegistration,
+const accreditedReprocessorRegistration = buildRegistration({
+  registration: {
+    ...reprocessorRegistration.registration,
+    accreditationId: 'acc-001'
+  },
   accreditation: { id: 'acc-001' }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
@@ -171,7 +243,7 @@ const reprocessorReportDetail = {
       by: { id: 'user-789', name: 'Jane Smith', position: 'User' }
     }
   },
-  supportingInformation: null,
+  supportingInformation: undefined,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
@@ -214,22 +286,28 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-const accreditedExporterRegistration = {
-  ...exporterRegistration,
+const accreditedExporterRegistration = buildRegistration({
+  registration: {
+    ...exporterRegistration.registration,
+    accreditationId: 'acc-002'
+  },
   accreditation: { id: 'acc-002' }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   operatorCategory: 'EXPORTER_ACCREDITED',
   exportActivity: {
-    ...exporterReportDetail.exportActivity,
+    .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+      exporterReportDetail.exportActivity
+    ),
     overseasSites: [
       {
         siteName: 'Brussels Recycling',
         orsId: 'OSR-001',
         country: 'Belgium',
+        tonnageExported: 50,
         approved: true
       }
     ]
@@ -591,7 +669,9 @@ describe('#submitController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...exporterReportDetail,
             exportActivity: {
-              ...exporterReportDetail.exportActivity,
+              .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+                exporterReportDetail.exportActivity
+              ),
               totalTonnageRefusedOrStopped: null,
               tonnageRefusedAtDestination: null,
               tonnageStoppedDuringExport: null,
@@ -793,7 +873,7 @@ describe('#submitController', () => {
           )
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...exporterReportDetail,
-            exportActivity: null
+            exportActivity: undefined
           })
         })
 
@@ -1244,6 +1324,36 @@ describe('#submitController', () => {
             ).toBe(true)
           }
         )
+      })
+
+      describe('when report is already submitted', () => {
+        beforeEach(() => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            exporterRegistration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...exporterReportDetail,
+            status: {
+              .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['status']>} */ (
+                exporterReportDetail.status
+              ),
+              currentStatus: 'submitted'
+            }
+          })
+        })
+
+        it('should redirect to the submitted confirmation page', async ({
+          server
+        }) => {
+          const { statusCode, headers } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          expect(statusCode).toBe(statusCodes.found)
+          expect(headers.location).toBe(submittedUrl)
+        })
       })
     })
 

@@ -4,6 +4,15 @@ import { test, vi } from 'vitest'
 import { organisations } from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
+ * @import { SetupServer } from 'msw/node'
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
+/**
+ * @typedef {{ msw: SetupServer, server: HapiServer }} ServerFixtures
+ */
+
+/**
  * Stub handler for AWS EC2 Instance Metadata Service (IMDS).
  * The AWS SDK attempts to fetch credentials from this endpoint when running on EC2.
  * In tests, we stub it to prevent MSW warnings about unhandled requests.
@@ -97,40 +106,42 @@ const attachLoggerMocks = (server) => {
   })
 }
 
-const it = test.extend({
-  msw: [
-    // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
-      const server = setupServer(
-        awsEc2MetadataHandler,
-        ...createOidcHandlers('http://defra-id.auth')
-      )
-      server.listen({ onUnhandledRequest: 'error' })
+const it = /** @type {import('vitest').TestAPI<ServerFixtures>} */ (
+  test.extend({
+    msw: [
+      // eslint-disable-next-line no-empty-pattern
+      async ({}, use) => {
+        const server = setupServer(
+          awsEc2MetadataHandler,
+          ...createOidcHandlers('http://defra-id.auth')
+        )
+        server.listen({ onUnhandledRequest: 'error' })
 
-      await use(server)
+        await use(server)
 
-      server.resetHandlers()
-      server.close()
-    },
-    { auto: true }
-  ],
-  server: [
-    // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
-      const { createServer } = await import('#server/index.js')
-      const server = await createServer({ wasteOrganisations: organisations })
+        server.resetHandlers()
+        server.close()
+      },
+      { auto: true }
+    ],
+    server: [
+      // eslint-disable-next-line no-empty-pattern
+      async ({}, use) => {
+        const { createServer } = await import('#server/index.js')
+        const server = await createServer({ wasteOrganisations: organisations })
 
-      attachLoggerMocks(server)
+        attachLoggerMocks(server)
 
-      await server.initialize()
+        await server.initialize()
 
-      await use(server)
+        await use(server)
 
-      await server.stop()
-    },
-    { scope: 'test' }
-  ]
-})
+        await server.stop()
+      },
+      { scope: 'test' }
+    ]
+  })
+)
 
 const beforeEach = it.beforeEach
 
