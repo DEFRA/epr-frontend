@@ -94,7 +94,7 @@
   "noteSummaryHeading": "{{noteTypePlural}} issued for {{material}} packaging waste in {{periodShort}}",
   "noteSummaryPageTitle": "{{noteTypePlural}} issued: {{material}}: {{periodLabel}}",
   "noteSummaryRevenueHint": "Total revenue should be in pounds and pence",
-  "noteSummaryRevenueLabel": "Enter total revenue of {{noteTypePlural}}, excluding VAT",
+  "noteSummaryRevenueLabel": "Enter the total revenue that you have received or expect to receive for these {{noteTypePlural}}, excluding VAT",
   "noteSummarySave": "Save and come back later",
   "noteTypeSectionHeading": "{{noteTypePlural}}",
   "orsHelpLine1": "If any of your ORS data is missing, upload your summary logs again for this period to fix the problem.",
