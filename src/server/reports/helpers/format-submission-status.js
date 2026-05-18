@@ -1,17 +1,17 @@
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { SUBMISSION_STATUS } from '../constants.js'
 
 /** @type {Record<string, string>} */
 const tagClasses = {
-  [SUBMISSION_STATUS.DUE]: 'govuk-tag--orange',
-  [SUBMISSION_STATUS.IN_PROGRESS]: 'govuk-tag--yellow',
-  [SUBMISSION_STATUS.READY_TO_SUBMIT]: '',
-  [SUBMISSION_STATUS.SUBMITTED]: 'govuk-tag--green'
+  [SUBMISSION_STATUS.DUE]: cssClasses.tag.orange,
+  [SUBMISSION_STATUS.IN_PROGRESS]: cssClasses.tag.yellow,
+  [SUBMISSION_STATUS.READY_TO_SUBMIT]: cssClasses.tag.blue,
+  [SUBMISSION_STATUS.SUBMITTED]: cssClasses.tag.green
 }
 
 /**
  * Get the GOV.UK tag modifier class for a submission status.
- * Returns an empty string for null, unrecognised, or ready-to-submit
- * (which uses the default blue tag).
+ * Returns an empty string for null or unrecognised statuses.
  * @param {string | null} status
  * @returns {string}
  */
