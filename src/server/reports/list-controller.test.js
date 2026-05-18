@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
+import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole, queryByRole } from '@testing-library/dom'
@@ -99,7 +100,7 @@ const registeredOnlyReprocessor = {
 }
 
 const monthlyResponse = {
-  cadence: 'monthly',
+  cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
       year: 2026,
@@ -129,7 +130,7 @@ const monthlyResponse = {
 }
 
 const quarterlyResponse = {
-  cadence: 'quarterly',
+  cadence: CADENCE.QUARTERLY,
   reportingPeriods: [
     {
       year: 2026,
@@ -143,7 +144,7 @@ const quarterlyResponse = {
 }
 
 const monthlyWithReportResponse = {
-  cadence: 'monthly',
+  cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
       year: 2026,
@@ -153,7 +154,7 @@ const monthlyWithReportResponse = {
       dueDate: '2026-02-20',
       report: {
         id: 'report-001',
-        status: 'in_progress',
+        status: SUBMISSION_STATUS.IN_PROGRESS,
         submittedAt: null,
         submittedBy: null
       }
@@ -162,7 +163,7 @@ const monthlyWithReportResponse = {
 }
 
 const monthlyWithReadyToSubmitResponse = {
-  cadence: 'monthly',
+  cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
       year: 2026,
@@ -172,7 +173,7 @@ const monthlyWithReadyToSubmitResponse = {
       dueDate: '2026-02-20',
       report: {
         id: 'report-002',
-        status: 'ready_to_submit',
+        status: SUBMISSION_STATUS.READY_TO_SUBMIT,
         submittedAt: null,
         submittedBy: null
       }
@@ -181,7 +182,7 @@ const monthlyWithReadyToSubmitResponse = {
 }
 
 const monthlyWithSubmittedResponse = {
-  cadence: 'monthly',
+  cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
       year: 2026,
@@ -191,7 +192,7 @@ const monthlyWithSubmittedResponse = {
       dueDate: '2026-02-20',
       report: {
         id: 'report-002',
-        status: 'submitted',
+        status: SUBMISSION_STATUS.SUBMITTED,
         submittedAt: '2026-02-05T18:22:00.000Z',
         submittedBy: {
           id: 'user-1',
@@ -204,7 +205,7 @@ const monthlyWithSubmittedResponse = {
 }
 
 const monthlyMixedStatusResponse = {
-  cadence: 'monthly',
+  cadence: CADENCE.MONTHLY,
   reportingPeriods: [
     {
       year: 2026,
@@ -214,7 +215,7 @@ const monthlyMixedStatusResponse = {
       dueDate: '2026-02-20',
       report: {
         id: 'report-001',
-        status: 'submitted',
+        status: SUBMISSION_STATUS.SUBMITTED,
         submittedAt: '2026-02-05T18:22:00.000Z',
         submittedBy: {
           id: 'user-1',
@@ -231,7 +232,7 @@ const monthlyMixedStatusResponse = {
       dueDate: '2026-03-20',
       report: {
         id: 'report-002',
-        status: 'in_progress',
+        status: SUBMISSION_STATUS.IN_PROGRESS,
         submittedAt: null,
         submittedBy: null
       }
@@ -248,7 +249,7 @@ const monthlyMixedStatusResponse = {
 }
 
 const emptyResponse = {
-  cadence: 'monthly',
+  cadence: CADENCE.MONTHLY,
   reportingPeriods: []
 }
 
@@ -689,7 +690,7 @@ describe('#listReportsController', () => {
         server
       }) => {
         vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: 'monthly',
+          cadence: CADENCE.MONTHLY,
           reportingPeriods: [
             {
               year: 2026,
@@ -699,7 +700,7 @@ describe('#listReportsController', () => {
               dueDate: '2026-02-20',
               report: {
                 id: 'report-002',
-                status: 'submitted',
+                status: SUBMISSION_STATUS.SUBMITTED,
                 submittedAt: null,
                 submittedBy: null
               }
@@ -969,7 +970,7 @@ describe('#listReportsController', () => {
         server
       }) => {
         vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: 'quarterly',
+          cadence: CADENCE.QUARTERLY,
           reportingPeriods: [
             {
               year: 2026,
@@ -979,7 +980,7 @@ describe('#listReportsController', () => {
               dueDate: '2026-04-20',
               report: {
                 id: 'report-003',
-                status: 'in_progress',
+                status: SUBMISSION_STATUS.IN_PROGRESS,
                 submittedAt: null,
                 submittedBy: null
               }
@@ -1014,7 +1015,7 @@ describe('#listReportsController', () => {
           }
         })
         vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: 'quarterly',
+          cadence: CADENCE.QUARTERLY,
           reportingPeriods: [
             {
               year: 2026,
@@ -1024,7 +1025,7 @@ describe('#listReportsController', () => {
               dueDate: '2026-04-20',
               report: {
                 id: 'report-004',
-                status: 'in_progress',
+                status: SUBMISSION_STATUS.IN_PROGRESS,
                 submittedAt: null,
                 submittedBy: null
               }
