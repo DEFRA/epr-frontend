@@ -13,6 +13,22 @@ const tagClasses = {
   [SUBMISSION_STATUS.SUBMITTED]: cssClasses.tag.green
 }
 
+/** @type {Record<SubmissionStatusValue, string>} */
+const statusLabelKeys = {
+  [SUBMISSION_STATUS.DUE]: 'reports:statusDue',
+  [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:statusInProgress',
+  [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:statusReadyToSubmit',
+  [SUBMISSION_STATUS.SUBMITTED]: 'reports:statusSubmitted'
+}
+
+/** @type {Record<SubmissionStatusValue, string>} */
+const actionLabelKeys = {
+  [SUBMISSION_STATUS.DUE]: 'reports:actionSelect',
+  [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:actionContinue',
+  [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:actionReviewAndSubmit',
+  [SUBMISSION_STATUS.SUBMITTED]: 'reports:actionView'
+}
+
 /**
  * Get the GOV.UK tag modifier class for a submission status.
  * @param {SubmissionStatusValue} status
@@ -26,19 +42,8 @@ export const getStatusTagClass = (status) => tagClasses[status]
  * @param {(key: string) => string} localise
  * @returns {string}
  */
-export function getStatusLabel(status, localise) {
-  /** @type {Record<SubmissionStatusValue, string>} */
-  const labels = {
-    [SUBMISSION_STATUS.DUE]: localise('reports:statusDue'),
-    [SUBMISSION_STATUS.IN_PROGRESS]: localise('reports:statusInProgress'),
-    [SUBMISSION_STATUS.READY_TO_SUBMIT]: localise(
-      'reports:statusReadyToSubmit'
-    ),
-    [SUBMISSION_STATUS.SUBMITTED]: localise('reports:statusSubmitted')
-  }
-
-  return labels[status]
-}
+export const getStatusLabel = (status, localise) =>
+  localise(statusLabelKeys[status])
 
 /**
  * Get the localised action link text for a submission status.
@@ -46,18 +51,5 @@ export function getStatusLabel(status, localise) {
  * @param {(key: string) => string} localise
  * @returns {string}
  */
-export function getActionLabel(status, localise) {
-  if (status === SUBMISSION_STATUS.SUBMITTED) {
-    return localise('reports:actionView')
-  }
-
-  if (status === SUBMISSION_STATUS.READY_TO_SUBMIT) {
-    return localise('reports:actionReviewAndSubmit')
-  }
-
-  if (status === SUBMISSION_STATUS.IN_PROGRESS) {
-    return localise('reports:actionContinue')
-  }
-
-  return localise('reports:actionSelect')
-}
+export const getActionLabel = (status, localise) =>
+  localise(actionLabelKeys[status])
