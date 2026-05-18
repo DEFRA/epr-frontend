@@ -208,45 +208,34 @@ function buildRows({
 
 /**
  * @param {TFunction} localise
+ * @param {string} textKey
+ * @returns {TableCell}
+ */
+const headerCol = (localise, textKey) => ({
+  text: localise(textKey),
+  classes: cssClasses.width.oneQuarter
+})
+
+/** @type {TableCell} */
+const actionHeaderCol = { text: '', classes: cssClasses.textAlign.right }
+
+/**
+ * @param {TFunction} localise
  * @returns {{ activeHeader: TableRow, submittedHeader: TableRow }}
  */
 const buildHeaders = (localise) => ({
   activeHeader: [
-    {
-      text: localise('reports:periodColumn'),
-      classes: cssClasses.width.oneQuarter
-    },
-    {
-      text: localise('reports:statusColumn'),
-      classes: cssClasses.width.oneQuarter
-    },
-    {
-      text: localise('reports:dateDueColumn'),
-      classes: cssClasses.width.oneQuarter
-    },
-    {
-      text: '',
-      classes: cssClasses.textAlign.right
-    }
+    headerCol(localise, 'reports:periodColumn'),
+    headerCol(localise, 'reports:statusColumn'),
+    headerCol(localise, 'reports:dateDueColumn'),
+    actionHeaderCol
   ],
   submittedHeader: [
-    {
-      text: localise('reports:periodColumn'),
-      classes: cssClasses.width.oneQuarter
-    },
-    {
-      text: localise('reports:statusColumn'),
-      classes: cssClasses.width.oneQuarter
-    },
-    {
-      text: localise('reports:dateAndTimeColumn'),
-      classes: cssClasses.width.oneQuarter
-    },
+    headerCol(localise, 'reports:periodColumn'),
+    headerCol(localise, 'reports:statusColumn'),
+    headerCol(localise, 'reports:dateAndTimeColumn'),
     { text: localise('reports:submittedByColumn') },
-    {
-      text: '',
-      classes: cssClasses.textAlign.right
-    }
+    actionHeaderCol
   ]
 })
 
