@@ -8,6 +8,10 @@ import { getByRole, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import { ServerInjectOptions } from '@hapi/hapi'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -21,10 +25,12 @@ const mockCredentials = {
   idToken: 'mock-id-token'
 }
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
+const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
+  /** @type {unknown} */ ({
+    strategy: 'session',
+    credentials: mockCredentials
+  })
+)
 
 const accreditedRegistration = {
   organisationData: { id: 'org-123' },
