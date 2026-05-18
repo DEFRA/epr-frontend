@@ -20,14 +20,6 @@ describe('#getStatusTagClass', () => {
       expect(getStatusTagClass(status)).toBe(expected)
     }
   )
-
-  it('returns empty string for null status', () => {
-    expect(getStatusTagClass(null)).toBe('')
-  })
-
-  it('returns empty string for unrecognised status', () => {
-    expect(getStatusTagClass('unknown')).toBe('')
-  })
 })
 
 describe('#getStatusLabel', () => {
@@ -51,14 +43,6 @@ describe('#getStatusLabel', () => {
     expect(getStatusLabel('submitted', localise)).toBe(
       'reports:statusSubmitted'
     )
-  })
-
-  it('returns null for null status', () => {
-    expect(getStatusLabel(null, localise)).toBeNull()
-  })
-
-  it('returns null for unrecognised status', () => {
-    expect(getStatusLabel('unknown', localise)).toBeNull()
   })
 })
 

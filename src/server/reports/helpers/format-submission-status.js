@@ -1,7 +1,11 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { SUBMISSION_STATUS } from '../constants.js'
 
-/** @type {Record<string, string>} */
+/**
+ * @import { SubmissionStatusValue } from '../constants.js'
+ */
+
+/** @type {Record<SubmissionStatusValue, string>} */
 const tagClasses = {
   [SUBMISSION_STATUS.DUE]: cssClasses.tag.orange,
   [SUBMISSION_STATUS.IN_PROGRESS]: cssClasses.tag.yellow,
@@ -11,24 +15,19 @@ const tagClasses = {
 
 /**
  * Get the GOV.UK tag modifier class for a submission status.
- * Returns an empty string for null or unrecognised statuses.
- * @param {string | null} status
+ * @param {SubmissionStatusValue} status
  * @returns {string}
  */
-export const getStatusTagClass = (status) => {
-  if (status === null) {
-    return ''
-  }
-  return tagClasses[status] ?? ''
-}
+export const getStatusTagClass = (status) => tagClasses[status]
 
 /**
  * Get the localised display label for a submission status.
- * @param {string | null} status
+ * @param {SubmissionStatusValue} status
  * @param {(key: string) => string} localise
- * @returns {string | null}
+ * @returns {string}
  */
 export function getStatusLabel(status, localise) {
+  /** @type {Record<SubmissionStatusValue, string>} */
   const labels = {
     [SUBMISSION_STATUS.DUE]: localise('reports:statusDue'),
     [SUBMISSION_STATUS.IN_PROGRESS]: localise('reports:statusInProgress'),
@@ -38,12 +37,12 @@ export function getStatusLabel(status, localise) {
     [SUBMISSION_STATUS.SUBMITTED]: localise('reports:statusSubmitted')
   }
 
-  return labels[status] ?? null
+  return labels[status]
 }
 
 /**
  * Get the localised action link text for a submission status.
- * @param {string | null} status
+ * @param {SubmissionStatusValue} status
  * @param {(key: string) => string} localise
  * @returns {string}
  */

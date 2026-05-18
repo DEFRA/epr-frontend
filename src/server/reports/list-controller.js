@@ -25,30 +25,24 @@ import {
  */
 
 /**
- * @param {string | null} status
+ * @param {string} actionLabel
  * @param {string} url
  * @param {string} label
- * @param {TFunction} localise
  * @returns {string}
  */
-const buildActionLinkHtml = (status, url, label, localise) => {
-  const actionLabel = getActionLabel(status, localise)
-  return `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
-}
+const buildActionLinkHtml = (actionLabel, url, label) =>
+  `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
 
 /**
- * @param {string | null} status
+ * @param {SubmissionStatusValue} status
  * @param {TFunction} localise
  * @returns {string}
  */
 const buildStatusTagHtml = (status, localise) => {
   const statusLabel = getStatusLabel(status, localise)
-  if (!statusLabel) {
-    return ''
-  }
   const statusTagClass = getStatusTagClass(status)
-  const tagClass = statusTagClass ? `govuk-tag ${statusTagClass}` : 'govuk-tag'
-  return `<strong class="${tagClass}">${escapeHtml(statusLabel)}</strong>`
+
+  return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
 }
 
 /**
@@ -66,7 +60,7 @@ const formatSubmittedDateTime = (isoString) => {
  * Resolves the path the action link on a report row should target.
  * For in-progress reports the destination varies by registration type
  * and cadence; other statuses map to a fixed page in the report flow.
- * @param {string | null} status
+ * @param {SubmissionStatusValue} status
  * @param {Registration} registration
  * @param {Accreditation | undefined} accreditation
  * @param {CadenceValue} cadence
@@ -97,6 +91,50 @@ const getActionPath = (status, registration, accreditation, cadence) => {
     return '/tonnes-not-exported'
   }
   return '/supporting-information'
+}
+
+/**
+ * @param {{
+ *   accreditation: Accreditation | undefined,
+ *   cadence: CadenceValue,
+ *   label: string,
+ *   localise: TFunction,
+ *   localiseUrl: (url: string) => string,
+ *   periodPath: string,
+ *   registration: Registration,
+ *   status: SubmissionStatusValue | null
+ * }} options
+ * @returns {TableCell}
+ */
+const buildActionCell = ({
+  accreditation,
+  cadence,
+  label,
+  localise,
+  localiseUrl,
+  periodPath,
+  registration,
+  status
+}) => {
+  const { actionPath, actionLabel } =
+    status === null
+      ? { actionPath: '', actionLabel: localise('reports:actionSelect') }
+      : {
+          actionPath: getActionPath(
+            status,
+            registration,
+            accreditation,
+            cadence
+          ),
+          actionLabel: getActionLabel(status, localise)
+        }
+
+  const url = localiseUrl(`${periodPath}${actionPath}`)
+
+  return {
+    html: buildActionLinkHtml(actionLabel, url, label),
+    classes: cssClasses.textAlign.right
+  }
 }
 
 /**
@@ -133,23 +171,24 @@ function buildRows({
 
     const status = deriveSubmissionStatus(period.endDate, period.report)
 
-    const actionPath = getActionPath(
+    const actionCell = buildActionCell({
       status,
       registration,
       accreditation,
-      cadence
-    )
-    const url = localiseUrl(`${periodPath}${actionPath}`)
+      cadence,
+      localise,
+      localiseUrl,
+      periodPath,
+      label
+    })
 
-    const actionCell = {
-      html: buildActionLinkHtml(status, url, label, localise),
-      classes: cssClasses.textAlign.right
-    }
+    const statusTagHtml =
+      status === null ? '' : buildStatusTagHtml(status, localise)
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([
         { text: label },
-        { html: buildStatusTagHtml(status, localise) },
+        { html: statusTagHtml },
         { text: formatSubmittedDateTime(period.report?.submittedAt) },
         { text: period.report?.submittedBy?.name ?? '' },
         actionCell
@@ -157,7 +196,7 @@ function buildRows({
     } else {
       activeRows.push([
         { text: label },
-        { html: buildStatusTagHtml(status, localise) },
+        { html: statusTagHtml },
         { text: formatDate(period.dueDate) },
         actionCell
       ])
@@ -271,6 +310,6 @@ export const listController = {
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
- * @import { CadenceValue } from './constants.js'
+ * @import { CadenceValue, SubmissionStatusValue } from './constants.js'
  * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  */
