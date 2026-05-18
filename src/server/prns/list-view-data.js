@@ -3,6 +3,24 @@ import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registratio
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
 
+/**
+ * @param {{
+ *   t: (key: string, params?: object) => string,
+ *   localiseUrl: (url: string) => string
+ * }} request
+ * @param {{
+ *   organisationId: string,
+ *   registrationId: string,
+ *   accreditationId: string,
+ *   registration: { wasteProcessingType: string },
+ *   prns: object[],
+ *   cancellationPrns?: object[],
+ *   issuedPrns?: object[],
+ *   cancelledPrns?: object[],
+ *   hasCreatedPrns?: boolean,
+ *   wasteBalance?: { availableAmount?: number } | null
+ * }} options
+ */
 export function buildListViewData(
   request,
   {
