@@ -1,3 +1,4 @@
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -18,8 +19,9 @@ import {
 } from './helpers/format-submission-status.js'
 
 /**
- * @typedef {{ text: string } | { html: string }} TableCell
+ * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
  * @typedef {TableCell[]} TableRow
+ * @typedef {{ organisationId: string, registrationId: string }} ReportListParams
  */
 
 /**
@@ -110,7 +112,7 @@ const getActionPath = (status, registration, accreditation, cadence) => {
  * }} options
  * @returns {{ activeRows: TableRow[], submittedRows: TableRow[] }}
  */
-function buildTableRows({
+function buildRows({
   accreditation,
   cadence,
   localise,
@@ -141,7 +143,7 @@ function buildTableRows({
 
     const actionCell = {
       html: buildActionLinkHtml(status, url, label, localise),
-      classes: 'govuk-!-text-align-right'
+      classes: cssClasses.textAlign.right
     }
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
@@ -165,14 +167,52 @@ function buildTableRows({
   return { activeRows, submittedRows }
 }
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
+/**
+ * @param {TFunction} localise
+ * @returns {{ activeHeader: TableRow, submittedHeader: TableRow }}
+ */
+const buildHeaders = (localise) => ({
+  activeHeader: [
+    {
+      text: localise('reports:periodColumn'),
+      classes: cssClasses.width.oneQuarter
+    },
+    {
+      text: localise('reports:statusColumn'),
+      classes: cssClasses.width.oneQuarter
+    },
+    {
+      text: localise('reports:dateDueColumn'),
+      classes: cssClasses.width.oneQuarter
+    },
+    {
+      text: localise('reports:actionColumn'),
+      classes: cssClasses.textAlign.right
+    }
+  ],
+  submittedHeader: [
+    {
+      text: localise('reports:periodColumn'),
+      classes: cssClasses.width.oneQuarter
+    },
+    {
+      text: localise('reports:statusColumn'),
+      classes: cssClasses.width.oneQuarter
+    },
+    {
+      text: localise('reports:dateAndTimeColumn'),
+      classes: cssClasses.width.oneQuarter
+    },
+    { text: localise('reports:submittedByColumn') },
+    {
+      text: localise('reports:actionColumn'),
+      classes: cssClasses.textAlign.right
+    }
+  ]
+})
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: ReportListParams }>>} */
 export const listController = {
-  /**
-   * @param {HapiRequest & {
-   *   params: { organisationId: string, registrationId: string }
-   * }} request
-   * @param {ResponseToolkit} h
-   */
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
     const session = request.auth.credentials
@@ -196,46 +236,9 @@ export const listController = {
         : 'reports:quarterlyHeading'
     )
 
-    const activeHeader = [
-      {
-        text: localise('reports:periodColumn'),
-        classes: 'govuk-!-width-one-quarter'
-      },
-      {
-        text: localise('reports:statusColumn'),
-        classes: 'govuk-!-width-one-quarter'
-      },
-      {
-        text: localise('reports:dateDueColumn'),
-        classes: 'govuk-!-width-one-quarter'
-      },
-      {
-        text: localise('reports:actionColumn'),
-        classes: 'govuk-!-text-align-right'
-      }
-    ]
+    const { activeHeader, submittedHeader } = buildHeaders(localise)
 
-    const submittedHeader = [
-      {
-        text: localise('reports:periodColumn'),
-        classes: 'govuk-!-width-one-quarter'
-      },
-      {
-        text: localise('reports:statusColumn'),
-        classes: 'govuk-!-width-one-quarter'
-      },
-      {
-        text: localise('reports:dateAndTimeColumn'),
-        classes: 'govuk-!-width-one-quarter'
-      },
-      { text: localise('reports:submittedByColumn') },
-      {
-        text: localise('reports:actionColumn'),
-        classes: 'govuk-!-text-align-right'
-      }
-    ]
-
-    const { activeRows, submittedRows } = buildTableRows({
+    const { activeRows, submittedRows } = buildRows({
       accreditation,
       cadence,
       localise,
@@ -264,7 +267,6 @@ export const listController = {
 }
 
 /**
- * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'

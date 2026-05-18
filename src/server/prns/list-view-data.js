@@ -129,10 +129,10 @@ function buildAwaitingTable(
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
-      classes: cssClasses.fontWeightBold
+      classes: cssClasses.fontWeight.bold
     },
     { text: '' },
-    { text: totalTonnage, classes: cssClasses.fontWeightBold },
+    { text: totalTonnage, classes: cssClasses.fontWeight.bold },
     { text: '' },
     { text: '' }
   ]
@@ -189,11 +189,11 @@ function buildDetailTable(
   const totalRow = [
     {
       text: localise('prns:list:table:totalLabel'),
-      classes: cssClasses.fontWeightBold
+      classes: cssClasses.fontWeight.bold
     },
     { text: '' },
     { text: '' },
-    { text: totalTonnage, classes: cssClasses.fontWeightBold },
+    { text: totalTonnage, classes: cssClasses.fontWeight.bold },
     { text: '' },
     { text: '' }
   ]

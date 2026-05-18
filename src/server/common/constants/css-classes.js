@@ -1,3 +1,11 @@
 export const cssClasses = {
-  fontWeightBold: 'govuk-!-font-weight-bold'
+  width: {
+    oneQuarter: 'govuk-!-width-one-quarter'
+  },
+  textAlign: {
+    right: 'govuk-!-text-align-right'
+  },
+  fontWeight: {
+    bold: 'govuk-!-font-weight-bold'
+  }
 }
