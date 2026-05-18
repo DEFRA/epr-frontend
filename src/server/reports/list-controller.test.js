@@ -11,6 +11,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
+ * @import { DOMWindow } from 'jsdom'
  */
 
 vi.mock(
@@ -257,6 +258,7 @@ const accreditedUrl = '/organisations/org-123/registrations/reg-001/reports'
 const exporterUrl = '/organisations/org-456/registrations/reg-002/reports'
 const reprocessorUrl = '/organisations/org-789/registrations/reg-003/reports'
 
+/** @param {InstanceType<DOMWindow['HTMLElement']>} body */
 const extractTagData = (body) =>
   Array.from(body.querySelectorAll('.govuk-table .govuk-tag')).map((tag) => ({
     text: tag.textContent?.trim(),
