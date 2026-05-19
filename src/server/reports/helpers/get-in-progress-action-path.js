@@ -11,14 +11,14 @@ import { CADENCE } from '../constants.js'
  */
 
 /**
- * Resolves the report-flow page an in-progress report should target.
+ * Gets the report-flow action path an in-progress report should target.
  * The destination varies by registration type, accreditation and cadence.
  * @param {Pick<Registration, 'wasteProcessingType'>} registration
  * @param {Accreditation | undefined} accreditation
  * @param {CadenceValue} cadence
  * @returns {string}
  */
-export const resolveInProgressReportPage = (
+export const getInProgressActionPath = (
   registration,
   accreditation,
   cadence

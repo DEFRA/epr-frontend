@@ -1,8 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { createReport } from './helpers/create-report.js'
+import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-import { resolveInProgressReportPage } from './helpers/resolve-in-progress-report-page.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams }>>} */
@@ -47,7 +47,7 @@ export const createController = {
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
 
-    const nextPage = `${basePath}${resolveInProgressReportPage(registration, accreditation, cadence)}`
+    const nextPage = `${basePath}${getInProgressActionPath(registration, accreditation, cadence)}`
 
     return h.redirect(request.localiseUrl(nextPage))
   }

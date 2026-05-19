@@ -13,7 +13,7 @@ import {
   getStatusLabel,
   getStatusTagClass
 } from './helpers/format-submission-status.js'
-import { resolveInProgressReportPage } from './helpers/resolve-in-progress-report-page.js'
+import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -73,7 +73,7 @@ const getActionPath = (status, registration, accreditation, cadence) => {
   if (status !== SUBMISSION_STATUS.IN_PROGRESS) {
     return fixedActionPaths[status] ?? ''
   }
-  return resolveInProgressReportPage(registration, accreditation, cadence)
+  return getInProgressActionPath(registration, accreditation, cadence)
 }
 
 /**

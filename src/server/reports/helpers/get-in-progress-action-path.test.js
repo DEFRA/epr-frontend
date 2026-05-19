@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { CADENCE } from '../constants.js'
-import { resolveInProgressReportPage } from './resolve-in-progress-report-page.js'
+import { getInProgressActionPath } from './get-in-progress-action-path.js'
 
 /**
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
@@ -13,7 +13,7 @@ const accreditation = /** @type {Accreditation} */ (
   /** @type {unknown} */ ({ id: 'acc-1' })
 )
 
-describe('#resolveInProgressReportPage', () => {
+describe('#getInProgressActionPath', () => {
   it.each([
     {
       scenario: 'accredited-exporter-monthly',
@@ -61,7 +61,7 @@ describe('#resolveInProgressReportPage', () => {
     'returns $expected for $scenario',
     ({ registration, accreditation, cadence, expected }) => {
       expect(
-        resolveInProgressReportPage(registration, accreditation, cadence)
+        getInProgressActionPath(registration, accreditation, cadence)
       ).toBe(expected)
     }
   )
