@@ -4,10 +4,6 @@ import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import {
-  isExporterRegistration,
-  isReprocessorRegistration
-} from '#server/common/helpers/prns/registration-helpers.js'
 import { CADENCE, SUBMISSION_STATUS } from './constants.js'
 import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
@@ -17,6 +13,7 @@ import {
   getStatusLabel,
   getStatusTagClass
 } from './helpers/format-submission-status.js'
+import { resolveInProgressReportPage } from './helpers/resolve-in-progress-report-page.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -56,41 +53,27 @@ const formatSubmittedDateTime = (isoString) => {
   return `${formatDate(isoString)}, ${formatTime(isoString)}`
 }
 
+/** @type {Partial<Record<SubmissionStatusValue, string>>} */
+const fixedActionPaths = {
+  [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
+  [SUBMISSION_STATUS.SUBMITTED]: '/view'
+}
+
 /**
  * Resolves the path the action link on a report row should target.
  * For in-progress reports the destination varies by registration type
  * and cadence; other statuses map to a fixed page in the report flow.
  * @param {SubmissionStatusValue} status
- * @param {Registration} registration
+ * @param {Pick<Registration, 'wasteProcessingType'>} registration
  * @param {Accreditation | undefined} accreditation
  * @param {CadenceValue} cadence
  * @returns {string}
  */
 const getActionPath = (status, registration, accreditation, cadence) => {
-  if (status === SUBMISSION_STATUS.READY_TO_SUBMIT) {
-    return '/submit'
-  }
-  if (status === SUBMISSION_STATUS.SUBMITTED) {
-    return '/view'
-  }
   if (status !== SUBMISSION_STATUS.IN_PROGRESS) {
-    return ''
+    return fixedActionPaths[status] ?? ''
   }
-
-  const isExporter = isExporterRegistration(registration)
-  const isReprocessor = isReprocessorRegistration(registration)
-  const hasAccreditation = !!accreditation
-
-  if (hasAccreditation && isExporter && cadence === CADENCE.MONTHLY) {
-    return '/prn-summary'
-  }
-  if (isReprocessor) {
-    return '/tonnes-recycled'
-  }
-  if (!hasAccreditation && isExporter) {
-    return '/tonnes-not-exported'
-  }
-  return '/supporting-information'
+  return resolveInProgressReportPage(registration, accreditation, cadence)
 }
 
 /**
@@ -101,7 +84,7 @@ const getActionPath = (status, registration, accreditation, cadence) => {
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
  *   periodPath: string,
- *   registration: Registration,
+ *   registration: Pick<Registration, 'wasteProcessingType'>,
  *   status: SubmissionStatusValue | null
  * }} options
  * @returns {TableCell}
