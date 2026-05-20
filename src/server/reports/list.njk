@@ -18,24 +18,26 @@
         {{ heading }}
       </h1>
 
-      {% if not hasPeriods %}
-        <p class="govuk-body">{{ emptyStateMessage }}</p>
+      <h2 class="govuk-heading-m">{{ cadenceHeading }}</h2>
+
+      <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
+      {% if active.rows.length %}
+        {{ govukTable({
+          head: active.head,
+          rows: active.rows
+        }) }}
       {% else %}
-        <h2 class="govuk-heading-m">{{ cadenceHeading }}</h2>
-        {% if active.rows.length %}
-          <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
-          {{ govukTable({
-            head: active.head,
-            rows: active.rows
-          }) }}
-        {% endif %}
-        {% if submitted.rows.length %}
-          <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
-          {{ govukTable({
-            head: submitted.head,
-            rows: submitted.rows
-          }) }}
-        {% endif %}
+        <p class="govuk-body">{{ active.emptyMessage }}</p>
+      {% endif %}
+
+      <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
+      {% if submitted.rows.length %}
+        {{ govukTable({
+          head: submitted.head,
+          rows: submitted.rows
+        }) }}
+      {% else %}
+        <p class="govuk-body">{{ submitted.emptyMessage }}</p>
       {% endif %}
 
     </div>

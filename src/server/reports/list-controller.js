@@ -260,17 +260,23 @@ export const listController = {
     })
 
     const viewData = {
-      active: { head: activeHeader, rows: activeRows },
+      active: {
+        head: activeHeader,
+        rows: activeRows,
+        emptyMessage: localise('reports:actionRequiredEmpty')
+      },
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
       cadenceHeading,
-      emptyStateMessage: localise('reports:emptyState'),
-      hasPeriods: reportingPeriods.length > 0,
       heading: localise('reports:heading'),
       material,
       pageTitle: localise('reports:pageTitle', { material }),
-      submitted: { head: submittedHeader, rows: submittedRows }
+      submitted: {
+        head: submittedHeader,
+        rows: submittedRows,
+        emptyMessage: localise('reports:submittedSectionEmpty')
+      }
     }
 
     return h.view('reports/list', viewData)

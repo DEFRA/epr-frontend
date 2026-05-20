@@ -275,6 +275,27 @@ const extractTagData = (body) =>
       Array.from(tag.classList).find((c) => c.startsWith('govuk-tag--')) ?? null
   }))
 
+/**
+ * @param {InstanceType<DOMWindow['HTMLElement']>} body
+ * @param {string} headingText
+ */
+const findSection = (body, headingText) => {
+  const heading = Array.from(body.querySelectorAll('h3.govuk-heading-m')).find(
+    (h) => h.textContent?.trim() === headingText
+  )
+  return heading?.nextElementSibling
+}
+
+/** @param {InstanceType<DOMWindow['Element']>} table */
+const readTable = (table) => ({
+  headers: Array.from(table.querySelectorAll('thead th')).map((th) =>
+    th.textContent?.trim()
+  ),
+  rows: Array.from(table.querySelectorAll('tbody tr')).map((tr) =>
+    Array.from(tr.querySelectorAll('td')).map((td) => td.textContent?.trim())
+  )
+})
+
 describe('#listReportsController', () => {
   beforeAll(() => {
     vi.useFakeTimers({
@@ -766,9 +787,7 @@ describe('#listReportsController', () => {
         expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
       })
 
-      it('should render two tables: active rows then submitted rows', async ({
-        server
-      }) => {
+      it('should render the action-required table', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -778,22 +797,23 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const tables = body.querySelectorAll('.govuk-table')
-        const periodsByTable = Array.from(tables).map((table) =>
-          Array.from(table.querySelectorAll('tbody tr')).map((tr) =>
-            tr.querySelector('td')?.textContent?.trim()
-          )
-        )
+        const actionRequiredTable = findSection(body, 'Action required')
 
-        expect(periodsByTable).toStrictEqual([
-          ['February 2026', 'March 2026'],
-          ['January 2026']
-        ])
+        expect(readTable(actionRequiredTable)).toStrictEqual({
+          headers: ['Period', 'Status', 'Date due', ''],
+          rows: [
+            [
+              'February 2026',
+              'In progress',
+              '20 March 2026',
+              'Continue February 2026'
+            ],
+            ['March 2026', '', '20 April 2026', 'Select March 2026']
+          ]
+        })
       })
 
-      it('should display distinct headers on the submitted table', async ({
-        server
-      }) => {
+      it('should render the submitted table', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -803,45 +823,20 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const tables = body.querySelectorAll('.govuk-table')
-        const submittedHeaders = Array.from(
-          tables[1].querySelectorAll('thead th')
-        ).map((th) => th.textContent?.trim())
+        const submittedTable = findSection(body, 'Submitted')
 
-        expect(submittedHeaders).toStrictEqual([
-          'Period',
-          'Status',
-          'Date and time',
-          'Submitted by',
-          ''
-        ])
-      })
-
-      it('should render submitted row with date+time and submitter name', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
+        expect(readTable(submittedTable)).toStrictEqual({
+          headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
+          rows: [
+            [
+              'January 2026',
+              'Submitted',
+              '5 February 2026, 6:22pm',
+              'Matt Davis',
+              'View January 2026'
+            ]
+          ]
         })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const tables = body.querySelectorAll('.govuk-table')
-        const submittedRow = tables[1].querySelector('tbody tr')
-        const cells = Array.from(submittedRow.querySelectorAll('td')).map(
-          (td) => td.textContent?.trim()
-        )
-
-        expect(cells).toStrictEqual([
-          'January 2026',
-          'Submitted',
-          '5 February 2026, 6:22pm',
-          'Matt Davis',
-          'View January 2026'
-        ])
       })
     })
 
@@ -853,7 +848,7 @@ describe('#listReportsController', () => {
         vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
       })
 
-      it('should not display Submitted section heading', async ({ server }) => {
+      it('should display both section headings', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -867,7 +862,27 @@ describe('#listReportsController', () => {
           body.querySelectorAll('h3.govuk-heading-m')
         ).map((h) => h.textContent?.trim())
 
-        expect(sectionHeadings).toStrictEqual(['Action required'])
+        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
+      })
+
+      it('should render the submitted-section placeholder in place of a table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const submittedSection = findSection(body, 'Submitted')
+
+        expect(submittedSection?.tagName).toBe('P')
+        expect(submittedSection?.textContent?.trim()).toBe(
+          'You do not currently have any submitted reports.'
+        )
       })
     })
 
@@ -881,9 +896,7 @@ describe('#listReportsController', () => {
         )
       })
 
-      it('should not display Action required section heading', async ({
-        server
-      }) => {
+      it('should display both section headings', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -897,7 +910,27 @@ describe('#listReportsController', () => {
           body.querySelectorAll('h3.govuk-heading-m')
         ).map((h) => h.textContent?.trim())
 
-        expect(sectionHeadings).toStrictEqual(['Submitted'])
+        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
+      })
+
+      it('should render the action-required placeholder in place of a table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const actionRequiredSection = findSection(body, 'Action required')
+
+        expect(actionRequiredSection?.tagName).toBe('P')
+        expect(actionRequiredSection?.textContent?.trim()).toBe(
+          'You do not currently have any reports that require an action.'
+        )
       })
     })
 
@@ -1132,7 +1165,9 @@ describe('#listReportsController', () => {
         vi.mocked(fetchReportingPeriods).mockResolvedValue(emptyResponse)
       })
 
-      it('should display empty state message', async ({ server }) => {
+      it('should display cadence heading and both section headings', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: accreditedUrl,
@@ -1142,8 +1177,55 @@ describe('#listReportsController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        expect(body.textContent).toContain(
-          'There are no reporting periods with data'
+        const cadenceHeading = getByRole(body, 'heading', {
+          name: 'Monthly',
+          level: 2
+        })
+        const sectionHeadings = Array.from(
+          body.querySelectorAll('h3.govuk-heading-m')
+        ).map((h) => h.textContent?.trim())
+
+        expect(cadenceHeading).toBeDefined()
+        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
+      })
+
+      it('should render the action-required placeholder in place of a table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const actionRequiredSection = findSection(body, 'Action required')
+
+        expect(actionRequiredSection?.tagName).toBe('P')
+        expect(actionRequiredSection?.textContent?.trim()).toBe(
+          'You do not currently have any reports that require an action.'
+        )
+      })
+
+      it('should render the submitted-section placeholder in place of a table', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const submittedSection = findSection(body, 'Submitted')
+
+        expect(submittedSection?.tagName).toBe('P')
+        expect(submittedSection?.textContent?.trim()).toBe(
+          'You do not currently have any submitted reports.'
         )
       })
     })

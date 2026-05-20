@@ -1,6 +1,7 @@
 {
   "accreditationLabel": "Accreditation",
   "actionContinue": "Continue",
+  "actionRequiredEmpty": "You do not currently have any reports that require an action.",
   "actionRequiredHeading": "Action required",
   "actionReviewAndSubmit": "Review and submit",
   "actionSelect": "Select",
@@ -53,7 +54,6 @@
   "detailPageTitle": "Report: {{ material }}: {{ periodLabel }}",
   "detailsHeading": "Details",
   "emailColumn": "Email",
-  "emptyState": "There are no reporting periods with data.",
   "facilityTypeColumn": "Facility type",
   "freeCaption": "Create report",
   "freeContinue": "Continue",
@@ -148,6 +148,7 @@
   "submittedPageTitle": "Report submitted: {{ material }}: {{ periodLabel }}",
   "submittedRegistrationLabel": "Registration:",
   "submittedReturnToReports": "Return to your reports",
+  "submittedSectionEmpty": "You do not currently have any submitted reports.",
   "submittedSectionHeading": "Submitted",
   "submittedViewReport": "View report (Opens in a new tab)",
   "supplierColumn": "Supplier",
