@@ -34,7 +34,7 @@ import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
  * @param {{ at: string, by: { name: string } }} statusCreated
- * @param {(key: string, params?: Record<string, string>) => string} localise
+ * @param {import('./helpers/format-period-label.js').Localise} localise
  * @returns {{ createdBy: string, createdOn: string }}
  */
 function getCreationDetails(statusCreated, localise) {
@@ -107,7 +107,7 @@ const buildWasteSentOnViewData = (wasteSent) => ({
   totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
 })
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams }>>} */
 export const submitGetController = {
   options: {
     validate: {
@@ -144,6 +144,14 @@ export const submitGetController = {
       reportDetail.status
     )
 
+    if (status.currentStatus === SUBMISSION_STATUS.SUBMITTED) {
+      return h.redirect(
+        request.localiseUrl(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submitted`
+        )
+      )
+    }
+
     const viewData = buildViewData({
       registration,
       accreditation,
@@ -163,7 +171,7 @@ export const submitGetController = {
 }
 
 /**
- * @param {{ localise: (key: string, params?: Record<string, string>) => string, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
+ * @param {{ localise: import('./helpers/format-period-label.js').Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
  * @returns {object}
  */
 function buildPageLabels({
@@ -220,7 +228,7 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
  *   year: number,
  *   cadence: CadenceValue,
  *   period: number,
- *   localise: (key: string, params?: Record<string, string>) => string,
+ *   localise: import('./helpers/format-period-label.js').Localise,
  *   localiseUrl: (url: string) => string
  * }} params
  * @returns {object}
@@ -324,7 +332,7 @@ function buildViewData({
   }
 }
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams, payload: VersionedPayload }>>} */
 export const submitPostController = {
   options: {
     validate: {

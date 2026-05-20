@@ -11,33 +11,33 @@
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-full">
 
       <h1 class="govuk-heading-l">
         <span class="govuk-caption-l">{{ material }}</span>
         {{ heading }}
       </h1>
 
-      {% if not hasPeriods %}
-        <p class="govuk-body">{{ emptyStateMessage }}</p>
+      <h2 class="govuk-heading-m">{{ cadenceHeading }}</h2>
+
+      <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
+      {% if active.rows.length %}
+        {{ govukTable({
+          head: active.head,
+          rows: active.rows
+        }) }}
       {% else %}
+        <p class="govuk-body app-colour-secondary">{{ active.emptyMessage }}</p>
+      {% endif %}
 
-        {% if hasMonthlyPeriods %}
-          <h2 class="govuk-heading-m">{{ localise("reports:monthlyHeading") }}</h2>
-          {{ govukTable({
-            head: monthlyTableHead,
-            rows: monthlyTableRows
-          }) }}
-        {% endif %}
-
-        {% if hasQuarterlyPeriods %}
-          <h2 class="govuk-heading-m">{{ localise("reports:quarterlyHeading") }}</h2>
-          {{ govukTable({
-            head: quarterlyTableHead,
-            rows: quarterlyTableRows
-          }) }}
-        {% endif %}
-
+      <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
+      {% if submitted.rows.length %}
+        {{ govukTable({
+          head: submitted.head,
+          rows: submitted.rows
+        }) }}
+      {% else %}
+        <p class="govuk-body app-colour-secondary">{{ submitted.emptyMessage }}</p>
       {% endif %}
 
     </div>
