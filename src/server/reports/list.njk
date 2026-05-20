@@ -27,7 +27,7 @@
           rows: active.rows
         }) }}
       {% else %}
-        <p class="govuk-body">{{ active.emptyMessage }}</p>
+        <p class="govuk-body app-colour-secondary">{{ active.emptyMessage }}</p>
       {% endif %}
 
       <h3 class="govuk-heading-m">{{ localise("reports:submittedSectionHeading") }}</h3>
@@ -37,7 +37,7 @@
           rows: submitted.rows
         }) }}
       {% else %}
-        <p class="govuk-body">{{ submitted.emptyMessage }}</p>
+        <p class="govuk-body app-colour-secondary">{{ submitted.emptyMessage }}</p>
       {% endif %}
 
     </div>

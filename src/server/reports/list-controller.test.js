@@ -879,10 +879,15 @@ describe('#listReportsController', () => {
 
         const submittedSection = findSection(body, 'Submitted')
 
-        expect(submittedSection?.tagName).toBe('P')
-        expect(submittedSection?.textContent?.trim()).toBe(
-          'You do not currently have any submitted reports.'
-        )
+        expect({
+          tag: submittedSection?.tagName,
+          className: submittedSection?.className,
+          text: submittedSection?.textContent?.trim()
+        }).toStrictEqual({
+          tag: 'P',
+          className: 'govuk-body app-colour-secondary',
+          text: 'You do not currently have any submitted reports.'
+        })
       })
     })
 
@@ -927,10 +932,15 @@ describe('#listReportsController', () => {
 
         const actionRequiredSection = findSection(body, 'Action required')
 
-        expect(actionRequiredSection?.tagName).toBe('P')
-        expect(actionRequiredSection?.textContent?.trim()).toBe(
-          'You do not currently have any reports that require an action.'
-        )
+        expect({
+          tag: actionRequiredSection?.tagName,
+          className: actionRequiredSection?.className,
+          text: actionRequiredSection?.textContent?.trim()
+        }).toStrictEqual({
+          tag: 'P',
+          className: 'govuk-body app-colour-secondary',
+          text: 'You do not currently have any reports that require an action.'
+        })
       })
     })
 
@@ -1203,10 +1213,15 @@ describe('#listReportsController', () => {
 
         const actionRequiredSection = findSection(body, 'Action required')
 
-        expect(actionRequiredSection?.tagName).toBe('P')
-        expect(actionRequiredSection?.textContent?.trim()).toBe(
-          'You do not currently have any reports that require an action.'
-        )
+        expect({
+          tag: actionRequiredSection?.tagName,
+          className: actionRequiredSection?.className,
+          text: actionRequiredSection?.textContent?.trim()
+        }).toStrictEqual({
+          tag: 'P',
+          className: 'govuk-body app-colour-secondary',
+          text: 'You do not currently have any reports that require an action.'
+        })
       })
 
       it('should render the submitted-section placeholder in place of a table', async ({
@@ -1223,10 +1238,15 @@ describe('#listReportsController', () => {
 
         const submittedSection = findSection(body, 'Submitted')
 
-        expect(submittedSection?.tagName).toBe('P')
-        expect(submittedSection?.textContent?.trim()).toBe(
-          'You do not currently have any submitted reports.'
-        )
+        expect({
+          tag: submittedSection?.tagName,
+          className: submittedSection?.className,
+          text: submittedSection?.textContent?.trim()
+        }).toStrictEqual({
+          tag: 'P',
+          className: 'govuk-body app-colour-secondary',
+          text: 'You do not currently have any submitted reports.'
+        })
       })
     })
 
