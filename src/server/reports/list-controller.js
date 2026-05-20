@@ -1,89 +1,229 @@
+import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
-import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { formatDate } from '#server/common/helpers/format-date.js'
+import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import {
-  isExporterRegistration,
-  isReprocessorRegistration
-} from '#server/common/helpers/prns/registration-helpers.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from './constants.js'
 import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
   getActionLabel,
-  getStatusLabel
+  getStatusLabel,
+  getStatusTagClass
 } from './helpers/format-submission-status.js'
+import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
 
 /**
- * Build table rows for the govukTable macro.
- * Each row is an array of cell objects ({ text } or { html }).
- * @param {object} options
- * @param {import('./helpers/fetch-reporting-periods.js').ReportingPeriod[]} options.reportingPeriods
- * @param {CadenceValue} options.cadence
- * @param {string} options.organisationId
- * @param {string} options.registrationId
- * @param {boolean} options.isAccreditedExporter
- * @param {boolean} options.isRegisteredOnlyExporter
- * @param {boolean} options.isReprocessor
- * @param {(url: string) => string} options.localiseUrl
- * @param {(key: string, params?: Record<string, unknown>) => string} options.localise
- * @returns {Array<Array<{text: string} | {html: string}>>}
+ * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
+ * @typedef {TableCell[]} TableRow
+ * @typedef {{ organisationId: string, registrationId: string }} ReportListParams
  */
-function buildTableRows({
-  reportingPeriods,
+
+/**
+ * @param {string} actionLabel
+ * @param {string} url
+ * @param {string} label
+ * @returns {string}
+ */
+const buildActionLinkHtml = (actionLabel, url, label) =>
+  `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
+
+/**
+ * @param {SubmissionStatusValue} status
+ * @param {TFunction} localise
+ * @returns {string}
+ */
+const buildStatusTagHtml = (status, localise) => {
+  const statusLabel = getStatusLabel(status, localise)
+  const statusTagClass = getStatusTagClass(status)
+
+  return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
+}
+
+/**
+ * @param {string | null | undefined} isoString
+ * @returns {string}
+ */
+const formatSubmittedDateTime = (isoString) => {
+  if (!isoString) {
+    return ''
+  }
+  return `${formatDate(isoString)}, ${formatTime(isoString)}`
+}
+
+/** @type {Partial<Record<SubmissionStatusValue, string>>} */
+const fixedActionPaths = {
+  [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
+  [SUBMISSION_STATUS.SUBMITTED]: '/view'
+}
+
+/**
+ * Resolves the path the action link on a report row should target.
+ * For in-progress reports the destination varies by registration type
+ * and cadence; other statuses map to a fixed page in the report flow.
+ * @param {SubmissionStatusValue} status
+ * @param {Pick<Registration, 'wasteProcessingType'>} registration
+ * @param {Accreditation | undefined} accreditation
+ * @param {CadenceValue} cadence
+ * @returns {string}
+ */
+const getActionPath = (status, registration, accreditation, cadence) => {
+  if (status !== SUBMISSION_STATUS.IN_PROGRESS) {
+    return fixedActionPaths[status] ?? ''
+  }
+  return getInProgressActionPath(registration, accreditation, cadence)
+}
+
+/**
+ * @param {{
+ *   accreditation: Accreditation | undefined,
+ *   cadence: CadenceValue,
+ *   label: string,
+ *   localise: TFunction,
+ *   localiseUrl: (url: string) => string,
+ *   periodPath: string,
+ *   registration: Pick<Registration, 'wasteProcessingType'>,
+ *   status: SubmissionStatusValue | null
+ * }} options
+ * @returns {TableCell}
+ */
+const buildActionCell = ({
+  accreditation,
   cadence,
-  organisationId,
-  registrationId,
-  isAccreditedExporter,
-  isRegisteredOnlyExporter,
-  isReprocessor,
+  label,
+  localise,
   localiseUrl,
-  localise
+  periodPath,
+  registration,
+  status
+}) => {
+  const { actionPath, actionLabel } =
+    status === null
+      ? { actionPath: '', actionLabel: localise('reports:actionSelect') }
+      : {
+          actionPath: getActionPath(
+            status,
+            registration,
+            accreditation,
+            cadence
+          ),
+          actionLabel: getActionLabel(status, localise)
+        }
+
+  const url = localiseUrl(`${periodPath}${actionPath}`)
+
+  return {
+    html: buildActionLinkHtml(actionLabel, url, label),
+    classes: cssClasses.textAlign.right
+  }
+}
+
+/**
+ * Build table rows for the govukTable macro, partitioned by submission status.
+ * @param {{
+ *   accreditation: Accreditation | undefined,
+ *   cadence: CadenceValue,
+ *   localise: TFunction,
+ *   localiseUrl: (url: string) => string,
+ *   organisationId: string,
+ *   registration: Registration,
+ *   reportingPeriods: ReportingPeriod[]
+ * }} options
+ * @returns {{ activeRows: TableRow[], submittedRows: TableRow[] }}
+ */
+function buildRows({
+  accreditation,
+  cadence,
+  localise,
+  localiseUrl,
+  organisationId,
+  registration,
+  reportingPeriods
 }) {
-  return reportingPeriods.map((period) => {
-    const periodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${period.year}/${cadence}/${period.period}`
+  /** @type {TableRow[]} */
+  const activeRows = []
+  /** @type {TableRow[]} */
+  const submittedRows = []
+
+  for (const period of reportingPeriods) {
+    const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}`
 
     const label = formatPeriodLabel(period, cadence, localise)
 
     const status = deriveSubmissionStatus(period.endDate, period.report)
-    const statusLabel = getStatusLabel(status, localise)
 
-    let inProgressSuffix
-    if (isAccreditedExporter && cadence === CADENCE.MONTHLY) {
-      inProgressSuffix = '/prn-summary'
-    } else if (isReprocessor) {
-      inProgressSuffix = '/tonnes-recycled'
-    } else if (isRegisteredOnlyExporter) {
-      inProgressSuffix = '/tonnes-not-exported'
+    const actionCell = buildActionCell({
+      status,
+      registration,
+      accreditation,
+      cadence,
+      localise,
+      localiseUrl,
+      periodPath,
+      label
+    })
+
+    const statusTagHtml =
+      status === null ? '' : buildStatusTagHtml(status, localise)
+
+    if (status === SUBMISSION_STATUS.SUBMITTED) {
+      submittedRows.push([
+        { text: label },
+        { html: statusTagHtml },
+        { text: formatSubmittedDateTime(period.report?.submittedAt) },
+        { text: period.report?.submittedBy?.name ?? '' },
+        actionCell
+      ])
     } else {
-      inProgressSuffix = '/supporting-information'
+      activeRows.push([
+        { text: label },
+        { html: statusTagHtml },
+        { text: formatDate(period.dueDate) },
+        actionCell
+      ])
     }
+  }
 
-    const suffixByStatus = {
-      [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
-      [SUBMISSION_STATUS.IN_PROGRESS]: inProgressSuffix,
-      [SUBMISSION_STATUS.SUBMITTED]: '/view'
-    }
-    const url = localiseUrl(`${periodPath}${suffixByStatus[status] ?? ''}`)
-    const statusHtml = statusLabel
-      ? `<strong class="govuk-tag">${escapeHtml(statusLabel)}</strong>`
-      : ''
-
-    const actionLabel = getActionLabel(status, localise)
-    const labelHtml = `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
-
-    return [{ text: label }, { html: statusHtml }, { html: labelHtml }]
-  })
+  return { activeRows, submittedRows }
 }
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
+/**
+ * @param {TFunction} localise
+ * @param {string} textKey
+ * @returns {TableCell}
+ */
+const headerCol = (localise, textKey) => ({
+  text: localise(textKey),
+  classes: cssClasses.width.oneQuarter
+})
+
+/** @type {TableCell} */
+const actionHeaderCol = { text: '', classes: cssClasses.textAlign.right }
+
+/**
+ * @param {TFunction} localise
+ * @returns {{ activeHeader: TableRow, submittedHeader: TableRow }}
+ */
+const buildHeaders = (localise) => ({
+  activeHeader: [
+    headerCol(localise, 'reports:periodColumn'),
+    headerCol(localise, 'reports:statusColumn'),
+    headerCol(localise, 'reports:dateDueColumn'),
+    actionHeaderCol
+  ],
+  submittedHeader: [
+    headerCol(localise, 'reports:periodColumn'),
+    headerCol(localise, 'reports:statusColumn'),
+    headerCol(localise, 'reports:dateAndTimeColumn'),
+    { text: localise('reports:submittedByColumn') },
+    actionHeaderCol
+  ]
+})
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: ReportListParams }>>} */
 export const listController = {
-  /**
-   * @param {HapiRequest & {
-   *   params: { organisationId: string, registrationId: string }
-   * }} request
-   * @param {ResponseToolkit} h
-   */
   async handler(request, h) {
     const { organisationId, registrationId } = request.params
     const session = request.auth.credentials
@@ -101,48 +241,42 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
-    const isExporter = isExporterRegistration(registration)
-    const isReprocessor = isReprocessorRegistration(registration)
+    const cadenceHeading = localise(
+      cadence === CADENCE.MONTHLY
+        ? 'reports:monthlyHeading'
+        : 'reports:quarterlyHeading'
+    )
 
-    const hasAccreditation = !!accreditation
-    const isAccreditedExporter = hasAccreditation && isExporter
-    const isRegisteredOnlyExporter = !hasAccreditation && isExporter
+    const { activeHeader, submittedHeader } = buildHeaders(localise)
 
-    const isMonthly = cadence === CADENCE.MONTHLY
-    const isQuarterly = cadence === CADENCE.QUARTERLY
-    const tableHead = [
-      { text: localise('reports:periodColumn') },
-      { text: localise('reports:statusColumn') },
-      { text: localise('reports:actionColumn') }
-    ]
-
-    const tableRows = buildTableRows({
-      reportingPeriods,
+    const { activeRows, submittedRows } = buildRows({
+      accreditation,
       cadence,
-      organisationId,
-      registrationId,
-      isAccreditedExporter,
-      isRegisteredOnlyExporter,
-      isReprocessor,
+      localise,
       localiseUrl: (url) => request.localiseUrl(url),
-      localise
+      organisationId,
+      registration,
+      reportingPeriods
     })
 
     const viewData = {
-      pageTitle: localise('reports:pageTitle', { material }),
-      heading: localise('reports:heading'),
-      material,
+      active: {
+        head: activeHeader,
+        rows: activeRows,
+        emptyMessage: localise('reports:actionRequiredEmpty')
+      },
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
-      hasMonthlyPeriods: isMonthly && reportingPeriods.length > 0,
-      hasQuarterlyPeriods: isQuarterly && reportingPeriods.length > 0,
-      monthlyTableHead: isMonthly ? tableHead : [],
-      monthlyTableRows: isMonthly ? tableRows : [],
-      quarterlyTableHead: isQuarterly ? tableHead : [],
-      quarterlyTableRows: isQuarterly ? tableRows : [],
-      hasPeriods: reportingPeriods.length > 0,
-      emptyStateMessage: localise('reports:emptyState')
+      cadenceHeading,
+      heading: localise('reports:heading'),
+      material,
+      pageTitle: localise('reports:pageTitle', { material }),
+      submitted: {
+        head: submittedHeader,
+        rows: submittedRows,
+        emptyMessage: localise('reports:submittedSectionEmpty')
+      }
     }
 
     return h.view('reports/list', viewData)
@@ -150,7 +284,10 @@ export const listController = {
 }
 
 /**
- * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { CadenceValue } from './constants.js'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { CadenceValue, SubmissionStatusValue } from './constants.js'
+ * @import { ReportingPeriod } from './helpers/fetch-reporting-periods.js'
  */

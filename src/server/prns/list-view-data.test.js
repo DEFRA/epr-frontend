@@ -50,7 +50,7 @@ const createMockRequest = () => ({
       'prns:list:cancelledTable:actionHeading': 'View in new tab',
       'prns:list:cancelledTable:selectText': 'Select'
     }
-    return translations[key] || key
+    return /** @type {Record<string, string>} */ (translations)[key] || key
   }),
   localiseUrl: vi.fn((url) => url)
 })
@@ -291,9 +291,9 @@ describe('#buildListViewData', () => {
 
       const totalRow = result.table.rows[2]
       expect(totalRow[0].text).toBe('Total')
-      expect(totalRow[0].classes).toBe(cssClasses.fontWeightBold)
+      expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(170) // 50 + 120
-      expect(totalRow[2].classes).toBe(cssClasses.fontWeightBold)
+      expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
     })
 
     it('should treat undefined tonnage as zero in total row', () => {
@@ -755,9 +755,9 @@ describe('#buildListViewData', () => {
 
       const totalRow = result.cancellationTable.rows[2]
       expect(totalRow[0].text).toBe('Total')
-      expect(totalRow[0].classes).toBe(cssClasses.fontWeightBold)
+      expect(totalRow[0].classes).toBe(cssClasses.fontWeight.bold)
       expect(totalRow[2].text).toBe(30) // 5 + 25
-      expect(totalRow[2].classes).toBe(cssClasses.fontWeightBold)
+      expect(totalRow[2].classes).toBe(cssClasses.fontWeight.bold)
     })
 
     it('should return cancellation table with select links', () => {

@@ -1,15 +1,30 @@
-import { http, HttpResponse } from 'msw'
+import { http, HttpHandler, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { test, vi } from 'vitest'
-import { organisations } from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
+import { asHapiRequest } from '#server/common/hapi-types.js'
+import organisationsFixture from '../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 /**
- * @import { SetupServer } from 'msw/node'
+ * @import { SetupServerApi } from 'msw/node'
+ * @import { Mock, TestAPI } from 'vitest'
  * @import { HapiServer } from '#server/common/hapi-types.js'
+ * @import { WasteOrganisation } from '#server/common/helpers/waste-organisations/types.js'
+ * @import { LogMethod } from '#server/common/helpers/logging/logger.js'
  */
 
 /**
- * @typedef {{ msw: SetupServer, server: HapiServer }} ServerFixtures
+ * @typedef {{
+ *   info: Mock<LogMethod>,
+ *   warn: Mock<LogMethod>,
+ *   error: Mock<LogMethod>
+ * }} LoggerMocks
+ */
+
+/**
+ * @typedef {{
+ *   msw: SetupServerApi,
+ *   server: HapiServer & { loggerMocks: LoggerMocks }
+ * }} ServerFixtures
  */
 
 /**
@@ -22,6 +37,11 @@ const awsEc2MetadataHandler = http.put(
   () => new HttpResponse(null, { status: 404 })
 )
 
+/**
+ * Create OIDC handlers
+ * @param {string} baseUrl
+ * @returns {HttpHandler[]}
+ */
 const createOidcHandlers = (baseUrl) => {
   const origin = new URL(baseUrl).origin
 
@@ -85,28 +105,30 @@ const createOidcHandlers = (baseUrl) => {
  * `server` fixture can then assert with
  * `expect(server.loggerMocks.warn).toHaveBeenCalledWith(...)` — covering
  * server- and request-level logs uniformly.
- * @param {import('@hapi/hapi').Server & {
- *   loggerMocks?: { info: ReturnType<typeof vi.fn>, warn: ReturnType<typeof vi.fn>, error: ReturnType<typeof vi.fn> }
- * }} server
+ * @param {HapiServer & { loggerMocks?: LoggerMocks }} server
  */
 const attachLoggerMocks = (server) => {
-  server.loggerMocks = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  const loggerMocks = {
+    info: /** @type {Mock<LogMethod>} */ (vi.fn()),
+    warn: /** @type {Mock<LogMethod>} */ (vi.fn()),
+    error: /** @type {Mock<LogMethod>} */ (vi.fn())
+  }
+  server.loggerMocks = loggerMocks
 
-  vi.spyOn(server.logger, 'info').mockImplementation(server.loggerMocks.info)
-  vi.spyOn(server.logger, 'warn').mockImplementation(server.loggerMocks.warn)
-  vi.spyOn(server.logger, 'error').mockImplementation(server.loggerMocks.error)
+  vi.spyOn(server.logger, 'info').mockImplementation(loggerMocks.info)
+  vi.spyOn(server.logger, 'warn').mockImplementation(loggerMocks.warn)
+  vi.spyOn(server.logger, 'error').mockImplementation(loggerMocks.error)
 
   server.ext('onRequest', (request, h) => {
-    vi.spyOn(request.logger, 'info').mockImplementation(server.loggerMocks.info)
-    vi.spyOn(request.logger, 'warn').mockImplementation(server.loggerMocks.warn)
-    vi.spyOn(request.logger, 'error').mockImplementation(
-      server.loggerMocks.error
-    )
+    const { logger } = asHapiRequest(request)
+    vi.spyOn(logger, 'info').mockImplementation(loggerMocks.info)
+    vi.spyOn(logger, 'warn').mockImplementation(loggerMocks.warn)
+    vi.spyOn(logger, 'error').mockImplementation(loggerMocks.error)
     return h.continue
   })
 }
 
-const it = /** @type {import('vitest').TestAPI<ServerFixtures>} */ (
+const it = /** @type {TestAPI<ServerFixtures>} */ (
   test.extend({
     msw: [
       // eslint-disable-next-line no-empty-pattern
@@ -128,7 +150,11 @@ const it = /** @type {import('vitest').TestAPI<ServerFixtures>} */ (
       // eslint-disable-next-line no-empty-pattern
       async ({}, use) => {
         const { createServer } = await import('#server/index.js')
-        const server = await createServer({ wasteOrganisations: organisations })
+        const server = await createServer({
+          wasteOrganisations: /** @type {WasteOrganisation[]} */ (
+            organisationsFixture.organisations
+          )
+        })
 
         attachLoggerMocks(server)
 

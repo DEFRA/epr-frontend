@@ -8,6 +8,12 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import { ServerInjectOptions } from '@hapi/hapi'
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { CreatePrnResponse } from './helpers/create-prn.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
@@ -24,36 +30,43 @@ const mockCredentials = {
   idToken: 'mock-id-token'
 }
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
+const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
+  /** @type {unknown} */ ({
+    strategy: 'session',
+    credentials: mockCredentials
+  })
+)
 
-const fixtureReprocessor = {
-  organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'reprocessor-input',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Reprocessing Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
-}
+const fixtureReprocessor =
+  /** @type {Required<RegistrationWithAccreditation>} */ (
+    /** @type {unknown} */ ({
+      organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
+      registration: {
+        id: 'reg-456',
+        wasteProcessingType: 'reprocessor-input',
+        material: 'plastic',
+        nation: 'england',
+        site: { address: { line1: 'Reprocessing Site' } },
+        accreditationId: 'acc-001'
+      },
+      accreditation: { id: 'acc-001', status: 'approved' }
+    })
+  )
 
-const fixtureExporter = {
-  organisationData: { id: 'org-123', name: 'Exporter Organisation' },
-  registration: {
-    id: 'reg-456',
-    wasteProcessingType: 'exporter',
-    material: 'plastic',
-    nation: 'england',
-    site: { address: { line1: 'Export Site' } },
-    accreditationId: 'acc-001'
-  },
-  accreditation: { id: 'acc-001', status: 'approved' }
-}
+const fixtureExporter = /** @type {Required<RegistrationWithAccreditation>} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-123', name: 'Exporter Organisation' },
+    registration: {
+      id: 'reg-456',
+      wasteProcessingType: 'exporter',
+      material: 'plastic',
+      nation: 'england',
+      site: { address: { line1: 'Export Site' } },
+      accreditationId: 'acc-001'
+    },
+    accreditation: { id: 'acc-001', status: 'approved' }
+  })
+)
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -96,15 +109,19 @@ describe('#postCreatePrnController', () => {
       it('creates PRN draft and redirects to check page', async ({
         server
       }) => {
-        vi.mocked(createPrn).mockResolvedValue({
-          id: 'prn-789',
-          tonnage: 100,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
+        vi.mocked(createPrn).mockResolvedValue(
+          /** @type {CreatePrnResponse} */ (
+            /** @type {unknown} */ ({
+              id: 'prn-789',
+              tonnage: 100,
+              material: 'plastic',
+              status: 'draft',
+              wasteProcessingType: 'reprocessor',
+              processToBeUsed: 'R3',
+              isDecemberWaste: false
+            })
+          )
+        )
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
           auth: mockAuth
@@ -125,15 +142,19 @@ describe('#postCreatePrnController', () => {
       })
 
       it('calls createPrn with correct parameters', async ({ server }) => {
-        vi.mocked(createPrn).mockResolvedValue({
-          id: 'prn-789',
-          tonnage: 100,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
+        vi.mocked(createPrn).mockResolvedValue(
+          /** @type {CreatePrnResponse} */ (
+            /** @type {unknown} */ ({
+              id: 'prn-789',
+              tonnage: 100,
+              material: 'plastic',
+              status: 'draft',
+              wasteProcessingType: 'reprocessor',
+              processToBeUsed: 'R3',
+              isDecemberWaste: false
+            })
+          )
+        )
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
           auth: mockAuth
@@ -155,7 +176,7 @@ describe('#postCreatePrnController', () => {
             issuedToOrganisation: {
               id: validPayload.recipient,
               name: 'Bigco Packaging Ltd',
-              tradingName: undefined,
+              tradingName: null,
               registrationType: 'LARGE_PRODUCER'
             },
             tonnage: 100,
@@ -166,15 +187,19 @@ describe('#postCreatePrnController', () => {
       })
 
       it('omits notes when notes is empty', async ({ server }) => {
-        vi.mocked(createPrn).mockResolvedValue({
-          id: 'prn-789',
-          tonnage: 100,
-          material: 'plastic',
-          status: 'draft',
-          wasteProcessingType: 'reprocessor',
-          processToBeUsed: 'R3',
-          isDecemberWaste: false
-        })
+        vi.mocked(createPrn).mockResolvedValue(
+          /** @type {CreatePrnResponse} */ (
+            /** @type {unknown} */ ({
+              id: 'prn-789',
+              tonnage: 100,
+              material: 'plastic',
+              status: 'draft',
+              wasteProcessingType: 'reprocessor',
+              processToBeUsed: 'R3',
+              isDecemberWaste: false
+            })
+          )
+        )
 
         const { cookie, crumb } = await getCsrfToken(server, url, {
           auth: mockAuth
