@@ -1,4 +1,8 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
 version: v1.25.1
-ignore: {}
+ignore:
+  'SNYK-JS-POSTCSSSELECTORPARSER-16873882':
+    - '*':
+        reason: 'No upstream fix available. postcss-selector-parser is pulled in transitively by cssnano during the webpack CSS build only and is never reached at application runtime, so the uncontrolled-recursion DoS is not exploitable here. Revisit when a patched version is published.'
+        expires: '2026-11-27T00:00:00.000Z'
 patch: {}
