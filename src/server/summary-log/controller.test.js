@@ -1488,6 +1488,46 @@ describe('#summaryLogUploadProgressController', () => {
           'Select a value from the drop-down list'
         ])
       })
+
+      it('should show a human-readable column label, not the raw header code', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_VALID_EWC_CODE',
+                actual: '99',
+                location: {
+                  sheet: 'Received',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 9,
+                  rowId: '1002',
+                  column: 'F',
+                  header: 'EWC_CODE'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const columnCell = $(
+          '[data-testid="app-page-body"] table.govuk-table tbody tr td'
+        )
+          .eq(1)
+          .text()
+          .trim()
+
+        expect(columnCell).toBe('EWC code (column F)')
+      })
     })
 
     it('status: rejected - should initiate upload with pre-signed URL', async ({
