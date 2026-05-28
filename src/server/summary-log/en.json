@@ -51,6 +51,7 @@
     "CUSTOMS_CODES": "Customs codes",
     "DATE_LOAD_LEFT_SITE": "Date load left site",
     "DATE_OF_EXPORT": "Date of export",
+    "DATE_RECEIVED_BY_OSR": "Date received by OSR",
     "DATE_RECEIVED_FOR_EXPORT": "Date received for export",
     "DATE_RECEIVED_FOR_REPROCESSING": "Date received for reprocessing",
     "DESCRIPTION_WASTE": "Description of waste",

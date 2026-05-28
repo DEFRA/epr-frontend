@@ -23,7 +23,9 @@
       {% for worksheet in errorGroups %}
         <h2 class="govuk-heading-m">{{ worksheet.worksheetLabel }}</h2>
         {% for section in worksheet.sections %}
-          <h3 class="govuk-heading-s">{{ section.sectionLabel }}</h3>
+          {% if section.sectionLabel != worksheet.worksheetLabel %}
+            <h3 class="govuk-heading-s">{{ section.sectionLabel }}</h3>
+          {% endif %}
           <table class="govuk-table">
             <caption class="govuk-table__caption govuk-visually-hidden">{{ section.sectionLabel }}</caption>
             <thead class="govuk-table__head">

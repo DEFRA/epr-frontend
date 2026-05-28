@@ -1528,6 +1528,43 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(columnCell).toBe('EWC code (column F)')
       })
+
+      it('should not repeat the worksheet heading when the table has no distinct label', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                actual: 'x',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'UNMAPPED_TABLE',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'D',
+                  header: 'NET_WEIGHT'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const worksheetHeadingCount = $(
+          '[data-testid="app-page-body"] h2, [data-testid="app-page-body"] h3'
+        ).filter((_, el) => $(el).text().trim() === 'Reprocessing').length
+
+        expect(worksheetHeadingCount).toBe(1)
+      })
     })
 
     it('status: rejected - should initiate upload with pre-signed URL', async ({
