@@ -14,6 +14,18 @@
   "adjustmentsReflected_one": "{{count}} adjusted load will be reflected in your waste balance",
   "adjustmentsReflected_other": "{{count}} adjusted loads will be reflected in your waste balance",
   "cancelButtonText": "Cancel and return to home",
+  "cellColumnLabel": "{{label}} (column {{column}})",
+  "cellEmptyValue": "(empty)",
+  "cellReason": {
+    "WEIGHT_FORMAT_INVALID": "Must be a number",
+    "DATA_ENTRY_INVALID": "Check this value"
+  },
+  "cellTable": {
+    "rowIdHeading": "Row ID",
+    "columnHeading": "Column",
+    "valueHeading": "Value entered",
+    "problemHeading": "Problem"
+  },
   "checkCaption": "Upload summary log",
   "checkHeading": "Check before confirming upload",
   "checkIntro": "Your summary log data has been checked and is now ready for you to upload.",
@@ -23,6 +35,9 @@
   "checkWarningOr": "or",
   "checkWarningStart": "This data will not be saved until you confirm upload. If something looks wrong, you can",
   "checkWarningUploadLink": "upload an updated summary log",
+  "columnHeader": {
+    "NET_WEIGHT": "Net weight"
+  },
   "complianceBody": "By submitting this summary log, you are declaring that you have complied with the requirements of your environmental permit during the reporting period.",
   "complianceHeading": "Compliance",
   "complianceSubheading": "You must comply with your waste permit",
@@ -125,6 +140,9 @@
   "successPageTitle": "Summary log uploaded",
   "supersededHeading": "This summary log has been replaced",
   "supersededMessage": "A newer summary log has been uploaded. This upload is no longer being processed.",
+  "tableLabel": {
+    "RECEIVED_LOADS_FOR_REPROCESSING": "Loads received"
+  },
   "tonnes": "tonnes",
   "tooManyAdjustedLoadsToList": "As there are 100 or more adjusted loads, we are not able to list them all here.",
   "tooManyLoadsToList": "As 100 or more loads are missing data, we are not able to list them here. If you need detailed guidance on how to record all the necessary data in your summary log, you can read the <a href=\"https://www.gov.uk/government/publications/summary-log-templates-for-uk-packaging-waste/recording-uk-packaging-waste-in-summary-logs-supplementary-guidance\" class=\"govuk-link\">supplementary guidance</a>.",

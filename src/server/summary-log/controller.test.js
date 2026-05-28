@@ -1213,6 +1213,54 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('The selected file contains a virus')
     })
 
+    describe('located cell errors (per-cell detail)', () => {
+      const locatedFailure = {
+        errorCode: 'MUST_BE_A_NUMBER',
+        location: {
+          sheet: 'Reprocessing',
+          table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+          row: 8,
+          rowId: '1003',
+          column: 'D',
+          header: 'NET_WEIGHT'
+        },
+        actual: 'abc'
+      }
+
+      it('should render a per-cell detail row instead of a collapsed category message', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures: [locatedFailure] }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = load(result)
+        const cells = $(
+          '[data-testid="app-page-body"] table.govuk-table tbody tr'
+        )
+          .first()
+          .find('td')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(cells).toStrictEqual([
+          '1003',
+          'Net weight (column D)',
+          'abc',
+          'Must be a number'
+        ])
+      })
+    })
+
     it('status: rejected - should initiate upload with pre-signed URL', async ({
       server
     }) => {

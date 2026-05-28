@@ -12,16 +12,77 @@
  */
 
 /**
+ * Full location of a validation failure within the uploaded spreadsheet.
+ * `rowId` is the operator-facing ROW_ID ("load number"); `row` is the raw
+ * spreadsheet row number; `column` is the Excel column letter.
+ * @typedef {{
+ *   sheet?: string,
+ *   table?: string,
+ *   row?: number,
+ *   rowId?: string,
+ *   column?: string,
+ *   header?: string,
+ *   field?: string
+ * }} CellLocation
+ */
+
+/**
  * @typedef {{
  *   errorCode: string,
- *   location?: { header?: string }
+ *   code?: string,
+ *   location?: CellLocation,
+ *   actual?: unknown,
+ *   expected?: unknown
  * }} ValidationFailure
  */
 
 /**
  * @typedef {{
- *   failures: ValidationFailure[]
+ *   failures: ValidationFailure[],
+ *   totalIssuesCount?: number
  * }} ValidationResponse
+ */
+
+/**
+ * A validation failure that pinpoints a specific spreadsheet cell. Narrowed
+ * from {@link ValidationFailure} by the isLocatedCellError type guard, so the
+ * location dimensions used for rendering are guaranteed present.
+ * @typedef {{
+ *   errorCode: string,
+ *   actual?: unknown,
+ *   location: {
+ *     sheet: string,
+ *     table: string,
+ *     row: number,
+ *     column: string,
+ *     header: string,
+ *     rowId?: string
+ *   }
+ * }} LocatedCellFailure
+ */
+
+/**
+ * A single located cell error rendered as a table row on the rejection page.
+ * @typedef {{
+ *   rowId: string,
+ *   columnLabel: string,
+ *   value: string,
+ *   problem: string
+ * }} CellErrorRow
+ */
+
+/**
+ * Located cell errors grouped by (worksheet, table). One rendered table.
+ * @typedef {{
+ *   worksheetLabel: string,
+ *   sectionLabel: string,
+ *   rows: CellErrorRow[]
+ * }} CellErrorGroup
+ */
+
+/**
+ * i18next translation function (Hapi `request.t`).
+ * @typedef {(key: string, params?: object) => string} Localise
  */
 
 /**

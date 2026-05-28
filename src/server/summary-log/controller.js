@@ -15,9 +15,13 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
+ *   CellErrorGroup,
+ *   CellErrorRow,
  *   LoadCategoryViewModel,
  *   LoadRows,
  *   LoadsViewModel,
+ *   Localise,
+ *   LocatedCellFailure,
  *   RawLoadCategory,
  *   RawLoads,
  *   RawLoadsByWasteRecordType,
@@ -25,6 +29,7 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
  *   SummaryLogParams,
  *   SummaryLogStatusResponse,
  *   SummaryLogsSession,
+ *   ValidationFailure,
  *   ValidationResponse
  * } from './types.js'
  */
@@ -459,6 +464,123 @@ const applyFallback = (combinedIssues, fallbackMessage) => {
 }
 
 /**
+ * A failure is a located cell error when it pinpoints a specific spreadsheet
+ * cell (sheet, table, row, column and header). Other failures are meta/file-
+ * level and keep the existing category-message rendering.
+ * @param {ValidationFailure} failure
+ * @returns {failure is LocatedCellFailure}
+ */
+const isLocatedCellError = (failure) => {
+  const location = failure?.location
+
+  return Boolean(
+    location?.sheet &&
+    location?.table &&
+    typeof location?.row === 'number' &&
+    location?.column &&
+    location?.header
+  )
+}
+
+/**
+ * Sorts ROW_IDs numerically where both are numeric, falling back to a string
+ * comparison (ROW_IDs arrive as strings and are unique only within a table).
+ * @param {string} a
+ * @param {string} b
+ * @returns {number}
+ */
+const compareRowId = (a, b) => {
+  const numA = Number(a)
+  const numB = Number(b)
+
+  if (Number.isFinite(numA) && Number.isFinite(numB)) {
+    return numA - numB
+  }
+
+  return String(a).localeCompare(String(b))
+}
+
+/**
+ * @param {string} header - Column header code (e.g. NET_WEIGHT)
+ * @param {string} column - Excel column letter (e.g. D)
+ * @param {Localise} localise
+ * @returns {string} e.g. "Net weight (column D)"
+ */
+const buildColumnLabel = (header, column, localise) => {
+  const label = localise(`summary-log:columnHeader.${header}`, {
+    defaultValue: header
+  })
+
+  return localise('summary-log:cellColumnLabel', { label, column })
+}
+
+/**
+ * @param {unknown} actual - The value the operator entered
+ * @param {Localise} localise
+ * @returns {string}
+ */
+const formatCellValue = (actual, localise) => {
+  if (actual === undefined || actual === null || actual === '') {
+    return localise('summary-log:cellEmptyValue')
+  }
+
+  return String(actual)
+}
+
+/**
+ * @param {LocatedCellFailure} failure
+ * @param {Localise} localise
+ * @returns {CellErrorRow}
+ */
+const buildCellErrorRow = (failure, localise) => {
+  const { location, errorCode, actual } = failure
+  const displayCode = getDisplayCodeFromErrorCode(errorCode, location.header)
+
+  return {
+    rowId: location.rowId ?? String(location.row),
+    columnLabel: buildColumnLabel(location.header, location.column, localise),
+    value: formatCellValue(actual, localise),
+    problem: localise(`summary-log:cellReason.${displayCode}`, {
+      defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
+    })
+  }
+}
+
+/**
+ * Groups located cell errors by (worksheet, table), sorting each table's rows
+ * by ROW_ID. Each group renders as one table on the rejection page.
+ * @param {LocatedCellFailure[]} locatedFailures
+ * @param {Localise} localise
+ * @returns {CellErrorGroup[]}
+ */
+const buildCellErrorGroups = (locatedFailures, localise) => {
+  const byTable = new Map()
+
+  for (const failure of locatedFailures) {
+    const { location } = failure
+    const key = `${location.sheet} ${location.table}`
+
+    if (!byTable.has(key)) {
+      byTable.set(key, {
+        worksheetLabel: location.sheet,
+        sectionLabel: localise(`summary-log:tableLabel.${location.table}`, {
+          defaultValue: location.sheet
+        }),
+        rows: []
+      })
+    }
+
+    byTable.get(key).rows.push(buildCellErrorRow(failure, localise))
+  }
+
+  for (const group of byTable.values()) {
+    group.rows.sort((a, b) => compareRowId(a.rowId, b.rowId))
+  }
+
+  return [...byTable.values()]
+}
+
+/**
  * Renders the validation failures page for invalid summary logs
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
@@ -476,21 +598,31 @@ const renderValidationFailuresView = (
     `summary-log:failure.${TECHNICAL_ERROR_DISPLAY_CODE}`
   )
 
-  const rowRemovedFailures = failures.filter(
+  const locatedFailures = failures.filter(isLocatedCellError)
+  const nonLocatedFailures = failures.filter(
+    (failure) => !isLocatedCellError(failure)
+  )
+
+  const rowRemovedFailures = nonLocatedFailures.filter(
     ({ errorCode }) => errorCode === 'SEQUENTIAL_ROW_REMOVED'
   )
-  const otherFailures = failures.filter(
+  const otherFailures = nonLocatedFailures.filter(
     ({ errorCode }) => errorCode !== 'SEQUENTIAL_ROW_REMOVED'
   )
+
+  const errorGroups = buildCellErrorGroups(locatedFailures, localise)
 
   const combinedIssues = [
     ...buildRowRemovedIssue(rowRemovedFailures, localise),
     ...buildOtherIssueMessages(otherFailures, localise, fallbackMessage)
   ]
 
-  const issues = applyFallback(combinedIssues, fallbackMessage)
+  const issues =
+    errorGroups.length > 0
+      ? combinedIssues
+      : applyFallback(combinedIssues, fallbackMessage)
 
-  const issueCount = issues.length
+  const issueCount = locatedFailures.length + issues.length
 
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
@@ -501,6 +633,7 @@ const renderValidationFailuresView = (
     description2: localise('summary-log:validationFailuresDescription2', {
       count: issueCount
     }),
+    errorGroups,
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),
     buttonText: localise('summary-log:reuploadButtonText'),
