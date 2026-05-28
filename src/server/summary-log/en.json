@@ -26,6 +26,7 @@
     "valueHeading": "Value entered",
     "problemHeading": "Problem"
   },
+  "cellTruncationNotice": "Showing the first {{shown}} of {{total}} problems found. Fix these, then upload the file again to check for any remaining problems.",
   "checkCaption": "Upload summary log",
   "checkHeading": "Check before confirming upload",
   "checkIntro": "Your summary log data has been checked and is now ready for you to upload.",

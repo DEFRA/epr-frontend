@@ -16,6 +16,10 @@
       <p>{{ description1 }}</p>
       <p>{{ description2 }}</p>
 
+      {% if truncationNotice %}
+        <p class="govuk-!-font-weight-bold">{{ truncationNotice }}</p>
+      {% endif %}
+
       {% for worksheet in errorGroups %}
         <h2 class="govuk-heading-m">{{ worksheet.worksheetLabel }}</h2>
         {% for section in worksheet.sections %}

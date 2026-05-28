@@ -633,6 +633,15 @@ const renderValidationFailuresView = (
 
   const issueCount = locatedFailures.length + issues.length
 
+  const totalIssuesCount = validation?.totalIssuesCount
+  const truncationNotice =
+    typeof totalIssuesCount === 'number' && totalIssuesCount > failures.length
+      ? localise('summary-log:cellTruncationNotice', {
+          shown: failures.length,
+          total: totalIssuesCount
+        })
+      : undefined
+
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
     heading: localise('summary-log:validationFailuresHeading'),
@@ -642,6 +651,7 @@ const renderValidationFailuresView = (
     description2: localise('summary-log:validationFailuresDescription2', {
       count: issueCount
     }),
+    truncationNotice,
     errorGroups,
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),

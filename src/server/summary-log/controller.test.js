@@ -1334,6 +1334,44 @@ describe('#summaryLogUploadProgressController', () => {
         expect(firstTableRowIds).toStrictEqual(['1001', '1003'])
         expect(secondTableRowIds).toStrictEqual(['1001'])
       })
+
+      it('should state the total found when more issues exist than are shown', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            totalIssuesCount: 137,
+            failures: [locatedFailure]
+          }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('Showing the first 1 of 137 problems')
+      })
+
+      it('should not show a truncation notice when no total is reported', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures: [locatedFailure] }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(result).not.toContain('Showing the first')
+      })
     })
 
     it('status: rejected - should initiate upload with pre-signed URL', async ({
