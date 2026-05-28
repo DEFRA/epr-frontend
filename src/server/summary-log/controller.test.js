@@ -1434,6 +1434,60 @@ describe('#summaryLogUploadProgressController', () => {
         expect(tables).toHaveLength(1)
         expect(result).toContain('Registration number on summary log')
       })
+
+      it('should show a specific per-cell reason for each field type', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_VALID_DATE',
+                actual: '31/02/2025',
+                location: {
+                  sheet: 'Received',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'G',
+                  header: 'DATE_RECEIVED_FOR_REPROCESSING'
+                }
+              },
+              {
+                errorCode: 'MUST_BE_VALID_EWC_CODE',
+                actual: '99',
+                location: {
+                  sheet: 'Received',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 9,
+                  rowId: '1002',
+                  column: 'F',
+                  header: 'EWC_CODE'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const problems = $(
+          '[data-testid="app-page-body"] table.govuk-table tbody tr td:last-child'
+        )
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(problems).toStrictEqual([
+          'Must be a valid date',
+          'Select a value from the drop-down list'
+        ])
+      })
     })
 
     it('status: rejected - should initiate upload with pre-signed URL', async ({
