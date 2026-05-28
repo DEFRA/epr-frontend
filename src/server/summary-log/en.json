@@ -14,6 +14,7 @@
   "adjustmentsReflected_one": "{{count}} adjusted load will be reflected in your waste balance",
   "adjustmentsReflected_other": "{{count}} adjusted loads will be reflected in your waste balance",
   "cancelButtonText": "Cancel and return to home",
+  "cellDisplayCapNotice": "We can only show the first {{cap}} issues. Correct these and upload your file again to check for any others.",
   "cellEmptyValue": "(empty)",
   "cellReason": {
     "CALCULATED_FIELD_MISMATCH": "Does not match the calculated value",
@@ -33,7 +34,6 @@
     "valueHeading": "Value entered",
     "problemHeading": "Problem"
   },
-  "cellTruncationNotice": "Showing the first {{shown}} of {{total}} problems found. Fix these, then upload the file again to check for any remaining problems.",
   "checkCaption": "Upload summary log",
   "checkHeading": "Check before confirming upload",
   "checkIntro": "Your summary log data has been checked and is now ready for you to upload.",
@@ -194,8 +194,8 @@
   "uploadConflictReason1": "someone else from your organisation has just uploaded a different summary log",
   "uploadConflictReason2": "you confirmed the upload of this summary log a long time after you chose the file to upload",
   "uploadConflictReasonsIntro": "This may have happened because:",
-  "validationFailuresDescription1_one": "We've found the following issue with the file you selected.",
-  "validationFailuresDescription1_other": "We've found the following issues with the file you selected.",
+  "validationFailuresDescription1_one": "We've found {{count}} issue with the file you selected.",
+  "validationFailuresDescription1_other": "We've found {{count}} issues with the file you selected.",
   "validationFailuresDescription2_one": "You will need to correct this issue before you can upload the file.",
   "validationFailuresDescription2_other": "You will need to correct these issues before uploading the file again.",
   "validationFailuresHeading": "Your summary log cannot be uploaded",

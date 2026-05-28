@@ -1336,28 +1336,73 @@ describe('#summaryLogUploadProgressController', () => {
         expect(secondTableRowIds).toStrictEqual(['1001'])
       })
 
-      it('should state the total found when more issues exist than are shown', async ({
-        server
-      }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            totalIssuesCount: 137,
-            failures: [locatedFailure]
+      it('should state how many issues were found', async ({ server }) => {
+        const located = (rowId, column) => ({
+          errorCode: 'MUST_BE_A_NUMBER',
+          actual: 'x',
+          location: {
+            sheet: 'Received',
+            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+            row: 8,
+            rowId,
+            column,
+            header: 'NET_WEIGHT'
           }
         })
 
-        const { result, statusCode } = await server.inject({
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              located('1001', 'D'),
+              located('1002', 'E'),
+              located('1003', 'F')
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
           method: 'GET',
           url,
           auth: mockAuth
         })
 
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain('Showing the first 1 of 137 problems')
+        expect(result).toContain(
+          'We&#39;ve found 3 issues with the file you selected'
+        )
       })
 
-      it('should not show a truncation notice when no total is reported', async ({
+      it('should show a cap notice when the displayed errors hit the 100 limit', async ({
+        server
+      }) => {
+        const failures = Array.from({ length: 100 }, (_, i) => ({
+          errorCode: 'MUST_BE_A_NUMBER',
+          actual: 'x',
+          location: {
+            sheet: 'Received',
+            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+            row: i + 4,
+            rowId: String(1000 + i),
+            column: 'D',
+            header: 'NET_WEIGHT'
+          }
+        }))
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(result).toContain('We can only show the first 100 issues')
+      })
+
+      it('should not show a cap notice below the 100 limit', async ({
         server
       }) => {
         fetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1371,7 +1416,7 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        expect(result).not.toContain('Showing the first')
+        expect(result).not.toContain('We can only show the first')
       })
 
       it('should show "(empty)" when the failing cell has no value', async ({
@@ -1678,7 +1723,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
       expect(result).toContain(
-        'We&#39;ve found the following issue with the file you selected'
+        'We&#39;ve found 1 issue with the file you selected'
       )
       expect(result).toContain(
         'Registration number on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
@@ -1825,7 +1870,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(bullets).toStrictEqual(['Exported (sections 1, 2 and 3)'])
 
       expect(result).toContain(
-        'We&#39;ve found the following issue with the file you selected'
+        'We&#39;ve found 1 issue with the file you selected'
       )
     })
 
@@ -1873,7 +1918,7 @@ describe('#summaryLogUploadProgressController', () => {
       expect(preambleMatches).toHaveLength(1)
 
       expect(result).toContain(
-        'We&#39;ve found the following issue with the file you selected'
+        'We&#39;ve found 1 issue with the file you selected'
       )
     })
 

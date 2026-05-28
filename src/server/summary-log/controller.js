@@ -138,6 +138,11 @@ const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 const MAX_FILE_SIZE_MB = 100
 
+// Mirrors the backend MAX_VALIDATION_ISSUES cap; when the returned fatal
+// failures hit this, the backend dropped some, so we tell the operator only
+// the first N are shown (a true total of fatal errors is not on the wire).
+const VALIDATION_ISSUE_DISPLAY_CAP = 100
+
 /** @type {LoadRows} */
 const NO_ROWS = { count: 0, rowIds: [] }
 
@@ -635,12 +640,10 @@ const renderValidationFailuresView = (
 
   const issueCount = locatedFailures.length + issues.length
 
-  const totalIssuesCount = validation?.totalIssuesCount
-  const truncationNotice =
-    typeof totalIssuesCount === 'number' && totalIssuesCount > failures.length
-      ? localise('summary-log:cellTruncationNotice', {
-          shown: failures.length,
-          total: totalIssuesCount
+  const capNotice =
+    failures.length >= VALIDATION_ISSUE_DISPLAY_CAP
+      ? localise('summary-log:cellDisplayCapNotice', {
+          cap: VALIDATION_ISSUE_DISPLAY_CAP
         })
       : undefined
 
@@ -653,7 +656,7 @@ const renderValidationFailuresView = (
     description2: localise('summary-log:validationFailuresDescription2', {
       count: issueCount
     }),
-    truncationNotice,
+    capNotice,
     errorGroups,
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),
