@@ -1372,6 +1372,68 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(result).not.toContain('Showing the first')
       })
+
+      it('should show "(empty)" when the failing cell has no value', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'FIELD_REQUIRED',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'C',
+                  header: 'EWC_CODE'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const valueCell = $(
+          '[data-testid="app-page-body"] table.govuk-table tbody tr td'
+        )
+          .eq(2)
+          .text()
+          .trim()
+
+        expect(valueCell).toBe('(empty)')
+      })
+
+      it('should render located errors as a table while keeping meta-level category messages', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [locatedFailure, { errorCode: 'REGISTRATION_MISMATCH' }]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const tables = $('[data-testid="app-page-body"] table.govuk-table')
+
+        expect(tables).toHaveLength(1)
+        expect(result).toContain('Registration number on summary log')
+      })
     })
 
     it('status: rejected - should initiate upload with pre-signed URL', async ({
