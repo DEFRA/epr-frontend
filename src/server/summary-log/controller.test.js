@@ -1399,6 +1399,9 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
+        expect(result).toContain(
+          'We&#39;ve found 100 or more issues with the file you selected'
+        )
         expect(result).toContain('We can only show the first 100 issues')
       })
 
