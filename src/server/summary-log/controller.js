@@ -645,12 +645,6 @@ const renderValidationFailuresView = (
   // count. An exact total needs a backend change (see repos-cw1).
   const capped = failures.length >= VALIDATION_ISSUE_DISPLAY_CAP
 
-  const capNotice = capped
-    ? localise('summary-log:cellDisplayCapNotice', {
-        cap: VALIDATION_ISSUE_DISPLAY_CAP
-      })
-    : undefined
-
   const description1 = capped
     ? localise('summary-log:validationFailuresCappedSummary', {
         cap: VALIDATION_ISSUE_DISPLAY_CAP
@@ -659,14 +653,19 @@ const renderValidationFailuresView = (
         count: issueCount
       })
 
+  const description2 = capped
+    ? localise('summary-log:validationFailuresCappedAction', {
+        cap: VALIDATION_ISSUE_DISPLAY_CAP
+      })
+    : localise('summary-log:validationFailuresDescription2', {
+        count: issueCount
+      })
+
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
     heading: localise('summary-log:validationFailuresHeading'),
     description1,
-    description2: localise('summary-log:validationFailuresDescription2', {
-      count: issueCount
-    }),
-    capNotice,
+    description2,
     errorGroups,
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),
