@@ -5,3 +5,9 @@
 .epr-summary-log-value {
   overflow-wrap: anywhere;
 }
+
+// Keep the Row ID column on one line so it cannot be squeezed/wrapped by the
+// flexible value column next to it.
+.epr-summary-log-rowid {
+  white-space: nowrap;
+}

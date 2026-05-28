@@ -66,6 +66,7 @@
  * is rowspanned across the record's cells).
  * @typedef {{
  *   columnLabel: string,
+ *   cellRef: string,
  *   value: string,
  *   problem: string
  * }} CellErrorCell

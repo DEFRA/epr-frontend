@@ -1254,7 +1254,8 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(cells).toStrictEqual([
           '1003',
-          'Net weight (D)',
+          'Net weight',
+          'D8',
           'abc',
           'Must be a number'
         ])
@@ -1405,7 +1406,7 @@ describe('#summaryLogUploadProgressController', () => {
         const valueCell = $(
           '[data-testid="app-page-body"] table.govuk-table tbody tr td'
         )
-          .eq(2)
+          .eq(3)
           .text()
           .trim()
 
@@ -1526,7 +1527,7 @@ describe('#summaryLogUploadProgressController', () => {
           .text()
           .trim()
 
-        expect(columnCell).toBe('EWC code (F)')
+        expect(columnCell).toBe('EWC code')
       })
 
       it('should not repeat the worksheet heading when the table has no distinct label', async ({

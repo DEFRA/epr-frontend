@@ -502,17 +502,11 @@ const compareRowId = (a, b) => {
 
 /**
  * @param {string} header - Column header code (e.g. NET_WEIGHT)
- * @param {string} column - Excel column letter (e.g. D)
  * @param {Localise} localise
- * @returns {string} e.g. "Net weight (column D)"
+ * @returns {string} Human label, e.g. "Net weight"
  */
-const buildColumnLabel = (header, column, localise) => {
-  const label = localise(`summary-log:columnHeader.${header}`, {
-    defaultValue: header
-  })
-
-  return localise('summary-log:cellColumnLabel', { label, column })
-}
+const buildColumnLabel = (header, localise) =>
+  localise(`summary-log:columnHeader.${header}`, { defaultValue: header })
 
 /**
  * @param {unknown} actual - The value the operator entered
@@ -537,7 +531,8 @@ const buildCellErrorCell = (failure, localise) => {
   const displayCode = getDisplayCodeFromErrorCode(errorCode, location.header)
 
   return {
-    columnLabel: buildColumnLabel(location.header, location.column, localise),
+    columnLabel: buildColumnLabel(location.header, localise),
+    cellRef: `${location.column}${location.row}`,
     value: formatCellValue(actual, localise),
     problem: localise(`summary-log:cellReason.${displayCode}`, {
       defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
