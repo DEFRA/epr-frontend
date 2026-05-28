@@ -15,8 +15,8 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
- *   CellErrorGroup,
  *   CellErrorRow,
+ *   CellErrorWorksheet,
  *   LoadCategoryViewModel,
  *   LoadRows,
  *   LoadsViewModel,
@@ -547,22 +547,27 @@ const buildCellErrorRow = (failure, localise) => {
 }
 
 /**
- * Groups located cell errors by (worksheet, table), sorting each table's rows
- * by ROW_ID. Each group renders as one table on the rejection page.
+ * Groups located cell errors by worksheet, then by table/section, sorting each
+ * table's rows by ROW_ID. One worksheet renders one heading; one table renders
+ * one table. ROW_ID is scoped within its (sheet, table).
  * @param {LocatedCellFailure[]} locatedFailures
  * @param {Localise} localise
- * @returns {CellErrorGroup[]}
+ * @returns {CellErrorWorksheet[]}
  */
 const buildCellErrorGroups = (locatedFailures, localise) => {
-  const byTable = new Map()
+  const byWorksheet = new Map()
 
   for (const failure of locatedFailures) {
     const { location } = failure
-    const key = `${location.sheet} ${location.table}`
 
-    if (!byTable.has(key)) {
-      byTable.set(key, {
-        worksheetLabel: location.sheet,
+    if (!byWorksheet.has(location.sheet)) {
+      byWorksheet.set(location.sheet, new Map())
+    }
+
+    const sectionsByTable = byWorksheet.get(location.sheet)
+
+    if (!sectionsByTable.has(location.table)) {
+      sectionsByTable.set(location.table, {
         sectionLabel: localise(`summary-log:tableLabel.${location.table}`, {
           defaultValue: location.sheet
         }),
@@ -570,14 +575,18 @@ const buildCellErrorGroups = (locatedFailures, localise) => {
       })
     }
 
-    byTable.get(key).rows.push(buildCellErrorRow(failure, localise))
+    sectionsByTable
+      .get(location.table)
+      .rows.push(buildCellErrorRow(failure, localise))
   }
 
-  for (const group of byTable.values()) {
-    group.rows.sort((a, b) => compareRowId(a.rowId, b.rowId))
-  }
-
-  return [...byTable.values()]
+  return [...byWorksheet].map(([worksheetLabel, sectionsByTable]) => ({
+    worksheetLabel,
+    sections: [...sectionsByTable.values()].map((section) => ({
+      sectionLabel: section.sectionLabel,
+      rows: section.rows.toSorted((a, b) => compareRowId(a.rowId, b.rowId))
+    }))
+  }))
 }
 
 /**

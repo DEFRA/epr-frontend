@@ -72,12 +72,19 @@
  */
 
 /**
- * Located cell errors grouped by (worksheet, table). One rendered table.
+ * Located cell errors for one table within a worksheet (one rendered table).
  * @typedef {{
- *   worksheetLabel: string,
  *   sectionLabel: string,
  *   rows: CellErrorRow[]
- * }} CellErrorGroup
+ * }} CellErrorSection
+ */
+
+/**
+ * Located cell errors grouped by worksheet, then by table/section.
+ * @typedef {{
+ *   worksheetLabel: string,
+ *   sections: CellErrorSection[]
+ * }} CellErrorWorksheet
  */
 
 /**

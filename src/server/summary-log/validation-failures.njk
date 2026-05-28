@@ -16,30 +16,32 @@
       <p>{{ description1 }}</p>
       <p>{{ description2 }}</p>
 
-      {% for group in errorGroups %}
-        <h2 class="govuk-heading-m">{{ group.worksheetLabel }}</h2>
-        <h3 class="govuk-heading-s">{{ group.sectionLabel }}</h3>
-        <table class="govuk-table">
-          <caption class="govuk-table__caption govuk-visually-hidden">{{ group.sectionLabel }}</caption>
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.rowIdHeading") }}</th>
-              <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.columnHeading") }}</th>
-              <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.valueHeading") }}</th>
-              <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.problemHeading") }}</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for row in group.rows %}
+      {% for worksheet in errorGroups %}
+        <h2 class="govuk-heading-m">{{ worksheet.worksheetLabel }}</h2>
+        {% for section in worksheet.sections %}
+          <h3 class="govuk-heading-s">{{ section.sectionLabel }}</h3>
+          <table class="govuk-table">
+            <caption class="govuk-table__caption govuk-visually-hidden">{{ section.sectionLabel }}</caption>
+            <thead class="govuk-table__head">
               <tr class="govuk-table__row">
-                <td class="govuk-table__cell">{{ row.rowId }}</td>
-                <td class="govuk-table__cell">{{ row.columnLabel }}</td>
-                <td class="govuk-table__cell">{{ row.value }}</td>
-                <td class="govuk-table__cell">{{ row.problem }}</td>
+                <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.rowIdHeading") }}</th>
+                <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.columnHeading") }}</th>
+                <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.valueHeading") }}</th>
+                <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.problemHeading") }}</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for row in section.rows %}
+                <tr class="govuk-table__row">
+                  <td class="govuk-table__cell">{{ row.rowId }}</td>
+                  <td class="govuk-table__cell">{{ row.columnLabel }}</td>
+                  <td class="govuk-table__cell">{{ row.value }}</td>
+                  <td class="govuk-table__cell">{{ row.problem }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endfor %}
       {% endfor %}
 
       {% for issue in issues %}

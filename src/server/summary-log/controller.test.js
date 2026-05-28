@@ -1259,6 +1259,81 @@ describe('#summaryLogUploadProgressController', () => {
           'Must be a number'
         ])
       })
+
+      it('should group by worksheet and table, scoping and sorting ROW_ID within each table', async ({
+        server
+      }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                actual: 'x',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 10,
+                  rowId: '1003',
+                  column: 'D',
+                  header: 'NET_WEIGHT'
+                }
+              },
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                actual: 'y',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'D',
+                  header: 'NET_WEIGHT'
+                }
+              },
+              {
+                errorCode: 'MUST_BE_A_VALID_DATE',
+                actual: 'z',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'SENT_ON_LOADS_FOR_REPROCESSING',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'H',
+                  header: 'DATE_OF_EXPORT'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const $ = load(result)
+        const tables = $('[data-testid="app-page-body"] table.govuk-table')
+        const worksheetHeadings = $('[data-testid="app-page-body"] h2')
+          .map((_, el) => $(el).text().trim())
+          .get()
+        const firstTableRowIds = $(tables[0])
+          .find('tbody tr td:first-child')
+          .map((_, el) => $(el).text().trim())
+          .get()
+        const secondTableRowIds = $(tables[1])
+          .find('tbody tr td:first-child')
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(tables).toHaveLength(2)
+        expect(worksheetHeadings).toStrictEqual(['Reprocessing'])
+        expect(firstTableRowIds).toStrictEqual(['1001', '1003'])
+        expect(secondTableRowIds).toStrictEqual(['1001'])
+      })
     })
 
     it('status: rejected - should initiate upload with pre-signed URL', async ({
