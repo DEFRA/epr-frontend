@@ -1538,6 +1538,51 @@ describe('#summaryLogUploadProgressController', () => {
         ])
       })
 
+      it('should show the specific range reason, not a generic "must be a number"', async ({
+        server
+      }) => {
+        const located = (rowId, column, errorCode) => ({
+          errorCode,
+          actual: 'x',
+          location: {
+            sheet: 'Received',
+            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+            row: 4,
+            rowId,
+            column,
+            header: 'GROSS_WEIGHT'
+          }
+        })
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              located('1001', 'K', 'MUST_BE_AT_MOST_1000'),
+              located('1002', 'L', 'MUST_BE_AT_LEAST_ZERO')
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const problems = $(
+          '[data-testid="app-page-body"] table.govuk-table tbody tr td:last-child'
+        )
+          .map((_, el) => $(el).text().trim())
+          .get()
+
+        expect(problems).toStrictEqual([
+          'Must be 1,000 or less',
+          'Must be 0 or more'
+        ])
+      })
+
       it('should show a human-readable column label, not the raw header code', async ({
         server
       }) => {

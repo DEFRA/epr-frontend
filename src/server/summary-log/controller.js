@@ -539,8 +539,10 @@ const buildCellErrorCell = (failure, localise) => {
     columnLabel: buildColumnLabel(location.header, localise),
     cellRef: `${location.column}${location.row}`,
     value: formatCellValue(actual, localise),
-    problem: localise(`summary-log:cellReason.${displayCode}`, {
-      defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
+    problem: localise(`summary-log:cellReason.${errorCode}`, {
+      defaultValue: localise(`summary-log:cellReason.${displayCode}`, {
+        defaultValue: localise('summary-log:cellReason.DATA_ENTRY_INVALID')
+      })
     })
   }
 }

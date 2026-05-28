@@ -22,6 +22,13 @@
     "DROPDOWN_FORMAT_INVALID": "Select a value from the drop-down list",
     "FREE_TEXT_INVALID": "Contains characters that are not allowed",
     "ID_FORMAT_INVALID": "Must be a 3-digit number",
+    "MUST_BE_A_NUMBER": "Must be a number",
+    "MUST_BE_AT_LEAST_ZERO": "Must be 0 or more",
+    "MUST_BE_AT_MOST_1": "Must be 1 or less",
+    "MUST_BE_AT_MOST_1000": "Must be 1,000 or less",
+    "MUST_BE_AT_MOST_100_CHARS": "Must be 100 characters or fewer",
+    "MUST_BE_GREATER_THAN_ZERO": "Must be more than 0",
+    "MUST_BE_LESS_THAN_1": "Must be less than 1",
     "PERCENTAGE_FORMAT_INVALID": "Must be a number",
     "WEIGHT_FORMAT_INVALID": "Must be a number",
     "YES_NO_FORMAT_INVALID": "Must be Yes or No"
