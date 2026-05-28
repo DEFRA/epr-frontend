@@ -1254,7 +1254,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(cells).toStrictEqual([
           '1003',
-          'Net weight (column D)',
+          'Net weight (D)',
           'abc',
           'Must be a number'
         ])
@@ -1526,7 +1526,7 @@ describe('#summaryLogUploadProgressController', () => {
           .text()
           .trim()
 
-        expect(columnCell).toBe('EWC code (column F)')
+        expect(columnCell).toBe('EWC code (F)')
       })
 
       it('should not repeat the worksheet heading when the table has no distinct label', async ({
@@ -1564,6 +1564,52 @@ describe('#summaryLogUploadProgressController', () => {
         ).filter((_, el) => $(el).text().trim() === 'Reprocessing').length
 
         expect(worksheetHeadingCount).toBe(1)
+      })
+
+      it('should rowspan the Row ID across a record with multiple failing cells', async ({
+        server
+      }) => {
+        const failingCell = (column, header) => ({
+          errorCode: 'MUST_BE_A_NUMBER',
+          actual: 'x',
+          location: {
+            sheet: 'Received',
+            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+            row: 8,
+            rowId: '1000',
+            column,
+            header
+          }
+        })
+
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              failingCell('K', 'GROSS_WEIGHT'),
+              failingCell('L', 'TARE_WEIGHT'),
+              failingCell('M', 'PALLET_WEIGHT')
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const $ = load(result)
+        const rowIdCells = $(
+          '[data-testid="app-page-body"] table.govuk-table tbody td'
+        ).filter((_, el) => $(el).text().trim() === '1000')
+        const bodyRows = $(
+          '[data-testid="app-page-body"] table.govuk-table tbody tr'
+        )
+
+        expect(rowIdCells).toHaveLength(1)
+        expect(rowIdCells.attr('rowspan')).toBe('3')
+        expect(bodyRows).toHaveLength(3)
       })
     })
 

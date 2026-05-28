@@ -15,7 +15,7 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
- *   CellErrorRow,
+ *   CellErrorCell,
  *   CellErrorWorksheet,
  *   LoadCategoryViewModel,
  *   LoadRows,
@@ -530,14 +530,13 @@ const formatCellValue = (actual, localise) => {
 /**
  * @param {LocatedCellFailure} failure
  * @param {Localise} localise
- * @returns {CellErrorRow}
+ * @returns {CellErrorCell}
  */
-const buildCellErrorRow = (failure, localise) => {
+const buildCellErrorCell = (failure, localise) => {
   const { location, errorCode, actual } = failure
   const displayCode = getDisplayCodeFromErrorCode(errorCode, location.header)
 
   return {
-    rowId: location.rowId ?? String(location.row),
     columnLabel: buildColumnLabel(location.header, location.column, localise),
     value: formatCellValue(actual, localise),
     problem: localise(`summary-log:cellReason.${displayCode}`, {
@@ -547,9 +546,10 @@ const buildCellErrorRow = (failure, localise) => {
 }
 
 /**
- * Groups located cell errors by worksheet, then by table/section, sorting each
- * table's rows by ROW_ID. One worksheet renders one heading; one table renders
- * one table. ROW_ID is scoped within its (sheet, table).
+ * Groups located cell errors by worksheet, then table/section, then ROW_ID.
+ * Each worksheet renders one heading, each table one table, and each record
+ * (ROW_ID) one rowspanned Row ID cell over its failing cells. Records are
+ * sorted by ROW_ID, scoped within their (sheet, table).
  * @param {LocatedCellFailure[]} locatedFailures
  * @param {Localise} localise
  * @returns {CellErrorWorksheet[]}
@@ -559,6 +559,7 @@ const buildCellErrorGroups = (locatedFailures, localise) => {
 
   for (const failure of locatedFailures) {
     const { location } = failure
+    const rowId = location.rowId ?? String(location.row)
 
     if (!byWorksheet.has(location.sheet)) {
       byWorksheet.set(location.sheet, new Map())
@@ -571,20 +572,26 @@ const buildCellErrorGroups = (locatedFailures, localise) => {
         sectionLabel: localise(`summary-log:tableLabel.${location.table}`, {
           defaultValue: location.sheet
         }),
-        rows: []
+        recordsByRowId: new Map()
       })
     }
 
-    sectionsByTable
-      .get(location.table)
-      .rows.push(buildCellErrorRow(failure, localise))
+    const { recordsByRowId } = sectionsByTable.get(location.table)
+
+    if (!recordsByRowId.has(rowId)) {
+      recordsByRowId.set(rowId, [])
+    }
+
+    recordsByRowId.get(rowId).push(buildCellErrorCell(failure, localise))
   }
 
   return [...byWorksheet].map(([worksheetLabel, sectionsByTable]) => ({
     worksheetLabel,
     sections: [...sectionsByTable.values()].map((section) => ({
       sectionLabel: section.sectionLabel,
-      rows: section.rows.toSorted((a, b) => compareRowId(a.rowId, b.rowId))
+      records: [...section.recordsByRowId]
+        .map(([rowId, cells]) => ({ rowId, cells }))
+        .toSorted((a, b) => compareRowId(a.rowId, b.rowId))
     }))
   }))
 }

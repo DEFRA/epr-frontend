@@ -37,13 +37,17 @@
               </tr>
             </thead>
             <tbody class="govuk-table__body">
-              {% for row in section.rows %}
-                <tr class="govuk-table__row">
-                  <td class="govuk-table__cell">{{ row.rowId }}</td>
-                  <td class="govuk-table__cell">{{ row.columnLabel }}</td>
-                  <td class="govuk-table__cell">{{ row.value }}</td>
-                  <td class="govuk-table__cell">{{ row.problem }}</td>
-                </tr>
+              {% for record in section.records %}
+                {% for cell in record.cells %}
+                  <tr class="govuk-table__row">
+                    {% if loop.first %}
+                      <td class="govuk-table__cell" rowspan="{{ record.cells.length }}">{{ record.rowId }}</td>
+                    {% endif %}
+                    <td class="govuk-table__cell">{{ cell.columnLabel }}</td>
+                    <td class="govuk-table__cell epr-summary-log-value">{{ cell.value }}</td>
+                    <td class="govuk-table__cell">{{ cell.problem }}</td>
+                  </tr>
+                {% endfor %}
               {% endfor %}
             </tbody>
           </table>

@@ -62,20 +62,29 @@
  */
 
 /**
- * A single located cell error rendered as a table row on the rejection page.
+ * A single failing cell within a record (one table row, minus the ROW_ID which
+ * is rowspanned across the record's cells).
  * @typedef {{
- *   rowId: string,
  *   columnLabel: string,
  *   value: string,
  *   problem: string
- * }} CellErrorRow
+ * }} CellErrorCell
+ */
+
+/**
+ * One record (ROW_ID) and its failing cells. The ROW_ID cell is rowspanned
+ * across the cells.
+ * @typedef {{
+ *   rowId: string,
+ *   cells: CellErrorCell[]
+ * }} CellErrorRecord
  */
 
 /**
  * Located cell errors for one table within a worksheet (one rendered table).
  * @typedef {{
  *   sectionLabel: string,
- *   rows: CellErrorRow[]
+ *   records: CellErrorRecord[]
  * }} CellErrorSection
  */
 
