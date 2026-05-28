@@ -16,6 +16,10 @@
         <h1 class="govuk-heading-xl">{{ heading }}</h1>
         <p>{{ description1 }}</p>
         <p>{{ description2 }}</p>
+
+        {% if capNotice %}
+          <p class="govuk-!-font-weight-bold">{{ capNotice }}</p>
+        {% endif %}
       </div>
     </div>
   </div>

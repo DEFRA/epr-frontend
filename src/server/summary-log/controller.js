@@ -641,31 +641,31 @@ const renderValidationFailuresView = (
   const issueCount = locatedFailures.length + issues.length
 
   // When the fatal failures hit the cap there are 100+ but the true total is
-  // not on the wire, so state "100 or more" rather than the misleading capped
-  // count. An exact total needs a backend change (see repos-cw1).
+  // not on the wire, so the intro stays generic (no misleading count) and the
+  // cap notice carries the "first 100" call to action. An exact total needs a
+  // backend change (see repos-cw1).
   const capped = failures.length >= VALIDATION_ISSUE_DISPLAY_CAP
 
   const description1 = capped
-    ? localise('summary-log:validationFailuresCappedSummary', {
-        cap: VALIDATION_ISSUE_DISPLAY_CAP
-      })
+    ? localise('summary-log:validationFailuresCappedSummary')
     : localise('summary-log:validationFailuresDescription1', {
         count: issueCount
       })
 
-  const description2 = capped
+  const capNotice = capped
     ? localise('summary-log:validationFailuresCappedAction', {
         cap: VALIDATION_ISSUE_DISPLAY_CAP
       })
-    : localise('summary-log:validationFailuresDescription2', {
-        count: issueCount
-      })
+    : undefined
 
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
     heading: localise('summary-log:validationFailuresHeading'),
     description1,
-    description2,
+    description2: localise('summary-log:validationFailuresDescription2', {
+      count: issueCount
+    }),
+    capNotice,
     errorGroups,
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),
