@@ -1213,6 +1213,66 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('The selected file contains a virus')
     })
 
+    // Codes that resolve via the direct-key fallback to their own
+    // `failure.<code>` copy. Without that copy they would silently render the
+    // technical-error defaultValue, so each case asserts the tailored message
+    // AND the absence of the fallback.
+    const technicalErrorCopy =
+      'Sorry, there is a problem with the service - try again later'
+
+    it.for([
+      {
+        errorCode: 'FILE_EMPTY',
+        status: summaryLogStatuses.rejected,
+        copy: 'The selected file is empty'
+      },
+      {
+        errorCode: 'FILE_TOO_LARGE',
+        status: summaryLogStatuses.rejected,
+        copy: 'The selected file must be smaller than 100MB'
+      },
+      {
+        errorCode: 'FILE_WRONG_TYPE',
+        status: summaryLogStatuses.rejected,
+        copy: 'The selected file must be a .XLSX'
+      },
+      {
+        errorCode: 'PROCESSING_TYPE_DATA_INVALID',
+        status: summaryLogStatuses.invalid,
+        copy: 'There is a problem with your registration - please contact support'
+      },
+      {
+        errorCode: 'TEMPLATE_VERSION_REQUIRED',
+        status: summaryLogStatuses.invalid,
+        copy: 'The template version could not be determined'
+      },
+      {
+        errorCode: 'TEMPLATE_VERSION_INVALID',
+        status: summaryLogStatuses.invalid,
+        copy: 'The template version is not recognised'
+      }
+    ])(
+      'status: $status with $errorCode - should render its tailored failure copy, not the technical-error fallback',
+      async ({ errorCode, status, copy }, { server }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          validation: { failures: [{ errorCode }] }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(getByText(body, copy)).toBeDefined()
+        expect(queryByText(body, technicalErrorCopy)).toBeNull()
+      }
+    )
+
     it('status: rejected - should initiate upload with pre-signed URL', async ({
       server
     }) => {
@@ -1996,7 +2056,7 @@ describe('#summaryLogUploadProgressController', () => {
         validation: {
           failures: [
             {
-              errorCode: 'MUST_BE_3_DIGIT_NUMBER',
+              errorCode: 'MUST_BE_3_DIGIT_ID',
               location: { header: 'OSR_ID' }
             }
           ]
