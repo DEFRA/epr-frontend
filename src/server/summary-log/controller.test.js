@@ -1484,104 +1484,91 @@ describe('#summaryLogUploadProgressController', () => {
         expect(result).toContain('Registration number on summary log')
       })
 
-      it('should show a specific per-cell reason for each field type', async ({
-        server
-      }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              {
-                errorCode: 'MUST_BE_A_VALID_DATE',
-                actual: '31/02/2025',
-                location: {
-                  sheet: 'Received',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 8,
-                  rowId: '1001',
-                  column: 'G',
-                  header: 'DATE_RECEIVED_FOR_REPROCESSING'
-                }
-              },
-              {
-                errorCode: 'MUST_BE_VALID_EWC_CODE',
-                actual: '99',
-                location: {
-                  sheet: 'Received',
-                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-                  row: 9,
-                  rowId: '1002',
-                  column: 'F',
-                  header: 'EWC_CODE'
-                }
-              }
-            ]
-          }
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-
-        const $ = load(result)
-        const problems = $(
-          '[data-testid="app-page-body"] table.govuk-table tbody tr td:last-child'
-        )
-          .map((_, el) => $(el).text().trim())
-          .get()
-
-        expect(problems).toStrictEqual([
-          'Must be a valid date',
+      it.for([
+        ['MUST_BE_A_NUMBER', 'GROSS_WEIGHT', 'Must be a number'],
+        ['MUST_BE_AT_MOST_1000', 'GROSS_WEIGHT', 'Must be 1,000 or less'],
+        ['MUST_BE_AT_LEAST_ZERO', 'TARE_WEIGHT', 'Must be 0 or more'],
+        ['MUST_BE_GREATER_THAN_ZERO', 'PALLET_WEIGHT', 'Must be more than 0'],
+        [
+          'MUST_BE_LESS_THAN_1',
+          'RECYCLABLE_PROPORTION_PERCENTAGE',
+          'Must be less than 1'
+        ],
+        [
+          'MUST_BE_AT_MOST_1',
+          'UK_PACKAGING_WEIGHT_PERCENTAGE',
+          'Must be 1 or less'
+        ],
+        ['MUST_BE_A_VALID_DATE', 'DATE_OF_EXPORT', 'Must be a valid date'],
+        ['MUST_BE_YES_OR_NO', 'BAILING_WIRE_PROTOCOL', 'Must be Yes or No'],
+        [
+          'MUST_BE_VALID_EWC_CODE',
+          'EWC_CODE',
           'Select a value from the drop-down list'
-        ])
-      })
+        ],
+        [
+          'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
+          'CONTAINER_NUMBER',
+          'Contains characters that are not allowed'
+        ],
+        [
+          'MUST_BE_AT_MOST_100_CHARS',
+          'CUSTOMS_CODES',
+          'Must be 100 characters or fewer'
+        ],
+        ['MUST_BE_3_DIGIT_NUMBER', 'OSR_ID', 'Must be a 3-digit number'],
+        [
+          'NET_WEIGHT_CALCULATION_MISMATCH',
+          'NET_WEIGHT',
+          'Does not match the calculated value'
+        ],
+        ['MUST_BE_A_STRING', 'ADD_PRODUCT_WEIGHT', 'Must be Yes or No'],
+        [
+          'MUST_BE_A_STRING',
+          'EWC_CODE',
+          'Select a value from the drop-down list'
+        ],
+        ['FIELD_REQUIRED', 'GROSS_WEIGHT', 'Check this value']
+      ])(
+        'maps errorCode %s to its per-cell problem',
+        async ([errorCode, header, expectedProblem], { server }) => {
+          fetchSummaryLogStatus.mockResolvedValueOnce({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode,
+                  actual: 'x',
+                  location: {
+                    sheet: 'Received',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 4,
+                    rowId: '1001',
+                    column: 'D',
+                    header
+                  }
+                }
+              ]
+            }
+          })
 
-      it('should show the specific range reason, not a generic "must be a number"', async ({
-        server
-      }) => {
-        const located = (rowId, column, errorCode) => ({
-          errorCode,
-          actual: 'x',
-          location: {
-            sheet: 'Received',
-            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-            row: 4,
-            rowId,
-            column,
-            header: 'GROSS_WEIGHT'
-          }
-        })
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: {
-            failures: [
-              located('1001', 'K', 'MUST_BE_AT_MOST_1000'),
-              located('1002', 'L', 'MUST_BE_AT_LEAST_ZERO')
-            ]
-          }
-        })
+          const $ = load(result)
+          const problem = $(
+            '[data-testid="app-page-body"] table.govuk-table tbody tr td:last-child'
+          )
+            .first()
+            .text()
+            .trim()
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-
-        const $ = load(result)
-        const problems = $(
-          '[data-testid="app-page-body"] table.govuk-table tbody tr td:last-child'
-        )
-          .map((_, el) => $(el).text().trim())
-          .get()
-
-        expect(problems).toStrictEqual([
-          'Must be 1,000 or less',
-          'Must be 0 or more'
-        ])
-      })
+          expect(problem).toBe(expectedProblem)
+        }
+      )
 
       it('should show a human-readable column label, not the raw header code', async ({
         server
