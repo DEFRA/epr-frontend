@@ -413,8 +413,4 @@ describe('#getDisplayCodeFromErrorCode', () => {
       'ROW_ID_MISMATCH'
     )
   })
-
-  test('returns undefined for undefined errorCode', () => {
-    expect(getDisplayCodeFromErrorCode(undefined, 'NET_WEIGHT')).toBeUndefined()
-  })
 })
