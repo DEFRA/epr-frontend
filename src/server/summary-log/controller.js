@@ -490,6 +490,21 @@ const isLocatedCellError = (failure) => {
 }
 
 /**
+ * Splits failures into those that pinpoint a spreadsheet cell (rendered as
+ * tables) and the rest (meta/file-level, rendered as category messages). The
+ * return type carries through the isLocatedCellError narrowing.
+ * @param {ValidationFailure[]} failures
+ * @returns {{
+ *   locatedFailures: LocatedCellFailure[],
+ *   nonLocatedFailures: ValidationFailure[]
+ * }}
+ */
+const partitionByLocation = (failures) => ({
+  locatedFailures: failures.filter(isLocatedCellError),
+  nonLocatedFailures: failures.filter((failure) => !isLocatedCellError(failure))
+})
+
+/**
  * Sorts ROW_IDs numerically where both are numeric, falling back to a string
  * comparison (ROW_IDs arrive as strings and are unique only within a table).
  * @param {string} a
@@ -637,10 +652,7 @@ const renderValidationFailuresView = (
     `summary-log:failure.${TECHNICAL_ERROR_DISPLAY_CODE}`
   )
 
-  const locatedFailures = failures.filter(isLocatedCellError)
-  const nonLocatedFailures = failures.filter(
-    (failure) => !isLocatedCellError(failure)
-  )
+  const { locatedFailures, nonLocatedFailures } = partitionByLocation(failures)
 
   const rowRemovedFailures = nonLocatedFailures.filter(
     ({ errorCode }) => errorCode === 'SEQUENTIAL_ROW_REMOVED'
