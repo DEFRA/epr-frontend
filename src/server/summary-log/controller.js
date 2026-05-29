@@ -16,6 +16,8 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
  *   CellErrorCell,
+ *   CellErrorRecord,
+ *   CellErrorSection,
  *   CellErrorWorksheet,
  *   LoadCategoryViewModel,
  *   LoadRows,
@@ -548,55 +550,74 @@ const buildCellErrorCell = (failure, localise) => {
 }
 
 /**
- * Groups located cell errors by worksheet, then table/section, then ROW_ID.
- * Each worksheet renders one heading, each table one table, and each record
- * (ROW_ID) one rowspanned Row ID cell over its failing cells. Records are
- * sorted by ROW_ID, scoped within their (sheet, table).
+ * The operator-facing ROW_ID ("load number"), falling back to the raw
+ * spreadsheet row number when the backend omits it.
+ * @param {LocatedCellFailure} failure
+ * @returns {string}
+ */
+const rowIdOf = ({ location }) => location.rowId ?? String(location.row)
+
+/**
+ * One record: a ROW_ID and its failing cells (the ROW_ID cell is rowspanned
+ * across them in the view).
+ * @param {string} rowId
+ * @param {LocatedCellFailure[]} failures - This record's failures
+ * @param {Localise} localise
+ * @returns {CellErrorRecord}
+ */
+const buildCellErrorRecord = (rowId, failures, localise) => ({
+  rowId,
+  cells: failures.map((failure) => buildCellErrorCell(failure, localise))
+})
+
+/**
+ * One rendered table: its failures grouped into records by ROW_ID, sorted
+ * (numerically where possible). ROW_IDs are unique only within a table.
+ * @param {string} table
+ * @param {LocatedCellFailure[]} failures - This table's failures
+ * @param {string} worksheetLabel - Used as the section label fallback
+ * @param {Localise} localise
+ * @returns {CellErrorSection}
+ */
+const buildCellErrorSection = (table, failures, worksheetLabel, localise) => ({
+  sectionLabel: localise(`summary-log:tableLabel.${table}`, {
+    defaultValue: worksheetLabel
+  }),
+  records: [...Map.groupBy(failures, rowIdOf)]
+    .map(([rowId, recordFailures]) =>
+      buildCellErrorRecord(rowId, recordFailures, localise)
+    )
+    .toSorted((a, b) => compareRowId(a.rowId, b.rowId))
+})
+
+/**
+ * One worksheet group: a heading and its tables (one rendered table per
+ * spreadsheet table within the worksheet).
+ * @param {string} worksheetLabel
+ * @param {LocatedCellFailure[]} failures - This worksheet's failures
+ * @param {Localise} localise
+ * @returns {CellErrorWorksheet}
+ */
+const buildCellErrorWorksheet = (worksheetLabel, failures, localise) => ({
+  worksheetLabel,
+  sections: [...Map.groupBy(failures, ({ location }) => location.table)].map(
+    ([table, tableFailures]) =>
+      buildCellErrorSection(table, tableFailures, worksheetLabel, localise)
+  )
+})
+
+/**
+ * Groups located cell errors by worksheet, then table, then ROW_ID — the
+ * nesting the view renders. See the per-level builders for the detail.
  * @param {LocatedCellFailure[]} locatedFailures
  * @param {Localise} localise
  * @returns {CellErrorWorksheet[]}
  */
-const buildCellErrorGroups = (locatedFailures, localise) => {
-  const byWorksheet = new Map()
-
-  for (const failure of locatedFailures) {
-    const { location } = failure
-    const rowId = location.rowId ?? String(location.row)
-
-    if (!byWorksheet.has(location.sheet)) {
-      byWorksheet.set(location.sheet, new Map())
-    }
-
-    const sectionsByTable = byWorksheet.get(location.sheet)
-
-    if (!sectionsByTable.has(location.table)) {
-      sectionsByTable.set(location.table, {
-        sectionLabel: localise(`summary-log:tableLabel.${location.table}`, {
-          defaultValue: location.sheet
-        }),
-        recordsByRowId: new Map()
-      })
-    }
-
-    const { recordsByRowId } = sectionsByTable.get(location.table)
-
-    if (!recordsByRowId.has(rowId)) {
-      recordsByRowId.set(rowId, [])
-    }
-
-    recordsByRowId.get(rowId).push(buildCellErrorCell(failure, localise))
-  }
-
-  return [...byWorksheet].map(([worksheetLabel, sectionsByTable]) => ({
-    worksheetLabel,
-    sections: [...sectionsByTable.values()].map((section) => ({
-      sectionLabel: section.sectionLabel,
-      records: [...section.recordsByRowId]
-        .map(([rowId, cells]) => ({ rowId, cells }))
-        .toSorted((a, b) => compareRowId(a.rowId, b.rowId))
-    }))
-  }))
-}
+const buildCellErrorGroups = (locatedFailures, localise) =>
+  [...Map.groupBy(locatedFailures, ({ location }) => location.sheet)].map(
+    ([worksheetLabel, sheetFailures]) =>
+      buildCellErrorWorksheet(worksheetLabel, sheetFailures, localise)
+  )
 
 /**
  * Renders the validation failures page for invalid summary logs
