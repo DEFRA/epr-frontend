@@ -490,19 +490,40 @@ const isLocatedCellError = (failure) => {
 }
 
 /**
- * Splits failures into those that pinpoint a spreadsheet cell (rendered as
- * tables) and the rest (meta/file-level, rendered as category messages). The
- * return type carries through the isLocatedCellError narrowing.
- * @param {ValidationFailure[]} failures
- * @returns {{
- *   locatedFailures: LocatedCellFailure[],
- *   nonLocatedFailures: ValidationFailure[]
- * }}
+ * @param {ValidationFailure} failure
+ * @returns {boolean}
  */
-const partitionByLocation = (failures) => ({
-  locatedFailures: failures.filter(isLocatedCellError),
-  nonLocatedFailures: failures.filter((failure) => !isLocatedCellError(failure))
-})
+const isSequentialRowRemoved = ({ errorCode }) =>
+  errorCode === 'SEQUENTIAL_ROW_REMOVED'
+
+/* eslint-disable jsdoc/no-undefined-types -- the `item is S` type-guard param confuses eslint-plugin-jsdoc's parser (`item` is the operand, not a type); a type guard has no alternative spelling */
+/**
+ * Splits an array into [matching, rest] by a predicate. When the predicate is
+ * a type guard, the matching half is narrowed to the guarded type.
+ * @template T
+ * @template {T} S
+ * @overload
+ * @param {T[]} items
+ * @param {(item: T) => item is S} predicate
+ * @returns {[S[], T[]]}
+ */
+/* eslint-enable jsdoc/no-undefined-types */
+/**
+ * @template T
+ * @overload
+ * @param {T[]} items
+ * @param {(item: T) => boolean} predicate
+ * @returns {[T[], T[]]}
+ */
+/**
+ * @param {unknown[]} items
+ * @param {(item: unknown) => boolean} predicate
+ * @returns {[unknown[], unknown[]]}
+ */
+const partition = (items, predicate) => [
+  items.filter(predicate),
+  items.filter((item) => !predicate(item))
+]
 
 /**
  * Sorts ROW_IDs numerically where both are numeric, falling back to a string
@@ -652,13 +673,14 @@ const renderValidationFailuresView = (
     `summary-log:failure.${TECHNICAL_ERROR_DISPLAY_CODE}`
   )
 
-  const { locatedFailures, nonLocatedFailures } = partitionByLocation(failures)
-
-  const rowRemovedFailures = nonLocatedFailures.filter(
-    ({ errorCode }) => errorCode === 'SEQUENTIAL_ROW_REMOVED'
+  const [locatedFailures, nonLocatedFailures] = partition(
+    failures,
+    isLocatedCellError
   )
-  const otherFailures = nonLocatedFailures.filter(
-    ({ errorCode }) => errorCode !== 'SEQUENTIAL_ROW_REMOVED'
+
+  const [rowRemovedFailures, otherFailures] = partition(
+    nonLocatedFailures,
+    isSequentialRowRemoved
   )
 
   const errorGroups = buildCellErrorGroups(locatedFailures, localise)
