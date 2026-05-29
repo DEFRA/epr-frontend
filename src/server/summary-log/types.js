@@ -14,7 +14,7 @@
 /**
  * @typedef {{
  *   errorCode: string,
- *   location?: { header?: string }
+ *   location?: { header?: string, sheet?: string }
  * }} ValidationFailure
  */
 
@@ -25,9 +25,13 @@
  */
 
 /**
+ * @typedef {string | number} RowId
+ */
+
+/**
  * @typedef {{
  *   count: number,
- *   rowIds: string[]
+ *   rowIds: RowId[]
  * }} LoadRows
  */
 
@@ -79,8 +83,8 @@
  * @typedef {{
  *   headingKey: string,
  *   sectionReference: string,
- *   added: { count: number, rowIds: string[] },
- *   adjusted: { count: number, rowIds: string[] }
+ *   added: { count: number, rowIds: RowId[] },
+ *   adjusted: { count: number, rowIds: RowId[] }
  * }} RegisteredOnlyLoadsSectionViewModel
  */
 
