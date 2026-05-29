@@ -228,21 +228,21 @@ describe('#getDisplayCodeFromErrorCode', () => {
     ).toBe('DATA_ENTRY_INVALID')
   })
 
-  test('returns ID_FORMAT_INVALID for MUST_BE_3_DIGIT_NUMBER with OSR_ID header', () => {
+  test('returns ID_FORMAT_INVALID for MUST_BE_3_DIGIT_ID with OSR_ID header', () => {
+    expect(getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_ID', 'OSR_ID')).toBe(
+      'ID_FORMAT_INVALID'
+    )
+  })
+
+  test('returns ID_FORMAT_INVALID for MUST_BE_3_DIGIT_ID with INTERIM_SITE_ID header', () => {
     expect(
-      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_NUMBER', 'OSR_ID')
+      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_ID', 'INTERIM_SITE_ID')
     ).toBe('ID_FORMAT_INVALID')
   })
 
-  test('returns ID_FORMAT_INVALID for MUST_BE_3_DIGIT_NUMBER with INTERIM_SITE_ID header', () => {
+  test('returns DATA_ENTRY_INVALID for MUST_BE_3_DIGIT_ID with non-ID header (safety net)', () => {
     expect(
-      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_NUMBER', 'INTERIM_SITE_ID')
-    ).toBe('ID_FORMAT_INVALID')
-  })
-
-  test('returns DATA_ENTRY_INVALID for MUST_BE_3_DIGIT_NUMBER with non-ID header (safety net)', () => {
-    expect(
-      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_NUMBER', 'GROSS_WEIGHT')
+      getDisplayCodeFromErrorCode('MUST_BE_3_DIGIT_ID', 'GROSS_WEIGHT')
     ).toBe('DATA_ENTRY_INVALID')
   })
 
