@@ -5,11 +5,18 @@ import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summa
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, getByText, queryByText } from '@testing-library/dom'
-import { load } from 'cheerio'
+import {
+  getAllByRole,
+  getAllByText,
+  getByRole,
+  getByTestId,
+  getByText,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -76,6 +83,14 @@ const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
 
+// server.inject types `result` as `object | undefined`, but for the rendered
+// HTML views under test it is the response body string.
+/**
+ * @param {unknown} result
+ * @returns {string}
+ */
+const asHtml = (result) => /** @type {string} */ (result)
+
 describe('#summaryLogUploadProgressController', () => {
   const organisationId = '123'
   const registrationId = '456'
@@ -128,21 +143,31 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
-      const $body = $('[data-testid="app-page-body"]')
+      const { body } = new JSDOM(result).window.document
+      const pageBody = getByTestId(body, 'app-page-body')
 
       /* eslint-disable vitest/max-expects */
-      expect($body.find('h1').text()).toBe('Your file is being checked')
-      expect($body.find('p').first().text()).toBe(
+      expect(
+        getByRole(pageBody, 'heading', {
+          level: 1,
+          name: 'Your file is being checked'
+        })
+      ).toBeDefined()
+      const paragraphs = getAllByRole(pageBody, 'paragraph')
+      expect(paragraphs[0].textContent?.trim()).toBe(
         'Your summary log is being checked for:'
       )
-      expect($body.find('li').eq(0).text()).toBe('errors')
-      expect($body.find('li').eq(1).text()).toBe('new data')
-      expect($body.find('li').eq(2).text()).toBe(
+      expect(
+        getAllByRole(pageBody, 'listitem').map((li) => li.textContent?.trim())
+      ).toStrictEqual([
+        'errors',
+        'new data',
         'changes to previously uploaded data'
+      ])
+      expect(paragraphs[1].textContent?.trim()).toBe(
+        'This may take a few minutes.'
       )
-      expect($body.find('p').eq(1).text()).toBe('This may take a few minutes.')
-      expect($body.find('p').eq(2).text()).toBe(
+      expect(paragraphs[2].textContent?.trim()).toBe(
         'Keep this page open and do not refresh it.'
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
@@ -937,46 +962,52 @@ describe('#summaryLogUploadProgressController', () => {
         )
       })
 
-      it('status: submitted - should display waste balance in confirmation panel', async ({
-        server
-      }) => {
-        const accreditationId = 'accreditation-id-456'
+      it.for([
+        { label: 'a balance', availableAmount: 1234.56, expected: '1,234.56' },
+        { label: 'a zero balance', availableAmount: 0, expected: '0.00' }
+      ])(
+        'status: submitted - should display $label in the confirmation panel',
+        async ({ availableAmount, expected }, { server }) => {
+          const accreditationId = 'accreditation-id-456'
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          accreditationNumber: 'ACC-2025-001'
-        })
-
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
+          fetchSummaryLogStatus.mockResolvedValueOnce({
+            status: summaryLogStatuses.submitted,
             accreditationNumber: 'ACC-2025-001'
-          }
-        })
+          })
 
-        fetchWasteBalances.mockResolvedValueOnce({
-          [accreditationId]: {
-            amount: 1000,
-            availableAmount: 1234.56
-          }
-        })
+          fetchRegistrationAndAccreditation.mockResolvedValueOnce({
+            organisationData: { id: organisationId },
+            registration: { id: registrationId, accreditationId },
+            accreditation: {
+              id: accreditationId,
+              accreditationNumber: 'ACC-2025-001'
+            }
+          })
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
+          fetchWasteBalances.mockResolvedValueOnce({
+            [accreditationId]: {
+              amount: 1000,
+              availableAmount
+            }
+          })
 
-        const $ = load(result)
-        const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
 
-        expect(panelBody).toHaveLength(1)
-        expect(panelBody.text()).toContain('Your updated waste balance')
-        expect(panelBody.text()).toContain('1,234.56')
-        expect(panelBody.text()).toContain('tonnes')
-      })
+          const { body } = new JSDOM(result).window.document
+          const panelBody = body.querySelector(
+            '.govuk-panel--confirmation .govuk-panel__body'
+          )
+
+          expect(panelBody).not.toBeNull()
+          expect(panelBody?.textContent).toContain('Your updated waste balance')
+          expect(panelBody?.textContent).toContain(expected)
+          expect(panelBody?.textContent).toContain('tonnes')
+        }
+      )
 
       it('status: submitted - should not display waste balance section when balance unavailable', async ({
         server
@@ -998,14 +1029,11 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
+        const { body } = new JSDOM(result).window.document
+
         expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = load(result)
-        const panel = $('.govuk-panel--confirmation')
-        const panelBody = panel.find('.govuk-panel__body')
-
-        expect(panel).toHaveLength(1)
-        expect(panelBody).toHaveLength(0)
+        expect(body.querySelector('.govuk-panel--confirmation')).not.toBeNull()
+        expect(body.querySelector('.govuk-panel__body')).toBeNull()
         expect(result).not.toContain('Your updated waste balance')
       })
 
@@ -1078,48 +1106,6 @@ describe('#summaryLogUploadProgressController', () => {
         })
       })
 
-      it('status: submitted - should display zero waste balance correctly', async ({
-        server
-      }) => {
-        const accreditationId = 'accreditation-id-456'
-
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          accreditationNumber: 'ACC-2025-001'
-        })
-
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
-          }
-        })
-
-        fetchWasteBalances.mockResolvedValueOnce({
-          [accreditationId]: {
-            amount: 0,
-            availableAmount: 0
-          }
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = load(result)
-        const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
-
-        expect(panelBody).toHaveLength(1)
-        expect(panelBody.text()).toContain('0.00')
-        expect(panelBody.text()).toContain('tonnes')
-      })
-
       it('status: submitted - should propagate 404 when registration not found', async ({
         server
       }) => {
@@ -1166,9 +1152,9 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(postResponse.statusCode).toBe(statusCodes.found)
 
-      const setCookies = postResponse.headers['set-cookie']
-      const cookies = Array.isArray(setCookies) ? setCookies : [setCookies]
-      const cookieHeader = cookies.map((c) => c.split(';')[0]).join('; ')
+      const cookieHeader = extractCookieValues(
+        postResponse.headers['set-cookie']
+      ).join('; ')
 
       const initialCallCount = fetchSummaryLogStatus.mock.calls.length
 
@@ -1443,158 +1429,95 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    it('status: invalid with SEQUENTIAL_ROW_REMOVED for one sheet - should show preamble, sheet name bullet, and closing', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            }
-          ]
-        }
-      })
+    it.for([
+      {
+        label: 'one sheet',
+        failures: [
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          }
+        ],
+        expectedBullets: ['Exported (sections 1, 2 and 3)']
+      },
+      {
+        label: 'multiple sheets listed once each',
+        failures: [
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          },
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Sent on (sections 4 and 5)' }
+          }
+        ],
+        expectedBullets: [
+          'Exported (sections 1, 2 and 3)',
+          'Sent on (sections 4 and 5)'
+        ]
+      },
+      {
+        label: 'duplicate sheet deduped to one bullet',
+        failures: [
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          },
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          }
+        ],
+        expectedBullets: ['Exported (sections 1, 2 and 3)']
+      },
+      {
+        label: 'missing sheet falls back to Unknown',
+        failures: [{ errorCode: 'SEQUENTIAL_ROW_REMOVED' }],
+        expectedBullets: ['Unknown']
+      }
+    ])(
+      'status: invalid with SEQUENTIAL_ROW_REMOVED ($label) - should list affected sheets as bullets with preamble and closing',
+      async ({ failures, expectedBullets }, { server }) => {
+        fetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures }
+        })
 
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Since your summary log was last submitted, rows have been removed from:'
-      )
-      expect(result).toContain(
-        'The rows must be re-added before you can submit your file.'
-      )
+        const { body } = new JSDOM(result).window.document
+        const bullets = getAllByRole(
+          getByTestId(body, 'app-page-body'),
+          'listitem'
+        ).map((li) => li.textContent?.trim())
 
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual(['Exported (sections 1, 2 and 3)'])
-
-      expect(result).toContain(
-        'We&#39;ve found the following issue with the file you selected'
-      )
-    })
-
-    it('status: invalid with SEQUENTIAL_ROW_REMOVED for multiple sheets - should list each affected sheet once', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            },
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Sent on (sections 4 and 5)' }
-            }
-          ]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual([
-        'Exported (sections 1, 2 and 3)',
-        'Sent on (sections 4 and 5)'
-      ])
-
-      const preambleMatches = result.match(
-        /Since your summary log was last submitted, rows have been removed from:/g
-      )
-      expect(preambleMatches).toHaveLength(1)
-
-      expect(result).toContain(
-        'We&#39;ve found the following issue with the file you selected'
-      )
-    })
-
-    it('status: invalid with duplicate SEQUENTIAL_ROW_REMOVED for same sheet - should dedupe to a single bullet', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            },
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            }
-          ]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual(['Exported (sections 1, 2 and 3)'])
-    })
-
-    it('status: invalid with SEQUENTIAL_ROW_REMOVED missing sheet - should fall back to Unknown', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'SEQUENTIAL_ROW_REMOVED' }]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual(['Unknown'])
-    })
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(bullets).toStrictEqual(expectedBullets)
+        expect(
+          getAllByText(
+            body,
+            'Since your summary log was last submitted, rows have been removed from:'
+          )
+        ).toHaveLength(1)
+        expect(
+          getByText(
+            body,
+            'The rows must be re-added before you can submit your file.'
+          )
+        ).toBeDefined()
+        expect(
+          getByText(
+            body,
+            /We've found the following issue with the file you selected/
+          )
+        ).toBeDefined()
+      }
+    )
 
     it('status: invalid with unknown failure code - should show technical error message', async ({
       server
@@ -1645,7 +1568,7 @@ describe('#summaryLogUploadProgressController', () => {
         'The selected file contains data that&#39;s been entered incorrectly'
       )
 
-      const matches = result.match(
+      const matches = asHtml(result).match(
         /The selected file contains data that&#39;s been entered incorrectly/g
       )
 
@@ -1816,7 +1739,7 @@ describe('#summaryLogUploadProgressController', () => {
       )
 
       // Should only appear once (deduplicated)
-      const matches = result.match(
+      const matches = asHtml(result).match(
         /The summary log template you&#39;re uploading is incorrect/g
       )
 
@@ -1874,7 +1797,7 @@ describe('#summaryLogUploadProgressController', () => {
         'Sorry, there is a problem with the service - try again later'
       )
 
-      const matches = result.match(
+      const matches = asHtml(result).match(
         /Sorry, there is a problem with the service - try again later/g
       )
 
