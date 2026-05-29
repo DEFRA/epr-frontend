@@ -138,7 +138,7 @@ const NO_ROWS = { count: 0, rowIds: [] }
 
 /**
  * Builds view model for a single load category (added or adjusted)
- * @param {RawLoadCategory} [category] - Category data from backend (e.g. loads.added)
+ * @param {Partial<RawLoadCategory>} [category] - Category data from backend (e.g. loads.added)
  * @returns {LoadCategoryViewModel}
  */
 const buildCategoryViewModel = (category) => {
@@ -155,7 +155,7 @@ const buildCategoryViewModel = (category) => {
 /**
  * Transforms raw loads data from backend into a view model
  * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
- * @param {RawLoads} [loads] - Raw loads data from backend API
+ * @param {{ added?: Partial<RawLoadCategory>, adjusted?: Partial<RawLoadCategory> } | null} [loads] - Raw loads data from backend API (defensively tolerates partial/missing categories)
  * @returns {LoadsViewModel}
  */
 export const buildLoadsViewModel = (loads) => {

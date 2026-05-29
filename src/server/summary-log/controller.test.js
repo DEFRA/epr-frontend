@@ -20,6 +20,11 @@ import {
   getWasteRecordSectionNumber
 } from './controller.js'
 
+/**
+ * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
+ * @import { RawLoadsByWasteRecordType } from './types.js'
+ */
+
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
 vi.mock(
@@ -2551,8 +2556,8 @@ describe('#buildLoadsViewModel', () => {
   test('preserves count and rowIds from backend', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 150, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 50, rowIds: [1004, 1005] }
+        included: { count: 150, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 50, rowIds: ['1004', '1005'] }
       },
       adjusted: {
         included: { count: 0, rowIds: [] },
@@ -2561,8 +2566,8 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result.added).toStrictEqual({
-      included: { count: 150, rowIds: [1001, 1002, 1003] },
-      excluded: { count: 50, rowIds: [1004, 1005] },
+      included: { count: 150, rowIds: ['1001', '1002', '1003'] },
+      excluded: { count: 50, rowIds: ['1004', '1005'] },
       total: 200
     })
   })
@@ -2574,14 +2579,14 @@ describe('#buildLoadsViewModel', () => {
         excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        included: { count: 120, rowIds: [2001, 2002] },
-        excluded: { count: 30, rowIds: [2003] }
+        included: { count: 120, rowIds: ['2001', '2002'] },
+        excluded: { count: 30, rowIds: ['2003'] }
       }
     })
 
     expect(result.adjusted).toStrictEqual({
-      included: { count: 120, rowIds: [2001, 2002] },
-      excluded: { count: 30, rowIds: [2003] },
+      included: { count: 120, rowIds: ['2001', '2002'] },
+      excluded: { count: 30, rowIds: ['2003'] },
       total: 150
     })
   })
@@ -2589,7 +2594,7 @@ describe('#buildLoadsViewModel', () => {
   test('handles partial loads data gracefully', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 1, rowIds: [1001] }
+        included: { count: 1, rowIds: ['1001'] }
         // missing excluded
       }
       // missing adjusted
@@ -2597,7 +2602,7 @@ describe('#buildLoadsViewModel', () => {
 
     expect(result).toStrictEqual({
       added: {
-        included: { count: 1, rowIds: [1001] },
+        included: { count: 1, rowIds: ['1001'] },
         excluded: noRows,
         total: 1
       },
@@ -2613,8 +2618,8 @@ describe('#buildLoadsViewModel', () => {
     const result = buildLoadsViewModel({
       added: {
         valid: { count: 10, rowIds: [] },
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 2, rowIds: [1004, 1005] }
+        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 2, rowIds: ['1004', '1005'] }
       },
       adjusted: {
         included: { count: 0, rowIds: [] },
@@ -2623,8 +2628,8 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result.added).toStrictEqual({
-      included: { count: 8, rowIds: [1001, 1002, 1003] },
-      excluded: { count: 2, rowIds: [1004, 1005] },
+      included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+      excluded: { count: 2, rowIds: ['1004', '1005'] },
       total: 10
     })
   })
@@ -2632,12 +2637,12 @@ describe('#buildLoadsViewModel', () => {
   test('calculates total from included + excluded counts', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 7, rowIds: [1004, 1005] }
+        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 7, rowIds: ['1004', '1005'] }
       },
       adjusted: {
-        included: { count: 4, rowIds: [2001, 2002, 2003, 2004] },
-        excluded: { count: 3, rowIds: [2005, 2006, 2007] }
+        included: { count: 4, rowIds: ['2001', '2002', '2003', '2004'] },
+        excluded: { count: 3, rowIds: ['2005', '2006', '2007'] }
       }
     })
 
@@ -2664,14 +2669,20 @@ describe('#getWasteRecordSectionNumber', () => {
   })
 
   test('returns undefined for unknown processingType', () => {
-    expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
+    expect(
+      getWasteRecordSectionNumber(
+        /** @type {ProcessingType} */ ('UNKNOWN_TYPE')
+      )
+    ).toBeUndefined()
   })
 })
 
 describe('#buildLoadsByWasteRecordTypeViewModel', () => {
+  /** @type {RawLoadsByWasteRecordType} */
   const mockLoadsByWasteRecordType = [
     {
       wasteRecordType: 'sentOn',
+      sheetName: 'Sent on',
       added: {
         valid: { count: 2, rowIds: ['005', '006'] }
       },
@@ -2684,6 +2695,7 @@ describe('#buildLoadsByWasteRecordTypeViewModel', () => {
     },
     {
       wasteRecordType: 'received',
+      sheetName: 'Received',
       added: {
         valid: { count: 3, rowIds: ['001', '002', '003'] }
       },
