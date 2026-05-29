@@ -30,19 +30,17 @@ export const VALIDATION_CODE = Object.freeze(
     ACCREDITATION_MISMATCH: 'ACCREDITATION_MISMATCH',
     ACCREDITATION_UNEXPECTED: 'ACCREDITATION_UNEXPECTED',
 
-    // Data-level validation codes (generic - deprecated, use specific codes below)
+    // Generic data-level codes. The backend still emits these (its Joi-error map
+    // in data-syntax.js assigns them to the issue `code`) but marks them
+    // @deprecated in favour of the specific field codes below for the `errorCode`
+    // field; the FE maps both, so they are not annotated @deprecated here.
     TABLE_UNRECOGNISED: 'TABLE_UNRECOGNISED',
     HEADER_REQUIRED: 'HEADER_REQUIRED',
     FIELD_REQUIRED: 'FIELD_REQUIRED',
-    /** @deprecated Use specific errorCode field instead */
     INVALID_TYPE: 'INVALID_TYPE',
-    /** @deprecated Use specific errorCode field instead */
     VALUE_OUT_OF_RANGE: 'VALUE_OUT_OF_RANGE',
-    /** @deprecated Use specific errorCode field instead */
     INVALID_FORMAT: 'INVALID_FORMAT',
-    /** @deprecated Use specific errorCode field instead */
     INVALID_DATE: 'INVALID_DATE',
-    /** @deprecated Use specific errorCode field instead */
     CALCULATED_VALUE_MISMATCH: 'CALCULATED_VALUE_MISMATCH',
     SEQUENTIAL_ROW_REMOVED: 'SEQUENTIAL_ROW_REMOVED',
 
