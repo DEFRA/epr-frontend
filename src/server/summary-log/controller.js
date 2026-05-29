@@ -10,6 +10,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { partition } from 'lodash-es'
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
@@ -495,35 +496,6 @@ const isLocatedCellError = (failure) => {
  */
 const isSequentialRowRemoved = ({ errorCode }) =>
   errorCode === 'SEQUENTIAL_ROW_REMOVED'
-
-/* eslint-disable jsdoc/no-undefined-types -- the `item is S` type-guard param confuses eslint-plugin-jsdoc's parser (`item` is the operand, not a type); a type guard has no alternative spelling */
-/**
- * Splits an array into [matching, rest] by a predicate. When the predicate is
- * a type guard, the matching half is narrowed to the guarded type.
- * @template T
- * @template {T} S
- * @overload
- * @param {T[]} items
- * @param {(item: T) => item is S} predicate
- * @returns {[S[], T[]]}
- */
-/* eslint-enable jsdoc/no-undefined-types */
-/**
- * @template T
- * @overload
- * @param {T[]} items
- * @param {(item: T) => boolean} predicate
- * @returns {[T[], T[]]}
- */
-/**
- * @param {unknown[]} items
- * @param {(item: unknown) => boolean} predicate
- * @returns {[unknown[], unknown[]]}
- */
-const partition = (items, predicate) => [
-  items.filter(predicate),
-  items.filter((item) => !predicate(item))
-]
 
 /**
  * Sorts ROW_IDs numerically where both are numeric, falling back to a string
