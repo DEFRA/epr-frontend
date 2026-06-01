@@ -66,7 +66,7 @@
  *     row: number,
  *     column: string,
  *     header: string,
- *     rowId?: string
+ *     rowId: string
  *   }
  * }} LocatedCellFailure
  */

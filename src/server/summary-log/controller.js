@@ -548,12 +548,12 @@ const buildCellErrorCell = (failure, localise) => {
 }
 
 /**
- * The operator-facing ROW_ID ("load number"), falling back to the raw
- * spreadsheet row number when the backend omits it.
+ * The operator-facing ROW_ID ("load number"). The backend always emits it for
+ * located cell errors (a loads-table row is a load), enforced by rowIdSchema.
  * @param {LocatedCellFailure} failure
  * @returns {string}
  */
-const rowIdOf = ({ location }) => location.rowId ?? String(location.row)
+const rowIdOf = ({ location }) => location.rowId
 
 /**
  * One record: a ROW_ID, its (sheet, table) section label and its failing cells
@@ -848,6 +848,15 @@ export const summaryLogUploadProgressController = {
       summaryLogId,
       session.idToken
     )
+
+    // TEMP DEBUG (PAE-1538): remove before commit
+    request.logger.info({
+      msg: 'WIRE_VALIDATION',
+      status,
+      counts: validation?.counts,
+      failuresLength: validation?.failures?.length,
+      validation
+    })
 
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
