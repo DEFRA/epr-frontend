@@ -3,7 +3,7 @@ import * as fetchOrganisationModule from '#server/common/helpers/organisations/f
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getAllByRole, getByRole, getByText } from '@testing-library/dom'
+import { getAllByRole, getByRole } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -359,7 +359,7 @@ describe('#organisationController', () => {
         ]
       }
 
-      it('should exclude registrations whose accreditation has an excluded status', async ({
+      it('should show as registered-only when accreditation application is pending', async ({
         server
       }) => {
         vi.mocked(
@@ -393,9 +393,10 @@ describe('#organisationController', () => {
         })
 
         const { body } = new JSDOM(result).window.document
+        const cell = cellInColumn(getByRole(body, 'table'))
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(getByText(body, /No sites found/i)).toBeDefined()
+        expect(cell('Accreditation')).toHaveTextContent(/Not accredited/i)
       })
 
       it('should show registered-only', async ({ server }) => {
