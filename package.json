@@ -149,14 +149,12 @@
     "webpack-cli": "7.0.2"
   },
   "overrides": {
-    "@hapi/content": "6.0.2",
     "eslint-plugin-import": {
       "eslint": "$eslint"
     },
     "stylelint-config-gds": {
       "stylelint": "$stylelint"
     },
-    "tmp": "0.2.6",
     "uuid": "14.0.0"
   }
 }
