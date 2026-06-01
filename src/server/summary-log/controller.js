@@ -512,7 +512,7 @@ const compareRowId = (a, b) => {
     return numA - numB
   }
 
-  return String(a).localeCompare(String(b))
+  return a.localeCompare(b)
 }
 
 /**
