@@ -17,7 +17,6 @@ import {
   getByText,
   queryByText
 } from '@testing-library/dom'
-import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -1239,6 +1238,15 @@ describe('#summaryLogUploadProgressController', () => {
         actual: 'abc'
       }
 
+      const pageBody = (result) =>
+        getByTestId(new JSDOM(result).window.document.body, 'app-page-body')
+
+      const dataRows = (table) =>
+        getAllByRole(getAllByRole(table, 'rowgroup')[1], 'row')
+
+      const rowCells = (row) =>
+        getAllByRole(row, 'cell').map((cell) => cell.textContent?.trim())
+
       it('should render a per-cell detail row instead of a collapsed category message', async ({
         server
       }) => {
@@ -1255,14 +1263,8 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const $ = load(result)
-        const cells = $(
-          '[data-testid="app-page-body"] table.govuk-table tbody tr'
-        )
-          .first()
-          .find('td')
-          .map((_, el) => $(el).text().trim())
-          .get()
+        const table = getByRole(pageBody(result), 'table')
+        const cells = rowCells(dataRows(table)[0])
 
         expect(cells).toStrictEqual([
           '1003',
@@ -1328,19 +1330,15 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const $ = load(result)
-        const tables = $('[data-testid="app-page-body"] table.govuk-table')
-        const worksheetHeadings = $('[data-testid="app-page-body"] h2')
-          .map((_, el) => $(el).text().trim())
-          .get()
-        const firstTableRowIds = $(tables[0])
-          .find('tbody tr td:first-child')
-          .map((_, el) => $(el).text().trim())
-          .get()
-        const secondTableRowIds = $(tables[1])
-          .find('tbody tr td:first-child')
-          .map((_, el) => $(el).text().trim())
-          .get()
+        const scope = pageBody(result)
+        const tables = getAllByRole(scope, 'table')
+        const worksheetHeadings = getAllByRole(scope, 'heading', {
+          level: 2
+        }).map((heading) => heading.textContent?.trim())
+        const rowIdColumn = (table) =>
+          dataRows(table).map((row) => rowCells(row)[0])
+        const firstTableRowIds = rowIdColumn(tables[0])
+        const secondTableRowIds = rowIdColumn(tables[1])
 
         expect(tables).toHaveLength(2)
         expect(worksheetHeadings).toStrictEqual(['Reprocessing'])
@@ -1465,13 +1463,8 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
-        const valueCell = $(
-          '[data-testid="app-page-body"] table.govuk-table tbody tr td'
-        )
-          .eq(3)
-          .text()
-          .trim()
+        const table = getByRole(pageBody(result), 'table')
+        const [, , , valueCell] = rowCells(dataRows(table)[0])
 
         expect(valueCell).toBe('(empty)')
       })
@@ -1492,8 +1485,7 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
-        const tables = $('[data-testid="app-page-body"] table.govuk-table')
+        const tables = getAllByRole(pageBody(result), 'table')
 
         expect(tables).toHaveLength(1)
         expect(result).toContain('Registration number on summary log')
@@ -1573,13 +1565,9 @@ describe('#summaryLogUploadProgressController', () => {
             auth: mockAuth
           })
 
-          const $ = load(result)
-          const problem = $(
-            '[data-testid="app-page-body"] table.govuk-table tbody tr td:last-child'
-          )
-            .first()
-            .text()
-            .trim()
+          const table = getByRole(pageBody(result), 'table')
+          const cells = rowCells(dataRows(table)[0])
+          const problem = cells.at(-1)
 
           expect(problem).toBe(expectedProblem)
         }
@@ -1614,13 +1602,8 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
-        const columnCell = $(
-          '[data-testid="app-page-body"] table.govuk-table tbody tr td'
-        )
-          .eq(1)
-          .text()
-          .trim()
+        const table = getByRole(pageBody(result), 'table')
+        const [, columnCell] = rowCells(dataRows(table)[0])
 
         expect(columnCell).toBe('EWC code')
       })
@@ -1654,12 +1637,12 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
-        const worksheetHeadingCount = $(
-          '[data-testid="app-page-body"] h2, [data-testid="app-page-body"] h3'
-        ).filter((_, el) => $(el).text().trim() === 'Reprocessing').length
+        const reprocessingHeadings = getAllByRole(
+          pageBody(result),
+          'heading'
+        ).filter((heading) => heading.textContent?.trim() === 'Reprocessing')
 
-        expect(worksheetHeadingCount).toBe(1)
+        expect(reprocessingHeadings).toHaveLength(1)
       })
 
       it('should rowspan the Row ID across a record with multiple failing cells', async ({
@@ -1695,17 +1678,15 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
-        const rowIdCells = $(
-          '[data-testid="app-page-body"] table.govuk-table tbody td'
-        ).filter((_, el) => $(el).text().trim() === '1000')
-        const bodyRows = $(
-          '[data-testid="app-page-body"] table.govuk-table tbody tr'
+        const table = getByRole(pageBody(result), 'table')
+        const rows = dataRows(table)
+        const rowIdCells = getAllByRole(table, 'cell').filter(
+          (cell) => cell.textContent?.trim() === '1000'
         )
 
         expect(rowIdCells).toHaveLength(1)
-        expect(rowIdCells.attr('rowspan')).toBe('3')
-        expect(bodyRows).toHaveLength(3)
+        expect(rowIdCells[0].getAttribute('rowspan')).toBe('3')
+        expect(rows).toHaveLength(3)
       })
     })
 
@@ -2024,10 +2005,7 @@ describe('#summaryLogUploadProgressController', () => {
           )
         ).toBeDefined()
         expect(
-          getByText(
-            body,
-            /We've found 1 issue with the file you selected/
-          )
+          getByText(body, /We've found 1 issue with the file you selected/)
         ).toBeDefined()
       }
     )
