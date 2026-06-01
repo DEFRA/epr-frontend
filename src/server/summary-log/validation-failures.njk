@@ -9,37 +9,83 @@
 {% endblock %}
 
 {% block content %}
-<div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
-    <div class="govuk-body" data-testid="app-page-body">
-      <h1 class="govuk-heading-xl">{{ heading }}</h1>
-      <p>{{ description1 }}</p>
-      <p>{{ description2 }}</p>
+<div data-testid="app-page-body">
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body">
+        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+        <p>{{ description1 }}</p>
+        <p>{{ description2 }}</p>
+      </div>
+    </div>
+  </div>
 
-      {% for issue in issues %}
-        <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-        {% if issue.type == 'sequentialRowRemoved' %}
-          <p class="govuk-body govuk-!-font-weight-bold">{{ issue.preamble }}</p>
-          <ul class="govuk-list govuk-list--bullet govuk-!-font-weight-bold">
-            {% for sheet in issue.sheets %}
-              <li>{{ sheet }}</li>
+  {% if errorRecords.length %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <table class="govuk-table">
+        <caption class="govuk-table__caption govuk-visually-hidden">{{ heading }}</caption>
+        <thead class="govuk-table__head">
+          <tr class="govuk-table__row">
+            <th scope="col" class="govuk-table__header epr-summary-log-rowid">{{ localise("summary-log:cellTable.rowIdHeading") }}</th>
+            <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.sectionHeading") }}</th>
+            <th scope="col" class="govuk-table__header epr-summary-log-col">{{ localise("summary-log:cellTable.columnHeading") }}</th>
+            <th scope="col" class="govuk-table__header">{{ localise("summary-log:cellTable.cellHeading") }}</th>
+            <th scope="col" class="govuk-table__header epr-summary-log-col">{{ localise("summary-log:cellTable.valueHeading") }}</th>
+            <th scope="col" class="govuk-table__header epr-summary-log-col">{{ localise("summary-log:cellTable.problemHeading") }}</th>
+          </tr>
+        </thead>
+        <tbody class="govuk-table__body">
+          {% for record in errorRecords %}
+            {% for cell in record.cells %}
+              <tr class="govuk-table__row">
+                {% if loop.first %}
+                  <td class="govuk-table__cell epr-summary-log-rowid govuk-!-font-weight-bold" rowspan="{{ record.cells.length }}">{{ record.rowId }}</td>
+                  <td class="govuk-table__cell" rowspan="{{ record.cells.length }}">{{ record.section }}</td>
+                {% endif %}
+                <td class="govuk-table__cell">{{ cell.columnLabel }}</td>
+                <td class="govuk-table__cell">{{ cell.cellRef }}</td>
+                <td class="govuk-table__cell epr-summary-log-value">{{ cell.value }}</td>
+                <td class="govuk-table__cell">{{ cell.problem }}</td>
+              </tr>
             {% endfor %}
-          </ul>
-          <p class="govuk-body govuk-!-font-weight-bold">{{ issue.closing }}</p>
-        {% else %}
-          <p class="govuk-body govuk-!-font-weight-bold">{{ issue }}</p>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body">
+        {% for issue in issues %}
+          <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+          {% if issue.type == 'sequentialRowRemoved' %}
+            <p class="govuk-body govuk-!-font-weight-bold">{{ issue.preamble }}</p>
+            <ul class="govuk-list govuk-list--bullet govuk-!-font-weight-bold">
+              {% for sheet in issue.sheets %}
+                <li>{{ sheet }}</li>
+              {% endfor %}
+            </ul>
+            <p class="govuk-body govuk-!-font-weight-bold">{{ issue.closing }}</p>
+          {% else %}
+            <p class="govuk-body govuk-!-font-weight-bold">{{ issue }}</p>
+          {% endif %}
+        {% endfor %}
+
+        {% if issues.length %}
+          <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
         {% endif %}
-      {% endfor %}
 
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-
-      {{ summaryLogUpload({
-        uploadUrl: uploadUrl,
-        fileUploadLabel: fileUploadLabel,
-        buttonText: buttonText,
-        cancelUrl: cancelUrl,
-        cancelButtonText: cancelButtonText
-      }) }}
+        {{ summaryLogUpload({
+          uploadUrl: uploadUrl,
+          fileUploadLabel: fileUploadLabel,
+          buttonText: buttonText,
+          cancelUrl: cancelUrl,
+          cancelButtonText: cancelButtonText
+        }) }}
+      </div>
     </div>
   </div>
 </div>

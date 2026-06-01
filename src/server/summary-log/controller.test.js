@@ -15,6 +15,7 @@ import {
   getByRole,
   getByTestId,
   getByText,
+  queryAllByRole,
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -1224,6 +1225,479 @@ describe('#summaryLogUploadProgressController', () => {
       expect(result).toContain('The selected file contains a virus')
     })
 
+    describe('located cell errors (per-cell detail)', () => {
+      const locatedFailure = {
+        errorCode: 'MUST_BE_A_NUMBER',
+        location: {
+          sheet: 'Reprocessing',
+          table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+          row: 8,
+          rowId: '1003',
+          column: 'D',
+          header: 'NET_WEIGHT'
+        },
+        actual: 'abc'
+      }
+
+      const pageBody = (result) =>
+        getByTestId(new JSDOM(result).window.document.body, 'app-page-body')
+
+      const dataRows = (table) =>
+        getAllByRole(getAllByRole(table, 'rowgroup')[1], 'row')
+
+      const rowCells = (row) =>
+        getAllByRole(row, 'cell').map((cell) => cell.textContent?.trim())
+
+      it('should render a per-cell detail row instead of a collapsed category message', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures: [locatedFailure] }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const table = getByRole(pageBody(result), 'table')
+        const cells = rowCells(dataRows(table)[0])
+
+        expect(cells).toStrictEqual([
+          '1003',
+          'Loads received',
+          'Net weight',
+          'D8',
+          'abc',
+          'Must be a number'
+        ])
+      })
+
+      it('should render all records in one flat table with a Section column, sorting ROW_ID within each section', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                actual: 'x',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 10,
+                  rowId: '1003',
+                  column: 'D',
+                  header: 'NET_WEIGHT'
+                }
+              },
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                actual: 'y',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'D',
+                  header: 'NET_WEIGHT'
+                }
+              },
+              {
+                errorCode: 'MUST_BE_A_VALID_DATE',
+                actual: 'z',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'SENT_ON_LOADS_FOR_REPROCESSING',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'H',
+                  header: 'DATE_OF_EXPORT'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+
+        const scope = pageBody(result)
+        const tables = getAllByRole(scope, 'table')
+        const worksheetHeadings = queryAllByRole(scope, 'heading', {
+          level: 2
+        })
+        const rows = dataRows(tables[0])
+        const rowIdColumn = rows.map((row) => rowCells(row)[0])
+        const sectionColumn = rows.map((row) => rowCells(row)[1])
+
+        expect(tables).toHaveLength(1)
+        expect(worksheetHeadings).toHaveLength(0)
+        expect(rowIdColumn).toStrictEqual(['1001', '1003', '1001'])
+        expect(sectionColumn).toStrictEqual([
+          'Loads received',
+          'Loads received',
+          'Reprocessing'
+        ])
+      })
+
+      it('should state how many errors were found', async ({ server }) => {
+        const located = (rowId, column) => ({
+          errorCode: 'MUST_BE_A_NUMBER',
+          actual: 'x',
+          location: {
+            sheet: 'Received',
+            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+            row: 8,
+            rowId,
+            column,
+            header: 'NET_WEIGHT'
+          }
+        })
+
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              located('1001', 'D'),
+              located('1002', 'E'),
+              located('1003', 'F')
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(result).toContain('We found 3 errors in your summary log')
+      })
+
+      it('should fold the cap notice into the count line, showing the exact total, when counts are present', async ({
+        server
+      }) => {
+        const failures = Array.from({ length: 100 }, (_, i) => ({
+          errorCode: 'MUST_BE_A_NUMBER',
+          actual: 'x',
+          location: {
+            sheet: 'Received',
+            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+            row: i + 4,
+            rowId: String(1000 + i),
+            column: 'D',
+            header: 'NET_WEIGHT'
+          }
+        }))
+
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures,
+            counts: { fatal: 150, error: 0, warning: 0, total: 150 }
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const table = getByRole(pageBody(result), 'table')
+
+        expect(result).toContain(
+          'We found 150 errors in your summary log, but can only display 50 of them at the moment'
+        )
+        expect(dataRows(table)).toHaveLength(50)
+      })
+
+      it('should not show a cap notice below the 50 limit', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures: [locatedFailure] }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        expect(result).not.toContain('can only display')
+      })
+
+      it('should show "(empty)" when the failing cell has no value', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'FIELD_REQUIRED',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'C',
+                  header: 'EWC_CODE'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const table = getByRole(pageBody(result), 'table')
+        const [, , , , valueCell] = rowCells(dataRows(table)[0])
+
+        expect(valueCell).toBe('(empty)')
+      })
+
+      it('should render located errors as a table while keeping meta-level category messages', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [locatedFailure, { errorCode: 'REGISTRATION_MISMATCH' }]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const tables = getAllByRole(pageBody(result), 'table')
+
+        expect(tables).toHaveLength(1)
+        expect(result).toContain('Registration number on summary log')
+      })
+
+      it.for([
+        ['MUST_BE_A_NUMBER', 'GROSS_WEIGHT', 'Must be a number'],
+        ['MUST_BE_AT_MOST_1000', 'GROSS_WEIGHT', 'Must be 1,000 or less'],
+        ['MUST_BE_AT_LEAST_ZERO', 'TARE_WEIGHT', 'Must be 0 or more'],
+        ['MUST_BE_GREATER_THAN_ZERO', 'PALLET_WEIGHT', 'Must be more than 0'],
+        [
+          'MUST_BE_LESS_THAN_1',
+          'RECYCLABLE_PROPORTION_PERCENTAGE',
+          'Must be less than 1'
+        ],
+        [
+          'MUST_BE_AT_MOST_1',
+          'UK_PACKAGING_WEIGHT_PERCENTAGE',
+          'Must be 1 or less'
+        ],
+        ['MUST_BE_A_VALID_DATE', 'DATE_OF_EXPORT', 'Must be a valid date'],
+        ['MUST_BE_YES_OR_NO', 'BAILING_WIRE_PROTOCOL', 'Must be Yes or No'],
+        [
+          'MUST_BE_VALID_EWC_CODE',
+          'EWC_CODE',
+          'Select a value from the drop-down list'
+        ],
+        [
+          'MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS',
+          'CONTAINER_NUMBER',
+          'Contains characters that are not allowed'
+        ],
+        [
+          'MUST_BE_AT_MOST_100_CHARS',
+          'CUSTOMS_CODES',
+          'Must be 100 characters or fewer'
+        ],
+        ['MUST_BE_3_DIGIT_ID', 'OSR_ID', 'Must be a 3-digit number'],
+        [
+          'NET_WEIGHT_CALCULATION_MISMATCH',
+          'NET_WEIGHT',
+          'Does not match the calculated value'
+        ],
+        ['MUST_BE_A_STRING', 'ADD_PRODUCT_WEIGHT', 'Must be Yes or No'],
+        [
+          'MUST_BE_A_STRING',
+          'EWC_CODE',
+          'Select a value from the drop-down list'
+        ],
+        ['FIELD_REQUIRED', 'GROSS_WEIGHT', 'Check this value']
+      ])(
+        'maps errorCode %s to its per-cell problem',
+        async ([errorCode, header, expectedProblem], { server }) => {
+          mockFetchSummaryLogStatus.mockResolvedValueOnce({
+            status: summaryLogStatuses.invalid,
+            validation: {
+              failures: [
+                {
+                  errorCode,
+                  actual: 'x',
+                  location: {
+                    sheet: 'Received',
+                    table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                    row: 4,
+                    rowId: '1001',
+                    column: 'D',
+                    header
+                  }
+                }
+              ]
+            }
+          })
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+
+          const table = getByRole(pageBody(result), 'table')
+          const cells = rowCells(dataRows(table)[0])
+          const problem = cells.at(-1)
+
+          expect(problem).toBe(expectedProblem)
+        }
+      )
+
+      it('should show a human-readable column label, not the raw header code', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_VALID_EWC_CODE',
+                actual: '99',
+                location: {
+                  sheet: 'Received',
+                  table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+                  row: 9,
+                  rowId: '1002',
+                  column: 'F',
+                  header: 'EWC_CODE'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const table = getByRole(pageBody(result), 'table')
+        const [, , columnCell] = rowCells(dataRows(table)[0])
+
+        expect(columnCell).toBe('EWC code')
+      })
+
+      it('should fall back to the worksheet name as the Section when the table has no distinct label', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              {
+                errorCode: 'MUST_BE_A_NUMBER',
+                actual: 'x',
+                location: {
+                  sheet: 'Reprocessing',
+                  table: 'UNMAPPED_TABLE',
+                  row: 8,
+                  rowId: '1001',
+                  column: 'D',
+                  header: 'NET_WEIGHT'
+                }
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const table = getByRole(pageBody(result), 'table')
+        const [, sectionCell] = rowCells(dataRows(table)[0])
+
+        expect(sectionCell).toBe('Reprocessing')
+      })
+
+      it('should rowspan the Row ID across a record with multiple failing cells', async ({
+        server
+      }) => {
+        const failingCell = (column, header) => ({
+          errorCode: 'MUST_BE_A_NUMBER',
+          actual: 'x',
+          location: {
+            sheet: 'Received',
+            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
+            row: 8,
+            rowId: '1000',
+            column,
+            header
+          }
+        })
+
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: {
+            failures: [
+              failingCell('K', 'GROSS_WEIGHT'),
+              failingCell('L', 'TARE_WEIGHT'),
+              failingCell('M', 'PALLET_WEIGHT')
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const table = getByRole(pageBody(result), 'table')
+        const rows = dataRows(table)
+        const rowIdCells = getAllByRole(table, 'cell').filter(
+          (cell) => cell.textContent?.trim() === '1000'
+        )
+        const sectionCells = getAllByRole(table, 'cell').filter(
+          (cell) => cell.textContent?.trim() === 'Loads received'
+        )
+
+        expect(rowIdCells).toHaveLength(1)
+        expect(rowIdCells[0].getAttribute('rowspan')).toBe('3')
+        expect(sectionCells).toHaveLength(1)
+        expect(sectionCells[0].getAttribute('rowspan')).toBe('3')
+        expect(rows).toHaveLength(3)
+      })
+    })
+
     // Codes that resolve via the direct-key fallback to their own
     // `failure.<code>` copy. Without that copy they would silently render the
     // technical-error defaultValue, so each case asserts the tailored message
@@ -1347,9 +1821,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain(
-        'We&#39;ve found the following issue with the file you selected'
-      )
+      expect(result).toContain('We found 1 error in your summary log')
       expect(result).toContain(
         'Registration number on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
       )
@@ -1539,10 +2011,7 @@ describe('#summaryLogUploadProgressController', () => {
           )
         ).toBeDefined()
         expect(
-          getByText(
-            body,
-            /We've found the following issue with the file you selected/
-          )
+          getByText(body, /We found 1 error in your summary log/)
         ).toBeDefined()
       }
     )

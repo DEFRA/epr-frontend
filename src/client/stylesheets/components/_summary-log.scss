@@ -1,0 +1,20 @@
+// The "value entered" cell can hold an arbitrary, unbroken operator string
+// (e.g. a 100+ char free-text value). overflow-wrap: anywhere lets it break
+// mid-token so the cell can shrink and the table stays within its column,
+// without constraining any column widths.
+.epr-summary-log-value {
+  overflow-wrap: anywhere;
+}
+
+// Keep the Row ID column on one line so it cannot be squeezed/wrapped by the
+// flexible value column next to it.
+.epr-summary-log-rowid {
+  white-space: nowrap;
+}
+
+// Balance the three free-text columns (Column header, Data entered, Error
+// message) to roughly equal width. GOV.UK ships no one-fifth width override,
+// so per DS guidance we add our own width class on the table-head cells.
+.epr-summary-log-col {
+  width: 23%;
+}
