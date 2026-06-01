@@ -59,7 +59,7 @@
  * location dimensions used for rendering are guaranteed present.
  * @typedef {{
  *   errorCode: string,
- *   actual?: unknown,
+ *   actual?: string | number | boolean | null,
  *   location: {
  *     sheet: string,
  *     table: string,

@@ -121,7 +121,7 @@ const buildColumnLabel = (header, localise) =>
   localise(`summary-log:columnHeader.${header}`, { defaultValue: header })
 
 /**
- * @param {unknown} actual - The value the operator entered
+ * @param {string | number | boolean | null | undefined} actual - The value the operator entered
  * @param {Localise} localise
  * @returns {string}
  */
