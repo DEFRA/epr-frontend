@@ -104,14 +104,6 @@ const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
 
-// server.inject types `result` as `object | undefined`, but for the rendered
-// HTML views under test it is the response body string.
-/**
- * @param {unknown} result
- * @returns {string}
- */
-const asHtml = (result) => /** @type {string} */ (result)
-
 describe('#summaryLogUploadProgressController', () => {
   const organisationId = '123'
   const registrationId = '456'
@@ -1598,17 +1590,18 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
+      const { body } = new JSDOM(result).window.document
+
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain(
-        'The selected file contains data that&#39;s been entered incorrectly'
-      )
-
-      const matches = asHtml(result).match(
-        /The selected file contains data that&#39;s been entered incorrectly/g
-      )
-
-      expect(matches).toHaveLength(1)
+      expect(
+        getByText(body, 'Your summary log cannot be uploaded')
+      ).toBeDefined()
+      expect(
+        getAllByText(
+          body,
+          "The selected file contains data that's been entered incorrectly - check that the data you've entered matches the examples provided in the summary log"
+        )
+      ).toHaveLength(1)
     })
 
     it('status: invalid with mixed failures - should show data entry message and other failures', async ({
@@ -1769,17 +1762,16 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
+      const { body } = new JSDOM(result).window.document
+
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'The summary log template you&#39;re uploading is incorrect'
-      )
-
       // Should only appear once (deduplicated)
-      const matches = asHtml(result).match(
-        /The summary log template you&#39;re uploading is incorrect/g
-      )
-
-      expect(matches).toHaveLength(1)
+      expect(
+        getAllByText(
+          body,
+          "The summary log template you're uploading is incorrect - make sure you download the correct template for your registration or accreditation"
+        )
+      ).toHaveLength(1)
     })
 
     it.for([
@@ -1828,16 +1820,15 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
+      const { body } = new JSDOM(result).window.document
+
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-
-      const matches = asHtml(result).match(
-        /Sorry, there is a problem with the service - try again later/g
-      )
-
-      expect(matches).toHaveLength(1)
+      expect(
+        getAllByText(
+          body,
+          'Sorry, there is a problem with the service - try again later'
+        )
+      ).toHaveLength(1)
     })
 
     it('status: invalid with NET_WEIGHT_CALCULATION_MISMATCH errorCode - should show calculated field mismatch message', async ({
