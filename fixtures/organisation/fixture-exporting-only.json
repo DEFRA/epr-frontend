@@ -7,10 +7,29 @@
     {
       "status": "created",
       "updatedAt": "2025-08-22T19:34:44.944Z"
+    },
+    {
+      "status": "approved",
+      "updatedAt": "2025-08-28T09:00:00.000Z"
+    },
+    {
+      "status": "active",
+      "updatedAt": "2025-09-01T10:00:00.000Z"
     }
   ],
+  "linkedDefraOrganisation": {
+    "orgId": "defra-org-50003",
+    "orgName": "Global Exports Ltd",
+    "linkedAt": "2025-09-01T10:00:00.000Z",
+    "linkedBy": {
+      "email": "jane.smith@example.com",
+      "id": "user-456"
+    }
+  },
   "wasteProcessingTypes": ["exporter"],
   "businessType": "limited-company",
+  "status": "active",
+  "users": [],
   "submittedToRegulator": "ea",
   "formSubmissionTime": "2025-08-22T19:34:44.944Z",
   "submitterContactDetails": {

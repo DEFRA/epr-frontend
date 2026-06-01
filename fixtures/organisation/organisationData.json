@@ -7,8 +7,25 @@
     {
       "status": "created",
       "updatedAt": "2025-08-22T19:34:44.944Z"
+    },
+    {
+      "status": "approved",
+      "updatedAt": "2025-08-28T09:00:00.000Z"
+    },
+    {
+      "status": "active",
+      "updatedAt": "2025-09-01T10:00:00.000Z"
     }
   ],
+  "linkedDefraOrganisation": {
+    "orgId": "defra-org-50002",
+    "orgName": "ACME ltd",
+    "linkedAt": "2025-09-01T10:00:00.000Z",
+    "linkedBy": {
+      "email": "anakin.skywalker@starwars.com",
+      "id": "user-123"
+    }
+  },
   "wasteProcessingTypes": ["reprocessor", "exporter"],
   "reprocessingNations": ["england", "wales"],
   "businessType": "partnership",
@@ -25,6 +42,8 @@
       }
     ]
   },
+  "status": "active",
+  "users": [],
   "submittedToRegulator": "ea",
   "formSubmissionTime": "2025-08-22T19:34:44.944Z",
   "submitterContactDetails": {
