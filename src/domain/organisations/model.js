@@ -211,7 +211,7 @@ export const USER_ROLES = Object.freeze({
 /**
  * @typedef {{
  *   status: RegAccStatus;
- *   updatedAt: Date;
+ *   updatedAt: string;
  *   updatedBy?: string;
  * }} StatusHistoryItem
  */
@@ -236,7 +236,7 @@ export const USER_ROLES = Object.freeze({
  *   accreditations: Accreditation[];
  *   businessType?: BusinessTypeValue;
  *   companyDetails: CompanyDetails;
- *   formSubmissionTime: Date;
+ *   formSubmissionTime: string;
  *   linkedDefraOrganisation?: LinkedDefraOrganisation;
  *   managementContactDetails?: User;
  *   orgId: number;
