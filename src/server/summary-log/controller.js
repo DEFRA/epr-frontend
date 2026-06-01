@@ -849,15 +849,6 @@ export const summaryLogUploadProgressController = {
       session.idToken
     )
 
-    // TEMP DEBUG (PAE-1538): remove before commit
-    request.logger.info({
-      msg: 'WIRE_VALIDATION',
-      status,
-      counts: validation?.counts,
-      failuresLength: validation?.failures?.length,
-      validation
-    })
-
     const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}`
     const pollUrl = `${baseUrl}/summary-logs/${summaryLogId}`
     const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
