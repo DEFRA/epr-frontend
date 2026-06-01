@@ -201,6 +201,7 @@
   "uploadConflictReason2": "you confirmed the upload of this summary log a long time after you chose the file to upload",
   "uploadConflictReasonsIntro": "This may have happened because:",
   "validationFailuresCappedAction": "We can only show the first {{cap}} issues. Correct these and upload your file again to check for any others.",
+  "validationFailuresCappedActionWithTotal": "We can only show the first {{cap}} of {{total}} issues. Correct these and upload your file again to check for any others.",
   "validationFailuresCappedSummary": "We've found the following issues with the file you selected.",
   "validationFailuresDescription1_one": "We've found {{count}} issue with the file you selected.",
   "validationFailuresDescription1_other": "We've found {{count}} issues with the file you selected.",

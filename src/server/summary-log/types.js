@@ -37,9 +37,19 @@
  */
 
 /**
+ * Validation issue counts by severity, computed pre-cap on the backend.
+ * @typedef {{
+ *   fatal: number,
+ *   error: number,
+ *   warning: number,
+ *   total: number
+ * }} ValidationIssueCounts
+ */
+
+/**
  * @typedef {{
  *   failures: ValidationFailure[],
- *   totalIssuesCount?: number
+ *   counts?: ValidationIssueCounts
  * }} ValidationResponse
  */
 
