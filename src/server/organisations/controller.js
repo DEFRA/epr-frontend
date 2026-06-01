@@ -260,10 +260,14 @@ function getDisplayableRegistrations(organisationData) {
   )
 
   return organisationData.registrations
-    .map((registration) => ({
-      registration,
-      accreditation: accreditationById.get(registration.accreditationId)
-    }))
+    .map((registration) => {
+      const accreditation = accreditationById.get(registration.accreditationId)
+      return {
+        registration,
+        accreditation:
+          accreditation?.status === 'created' ? undefined : accreditation
+      }
+    })
     .filter(
       ({ registration, accreditation }) =>
         shouldRenderSite(registration, accreditation, 'reprocessor') ||
