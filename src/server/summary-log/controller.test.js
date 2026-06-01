@@ -4,10 +4,19 @@ import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summ
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { extractCookieValues } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, getByText, queryByText } from '@testing-library/dom'
+import {
+  getAllByRole,
+  getAllByText,
+  getByRole,
+  getByTestId,
+  getByText,
+  queryByText
+} from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
@@ -18,6 +27,11 @@ import {
   buildLoadsViewModel,
   getWasteRecordSectionNumber
 } from './controller.js'
+
+/**
+ * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
+ * @import { RawLoadsByWasteRecordType } from './types.js'
+ */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
 
@@ -65,16 +79,28 @@ vi.mock(
   })
 )
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
+const mockFetchSummaryLogStatus = vi.mocked(fetchSummaryLogStatus, {
+  partial: true,
+  deep: true
+})
+const mockInitiateSummaryLogUpload = vi.mocked(initiateSummaryLogUpload, {
+  partial: true,
+  deep: true
+})
+const mockSubmitSummaryLog = vi.mocked(submitSummaryLog, {
+  partial: true,
+  deep: true
+})
+const mockFetchRegistrationAndAccreditation = vi.mocked(
+  fetchRegistrationAndAccreditation,
+  { partial: true, deep: true }
+)
+const mockFetchWasteBalances = vi.mocked(fetchWasteBalances, {
+  partial: true,
+  deep: true
+})
+
+const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
@@ -88,16 +114,16 @@ describe('#summaryLogUploadProgressController', () => {
   const url = summaryLogBaseUrl
 
   beforeEach(() => {
-    fetchSummaryLogStatus.mockReset().mockResolvedValue({
+    mockFetchSummaryLogStatus.mockReset().mockResolvedValue({
       status: 'preprocessing'
     })
 
-    initiateSummaryLogUpload.mockReset().mockResolvedValue({
+    mockInitiateSummaryLogUpload.mockReset().mockResolvedValue({
       uploadUrl: mockUploadUrl,
       uploadId: 'new-upload-id-123'
     })
 
-    submitSummaryLog.mockReset()
+    mockSubmitSummaryLog.mockReset()
   })
 
   it('should provide expected response', async ({ server }) => {
@@ -121,7 +147,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: preprocessing - should show processing message and poll', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.preprocessing
       })
 
@@ -131,21 +157,31 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
-      const $body = $('[data-testid="app-page-body"]')
+      const { body } = new JSDOM(result).window.document
+      const pageBody = getByTestId(body, 'app-page-body')
 
       /* eslint-disable vitest/max-expects */
-      expect($body.find('h1').text()).toBe('Your file is being checked')
-      expect($body.find('p').first().text()).toBe(
+      expect(
+        getByRole(pageBody, 'heading', {
+          level: 1,
+          name: 'Your file is being checked'
+        })
+      ).toBeDefined()
+      const paragraphs = getAllByRole(pageBody, 'paragraph')
+      expect(paragraphs[0].textContent?.trim()).toBe(
         'Your summary log is being checked for:'
       )
-      expect($body.find('li').eq(0).text()).toBe('errors')
-      expect($body.find('li').eq(1).text()).toBe('new data')
-      expect($body.find('li').eq(2).text()).toBe(
+      expect(
+        getAllByRole(pageBody, 'listitem').map((li) => li.textContent?.trim())
+      ).toStrictEqual([
+        'errors',
+        'new data',
         'changes to previously uploaded data'
+      ])
+      expect(paragraphs[1].textContent?.trim()).toBe(
+        'This may take a few minutes.'
       )
-      expect($body.find('p').eq(1).text()).toBe('This may take a few minutes.')
-      expect($body.find('p').eq(2).text()).toBe(
+      expect(paragraphs[2].textContent?.trim()).toBe(
         'Keep this page open and do not refresh it.'
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
@@ -156,7 +192,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validating - should show processing message and poll', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validating
       })
 
@@ -176,7 +212,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: submitting - should show submitting message and poll', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitting
       })
 
@@ -214,7 +250,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated - should show check page and stop polling', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated
       })
 
@@ -243,7 +279,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated - should show return to home link to organisation home', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated
       })
 
@@ -263,7 +299,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated - should show warning inset text with both links', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated
       })
 
@@ -291,12 +327,15 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
         loads: {
           added: {
-            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            included: {
+              count: 5,
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
+            },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
@@ -321,12 +360,15 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with REPROCESSOR_OUTPUT - should show section 3 in explanation text', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_OUTPUT',
         loads: {
           added: {
-            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            included: {
+              count: 5,
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
+            },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
@@ -351,12 +393,15 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with EXPORTER - should show section 1 in explanation text', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
         loads: {
           added: {
-            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            included: {
+              count: 5,
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
+            },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
@@ -381,15 +426,15 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with new loads - should show new loads heading', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
             included: {
               count: 7,
-              rowIds: [1092, 1093, 1094, 1095, 1096, 1097, 1098]
+              rowIds: ['1092', '1093', '1094', '1095', '1096', '1097', '1098']
             },
-            excluded: { count: 2, rowIds: [1099, 1100] }
+            excluded: { count: 2, rowIds: ['1099', '1100'] }
           },
           adjusted: {
             included: { count: 0, rowIds: [] },
@@ -423,7 +468,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with no new loads - should show no new loads heading', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
@@ -431,7 +476,7 @@ describe('#summaryLogUploadProgressController', () => {
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            included: { count: 3, rowIds: ['1096', '1099', '1100'] },
             excluded: { count: 0, rowIds: [] }
           }
         }
@@ -454,7 +499,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with adjusted loads - should show adjusted loads section', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
         loads: {
@@ -463,7 +508,7 @@ describe('#summaryLogUploadProgressController', () => {
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            included: { count: 3, rowIds: ['1096', '1099', '1100'] },
             excluded: { count: 0, rowIds: [] }
           }
         }
@@ -494,11 +539,11 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with new included loads - should NOT display row IDs', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            included: { count: 3, rowIds: [1092, 1093, 1094] },
+            included: { count: 3, rowIds: ['1092', '1093', '1094'] },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
@@ -530,15 +575,15 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with singular load - should use singular form', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            included: { count: 1, rowIds: [1092] },
+            included: { count: 1, rowIds: ['1092'] },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 1, rowIds: [1093] },
+            included: { count: 1, rowIds: ['1093'] },
             excluded: { count: 0, rowIds: [] }
           }
         }
@@ -570,14 +615,17 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with 100+ excluded loads - should show supplementary guidance instead of row IDs', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            included: { count: 5, rowIds: [1001, 1002, 1003, 1004, 1005] },
+            included: {
+              count: 5,
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
+            },
             excluded: {
               count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => 2000 + i)
+              rowIds: Array.from({ length: 100 }, (_, i) => String(2000 + i))
             }
           },
           adjusted: {
@@ -610,14 +658,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with 99 excluded loads - should show Show loads link with row IDs', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
             excluded: {
               count: 99,
-              rowIds: Array.from({ length: 99 }, (_, i) => 2000 + i)
+              rowIds: Array.from({ length: 99 }, (_, i) => String(2000 + i))
             }
           },
           adjusted: {
@@ -645,7 +693,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with 100+ adjusted excluded loads - should show supplementary guidance', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
@@ -653,10 +701,10 @@ describe('#summaryLogUploadProgressController', () => {
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 2, rowIds: [3001, 3002] },
+            included: { count: 2, rowIds: ['3001', '3002'] },
             excluded: {
               count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => 4000 + i)
+              rowIds: Array.from({ length: 100 }, (_, i) => String(4000 + i))
             }
           }
         }
@@ -680,7 +728,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with 99 adjusted excluded loads - should show Show loads link', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
@@ -691,7 +739,7 @@ describe('#summaryLogUploadProgressController', () => {
             included: { count: 0, rowIds: [] },
             excluded: {
               count: 99,
-              rowIds: Array.from({ length: 99 }, (_, i) => 4000 + i)
+              rowIds: Array.from({ length: 99 }, (_, i) => String(4000 + i))
             }
           }
         }
@@ -716,7 +764,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with adjusted included loads - should show Show loads link', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
@@ -726,7 +774,7 @@ describe('#summaryLogUploadProgressController', () => {
           adjusted: {
             included: {
               count: 5,
-              rowIds: [3001, 3002, 3003, 3004, 3005]
+              rowIds: ['3001', '3002', '3003', '3004', '3005']
             },
             excluded: { count: 0, rowIds: [] }
           }
@@ -749,7 +797,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated with 100+ adjusted included loads - should NOT show missing data message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
@@ -759,7 +807,7 @@ describe('#summaryLogUploadProgressController', () => {
           adjusted: {
             included: {
               count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => 3000 + i)
+              rowIds: Array.from({ length: 100 }, (_, i) => String(3000 + i))
             },
             excluded: { count: 0, rowIds: [] }
           }
@@ -792,11 +840,14 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validated without adjusted loads - should show no adjusted loads message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            included: { count: 5, rowIds: [1092, 1093, 1094, 1095, 1096] },
+            included: {
+              count: 5,
+              rowIds: ['1092', '1093', '1094', '1095', '1096']
+            },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
@@ -823,7 +874,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: submitted - should show success page and stop polling', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
         accreditationNumber: 'ACC-2025-001'
       })
@@ -851,7 +902,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: submitted - should link to organisation root', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted
       })
 
@@ -870,7 +921,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('status: validated - should not fetch waste balance data', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.validated,
           loads: {
             added: {
@@ -900,12 +951,12 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         const accreditationId = 'accreditation-id-456'
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -914,7 +965,7 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        fetchWasteBalances.mockResolvedValueOnce({
+        mockFetchWasteBalances.mockResolvedValueOnce({
           [accreditationId]: {
             amount: 1000,
             availableAmount: 1234.56
@@ -940,56 +991,62 @@ describe('#summaryLogUploadProgressController', () => {
         )
       })
 
-      it('status: submitted - should display waste balance in confirmation panel', async ({
-        server
-      }) => {
-        const accreditationId = 'accreditation-id-456'
+      it.for([
+        { label: 'a balance', availableAmount: 1234.56, expected: '1,234.56' },
+        { label: 'a zero balance', availableAmount: 0, expected: '0.00' }
+      ])(
+        'status: submitted - should display $label in the confirmation panel',
+        async ({ availableAmount, expected }, { server }) => {
+          const accreditationId = 'accreditation-id-456'
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          accreditationNumber: 'ACC-2025-001'
-        })
-
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
+          mockFetchSummaryLogStatus.mockResolvedValueOnce({
+            status: summaryLogStatuses.submitted,
             accreditationNumber: 'ACC-2025-001'
-          }
-        })
+          })
 
-        fetchWasteBalances.mockResolvedValueOnce({
-          [accreditationId]: {
-            amount: 1000,
-            availableAmount: 1234.56
-          }
-        })
+          mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+            organisationData: { id: organisationId },
+            registration: { id: registrationId, accreditationId },
+            accreditation: {
+              id: accreditationId,
+              accreditationNumber: 'ACC-2025-001'
+            }
+          })
 
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
+          mockFetchWasteBalances.mockResolvedValueOnce({
+            [accreditationId]: {
+              amount: 1000,
+              availableAmount
+            }
+          })
 
-        const $ = load(result)
-        const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
 
-        expect(panelBody).toHaveLength(1)
-        expect(panelBody.text()).toContain('Your updated waste balance')
-        expect(panelBody.text()).toContain('1,234.56')
-        expect(panelBody.text()).toContain('tonnes')
-      })
+          const { body } = new JSDOM(result).window.document
+          const panelBody = body.querySelector(
+            '.govuk-panel--confirmation .govuk-panel__body'
+          )
+
+          expect(panelBody).not.toBeNull()
+          expect(panelBody?.textContent).toContain('Your updated waste balance')
+          expect(panelBody?.textContent).toContain(expected)
+          expect(panelBody?.textContent).toContain('tonnes')
+        }
+      )
 
       it('status: submitted - should not display waste balance section when balance unavailable', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId },
           accreditation: undefined
@@ -1001,14 +1058,11 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
+        const { body } = new JSDOM(result).window.document
+
         expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = load(result)
-        const panel = $('.govuk-panel--confirmation')
-        const panelBody = panel.find('.govuk-panel__body')
-
-        expect(panel).toHaveLength(1)
-        expect(panelBody).toHaveLength(0)
+        expect(body.querySelector('.govuk-panel--confirmation')).not.toBeNull()
+        expect(body.querySelector('.govuk-panel__body')).toBeNull()
         expect(result).not.toContain('Your updated waste balance')
       })
 
@@ -1017,12 +1071,12 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         const accreditationId = 'accreditation-id-456'
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -1031,7 +1085,7 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        fetchWasteBalances.mockResolvedValueOnce({})
+        mockFetchWasteBalances.mockResolvedValueOnce({})
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1049,12 +1103,12 @@ describe('#summaryLogUploadProgressController', () => {
         const accreditationId = 'accreditation-id-456'
         const fetchError = new Error('Waste balance service unavailable')
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
           organisationData: { id: organisationId },
           registration: { id: registrationId, accreditationId },
           accreditation: {
@@ -1063,7 +1117,7 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        fetchWasteBalances.mockRejectedValueOnce(fetchError)
+        mockFetchWasteBalances.mockRejectedValueOnce(fetchError)
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -1081,57 +1135,15 @@ describe('#summaryLogUploadProgressController', () => {
         })
       })
 
-      it('status: submitted - should display zero waste balance correctly', async ({
-        server
-      }) => {
-        const accreditationId = 'accreditation-id-456'
-
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.submitted,
-          accreditationNumber: 'ACC-2025-001'
-        })
-
-        fetchRegistrationAndAccreditation.mockResolvedValueOnce({
-          organisationData: { id: organisationId },
-          registration: { id: registrationId, accreditationId },
-          accreditation: {
-            id: accreditationId,
-            accreditationNumber: 'ACC-2025-001'
-          }
-        })
-
-        fetchWasteBalances.mockResolvedValueOnce({
-          [accreditationId]: {
-            amount: 0,
-            availableAmount: 0
-          }
-        })
-
-        const { result, statusCode } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-
-        const $ = load(result)
-        const panelBody = $('.govuk-panel--confirmation .govuk-panel__body')
-
-        expect(panelBody).toHaveLength(1)
-        expect(panelBody.text()).toContain('0.00')
-        expect(panelBody.text()).toContain('tonnes')
-      })
-
       it('status: submitted - should propagate 404 when registration not found', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           accreditationNumber: 'ACC-2025-001'
         })
 
-        vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValueOnce(
+        mockFetchRegistrationAndAccreditation.mockRejectedValueOnce(
           Boom.notFound('Registration not found')
         )
 
@@ -1150,7 +1162,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       const submitUrl = `${url}/submit`
 
-      submitSummaryLog.mockResolvedValueOnce({
+      mockSubmitSummaryLog.mockResolvedValueOnce({
         status: summaryLogStatuses.submitted,
         accreditationNumber: 'ACC-2025-002'
       })
@@ -1169,11 +1181,11 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(postResponse.statusCode).toBe(statusCodes.found)
 
-      const setCookies = postResponse.headers['set-cookie']
-      const cookies = Array.isArray(setCookies) ? setCookies : [setCookies]
-      const cookieHeader = cookies.map((c) => c.split(';')[0]).join('; ')
+      const cookieHeader = extractCookieValues(
+        postResponse.headers['set-cookie']
+      ).join('; ')
 
-      const initialCallCount = fetchSummaryLogStatus.mock.calls.length
+      const initialCallCount = mockFetchSummaryLogStatus.mock.calls.length
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -1195,7 +1207,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: rejected with validation failure code - should show validation failures page', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
           failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
@@ -1230,7 +1242,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render a per-cell detail row instead of a collapsed category message', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: { failures: [locatedFailure] }
         })
@@ -1264,7 +1276,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should group by worksheet and table, scoping and sorting ROW_ID within each table', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures: [
@@ -1350,7 +1362,7 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures: [
@@ -1388,7 +1400,7 @@ describe('#summaryLogUploadProgressController', () => {
           }
         }))
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures,
@@ -1411,7 +1423,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should not show a cap notice below the 100 limit', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: { failures: [locatedFailure] }
         })
@@ -1428,7 +1440,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should show "(empty)" when the failing cell has no value', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures: [
@@ -1467,7 +1479,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should render located errors as a table while keeping meta-level category messages', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures: [locatedFailure, { errorCode: 'REGISTRATION_MISMATCH' }]
@@ -1519,7 +1531,7 @@ describe('#summaryLogUploadProgressController', () => {
           'CUSTOMS_CODES',
           'Must be 100 characters or fewer'
         ],
-        ['MUST_BE_3_DIGIT_NUMBER', 'OSR_ID', 'Must be a 3-digit number'],
+        ['MUST_BE_3_DIGIT_ID', 'OSR_ID', 'Must be a 3-digit number'],
         [
           'NET_WEIGHT_CALCULATION_MISMATCH',
           'NET_WEIGHT',
@@ -1535,7 +1547,7 @@ describe('#summaryLogUploadProgressController', () => {
       ])(
         'maps errorCode %s to its per-cell problem',
         async ([errorCode, header, expectedProblem], { server }) => {
-          fetchSummaryLogStatus.mockResolvedValueOnce({
+          mockFetchSummaryLogStatus.mockResolvedValueOnce({
             status: summaryLogStatuses.invalid,
             validation: {
               failures: [
@@ -1576,7 +1588,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should show a human-readable column label, not the raw header code', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures: [
@@ -1616,7 +1628,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should not repeat the worksheet heading when the table has no distinct label', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures: [
@@ -1666,7 +1678,7 @@ describe('#summaryLogUploadProgressController', () => {
           }
         })
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.invalid,
           validation: {
             failures: [
@@ -1697,10 +1709,70 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
+    // Codes that resolve via the direct-key fallback to their own
+    // `failure.<code>` copy. Without that copy they would silently render the
+    // technical-error defaultValue, so each case asserts the tailored message
+    // AND the absence of the fallback.
+    const technicalErrorCopy =
+      'Sorry, there is a problem with the service - try again later'
+
+    it.for([
+      {
+        errorCode: 'FILE_EMPTY',
+        status: summaryLogStatuses.rejected,
+        copy: 'The selected file is empty'
+      },
+      {
+        errorCode: 'FILE_TOO_LARGE',
+        status: summaryLogStatuses.rejected,
+        copy: 'The selected file must be smaller than 100MB'
+      },
+      {
+        errorCode: 'FILE_WRONG_TYPE',
+        status: summaryLogStatuses.rejected,
+        copy: 'The selected file must be a .XLSX'
+      },
+      {
+        errorCode: 'PROCESSING_TYPE_DATA_INVALID',
+        status: summaryLogStatuses.invalid,
+        copy: 'There is a problem with your registration - please contact support'
+      },
+      {
+        errorCode: 'TEMPLATE_VERSION_REQUIRED',
+        status: summaryLogStatuses.invalid,
+        copy: 'The template version could not be determined'
+      },
+      {
+        errorCode: 'TEMPLATE_VERSION_INVALID',
+        status: summaryLogStatuses.invalid,
+        copy: 'The template version is not recognised'
+      }
+    ])(
+      'status: $status with $errorCode - should render its tailored failure copy, not the technical-error fallback',
+      async ({ errorCode, status, copy }, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status,
+          validation: { failures: [{ errorCode }] }
+        })
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(getByText(body, copy)).toBeDefined()
+        expect(queryByText(body, technicalErrorCopy)).toBeNull()
+      }
+    )
+
     it('status: rejected - should initiate upload with pre-signed URL', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected,
         validation: {
           failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
@@ -1725,7 +1797,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: rejected without validation - should show validation failures page with technical error', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.rejected
       })
 
@@ -1745,7 +1817,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with validation failures - should show validation failures page with correct content', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
@@ -1772,7 +1844,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with validation failures - should show re-upload form and cancel button', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
@@ -1796,7 +1868,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid - should render back link to registration dashboard', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
@@ -1818,7 +1890,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid - should initiate upload with pre-signed URL', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'REGISTRATION_MISMATCH' }]
@@ -1843,7 +1915,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SEQUENTIAL_ROW_REMOVED alongside another failure - should render both the composite block and the other failure message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -1870,163 +1942,100 @@ describe('#summaryLogUploadProgressController', () => {
       )
     })
 
-    it('status: invalid with SEQUENTIAL_ROW_REMOVED for one sheet - should show preamble, sheet name bullet, and closing', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            }
-          ]
-        }
-      })
+    it.for([
+      {
+        label: 'one sheet',
+        failures: [
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          }
+        ],
+        expectedBullets: ['Exported (sections 1, 2 and 3)']
+      },
+      {
+        label: 'multiple sheets listed once each',
+        failures: [
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          },
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Sent on (sections 4 and 5)' }
+          }
+        ],
+        expectedBullets: [
+          'Exported (sections 1, 2 and 3)',
+          'Sent on (sections 4 and 5)'
+        ]
+      },
+      {
+        label: 'duplicate sheet deduped to one bullet',
+        failures: [
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          },
+          {
+            errorCode: 'SEQUENTIAL_ROW_REMOVED',
+            location: { sheet: 'Exported (sections 1, 2 and 3)' }
+          }
+        ],
+        expectedBullets: ['Exported (sections 1, 2 and 3)']
+      },
+      {
+        label: 'missing sheet falls back to Unknown',
+        failures: [{ errorCode: 'SEQUENTIAL_ROW_REMOVED' }],
+        expectedBullets: ['Unknown']
+      }
+    ])(
+      'status: invalid with SEQUENTIAL_ROW_REMOVED ($label) - should list affected sheets as bullets with preamble and closing',
+      async ({ failures, expectedBullets }, { server }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.invalid,
+          validation: { failures }
+        })
 
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Since your summary log was last submitted, rows have been removed from:'
-      )
-      expect(result).toContain(
-        'The rows must be re-added before you can submit your file.'
-      )
+        const { body } = new JSDOM(result).window.document
+        const bullets = getAllByRole(
+          getByTestId(body, 'app-page-body'),
+          'listitem'
+        ).map((li) => li.textContent?.trim())
 
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual(['Exported (sections 1, 2 and 3)'])
-
-      expect(result).toContain(
-        'We&#39;ve found 1 issue with the file you selected'
-      )
-    })
-
-    it('status: invalid with SEQUENTIAL_ROW_REMOVED for multiple sheets - should list each affected sheet once', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            },
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Sent on (sections 4 and 5)' }
-            }
-          ]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual([
-        'Exported (sections 1, 2 and 3)',
-        'Sent on (sections 4 and 5)'
-      ])
-
-      const preambleMatches = result.match(
-        /Since your summary log was last submitted, rows have been removed from:/g
-      )
-      expect(preambleMatches).toHaveLength(1)
-
-      expect(result).toContain(
-        'We&#39;ve found 1 issue with the file you selected'
-      )
-    })
-
-    it('status: invalid with duplicate SEQUENTIAL_ROW_REMOVED for same sheet - should dedupe to a single bullet', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            },
-            {
-              errorCode: 'SEQUENTIAL_ROW_REMOVED',
-              location: { sheet: 'Exported (sections 1, 2 and 3)' }
-            }
-          ]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual(['Exported (sections 1, 2 and 3)'])
-    })
-
-    it('status: invalid with SEQUENTIAL_ROW_REMOVED missing sheet - should fall back to Unknown', async ({
-      server
-    }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.invalid,
-        validation: {
-          failures: [{ errorCode: 'SEQUENTIAL_ROW_REMOVED' }]
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const $ = load(result)
-      const bullets = $(
-        '[data-testid="app-page-body"] ul.govuk-list--bullet li'
-      )
-        .map((_, el) => $(el).text().trim())
-        .get()
-      expect(bullets).toStrictEqual(['Unknown'])
-    })
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(bullets).toStrictEqual(expectedBullets)
+        expect(
+          getAllByText(
+            body,
+            'Since your summary log was last submitted, rows have been removed from:'
+          )
+        ).toHaveLength(1)
+        expect(
+          getByText(
+            body,
+            'The rows must be re-added before you can submit your file.'
+          )
+        ).toBeDefined()
+        expect(
+          getByText(
+            body,
+            /We've found 1 issue with the file you selected/
+          )
+        ).toBeDefined()
+      }
+    )
 
     it('status: invalid with unknown failure code - should show technical error message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'SOME_UNKNOWN_CODE' }]
@@ -2049,7 +2058,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with data entry failures - should show single deduplicated message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2066,23 +2075,24 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
+      const { body } = new JSDOM(result).window.document
+
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain(
-        'The selected file contains data that&#39;s been entered incorrectly'
-      )
-
-      const matches = result.match(
-        /The selected file contains data that&#39;s been entered incorrectly/g
-      )
-
-      expect(matches).toHaveLength(1)
+      expect(
+        getByText(body, 'Your summary log cannot be uploaded')
+      ).toBeDefined()
+      expect(
+        getAllByText(
+          body,
+          "The selected file contains data that's been entered incorrectly - check that the data you've entered matches the examples provided in the summary log"
+        )
+      ).toHaveLength(1)
     })
 
     it('status: invalid with mixed failures - should show data entry message and other failures', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2111,7 +2121,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with material failure - should show material invalid message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'MATERIAL_MISMATCH' }]
@@ -2133,7 +2143,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with accreditation failure - should show accreditation invalid message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'ACCREDITATION_MISMATCH' }]
@@ -2155,7 +2165,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with processing type failure - should show template incorrect message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'PROCESSING_TYPE_MISMATCH' }]
@@ -2177,7 +2187,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SPREADSHEET_MALFORMED_MARKERS failure - should show malformed template message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'SPREADSHEET_MALFORMED_MARKERS' }]
@@ -2199,7 +2209,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with SPREADSHEET_INVALID_ERROR failure - should show malformed template message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: 'SPREADSHEET_INVALID_ERROR' }]
@@ -2221,7 +2231,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with multiple spreadsheet failures - should show single deduplicated message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2237,17 +2247,16 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
+      const { body } = new JSDOM(result).window.document
+
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'The summary log template you&#39;re uploading is incorrect'
-      )
-
       // Should only appear once (deduplicated)
-      const matches = result.match(
-        /The summary log template you&#39;re uploading is incorrect/g
-      )
-
-      expect(matches).toHaveLength(1)
+      expect(
+        getAllByText(
+          body,
+          "The summary log template you're uploading is incorrect - make sure you download the correct template for your registration or accreditation"
+        )
+      ).toHaveLength(1)
     })
 
     it.for([
@@ -2257,7 +2266,7 @@ describe('#summaryLogUploadProgressController', () => {
       'VALIDATION_SYSTEM_ERROR',
       'UNKNOWN'
     ])('%s - should show technical error message', async (code, { server }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [{ errorCode: code }]
@@ -2279,7 +2288,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with multiple technical errors - should show single deduplicated message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2296,22 +2305,21 @@ describe('#summaryLogUploadProgressController', () => {
         auth: mockAuth
       })
 
+      const { body } = new JSDOM(result).window.document
+
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Sorry, there is a problem with the service - try again later'
-      )
-
-      const matches = result.match(
-        /Sorry, there is a problem with the service - try again later/g
-      )
-
-      expect(matches).toHaveLength(1)
+      expect(
+        getAllByText(
+          body,
+          'Sorry, there is a problem with the service - try again later'
+        )
+      ).toHaveLength(1)
     })
 
     it('status: invalid with NET_WEIGHT_CALCULATION_MISMATCH errorCode - should show calculated field mismatch message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2338,7 +2346,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with weight numeric errorCode - should show weight format message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2365,7 +2373,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with date errorCode on date header - should show date format message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2392,7 +2400,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with yes/no errorCode on yes/no header - should show yes/no format message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2419,7 +2427,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with dropdown errorCode on dropdown header - should show dropdown format message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2448,7 +2456,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with MUST_CONTAIN_ONLY_PERMITTED_CHARACTERS errorCode on free-text header - should show free-text message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2475,12 +2483,12 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with ID errorCode on ID header - should show ID format message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
             {
-              errorCode: 'MUST_BE_3_DIGIT_NUMBER',
+              errorCode: 'MUST_BE_3_DIGIT_ID',
               location: { header: 'OSR_ID' }
             }
           ]
@@ -2502,7 +2510,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with percentage errorCode on percentage header - should show percentage format message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2529,7 +2537,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with known errorCode but unrecognised header - should show safety net fallback', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2556,7 +2564,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with completely unrecognised errorCode - should show technical error as fallback', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2583,7 +2591,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with unknown errorCode alongside real failures - should strip technical error', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2617,7 +2625,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with mixed errorCode failures - should show correct deduplicated messages', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: [
@@ -2655,7 +2663,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid with empty validation failures - should show technical error message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid,
         validation: {
           failures: []
@@ -2679,7 +2687,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: invalid without validation object - should show technical error message', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.invalid
       })
 
@@ -2699,7 +2707,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validation_failed - should show validation failures page with re-upload option', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed,
         validation: {
           failures: [{ errorCode: 'PROCESSING_FAILED' }]
@@ -2720,7 +2728,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: validation_failed - should initiate upload for re-upload', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validationFailed
       })
 
@@ -2741,7 +2749,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: submission_failed - should show validation failures page with re-upload option', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submissionFailed
       })
 
@@ -2759,7 +2767,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: submission_failed - should initiate upload for re-upload', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.submissionFailed
       })
 
@@ -2781,7 +2789,7 @@ describe('#summaryLogUploadProgressController', () => {
       it('should show superseded page with link to organisation', async ({
         server
       }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.superseded
         })
 
@@ -2801,7 +2809,7 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       it('should not enable client-side polling', async ({ server }) => {
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.superseded
         })
 
@@ -2815,9 +2823,9 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       it('should not initiate upload', async ({ server }) => {
-        const initialCallCount = initiateSummaryLogUpload.mock.calls.length
+        const initialCallCount = mockInitiateSummaryLogUpload.mock.calls.length
 
-        fetchSummaryLogStatus.mockResolvedValueOnce({
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.superseded
         })
 
@@ -2834,7 +2842,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('status: superseded - should not enable client-side polling', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.superseded
       })
 
@@ -2850,7 +2858,7 @@ describe('#summaryLogUploadProgressController', () => {
 
   describe('unexpected status handling', () => {
     it('unexpected status - should show error page', async ({ server }) => {
-      fetchSummaryLogStatus.mockResolvedValueOnce({
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: 'some_unknown_status'
       })
 
@@ -2870,7 +2878,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('should show 404 error page when summary log not found', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockRejectedValueOnce(Boom.notFound())
+      mockFetchSummaryLogStatus.mockRejectedValueOnce(Boom.notFound())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -2885,7 +2893,7 @@ describe('#summaryLogUploadProgressController', () => {
     it('should show 500 error page when backend fetch fails', async ({
       server
     }) => {
-      fetchSummaryLogStatus.mockRejectedValueOnce(
+      mockFetchSummaryLogStatus.mockRejectedValueOnce(
         Boom.internal('Failed to fetch')
       )
 
@@ -2983,8 +2991,8 @@ describe('#buildLoadsViewModel', () => {
   test('preserves count and rowIds from backend', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 150, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 50, rowIds: [1004, 1005] }
+        included: { count: 150, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 50, rowIds: ['1004', '1005'] }
       },
       adjusted: {
         included: { count: 0, rowIds: [] },
@@ -2993,8 +3001,8 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result.added).toStrictEqual({
-      included: { count: 150, rowIds: [1001, 1002, 1003] },
-      excluded: { count: 50, rowIds: [1004, 1005] },
+      included: { count: 150, rowIds: ['1001', '1002', '1003'] },
+      excluded: { count: 50, rowIds: ['1004', '1005'] },
       total: 200
     })
   })
@@ -3006,14 +3014,14 @@ describe('#buildLoadsViewModel', () => {
         excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        included: { count: 120, rowIds: [2001, 2002] },
-        excluded: { count: 30, rowIds: [2003] }
+        included: { count: 120, rowIds: ['2001', '2002'] },
+        excluded: { count: 30, rowIds: ['2003'] }
       }
     })
 
     expect(result.adjusted).toStrictEqual({
-      included: { count: 120, rowIds: [2001, 2002] },
-      excluded: { count: 30, rowIds: [2003] },
+      included: { count: 120, rowIds: ['2001', '2002'] },
+      excluded: { count: 30, rowIds: ['2003'] },
       total: 150
     })
   })
@@ -3021,7 +3029,7 @@ describe('#buildLoadsViewModel', () => {
   test('handles partial loads data gracefully', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 1, rowIds: [1001] }
+        included: { count: 1, rowIds: ['1001'] }
         // missing excluded
       }
       // missing adjusted
@@ -3029,7 +3037,7 @@ describe('#buildLoadsViewModel', () => {
 
     expect(result).toStrictEqual({
       added: {
-        included: { count: 1, rowIds: [1001] },
+        included: { count: 1, rowIds: ['1001'] },
         excluded: noRows,
         total: 1
       },
@@ -3045,8 +3053,8 @@ describe('#buildLoadsViewModel', () => {
     const result = buildLoadsViewModel({
       added: {
         valid: { count: 10, rowIds: [] },
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 2, rowIds: [1004, 1005] }
+        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 2, rowIds: ['1004', '1005'] }
       },
       adjusted: {
         included: { count: 0, rowIds: [] },
@@ -3055,8 +3063,8 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result.added).toStrictEqual({
-      included: { count: 8, rowIds: [1001, 1002, 1003] },
-      excluded: { count: 2, rowIds: [1004, 1005] },
+      included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+      excluded: { count: 2, rowIds: ['1004', '1005'] },
       total: 10
     })
   })
@@ -3064,12 +3072,12 @@ describe('#buildLoadsViewModel', () => {
   test('calculates total from included + excluded counts', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 7, rowIds: [1004, 1005] }
+        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 7, rowIds: ['1004', '1005'] }
       },
       adjusted: {
-        included: { count: 4, rowIds: [2001, 2002, 2003, 2004] },
-        excluded: { count: 3, rowIds: [2005, 2006, 2007] }
+        included: { count: 4, rowIds: ['2001', '2002', '2003', '2004'] },
+        excluded: { count: 3, rowIds: ['2005', '2006', '2007'] }
       }
     })
 
@@ -3096,14 +3104,20 @@ describe('#getWasteRecordSectionNumber', () => {
   })
 
   test('returns undefined for unknown processingType', () => {
-    expect(getWasteRecordSectionNumber('UNKNOWN_TYPE')).toBeUndefined()
+    expect(
+      getWasteRecordSectionNumber(
+        /** @type {ProcessingType} */ ('UNKNOWN_TYPE')
+      )
+    ).toBeUndefined()
   })
 })
 
 describe('#buildLoadsByWasteRecordTypeViewModel', () => {
+  /** @type {RawLoadsByWasteRecordType} */
   const mockLoadsByWasteRecordType = [
     {
       wasteRecordType: 'sentOn',
+      sheetName: 'Sent on',
       added: {
         valid: { count: 2, rowIds: ['005', '006'] }
       },
@@ -3116,6 +3130,7 @@ describe('#buildLoadsByWasteRecordTypeViewModel', () => {
     },
     {
       wasteRecordType: 'received',
+      sheetName: 'Received',
       added: {
         valid: { count: 3, rowIds: ['001', '002', '003'] }
       },
@@ -3163,6 +3178,7 @@ describe('registered-only check view', () => {
   const summaryLogId = '789'
   const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
 
+  /** @type {RawLoadsByWasteRecordType} */
   const mockLoadsByWasteRecordType = [
     {
       wasteRecordType: 'received',
@@ -3196,7 +3212,7 @@ describe('registered-only check view', () => {
   it('status: validated with registered-only processing type and loadsByWasteRecordType - should render check-registered-only view with sections and counts', async ({
     server
   }) => {
-    fetchSummaryLogStatus.mockResolvedValueOnce({
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByWasteRecordType: mockLoadsByWasteRecordType
@@ -3253,7 +3269,7 @@ describe('registered-only check view', () => {
   it('status: validated with registered-only processing type and zero counts - should show no-activity headings and descriptions', async ({
     server
   }) => {
-    fetchSummaryLogStatus.mockResolvedValueOnce({
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'REPROCESSOR_REGISTERED_ONLY',
       loadsByWasteRecordType: [
@@ -3313,7 +3329,7 @@ describe('registered-only check view', () => {
       valid: { count: 0, rowIds: [] }
     }
 
-    fetchSummaryLogStatus.mockResolvedValueOnce({
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER_REGISTERED_ONLY',
       loadsByWasteRecordType: [
@@ -3375,7 +3391,7 @@ describe('registered-only check view', () => {
   it('status: validated with registered-only processing type but missing loadsByWasteRecordType - should surface an error rather than silently render an empty page', async ({
     server
   }) => {
-    fetchSummaryLogStatus.mockResolvedValueOnce({
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER_REGISTERED_ONLY'
     })

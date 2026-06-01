@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
@@ -12,7 +13,6 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
  * @import { Organisation, User } from '#domain/organisations/model.js'
  * @import { Registration, RegistrationApproved } from '#domain/organisations/registration.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
- * @import { UserSession } from '#server/auth/types/session.js'
  */
 
 vi.mock(
@@ -23,22 +23,7 @@ vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
-/** @type {{ strategy: string, credentials: UserSession }} */
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    provider: 'defra-id',
-    query: {},
-    refreshToken: 'mock-refresh-token',
-    profile: { id: 'user-123', email: 'test@example.com' },
-    expiresAt: '2099-01-01T00:00:00.000Z',
-    idToken: 'mock-id-token',
-    urls: {
-      token: 'http://defra-id.auth/token',
-      logout: 'http://defra-id.auth/logout'
-    }
-  }
-}
+const mockAuth = buildMockAuth()
 
 /** @type {User} */
 const stubUser = {

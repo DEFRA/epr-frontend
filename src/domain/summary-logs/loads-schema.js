@@ -7,9 +7,7 @@ const countSchema = Joi.number().integer().min(0).required()
 
 export const loadCategorySchema = Joi.object({
   count: countSchema,
-  rowIds: Joi.array()
-    .items(Joi.alternatives().try(Joi.string(), Joi.number()))
-    .required()
+  rowIds: Joi.array().items(Joi.string().pattern(/^\d+$/, 'numeric')).required()
 })
 
 export const loadValiditySchema = Joi.object({

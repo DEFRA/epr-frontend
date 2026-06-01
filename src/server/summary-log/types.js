@@ -113,9 +113,15 @@
  */
 
 /**
+ * Row identifier. Numeric in the sheet, but the backend coerces it to a string
+ * on the wire (response.schema.js), so treat it as an opaque id, not a number.
+ * @typedef {string} RowId
+ */
+
+/**
  * @typedef {{
  *   count: number,
- *   rowIds: string[]
+ *   rowIds: RowId[]
  * }} LoadRows
  */
 
@@ -167,8 +173,8 @@
  * @typedef {{
  *   headingKey: string,
  *   sectionReference: string,
- *   added: { count: number, rowIds: string[] },
- *   adjusted: { count: number, rowIds: string[] }
+ *   added: { count: number, rowIds: RowId[] },
+ *   adjusted: { count: number, rowIds: RowId[] }
  * }} RegisteredOnlyLoadsSectionViewModel
  */
 
