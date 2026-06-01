@@ -599,7 +599,7 @@ describe('#organisationController', () => {
       vi.mocked(
         fetchOrganisationModule.fetchOrganisationById
       ).mockResolvedValue(
-        /** @type {any} */ ({ invalidField: 'no company details' })
+        asOrganisation({ invalidField: 'no company details' })
       )
 
       const { statusCode } = await server.inject({
