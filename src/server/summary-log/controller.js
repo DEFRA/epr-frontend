@@ -2,14 +2,11 @@ import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
-import {
-  getDisplayCodeFromErrorCode,
-  TECHNICAL_ERROR_DISPLAY_CODE
-} from '#server/common/constants/validation-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
@@ -131,7 +128,6 @@ const SUCCESS_VIEW_NAME = 'summary-log/success'
 const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
-const MAX_FILE_SIZE_MB = 100
 
 /** @type {LoadRows} */
 const NO_ROWS = { count: 0, rowIds: [] }
@@ -404,60 +400,6 @@ const renderSupersededView = (
   })
 }
 
-const buildRowRemovedIssue = (rowRemovedFailures, localise) => {
-  if (rowRemovedFailures.length === 0) {
-    return []
-  }
-
-  const sheets = [
-    ...new Set(
-      rowRemovedFailures.map(({ location }) => location?.sheet ?? 'Unknown')
-    )
-  ]
-
-  return [
-    {
-      type: 'sequentialRowRemoved',
-      preamble: localise('summary-log:failure.SEQUENTIAL_ROW_REMOVED_PREAMBLE'),
-      sheets,
-      closing: localise('summary-log:failure.SEQUENTIAL_ROW_REMOVED_CLOSING')
-    }
-  ]
-}
-
-const buildOtherIssueMessages = (otherFailures, localise, fallbackMessage) => {
-  if (otherFailures.length === 0) {
-    return []
-  }
-
-  return [
-    ...new Set(
-      otherFailures.map(({ errorCode, location }) => {
-        const displayCode = getDisplayCodeFromErrorCode(
-          errorCode,
-          location?.header
-        )
-        return localise(`summary-log:failure.${displayCode}`, {
-          defaultValue: fallbackMessage,
-          maxSize: MAX_FILE_SIZE_MB
-        })
-      })
-    )
-  ]
-}
-
-const applyFallback = (combinedIssues, fallbackMessage) => {
-  if (combinedIssues.length === 0) {
-    return [fallbackMessage]
-  }
-
-  if (combinedIssues.length > 1) {
-    return combinedIssues.filter((issue) => issue !== fallbackMessage)
-  }
-
-  return combinedIssues
-}
-
 /**
  * Renders the validation failures page for invalid summary logs
  * @param {ResponseToolkit} h - Hapi response toolkit
@@ -470,37 +412,15 @@ const renderValidationFailuresView = (
   localise,
   { validation, uploadUrl, cancelUrl }
 ) => {
-  const failures = validation?.failures ?? []
-
-  const fallbackMessage = localise(
-    `summary-log:failure.${TECHNICAL_ERROR_DISPLAY_CODE}`
-  )
-
-  const rowRemovedFailures = failures.filter(
-    ({ errorCode }) => errorCode === 'SEQUENTIAL_ROW_REMOVED'
-  )
-  const otherFailures = failures.filter(
-    ({ errorCode }) => errorCode !== 'SEQUENTIAL_ROW_REMOVED'
-  )
-
-  const combinedIssues = [
-    ...buildRowRemovedIssue(rowRemovedFailures, localise),
-    ...buildOtherIssueMessages(otherFailures, localise, fallbackMessage)
-  ]
-
-  const issues = applyFallback(combinedIssues, fallbackMessage)
-
-  const issueCount = issues.length
+  const { errorRecords, issues, description1, description2 } =
+    buildValidationFailuresViewModel(localise, validation)
 
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
     heading: localise('summary-log:validationFailuresHeading'),
-    description1: localise('summary-log:validationFailuresDescription1', {
-      count: issueCount
-    }),
-    description2: localise('summary-log:validationFailuresDescription2', {
-      count: issueCount
-    }),
+    description1,
+    description2,
+    errorRecords,
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),
     buttonText: localise('summary-log:reuploadButtonText'),

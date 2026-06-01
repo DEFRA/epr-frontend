@@ -3,10 +3,20 @@ import Joi from 'joi'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 
+const nonNegativeInteger = Joi.number().integer().min(0).required()
+
+export const rowIdSchema = Joi.string().pattern(/^\d+$/, 'numeric')
+
 export const loadCategorySchema = Joi.object({
-  count: Joi.number().integer().min(0).required(),
-  rowIds: Joi.array().items(Joi.string().pattern(/^\d+$/, 'numeric')).required()
+  count: nonNegativeInteger,
+  rowIds: Joi.array().items(rowIdSchema).required()
 })
+
+const validationFailureSchema = Joi.object({
+  location: Joi.object({
+    rowId: rowIdSchema
+  }).unknown(true)
+}).unknown(true)
 
 export const loadValiditySchema = Joi.object({
   valid: loadCategorySchema.required(),
@@ -55,9 +65,14 @@ export const summaryLogStatusResponseSchema = Joi.object({
     )
     .required(),
   validation: Joi.object({
-    failures: Joi.array().required(),
+    failures: Joi.array().items(validationFailureSchema).required(),
     concerns: Joi.object().optional(),
-    totalIssuesCount: Joi.number().integer().optional()
+    counts: Joi.object({
+      fatal: nonNegativeInteger,
+      error: nonNegativeInteger,
+      warning: nonNegativeInteger,
+      total: nonNegativeInteger
+    }).required()
   }).optional(),
   loads: loadsSchema.optional(),
   loadsByWasteRecordType: loadsByWasteRecordTypeSchema.optional(),

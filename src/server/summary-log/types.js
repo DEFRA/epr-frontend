@@ -12,16 +12,90 @@
  */
 
 /**
+ * Full location of a validation failure within the uploaded spreadsheet.
+ * `rowId` is the operator-facing ROW_ID ("load number"); `row` is the raw
+ * spreadsheet row number; `column` is the Excel column letter.
  * @typedef {{
- *   errorCode: string,
- *   location?: { header?: string, sheet?: string }
- * }} ValidationFailure
+ *   sheet?: string,
+ *   table?: string,
+ *   row?: number,
+ *   rowId?: string,
+ *   column?: string,
+ *   header?: string,
+ *   field?: string
+ * }} CellLocation
  */
 
 /**
  * @typedef {{
- *   failures: ValidationFailure[]
+ *   errorCode: string,
+ *   code?: string,
+ *   location?: CellLocation,
+ *   actual?: unknown,
+ *   expected?: unknown
+ * }} ValidationFailure
+ */
+
+/**
+ * Validation issue counts by severity, computed pre-cap on the backend.
+ * @typedef {{
+ *   fatal: number,
+ *   error: number,
+ *   warning: number,
+ *   total: number
+ * }} ValidationIssueCounts
+ */
+
+/**
+ * @typedef {{
+ *   failures: ValidationFailure[],
+ *   counts: ValidationIssueCounts
  * }} ValidationResponse
+ */
+
+/**
+ * A validation failure that pinpoints a specific spreadsheet cell. Narrowed
+ * from {@link ValidationFailure} by the isLocatedCellError type guard, so the
+ * location dimensions used for rendering are guaranteed present.
+ * @typedef {{
+ *   errorCode: string,
+ *   actual?: string | number | boolean | null,
+ *   location: {
+ *     sheet: string,
+ *     table: string,
+ *     row: number,
+ *     column: string,
+ *     header: string,
+ *     rowId: string
+ *   }
+ * }} LocatedCellFailure
+ */
+
+/**
+ * A single failing cell within a record (one table row, minus the ROW_ID which
+ * is rowspanned across the record's cells).
+ * @typedef {{
+ *   columnLabel: string,
+ *   cellRef: string,
+ *   value: string,
+ *   problem: string
+ * }} CellErrorCell
+ */
+
+/**
+ * One record (ROW_ID) and its failing cells, rendered as a row group in the
+ * single flat error table. The ROW_ID and section cells are rowspanned across
+ * the record's cells. `section` is the (sheet, table) label.
+ * @typedef {{
+ *   rowId: string,
+ *   section: string,
+ *   cells: CellErrorCell[]
+ * }} CellErrorRecord
+ */
+
+/**
+ * i18next translation function (Hapi `request.t`).
+ * @typedef {(key: string, params?: object) => string} Localise
  */
 
 /**
