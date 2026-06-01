@@ -673,16 +673,15 @@ const renderValidationFailuresView = (
   // counts, so a capped response always has the true pre-cap fatal total to
   // name ("first 100 of N").
   const capped = failures.length >= VALIDATION_ISSUE_DISPLAY_CAP
-  const totalFatal = validation?.counts?.fatal
 
   const description1 = localise('summary-log:validationFailuresDescription1', {
-    count: capped ? totalFatal : issueCount
+    count: capped ? validation?.counts.fatal : issueCount
   })
 
   const capNotice = capped
     ? localise('summary-log:validationFailuresCappedActionWithTotal', {
         cap: VALIDATION_ISSUE_DISPLAY_CAP,
-        total: totalFatal
+        total: validation?.counts.fatal
       })
     : undefined
 

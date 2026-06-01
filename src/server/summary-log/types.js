@@ -49,7 +49,7 @@
 /**
  * @typedef {{
  *   failures: ValidationFailure[],
- *   counts?: ValidationIssueCounts
+ *   counts: ValidationIssueCounts
  * }} ValidationResponse
  */
 

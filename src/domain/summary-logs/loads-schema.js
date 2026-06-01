@@ -3,8 +3,10 @@ import Joi from 'joi'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 
+const countSchema = Joi.number().integer().min(0).required()
+
 export const loadCategorySchema = Joi.object({
-  count: Joi.number().integer().min(0).required(),
+  count: countSchema,
   rowIds: Joi.array()
     .items(Joi.alternatives().try(Joi.string(), Joi.number()))
     .required()
@@ -60,11 +62,11 @@ export const summaryLogStatusResponseSchema = Joi.object({
     failures: Joi.array().required(),
     concerns: Joi.object().optional(),
     counts: Joi.object({
-      fatal: Joi.number().integer().required(),
-      error: Joi.number().integer().required(),
-      warning: Joi.number().integer().required(),
-      total: Joi.number().integer().required()
-    }).optional()
+      fatal: countSchema,
+      error: countSchema,
+      warning: countSchema,
+      total: countSchema
+    }).required()
   }).optional(),
   loads: loadsSchema.optional(),
   loadsByWasteRecordType: loadsByWasteRecordTypeSchema.optional(),
