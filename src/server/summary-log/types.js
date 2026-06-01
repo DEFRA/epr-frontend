@@ -83,28 +83,14 @@
  */
 
 /**
- * One record (ROW_ID) and its failing cells. The ROW_ID cell is rowspanned
- * across the cells.
+ * One record (ROW_ID) and its failing cells, rendered as a row group in the
+ * single flat error table. The ROW_ID and section cells are rowspanned across
+ * the record's cells. `section` is the (sheet, table) label.
  * @typedef {{
  *   rowId: string,
+ *   section: string,
  *   cells: CellErrorCell[]
  * }} CellErrorRecord
- */
-
-/**
- * Located cell errors for one table within a worksheet (one rendered table).
- * @typedef {{
- *   sectionLabel: string,
- *   records: CellErrorRecord[]
- * }} CellErrorSection
- */
-
-/**
- * Located cell errors grouped by worksheet, then by table/section.
- * @typedef {{
- *   worksheetLabel: string,
- *   sections: CellErrorSection[]
- * }} CellErrorWorksheet
  */
 
 /**

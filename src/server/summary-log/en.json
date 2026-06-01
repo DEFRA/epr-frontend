@@ -35,10 +35,11 @@
   },
   "cellTable": {
     "rowIdHeading": "Row ID",
-    "columnHeading": "Column",
+    "sectionHeading": "Section",
+    "columnHeading": "Column header",
     "cellHeading": "Cell",
-    "valueHeading": "Value entered",
-    "problemHeading": "Problem"
+    "valueHeading": "Data entered",
+    "problemHeading": "Error message"
   },
   "checkCaption": "Upload summary log",
   "checkHeading": "Check before confirming upload",
@@ -200,11 +201,11 @@
   "uploadConflictReason1": "someone else from your organisation has just uploaded a different summary log",
   "uploadConflictReason2": "you confirmed the upload of this summary log a long time after you chose the file to upload",
   "uploadConflictReasonsIntro": "This may have happened because:",
-  "validationFailuresCappedActionWithTotal": "We can only show the first {{cap}} of {{total}} issues. Correct these and upload your file again to check for any others.",
-  "validationFailuresDescription1_one": "We've found {{count}} issue with the file you selected.",
-  "validationFailuresDescription1_other": "We've found {{count}} issues with the file you selected.",
-  "validationFailuresDescription2_one": "You will need to correct this issue before you can upload the file.",
-  "validationFailuresDescription2_other": "You will need to correct these issues before uploading the file again.",
+  "validationFailuresDescription1Capped": "We found {{total}} errors in your summary log, but can only display {{cap}} of them at the moment.",
+  "validationFailuresDescription1_one": "We found {{count}} error in your summary log.",
+  "validationFailuresDescription1_other": "We found {{count}} errors in your summary log.",
+  "validationFailuresDescription2_one": "You'll need to fix your summary log error before you can upload this file.",
+  "validationFailuresDescription2_other": "You'll need to fix all of your summary log errors before you can upload this file.",
   "validationFailuresHeading": "Your summary log cannot be uploaded",
   "wasteBalanceLabel": "Your updated waste balance"
 }

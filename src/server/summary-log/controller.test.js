@@ -15,6 +15,7 @@ import {
   getByRole,
   getByTestId,
   getByText,
+  queryAllByRole,
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -1268,6 +1269,7 @@ describe('#summaryLogUploadProgressController', () => {
 
         expect(cells).toStrictEqual([
           '1003',
+          'Loads received',
           'Net weight',
           'D8',
           'abc',
@@ -1275,7 +1277,7 @@ describe('#summaryLogUploadProgressController', () => {
         ])
       })
 
-      it('should group by worksheet and table, scoping and sorting ROW_ID within each table', async ({
+      it('should render all records in one flat table with a Section column, sorting ROW_ID within each section', async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1332,21 +1334,24 @@ describe('#summaryLogUploadProgressController', () => {
 
         const scope = pageBody(result)
         const tables = getAllByRole(scope, 'table')
-        const worksheetHeadings = getAllByRole(scope, 'heading', {
+        const worksheetHeadings = queryAllByRole(scope, 'heading', {
           level: 2
-        }).map((heading) => heading.textContent?.trim())
-        const rowIdColumn = (table) =>
-          dataRows(table).map((row) => rowCells(row)[0])
-        const firstTableRowIds = rowIdColumn(tables[0])
-        const secondTableRowIds = rowIdColumn(tables[1])
+        })
+        const rows = dataRows(tables[0])
+        const rowIdColumn = rows.map((row) => rowCells(row)[0])
+        const sectionColumn = rows.map((row) => rowCells(row)[1])
 
-        expect(tables).toHaveLength(2)
-        expect(worksheetHeadings).toStrictEqual(['Reprocessing'])
-        expect(firstTableRowIds).toStrictEqual(['1001', '1003'])
-        expect(secondTableRowIds).toStrictEqual(['1001'])
+        expect(tables).toHaveLength(1)
+        expect(worksheetHeadings).toHaveLength(0)
+        expect(rowIdColumn).toStrictEqual(['1001', '1003', '1001'])
+        expect(sectionColumn).toStrictEqual([
+          'Loads received',
+          'Loads received',
+          'Reprocessing'
+        ])
       })
 
-      it('should state how many issues were found', async ({ server }) => {
+      it('should state how many errors were found', async ({ server }) => {
         const located = (rowId, column) => ({
           errorCode: 'MUST_BE_A_NUMBER',
           actual: 'x',
@@ -1377,12 +1382,10 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        expect(result).toContain(
-          'We&#39;ve found 3 issues with the file you selected'
-        )
+        expect(result).toContain('We found 3 errors in your summary log')
       })
 
-      it('should show the exact total in the cap notice when counts are present', async ({
+      it('should fold the cap notice into the count line, showing the exact total, when counts are present', async ({
         server
       }) => {
         const failures = Array.from({ length: 100 }, (_, i) => ({
@@ -1412,13 +1415,15 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
+        const table = getByRole(pageBody(result), 'table')
+
         expect(result).toContain(
-          'We&#39;ve found 150 issues with the file you selected'
+          'We found 150 errors in your summary log, but can only display 50 of them at the moment'
         )
-        expect(result).toContain('We can only show the first 100 of 150 issues')
+        expect(dataRows(table)).toHaveLength(50)
       })
 
-      it('should not show a cap notice below the 100 limit', async ({
+      it('should not show a cap notice below the 50 limit', async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1432,7 +1437,7 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        expect(result).not.toContain('We can only show the first')
+        expect(result).not.toContain('can only display')
       })
 
       it('should show "(empty)" when the failing cell has no value', async ({
@@ -1464,7 +1469,7 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         const table = getByRole(pageBody(result), 'table')
-        const [, , , valueCell] = rowCells(dataRows(table)[0])
+        const [, , , , valueCell] = rowCells(dataRows(table)[0])
 
         expect(valueCell).toBe('(empty)')
       })
@@ -1603,12 +1608,12 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         const table = getByRole(pageBody(result), 'table')
-        const [, columnCell] = rowCells(dataRows(table)[0])
+        const [, , columnCell] = rowCells(dataRows(table)[0])
 
         expect(columnCell).toBe('EWC code')
       })
 
-      it('should not repeat the worksheet heading when the table has no distinct label', async ({
+      it('should fall back to the worksheet name as the Section when the table has no distinct label', async ({
         server
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -1637,12 +1642,10 @@ describe('#summaryLogUploadProgressController', () => {
           auth: mockAuth
         })
 
-        const reprocessingHeadings = getAllByRole(
-          pageBody(result),
-          'heading'
-        ).filter((heading) => heading.textContent?.trim() === 'Reprocessing')
+        const table = getByRole(pageBody(result), 'table')
+        const [, sectionCell] = rowCells(dataRows(table)[0])
 
-        expect(reprocessingHeadings).toHaveLength(1)
+        expect(sectionCell).toBe('Reprocessing')
       })
 
       it('should rowspan the Row ID across a record with multiple failing cells', async ({
@@ -1683,9 +1686,14 @@ describe('#summaryLogUploadProgressController', () => {
         const rowIdCells = getAllByRole(table, 'cell').filter(
           (cell) => cell.textContent?.trim() === '1000'
         )
+        const sectionCells = getAllByRole(table, 'cell').filter(
+          (cell) => cell.textContent?.trim() === 'Loads received'
+        )
 
         expect(rowIdCells).toHaveLength(1)
         expect(rowIdCells[0].getAttribute('rowspan')).toBe('3')
+        expect(sectionCells).toHaveLength(1)
+        expect(sectionCells[0].getAttribute('rowspan')).toBe('3')
         expect(rows).toHaveLength(3)
       })
     })
@@ -1813,9 +1821,7 @@ describe('#summaryLogUploadProgressController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Your summary log cannot be uploaded')
-      expect(result).toContain(
-        'We&#39;ve found 1 issue with the file you selected'
-      )
+      expect(result).toContain('We found 1 error in your summary log')
       expect(result).toContain(
         'Registration number on summary log&#39;s &#39;Cover&#39; tab is missing or incorrect'
       )
@@ -2005,7 +2011,7 @@ describe('#summaryLogUploadProgressController', () => {
           )
         ).toBeDefined()
         expect(
-          getByText(body, /We've found 1 issue with the file you selected/)
+          getByText(body, /We found 1 error in your summary log/)
         ).toBeDefined()
       }
     )

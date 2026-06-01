@@ -18,8 +18,6 @@ import { partition } from 'lodash-es'
  * @import {
  *   CellErrorCell,
  *   CellErrorRecord,
- *   CellErrorSection,
- *   CellErrorWorksheet,
  *   LoadCategoryViewModel,
  *   LoadRows,
  *   LoadsViewModel,
@@ -141,10 +139,11 @@ const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
 const MAX_FILE_SIZE_MB = 100
 
-// Mirrors the backend MAX_VALIDATION_ISSUES cap; when the returned fatal
-// failures hit this, the backend dropped some, so we tell the operator only
-// the first N are shown (a true total of fatal errors is not on the wire).
-const VALIDATION_ISSUE_DISPLAY_CAP = 100
+// Front-end display slice: we render at most this many located cell errors in
+// the table (the backend returns up to its own larger cap). When the true total
+// (validation.counts.fatal) exceeds this, we tell the operator only the first N
+// are shown.
+const VALIDATION_ISSUE_DISPLAY_CAP = 50
 
 /** @type {LoadRows} */
 const NO_ROWS = { count: 0, rowIds: [] }
@@ -557,65 +556,57 @@ const buildCellErrorCell = (failure, localise) => {
 const rowIdOf = ({ location }) => location.rowId ?? String(location.row)
 
 /**
- * One record: a ROW_ID and its failing cells (the ROW_ID cell is rowspanned
- * across them in the view).
+ * One record: a ROW_ID, its (sheet, table) section label and its failing cells
+ * (the ROW_ID and section cells are rowspanned across them in the view).
  * @param {string} rowId
+ * @param {string} section
  * @param {LocatedCellFailure[]} failures - This record's failures
  * @param {Localise} localise
  * @returns {CellErrorRecord}
  */
-const buildCellErrorRecord = (rowId, failures, localise) => ({
+const buildCellErrorRecord = (rowId, section, failures, localise) => ({
   rowId,
+  section,
   cells: failures.map((failure) => buildCellErrorCell(failure, localise))
 })
 
 /**
- * One rendered table: its failures grouped into records by ROW_ID, sorted
- * (numerically where possible). ROW_IDs are unique only within a table.
+ * One table's records: failures grouped by ROW_ID and sorted (numerically where
+ * possible), each carrying the table's section label. ROW_IDs are unique only
+ * within a (sheet, table).
  * @param {string} table
  * @param {LocatedCellFailure[]} failures - This table's failures
- * @param {string} worksheetLabel - Used as the section label fallback
+ * @param {string} sheet - Section label fallback when the table is unmapped
  * @param {Localise} localise
- * @returns {CellErrorSection}
+ * @returns {CellErrorRecord[]}
  */
-const buildCellErrorSection = (table, failures, worksheetLabel, localise) => ({
-  sectionLabel: localise(`summary-log:tableLabel.${table}`, {
-    defaultValue: worksheetLabel
-  }),
-  records: [...Map.groupBy(failures, rowIdOf)]
+const buildTableRecords = (table, failures, sheet, localise) => {
+  const section = localise(`summary-log:tableLabel.${table}`, {
+    defaultValue: sheet
+  })
+
+  return [...Map.groupBy(failures, rowIdOf)]
     .map(([rowId, recordFailures]) =>
-      buildCellErrorRecord(rowId, recordFailures, localise)
+      buildCellErrorRecord(rowId, section, recordFailures, localise)
     )
     .toSorted((a, b) => compareRowId(a.rowId, b.rowId))
-})
+}
 
 /**
- * One worksheet group: a heading and its tables (one rendered table per
- * spreadsheet table within the worksheet).
- * @param {string} worksheetLabel
- * @param {LocatedCellFailure[]} failures - This worksheet's failures
- * @param {Localise} localise
- * @returns {CellErrorWorksheet}
- */
-const buildCellErrorWorksheet = (worksheetLabel, failures, localise) => ({
-  worksheetLabel,
-  sections: [...Map.groupBy(failures, ({ location }) => location.table)].map(
-    ([table, tableFailures]) =>
-      buildCellErrorSection(table, tableFailures, worksheetLabel, localise)
-  )
-})
-
-/**
- * Groups located cell errors by worksheet, then table, then ROW_ID — the
- * nesting the view renders. See the per-level builders for the detail.
+ * Flattens located cell errors into a single ordered record list for the flat
+ * table — grouped by sheet then table (preserving encounter order), records
+ * sorted by ROW_ID within each table, each carrying its section label.
  * @param {LocatedCellFailure[]} locatedFailures
  * @param {Localise} localise
- * @returns {CellErrorWorksheet[]}
+ * @returns {CellErrorRecord[]}
  */
-const buildCellErrorGroups = (locatedFailures, localise) =>
-  [...Map.groupBy(locatedFailures, ({ location }) => location.sheet)].map(
-    ([worksheetLabel, sheetFailures]) =>
-      buildCellErrorWorksheet(worksheetLabel, sheetFailures, localise)
+const buildCellErrorRecords = (locatedFailures, localise) =>
+  [...Map.groupBy(locatedFailures, ({ location }) => location.sheet)].flatMap(
+    ([sheet, sheetFailures]) =>
+      [...Map.groupBy(sheetFailures, ({ location }) => location.table)].flatMap(
+        ([table, tableFailures]) =>
+          buildTableRecords(table, tableFailures, sheet, localise)
+      )
   )
 
 /**
@@ -646,45 +637,47 @@ const renderValidationFailuresView = (
     isSequentialRowRemoved
   )
 
-  const errorGroups = buildCellErrorGroups(locatedFailures, localise)
-
   const combinedIssues = [
     ...buildRowRemovedIssue(rowRemovedFailures, localise),
     ...buildOtherIssueMessages(otherFailures, localise, fallbackMessage)
   ]
 
   const issues =
-    errorGroups.length > 0
+    locatedFailures.length > 0
       ? combinedIssues
       : applyFallback(combinedIssues, fallbackMessage)
 
   const issueCount = locatedFailures.length + issues.length
 
-  // Capping only happens on the validation-issues path, which always carries
-  // counts, so a capped response always has the true pre-cap fatal total to
-  // name ("first 100 of N").
-  const capped = failures.length >= VALIDATION_ISSUE_DISPLAY_CAP
+  // counts.fatal is the true pre-cap total (the backend caps the returned
+  // failures array); fall back to the rendered count when it is absent (e.g.
+  // file-level rejections, which never approach the cap).
+  const totalErrors = validation?.counts?.fatal ?? issueCount
+  const capped = totalErrors > VALIDATION_ISSUE_DISPLAY_CAP
 
-  const description1 = localise('summary-log:validationFailuresDescription1', {
-    count: capped ? validation?.counts.fatal : issueCount
-  })
+  // Display only the first N located errors; the message names the true total.
+  const errorRecords = buildCellErrorRecords(
+    locatedFailures.slice(0, VALIDATION_ISSUE_DISPLAY_CAP),
+    localise
+  )
 
-  const capNotice = capped
-    ? localise('summary-log:validationFailuresCappedActionWithTotal', {
-        cap: VALIDATION_ISSUE_DISPLAY_CAP,
-        total: validation?.counts.fatal
+  const description1 = capped
+    ? localise('summary-log:validationFailuresDescription1Capped', {
+        total: totalErrors,
+        cap: VALIDATION_ISSUE_DISPLAY_CAP
       })
-    : undefined
+    : localise('summary-log:validationFailuresDescription1', {
+        count: totalErrors
+      })
 
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
     pageTitle: localise(PAGE_TITLE_KEY),
     heading: localise('summary-log:validationFailuresHeading'),
     description1,
     description2: localise('summary-log:validationFailuresDescription2', {
-      count: issueCount
+      count: totalErrors
     }),
-    capNotice,
-    errorGroups,
+    errorRecords,
     issues,
     fileUploadLabel: localise('summary-log:reuploadFileLabel'),
     buttonText: localise('summary-log:reuploadButtonText'),
