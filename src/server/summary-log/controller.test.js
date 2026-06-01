@@ -333,7 +333,7 @@ describe('#summaryLogUploadProgressController', () => {
           added: {
             included: {
               count: 5,
-              rowIds: [1001, 1002, 1003, 1004, 1005]
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
             },
             excluded: { count: 0, rowIds: [] }
           },
@@ -366,7 +366,7 @@ describe('#summaryLogUploadProgressController', () => {
           added: {
             included: {
               count: 5,
-              rowIds: [1001, 1002, 1003, 1004, 1005]
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
             },
             excluded: { count: 0, rowIds: [] }
           },
@@ -399,7 +399,7 @@ describe('#summaryLogUploadProgressController', () => {
           added: {
             included: {
               count: 5,
-              rowIds: [1001, 1002, 1003, 1004, 1005]
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
             },
             excluded: { count: 0, rowIds: [] }
           },
@@ -431,9 +431,9 @@ describe('#summaryLogUploadProgressController', () => {
           added: {
             included: {
               count: 7,
-              rowIds: [1092, 1093, 1094, 1095, 1096, 1097, 1098]
+              rowIds: ['1092', '1093', '1094', '1095', '1096', '1097', '1098']
             },
-            excluded: { count: 2, rowIds: [1099, 1100] }
+            excluded: { count: 2, rowIds: ['1099', '1100'] }
           },
           adjusted: {
             included: { count: 0, rowIds: [] },
@@ -475,7 +475,7 @@ describe('#summaryLogUploadProgressController', () => {
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            included: { count: 3, rowIds: ['1096', '1099', '1100'] },
             excluded: { count: 0, rowIds: [] }
           }
         }
@@ -507,7 +507,7 @@ describe('#summaryLogUploadProgressController', () => {
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 3, rowIds: [1096, 1099, 1100] },
+            included: { count: 3, rowIds: ['1096', '1099', '1100'] },
             excluded: { count: 0, rowIds: [] }
           }
         }
@@ -542,7 +542,7 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            included: { count: 3, rowIds: [1092, 1093, 1094] },
+            included: { count: 3, rowIds: ['1092', '1093', '1094'] },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
@@ -578,11 +578,11 @@ describe('#summaryLogUploadProgressController', () => {
         status: summaryLogStatuses.validated,
         loads: {
           added: {
-            included: { count: 1, rowIds: [1092] },
+            included: { count: 1, rowIds: ['1092'] },
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 1, rowIds: [1093] },
+            included: { count: 1, rowIds: ['1093'] },
             excluded: { count: 0, rowIds: [] }
           }
         }
@@ -620,11 +620,11 @@ describe('#summaryLogUploadProgressController', () => {
           added: {
             included: {
               count: 5,
-              rowIds: [1001, 1002, 1003, 1004, 1005]
+              rowIds: ['1001', '1002', '1003', '1004', '1005']
             },
             excluded: {
               count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => 2000 + i)
+              rowIds: Array.from({ length: 100 }, (_, i) => String(2000 + i))
             }
           },
           adjusted: {
@@ -664,7 +664,7 @@ describe('#summaryLogUploadProgressController', () => {
             included: { count: 0, rowIds: [] },
             excluded: {
               count: 99,
-              rowIds: Array.from({ length: 99 }, (_, i) => 2000 + i)
+              rowIds: Array.from({ length: 99 }, (_, i) => String(2000 + i))
             }
           },
           adjusted: {
@@ -700,10 +700,10 @@ describe('#summaryLogUploadProgressController', () => {
             excluded: { count: 0, rowIds: [] }
           },
           adjusted: {
-            included: { count: 2, rowIds: [3001, 3002] },
+            included: { count: 2, rowIds: ['3001', '3002'] },
             excluded: {
               count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => 4000 + i)
+              rowIds: Array.from({ length: 100 }, (_, i) => String(4000 + i))
             }
           }
         }
@@ -738,7 +738,7 @@ describe('#summaryLogUploadProgressController', () => {
             included: { count: 0, rowIds: [] },
             excluded: {
               count: 99,
-              rowIds: Array.from({ length: 99 }, (_, i) => 4000 + i)
+              rowIds: Array.from({ length: 99 }, (_, i) => String(4000 + i))
             }
           }
         }
@@ -773,7 +773,7 @@ describe('#summaryLogUploadProgressController', () => {
           adjusted: {
             included: {
               count: 5,
-              rowIds: [3001, 3002, 3003, 3004, 3005]
+              rowIds: ['3001', '3002', '3003', '3004', '3005']
             },
             excluded: { count: 0, rowIds: [] }
           }
@@ -806,7 +806,7 @@ describe('#summaryLogUploadProgressController', () => {
           adjusted: {
             included: {
               count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => 3000 + i)
+              rowIds: Array.from({ length: 100 }, (_, i) => String(3000 + i))
             },
             excluded: { count: 0, rowIds: [] }
           }
@@ -845,7 +845,7 @@ describe('#summaryLogUploadProgressController', () => {
           added: {
             included: {
               count: 5,
-              rowIds: [1092, 1093, 1094, 1095, 1096]
+              rowIds: ['1092', '1093', '1094', '1095', '1096']
             },
             excluded: { count: 0, rowIds: [] }
           },
@@ -2506,8 +2506,8 @@ describe('#buildLoadsViewModel', () => {
   test('preserves count and rowIds from backend', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 150, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 50, rowIds: [1004, 1005] }
+        included: { count: 150, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 50, rowIds: ['1004', '1005'] }
       },
       adjusted: {
         included: { count: 0, rowIds: [] },
@@ -2516,8 +2516,8 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result.added).toStrictEqual({
-      included: { count: 150, rowIds: [1001, 1002, 1003] },
-      excluded: { count: 50, rowIds: [1004, 1005] },
+      included: { count: 150, rowIds: ['1001', '1002', '1003'] },
+      excluded: { count: 50, rowIds: ['1004', '1005'] },
       total: 200
     })
   })
@@ -2529,14 +2529,14 @@ describe('#buildLoadsViewModel', () => {
         excluded: { count: 0, rowIds: [] }
       },
       adjusted: {
-        included: { count: 120, rowIds: [2001, 2002] },
-        excluded: { count: 30, rowIds: [2003] }
+        included: { count: 120, rowIds: ['2001', '2002'] },
+        excluded: { count: 30, rowIds: ['2003'] }
       }
     })
 
     expect(result.adjusted).toStrictEqual({
-      included: { count: 120, rowIds: [2001, 2002] },
-      excluded: { count: 30, rowIds: [2003] },
+      included: { count: 120, rowIds: ['2001', '2002'] },
+      excluded: { count: 30, rowIds: ['2003'] },
       total: 150
     })
   })
@@ -2544,7 +2544,7 @@ describe('#buildLoadsViewModel', () => {
   test('handles partial loads data gracefully', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 1, rowIds: [1001] }
+        included: { count: 1, rowIds: ['1001'] }
         // missing excluded
       }
       // missing adjusted
@@ -2552,7 +2552,7 @@ describe('#buildLoadsViewModel', () => {
 
     expect(result).toStrictEqual({
       added: {
-        included: { count: 1, rowIds: [1001] },
+        included: { count: 1, rowIds: ['1001'] },
         excluded: noRows,
         total: 1
       },
@@ -2568,8 +2568,8 @@ describe('#buildLoadsViewModel', () => {
     const result = buildLoadsViewModel({
       added: {
         valid: { count: 10, rowIds: [] },
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 2, rowIds: [1004, 1005] }
+        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 2, rowIds: ['1004', '1005'] }
       },
       adjusted: {
         included: { count: 0, rowIds: [] },
@@ -2578,8 +2578,8 @@ describe('#buildLoadsViewModel', () => {
     })
 
     expect(result.added).toStrictEqual({
-      included: { count: 8, rowIds: [1001, 1002, 1003] },
-      excluded: { count: 2, rowIds: [1004, 1005] },
+      included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+      excluded: { count: 2, rowIds: ['1004', '1005'] },
       total: 10
     })
   })
@@ -2587,12 +2587,12 @@ describe('#buildLoadsViewModel', () => {
   test('calculates total from included + excluded counts', () => {
     const result = buildLoadsViewModel({
       added: {
-        included: { count: 8, rowIds: [1001, 1002, 1003] },
-        excluded: { count: 7, rowIds: [1004, 1005] }
+        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
+        excluded: { count: 7, rowIds: ['1004', '1005'] }
       },
       adjusted: {
-        included: { count: 4, rowIds: [2001, 2002, 2003, 2004] },
-        excluded: { count: 3, rowIds: [2005, 2006, 2007] }
+        included: { count: 4, rowIds: ['2001', '2002', '2003', '2004'] },
+        excluded: { count: 3, rowIds: ['2005', '2006', '2007'] }
       }
     })
 

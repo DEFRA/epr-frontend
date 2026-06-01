@@ -25,7 +25,9 @@
  */
 
 /**
- * @typedef {string | number} RowId
+ * Row identifier. Numeric in the sheet, but the backend coerces it to a string
+ * on the wire (response.schema.js), so treat it as an opaque id, not a number.
+ * @typedef {string} RowId
  */
 
 /**

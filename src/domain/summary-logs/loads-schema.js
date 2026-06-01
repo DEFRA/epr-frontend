@@ -5,9 +5,7 @@ import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 
 export const loadCategorySchema = Joi.object({
   count: Joi.number().integer().min(0).required(),
-  rowIds: Joi.array()
-    .items(Joi.alternatives().try(Joi.string(), Joi.number()))
-    .required()
+  rowIds: Joi.array().items(Joi.string().pattern(/^\d+$/, 'numeric')).required()
 })
 
 export const loadValiditySchema = Joi.object({
