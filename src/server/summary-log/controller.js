@@ -498,22 +498,13 @@ const isSequentialRowRemoved = ({ errorCode }) =>
   errorCode === 'SEQUENTIAL_ROW_REMOVED'
 
 /**
- * Sorts ROW_IDs numerically where both are numeric, falling back to a string
- * comparison (ROW_IDs arrive as strings and are unique only within a table).
+ * Sorts ROW_IDs numerically. They arrive as numeric strings (enforced by
+ * rowIdSchema) and are unique only within a table.
  * @param {string} a
  * @param {string} b
  * @returns {number}
  */
-const compareRowId = (a, b) => {
-  const numA = Number(a)
-  const numB = Number(b)
-
-  if (Number.isFinite(numA) && Number.isFinite(numB)) {
-    return numA - numB
-  }
-
-  return a.localeCompare(b)
-}
+const compareRowId = (a, b) => Number(a) - Number(b)
 
 /**
  * @param {string} header - Column header code (e.g. NET_WEIGHT)
