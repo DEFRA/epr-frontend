@@ -43,7 +43,14 @@
     ]
   },
   "status": "active",
-  "users": [],
+  "users": [
+    {
+      "contactId": "contact-001",
+      "fullName": "Luke Skywalker",
+      "email": "luke.skywalker@starwars.com",
+      "roles": ["initial_user"]
+    }
+  ],
   "submittedToRegulator": "ea",
   "formSubmissionTime": "2025-08-22T19:34:44.944Z",
   "submitterContactDetails": {

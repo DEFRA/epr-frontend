@@ -29,7 +29,14 @@
   "wasteProcessingTypes": ["exporter"],
   "businessType": "limited-company",
   "status": "active",
-  "users": [],
+  "users": [
+    {
+      "contactId": "contact-001",
+      "fullName": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "roles": ["initial_user"]
+    }
+  ],
   "submittedToRegulator": "ea",
   "formSubmissionTime": "2025-08-22T19:34:44.944Z",
   "submitterContactDetails": {

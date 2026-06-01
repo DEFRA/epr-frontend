@@ -244,12 +244,20 @@ export const USER_ROLES = Object.freeze({
  *   registrations: Registration[];
  *   reprocessingNations?: NationValue[];
  *   schemaVersion: number;
- *   status: OrganisationStatus;
  *   statusHistory: StatusHistoryItem[];
  *   submittedToRegulator: RegulatorValue;
  *   submitterContactDetails: User;
- *   users: CollatedUser[];
  *   version: number;
  *   wasteProcessingTypes: WasteProcessingTypeValue[];
- * }} Organisation
+ * }} OrganisationBase
+ */
+
+/**
+ * @typedef {(OrganisationBase & {
+ *   status: 'created' | 'rejected';
+ *   users: [];
+ * }) | (OrganisationBase & {
+ *   status: 'approved' | 'active';
+ *   users: CollatedUser[];
+ * })} Organisation
  */
