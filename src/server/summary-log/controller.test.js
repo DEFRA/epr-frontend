@@ -1372,39 +1372,6 @@ describe('#summaryLogUploadProgressController', () => {
         )
       })
 
-      it('should show a cap notice when the displayed errors hit the 100 limit', async ({
-        server
-      }) => {
-        const failures = Array.from({ length: 100 }, (_, i) => ({
-          errorCode: 'MUST_BE_A_NUMBER',
-          actual: 'x',
-          location: {
-            sheet: 'Received',
-            table: 'RECEIVED_LOADS_FOR_REPROCESSING',
-            row: i + 4,
-            rowId: String(1000 + i),
-            column: 'D',
-            header: 'NET_WEIGHT'
-          }
-        }))
-
-        fetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.invalid,
-          validation: { failures }
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-
-        expect(result).toContain(
-          'We&#39;ve found the following issues with the file you selected'
-        )
-        expect(result).toContain('We can only show the first 100 issues')
-      })
-
       it('should show the exact total in the cap notice when counts are present', async ({
         server
       }) => {

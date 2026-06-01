@@ -669,28 +669,21 @@ const renderValidationFailuresView = (
 
   const issueCount = locatedFailures.length + issues.length
 
-  // When the fatal failures hit the cap there are 100+ shown. The backend now
-  // sends the true pre-cap fatal total in validation.counts, so we name it
-  // ("first 100 of N"). Without counts (e.g. a direct upload rejection) the
-  // intro stays generic and the cap notice omits the total.
+  // Capping only happens on the validation-issues path, which always carries
+  // counts, so a capped response always has the true pre-cap fatal total to
+  // name ("first 100 of N").
   const capped = failures.length >= VALIDATION_ISSUE_DISPLAY_CAP
   const totalFatal = validation?.counts?.fatal
-  const hasExactTotal = capped && totalFatal !== undefined
 
-  const description1 =
-    capped && !hasExactTotal
-      ? localise('summary-log:validationFailuresCappedSummary')
-      : localise('summary-log:validationFailuresDescription1', {
-          count: hasExactTotal ? totalFatal : issueCount
-        })
+  const description1 = localise('summary-log:validationFailuresDescription1', {
+    count: capped ? totalFatal : issueCount
+  })
 
   const capNotice = capped
-    ? localise(
-        hasExactTotal
-          ? 'summary-log:validationFailuresCappedActionWithTotal'
-          : 'summary-log:validationFailuresCappedAction',
-        { cap: VALIDATION_ISSUE_DISPLAY_CAP, total: totalFatal }
-      )
+    ? localise('summary-log:validationFailuresCappedActionWithTotal', {
+        cap: VALIDATION_ISSUE_DISPLAY_CAP,
+        total: totalFatal
+      })
     : undefined
 
   return h.view(VALIDATION_FAILURES_VIEW_NAME, {
