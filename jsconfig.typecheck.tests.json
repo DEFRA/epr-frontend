@@ -6,7 +6,6 @@
   "include": [
     "**/*.test.js",
     "**/*.contract.js",
-    "**/*-test-helpers.js",
     "**/test-helpers/**/*.js",
     "**/test-fixtures.js",
     "**/*.d.ts"
