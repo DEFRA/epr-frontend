@@ -211,7 +211,7 @@ export const USER_ROLES = Object.freeze({
 /**
  * @typedef {{
  *   status: RegAccStatus;
- *   updatedAt: Date;
+ *   updatedAt: string;
  *   updatedBy?: string;
  * }} StatusHistoryItem
  */
@@ -236,7 +236,7 @@ export const USER_ROLES = Object.freeze({
  *   accreditations: Accreditation[];
  *   businessType?: BusinessTypeValue;
  *   companyDetails: CompanyDetails;
- *   formSubmissionTime: Date;
+ *   formSubmissionTime: string;
  *   linkedDefraOrganisation?: LinkedDefraOrganisation;
  *   managementContactDetails?: User;
  *   orgId: number;
@@ -244,12 +244,20 @@ export const USER_ROLES = Object.freeze({
  *   registrations: Registration[];
  *   reprocessingNations?: NationValue[];
  *   schemaVersion: number;
- *   status: OrganisationStatus;
  *   statusHistory: StatusHistoryItem[];
  *   submittedToRegulator: RegulatorValue;
  *   submitterContactDetails: User;
- *   users: CollatedUser[];
  *   version: number;
  *   wasteProcessingTypes: WasteProcessingTypeValue[];
- * }} Organisation
+ * }} OrganisationBase
+ */
+
+/**
+ * @typedef {(OrganisationBase & {
+ *   status: 'created' | 'rejected';
+ *   users: [];
+ * }) | (OrganisationBase & {
+ *   status: 'approved' | 'active';
+ *   users: CollatedUser[];
+ * })} Organisation
  */

@@ -44,7 +44,7 @@
 
 /**
  * @typedef {{ id: string } & StatusHistory & {
- *  formSubmissionTime: Date;
+ *  formSubmissionTime: string;
  *  material: string;
  *  prnIssuance: PrnIssuance;
  *  site?: AccreditationSite;

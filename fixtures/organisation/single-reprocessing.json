@@ -4,6 +4,17 @@
   "schemaVersion": 1,
   "version": 1,
   "status": "approved",
+  "statusHistory": [
+    {
+      "status": "created",
+      "updatedAt": "2025-08-20T19:34:44.944Z"
+    },
+    {
+      "status": "approved",
+      "updatedAt": "2025-08-22T19:34:44.944Z"
+    }
+  ],
+  "users": [],
   "wasteProcessingTypes": ["reprocessor"],
   "reprocessingNations": ["england"],
   "businessType": "company",

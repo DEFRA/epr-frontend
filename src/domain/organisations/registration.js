@@ -35,7 +35,7 @@
  *  accreditation?: Accreditation;
  *  accreditationId?: string;
  *  approvedPersons: User[]
- *  formSubmissionTime: Date;
+ *  formSubmissionTime: string;
  *  material: Material;
  *  glassRecyclingProcess?: GlassRecyclingProcess[];
  *  orgName: string;

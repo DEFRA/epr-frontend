@@ -16,6 +16,8 @@
     "type": "ltd",
     "partners": []
   },
+  "status": "created",
+  "users": [],
   "submittedToRegulator": "ea",
   "formSubmissionTime": "2025-08-22T19:34:44.944Z",
   "submitterContactDetails": {
