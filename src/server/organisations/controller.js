@@ -2,6 +2,7 @@ import { capitalize } from 'lodash-es'
 
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
+import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -23,20 +24,21 @@ import { getStatusClass } from './helpers/status-helpers.js'
  * @typedef {{ text: string, classes?: string, format?: string } | { html: string, classes?: string }} TableCell
  */
 
-const EXCLUDED_STATUSES = new Set(['created', 'rejected'])
+const EXCLUDED_REGISTRATION_STATUSES = new Set(['created', 'rejected'])
 
 /**
  * @param {string} [status]
  * @returns {boolean}
  */
-const isExcludedStatus = (status) => !status || EXCLUDED_STATUSES.has(status)
+const isRegistrationExcluded = (status) =>
+  !status || EXCLUDED_REGISTRATION_STATUSES.has(status)
 
 /**
  * @param {Accreditation | undefined} accreditation
  * @returns {boolean}
  */
 const excludeAccreditation = (accreditation) =>
-  accreditation !== undefined && isExcludedStatus(accreditation.status)
+  accreditation !== undefined && !isAccreditationActive(accreditation)
 
 /**
  * Determines whether a site should be rendered based on its registration
@@ -50,13 +52,11 @@ function shouldRenderSite(registration, accreditation, wasteProcessingType) {
   const isCorrectWasteProcessingType =
     registration.wasteProcessingType === wasteProcessingType
 
-  const isRegistrationExcluded = isExcludedStatus(registration.status)
+  const isRegExcluded = isRegistrationExcluded(registration.status)
   const isAccreditationExcluded = excludeAccreditation(accreditation)
 
   return (
-    isCorrectWasteProcessingType &&
-    !isRegistrationExcluded &&
-    !isAccreditationExcluded
+    isCorrectWasteProcessingType && !isRegExcluded && !isAccreditationExcluded
   )
 }
 
@@ -264,8 +264,9 @@ function getDisplayableRegistrations(organisationData) {
       const accreditation = accreditationById.get(registration.accreditationId)
       return {
         registration,
-        accreditation:
-          accreditation?.status === 'created' ? undefined : accreditation
+        accreditation: isAccreditationActive(accreditation)
+          ? accreditation
+          : undefined
       }
     })
     .filter(

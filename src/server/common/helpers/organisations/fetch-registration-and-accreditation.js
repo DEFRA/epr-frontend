@@ -1,5 +1,6 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
 import { notFound } from '#server/common/helpers/logging/cdp-boom.js'
+import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 
 /**
@@ -43,14 +44,16 @@ async function fetchRegistrationAndAccreditation(
     })
   }
 
-  const accreditation = organisationData.accreditations.find(
+  const rawAccreditation = organisationData.accreditations.find(
     ({ id }) => id === registration.accreditationId
   )
 
   return {
     organisationData,
     registration,
-    accreditation
+    accreditation: isAccreditationActive(rawAccreditation)
+      ? rawAccreditation
+      : undefined
   }
 }
 
