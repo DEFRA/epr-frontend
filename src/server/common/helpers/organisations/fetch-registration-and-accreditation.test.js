@@ -187,6 +187,7 @@ describe(fetchRegistrationAndAccreditation, () => {
   test('passes correct parameters to fetchOrganisationById', async ({
     msw
   }) => {
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.get(`${backendUrl}/v1/organisations/org-123`, ({ request }) => {
@@ -205,9 +206,9 @@ describe(fetchRegistrationAndAccreditation, () => {
       idToken
     )
 
-    expect(capturedRequest.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
+    expect(
+      /** @type {Request} */ (capturedRequest).headers.get('authorization')
+    ).toBe('Bearer test-id-token')
   })
 
   test('propagates errors from fetchOrganisationById', async ({ msw }) => {
