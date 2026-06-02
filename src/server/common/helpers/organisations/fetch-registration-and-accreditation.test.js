@@ -21,7 +21,11 @@ describe(fetchRegistrationAndAccreditation, () => {
       id: organisationId,
       registrations: [{ id: registrationId, accreditationId }],
       accreditations: [
-        { id: accreditationId, accreditationNumber: 'ACC-2025-001' }
+        {
+          id: accreditationId,
+          accreditationNumber: 'ACC-2025-001',
+          status: 'approved'
+        }
       ]
     }
 
@@ -42,8 +46,43 @@ describe(fetchRegistrationAndAccreditation, () => {
       registration: { id: registrationId, accreditationId },
       accreditation: {
         id: accreditationId,
-        accreditationNumber: 'ACC-2025-001'
+        accreditationNumber: 'ACC-2025-001',
+        status: 'approved'
       }
+    })
+  })
+
+  test('returns undefined accreditation when accreditation status is created', async ({
+    msw
+  }) => {
+    const mockOrganisationData = {
+      id: organisationId,
+      registrations: [{ id: registrationId, accreditationId }],
+      accreditations: [
+        {
+          id: accreditationId,
+          accreditationNumber: 'ACC-2025-001',
+          status: 'created'
+        }
+      ]
+    }
+
+    msw.use(
+      http.get(`${backendUrl}/v1/organisations/org-123`, () =>
+        HttpResponse.json(mockOrganisationData)
+      )
+    )
+
+    const result = await fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      idToken
+    )
+
+    expect(result).toStrictEqual({
+      organisationData: mockOrganisationData,
+      registration: { id: registrationId, accreditationId },
+      accreditation: undefined
     })
   })
 
@@ -148,6 +187,7 @@ describe(fetchRegistrationAndAccreditation, () => {
   test('passes correct parameters to fetchOrganisationById', async ({
     msw
   }) => {
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.get(`${backendUrl}/v1/organisations/org-123`, ({ request }) => {
@@ -166,9 +206,9 @@ describe(fetchRegistrationAndAccreditation, () => {
       idToken
     )
 
-    expect(capturedRequest.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
+    expect(
+      /** @type {Request} */ (capturedRequest).headers.get('authorization')
+    ).toBe('Bearer test-id-token')
   })
 
   test('propagates errors from fetchOrganisationById', async ({ msw }) => {
