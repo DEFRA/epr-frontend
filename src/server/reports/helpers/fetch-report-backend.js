@@ -1,4 +1,5 @@
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { StatusCodes } from 'http-status-codes'
 import { SummaryLogChangedError } from './summary-log-changed.js'
 
 const SUMMARY_LOG_CHANGED = 'summary_log_changed'
@@ -17,7 +18,7 @@ export const fetchReportBackend = async (path, options) => {
     return await fetchJsonFromBackend(path, options)
   } catch (err) {
     if (
-      err?.output?.statusCode === 409 &&
+      err?.output?.statusCode === StatusCodes.CONFLICT &&
       err?.output?.payload?.code === SUMMARY_LOG_CHANGED
     ) {
       throw new SummaryLogChangedError(err.output.payload.code)
