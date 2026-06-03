@@ -91,6 +91,27 @@ describe('#summaryLogChangedErrorController', () => {
         expect(button?.textContent?.trim()).toContain('Delete and start again')
         expect(button?.getAttribute('data-prevent-double-click')).toBe('true')
       })
+
+      it('displays the return to reports secondary button', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const button = getByRole(dom.window.document.body, 'button', {
+          name: /Return to reports/
+        })
+
+        expect(button).toBeDefined()
+        expect(button.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+        expect(button.classList.contains('govuk-button--secondary')).toBe(true)
+      })
     })
 
     describe('POST', () => {

@@ -13,11 +13,19 @@
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
-        {{ govukButton({
-          text: localise('reports:summaryLogChangedDeleteAndStartAgain'),
-          classes: "govuk-button--warning",
-          preventDoubleClick: true
-        }) }}
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: localise('reports:summaryLogChangedDeleteAndStartAgain'),
+            classes: "govuk-button--warning",
+            preventDoubleClick: true
+          }) }}
+
+          {{ govukButton({
+            text: localise('reports:summaryLogChangedReturnToReports'),
+            href: returnToReportsUrl,
+            classes: "govuk-button--secondary"
+          }) }}
+        </div>
       </form>
 
     </div>

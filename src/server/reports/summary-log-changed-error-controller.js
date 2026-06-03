@@ -14,12 +14,16 @@ export const summaryLogChangedErrorGetController = {
    */
   async handler(request, h) {
     const { t: localise } = request
+    const { organisationId, registrationId } = request.params
 
     return h.view('reports/summary-log-changed-error', {
       pageTitle: localise('reports:summaryLogChangedPageTitle'),
       heading: localise('reports:summaryLogChangedHeading'),
       bodyLine1: localise('reports:summaryLogChangedBodyLine1'),
-      bodyLine2: localise('reports:summaryLogChangedBodyLine2')
+      bodyLine2: localise('reports:summaryLogChangedBodyLine2'),
+      returnToReportsUrl: request.localiseUrl(
+        `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      )
     })
   }
 }
