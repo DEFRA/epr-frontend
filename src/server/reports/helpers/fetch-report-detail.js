@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchReportBackend } from './fetch-report-backend.js'
 
 /**
  * Fetches aggregated report detail for a specific period from the backend.
@@ -20,7 +20,7 @@ export async function fetchReportDetail(
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}`
 
-  return fetchJsonFromBackend(path, {
+  return fetchReportBackend(path, {
     method: 'GET',
     headers: { Authorization: `Bearer ${idToken}` }
   })

@@ -41,6 +41,15 @@ import {
   supportingInformationPostController
 } from './supporting-information-controller.js'
 import { viewGetController } from './view-controller.js'
+import {
+  summaryLogChangedErrorGetController,
+  summaryLogChangedErrorPostController
+} from './summary-log-changed-error-controller.js'
+import { SummaryLogChangedError } from './helpers/summary-log-changed.js'
+
+const INVALIDATION_ERROR_ROUTES = Object.freeze({
+  summary_log_changed: 'summary-log-changed-error'
+})
 
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/reports'
@@ -181,8 +190,38 @@ export const reports = {
           ...viewGetController,
           method: 'GET',
           path: `${periodPath}/view`
+        },
+        {
+          ...summaryLogChangedErrorGetController,
+          method: 'GET',
+          path: `${periodPath}/summary-log-changed-error`
+        },
+        {
+          ...summaryLogChangedErrorPostController,
+          method: 'POST',
+          path: `${periodPath}/summary-log-changed-error`
         }
       ])
+
+      server.ext('onPreResponse', (request, h) => {
+        if (request.response instanceof SummaryLogChangedError) {
+          const { organisationId, registrationId, year, cadence, period } =
+            request.params
+          const errorRoute = INVALIDATION_ERROR_ROUTES[request.response.reason]
+          if (
+            errorRoute &&
+            organisationId &&
+            registrationId &&
+            year &&
+            cadence &&
+            period
+          ) {
+            const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+            return h.redirect(request.localiseUrl(`${base}/${errorRoute}`))
+          }
+        }
+        return h.continue
+      })
     }
   }
 }
