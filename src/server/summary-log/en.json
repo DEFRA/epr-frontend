@@ -18,7 +18,7 @@
   "cellReason": {
     "CALCULATED_FIELD_MISMATCH": "Does not match the calculated value",
     "DATA_ENTRY_INVALID": "Check this value",
-    "DATE_FORMAT_INVALID": "Must be a valid date",
+    "DATE_FORMAT_INVALID": "Must be a valid date in the format dd/mm/yyyy",
     "DROPDOWN_FORMAT_INVALID": "Select a value from the drop-down list",
     "FREE_TEXT_INVALID": "Contains characters that are not allowed",
     "ID_FORMAT_INVALID": "Must be a 3-digit number",
