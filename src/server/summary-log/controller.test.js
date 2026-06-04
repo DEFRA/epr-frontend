@@ -1511,7 +1511,11 @@ describe('#summaryLogUploadProgressController', () => {
           'UK_PACKAGING_WEIGHT_PERCENTAGE',
           'Must be 1 or less'
         ],
-        ['MUST_BE_A_VALID_DATE', 'DATE_OF_EXPORT', 'Must be a valid date'],
+        [
+          'MUST_BE_A_VALID_DATE',
+          'DATE_OF_EXPORT',
+          'Must be a valid date in the format dd/mm/yyyy'
+        ],
         ['MUST_BE_YES_OR_NO', 'BAILING_WIRE_PROTOCOL', 'Must be Yes or No'],
         [
           'MUST_BE_VALID_EWC_CODE',
