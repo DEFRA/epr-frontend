@@ -7,8 +7,9 @@ vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
   fetchJsonFromBackend: vi.fn()
 }))
 
-const { fetchJsonFromBackend } =
+const { fetchJsonFromBackend: fetchJsonFromBackendRaw } =
   await import('#server/common/helpers/fetch-json-from-backend.js')
+const fetchJsonFromBackend = vi.mocked(fetchJsonFromBackendRaw)
 
 describe(fetchReportDetail, () => {
   const organisationId = 'org-123'
