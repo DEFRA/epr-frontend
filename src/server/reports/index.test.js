@@ -106,17 +106,5 @@ describe('reports plugin onPreResponse lifecycle', () => {
 
       expect(statusCode).not.toBe(statusCodes.found)
     })
-
-    it('does not redirect when params are missing (non-period route response)', async ({
-      server
-    }) => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports`,
-        auth: mockAuth
-      })
-
-      expect(statusCode).not.toBe(statusCodes.found)
-    })
   })
 })
