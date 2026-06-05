@@ -10,22 +10,23 @@
       <p class="govuk-body">{{ bodyLine1 }}</p>
       <p class="govuk-body">{{ bodyLine2 }}</p>
 
-      <form method="POST" novalidate>
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: localise('reports:summaryLogChangedDeleteAndStartAgain'),
+          classes: "govuk-button--warning",
+          preventDoubleClick: true,
+          attributes: { form: "delete-report-form" }
+        }) }}
+
+        {{ govukButton({
+          text: localise('reports:summaryLogChangedReturnToReports'),
+          href: returnToReportsUrl,
+          classes: "govuk-button--secondary"
+        }) }}
+      </div>
+
+      <form id="delete-report-form" method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
-
-        <div class="govuk-button-group">
-          {{ govukButton({
-            text: localise('reports:summaryLogChangedDeleteAndStartAgain'),
-            classes: "govuk-button--warning",
-            preventDoubleClick: true
-          }) }}
-
-          {{ govukButton({
-            text: localise('reports:summaryLogChangedReturnToReports'),
-            href: returnToReportsUrl,
-            classes: "govuk-button--secondary"
-          }) }}
-        </div>
       </form>
 
     </div>

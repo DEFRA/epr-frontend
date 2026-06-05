@@ -8,14 +8,44 @@ import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('./helpers/delete-report.js'))
+vi.mock(import('./helpers/fetch-report-detail.js'))
+vi.mock(
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
+)
 
 const { deleteReport } = await import('./helpers/delete-report.js')
+const { fetchReportDetail } = await import('./helpers/fetch-report-detail.js')
+const { SummaryLogChangedError } =
+  await import('./helpers/summary-log-changed.js')
+const { fetchRegistrationAndAccreditation } =
+  await import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 
 const mockAuth = buildMockAuth()
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/summary-log-changed-error`
+const periodUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1`
+
+/**
+ * Trigger the onPreResponse redirect to the error page, returning the
+ * session cookie that carries the yar flag set by the hook.
+ * @param {import('#server/common/hapi-types.js').HapiServer} server
+ * @returns {Promise<string>}
+ */
+async function triggerStalenessRedirect(server) {
+  const { headers } = await server.inject({
+    method: 'GET',
+    url: periodUrl,
+    auth: mockAuth
+  })
+  const setCookies = headers['set-cookie']
+  const cookies = Array.isArray(setCookies) ? setCookies : [setCookies]
+  return cookies
+    .filter(/** @returns {c is string} */ (c) => Boolean(c))
+    .map((c) => c.split(';')[0])
+    .join('; ')
+}
 
 describe('#summaryLogChangedErrorController', () => {
   beforeEach(() => {
@@ -32,21 +62,41 @@ describe('#summaryLogChangedErrorController', () => {
     })
 
     describe('GET', () => {
+      beforeEach(() => {
+        vi.mocked(fetchReportDetail).mockRejectedValue(
+          new SummaryLogChangedError('summary_log_changed')
+        )
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          /** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */ (
+            /** @type {unknown} */ ({
+              registration: { registrationType: 'reprocessor' },
+              accreditation: undefined
+            })
+          )
+        )
+      })
+
       it('returns 200', async ({ server }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
         const { statusCode } = await server.inject({
           method: 'GET',
           url: baseUrl,
-          auth: mockAuth
+          auth: mockAuth,
+          headers: { cookie }
         })
 
         expect(statusCode).toBe(statusCodes.ok)
       })
 
       it('displays the page heading', async ({ server }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
-          auth: mockAuth
+          auth: mockAuth,
+          headers: { cookie }
         })
 
         const dom = new JSDOM(result)
@@ -59,10 +109,13 @@ describe('#summaryLogChangedErrorController', () => {
       })
 
       it('displays both body paragraphs', async ({ server }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
-          auth: mockAuth
+          auth: mockAuth,
+          headers: { cookie }
         })
 
         const dom = new JSDOM(result)
@@ -76,10 +129,13 @@ describe('#summaryLogChangedErrorController', () => {
       })
 
       it('displays the warning delete button', async ({ server }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
-          auth: mockAuth
+          auth: mockAuth,
+          headers: { cookie }
         })
 
         const dom = new JSDOM(result)
@@ -95,10 +151,13 @@ describe('#summaryLogChangedErrorController', () => {
       it('displays the return to reports secondary button', async ({
         server
       }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
-          auth: mockAuth
+          auth: mockAuth,
+          headers: { cookie }
         })
 
         const dom = new JSDOM(result)
@@ -111,6 +170,21 @@ describe('#summaryLogChangedErrorController', () => {
           `/organisations/${organisationId}/registrations/${registrationId}/reports`
         )
         expect(button.classList.contains('govuk-button--secondary')).toBe(true)
+      })
+
+      it('redirects to reports landing page when accessed directly', async ({
+        server
+      }) => {
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
       })
     })
 

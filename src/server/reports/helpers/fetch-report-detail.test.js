@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { fetchReportDetail } from './fetch-report-detail.js'
+import { SummaryLogChangedError } from './summary-log-changed.js'
 
 vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
   fetchJsonFromBackend: vi.fn()
@@ -135,5 +136,47 @@ describe(fetchReportDetail, () => {
         idToken
       )
     ).rejects.toThrow('Network error')
+  })
+
+  it('throws SummaryLogChangedError when the report is stale', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      ...mockResponse,
+      stale: {
+        uploadedAt: '2026-06-01T00:00:00.000Z',
+        reason: 'summary_log_changed'
+      }
+    })
+
+    await expect(
+      fetchReportDetail(
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        idToken
+      )
+    ).rejects.toBeInstanceOf(SummaryLogChangedError)
+  })
+
+  it('sets the reason on the thrown SummaryLogChangedError for a stale report', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      ...mockResponse,
+      stale: {
+        uploadedAt: '2026-06-01T00:00:00.000Z',
+        reason: 'summary_log_changed'
+      }
+    })
+
+    const err = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      idToken
+    ).catch((e) => e)
+
+    expect(err.reason).toBe('summary_log_changed')
   })
 })

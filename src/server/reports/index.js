@@ -203,24 +203,30 @@ export const reports = {
         }
       ])
 
-      server.ext('onPreResponse', (request, h) => {
-        if (request.response instanceof SummaryLogChangedError) {
-          const { organisationId, registrationId, year, cadence, period } =
-            request.params
-          const errorRoute = INVALIDATION_ERROR_ROUTES[request.response.reason]
-          if (
-            errorRoute &&
-            organisationId &&
-            registrationId &&
-            year &&
-            cadence &&
-            period
-          ) {
-            const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
-            return h.redirect(request.localiseUrl(`${base}/${errorRoute}`))
+      server.ext({
+        type: 'onPreResponse',
+        method(request, h) {
+          if (request.response instanceof SummaryLogChangedError) {
+            const { organisationId, registrationId, year, cadence, period } =
+              request.params
+            const errorRoute =
+              INVALIDATION_ERROR_ROUTES[request.response.reason]
+            if (
+              errorRoute &&
+              organisationId &&
+              registrationId &&
+              year &&
+              cadence &&
+              period
+            ) {
+              const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+              request.yar.set('summaryLogChangedError', base)
+              return h.redirect(request.localiseUrl(`${base}/${errorRoute}`))
+            }
           }
-        }
-        return h.continue
+          return h.continue
+        },
+        options: { before: '@hapi/yar' }
       })
     }
   }

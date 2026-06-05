@@ -14,16 +14,27 @@ export const summaryLogChangedErrorGetController = {
    */
   async handler(request, h) {
     const { t: localise } = request
-    const { organisationId, registrationId } = request.params
+    const { organisationId, registrationId, year, cadence, period } =
+      request.params
+
+    const reportsUrl = request.localiseUrl(
+      `/organisations/${organisationId}/registrations/${registrationId}/reports`
+    )
+
+    const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+
+    if (request.yar.get('summaryLogChangedError') !== periodBase) {
+      return h.redirect(reportsUrl)
+    }
+
+    request.yar.clear('summaryLogChangedError')
 
     return h.view('reports/summary-log-changed-error', {
       pageTitle: localise('reports:summaryLogChangedPageTitle'),
       heading: localise('reports:summaryLogChangedHeading'),
       bodyLine1: localise('reports:summaryLogChangedBodyLine1'),
       bodyLine2: localise('reports:summaryLogChangedBodyLine2'),
-      returnToReportsUrl: request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports`
-      )
+      returnToReportsUrl: reportsUrl
     })
   }
 }
