@@ -1,21 +1,30 @@
-import { REGISTERED_ONLY_PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
+import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
+ * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { LoadsByPeriodStatus } from './types.js'
  */
 
 const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
 
 /**
+ * @param {ProcessingType} [processingType]
+ * @returns {boolean}
+ */
+const isRegisteredOnlyProcessingType = (processingType) =>
+  processingType === PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY ||
+  processingType === PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
+
+/**
  * Builds the view model for the enhanced check page from the BE
  * loadsByPeriodStatus payload.
  * @param {LoadsByPeriodStatus | undefined} loadsByPeriodStatus
- * @param {string | undefined} processingType
+ * @param {ProcessingType} [processingType]
  */
 const buildEnhancedCheckViewModel = (loadsByPeriodStatus, processingType) => {
   const isAccredited =
-    !!processingType && !REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
+    !!processingType && !isRegisteredOnlyProcessingType(processingType)
 
   const periodSections = loadsByPeriodStatus ?? { open: null, closed: null }
 
@@ -30,7 +39,7 @@ const buildEnhancedCheckViewModel = (loadsByPeriodStatus, processingType) => {
  * Unified template for both accredited and registered-only processing types.
  * @param {ResponseToolkit} h
  * @param {(key: string, params?: object) => string} localise
- * @param {{ loadsByPeriodStatus?: LoadsByPeriodStatus, processingType?: string, organisationId: string, registrationId: string, summaryLogId: string }} context
+ * @param {{ loadsByPeriodStatus?: LoadsByPeriodStatus, processingType?: ProcessingType, organisationId: string, registrationId: string, summaryLogId: string }} context
  * @returns {ResponseObject}
  */
 export const renderEnhancedCheckView = (h, localise, context) => {
