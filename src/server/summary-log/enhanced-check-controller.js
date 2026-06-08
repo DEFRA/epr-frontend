@@ -22,7 +22,9 @@ const isRegisteredOnlyProcessingType = (processingType) =>
  * @param {PeriodStatus['adjusted']} adjusted
  */
 const buildAdjustedViewModel = (adjusted) => {
-  if (!adjusted) return null
+  if (!adjusted) {
+    return null
+  }
   return {
     tonnageDelta: adjusted.tonnageDelta,
     absoluteTonnage: Math.abs(adjusted.tonnageDelta),
@@ -34,7 +36,9 @@ const buildAdjustedViewModel = (adjusted) => {
  * @param {PeriodStatus | null} period
  */
 const buildPeriodViewModel = (period) => {
-  if (!period) return null
+  if (!period) {
+    return null
+  }
   return {
     added: period.added,
     adjusted: buildAdjustedViewModel(period.adjusted)
