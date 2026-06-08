@@ -3,7 +3,7 @@ import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { LoadsByPeriodStatus } from './types.js'
+ * @import { LoadsByPeriodStatus, PeriodStatus } from './types.js'
  */
 
 const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
@@ -17,6 +17,31 @@ const isRegisteredOnlyProcessingType = (processingType) =>
   processingType === PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
 
 /**
+ * Transforms a period's adjusted section into a view-friendly shape
+ * with absolute tonnage and direction for the template.
+ * @param {PeriodStatus['adjusted']} adjusted
+ */
+const buildAdjustedViewModel = (adjusted) => {
+  if (!adjusted) return null
+  return {
+    tonnageDelta: adjusted.tonnageDelta,
+    absoluteTonnage: Math.abs(adjusted.tonnageDelta),
+    addsToBalance: adjusted.tonnageDelta >= 0
+  }
+}
+
+/**
+ * @param {PeriodStatus | null} period
+ */
+const buildPeriodViewModel = (period) => {
+  if (!period) return null
+  return {
+    added: period.added,
+    adjusted: buildAdjustedViewModel(period.adjusted)
+  }
+}
+
+/**
  * Builds the view model for the enhanced check page from the BE
  * loadsByPeriodStatus payload.
  * @param {LoadsByPeriodStatus | undefined} loadsByPeriodStatus
@@ -26,10 +51,13 @@ const buildEnhancedCheckViewModel = (loadsByPeriodStatus, processingType) => {
   const isAccredited =
     !!processingType && !isRegisteredOnlyProcessingType(processingType)
 
-  const periodSections = loadsByPeriodStatus ?? { open: null, closed: null }
+  const data = loadsByPeriodStatus ?? { open: null, closed: null }
 
   return {
-    periodSections,
+    periodSections: {
+      open: buildPeriodViewModel(data.open),
+      closed: buildPeriodViewModel(data.closed)
+    },
     isAccredited
   }
 }

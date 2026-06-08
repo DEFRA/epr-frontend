@@ -1,5 +1,33 @@
 {% extends 'layouts/page.njk' %}
 
+{% macro periodNewLoads(periodLabel, added, isAccredited) %}
+  <section class="govuk-!-margin-top-8">
+    <h2 class="govuk-heading-l">{{ periodLabel }}: {{ localise('summary-log:enhancedCheck.newLoads') }}</h2>
+
+    {% if isAccredited %}
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.newLoadsTonnage', { tonnes: added.tonnageDelta }) }}</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% macro periodAdjustedLoads(periodLabel, adjusted, isAccredited) %}
+  <section class="govuk-!-margin-top-8">
+    <h2 class="govuk-heading-l">{{ periodLabel }}: {{ localise('summary-log:enhancedCheck.adjustedLoads') }}</h2>
+
+    <div class="govuk-inset-text">
+      {{ localise('summary-log:enhancedCheck.adjustedInset') }}
+    </div>
+
+    {% if isAccredited %}
+      {% if adjusted.addsToBalance %}
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageAdd', { tonnes: adjusted.absoluteTonnage }) }}</p>
+      {% else %}
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageRemove', { tonnes: adjusted.absoluteTonnage }) }}</p>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endmacro %}
+
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
@@ -19,43 +47,23 @@
     </div>
 
     {% if periodSections.open %}
-    <section class="govuk-!-margin-top-8">
-      <h2 class="govuk-heading-l">{{ localise('summary-log:enhancedCheck.openPeriodsHeading') }}</h2>
-
       {% if periodSections.open.added %}
-      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.newLoadsHeading') }}</h3>
-      {% if isAccredited %}
-      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdded', { tonnes: periodSections.open.added.tonnageDelta }) }}</p>
-      {% endif %}
+        {{ periodNewLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.added, isAccredited) }}
       {% endif %}
 
       {% if periodSections.open.adjusted %}
-      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.adjustedLoadsHeading') }}</h3>
-      {% if isAccredited %}
-      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdjusted', { tonnes: periodSections.open.adjusted.tonnageDelta }) }}</p>
+        {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.adjusted, isAccredited) }}
       {% endif %}
-      {% endif %}
-    </section>
     {% endif %}
 
     {% if periodSections.closed %}
-    <section class="govuk-!-margin-top-8">
-      <h2 class="govuk-heading-l">{{ localise('summary-log:enhancedCheck.closedPeriodsHeading') }}</h2>
-
       {% if periodSections.closed.added %}
-      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.newLoadsHeading') }}</h3>
-      {% if isAccredited %}
-      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdded', { tonnes: periodSections.closed.added.tonnageDelta }) }}</p>
-      {% endif %}
+        {{ periodNewLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.added, isAccredited) }}
       {% endif %}
 
       {% if periodSections.closed.adjusted %}
-      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.adjustedLoadsHeading') }}</h3>
-      {% if isAccredited %}
-      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdjusted', { tonnes: periodSections.closed.adjusted.tonnageDelta }) }}</p>
+        {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.adjusted, isAccredited) }}
       {% endif %}
-      {% endif %}
-    </section>
     {% endif %}
 
     <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">

@@ -3415,7 +3415,7 @@ describe('enhanced check page', () => {
     config.reset('featureFlags.enhancedSummaryLogCheckPages')
   })
 
-  describe('accredited with open period loads only', () => {
+  describe('accredited with open period new loads only', () => {
     beforeEach(() => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
@@ -3427,39 +3427,7 @@ describe('enhanced check page', () => {
       })
     })
 
-    it('renders the enhanced check page heading', async ({ server }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toStrictEqual(
-        expect.stringContaining('Check before confirming upload')
-      )
-    })
-
-    it('shows open period section with tonnage', async ({ server }) => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-      const main = getByRole(body, 'main')
-
-      expect(
-        getByRole(main, 'heading', { level: 2, name: /open periods/i })
-      ).toBeDefined()
-      expect(queryByText(main, /10 tonnes/)).not.toBeNull()
-    })
-
-    it('hides closed period section when closed is null', async ({
+    it('renders "Open periods: new loads" heading with tonnage', async ({
       server
     }) => {
       const { result, statusCode } = await server.inject({
@@ -3474,6 +3442,31 @@ describe('enhanced check page', () => {
       const { body } = dom.window.document
       const main = getByRole(body, 'main')
 
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: new loads/i
+        })
+      ).toBeDefined()
+      expect(
+        queryByText(main, /will add 10 tonnes to your waste balance/)
+      ).not.toBeNull()
+    })
+
+    it('hides adjusted and closed sections', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(queryByText(main, /adjusted loads/i)).toBeNull()
       expect(queryByText(main, /closed periods/i)).toBeNull()
     })
 
@@ -3509,7 +3502,9 @@ describe('enhanced check page', () => {
       })
     })
 
-    it('renders both open and closed period sections', async ({ server }) => {
+    it('renders section headings for new and adjusted loads', async ({
+      server
+    }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
@@ -3526,30 +3521,14 @@ describe('enhanced check page', () => {
       const h2Texts = h2s.map((el) => el.textContent)
       expect(h2Texts).toStrictEqual(
         expect.arrayContaining([
-          expect.stringMatching(/open periods/i),
-          expect.stringMatching(/closed periods/i)
+          expect.stringMatching(/open periods: new loads/i),
+          expect.stringMatching(/closed periods: new loads/i),
+          expect.stringMatching(/closed periods: adjusted loads/i)
         ])
       )
-
-      expect(queryByText(main, /5 tonnes/)).not.toBeNull()
-      expect(queryByText(main, /8 tonnes/)).not.toBeNull()
-      expect(queryByText(main, /-3 tonnes/)).not.toBeNull()
-    })
-  })
-
-  describe('registered-only processing type', () => {
-    beforeEach(() => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'REPROCESSOR_REGISTERED_ONLY',
-        loadsByPeriodStatus: {
-          open: { added: { tonnageDelta: 0 }, adjusted: null },
-          closed: null
-        }
-      })
     })
 
-    it('shows open period section without tonnage language', async ({
+    it('shows directional tonnage for negative adjusted delta', async ({
       server
     }) => {
       const { result, statusCode } = await server.inject({
@@ -3565,7 +3544,62 @@ describe('enhanced check page', () => {
       const main = getByRole(body, 'main')
 
       expect(
-        getByRole(main, 'heading', { level: 2, name: /open periods/i })
+        queryByText(main, /will add 5 tonnes to your waste balance/)
+      ).not.toBeNull()
+      expect(
+        queryByText(main, /will add 8 tonnes to your waste balance/)
+      ).not.toBeNull()
+      expect(
+        queryByText(main, /will remove 3 tonnes from your waste balance/)
+      ).not.toBeNull()
+    })
+
+    it('shows inset text on adjusted section', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'Data has been added, removed or changed since this summary log was last uploaded'
+        )
+      )
+    })
+  })
+
+  describe('registered-only processing type', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_REGISTERED_ONLY',
+        loadsByPeriodStatus: {
+          open: { added: { tonnageDelta: 0 }, adjusted: null },
+          closed: null
+        }
+      })
+    })
+
+    it('shows period heading without tonnage language', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: new loads/i
+        })
       ).toBeDefined()
       expect(queryByText(main, /tonnes/)).toBeNull()
     })
@@ -3619,7 +3653,7 @@ describe('enhanced check page', () => {
       })
     })
 
-    it('hides open period section and shows closed', async ({ server }) => {
+    it('hides open sections and shows closed new loads', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
@@ -3634,9 +3668,14 @@ describe('enhanced check page', () => {
 
       expect(queryByText(main, /open periods/i)).toBeNull()
       expect(
-        getByRole(main, 'heading', { level: 2, name: /closed periods/i })
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /closed periods: new loads/i
+        })
       ).toBeDefined()
-      expect(queryByText(main, /15 tonnes/)).not.toBeNull()
+      expect(
+        queryByText(main, /will add 15 tonnes to your waste balance/)
+      ).not.toBeNull()
     })
   })
 })

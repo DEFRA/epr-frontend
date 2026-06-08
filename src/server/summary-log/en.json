@@ -90,12 +90,14 @@
   "confirmButton": "Confirm upload",
   "enhancedCheck": {
     "intro2": "Check the following to find out how your reporting periods are affected.",
-    "openPeriodsHeading": "Open periods",
-    "closedPeriodsHeading": "Closed periods",
-    "newLoadsHeading": "New loads",
-    "adjustedLoadsHeading": "Adjusted loads",
-    "tonnageAdded": "{{tonnes}} tonnes will be added to your waste balance.",
-    "tonnageAdjusted": "{{tonnes}} tonnes adjustment to your waste balance."
+    "openPeriods": "Open periods",
+    "closedPeriods": "Closed periods",
+    "newLoads": "new loads",
+    "adjustedLoads": "adjusted loads",
+    "newLoadsTonnage": "These new loads will add {{tonnes}} tonnes to your waste balance.",
+    "adjustedInset": "Data has been added, removed or changed since this summary log was last uploaded.",
+    "adjustedTonnageAdd": "These adjusted loads will add {{tonnes}} tonnes to your waste balance.",
+    "adjustedTonnageRemove": "These adjusted loads will remove {{tonnes}} tonnes from your waste balance."
   },
   "errorHeading": "Error checking status",
   "errorMessage": "Unable to check upload status",
