@@ -1,0 +1,70 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">
+      <span class="govuk-caption-xl">{{ localise('summary-log:checkCaption') }}</span>
+      {{ localise('summary-log:checkHeading') }}
+    </h1>
+
+    <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.intro2') }}</p>
+
+    <div class="govuk-inset-text">
+      {{ localise('summary-log:checkWarningStart') }}
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
+      {{ localise('summary-log:checkWarningOr') }}
+      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
+    </div>
+
+    {% if periodSections.open %}
+    <section class="govuk-!-margin-top-8">
+      <h2 class="govuk-heading-l">{{ localise('summary-log:enhancedCheck.openPeriodsHeading') }}</h2>
+
+      {% if periodSections.open.added %}
+      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.newLoadsHeading') }}</h3>
+      {% if isAccredited %}
+      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdded', { tonnes: periodSections.open.added.tonnageDelta }) }}</p>
+      {% endif %}
+      {% endif %}
+
+      {% if periodSections.open.adjusted %}
+      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.adjustedLoadsHeading') }}</h3>
+      {% if isAccredited %}
+      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdjusted', { tonnes: periodSections.open.adjusted.tonnageDelta }) }}</p>
+      {% endif %}
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if periodSections.closed %}
+    <section class="govuk-!-margin-top-8">
+      <h2 class="govuk-heading-l">{{ localise('summary-log:enhancedCheck.closedPeriodsHeading') }}</h2>
+
+      {% if periodSections.closed.added %}
+      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.newLoadsHeading') }}</h3>
+      {% if isAccredited %}
+      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdded', { tonnes: periodSections.closed.added.tonnageDelta }) }}</p>
+      {% endif %}
+      {% endif %}
+
+      {% if periodSections.closed.adjusted %}
+      <h3 class="govuk-heading-m">{{ localise('summary-log:enhancedCheck.adjustedLoadsHeading') }}</h3>
+      {% if isAccredited %}
+      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.tonnageAdjusted', { tonnes: periodSections.closed.adjusted.tonnageDelta }) }}</p>
+      {% endif %}
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
+      {{ govukButton({
+        text: localise('summary-log:confirmButton'),
+        preventDoubleClick: true
+      }) }}
+    </form>
+  </div>
+</div>
+{% endblock %}

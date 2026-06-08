@@ -88,6 +88,15 @@
   "complianceHeading": "Compliance",
   "complianceSubheading": "You must comply with your waste permit",
   "confirmButton": "Confirm upload",
+  "enhancedCheck": {
+    "intro2": "Check the following to find out how your reporting periods are affected.",
+    "openPeriodsHeading": "Open periods",
+    "closedPeriodsHeading": "Closed periods",
+    "newLoadsHeading": "New loads",
+    "adjustedLoadsHeading": "Adjusted loads",
+    "tonnageAdded": "{{tonnes}} tonnes will be added to your waste balance.",
+    "tonnageAdjusted": "{{tonnes}} tonnes adjustment to your waste balance."
+  },
   "errorHeading": "Error checking status",
   "errorMessage": "Unable to check upload status",
   "failure": {

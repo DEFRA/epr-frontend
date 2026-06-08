@@ -165,9 +165,28 @@
  */
 
 /**
+ * @typedef {{ tonnageDelta: number }} PeriodStatusByChange
+ */
+
+/**
+ * @typedef {{
+ *   added: PeriodStatusByChange | null,
+ *   adjusted: PeriodStatusByChange | null
+ * }} PeriodStatus
+ */
+
+/**
+ * @typedef {{
+ *   open: PeriodStatus | null,
+ *   closed: PeriodStatus | null
+ * }} LoadsByPeriodStatus
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
+ *   loadsByPeriodStatus?: LoadsByPeriodStatus,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   processingType?: ProcessingType
  *   status: string,
