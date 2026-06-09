@@ -80,7 +80,7 @@ export const controller = {
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
  *   registration: TaggedReference;
- *   reports: { isEnabled: boolean; link: Link };
+ *   reports: { link: Link };
  *   siteName: string | null;
  *   uploadSummaryLogUrl: string;
  *   wasteBalance: { availableAmount: number | null; noteTypePlural: 'PRNs' | 'PERNs' };
@@ -189,7 +189,6 @@ function getReportsViewData(request, organisationId, registrationId) {
   const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
   return {
-    isEnabled: true,
     link: {
       href: request.localiseUrl(reportsUrl),
       text: localise('registrations:manageReports')
