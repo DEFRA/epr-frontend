@@ -3465,7 +3465,7 @@ describe('enhanced check page', () => {
         })
       ).toBeDefined()
       expect(
-        queryByText(main, /will add 10 tonnes to your waste balance/)
+        queryByText(main, /will add 10\.00 tonnes to your waste balance/)
       ).not.toBeNull()
     })
 
@@ -3599,13 +3599,13 @@ describe('enhanced check page', () => {
       const main = getByRole(body, 'main')
 
       expect(
-        queryByText(main, /will add 5 tonnes to your waste balance/)
+        queryByText(main, /will add 5\.00 tonnes to your waste balance/)
       ).not.toBeNull()
       expect(
-        queryByText(main, /will add 8 tonnes to your waste balance/)
+        queryByText(main, /will add 8\.00 tonnes to your waste balance/)
       ).not.toBeNull()
       expect(
-        queryByText(main, /will remove 3 tonnes from your waste balance/)
+        queryByText(main, /will remove 3\.00 tonnes from your waste balance/)
       ).not.toBeNull()
     })
 
@@ -3806,7 +3806,7 @@ describe('enhanced check page', () => {
         })
       ).toBeDefined()
       expect(
-        queryByText(main, /will add 15 tonnes to your waste balance/)
+        queryByText(main, /will add 15\.00 tonnes to your waste balance/)
       ).not.toBeNull()
     })
   })

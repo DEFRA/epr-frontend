@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 
 /**
@@ -30,16 +31,13 @@ const buildChangeSectionViewModel = (changeSection) => {
     return null
   }
 
-  const tonnageDelta = parseFloat(
-    (
-      changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
-    ).toFixed(4)
-  )
+  const tonnageDelta =
+    changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
 
   return {
     count,
-    tonnageDelta,
-    absoluteTonnage: Math.abs(tonnageDelta),
+    tonnageDelta: formatTonnage(tonnageDelta),
+    absoluteTonnage: formatTonnage(Math.abs(tonnageDelta)),
     addsToBalance: tonnageDelta >= 0,
     included: { count: changeSection.included.count },
     excluded: { count: changeSection.excluded.count }
