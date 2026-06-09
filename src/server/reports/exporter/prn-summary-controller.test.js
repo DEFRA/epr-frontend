@@ -1,9 +1,8 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -62,16 +61,8 @@ const baseUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/prn-summary'
 
 describe('#prnSummaryDispatcher cross-registration routing', () => {
-  beforeAll(() => {
-    config.set('featureFlags.reports', true)
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  afterAll(() => {
-    config.reset('featureFlags.reports')
   })
 
   it('should dispatch to reprocessor controller for accredited reprocessor', async ({

@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -187,11 +186,10 @@ function buildViewModel({
  */
 function getReportsViewData(request, organisationId, registrationId) {
   const { t: localise } = request
-  const isEnabled = config.get('featureFlags.reports')
   const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
   return {
-    isEnabled,
+    isEnabled: true,
     link: {
       href: request.localiseUrl(reportsUrl),
       text: localise('registrations:manageReports')

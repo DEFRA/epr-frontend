@@ -1,11 +1,10 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { SummaryLogChangedError } from '#server/reports/helpers/summary-log-changed.js'
 import { it } from '#vite/fixtures/server.js'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { RegistrationApproved } from '#domain/organisations/registration.js'
@@ -48,63 +47,53 @@ describe('reports plugin onPreResponse lifecycle', () => {
     )
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', true)
+  it('redirects to summary-log-changed-error when SummaryLogChangedError is thrown', async ({
+    server
+  }) => {
+    vi.mocked(fetchReportDetail).mockRejectedValue(
+      new SummaryLogChangedError('summary_log_changed')
+    )
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: detailUrl,
+      auth: mockAuth
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
-    })
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`${periodBase}/summary-log-changed-error`)
+  })
 
-    it('redirects to summary-log-changed-error when SummaryLogChangedError is thrown', async ({
-      server
-    }) => {
-      vi.mocked(fetchReportDetail).mockRejectedValue(
-        new SummaryLogChangedError('summary_log_changed')
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
+  it('does not redirect for unrelated errors', async ({ server }) => {
+    vi.mocked(fetchReportDetail).mockRejectedValue(
+      Object.assign(new Error('Server error'), {
+        isBoom: true,
+        output: { statusCode: 500 }
       })
+    )
 
-      expect(statusCode).toBe(statusCodes.found)
-      expect(headers.location).toBe(`${periodBase}/summary-log-changed-error`)
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: detailUrl,
+      auth: mockAuth
     })
 
-    it('does not redirect for unrelated errors', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockRejectedValue(
-        Object.assign(new Error('Server error'), {
-          isBoom: true,
-          output: { statusCode: 500 }
-        })
-      )
+    expect(statusCode).toBe(statusCodes.internalServerError)
+  })
 
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
+  it('does not redirect when the reason is not in INVALIDATION_ERROR_ROUTES', async ({
+    server
+  }) => {
+    vi.mocked(fetchReportDetail).mockRejectedValue(
+      new SummaryLogChangedError('unknown_reason')
+    )
 
-      expect(statusCode).toBe(statusCodes.internalServerError)
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: detailUrl,
+      auth: mockAuth
     })
 
-    it('does not redirect when the reason is not in INVALIDATION_ERROR_ROUTES', async ({
-      server
-    }) => {
-      vi.mocked(fetchReportDetail).mockRejectedValue(
-        new SummaryLogChangedError('unknown_reason')
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).not.toBe(statusCodes.found)
-    })
+    expect(statusCode).not.toBe(statusCodes.found)
   })
 })

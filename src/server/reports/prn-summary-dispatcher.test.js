@@ -1,9 +1,8 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -61,49 +60,39 @@ describe('#prnSummaryDispatcher', () => {
     vi.clearAllMocks()
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', true)
+  it('should dispatch to exporter controller for exporter registration', async ({
+    server
+  }) => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      exporterRegistration
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+
+    const { statusCode, result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      auth: mockAuth
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('PERNs issued')
+  })
+
+  it('should dispatch to reprocessor controller for reprocessor registration', async ({
+    server
+  }) => {
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      reprocessorRegistration
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+
+    const { statusCode, result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      auth: mockAuth
     })
 
-    it('should dispatch to exporter controller for exporter registration', async ({
-      server
-    }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        exporterRegistration
-      )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url: baseUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('PERNs issued')
-    })
-
-    it('should dispatch to reprocessor controller for reprocessor registration', async ({
-      server
-    }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        reprocessorRegistration
-      )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url: baseUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('PRNs issued')
-    })
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('PRNs issued')
   })
 })
