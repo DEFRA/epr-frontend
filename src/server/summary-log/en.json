@@ -105,7 +105,8 @@
     "adjustedLoadsExcluded": "{{count}} adjusted loads will be recorded (NOT reflected in your waste balance)",
     "adjustedLoadsCount": "{{count}} adjusted loads will be recorded",
     "loadsRequiredData": "These loads include all the required summary log data.",
-    "adjustedExcludedReason": "These loads are either missing required summary log data or the adjusted data is not relevant to your waste balance."
+    "adjustedExcludedReason": "These loads are either missing required summary log data or the adjusted data is not relevant to your waste balance.",
+    "wasteBalanceProjection": "If you upload this summary log to create a new report, your waste balance will be {{projectedBalance}} from {{currentBalance}}."
   },
   "errorHeading": "Error checking status",
   "errorMessage": "Unable to check upload status",

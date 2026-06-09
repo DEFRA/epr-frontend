@@ -54,19 +54,60 @@ const buildPeriodViewModel = (period) => {
 }
 
 /**
+ * Sums the raw tonnage delta across all periods and change types.
+ * @param {LoadsByPeriodStatus} loadsByPeriodStatus
+ * @returns {number}
+ */
+const computeTotalTonnageDelta = (loadsByPeriodStatus) => {
+  let total = 0
+  for (const period of [loadsByPeriodStatus.open, loadsByPeriodStatus.closed]) {
+    for (const change of [period.added, period.adjusted]) {
+      total += change.included.tonnageDelta + change.excluded.tonnageDelta
+    }
+  }
+  return total
+}
+
+/**
+ * Builds the projected waste balance view model for accredited users.
+ * @param {number | undefined} currentBalance
+ * @param {LoadsByPeriodStatus} loadsByPeriodStatus
+ * @returns {{ currentBalance: string, projectedBalance: string } | null}
+ */
+const buildWasteBalanceProjection = (currentBalance, loadsByPeriodStatus) => {
+  if (currentBalance === undefined) {
+    return null
+  }
+
+  const totalDelta = computeTotalTonnageDelta(loadsByPeriodStatus)
+  const projected = currentBalance + totalDelta
+
+  return {
+    currentBalance: formatTonnage(currentBalance),
+    projectedBalance: formatTonnage(projected)
+  }
+}
+
+/**
  * Builds the view model for the enhanced check page from the BE
  * loadsByPeriodStatus payload.
  * @param {LoadsByPeriodStatus | undefined} loadsByPeriodStatus
  * @param {ProcessingType} [processingType]
+ * @param {number} [wasteBalance]
  */
-const buildEnhancedCheckViewModel = (loadsByPeriodStatus, processingType) => {
+const buildEnhancedCheckViewModel = (
+  loadsByPeriodStatus,
+  processingType,
+  wasteBalance
+) => {
   const isAccredited =
     !!processingType && !isRegisteredOnlyProcessingType(processingType)
 
   if (!loadsByPeriodStatus) {
     return {
       periodSections: { open: null, closed: null },
-      isAccredited
+      isAccredited,
+      wasteBalanceProjection: null
     }
   }
 
@@ -75,7 +116,10 @@ const buildEnhancedCheckViewModel = (loadsByPeriodStatus, processingType) => {
       open: buildPeriodViewModel(loadsByPeriodStatus.open),
       closed: buildPeriodViewModel(loadsByPeriodStatus.closed)
     },
-    isAccredited
+    isAccredited,
+    wasteBalanceProjection: isAccredited
+      ? buildWasteBalanceProjection(wasteBalance, loadsByPeriodStatus)
+      : null
   }
 }
 
@@ -84,7 +128,7 @@ const buildEnhancedCheckViewModel = (loadsByPeriodStatus, processingType) => {
  * Unified template for both accredited and registered-only processing types.
  * @param {ResponseToolkit} h
  * @param {(key: string, params?: object) => string} localise
- * @param {{ loadsByPeriodStatus?: LoadsByPeriodStatus, processingType?: ProcessingType, organisationId: string, registrationId: string, summaryLogId: string }} context
+ * @param {{ loadsByPeriodStatus?: LoadsByPeriodStatus, processingType?: ProcessingType, organisationId: string, registrationId: string, summaryLogId: string, wasteBalance?: number }} context
  * @returns {ResponseObject}
  */
 export const renderEnhancedCheckView = (h, localise, context) => {
@@ -93,13 +137,16 @@ export const renderEnhancedCheckView = (h, localise, context) => {
     processingType,
     organisationId,
     registrationId,
-    summaryLogId
+    summaryLogId,
+    wasteBalance
   } = context
 
-  const { periodSections, isAccredited } = buildEnhancedCheckViewModel(
-    loadsByPeriodStatus,
-    processingType
-  )
+  const { periodSections, isAccredited, wasteBalanceProjection } =
+    buildEnhancedCheckViewModel(
+      loadsByPeriodStatus,
+      processingType,
+      wasteBalance
+    )
 
   return h.view(ENHANCED_CHECK_VIEW_NAME, {
     pageTitle: localise('summary-log:checkPageTitle'),
@@ -107,6 +154,7 @@ export const renderEnhancedCheckView = (h, localise, context) => {
     registrationId,
     summaryLogId,
     periodSections,
-    isAccredited
+    isAccredited,
+    wasteBalanceProjection
   })
 }

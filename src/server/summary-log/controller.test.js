@@ -3908,6 +3908,97 @@ describe('enhanced check page', () => {
     })
   })
 
+  describe('waste balance projection for accredited', () => {
+    const accreditationId = 'accreditation-id-789'
+
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByPeriodStatus: {
+          open: {
+            added: {
+              included: { count: 3, tonnageDelta: 100 },
+              excluded: { count: 1, tonnageDelta: 0 }
+            },
+            adjusted: {
+              included: { count: 1, tonnageDelta: -20 },
+              excluded: { count: 0, tonnageDelta: 0 }
+            }
+          },
+          closed: emptyPeriod()
+        }
+      })
+
+      mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        organisationData: { id: organisationId },
+        registration: { id: registrationId, accreditationId },
+        accreditation: {
+          id: accreditationId,
+          accreditationNumber: 'ACC-2025-001'
+        }
+      })
+
+      mockFetchWasteBalances.mockResolvedValueOnce({
+        [accreditationId]: {
+          amount: 5000,
+          availableAmount: 4500
+        }
+      })
+    })
+
+    it('shows projected waste balance inset', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // current: 4500, delta: 100 + (-20) = 80, projected: 4580
+      expect(
+        queryByText(main, /your waste balance will be 4,580\.00 from 4,500\.00/)
+      ).not.toBeNull()
+    })
+  })
+
+  describe('waste balance projection hidden for registered-only', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_REGISTERED_ONLY',
+        loadsByPeriodStatus: {
+          open: {
+            added: {
+              included: { count: 0, tonnageDelta: 0 },
+              excluded: { count: 5, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closed: emptyPeriod()
+        }
+      })
+    })
+
+    it('does not show waste balance projection', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('your waste balance will be')
+      )
+    })
+  })
+
   describe('only closed period loads', () => {
     beforeEach(() => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({

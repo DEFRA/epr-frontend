@@ -534,7 +534,12 @@ const getWasteBalanceData = async (
   idToken,
   logger
 ) => {
-  if (status !== summaryLogStatuses.submitted) {
+  const needsWasteBalance =
+    status === summaryLogStatuses.submitted ||
+    (status === summaryLogStatuses.validated &&
+      isEnhancedSummaryLogCheckPagesEnabled())
+
+  if (!needsWasteBalance) {
     return {}
   }
 
