@@ -3693,6 +3693,46 @@ describe('enhanced check page', () => {
     })
   })
 
+  describe('tonnage formatting', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByPeriodStatus: {
+          open: {
+            added: {
+              included: { count: 3, tonnageDelta: 1230.06 },
+              excluded: { count: 1, tonnageDelta: 230.06 }
+            },
+            adjusted: emptyBucket()
+          },
+          closed: emptyPeriod()
+        }
+      })
+    })
+
+    it('formats summed tonnage with thousand separators and 2dp', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // 1230.06 + 230.06 = 1460.12 (not 1460.1199999999999)
+      expect(
+        queryByText(main, /will add 1,460\.12 tonnes to your waste balance/)
+      ).not.toBeNull()
+    })
+  })
+
   describe('registered-only processing type', () => {
     beforeEach(() => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
