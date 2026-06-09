@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchReportBackend } from './fetch-report-backend.js'
 
 /**
  * Updates a report via the backend PATCH endpoint.
@@ -22,7 +22,7 @@ export async function updateReport(
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}`
 
-  return fetchJsonFromBackend(path, {
+  return fetchReportBackend(path, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${idToken}`

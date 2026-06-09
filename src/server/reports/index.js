@@ -41,6 +41,15 @@ import {
   supportingInformationPostController
 } from './supporting-information-controller.js'
 import { viewGetController } from './view-controller.js'
+import {
+  summaryLogChangedErrorGetController,
+  summaryLogChangedErrorPostController
+} from './summary-log-changed-error-controller.js'
+import { SummaryLogChangedError } from './helpers/summary-log-changed.js'
+
+const INVALIDATION_ERROR_ROUTES = Object.freeze({
+  summary_log_changed: 'summary-log-changed-error'
+})
 
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/reports'
@@ -181,8 +190,37 @@ export const reports = {
           ...viewGetController,
           method: 'GET',
           path: `${periodPath}/view`
+        },
+        {
+          ...summaryLogChangedErrorGetController,
+          method: 'GET',
+          path: `${periodPath}/summary-log-changed-error`
+        },
+        {
+          ...summaryLogChangedErrorPostController,
+          method: 'POST',
+          path: `${periodPath}/summary-log-changed-error`
         }
       ])
+
+      server.ext({
+        type: 'onPreResponse',
+        method(request, h) {
+          if (!(request.response instanceof SummaryLogChangedError)) {
+            return h.continue
+          }
+          const errorRoute = INVALIDATION_ERROR_ROUTES[request.response.reason]
+          if (!errorRoute) {
+            return h.continue
+          }
+          const { organisationId, registrationId, year, cadence, period } =
+            request.params
+          const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+          request.yar.set('summaryLogChangedError', base)
+          return h.redirect(request.localiseUrl(`${base}/${errorRoute}`))
+        },
+        options: { before: '@hapi/yar' }
+      })
     }
   }
 }

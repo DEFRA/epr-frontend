@@ -1,7 +1,11 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchReportBackend } from './fetch-report-backend.js'
+import { SummaryLogChangedError } from './summary-log-changed.js'
 
 /**
  * Fetches aggregated report detail for a specific period from the backend.
+ * Throws {@link SummaryLogChangedError} if the report is stale so callers get
+ * a consistent error type regardless of whether staleness came from a GET 200
+ * (stale field) or a PATCH/POST 409.
  * @param {string} organisationId
  * @param {string} registrationId
  * @param {number} year
@@ -20,10 +24,16 @@ export async function fetchReportDetail(
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}`
 
-  return fetchJsonFromBackend(path, {
+  const report = await fetchReportBackend(path, {
     method: 'GET',
     headers: { Authorization: `Bearer ${idToken}` }
   })
+
+  if (report.stale) {
+    throw new SummaryLogChangedError(report.stale.reason)
+  }
+
+  return report
 }
 
 /**
@@ -86,6 +96,7 @@ export async function fetchReportDetail(
  *     ready?: { at: string, by: { id: string, name: string, position: string } },
  *     submitted?: { at: string, by: { id: string, name: string, position: string } }
  *   },
+ *   stale?: { uploadedAt: string, reason: string },
  *   supportingInformation?: string,
  *   prn?: {
  *     issuedTonnage: number,

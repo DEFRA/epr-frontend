@@ -1,4 +1,4 @@
-import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { fetchReportBackend } from './fetch-report-backend.js'
 
 /**
  * Transitions a report's status via the backend POST endpoint.
@@ -22,7 +22,7 @@ export async function updateReportStatus(
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/status`
 
-  return fetchJsonFromBackend(path, {
+  return fetchReportBackend(path, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${idToken}`
