@@ -6,6 +6,19 @@
 
     {% if isAccredited %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.newLoadsTonnage', { tonnes: added.tonnageDelta }) }}</p>
+
+      {% if added.included.count > 0 %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsIncluded', { count: added.included.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+      {% endif %}
+
+      {% if added.excluded.count > 0 %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsExcluded', { count: added.excluded.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+      {% endif %}
+    {% else %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsCount', { count: added.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
     {% endif %}
   </section>
 {% endmacro %}
@@ -24,6 +37,19 @@
       {% else %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageRemove', { tonnes: adjusted.absoluteTonnage }) }}</p>
       {% endif %}
+
+      {% if adjusted.included.count > 0 %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsIncluded', { count: adjusted.included.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+      {% endif %}
+
+      {% if adjusted.excluded.count > 0 %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsExcluded', { count: adjusted.excluded.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedExcludedReason') }}</p>
+      {% endif %}
+    {% else %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsCount', { count: adjusted.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
     {% endif %}
   </section>
 {% endmacro %}

@@ -3404,6 +3404,16 @@ describe('enhanced check page', () => {
   const summaryLogId = '789'
   const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
 
+  const emptyBucket = () => ({
+    included: { count: 0, tonnageDelta: 0 },
+    excluded: { count: 0, tonnageDelta: 0 }
+  })
+
+  const emptyPeriod = () => ({
+    added: emptyBucket(),
+    adjusted: emptyBucket()
+  })
+
   beforeEach(() => {
     config.set('featureFlags.enhancedSummaryLogCheckPages', true)
     mockFetchSummaryLogStatus.mockReset().mockResolvedValue({
@@ -3421,8 +3431,14 @@ describe('enhanced check page', () => {
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
         loadsByPeriodStatus: {
-          open: { added: { tonnageDelta: 10 }, adjusted: null },
-          closed: null
+          open: {
+            added: {
+              included: { count: 3, tonnageDelta: 10 },
+              excluded: { count: 1, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closed: emptyPeriod()
         }
       })
     })
@@ -3450,6 +3466,33 @@ describe('enhanced check page', () => {
       ).toBeDefined()
       expect(
         queryByText(main, /will add 10 tonnes to your waste balance/)
+      ).not.toBeNull()
+    })
+
+    it('shows included and excluded count lines', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        queryByText(
+          main,
+          /3 new loads will be recorded \(and added to your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /1 new loads will be recorded \(but NOT added to your waste balance\)/
+        )
       ).not.toBeNull()
     })
 
@@ -3493,10 +3536,22 @@ describe('enhanced check page', () => {
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
         loadsByPeriodStatus: {
-          open: { added: { tonnageDelta: 5 }, adjusted: null },
+          open: {
+            added: {
+              included: { count: 2, tonnageDelta: 5 },
+              excluded: { count: 0, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
           closed: {
-            added: { tonnageDelta: 8 },
-            adjusted: { tonnageDelta: -3 }
+            added: {
+              included: { count: 4, tonnageDelta: 8 },
+              excluded: { count: 1, tonnageDelta: 0 }
+            },
+            adjusted: {
+              included: { count: 2, tonnageDelta: -3 },
+              excluded: { count: 1, tonnageDelta: 0 }
+            }
           }
         }
       })
@@ -3554,6 +3609,67 @@ describe('enhanced check page', () => {
       ).not.toBeNull()
     })
 
+    it('shows included and excluded count lines', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // Closed new loads: 4 included, 1 excluded
+      expect(
+        queryByText(
+          main,
+          /4 new loads will be recorded \(and added to your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /1 new loads will be recorded \(but NOT added to your waste balance\)/
+        )
+      ).not.toBeNull()
+
+      // Closed adjusted: 2 included, 1 excluded
+      expect(
+        queryByText(
+          main,
+          /2 adjusted loads will be recorded \(and reflected in your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /1 adjusted loads will be recorded \(NOT reflected in your waste balance\)/
+        )
+      ).not.toBeNull()
+    })
+
+    it('hides excluded line when excluded count is zero', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // Open new loads has 0 excluded, should not render a zero-count line
+      expect(queryByText(main, /0 new loads/)).toBeNull()
+    })
+
     it('shows inset text on adjusted section', async ({ server }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -3576,13 +3692,21 @@ describe('enhanced check page', () => {
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_REGISTERED_ONLY',
         loadsByPeriodStatus: {
-          open: { added: { tonnageDelta: 0 }, adjusted: null },
-          closed: null
+          open: {
+            added: {
+              included: { count: 0, tonnageDelta: 0 },
+              excluded: { count: 5, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closed: emptyPeriod()
         }
       })
     })
 
-    it('shows period heading without tonnage language', async ({ server }) => {
+    it('shows total count without tonnage or included/excluded split', async ({
+      server
+    }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
@@ -3601,7 +3725,9 @@ describe('enhanced check page', () => {
           name: /open periods: new loads/i
         })
       ).toBeDefined()
+      expect(queryByText(main, /5 new loads will be recorded/)).not.toBeNull()
       expect(queryByText(main, /tonnes/)).toBeNull()
+      expect(queryByText(main, /waste balance/)).toBeNull()
     })
   })
 
@@ -3647,8 +3773,14 @@ describe('enhanced check page', () => {
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
         loadsByPeriodStatus: {
-          open: null,
-          closed: { added: { tonnageDelta: 15 }, adjusted: null }
+          open: emptyPeriod(),
+          closed: {
+            added: {
+              included: { count: 6, tonnageDelta: 15 },
+              excluded: { count: 0, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          }
         }
       })
     })

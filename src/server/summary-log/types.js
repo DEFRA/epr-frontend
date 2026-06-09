@@ -165,20 +165,27 @@
  */
 
 /**
- * @typedef {{ tonnageDelta: number }} PeriodStatusByChange
+ * @typedef {{ count: number, tonnageDelta: number }} LoadSummary
  */
 
 /**
  * @typedef {{
- *   added: PeriodStatusByChange | null,
- *   adjusted: PeriodStatusByChange | null
+ *   included: LoadSummary,
+ *   excluded: LoadSummary
+ * }} PeriodStatusByChange
+ */
+
+/**
+ * @typedef {{
+ *   added: PeriodStatusByChange,
+ *   adjusted: PeriodStatusByChange
  * }} PeriodStatus
  */
 
 /**
  * @typedef {{
- *   open: PeriodStatus | null,
- *   closed: PeriodStatus | null
+ *   open: PeriodStatus,
+ *   closed: PeriodStatus
  * }} LoadsByPeriodStatus
  */
 

@@ -3,7 +3,7 @@ import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { LoadsByPeriodStatus, PeriodStatus } from './types.js'
+ * @import { LoadsByPeriodStatus, PeriodStatus, PeriodStatusByChange } from './types.js'
  */
 
 const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
@@ -17,32 +17,44 @@ const isRegisteredOnlyProcessingType = (processingType) =>
   processingType === PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
 
 /**
- * Transforms a period's adjusted section into a view-friendly shape
- * with absolute tonnage and direction for the template.
- * @param {PeriodStatus['adjusted']} adjusted
+ * Flattens the BE's included/excluded shape into a view model for a single
+ * change type (added or adjusted). Returns null when the bucket is empty
+ * (total count is 0).
+ * @param {PeriodStatusByChange} changeSection
+ * @returns {{ count: number, tonnageDelta: number, absoluteTonnage: number, addsToBalance: boolean, included: { count: number }, excluded: { count: number } } | null}
  */
-const buildAdjustedViewModel = (adjusted) => {
-  if (!adjusted) {
+const buildChangeSectionViewModel = (changeSection) => {
+  const count = changeSection.included.count + changeSection.excluded.count
+
+  if (count === 0) {
     return null
   }
+
+  const tonnageDelta =
+    changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
+
   return {
-    tonnageDelta: adjusted.tonnageDelta,
-    absoluteTonnage: Math.abs(adjusted.tonnageDelta),
-    addsToBalance: adjusted.tonnageDelta >= 0
+    count,
+    tonnageDelta,
+    absoluteTonnage: Math.abs(tonnageDelta),
+    addsToBalance: tonnageDelta >= 0,
+    included: { count: changeSection.included.count },
+    excluded: { count: changeSection.excluded.count }
   }
 }
 
 /**
- * @param {PeriodStatus | null} period
+ * @param {PeriodStatus} period
  */
 const buildPeriodViewModel = (period) => {
-  if (!period) {
+  const added = buildChangeSectionViewModel(period.added)
+  const adjusted = buildChangeSectionViewModel(period.adjusted)
+
+  if (!added && !adjusted) {
     return null
   }
-  return {
-    added: period.added,
-    adjusted: buildAdjustedViewModel(period.adjusted)
-  }
+
+  return { added, adjusted }
 }
 
 /**
@@ -55,12 +67,17 @@ const buildEnhancedCheckViewModel = (loadsByPeriodStatus, processingType) => {
   const isAccredited =
     !!processingType && !isRegisteredOnlyProcessingType(processingType)
 
-  const data = loadsByPeriodStatus ?? { open: null, closed: null }
+  if (!loadsByPeriodStatus) {
+    return {
+      periodSections: { open: null, closed: null },
+      isAccredited
+    }
+  }
 
   return {
     periodSections: {
-      open: buildPeriodViewModel(data.open),
-      closed: buildPeriodViewModel(data.closed)
+      open: buildPeriodViewModel(loadsByPeriodStatus.open),
+      closed: buildPeriodViewModel(loadsByPeriodStatus.closed)
     },
     isAccredited
   }
