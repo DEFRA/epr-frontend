@@ -30,8 +30,11 @@ const buildChangeSectionViewModel = (changeSection) => {
     return null
   }
 
-  const tonnageDelta =
-    changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
+  const tonnageDelta = parseFloat(
+    (
+      changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
+    ).toFixed(4)
+  )
 
   return {
     count,
