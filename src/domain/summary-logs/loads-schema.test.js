@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   loadCategorySchema,
+  loadsByPeriodStatusSchema,
   summaryLogStatusResponseSchema
 } from './loads-schema.js'
 
@@ -33,6 +34,71 @@ describe('loadCategorySchema validation', () => {
 
       expect(error?.message).toContain('must be a string')
     })
+  })
+})
+
+describe('loadsByPeriodStatusSchema validation', () => {
+  const emptyBucket = () => ({
+    included: { count: 0, tonnageDelta: 0 },
+    excluded: { count: 0, tonnageDelta: 0 }
+  })
+
+  const emptyPeriod = () => ({
+    added: emptyBucket(),
+    adjusted: emptyBucket()
+  })
+
+  it('should accept a valid loadsByPeriodStatus payload', () => {
+    const { error } = loadsByPeriodStatusSchema.validate({
+      open: {
+        added: {
+          included: { count: 3, tonnageDelta: 10 },
+          excluded: { count: 1, tonnageDelta: 0 }
+        },
+        adjusted: emptyBucket()
+      },
+      closed: emptyPeriod()
+    })
+
+    expect(error).toBeUndefined()
+  })
+
+  it('should accept negative tonnageDelta', () => {
+    const { error } = loadsByPeriodStatusSchema.validate({
+      open: emptyPeriod(),
+      closed: {
+        added: emptyBucket(),
+        adjusted: {
+          included: { count: 2, tonnageDelta: -5.5 },
+          excluded: { count: 0, tonnageDelta: 0 }
+        }
+      }
+    })
+
+    expect(error).toBeUndefined()
+  })
+
+  it('should reject missing open period', () => {
+    const { error } = loadsByPeriodStatusSchema.validate({
+      closed: emptyPeriod()
+    })
+
+    expect(error?.message).toContain('"open" is required')
+  })
+
+  it('should reject negative count', () => {
+    const { error } = loadsByPeriodStatusSchema.validate({
+      open: {
+        added: {
+          included: { count: -1, tonnageDelta: 0 },
+          excluded: { count: 0, tonnageDelta: 0 }
+        },
+        adjusted: emptyBucket()
+      },
+      closed: emptyPeriod()
+    })
+
+    expect(error?.message).toContain('must be greater than or equal to 0')
   })
 })
 
