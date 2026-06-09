@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -6,7 +5,7 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -86,369 +85,88 @@ describe('#tonnesRecycledController', () => {
     vi.clearAllMocks()
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', true)
+  describe('GET', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        reprocessorRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
+    it('should return 200 for reprocessor with monthly cadence', async ({
+      server
+    }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
     })
 
-    describe('GET', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          reprocessorRegistration
-        )
-        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    it('should display hint text', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
       })
 
-      it('should return 200 for reprocessor with monthly cadence', async ({
-        server
-      }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
-      it('should display hint text', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        expect(result).toContain('This total may differ from the')
-      })
-
-      it('should display heading and pre-fill saved tonnage unchanged', async ({
-        server
-      }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          recyclingActivity: {
-            ...reportDetail.recyclingActivity,
-            tonnageRecycled: 150.5
-          }
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        const { body } = new JSDOM(result).window.document
-        const headingName =
-          /How many tonnes of plastic packaging waste did you recycle in January\?/
-
-        expect(
-          getByRole(body, 'heading', { level: 1, name: headingName })
-        ).toBeDefined()
-        expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
-          '150.5'
-        )
-      })
-
-      it('should return 200 for registered-only reprocessor', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyReprocessor
-        )
-
-        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-recycled`
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: quarterlyUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
-      it('should return 404 for exporter registration', async ({ server }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          exporterRegistration
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      })
-
-      it('should return 404 when report is not in progress', async ({
-        server
-      }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          status: { currentStatus: 'ready_to_submit' }
-        })
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
-      })
+      expect(result).toContain('This total may differ from the')
     })
 
-    describe('POST', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          reprocessorRegistration
-        )
-        vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-        vi.mocked(updateReport).mockResolvedValue(undefined)
+    it('should display heading and pre-fill saved tonnage unchanged', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...reportDetail,
+        recyclingActivity: {
+          ...reportDetail.recyclingActivity,
+          tonnageRecycled: 150.5
+        }
       })
 
-      describe('csrf protection', () => {
-        it('should reject POST without CSRF token', async ({ server }) => {
-          const { statusCode } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            payload: {}
-          })
-
-          expect(statusCode).toBe(statusCodes.forbidden)
-        })
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
       })
 
-      describe('when continue is clicked with valid tonnage', () => {
-        it('should redirect to tonnes-not-recycled', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+      const { body } = new JSDOM(result).window.document
+      const headingName =
+        /How many tonnes of plastic packaging waste did you recycle in January\?/
 
-          const { statusCode, headers } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: 100.5, action: 'continue' }
-          })
-
-          expect(statusCode).toBe(statusCodes.found)
-          expect(headers.location).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/tonnes-not-recycled`
-          )
-        })
-
-        it('should call updateReport with tonnageRecycled', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: 100.5, action: 'continue' }
-          })
-
-          expect(updateReport).toHaveBeenCalledWith(
-            organisationId,
-            registrationId,
-            2026,
-            'monthly',
-            1,
-            { tonnageRecycled: 100.5 },
-            'mock-id-token'
-          )
-        })
-      })
-
-      describe('when save is clicked', () => {
-        it('should redirect to reports list', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { statusCode, headers } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: 0, action: 'save' }
-          })
-
-          expect(statusCode).toBe(statusCodes.found)
-          expect(headers.location).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports`
-          )
-        })
-
-        it('should redirect to reports list when tonnage is empty', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { statusCode, headers } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: '', action: 'save' }
-          })
-
-          expect(statusCode).toBe(statusCodes.found)
-          expect(headers.location).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports`
-          )
-        })
-
-        it('should not call updateReport when tonnage is empty', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: '', action: 'save' }
-          })
-
-          expect(updateReport).not.toHaveBeenCalled()
-        })
-
-        it('should show error when tonnage is non-numeric', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { result } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: 'abc', action: 'save' }
-          })
-
-          const { body } = new JSDOM(result).window.document
-          const alert = getByRole(body, 'alert')
-
-          expect(
-            getByText(
-              alert,
-              /Enter the total tonnage in digits, using a decimal point if needed/
-            )
-          ).toBeDefined()
-        })
-      })
-
-      describe('validation errors', () => {
-        it('should show error when tonnage is empty', async ({ server }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { result } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: '', action: 'continue' }
-          })
-
-          const { body } = new JSDOM(result).window.document
-          const alert = getByRole(body, 'alert')
-
-          expect(
-            getByText(
-              alert,
-              /Enter the total tonnage of packaging waste recycled/
-            )
-          ).toBeDefined()
-        })
-
-        it('should show error when tonnage is non-numeric', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { result } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: 'abc', action: 'continue' }
-          })
-
-          const { body } = new JSDOM(result).window.document
-          const alert = getByRole(body, 'alert')
-
-          expect(
-            getByText(
-              alert,
-              /Enter the total tonnage in digits, using a decimal point if needed/
-            )
-          ).toBeDefined()
-        })
-
-        it('should show error when tonnage has more than 2 decimal places', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { result } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, tonnageRecycled: 12.345, action: 'continue' }
-          })
-
-          const { body } = new JSDOM(result).window.document
-          const alert = getByRole(body, 'alert')
-
-          expect(
-            getByText(
-              alert,
-              /Total tonnage should only have two digits after the decimal point/
-            )
-          ).toBeDefined()
-        })
-      })
-    })
-  })
-
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', false)
+      expect(
+        getByRole(body, 'heading', { level: 1, name: headingName })
+      ).toBeDefined()
+      expect(getByRole(body, 'textbox', { name: headingName }).value).toBe(
+        '150.5'
+      )
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
+    it('should return 200 for registered-only reprocessor', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyReprocessor
+      )
+
+      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-recycled`
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: quarterlyUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('should return 404', async ({ server }) => {
+    it('should return 404 for exporter registration', async ({ server }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+
       const { statusCode } = await server.inject({
         method: 'GET',
         url: baseUrl,
@@ -456,6 +174,257 @@ describe('#tonnesRecycledController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('should return 404 when report is not in progress', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...reportDetail,
+        status: { currentStatus: 'ready_to_submit' }
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('POST', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        reprocessorRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(updateReport).mockResolvedValue(undefined)
+    })
+
+    describe('csrf protection', () => {
+      it('should reject POST without CSRF token', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          payload: {}
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
+      })
+    })
+
+    describe('when continue is clicked with valid tonnage', () => {
+      it('should redirect to tonnes-not-recycled', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: 100.5, action: 'continue' }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/tonnes-not-recycled`
+        )
+      })
+
+      it('should call updateReport with tonnageRecycled', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: 100.5, action: 'continue' }
+        })
+
+        expect(updateReport).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          2026,
+          'monthly',
+          1,
+          { tonnageRecycled: 100.5 },
+          'mock-id-token'
+        )
+      })
+    })
+
+    describe('when save is clicked', () => {
+      it('should redirect to reports list', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: 0, action: 'save' }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      })
+
+      it('should redirect to reports list when tonnage is empty', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: '', action: 'save' }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      })
+
+      it('should not call updateReport when tonnage is empty', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: '', action: 'save' }
+        })
+
+        expect(updateReport).not.toHaveBeenCalled()
+      })
+
+      it('should show error when tonnage is non-numeric', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: 'abc', action: 'save' }
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(
+            alert,
+            /Enter the total tonnage in digits, using a decimal point if needed/
+          )
+        ).toBeDefined()
+      })
+    })
+
+    describe('validation errors', () => {
+      it('should show error when tonnage is empty', async ({ server }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: '', action: 'continue' }
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(
+            alert,
+            /Enter the total tonnage of packaging waste recycled/
+          )
+        ).toBeDefined()
+      })
+
+      it('should show error when tonnage is non-numeric', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: 'abc', action: 'continue' }
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(
+            alert,
+            /Enter the total tonnage in digits, using a decimal point if needed/
+          )
+        ).toBeDefined()
+      })
+
+      it('should show error when tonnage has more than 2 decimal places', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, tonnageRecycled: 12.345, action: 'continue' }
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const alert = getByRole(body, 'alert')
+
+        expect(
+          getByText(
+            alert,
+            /Total tonnage should only have two digits after the decimal point/
+          )
+        ).toBeDefined()
+      })
     })
   })
 })

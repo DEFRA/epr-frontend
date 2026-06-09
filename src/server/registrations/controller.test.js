@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -12,7 +11,7 @@ import {
 } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -819,112 +818,50 @@ describe('#accreditationDashboardController', () => {
       )
     })
 
-    describe('when feature flag is enabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.reports', true)
+    it('should display Manage reports link', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
       })
 
-      afterAll(() => {
-        config.reset('featureFlags.reports')
-      })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-      it('should display Manage reports link', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
+      const reportsCard = getByRole(body, 'heading', {
+        name: 'Reports',
+        level: 3
+      }).closest('.govuk-summary-card')
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+      const card = within(reportsCard)
 
-        const reportsCard = getByRole(body, 'heading', {
-          name: 'Reports',
-          level: 3
-        }).closest('.govuk-summary-card')
-
-        const card = within(reportsCard)
-
-        expect(
-          card
-            .getByRole('link', { name: 'Manage reports' })
-            .getAttribute('href')
-        ).toBe(
-          '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/reports'
-        )
-      })
-
-      it('should not display reports not available message', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const reportsCard = getByRole(body, 'heading', {
-          name: 'Reports',
-          level: 3
-        }).closest('.govuk-summary-card')
-
-        expect(
-          within(reportsCard).queryByText('Reporting is not yet available.')
-        ).toBeNull()
-      })
+      expect(
+        card.getByRole('link', { name: 'Manage reports' }).getAttribute('href')
+      ).toBe(
+        '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved/reports'
+      )
     })
 
-    describe('when feature flag is disabled', () => {
-      beforeAll(() => {
-        config.set('featureFlags.reports', false)
+    it('should not display reports not available message', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
+        auth: mockAuth
       })
 
-      afterAll(() => {
-        config.reset('featureFlags.reports')
-      })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-      it('should display reports not available message', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
+      const reportsCard = getByRole(body, 'heading', {
+        name: 'Reports',
+        level: 3
+      }).closest('.govuk-summary-card')
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const reportsCard = getByRole(body, 'heading', {
-          name: 'Reports',
-          level: 3
-        }).closest('.govuk-summary-card')
-
-        expect(
-          within(reportsCard).queryByText('Reporting is not yet available.')
-        ).not.toBeNull()
-      })
-
-      it('should not display Manage reports link', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-glass-approved',
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const reportsCard = getByRole(body, 'heading', {
-          name: 'Reports',
-          level: 3
-        }).closest('.govuk-summary-card')
-
-        expect(
-          queryByRole(reportsCard, 'link', { name: 'Manage reports' })
-        ).toBeNull()
-      })
+      expect(
+        within(reportsCard).queryByText('Reporting is not yet available.')
+      ).toBeNull()
     })
   })
 

@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
@@ -312,973 +311,933 @@ describe('#listReportsController', () => {
     vi.useRealTimers()
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', true)
+  describe('for accredited operator (monthly periods)', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
+    it('should return 200', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
     })
 
-    describe('for accredited operator (monthly periods)', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
+    it('should display page heading', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should return 200', async ({ server }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        expect(statusCode).toBe(statusCodes.ok)
+      const heading = getByRole(body, 'heading', {
+        name: /Reports/,
+        level: 1
       })
 
-      it('should display page heading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const heading = getByRole(body, 'heading', {
-          name: /Reports/,
-          level: 1
-        })
-
-        expect(heading).toBeDefined()
-      })
-
-      it('should display back link to dashboard', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const backLink = body.querySelector('.govuk-back-link')
-
-        expect(backLink).not.toBeNull()
-        expect(backLink?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001'
-        )
-      })
-
-      it('should display Monthly subheading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const heading = getByRole(body, 'heading', {
-          name: 'Monthly',
-          level: 2
-        })
-
-        expect(heading).toBeDefined()
-      })
-
-      it('should render monthly periods in a table', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const table = body.querySelector('.govuk-table')
-
-        expect(table).not.toBeNull()
-        expect(table?.textContent).toContain('January 2026')
-        expect(table?.textContent).toContain('February 2026')
-        expect(table?.textContent).toContain('March 2026')
-      })
-
-      it('should display Select links for accredited reprocessor periods', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const selectLinks = body.querySelectorAll('.govuk-table a.govuk-link')
-
-        expect(selectLinks).toHaveLength(3)
-        expect(selectLinks[0]?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
-        )
-        expect(selectLinks[0]?.textContent).toContain('Select')
-      })
-
-      it('should not display Quarterly subheading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        expect(
-          queryByRole(body, 'heading', {
-            name: 'Quarterly',
-            level: 2
-          })
-        ).toBeNull()
-      })
-
-      it('should display column headers in order', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const headerTexts = Array.from(
-          body.querySelectorAll('.govuk-table thead th')
-        ).map((th) => th.textContent?.trim())
-
-        expect(headerTexts).toStrictEqual(['Period', 'Status', 'Date due', ''])
-      })
-
-      it('should display formatted due date per row', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const dueDateCells = Array.from(
-          body.querySelectorAll('.govuk-table tbody tr')
-        ).map((tr) => tr.querySelectorAll('td')[2]?.textContent?.trim())
-
-        expect(dueDateCells).toStrictEqual([
-          '20 February 2026',
-          '20 March 2026',
-          '20 April 2026'
-        ])
-      })
-
-      it('should display Due tag for ended periods', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const tagData = extractTagData(body)
-
-        expect(tagData).toStrictEqual([
-          { text: 'Due', modifier: 'govuk-tag--orange' },
-          { text: 'Due', modifier: 'govuk-tag--orange' }
-        ])
-      })
-
-      it('should not display Due tag for current period', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const rows = body.querySelectorAll('.govuk-table tbody tr')
-        const marchRow = rows[2]
-        const tag = marchRow?.querySelector('.govuk-tag')
-
-        expect(tag).toBeNull()
-      })
+      expect(heading).toBeDefined()
     })
 
-    describe('for ended period with in_progress report', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(
-          monthlyWithReportResponse
-        )
+    it('should display back link to dashboard', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should display In progress tag', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+      const backLink = body.querySelector('.govuk-back-link')
 
-        const tagData = extractTagData(body)
-
-        expect(tagData).toStrictEqual([
-          { text: 'In progress', modifier: 'govuk-tag--yellow' }
-        ])
-      })
-
-      it('should display Continue link instead of Select', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const link = body.querySelector('.govuk-table a.govuk-link')
-
-        expect(link).not.toBeNull()
-        expect(link?.textContent).toContain('Continue')
-        expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/tonnes-recycled'
-        )
-      })
-
-      it('should link Continue to prn-summary for accredited exporter', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedExporter
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const link = body.querySelector('.govuk-table a.govuk-link')
-
-        expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/prn-summary'
-        )
-      })
-
-      it('should not display Due tag', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
-        const dueTag = Array.from(tags).find(
-          (tag) => tag.textContent?.trim() === 'Due'
-        )
-
-        expect(dueTag).toBeUndefined()
-      })
+      expect(backLink).not.toBeNull()
+      expect(backLink?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001'
+      )
     })
 
-    describe('for ended period with ready_to_submit report', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(
-          monthlyWithReadyToSubmitResponse
-        )
+    it('should display Monthly subheading', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should display Ready to submit tag', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const tagData = extractTagData(body)
-
-        expect(tagData).toStrictEqual([
-          { text: 'Ready to submit', modifier: null }
-        ])
+      const heading = getByRole(body, 'heading', {
+        name: 'Monthly',
+        level: 2
       })
 
-      it('should display Review and submit link to submit page', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const link = body.querySelector('.govuk-table a.govuk-link')
-
-        expect(link).not.toBeNull()
-        expect(link?.textContent).toContain('Review and submit')
-        expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submit'
-        )
-      })
+      expect(heading).toBeDefined()
     })
 
-    describe('for ended period with submitted report', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(
-          monthlyWithSubmittedResponse
-        )
+    it('should render monthly periods in a table', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should display Submitted tag', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+      const table = body.querySelector('.govuk-table')
 
-        const tagData = extractTagData(body)
-
-        expect(tagData).toStrictEqual([
-          { text: 'Submitted', modifier: 'govuk-tag--green' }
-        ])
-      })
-
-      it('should display View link to view reports page', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const link = body.querySelector('.govuk-table a.govuk-link')
-
-        expect(link).not.toBeNull()
-        expect(link?.textContent).toContain('View')
-        expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/view'
-        )
-      })
-
-      it('should render empty Date and time + Submitted by when backend has not supplied them yet', async ({
-        server
-      }) => {
-        vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: CADENCE.MONTHLY,
-          reportingPeriods: [
-            {
-              year: 2026,
-              period: 1,
-              startDate: '2026-01-01',
-              endDate: '2026-01-31',
-              dueDate: '2026-02-20',
-              report: {
-                id: 'report-002',
-                status: SUBMISSION_STATUS.SUBMITTED,
-                submittedAt: null,
-                submittedBy: null
-              }
-            }
-          ]
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const cells = Array.from(
-          body.querySelectorAll('.govuk-table tbody tr td')
-        ).map((td) => td.textContent?.trim())
-
-        expect(cells).toStrictEqual([
-          'January 2026',
-          'Submitted',
-          '',
-          '',
-          'View January 2026'
-        ])
-      })
+      expect(table).not.toBeNull()
+      expect(table?.textContent).toContain('January 2026')
+      expect(table?.textContent).toContain('February 2026')
+      expect(table?.textContent).toContain('March 2026')
     })
 
-    describe('for mixed-status periods', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(
-          monthlyMixedStatusResponse
-        )
+    it('should display Select links for accredited reprocessor periods', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should display Action required and Submitted section headings', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+      const selectLinks = body.querySelectorAll('.govuk-table a.govuk-link')
 
-        const sectionHeadings = Array.from(
-          body.querySelectorAll('h3.govuk-heading-m')
-        ).map((h) => h.textContent?.trim())
-
-        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
-      })
-
-      it('should render the action-required table', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const actionRequiredTable = findSection(body, 'Action required')
-
-        expect(readTable(actionRequiredTable)).toStrictEqual({
-          headers: ['Period', 'Status', 'Date due', ''],
-          rows: [
-            [
-              'February 2026',
-              'In progress',
-              '20 March 2026',
-              'Continue February 2026'
-            ],
-            ['March 2026', '', '20 April 2026', 'Select March 2026']
-          ]
-        })
-      })
-
-      it('should render the submitted table', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const submittedTable = findSection(body, 'Submitted')
-
-        expect(readTable(submittedTable)).toStrictEqual({
-          headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
-          rows: [
-            [
-              'January 2026',
-              'Submitted',
-              '5 February 2026, 6:22pm',
-              'Matt Davis',
-              'View January 2026'
-            ]
-          ]
-        })
-      })
+      expect(selectLinks).toHaveLength(3)
+      expect(selectLinks[0]?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+      )
+      expect(selectLinks[0]?.textContent).toContain('Select')
     })
 
-    describe('when only active periods exist', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
+    it('should not display Quarterly subheading', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should display both section headings', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const sectionHeadings = Array.from(
-          body.querySelectorAll('h3.govuk-heading-m')
-        ).map((h) => h.textContent?.trim())
-
-        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
-      })
-
-      it('should render the submitted-section placeholder in place of a table', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const submittedSection = findSection(body, 'Submitted')
-
-        expect({
-          tag: submittedSection?.tagName,
-          className: submittedSection?.className,
-          text: submittedSection?.textContent?.trim()
-        }).toStrictEqual({
-          tag: 'P',
-          className: 'govuk-body app-colour-secondary',
-          text: 'You do not currently have any submitted reports.'
-        })
-      })
-    })
-
-    describe('when only submitted periods exist', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(
-          monthlyWithSubmittedResponse
-        )
-      })
-
-      it('should display both section headings', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const sectionHeadings = Array.from(
-          body.querySelectorAll('h3.govuk-heading-m')
-        ).map((h) => h.textContent?.trim())
-
-        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
-      })
-
-      it('should render the action-required placeholder in place of a table', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const actionRequiredSection = findSection(body, 'Action required')
-
-        expect({
-          tag: actionRequiredSection?.tagName,
-          className: actionRequiredSection?.className,
-          text: actionRequiredSection?.textContent?.trim()
-        }).toStrictEqual({
-          tag: 'P',
-          className: 'govuk-body app-colour-secondary',
-          text: 'You do not currently have any reports that require an action.'
-        })
-      })
-    })
-
-    describe('for registered-only exporter (quarterly)', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyExporter
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
-      })
-
-      it('should return 200', async ({ server }) => {
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
-      it('should display Quarterly subheading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const heading = getByRole(body, 'heading', {
+      expect(
+        queryByRole(body, 'heading', {
           name: 'Quarterly',
           level: 2
         })
+      ).toBeNull()
+    })
 
-        expect(heading).toBeDefined()
+    it('should display column headers in order', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should render quarterly periods in a table', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+      const headerTexts = Array.from(
+        body.querySelectorAll('.govuk-table thead th')
+      ).map((th) => th.textContent?.trim())
 
-        const table = body.querySelector('.govuk-table')
+      expect(headerTexts).toStrictEqual(['Period', 'Status', 'Date due', ''])
+    })
 
-        expect(table).not.toBeNull()
-        expect(table?.textContent).toContain('Quarter 1, 2026')
+    it('should display formatted due date per row', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should display Select links for exporter', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
 
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
+      const dueDateCells = Array.from(
+        body.querySelectorAll('.govuk-table tbody tr')
+      ).map((tr) => tr.querySelectorAll('td')[2]?.textContent?.trim())
 
-        const selectLinks = body.querySelectorAll('.govuk-table a.govuk-link')
+      expect(dueDateCells).toStrictEqual([
+        '20 February 2026',
+        '20 March 2026',
+        '20 April 2026'
+      ])
+    })
 
-        expect(selectLinks).toHaveLength(1)
-        expect(selectLinks[0]?.getAttribute('href')).toBe(
-          '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1'
-        )
-        expect(selectLinks[0]?.textContent).toContain('Select')
+    it('should display Due tag for ended periods', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
       })
 
-      it('should link Continue to tonnes-not-exported for in-progress report', async ({
-        server
-      }) => {
-        vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: CADENCE.QUARTERLY,
-          reportingPeriods: [
-            {
-              year: 2026,
-              period: 1,
-              startDate: '2026-01-01',
-              endDate: '2026-03-31',
-              dueDate: '2026-04-20',
-              report: {
-                id: 'report-003',
-                status: SUBMISSION_STATUS.IN_PROGRESS,
-                submittedAt: null,
-                submittedBy: null
-              }
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const tagData = extractTagData(body)
+
+      expect(tagData).toStrictEqual([
+        { text: 'Due', modifier: 'govuk-tag--orange' },
+        { text: 'Due', modifier: 'govuk-tag--orange' }
+      ])
+    })
+
+    it('should not display Due tag for current period', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const rows = body.querySelectorAll('.govuk-table tbody tr')
+      const marchRow = rows[2]
+      const tag = marchRow?.querySelector('.govuk-tag')
+
+      expect(tag).toBeNull()
+    })
+  })
+
+  describe('for ended period with in_progress report', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithReportResponse
+      )
+    })
+
+    it('should display In progress tag', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const tagData = extractTagData(body)
+
+      expect(tagData).toStrictEqual([
+        { text: 'In progress', modifier: 'govuk-tag--yellow' }
+      ])
+    })
+
+    it('should display Continue link instead of Select', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('.govuk-table a.govuk-link')
+
+      expect(link).not.toBeNull()
+      expect(link?.textContent).toContain('Continue')
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/tonnes-recycled'
+      )
+    })
+
+    it('should link Continue to prn-summary for accredited exporter', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedExporter
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('.govuk-table a.govuk-link')
+
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/prn-summary'
+      )
+    })
+
+    it('should not display Due tag', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+      const dueTag = Array.from(tags).find(
+        (tag) => tag.textContent?.trim() === 'Due'
+      )
+
+      expect(dueTag).toBeUndefined()
+    })
+  })
+
+  describe('for ended period with ready_to_submit report', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithReadyToSubmitResponse
+      )
+    })
+
+    it('should display Ready to submit tag', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const tagData = extractTagData(body)
+
+      expect(tagData).toStrictEqual([
+        { text: 'Ready to submit', modifier: null }
+      ])
+    })
+
+    it('should display Review and submit link to submit page', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('.govuk-table a.govuk-link')
+
+      expect(link).not.toBeNull()
+      expect(link?.textContent).toContain('Review and submit')
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submit'
+      )
+    })
+  })
+
+  describe('for ended period with submitted report', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithSubmittedResponse
+      )
+    })
+
+    it('should display Submitted tag', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const tagData = extractTagData(body)
+
+      expect(tagData).toStrictEqual([
+        { text: 'Submitted', modifier: 'govuk-tag--green' }
+      ])
+    })
+
+    it('should display View link to view reports page', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('.govuk-table a.govuk-link')
+
+      expect(link).not.toBeNull()
+      expect(link?.textContent).toContain('View')
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/view'
+      )
+    })
+
+    it('should render empty Date and time + Submitted by when backend has not supplied them yet', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [
+          {
+            year: 2026,
+            period: 1,
+            startDate: '2026-01-01',
+            endDate: '2026-01-31',
+            dueDate: '2026-02-20',
+            report: {
+              id: 'report-002',
+              status: SUBMISSION_STATUS.SUBMITTED,
+              submittedAt: null,
+              submittedBy: null
             }
-          ]
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const link = body.querySelector('.govuk-table a.govuk-link')
-
-        expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/tonnes-not-exported'
-        )
-      })
-
-      it('should default Continue link to supporting-information for unknown processing type', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...registeredOnlyExporter,
-          registration: {
-            ...registeredOnlyExporter.registration,
-            wasteProcessingType: 'unknown'
           }
-        })
-        vi.mocked(fetchReportingPeriods).mockResolvedValue({
-          cadence: CADENCE.QUARTERLY,
-          reportingPeriods: [
-            {
-              year: 2026,
-              period: 1,
-              startDate: '2026-01-01',
-              endDate: '2026-03-31',
-              dueDate: '2026-04-20',
-              report: {
-                id: 'report-004',
-                status: SUBMISSION_STATUS.IN_PROGRESS,
-                submittedAt: null,
-                submittedBy: null
-              }
-            }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const cells = Array.from(
+        body.querySelectorAll('.govuk-table tbody tr td')
+      ).map((td) => td.textContent?.trim())
+
+      expect(cells).toStrictEqual([
+        'January 2026',
+        'Submitted',
+        '',
+        '',
+        'View January 2026'
+      ])
+    })
+  })
+
+  describe('for mixed-status periods', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyMixedStatusResponse
+      )
+    })
+
+    it('should display Action required and Submitted section headings', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const sectionHeadings = Array.from(
+        body.querySelectorAll('h3.govuk-heading-m')
+      ).map((h) => h.textContent?.trim())
+
+      expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
+    })
+
+    it('should render the action-required table', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const actionRequiredTable = findSection(body, 'Action required')
+
+      expect(readTable(actionRequiredTable)).toStrictEqual({
+        headers: ['Period', 'Status', 'Date due', ''],
+        rows: [
+          [
+            'February 2026',
+            'In progress',
+            '20 March 2026',
+            'Continue February 2026'
+          ],
+          ['March 2026', '', '20 April 2026', 'Select March 2026']
+        ]
+      })
+    })
+
+    it('should render the submitted table', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const submittedTable = findSection(body, 'Submitted')
+
+      expect(readTable(submittedTable)).toStrictEqual({
+        headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
+        rows: [
+          [
+            'January 2026',
+            'Submitted',
+            '5 February 2026, 6:22pm',
+            'Matt Davis',
+            'View January 2026'
           ]
-        })
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const link = body.querySelector('.govuk-table a.govuk-link')
-
-        expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/supporting-information'
-        )
-      })
-
-      it('should not display Monthly subheading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        expect(
-          queryByRole(body, 'heading', {
-            name: 'Monthly',
-            level: 2
-          })
-        ).toBeNull()
-      })
-
-      it('should not display Due tag for current quarter', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const tags = body.querySelectorAll('.govuk-table .govuk-tag')
-
-        expect(tags).toHaveLength(0)
-      })
-    })
-
-    describe('for registered-only reprocessor (quarterly)', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyReprocessor
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
-      })
-
-      it('should display Select links for reprocessor periods', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: reprocessorUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const link = body.querySelector('.govuk-table a.govuk-link')
-
-        expect(link).not.toBeNull()
-        expect(link?.getAttribute('href')).toBe(
-          '/organisations/org-789/registrations/reg-003/reports/2026/quarterly/1'
-        )
-        expect(link?.textContent).toContain('Select')
-
-        const hidden = link?.querySelector('.govuk-visually-hidden')
-        expect(hidden?.textContent).toBe('Quarter 1, 2026')
-      })
-    })
-
-    describe('when no periods have data', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          accreditedRegistration
-        )
-        vi.mocked(fetchReportingPeriods).mockResolvedValue(emptyResponse)
-      })
-
-      it('should display cadence heading and both section headings', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const cadenceHeading = getByRole(body, 'heading', {
-          name: 'Monthly',
-          level: 2
-        })
-        const sectionHeadings = Array.from(
-          body.querySelectorAll('h3.govuk-heading-m')
-        ).map((h) => h.textContent?.trim())
-
-        expect(cadenceHeading).toBeDefined()
-        expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
-      })
-
-      it('should render the action-required placeholder in place of a table', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const actionRequiredSection = findSection(body, 'Action required')
-
-        expect({
-          tag: actionRequiredSection?.tagName,
-          className: actionRequiredSection?.className,
-          text: actionRequiredSection?.textContent?.trim()
-        }).toStrictEqual({
-          tag: 'P',
-          className: 'govuk-body app-colour-secondary',
-          text: 'You do not currently have any reports that require an action.'
-        })
-      })
-
-      it('should render the submitted-section placeholder in place of a table', async ({
-        server
-      }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const submittedSection = findSection(body, 'Submitted')
-
-        expect({
-          tag: submittedSection?.tagName,
-          className: submittedSection?.className,
-          text: submittedSection?.textContent?.trim()
-        }).toStrictEqual({
-          tag: 'P',
-          className: 'govuk-body app-colour-secondary',
-          text: 'You do not currently have any submitted reports.'
-        })
-      })
-    })
-
-    describe('error handling', () => {
-      it('should return 404 when registration not found', async ({
-        server
-      }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
-          Boom.notFound('Registration not found')
-        )
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: accreditedUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.notFound)
+        ]
       })
     })
   })
 
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', false)
+  describe('when only active periods exist', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(monthlyResponse)
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
+    it('should display both section headings', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const sectionHeadings = Array.from(
+        body.querySelectorAll('h3.govuk-heading-m')
+      ).map((h) => h.textContent?.trim())
+
+      expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
     })
 
-    it('should return 404', async ({ server }) => {
+    it('should render the submitted-section placeholder in place of a table', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const submittedSection = findSection(body, 'Submitted')
+
+      expect({
+        tag: submittedSection?.tagName,
+        className: submittedSection?.className,
+        text: submittedSection?.textContent?.trim()
+      }).toStrictEqual({
+        tag: 'P',
+        className: 'govuk-body app-colour-secondary',
+        text: 'You do not currently have any submitted reports.'
+      })
+    })
+  })
+
+  describe('when only submitted periods exist', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithSubmittedResponse
+      )
+    })
+
+    it('should display both section headings', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const sectionHeadings = Array.from(
+        body.querySelectorAll('h3.govuk-heading-m')
+      ).map((h) => h.textContent?.trim())
+
+      expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
+    })
+
+    it('should render the action-required placeholder in place of a table', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const actionRequiredSection = findSection(body, 'Action required')
+
+      expect({
+        tag: actionRequiredSection?.tagName,
+        className: actionRequiredSection?.className,
+        text: actionRequiredSection?.textContent?.trim()
+      }).toStrictEqual({
+        tag: 'P',
+        className: 'govuk-body app-colour-secondary',
+        text: 'You do not currently have any reports that require an action.'
+      })
+    })
+  })
+
+  describe('for registered-only exporter (quarterly)', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyExporter
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
+    })
+
+    it('should return 200', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it('should display Quarterly subheading', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const heading = getByRole(body, 'heading', {
+        name: 'Quarterly',
+        level: 2
+      })
+
+      expect(heading).toBeDefined()
+    })
+
+    it('should render quarterly periods in a table', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const table = body.querySelector('.govuk-table')
+
+      expect(table).not.toBeNull()
+      expect(table?.textContent).toContain('Quarter 1, 2026')
+    })
+
+    it('should display Select links for exporter', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const selectLinks = body.querySelectorAll('.govuk-table a.govuk-link')
+
+      expect(selectLinks).toHaveLength(1)
+      expect(selectLinks[0]?.getAttribute('href')).toBe(
+        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1'
+      )
+      expect(selectLinks[0]?.textContent).toContain('Select')
+    })
+
+    it('should link Continue to tonnes-not-exported for in-progress report', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.QUARTERLY,
+        reportingPeriods: [
+          {
+            year: 2026,
+            period: 1,
+            startDate: '2026-01-01',
+            endDate: '2026-03-31',
+            dueDate: '2026-04-20',
+            report: {
+              id: 'report-003',
+              status: SUBMISSION_STATUS.IN_PROGRESS,
+              submittedAt: null,
+              submittedBy: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('.govuk-table a.govuk-link')
+
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/tonnes-not-exported'
+      )
+    })
+
+    it('should default Continue link to supporting-information for unknown processing type', async ({
+      server
+    }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
+        ...registeredOnlyExporter,
+        registration: {
+          ...registeredOnlyExporter.registration,
+          wasteProcessingType: 'unknown'
+        }
+      })
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.QUARTERLY,
+        reportingPeriods: [
+          {
+            year: 2026,
+            period: 1,
+            startDate: '2026-01-01',
+            endDate: '2026-03-31',
+            dueDate: '2026-04-20',
+            report: {
+              id: 'report-004',
+              status: SUBMISSION_STATUS.IN_PROGRESS,
+              submittedAt: null,
+              submittedBy: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('.govuk-table a.govuk-link')
+
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/supporting-information'
+      )
+    })
+
+    it('should not display Monthly subheading', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(
+        queryByRole(body, 'heading', {
+          name: 'Monthly',
+          level: 2
+        })
+      ).toBeNull()
+    })
+
+    it('should not display Due tag for current quarter', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const tags = body.querySelectorAll('.govuk-table .govuk-tag')
+
+      expect(tags).toHaveLength(0)
+    })
+  })
+
+  describe('for registered-only reprocessor (quarterly)', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyReprocessor
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
+    })
+
+    it('should display Select links for reprocessor periods', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: reprocessorUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('.govuk-table a.govuk-link')
+
+      expect(link).not.toBeNull()
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-789/registrations/reg-003/reports/2026/quarterly/1'
+      )
+      expect(link?.textContent).toContain('Select')
+
+      const hidden = link?.querySelector('.govuk-visually-hidden')
+      expect(hidden?.textContent).toBe('Quarter 1, 2026')
+    })
+  })
+
+  describe('when no periods have data', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(emptyResponse)
+    })
+
+    it('should display cadence heading and both section headings', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const cadenceHeading = getByRole(body, 'heading', {
+        name: 'Monthly',
+        level: 2
+      })
+      const sectionHeadings = Array.from(
+        body.querySelectorAll('h3.govuk-heading-m')
+      ).map((h) => h.textContent?.trim())
+
+      expect(cadenceHeading).toBeDefined()
+      expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
+    })
+
+    it('should render the action-required placeholder in place of a table', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const actionRequiredSection = findSection(body, 'Action required')
+
+      expect({
+        tag: actionRequiredSection?.tagName,
+        className: actionRequiredSection?.className,
+        text: actionRequiredSection?.textContent?.trim()
+      }).toStrictEqual({
+        tag: 'P',
+        className: 'govuk-body app-colour-secondary',
+        text: 'You do not currently have any reports that require an action.'
+      })
+    })
+
+    it('should render the submitted-section placeholder in place of a table', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const submittedSection = findSection(body, 'Submitted')
+
+      expect({
+        tag: submittedSection?.tagName,
+        className: submittedSection?.className,
+        text: submittedSection?.textContent?.trim()
+      }).toStrictEqual({
+        tag: 'P',
+        className: 'govuk-body app-colour-secondary',
+        text: 'You do not currently have any submitted reports.'
+      })
+    })
+  })
+
+  describe('error handling', () => {
+    it('should return 404 when registration not found', async ({ server }) => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockRejectedValue(
+        Boom.notFound('Registration not found')
+      )
+
       const { statusCode } = await server.inject({
         method: 'GET',
         url: accreditedUrl,

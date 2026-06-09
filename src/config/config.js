@@ -327,20 +327,10 @@ export const config = convict({
       default: isProduction,
       env: 'AUDIT_ENABLED'
     }
-  },
-  featureFlags: {
-    reports: {
-      doc: 'Feature Flag: Enable reports',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_REPORTS'
-    }
   }
 })
 
 config.validate({ allowed: 'strict' })
-
-export const isReportsEnabled = () => config.get('featureFlags.reports')
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'

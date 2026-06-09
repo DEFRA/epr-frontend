@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { account } from '#server/account/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
@@ -39,7 +38,7 @@ export const router = {
         organisations,
         prns,
         registrations,
-        ...(config.get('featureFlags.reports') ? [reports] : []),
+        reports,
         summaryLog,
         summaryLogUpload
       ])

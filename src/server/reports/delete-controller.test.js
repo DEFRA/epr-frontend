@@ -1,11 +1,10 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -47,282 +46,219 @@ describe('#deleteController', () => {
     vi.clearAllMocks()
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', true)
+  describe('GET', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyExporter
+      )
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
-    })
-
-    describe('GET', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyExporter
-        )
+    it('should return 200', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
       })
 
-      it('should return 200', async ({ server }) => {
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it('should display the confirmation heading', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const heading = getByRole(body, 'heading', {
+        name: /Confirm deletion of this report/,
+        level: 1
+      })
+
+      expect(heading).toBeDefined()
+    })
+
+    it('should display the warning button', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const button = body.querySelector('.govuk-button--warning')
+
+      expect(button).not.toBeNull()
+      expect(button?.textContent?.trim()).toContain('Confirm deletion')
+      expect(button?.getAttribute('data-prevent-double-click')).toBe('true')
+    })
+
+    describe('back link', () => {
+      const host = 'localhost'
+      const refererFor = (path) => `http://${host}${path}`
+      const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
+      const periodPrefix = `${reportsListPath}/2026/quarterly/1`
+
+      it('should fall back to the reports list when no referer header is present', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+      })
+
+      it('should use the referer pathname as the back link when the referer is same-origin', async ({
+        server
+      }) => {
+        const checkYourAnswersPath = `${periodPrefix}/check-your-answers`
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host, referer: refererFor(checkYourAnswersPath) }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(checkYourAnswersPath)
+      })
+
+      it('should preserve the query string from the referer', async ({
+        server
+      }) => {
+        const refererPath = `${periodPrefix}/tonnage-input?step=2`
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host, referer: refererFor(refererPath) }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(refererPath)
+      })
+
+      it('should fall back to the reports list when the referer is cross-origin', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: {
+            host,
+            referer: 'https://evil.example.com/stolen'
+          }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+      })
+
+      it('should fall back to the reports list when the referer is malformed', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host, referer: 'not-a-valid-url' }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+      })
+
+      it('should fall back to the reports list when the referer points to the delete page itself', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { host, referer: refererFor(baseUrl) }
+        })
+
+        const dom = new JSDOM(result)
+        const backLink = dom.window.document.querySelector('.govuk-back-link')
+
+        expect(backLink?.getAttribute('href')).toBe(reportsListPath)
+      })
+    })
+
+    it('should display the warning and guidance text', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const paragraphs = body.querySelectorAll(
+        '.govuk-grid-column-two-thirds > p.govuk-body'
+      )
+
+      expect(paragraphs).toHaveLength(2)
+      expect(paragraphs[0].textContent).toContain('cannot be undone')
+      expect(paragraphs[1].textContent).toContain(
+        'start creating the report again'
+      )
+    })
+  })
+
+  describe('POST', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyExporter
+      )
+      vi.mocked(deleteReport).mockResolvedValue({ ok: true })
+    })
+
+    describe('csrf protection', () => {
+      it('should reject POST without CSRF token', async ({ server }) => {
         const { statusCode } = await server.inject({
-          method: 'GET',
+          method: 'POST',
           url: baseUrl,
-          auth: mockAuth
+          auth: mockAuth,
+          payload: {}
         })
 
-        expect(statusCode).toBe(statusCodes.ok)
-      })
-
-      it('should display the confirmation heading', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const heading = getByRole(body, 'heading', {
-          name: /Confirm deletion of this report/,
-          level: 1
-        })
-
-        expect(heading).toBeDefined()
-      })
-
-      it('should display the warning button', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-
-        const button = body.querySelector('.govuk-button--warning')
-
-        expect(button).not.toBeNull()
-        expect(button?.textContent?.trim()).toContain('Confirm deletion')
-        expect(button?.getAttribute('data-prevent-double-click')).toBe('true')
-      })
-
-      describe('back link', () => {
-        const host = 'localhost'
-        const refererFor = (path) => `http://${host}${path}`
-        const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-        const periodPrefix = `${reportsListPath}/2026/quarterly/1`
-
-        it('should fall back to the reports list when no referer header is present', async ({
-          server
-        }) => {
-          const { result } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { host }
-          })
-
-          const dom = new JSDOM(result)
-          const backLink = dom.window.document.querySelector('.govuk-back-link')
-
-          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
-        })
-
-        it('should use the referer pathname as the back link when the referer is same-origin', async ({
-          server
-        }) => {
-          const checkYourAnswersPath = `${periodPrefix}/check-your-answers`
-
-          const { result } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { host, referer: refererFor(checkYourAnswersPath) }
-          })
-
-          const dom = new JSDOM(result)
-          const backLink = dom.window.document.querySelector('.govuk-back-link')
-
-          expect(backLink?.getAttribute('href')).toBe(checkYourAnswersPath)
-        })
-
-        it('should preserve the query string from the referer', async ({
-          server
-        }) => {
-          const refererPath = `${periodPrefix}/tonnage-input?step=2`
-
-          const { result } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { host, referer: refererFor(refererPath) }
-          })
-
-          const dom = new JSDOM(result)
-          const backLink = dom.window.document.querySelector('.govuk-back-link')
-
-          expect(backLink?.getAttribute('href')).toBe(refererPath)
-        })
-
-        it('should fall back to the reports list when the referer is cross-origin', async ({
-          server
-        }) => {
-          const { result } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: {
-              host,
-              referer: 'https://evil.example.com/stolen'
-            }
-          })
-
-          const dom = new JSDOM(result)
-          const backLink = dom.window.document.querySelector('.govuk-back-link')
-
-          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
-        })
-
-        it('should fall back to the reports list when the referer is malformed', async ({
-          server
-        }) => {
-          const { result } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { host, referer: 'not-a-valid-url' }
-          })
-
-          const dom = new JSDOM(result)
-          const backLink = dom.window.document.querySelector('.govuk-back-link')
-
-          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
-        })
-
-        it('should fall back to the reports list when the referer points to the delete page itself', async ({
-          server
-        }) => {
-          const { result } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { host, referer: refererFor(baseUrl) }
-          })
-
-          const dom = new JSDOM(result)
-          const backLink = dom.window.document.querySelector('.govuk-back-link')
-
-          expect(backLink?.getAttribute('href')).toBe(reportsListPath)
-        })
-      })
-
-      it('should display the warning and guidance text', async ({ server }) => {
-        const { result } = await server.inject({
-          method: 'GET',
-          url: baseUrl,
-          auth: mockAuth
-        })
-
-        const dom = new JSDOM(result)
-        const { body } = dom.window.document
-        const paragraphs = body.querySelectorAll(
-          '.govuk-grid-column-two-thirds > p.govuk-body'
-        )
-
-        expect(paragraphs).toHaveLength(2)
-        expect(paragraphs[0].textContent).toContain('cannot be undone')
-        expect(paragraphs[1].textContent).toContain(
-          'start creating the report again'
-        )
+        expect(statusCode).toBe(statusCodes.forbidden)
       })
     })
 
-    describe('POST', () => {
-      beforeEach(() => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          registeredOnlyExporter
-        )
-        vi.mocked(deleteReport).mockResolvedValue({ ok: true })
-      })
-
-      describe('csrf protection', () => {
-        it('should reject POST without CSRF token', async ({ server }) => {
-          const { statusCode } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            payload: {}
-          })
-
-          expect(statusCode).toBe(statusCodes.forbidden)
-        })
-      })
-
-      describe('when confirm deletion is clicked', () => {
-        it('should call deleteReport and redirect to reports list', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          const { statusCode, headers } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb }
-          })
-
-          expect(statusCode).toBe(statusCodes.found)
-          expect(headers.location).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports`
-          )
-        })
-
-        it('should call deleteReport with correct parameters', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
-
-          await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb }
-          })
-
-          expect(deleteReport).toHaveBeenCalledWith(
-            organisationId,
-            registrationId,
-            2026,
-            'quarterly',
-            1,
-            'mock-id-token'
-          )
-        })
-      })
-    })
-
-    describe('when deleteReport fails', () => {
-      it('should propagate the error', async ({ server }) => {
-        vi.mocked(deleteReport).mockRejectedValue(
-          Object.assign(new Error('Backend error'), {
-            isBoom: true,
-            output: { statusCode: 500 }
-          })
-        )
-
+    describe('when confirm deletion is clicked', () => {
+      it('should call deleteReport and redirect to reports list', async ({
+        server
+      }) => {
         const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
           auth: mockAuth
         })
 
-        const { statusCode } = await server.inject({
+        const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: baseUrl,
           auth: mockAuth,
@@ -330,66 +266,99 @@ describe('#deleteController', () => {
           payload: { crumb }
         })
 
-        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
       })
-    })
 
-    describe('param validation', () => {
-      it('should return 400 for invalid cadence', async ({ server }) => {
-        const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/delete`
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: invalidUrl,
+      it('should call deleteReport with correct parameters', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
           auth: mockAuth
         })
 
-        expect(statusCode).toBe(statusCodes.badRequest)
-      })
-
-      it('should return 400 for invalid year', async ({ server }) => {
-        const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/delete`
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: invalidUrl,
-          auth: mockAuth
+        await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb }
         })
 
-        expect(statusCode).toBe(statusCodes.badRequest)
-      })
-
-      it('should return 400 for invalid period', async ({ server }) => {
-        const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/delete`
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: invalidUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(deleteReport).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          2026,
+          'quarterly',
+          1,
+          'mock-id-token'
+        )
       })
     })
   })
 
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', false)
-    })
+  describe('when deleteReport fails', () => {
+    it('should propagate the error', async ({ server }) => {
+      vi.mocked(deleteReport).mockRejectedValue(
+        Object.assign(new Error('Backend error'), {
+          isBoom: true,
+          output: { statusCode: 500 }
+        })
+      )
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
-    })
-
-    it('should return 404', async ({ server }) => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: baseUrl,
+      const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
         auth: mockAuth
       })
 
-      expect(statusCode).toBe(statusCodes.notFound)
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: baseUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+  })
+
+  describe('param validation', () => {
+    it('should return 400 for invalid cadence', async ({ server }) => {
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/delete`
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: invalidUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('should return 400 for invalid year', async ({ server }) => {
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/delete`
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: invalidUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('should return 400 for invalid period', async ({ server }) => {
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/delete`
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: invalidUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
     })
   })
 })

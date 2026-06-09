@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -7,7 +6,7 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { Organisation, User } from '#domain/organisations/model.js'
@@ -326,1148 +325,1094 @@ describe('#submitController', () => {
     vi.clearAllMocks()
   })
 
-  describe('when feature flag is enabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', true)
-    })
-
-    afterAll(() => {
-      config.reset('featureFlags.reports')
-    })
-
-    describe('GET', () => {
-      describe('for exporter with supporting information', () => {
-        beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            exporterRegistration
-          )
-          vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
-        })
-
-        it('should return 200', async ({ server }) => {
-          const { statusCode } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth
-          })
-
-          expect(statusCode).toBe(statusCodes.ok)
-        })
-
-        it('should display the page heading', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Submit report for Quarter 1, 2026/,
-              level: 1
-            })
-          ).toBeDefined()
-        })
-
-        it('should display inset text with correction guidance', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-          const insetText = body.querySelector('.govuk-inset-text')
-
-          expect(insetText).not.toBeNull()
-          expect(insetText.textContent).toContain(
-            'If any of the following information is incorrect'
-          )
-        })
-
-        it('should display back link to reports list', async ({ server }) => {
-          const body = await getBody(server)
-          const backLink = body.querySelector('.govuk-back-link')
-
-          expect(backLink).not.toBeNull()
-          expect(backLink.getAttribute('href')).toBe(reportsUrl)
-        })
-
-        // Details section
-
-        it('should display Details heading', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', { name: /Details/, level: 2 })
-          ).toBeDefined()
-        })
-
-        it('should display status tag as Ready to submit', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-          const tag = body.querySelector('.govuk-tag')
-
-          expect(tag).not.toBeNull()
-          expect(tag.textContent.trim()).toBe('Ready to submit')
-        })
-
-        it('should display Created by from statusHistory', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Created by:')
-          expect(body.textContent).toContain('Michael Doran')
-        })
-
-        it('should display Created on with date and time', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Created on:')
-          expect(body.textContent).toContain('20 January 2026')
-          expect(body.textContent).toContain('2:30')
-        })
-
-        // Your report section
-
-        it('should display Your report heading', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', { name: /Your report/, level: 2 })
-          ).toBeDefined()
-        })
-
-        it('should display period and material in summary list', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Quarter 1, 2026')
-          expect(body.textContent).toContain('Plastic')
-        })
-
-        it('should not display site row when no site present', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          const summaryKeys = [
-            ...body.querySelectorAll('.govuk-summary-list__key')
-          ]
-          expect(summaryKeys.some((k) => k.textContent.includes('Site'))).toBe(
-            false
-          )
-        })
-
-        // Waste received section
-
-        it('should display Packaging waste received for exporting heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste received for exporting/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display waste received total tonnage', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('80.25')
-        })
-
-        it('should display Suppliers subheading', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', { name: /Suppliers/i, level: 3 })
-          ).toBeDefined()
-        })
-
-        it('should display supplier details with name, activity and contact information', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Grantham Waste')
-          expect(body.textContent).toContain('Baler')
-          expect(body.textContent).toContain('17 Foster St, L20 8EX')
-          expect(body.textContent).toContain('enquiries@granthamwaste.co.uk')
-        })
-
-        // Waste exported section
-
-        it('should display Packaging waste exported for recycling heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste exported for recycling/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display waste exported total tonnage', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('50')
-        })
-
-        it('should display overseas sites table under waste exported section', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Site name')
-          expect(body.textContent).toContain('Overseas reprocessor ID')
-        })
-
-        it('should display overseas sites with tonnage and OSR ID', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Brussels Recycling')
-          expect(body.textContent).toContain('30')
-          expect(body.textContent).toContain('OSR-001')
-          expect(body.textContent).toContain('RecyclePlast SA')
-        })
-
-        it('should not display Approved column header for non-accredited exporter', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          const tables = body.querySelectorAll('.govuk-table')
-          const overseasSiteTable = Array.from(tables).find((table) =>
-            table.textContent?.includes('Brussels Recycling')
-          )
-          const headers = overseasSiteTable?.querySelectorAll('th')
-          const headerTexts = Array.from(headers).map((h) =>
-            h.textContent?.trim()
-          )
-
-          expect(headerTexts).not.toContain('Approved')
-        })
-
-        it('should display unapproved overseas sites heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Overseas reprocessor IDs that have not been logged/,
-              level: 3
-            })
-          ).toBeDefined()
-        })
-
-        it('should display unapproved overseas sites intro text', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByText(
-              body,
-              /These overseas reprocessor IDs were in your summary log/
-            )
-          ).toBeDefined()
-        })
-
-        it('should display unapproved ORS ID in table', async ({ server }) => {
-          const body = await getBody(server)
-
-          const tables = body.querySelectorAll('.govuk-table')
-          const unapprovedTable = Array.from(tables).find((table) =>
-            table.textContent?.includes('OSR-999')
-          )
-
-          expect(unapprovedTable).not.toBeNull()
-          const headers = unapprovedTable?.querySelectorAll('th')
-          const headerTexts = Array.from(headers).map((h) =>
-            h.textContent?.trim()
-          )
-          expect(headerTexts).toStrictEqual(['Overseas reprocessor ID'])
-        })
-
-        // Received but not exported section
-
-        it('should display received but not exported heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste received but not exported/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display received but not exported tonnage', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('12.5')
-        })
-
-        // Refused or stopped section
-
-        it('should display refused or stopped heading', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste refused or stopped during export/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display refused or stopped breakdown', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Total tonnage refused')
-          expect(body.textContent).toContain('2.5')
-          expect(body.textContent).toContain('Total tonnage stopped')
-          expect(body.textContent).toContain('8.3')
-          expect(body.textContent).toContain('Total tonnage repatriated')
-        })
-
-        it('should display dash when refused, stopped and repatriated values are null', async ({
-          server
-        }) => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...exporterReportDetail,
-            exportActivity: {
-              .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
-                exporterReportDetail.exportActivity
-              ),
-              totalTonnageRefusedOrStopped: null,
-              tonnageRefusedAtDestination: null,
-              tonnageStoppedDuringExport: null,
-              tonnageRepatriated: null
-            }
-          })
-
-          const body = await getBody(server)
-
-          const labels = [...body.querySelectorAll('.govuk-caption-l')]
-          const refusedOrStoppedLabel = labels.find((el) =>
-            el.textContent.includes('Total tonnage refused or stopped')
-          )
-          const combinedTotal = refusedOrStoppedLabel.nextElementSibling
-
-          expect(combinedTotal.textContent.trim()).toBe('-')
-        })
-
-        // Waste sent on section
-
-        it('should display Packaging waste sent on heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste sent on/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display waste sent on total tonnage', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('10')
-        })
-
-        it('should display waste sent on breakdown with labels', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain(
-            'Total tonnage sent on to reprocessors'
-          )
-          expect(body.textContent).toContain(
-            'Total tonnage sent on to exporters'
-          )
-          expect(body.textContent).toContain(
-            'Total tonnage sent on to other sites or facilities'
-          )
-        })
-
-        it('should display Final destinations subheading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Final destinations/i,
-              level: 3
-            })
-          ).toBeDefined()
-        })
-
-        it('should display destination details with address', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Lincoln recycling')
-          expect(body.textContent).toContain('Reprocessor')
-          expect(body.textContent).toContain('12 Juniper St, L20 8EL')
-        })
-
-        it('should display destination tonnageSentOn >= 1000 as formatted number, not NaN', async ({
-          server
-        }) => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...exporterReportDetail,
-            wasteSent: {
-              ...exporterReportDetail.wasteSent,
-              finalDestinations: [
-                {
-                  recipientName: 'HighLow Limited',
-                  facilityType: 'Exporter',
-                  address: '11 high street, G59NS',
-                  tonnageSentOn: 1000
-                }
-              ]
-            }
-          })
-
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('1,000.00')
-          expect(body.textContent).not.toContain('NaN')
-        })
-
-        // Supporting information section
-
-        it('should display Supporting information heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Supporting information/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display supporting information text', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain(
-            'Supply chain disruption in February'
-          )
-        })
-
-        // Declaration section
-
-        it('should display Declaration heading', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', { name: /Declaration/, level: 2 })
-          ).toBeDefined()
-        })
-
-        it('should display declaration text and bullet points', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain(
-            'By submitting this report to your regulator you confirm that'
-          )
-          expect(body.textContent).toContain('you are an approved person')
-          expect(body.textContent).toContain(
-            'as accurate as reasonably possible'
-          )
-          expect(body.textContent).toContain(
-            'false or misleading information may result in enforcement action'
-          )
-        })
-
-        it('should display Confirm and submit button', async ({ server }) => {
-          const body = await getBody(server)
-          const button = body.querySelector('.govuk-button')
-
-          expect(button).not.toBeNull()
-          expect(button.textContent.trim()).toContain('Confirm and submit')
-          expect(button.getAttribute('data-prevent-double-click')).toBe('true')
-        })
-
-        it('should include report version as hidden form field', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-          const versionInput = body.querySelector('input[name="version"]')
-
-          expect(versionInput).not.toBeNull()
-          expect(versionInput.getAttribute('type')).toBe('hidden')
-          expect(versionInput.getAttribute('value')).toBe('1')
-        })
-
-        it('should not display recycling activity section', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            queryByRole(body, 'heading', {
-              name: /Packaging waste recycling/i,
-              level: 2
-            })
-          ).toBeNull()
-        })
-
-        it('should not display PERN section', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            queryByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
-          ).toBeNull()
-        })
-      })
-
-      describe('for exporter with no export activity', () => {
-        beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            exporterRegistration
-          )
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...exporterReportDetail,
-            exportActivity: undefined
-          })
-        })
-
-        it('should still display waste exported heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste exported for recycling/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display zero for total tonnage exported', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-          const labels = [...body.querySelectorAll('.govuk-caption-l')]
-          const exportedLabel = labels.find((el) =>
-            el.textContent.includes('Total tonnage exported')
-          )
-          const value = exportedLabel?.nextElementSibling
-
-          expect(value?.textContent?.trim()).toBe('0.00')
-        })
-
-        it('should still display received but not exported heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste received but not exported/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should still display refused or stopped heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste refused or stopped during export/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-      })
-
-      describe('for accredited exporter', () => {
-        beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            accreditedExporterRegistration
-          )
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            accreditedExporterReportDetail
-          )
-        })
-
-        it('should display Approved column header in overseas sites table', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          const tables = body.querySelectorAll('.govuk-table')
-          const overseasSiteTable = Array.from(tables).find((table) =>
-            table.textContent?.includes('Brussels Recycling')
-          )
-          const headers = overseasSiteTable?.querySelectorAll('th')
-          const headerTexts = Array.from(headers).map((h) =>
-            h.textContent?.trim()
-          )
-
-          expect(headerTexts).toStrictEqual([
-            'Site name',
-            'Overseas reprocessor ID',
-            'Country',
-            'Approved'
-          ])
-        })
-
-        it('should display approval status for approved overseas site', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          const tables = body.querySelectorAll('.govuk-table')
-          const overseasSiteTable = Array.from(tables).find((table) =>
-            table.textContent?.includes('Brussels Recycling')
-          )
-          const cells = overseasSiteTable?.querySelectorAll('td')
-          const lastCell = cells?.[cells.length - 1]
-
-          expect(lastCell?.textContent?.trim()).toBe('Yes')
-        })
-
-        it('should not display recycling activity section', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            queryByRole(body, 'heading', {
-              name: /Packaging waste recycling/i,
-              level: 2
-            })
-          ).toBeNull()
-        })
-
-        it('should display PERN section', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
-          ).toBeDefined()
-        })
-
-        it('should display total tonnage of PERNs issued label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Total tonnage of PERNs issued')
-          expect(body.textContent).toContain('100')
-        })
-
-        it('should display total tonnage of PERNs issued for free label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain(
-            'Total tonnage of PERNs issued for free'
-          )
-          expect(body.textContent).toContain('10')
-          expect(body.textContent).toContain(
-            '(These are not included in the average price per tonne calculation)'
-          )
-        })
-
-        it('should display total revenue of PERNs label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Total revenue of PERNs')
-          expect(body.textContent).toContain('£20,000.00')
-        })
-
-        it('should display average price per tonne of PERNs label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Average price per tonne of PERNs')
-          expect(body.textContent).toContain('£200.00')
-        })
-
-        it('should display received but not exported heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste received but not exported/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display received but not exported tonnage', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('12.5')
-        })
-      })
-
-      describe('for reprocessor without supporting information', () => {
-        beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            reprocessorRegistration
-          )
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            reprocessorReportDetail
-          )
-        })
-
-        it('should display Packaging waste received for reprocessing heading', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste received for reprocessing/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should not display waste exported section', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            queryByRole(body, 'heading', {
-              name: /waste exported/i,
-              level: 2
-            })
-          ).toBeNull()
-        })
-
-        it('should not display received but not exported section', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            queryByRole(body, 'heading', {
-              name: /received but not exported/i,
-              level: 2
-            })
-          ).toBeNull()
-        })
-
-        it('should not display refused or stopped section', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(
-            queryByRole(body, 'heading', {
-              name: /refused or stopped/i,
-              level: 2
-            })
-          ).toBeNull()
-        })
-
-        it('should display None provided for empty supporting information', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('None provided')
-        })
-
-        it('should display Created by from statusHistory', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Jane Smith')
-        })
-
-        it('should display recycling activity section', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste recycling/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display total tonnage recycled label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Total tonnage recycled')
-          expect(body.textContent).toContain('75.50')
-        })
-
-        it('should display total tonnage received but not recycled label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain(
-            'Total tonnage received but not recycled'
-          )
-          expect(body.textContent).toContain('4.75')
-        })
-
-        it('should not display PRN section', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            queryByRole(body, 'heading', { name: /^PRNs$/i, level: 2 })
-          ).toBeNull()
-        })
-
-        it('should display site address in Your report summary list', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Site')
-          expect(body.textContent).toContain('North Road')
-        })
-      })
-
-      describe('for accredited reprocessor', () => {
-        beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            accreditedReprocessorRegistration
-          )
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            accreditedReprocessorReportDetail
-          )
-        })
-
-        it('should display recycling activity section', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', {
-              name: /Packaging waste recycling/i,
-              level: 2
-            })
-          ).toBeDefined()
-        })
-
-        it('should display total tonnage recycled label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Total tonnage recycled')
-          expect(body.textContent).toContain('75.50')
-        })
-
-        it('should display total tonnage received but not recycled label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain(
-            'Total tonnage received but not recycled'
-          )
-          expect(body.textContent).toContain('4.75')
-        })
-
-        it('should display PRN section', async ({ server }) => {
-          const body = await getBody(server)
-
-          expect(
-            getByRole(body, 'heading', { name: /^PRNs$/i, level: 2 })
-          ).toBeDefined()
-        })
-
-        it('should display total tonnage of PRNs issued label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Total tonnage of PRNs issued')
-          expect(body.textContent).toContain('50')
-        })
-
-        it('should display total tonnage of PRNs issued for free label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain(
-            'Total tonnage of PRNs issued for free'
-          )
-          expect(body.textContent).toContain('5')
-          expect(body.textContent).toContain(
-            '(These are not included in the average price per tonne calculation)'
-          )
-        })
-
-        it('should display total revenue of PRNs label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Total revenue of PRNs')
-          expect(body.textContent).toContain('£7,500.00')
-        })
-
-        it('should display average price per tonne of PRNs label and value', async ({
-          server
-        }) => {
-          const body = await getBody(server)
-
-          expect(body.textContent).toContain('Average price per tonne of PRNs')
-          expect(body.textContent).toContain('£150.00')
-        })
-      })
-
-      describe('delete report button', () => {
-        it.for([
-          {
-            label: 'exporter quarterly',
-            registration: exporterRegistration,
-            report: exporterReportDetail,
-            cadence: 'quarterly',
-            period: 1
-          },
-          {
-            label: 'reprocessor monthly',
-            registration: reprocessorRegistration,
-            report: {
-              ...reprocessorReportDetail,
-              cadence: 'monthly',
-              period: 3
-            },
-            cadence: 'monthly',
-            period: 3
-          }
-        ])(
-          'should display warning button for $label',
-          async ({ registration, report, cadence, period }, { server }) => {
-            vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-              registration
-            )
-            vi.mocked(fetchReportDetail).mockResolvedValue(report)
-
-            const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/submit`
-            const { result } = await server.inject({
-              method: 'GET',
-              url,
-              auth: mockAuth
-            })
-            const body = new JSDOM(result).window.document.body
-            const deleteButton = getByRole(body, 'button', {
-              name: /Delete report/i
-            })
-
-            expect(deleteButton.getAttribute('href')).toBe(
-              `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/delete`
-            )
-            expect(
-              deleteButton.classList.contains('govuk-button--warning')
-            ).toBe(true)
-          }
-        )
-      })
-
-      describe('when report is already submitted', () => {
-        beforeEach(() => {
-          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-            exporterRegistration
-          )
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...exporterReportDetail,
-            status: {
-              .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['status']>} */ (
-                exporterReportDetail.status
-              ),
-              currentStatus: 'submitted'
-            }
-          })
-        })
-
-        it('should redirect to the submitted confirmation page', async ({
-          server
-        }) => {
-          const { statusCode, headers } = await server.inject({
-            method: 'GET',
-            url: baseUrl,
-            auth: mockAuth
-          })
-
-          expect(statusCode).toBe(statusCodes.found)
-          expect(headers.location).toBe(submittedUrl)
-        })
-      })
-    })
-
-    describe('POST', () => {
+  describe('GET', () => {
+    describe('for exporter with supporting information', () => {
       beforeEach(() => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           exporterRegistration
         )
         vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
-        vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
       })
 
-      describe('csrf protection', () => {
-        it('should reject POST without CSRF token', async ({ server }) => {
-          const { statusCode } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            payload: {}
-          })
-
-          expect(statusCode).toBe(statusCodes.forbidden)
+      it('should return 200', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
         })
+
+        expect(statusCode).toBe(statusCodes.ok)
       })
 
-      describe('when Confirm and submit is clicked', () => {
-        it('should call updateReportStatus with submitted status', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+      it('should display the page heading', async ({ server }) => {
+        const body = await getBody(server)
 
-          await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, version: 1 }
+        expect(
+          getByRole(body, 'heading', {
+            name: /Submit report for Quarter 1, 2026/,
+            level: 1
           })
+        ).toBeDefined()
+      })
 
-          expect(updateReportStatus).toHaveBeenCalledWith(
-            organisationId,
-            registrationId,
-            2026,
-            'quarterly',
-            1,
-            { status: 'submitted', version: 1 },
-            'mock-id-token'
+      it('should display inset text with correction guidance', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+        const insetText = body.querySelector('.govuk-inset-text')
+
+        expect(insetText).not.toBeNull()
+        expect(insetText.textContent).toContain(
+          'If any of the following information is incorrect'
+        )
+      })
+
+      it('should display back link to reports list', async ({ server }) => {
+        const body = await getBody(server)
+        const backLink = body.querySelector('.govuk-back-link')
+
+        expect(backLink).not.toBeNull()
+        expect(backLink.getAttribute('href')).toBe(reportsUrl)
+      })
+
+      // Details section
+
+      it('should display Details heading', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', { name: /Details/, level: 2 })
+        ).toBeDefined()
+      })
+
+      it('should display status tag as Ready to submit', async ({ server }) => {
+        const body = await getBody(server)
+        const tag = body.querySelector('.govuk-tag')
+
+        expect(tag).not.toBeNull()
+        expect(tag.textContent.trim()).toBe('Ready to submit')
+      })
+
+      it('should display Created by from statusHistory', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Created by:')
+        expect(body.textContent).toContain('Michael Doran')
+      })
+
+      it('should display Created on with date and time', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Created on:')
+        expect(body.textContent).toContain('20 January 2026')
+        expect(body.textContent).toContain('2:30')
+      })
+
+      // Your report section
+
+      it('should display Your report heading', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', { name: /Your report/, level: 2 })
+        ).toBeDefined()
+      })
+
+      it('should display period and material in summary list', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Quarter 1, 2026')
+        expect(body.textContent).toContain('Plastic')
+      })
+
+      it('should not display site row when no site present', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        const summaryKeys = [
+          ...body.querySelectorAll('.govuk-summary-list__key')
+        ]
+        expect(summaryKeys.some((k) => k.textContent.includes('Site'))).toBe(
+          false
+        )
+      })
+
+      // Waste received section
+
+      it('should display Packaging waste received for exporting heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste received for exporting/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display waste received total tonnage', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('80.25')
+      })
+
+      it('should display Suppliers subheading', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', { name: /Suppliers/i, level: 3 })
+        ).toBeDefined()
+      })
+
+      it('should display supplier details with name, activity and contact information', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Grantham Waste')
+        expect(body.textContent).toContain('Baler')
+        expect(body.textContent).toContain('17 Foster St, L20 8EX')
+        expect(body.textContent).toContain('enquiries@granthamwaste.co.uk')
+      })
+
+      // Waste exported section
+
+      it('should display Packaging waste exported for recycling heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste exported for recycling/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display waste exported total tonnage', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('50')
+      })
+
+      it('should display overseas sites table under waste exported section', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Site name')
+        expect(body.textContent).toContain('Overseas reprocessor ID')
+      })
+
+      it('should display overseas sites with tonnage and OSR ID', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Brussels Recycling')
+        expect(body.textContent).toContain('30')
+        expect(body.textContent).toContain('OSR-001')
+        expect(body.textContent).toContain('RecyclePlast SA')
+      })
+
+      it('should not display Approved column header for non-accredited exporter', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        const tables = body.querySelectorAll('.govuk-table')
+        const overseasSiteTable = Array.from(tables).find((table) =>
+          table.textContent?.includes('Brussels Recycling')
+        )
+        const headers = overseasSiteTable?.querySelectorAll('th')
+        const headerTexts = Array.from(headers).map((h) =>
+          h.textContent?.trim()
+        )
+
+        expect(headerTexts).not.toContain('Approved')
+      })
+
+      it('should display unapproved overseas sites heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Overseas reprocessor IDs that have not been logged/,
+            level: 3
+          })
+        ).toBeDefined()
+      })
+
+      it('should display unapproved overseas sites intro text', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByText(
+            body,
+            /These overseas reprocessor IDs were in your summary log/
           )
+        ).toBeDefined()
+      })
+
+      it('should display unapproved ORS ID in table', async ({ server }) => {
+        const body = await getBody(server)
+
+        const tables = body.querySelectorAll('.govuk-table')
+        const unapprovedTable = Array.from(tables).find((table) =>
+          table.textContent?.includes('OSR-999')
+        )
+
+        expect(unapprovedTable).not.toBeNull()
+        const headers = unapprovedTable?.querySelectorAll('th')
+        const headerTexts = Array.from(headers).map((h) =>
+          h.textContent?.trim()
+        )
+        expect(headerTexts).toStrictEqual(['Overseas reprocessor ID'])
+      })
+
+      // Received but not exported section
+
+      it('should display received but not exported heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste received but not exported/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display received but not exported tonnage', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('12.5')
+      })
+
+      // Refused or stopped section
+
+      it('should display refused or stopped heading', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste refused or stopped during export/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display refused or stopped breakdown', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Total tonnage refused')
+        expect(body.textContent).toContain('2.5')
+        expect(body.textContent).toContain('Total tonnage stopped')
+        expect(body.textContent).toContain('8.3')
+        expect(body.textContent).toContain('Total tonnage repatriated')
+      })
+
+      it('should display dash when refused, stopped and repatriated values are null', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          exportActivity: {
+            .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+              exporterReportDetail.exportActivity
+            ),
+            totalTonnageRefusedOrStopped: null,
+            tonnageRefusedAtDestination: null,
+            tonnageStoppedDuringExport: null,
+            tonnageRepatriated: null
+          }
         })
 
-        it('should redirect to submitted confirmation page', async ({
-          server
-        }) => {
-          const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
-            auth: mockAuth
-          })
+        const body = await getBody(server)
 
-          const { statusCode, headers } = await server.inject({
-            method: 'POST',
-            url: baseUrl,
-            auth: mockAuth,
-            headers: { cookie },
-            payload: { crumb, version: 1 }
-          })
+        const labels = [...body.querySelectorAll('.govuk-caption-l')]
+        const refusedOrStoppedLabel = labels.find((el) =>
+          el.textContent.includes('Total tonnage refused or stopped')
+        )
+        const combinedTotal = refusedOrStoppedLabel.nextElementSibling
 
-          expect(statusCode).toBe(statusCodes.found)
-          expect(headers.location).toBe(submittedUrl)
+        expect(combinedTotal.textContent.trim()).toBe('-')
+      })
+
+      // Waste sent on section
+
+      it('should display Packaging waste sent on heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste sent on/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display waste sent on total tonnage', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('10')
+      })
+
+      it('should display waste sent on breakdown with labels', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain(
+          'Total tonnage sent on to reprocessors'
+        )
+        expect(body.textContent).toContain('Total tonnage sent on to exporters')
+        expect(body.textContent).toContain(
+          'Total tonnage sent on to other sites or facilities'
+        )
+      })
+
+      it('should display Final destinations subheading', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Final destinations/i,
+            level: 3
+          })
+        ).toBeDefined()
+      })
+
+      it('should display destination details with address', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Lincoln recycling')
+        expect(body.textContent).toContain('Reprocessor')
+        expect(body.textContent).toContain('12 Juniper St, L20 8EL')
+      })
+
+      it('should display destination tonnageSentOn >= 1000 as formatted number, not NaN', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          wasteSent: {
+            ...exporterReportDetail.wasteSent,
+            finalDestinations: [
+              {
+                recipientName: 'HighLow Limited',
+                facilityType: 'Exporter',
+                address: '11 high street, G59NS',
+                tonnageSentOn: 1000
+              }
+            ]
+          }
         })
+
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('1,000.00')
+        expect(body.textContent).not.toContain('NaN')
+      })
+
+      // Supporting information section
+
+      it('should display Supporting information heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Supporting information/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display supporting information text', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain(
+          'Supply chain disruption in February'
+        )
+      })
+
+      // Declaration section
+
+      it('should display Declaration heading', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', { name: /Declaration/, level: 2 })
+        ).toBeDefined()
+      })
+
+      it('should display declaration text and bullet points', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain(
+          'By submitting this report to your regulator you confirm that'
+        )
+        expect(body.textContent).toContain('you are an approved person')
+        expect(body.textContent).toContain('as accurate as reasonably possible')
+        expect(body.textContent).toContain(
+          'false or misleading information may result in enforcement action'
+        )
+      })
+
+      it('should display Confirm and submit button', async ({ server }) => {
+        const body = await getBody(server)
+        const button = body.querySelector('.govuk-button')
+
+        expect(button).not.toBeNull()
+        expect(button.textContent.trim()).toContain('Confirm and submit')
+        expect(button.getAttribute('data-prevent-double-click')).toBe('true')
+      })
+
+      it('should include report version as hidden form field', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+        const versionInput = body.querySelector('input[name="version"]')
+
+        expect(versionInput).not.toBeNull()
+        expect(versionInput.getAttribute('type')).toBe('hidden')
+        expect(versionInput.getAttribute('value')).toBe('1')
+      })
+
+      it('should not display recycling activity section', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          queryByRole(body, 'heading', {
+            name: /Packaging waste recycling/i,
+            level: 2
+          })
+        ).toBeNull()
+      })
+
+      it('should not display PERN section', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          queryByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
+        ).toBeNull()
       })
     })
 
-    describe('param validation', () => {
-      it('should return 400 for invalid cadence', async ({ server }) => {
-        const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submit`
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: invalidUrl,
-          auth: mockAuth
+    describe('for exporter with no export activity', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          exporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          exportActivity: undefined
         })
-
-        expect(statusCode).toBe(statusCodes.badRequest)
       })
 
-      it('should return 400 for invalid year', async ({ server }) => {
-        const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submit`
+      it('should still display waste exported heading', async ({ server }) => {
+        const body = await getBody(server)
 
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url: invalidUrl,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste exported for recycling/i,
+            level: 2
+          })
+        ).toBeDefined()
       })
 
-      it('should return 400 for invalid period', async ({ server }) => {
-        const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submit`
+      it('should display zero for total tonnage exported', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+        const labels = [...body.querySelectorAll('.govuk-caption-l')]
+        const exportedLabel = labels.find((el) =>
+          el.textContent.includes('Total tonnage exported')
+        )
+        const value = exportedLabel?.nextElementSibling
 
-        const { statusCode } = await server.inject({
+        expect(value?.textContent?.trim()).toBe('0.00')
+      })
+
+      it('should still display received but not exported heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste received but not exported/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should still display refused or stopped heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste refused or stopped during export/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+    })
+
+    describe('for accredited exporter', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          accreditedExporterReportDetail
+        )
+      })
+
+      it('should display Approved column header in overseas sites table', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        const tables = body.querySelectorAll('.govuk-table')
+        const overseasSiteTable = Array.from(tables).find((table) =>
+          table.textContent?.includes('Brussels Recycling')
+        )
+        const headers = overseasSiteTable?.querySelectorAll('th')
+        const headerTexts = Array.from(headers).map((h) =>
+          h.textContent?.trim()
+        )
+
+        expect(headerTexts).toStrictEqual([
+          'Site name',
+          'Overseas reprocessor ID',
+          'Country',
+          'Approved'
+        ])
+      })
+
+      it('should display approval status for approved overseas site', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        const tables = body.querySelectorAll('.govuk-table')
+        const overseasSiteTable = Array.from(tables).find((table) =>
+          table.textContent?.includes('Brussels Recycling')
+        )
+        const cells = overseasSiteTable?.querySelectorAll('td')
+        const lastCell = cells?.[cells.length - 1]
+
+        expect(lastCell?.textContent?.trim()).toBe('Yes')
+      })
+
+      it('should not display recycling activity section', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          queryByRole(body, 'heading', {
+            name: /Packaging waste recycling/i,
+            level: 2
+          })
+        ).toBeNull()
+      })
+
+      it('should display PERN section', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', { name: /^PERNs$/i, level: 2 })
+        ).toBeDefined()
+      })
+
+      it('should display total tonnage of PERNs issued label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Total tonnage of PERNs issued')
+        expect(body.textContent).toContain('100')
+      })
+
+      it('should display total tonnage of PERNs issued for free label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain(
+          'Total tonnage of PERNs issued for free'
+        )
+        expect(body.textContent).toContain('10')
+        expect(body.textContent).toContain(
+          '(These are not included in the average price per tonne calculation)'
+        )
+      })
+
+      it('should display total revenue of PERNs label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Total revenue of PERNs')
+        expect(body.textContent).toContain('£20,000.00')
+      })
+
+      it('should display average price per tonne of PERNs label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Average price per tonne of PERNs')
+        expect(body.textContent).toContain('£200.00')
+      })
+
+      it('should display received but not exported heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste received but not exported/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display received but not exported tonnage', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('12.5')
+      })
+    })
+
+    describe('for reprocessor without supporting information', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          reprocessorRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
+      })
+
+      it('should display Packaging waste received for reprocessing heading', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste received for reprocessing/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should not display waste exported section', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          queryByRole(body, 'heading', {
+            name: /waste exported/i,
+            level: 2
+          })
+        ).toBeNull()
+      })
+
+      it('should not display received but not exported section', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          queryByRole(body, 'heading', {
+            name: /received but not exported/i,
+            level: 2
+          })
+        ).toBeNull()
+      })
+
+      it('should not display refused or stopped section', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(
+          queryByRole(body, 'heading', {
+            name: /refused or stopped/i,
+            level: 2
+          })
+        ).toBeNull()
+      })
+
+      it('should display None provided for empty supporting information', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('None provided')
+      })
+
+      it('should display Created by from statusHistory', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Jane Smith')
+      })
+
+      it('should display recycling activity section', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste recycling/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display total tonnage recycled label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Total tonnage recycled')
+        expect(body.textContent).toContain('75.50')
+      })
+
+      it('should display total tonnage received but not recycled label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain(
+          'Total tonnage received but not recycled'
+        )
+        expect(body.textContent).toContain('4.75')
+      })
+
+      it('should not display PRN section', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          queryByRole(body, 'heading', { name: /^PRNs$/i, level: 2 })
+        ).toBeNull()
+      })
+
+      it('should display site address in Your report summary list', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Site')
+        expect(body.textContent).toContain('North Road')
+      })
+    })
+
+    describe('for accredited reprocessor', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedReprocessorRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          accreditedReprocessorReportDetail
+        )
+      })
+
+      it('should display recycling activity section', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Packaging waste recycling/i,
+            level: 2
+          })
+        ).toBeDefined()
+      })
+
+      it('should display total tonnage recycled label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Total tonnage recycled')
+        expect(body.textContent).toContain('75.50')
+      })
+
+      it('should display total tonnage received but not recycled label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain(
+          'Total tonnage received but not recycled'
+        )
+        expect(body.textContent).toContain('4.75')
+      })
+
+      it('should display PRN section', async ({ server }) => {
+        const body = await getBody(server)
+
+        expect(
+          getByRole(body, 'heading', { name: /^PRNs$/i, level: 2 })
+        ).toBeDefined()
+      })
+
+      it('should display total tonnage of PRNs issued label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Total tonnage of PRNs issued')
+        expect(body.textContent).toContain('50')
+      })
+
+      it('should display total tonnage of PRNs issued for free label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain(
+          'Total tonnage of PRNs issued for free'
+        )
+        expect(body.textContent).toContain('5')
+        expect(body.textContent).toContain(
+          '(These are not included in the average price per tonne calculation)'
+        )
+      })
+
+      it('should display total revenue of PRNs label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Total revenue of PRNs')
+        expect(body.textContent).toContain('£7,500.00')
+      })
+
+      it('should display average price per tonne of PRNs label and value', async ({
+        server
+      }) => {
+        const body = await getBody(server)
+
+        expect(body.textContent).toContain('Average price per tonne of PRNs')
+        expect(body.textContent).toContain('£150.00')
+      })
+    })
+
+    describe('delete report button', () => {
+      it.for([
+        {
+          label: 'exporter quarterly',
+          registration: exporterRegistration,
+          report: exporterReportDetail,
+          cadence: 'quarterly',
+          period: 1
+        },
+        {
+          label: 'reprocessor monthly',
+          registration: reprocessorRegistration,
+          report: {
+            ...reprocessorReportDetail,
+            cadence: 'monthly',
+            period: 3
+          },
+          cadence: 'monthly',
+          period: 3
+        }
+      ])(
+        'should display warning button for $label',
+        async ({ registration, report, cadence, period }, { server }) => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            registration
+          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(report)
+
+          const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/submit`
+          const { result } = await server.inject({
+            method: 'GET',
+            url,
+            auth: mockAuth
+          })
+          const body = new JSDOM(result).window.document.body
+          const deleteButton = getByRole(body, 'button', {
+            name: /Delete report/i
+          })
+
+          expect(deleteButton.getAttribute('href')).toBe(
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/delete`
+          )
+          expect(deleteButton.classList.contains('govuk-button--warning')).toBe(
+            true
+          )
+        }
+      )
+    })
+
+    describe('when report is already submitted', () => {
+      beforeEach(() => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          exporterRegistration
+        )
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          status: {
+            .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['status']>} */ (
+              exporterReportDetail.status
+            ),
+            currentStatus: 'submitted'
+          }
+        })
+      })
+
+      it('should redirect to the submitted confirmation page', async ({
+        server
+      }) => {
+        const { statusCode, headers } = await server.inject({
           method: 'GET',
-          url: invalidUrl,
+          url: baseUrl,
           auth: mockAuth
         })
 
-        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(submittedUrl)
       })
     })
   })
 
-  describe('when feature flag is disabled', () => {
-    beforeAll(() => {
-      config.set('featureFlags.reports', false)
+  describe('POST', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
+      vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
     })
 
-    afterAll(() => {
-      config.reset('featureFlags.reports')
+    describe('csrf protection', () => {
+      it('should reject POST without CSRF token', async ({ server }) => {
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          payload: {}
+        })
+
+        expect(statusCode).toBe(statusCodes.forbidden)
+      })
     })
 
-    it('should return 404', async ({ server }) => {
+    describe('when Confirm and submit is clicked', () => {
+      it('should call updateReportStatus with submitted status', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1 }
+        })
+
+        expect(updateReportStatus).toHaveBeenCalledWith(
+          organisationId,
+          registrationId,
+          2026,
+          'quarterly',
+          1,
+          { status: 'submitted', version: 1 },
+          'mock-id-token'
+        )
+      })
+
+      it('should redirect to submitted confirmation page', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1 }
+        })
+
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(submittedUrl)
+      })
+    })
+  })
+
+  describe('param validation', () => {
+    it('should return 400 for invalid cadence', async ({ server }) => {
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submit`
+
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: baseUrl,
+        url: invalidUrl,
         auth: mockAuth
       })
 
-      expect(statusCode).toBe(statusCodes.notFound)
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('should return 400 for invalid year', async ({ server }) => {
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submit`
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: invalidUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    it('should return 400 for invalid period', async ({ server }) => {
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submit`
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: invalidUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
     })
   })
 })
