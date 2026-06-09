@@ -19,17 +19,12 @@ const isRegisteredOnlyProcessingType = (processingType) =>
 
 /**
  * Flattens the BE's included/excluded shape into a view model for a single
- * change type (added or adjusted). Returns null when the bucket is empty
- * (total count is 0).
+ * change type (added or adjusted).
  * @param {PeriodStatusByChange} changeSection
- * @returns {{ count: number, tonnageDelta: number, absoluteTonnage: number, addsToBalance: boolean, included: { count: number }, excluded: { count: number } } | null}
+ * @returns {{ count: number, tonnageDelta: string, absoluteTonnage: string, addsToBalance: boolean, included: { count: number }, excluded: { count: number } }}
  */
 const buildChangeSectionViewModel = (changeSection) => {
   const count = changeSection.included.count + changeSection.excluded.count
-
-  if (count === 0) {
-    return null
-  }
 
   const tonnageDelta =
     changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
@@ -51,7 +46,7 @@ const buildPeriodViewModel = (period) => {
   const added = buildChangeSectionViewModel(period.added)
   const adjusted = buildChangeSectionViewModel(period.adjusted)
 
-  if (!added && !adjusted) {
+  if (added.count === 0 && adjusted.count === 0) {
     return null
   }
 

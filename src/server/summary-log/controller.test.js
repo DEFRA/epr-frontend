@@ -3496,7 +3496,9 @@ describe('enhanced check page', () => {
       ).not.toBeNull()
     })
 
-    it('hides adjusted and closed sections', async ({ server }) => {
+    it('shows "no adjusted loads" message and hides closed sections', async ({
+      server
+    }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
@@ -3509,7 +3511,12 @@ describe('enhanced check page', () => {
       const { body } = dom.window.document
       const main = getByRole(body, 'main')
 
-      expect(queryByText(main, /adjusted loads/i)).toBeNull()
+      expect(
+        getByRole(main, 'heading', {
+          level: 3,
+          name: /there are no adjusted loads/i
+        })
+      ).toBeDefined()
       expect(queryByText(main, /closed periods/i)).toBeNull()
     })
 
@@ -3764,6 +3771,100 @@ describe('enhanced check page', () => {
       })
 
       expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
+    })
+  })
+
+  describe('all loads unchanged (zero added and adjusted)', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT',
+        loadsByPeriodStatus: {
+          open: emptyPeriod(),
+          closed: emptyPeriod()
+        }
+      })
+    })
+
+    it('shows no period sections', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(queryByText(main, /open periods/i)).toBeNull()
+      expect(queryByText(main, /closed periods/i)).toBeNull()
+    })
+
+    it('still includes the submit form', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
+    })
+  })
+
+  describe('shows no-loads messages within a period that has some loads', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByPeriodStatus: {
+          open: {
+            added: {
+              included: { count: 3, tonnageDelta: 10 },
+              excluded: { count: 0, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closed: emptyPeriod()
+        }
+      })
+    })
+
+    it('shows "no adjusted loads" in open period alongside new loads', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: new loads/i
+        })
+      ).toBeDefined()
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: adjusted loads/i
+        })
+      ).toBeDefined()
+      expect(
+        getByRole(main, 'heading', {
+          level: 3,
+          name: /there are no adjusted loads/i
+        })
+      ).toBeDefined()
     })
   })
 

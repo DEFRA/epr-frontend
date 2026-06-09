@@ -4,21 +4,25 @@
   <section class="govuk-!-margin-top-8">
     <h2 class="govuk-heading-l">{{ periodLabel }}: {{ localise('summary-log:enhancedCheck.newLoads') }}</h2>
 
-    {% if isAccredited %}
+    {% if added.count > 0 %}
+      {% if isAccredited %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.newLoadsTonnage', { tonnes: added.tonnageDelta }) }}</p>
 
-      {% if added.included.count > 0 %}
+        {% if added.included.count > 0 %}
     <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsIncluded', { count: added.included.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
-      {% endif %}
+        {% endif %}
 
-      {% if added.excluded.count > 0 %}
+        {% if added.excluded.count > 0 %}
     <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsExcluded', { count: added.excluded.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+        {% endif %}
+      {% else %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsCount', { count: added.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
       {% endif %}
     {% else %}
-    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsCount', { count: added.count }) }}</p>
-    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+    <h3 class="govuk-heading-m">{{ localise('summary-log:noAddedLoadsHeading') }}</h3>
     {% endif %}
   </section>
 {% endmacro %}
@@ -27,29 +31,33 @@
   <section class="govuk-!-margin-top-8">
     <h2 class="govuk-heading-l">{{ periodLabel }}: {{ localise('summary-log:enhancedCheck.adjustedLoads') }}</h2>
 
+    {% if adjusted.count > 0 %}
     <div class="govuk-inset-text">
       {{ localise('summary-log:enhancedCheck.adjustedInset') }}
     </div>
 
-    {% if isAccredited %}
-      {% if adjusted.addsToBalance %}
+      {% if isAccredited %}
+        {% if adjusted.addsToBalance %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageAdd', { tonnes: adjusted.absoluteTonnage }) }}</p>
-      {% else %}
+        {% else %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageRemove', { tonnes: adjusted.absoluteTonnage }) }}</p>
-      {% endif %}
+        {% endif %}
 
-      {% if adjusted.included.count > 0 %}
+        {% if adjusted.included.count > 0 %}
     <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsIncluded', { count: adjusted.included.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
-      {% endif %}
+        {% endif %}
 
-      {% if adjusted.excluded.count > 0 %}
+        {% if adjusted.excluded.count > 0 %}
     <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsExcluded', { count: adjusted.excluded.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedExcludedReason') }}</p>
-      {% endif %}
-    {% else %}
+        {% endif %}
+      {% else %}
     <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsCount', { count: adjusted.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+      {% endif %}
+    {% else %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:noAdjustedLoadsHeading') }}</h3>
     {% endif %}
   </section>
 {% endmacro %}
@@ -73,23 +81,13 @@
     </div>
 
     {% if periodSections.open %}
-      {% if periodSections.open.added %}
-        {{ periodNewLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.added, isAccredited) }}
-      {% endif %}
-
-      {% if periodSections.open.adjusted %}
-        {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.adjusted, isAccredited) }}
-      {% endif %}
+      {{ periodNewLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.added, isAccredited) }}
+      {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.adjusted, isAccredited) }}
     {% endif %}
 
     {% if periodSections.closed %}
-      {% if periodSections.closed.added %}
-        {{ periodNewLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.added, isAccredited) }}
-      {% endif %}
-
-      {% if periodSections.closed.adjusted %}
-        {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.adjusted, isAccredited) }}
-      {% endif %}
+      {{ periodNewLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.added, isAccredited) }}
+      {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.adjusted, isAccredited) }}
     {% endif %}
 
     <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
