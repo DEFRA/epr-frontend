@@ -15,7 +15,6 @@
 
         {% if added.excluded.count > 0 %}
     <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsExcluded', { count: added.excluded.count }) }}</p>
-    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
         {% endif %}
       {% else %}
     <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsCount', { count: added.count }) }}</p>
@@ -66,18 +65,21 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     <h1 class="govuk-heading-xl">
-      <span class="govuk-caption-xl">{{ localise('summary-log:checkCaption') }}</span>
-      {{ localise('summary-log:checkHeading') }}
+      <span class="govuk-caption-xl">{{ localise('summary-log:enhancedCheck.caption') }}</span>
+      {{ localise('summary-log:enhancedCheck.heading') }}
     </h1>
 
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
-    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.intro2') }}</p>
 
     <div class="govuk-inset-text">
-      {{ localise('summary-log:checkWarningStart') }}
-      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
-      {{ localise('summary-log:checkWarningOr') }}
-      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
+      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.warningPara1') }}</p>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        <strong>{{ localise('summary-log:enhancedCheck.warningBold') }}</strong>
+        {{ localise('summary-log:enhancedCheck.warningChooseFileLead') }}
+        <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:enhancedCheck.warningChooseFileLink') }}</a>
+        {{ localise('summary-log:enhancedCheck.warningHomeLead') }}
+        <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:enhancedCheck.warningHomeLink') }}</a>).
+      </p>
     </div>
 
     {% if periodSections.open %}

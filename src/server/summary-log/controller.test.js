@@ -3535,6 +3535,112 @@ describe('enhanced check page', () => {
       expect(result).toStrictEqual(expect.stringContaining('method="POST"'))
       expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
     })
+
+    it('renders the design caption and page heading', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 1,
+          name: /upload your summary log/i
+        })
+      ).toBeDefined()
+      expect(queryByText(main, 'Summary log')).not.toBeNull()
+      expect(queryByText(main, /check before confirming upload/i)).toBeNull()
+    })
+
+    it('does not render the reporting-periods intro paragraph', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        queryByText(
+          main,
+          /check the following to find out how your reporting periods are affected/i
+        )
+      ).toBeNull()
+    })
+
+    it('shows the upload warning with choose-again and home links', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        queryByText(main, /your data will not be saved until you upload it/i)
+      ).not.toBeNull()
+
+      const chooseFileLink = getByRole(main, 'link', {
+        name: /choose the file again/i
+      })
+      expect(chooseFileLink.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+      )
+
+      const homeLink = getByRole(main, 'link', { name: /return to home/i })
+      expect(homeLink.getAttribute('href')).toBe(
+        `/organisations/${organisationId}`
+      )
+
+      expect(
+        queryByText(main, /will not be saved until you confirm upload/i)
+      ).toBeNull()
+    })
+
+    it('does not repeat the required-data sentence under excluded new loads', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // Included new loads keep the sentence; the excluded line must not repeat it.
+      expect(
+        getAllByText(
+          main,
+          /these loads include all the required summary log data/i
+        )
+      ).toHaveLength(1)
+    })
   })
 
   describe('accredited with mixed open and closed period loads', () => {
