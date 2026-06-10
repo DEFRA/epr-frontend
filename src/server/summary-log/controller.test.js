@@ -3641,6 +3641,28 @@ describe('enhanced check page', () => {
         )
       ).toHaveLength(1)
     })
+
+    it('separates the new-loads sub-blocks with visible section breaks', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // A rule before the included block, before the excluded block, and one
+      // closing the section. The empty adjusted section adds none.
+      expect(
+        main.querySelectorAll('hr.govuk-section-break--visible')
+      ).toHaveLength(3)
+    })
   })
 
   describe('accredited with mixed open and closed period loads', () => {
@@ -4075,6 +4097,10 @@ describe('enhanced check page', () => {
       expect(
         main.querySelector('.epr-check-balance-panel strong')?.textContent
       ).toBe('4,580.00')
+      // Needs a bottom margin so it does not butt against the confirm button.
+      expect(
+        main.querySelector('.epr-check-balance-panel')?.className
+      ).toContain('govuk-!-margin-bottom-8')
     })
   })
 
