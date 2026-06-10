@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   loadCategorySchema,
-  loadsByPeriodStatusSchema,
+  loadsByReportingPeriodSchema,
   summaryLogStatusResponseSchema
 } from './loads-schema.js'
 
@@ -37,7 +37,7 @@ describe('loadCategorySchema validation', () => {
   })
 })
 
-describe('loadsByPeriodStatusSchema validation', () => {
+describe('loadsByReportingPeriodSchema validation', () => {
   const emptyBucket = () => ({
     balanceAffecting: { count: 0, tonnageDelta: 0 },
     nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
@@ -48,25 +48,25 @@ describe('loadsByPeriodStatusSchema validation', () => {
     adjusted: emptyBucket()
   })
 
-  it('should accept a valid loadsByPeriodStatus payload', () => {
-    const { error } = loadsByPeriodStatusSchema.validate({
-      open: {
+  it('should accept a valid loadsByReportingPeriod payload', () => {
+    const { error } = loadsByReportingPeriodSchema.validate({
+      openPeriodLoads: {
         added: {
           balanceAffecting: { count: 3, tonnageDelta: 10 },
           nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
         },
         adjusted: emptyBucket()
       },
-      closed: emptyPeriod()
+      closedPeriodLoads: emptyPeriod()
     })
 
     expect(error).toBeUndefined()
   })
 
   it('should accept negative tonnageDelta', () => {
-    const { error } = loadsByPeriodStatusSchema.validate({
-      open: emptyPeriod(),
-      closed: {
+    const { error } = loadsByReportingPeriodSchema.validate({
+      openPeriodLoads: emptyPeriod(),
+      closedPeriodLoads: {
         added: emptyBucket(),
         adjusted: {
           balanceAffecting: { count: 2, tonnageDelta: -5.5 },
@@ -79,23 +79,23 @@ describe('loadsByPeriodStatusSchema validation', () => {
   })
 
   it('should reject missing open period', () => {
-    const { error } = loadsByPeriodStatusSchema.validate({
-      closed: emptyPeriod()
+    const { error } = loadsByReportingPeriodSchema.validate({
+      closedPeriodLoads: emptyPeriod()
     })
 
-    expect(error?.message).toContain('"open" is required')
+    expect(error?.message).toContain('"openPeriodLoads" is required')
   })
 
   it('should reject negative count', () => {
-    const { error } = loadsByPeriodStatusSchema.validate({
-      open: {
+    const { error } = loadsByReportingPeriodSchema.validate({
+      openPeriodLoads: {
         added: {
           balanceAffecting: { count: -1, tonnageDelta: 0 },
           nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
         },
         adjusted: emptyBucket()
       },
-      closed: emptyPeriod()
+      closedPeriodLoads: emptyPeriod()
     })
 
     expect(error?.message).toContain('must be greater than or equal to 0')

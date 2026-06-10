@@ -64,9 +64,9 @@ const periodStatusSchema = Joi.object({
   adjusted: periodStatusByChangeSchema.required()
 })
 
-export const loadsByPeriodStatusSchema = Joi.object({
-  open: periodStatusSchema.required(),
-  closed: periodStatusSchema.required()
+export const loadsByReportingPeriodSchema = Joi.object({
+  openPeriodLoads: periodStatusSchema.required(),
+  closedPeriodLoads: periodStatusSchema.required()
 })
 
 export const summaryLogStatusResponseSchema = Joi.object({
@@ -95,7 +95,7 @@ export const summaryLogStatusResponseSchema = Joi.object({
     }).required()
   }).optional(),
   loads: loadsSchema.optional(),
-  loadsByPeriodStatus: loadsByPeriodStatusSchema.optional(),
+  loadsByReportingPeriod: loadsByReportingPeriodSchema.optional(),
   loadsByWasteRecordType: loadsByWasteRecordTypeSchema.optional(),
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),

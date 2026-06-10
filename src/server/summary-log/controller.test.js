@@ -3430,15 +3430,15 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 3, tonnageDelta: 10 },
               nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
-          closed: emptyPeriod()
+          closedPeriodLoads: emptyPeriod()
         }
       })
     })
@@ -3670,15 +3670,15 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 2, tonnageDelta: 5 },
               nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
-          closed: {
+          closedPeriodLoads: {
             added: {
               balanceAffecting: { count: 4, tonnageDelta: 8 },
               nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
@@ -3826,15 +3826,15 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 3, tonnageDelta: 1230.06 },
               nonBalanceAffecting: { count: 1, tonnageDelta: 230.06 }
             },
             adjusted: emptyBucket()
           },
-          closed: emptyPeriod()
+          closedPeriodLoads: emptyPeriod()
         }
       })
     })
@@ -3866,8 +3866,8 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 0, tonnageDelta: 0 },
               nonBalanceAffecting: { count: 3, tonnageDelta: 0 }
@@ -3877,7 +3877,7 @@ describe('enhanced check page', () => {
               nonBalanceAffecting: { count: 2, tonnageDelta: 0 }
             }
           },
-          closed: emptyPeriod()
+          closedPeriodLoads: emptyPeriod()
         }
       })
     })
@@ -3926,15 +3926,15 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_REGISTERED_ONLY',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 0, tonnageDelta: 0 },
               nonBalanceAffecting: { count: 5, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
-          closed: emptyPeriod()
+          closedPeriodLoads: emptyPeriod()
         }
       })
     })
@@ -3966,7 +3966,7 @@ describe('enhanced check page', () => {
     })
   })
 
-  describe('loadsByPeriodStatus missing', () => {
+  describe('loadsByReportingPeriod missing', () => {
     beforeEach(() => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
@@ -4007,9 +4007,9 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
-        loadsByPeriodStatus: {
-          open: emptyPeriod(),
-          closed: emptyPeriod()
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: emptyPeriod()
         }
       })
     })
@@ -4047,15 +4047,15 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 3, tonnageDelta: 10 },
               nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
-          closed: emptyPeriod()
+          closedPeriodLoads: emptyPeriod()
         }
       })
     })
@@ -4103,8 +4103,8 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 3, tonnageDelta: 100 },
               nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
@@ -4114,7 +4114,7 @@ describe('enhanced check page', () => {
               nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
             }
           },
-          closed: emptyPeriod()
+          closedPeriodLoads: emptyPeriod()
         }
       })
 
@@ -4169,15 +4169,15 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_REGISTERED_ONLY',
-        loadsByPeriodStatus: {
-          open: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
             added: {
               balanceAffecting: { count: 0, tonnageDelta: 0 },
               nonBalanceAffecting: { count: 5, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
-          closed: emptyPeriod()
+          closedPeriodLoads: emptyPeriod()
         }
       })
     })
@@ -4201,9 +4201,9 @@ describe('enhanced check page', () => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'REPROCESSOR_INPUT',
-        loadsByPeriodStatus: {
-          open: emptyPeriod(),
-          closed: {
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: {
             added: {
               balanceAffecting: { count: 6, tonnageDelta: 15 },
               nonBalanceAffecting: { count: 0, tonnageDelta: 0 }

@@ -184,16 +184,16 @@
 
 /**
  * @typedef {{
- *   open: PeriodStatus,
- *   closed: PeriodStatus
- * }} LoadsByPeriodStatus
+ *   openPeriodLoads: PeriodStatus,
+ *   closedPeriodLoads: PeriodStatus
+ * }} LoadsByReportingPeriod
  */
 
 /**
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
- *   loadsByPeriodStatus?: LoadsByPeriodStatus,
+ *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   processingType?: ProcessingType
  *   status: string,
