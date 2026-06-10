@@ -6,7 +6,9 @@
 
     {% if added.count > 0 %}
       {% if isAccredited %}
+        {% if added.hasTonnageDelta %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.newLoadsTonnage', { tonnes: added.tonnageDelta }) }}</p>
+        {% endif %}
 
         {% if added.included.count > 0 %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
@@ -40,10 +42,12 @@
     </div>
 
       {% if isAccredited %}
-        {% if adjusted.addsToBalance %}
+        {% if adjusted.hasTonnageDelta %}
+          {% if adjusted.addsToBalance %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageAdd', { tonnes: adjusted.absoluteTonnage }) }}</p>
-        {% else %}
+          {% else %}
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageRemove', { tonnes: adjusted.absoluteTonnage }) }}</p>
+          {% endif %}
         {% endif %}
 
         {% if adjusted.included.count > 0 %}

@@ -3861,6 +3861,66 @@ describe('enhanced check page', () => {
     })
   })
 
+  describe('accredited section with zero net tonnage', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByPeriodStatus: {
+          open: {
+            added: {
+              included: { count: 0, tonnageDelta: 0 },
+              excluded: { count: 3, tonnageDelta: 0 }
+            },
+            adjusted: {
+              included: { count: 0, tonnageDelta: 0 },
+              excluded: { count: 2, tonnageDelta: 0 }
+            }
+          },
+          closed: emptyPeriod()
+        }
+      })
+    })
+
+    it('hides the tonnage sentence but keeps the loads, when tonnage is zero', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // No "will add/remove 0.00 tonnes" sentence on either section
+      expect(
+        queryByText(main, /will add 0\.00 tonnes to your waste balance/)
+      ).toBeNull()
+      expect(
+        queryByText(main, /tonnes (to|from) your waste balance/)
+      ).toBeNull()
+
+      // The loads themselves are still recorded against the section
+      expect(
+        queryByText(
+          main,
+          /3 new loads will be recorded \(but NOT added to your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /2 adjusted loads will be recorded \(NOT reflected in your waste balance\)/
+        )
+      ).not.toBeNull()
+    })
+  })
+
   describe('registered-only processing type', () => {
     beforeEach(() => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({

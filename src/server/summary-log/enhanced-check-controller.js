@@ -9,6 +9,11 @@ import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 
 const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
 
+// The rendered figure for a zero tonnage, used to decide whether the
+// tonnage sentence is worth showing. Derived from formatTonnage so the
+// check can never drift from what the template actually prints.
+const ZERO_TONNAGE = formatTonnage(0)
+
 /**
  * @param {ProcessingType} [processingType]
  * @returns {boolean}
@@ -21,19 +26,23 @@ const isRegisteredOnlyProcessingType = (processingType) =>
  * Flattens the BE's included/excluded shape into a view model for a single
  * change type (added or adjusted).
  * @param {PeriodStatusByChange} changeSection
- * @returns {{ count: number, tonnageDelta: string, absoluteTonnage: string, addsToBalance: boolean, included: { count: number }, excluded: { count: number } }}
+ * @returns {{ count: number, tonnageDelta: string, absoluteTonnage: string, addsToBalance: boolean, hasTonnageDelta: boolean, included: { count: number }, excluded: { count: number } }}
  */
 const buildChangeSectionViewModel = (changeSection) => {
   const count = changeSection.included.count + changeSection.excluded.count
 
   const tonnageDelta =
     changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
+  const absoluteTonnage = formatTonnage(Math.abs(tonnageDelta))
 
   return {
     count,
     tonnageDelta: formatTonnage(tonnageDelta),
-    absoluteTonnage: formatTonnage(Math.abs(tonnageDelta)),
+    absoluteTonnage,
     addsToBalance: tonnageDelta >= 0,
+    // Hide the sentence whenever the figure we would print is zero, so a
+    // net delta that rounds to "0.00" never produces "will add 0.00 tonnes".
+    hasTonnageDelta: absoluteTonnage !== ZERO_TONNAGE,
     included: { count: changeSection.included.count },
     excluded: { count: changeSection.excluded.count }
   }
