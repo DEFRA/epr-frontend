@@ -93,8 +93,12 @@
     {% endif %}
 
     {% if wasteBalanceProjection %}
-    <div class="govuk-inset-text">
-      {{ localise('summary-log:enhancedCheck.wasteBalanceProjection', { currentBalance: wasteBalanceProjection.currentBalance, projectedBalance: wasteBalanceProjection.projectedBalance }) }}
+    <div class="epr-check-balance-panel govuk-!-text-align-centre govuk-!-padding-4 govuk-!-margin-top-8">
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        {{ localise('summary-log:enhancedCheck.wasteBalanceProjectionStart') }}
+        <strong>{{ wasteBalanceProjection.projectedBalance }}</strong>
+        {{ localise('summary-log:enhancedCheck.wasteBalanceProjectionFrom', { currentBalance: wasteBalanceProjection.currentBalance }) }}
+      </p>
     </div>
     {% endif %}
 

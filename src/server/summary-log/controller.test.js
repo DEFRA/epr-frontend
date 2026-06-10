@@ -4053,7 +4053,9 @@ describe('enhanced check page', () => {
       })
     })
 
-    it('shows projected waste balance inset', async ({ server }) => {
+    it('shows projected waste balance in a centred grey panel', async ({
+      server
+    }) => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url,
@@ -4067,9 +4069,12 @@ describe('enhanced check page', () => {
       const main = getByRole(body, 'main')
 
       // current: 4500, delta: 100 + (-20) = 80, projected: 4580
+      expect(main.textContent.replace(/\s+/g, ' ')).toMatch(
+        /your waste balance will be 4,580\.00 \(from 4,500\.00\)/
+      )
       expect(
-        queryByText(main, /your waste balance will be 4,580\.00 from 4,500\.00/)
-      ).not.toBeNull()
+        main.querySelector('.epr-check-balance-panel strong')?.textContent
+      ).toBe('4,580.00')
     })
   })
 
