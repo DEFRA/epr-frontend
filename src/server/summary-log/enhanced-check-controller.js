@@ -23,16 +23,19 @@ const isRegisteredOnlyProcessingType = (processingType) =>
   processingType === PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
 
 /**
- * Flattens the BE's included/excluded shape into a view model for a single
- * change type (added or adjusted).
+ * Flattens the BE's balanceAffecting/nonBalanceAffecting shape into a view
+ * model for a single change type (added or adjusted).
  * @param {PeriodStatusByChange} changeSection
- * @returns {{ count: number, tonnageDelta: string, absoluteTonnage: string, addsToBalance: boolean, hasTonnageDelta: boolean, included: { count: number }, excluded: { count: number } }}
+ * @returns {{ count: number, tonnageDelta: string, absoluteTonnage: string, addsToBalance: boolean, hasTonnageDelta: boolean, balanceAffecting: { count: number }, nonBalanceAffecting: { count: number } }}
  */
 const buildChangeSectionViewModel = (changeSection) => {
-  const count = changeSection.included.count + changeSection.excluded.count
+  const count =
+    changeSection.balanceAffecting.count +
+    changeSection.nonBalanceAffecting.count
 
   const tonnageDelta =
-    changeSection.included.tonnageDelta + changeSection.excluded.tonnageDelta
+    changeSection.balanceAffecting.tonnageDelta +
+    changeSection.nonBalanceAffecting.tonnageDelta
   const absoluteTonnage = formatTonnage(Math.abs(tonnageDelta))
 
   return {
@@ -43,8 +46,8 @@ const buildChangeSectionViewModel = (changeSection) => {
     // Hide the sentence whenever the figure we would print is zero, so a
     // net delta that rounds to "0.00" never produces "will add 0.00 tonnes".
     hasTonnageDelta: absoluteTonnage !== ZERO_TONNAGE,
-    included: { count: changeSection.included.count },
-    excluded: { count: changeSection.excluded.count }
+    balanceAffecting: { count: changeSection.balanceAffecting.count },
+    nonBalanceAffecting: { count: changeSection.nonBalanceAffecting.count }
   }
 }
 
@@ -71,7 +74,9 @@ const computeTotalTonnageDelta = (loadsByPeriodStatus) => {
   let total = 0
   for (const period of [loadsByPeriodStatus.open, loadsByPeriodStatus.closed]) {
     for (const change of [period.added, period.adjusted]) {
-      total += change.included.tonnageDelta + change.excluded.tonnageDelta
+      total +=
+        change.balanceAffecting.tonnageDelta +
+        change.nonBalanceAffecting.tonnageDelta
     }
   }
   return total

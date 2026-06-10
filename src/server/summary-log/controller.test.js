@@ -3405,8 +3405,8 @@ describe('enhanced check page', () => {
   const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
 
   const emptyBucket = () => ({
-    included: { count: 0, tonnageDelta: 0 },
-    excluded: { count: 0, tonnageDelta: 0 }
+    balanceAffecting: { count: 0, tonnageDelta: 0 },
+    nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
   })
 
   const emptyPeriod = () => ({
@@ -3433,8 +3433,8 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 3, tonnageDelta: 10 },
-              excluded: { count: 1, tonnageDelta: 0 }
+              balanceAffecting: { count: 3, tonnageDelta: 10 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
@@ -3673,19 +3673,19 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 2, tonnageDelta: 5 },
-              excluded: { count: 0, tonnageDelta: 0 }
+              balanceAffecting: { count: 2, tonnageDelta: 5 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
           closed: {
             added: {
-              included: { count: 4, tonnageDelta: 8 },
-              excluded: { count: 1, tonnageDelta: 0 }
+              balanceAffecting: { count: 4, tonnageDelta: 8 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
             },
             adjusted: {
-              included: { count: 2, tonnageDelta: -3 },
-              excluded: { count: 1, tonnageDelta: 0 }
+              balanceAffecting: { count: 2, tonnageDelta: -3 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
             }
           }
         }
@@ -3829,8 +3829,8 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 3, tonnageDelta: 1230.06 },
-              excluded: { count: 1, tonnageDelta: 230.06 }
+              balanceAffecting: { count: 3, tonnageDelta: 1230.06 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 230.06 }
             },
             adjusted: emptyBucket()
           },
@@ -3869,12 +3869,12 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 0, tonnageDelta: 0 },
-              excluded: { count: 3, tonnageDelta: 0 }
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 3, tonnageDelta: 0 }
             },
             adjusted: {
-              included: { count: 0, tonnageDelta: 0 },
-              excluded: { count: 2, tonnageDelta: 0 }
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 2, tonnageDelta: 0 }
             }
           },
           closed: emptyPeriod()
@@ -3929,8 +3929,8 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 0, tonnageDelta: 0 },
-              excluded: { count: 5, tonnageDelta: 0 }
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 5, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
@@ -4050,8 +4050,8 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 3, tonnageDelta: 10 },
-              excluded: { count: 0, tonnageDelta: 0 }
+              balanceAffecting: { count: 3, tonnageDelta: 10 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
@@ -4106,12 +4106,12 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 3, tonnageDelta: 100 },
-              excluded: { count: 1, tonnageDelta: 0 }
+              balanceAffecting: { count: 3, tonnageDelta: 100 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
             },
             adjusted: {
-              included: { count: 1, tonnageDelta: -20 },
-              excluded: { count: 0, tonnageDelta: 0 }
+              balanceAffecting: { count: 1, tonnageDelta: -20 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
             }
           },
           closed: emptyPeriod()
@@ -4172,8 +4172,8 @@ describe('enhanced check page', () => {
         loadsByPeriodStatus: {
           open: {
             added: {
-              included: { count: 0, tonnageDelta: 0 },
-              excluded: { count: 5, tonnageDelta: 0 }
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 5, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           },
@@ -4205,8 +4205,8 @@ describe('enhanced check page', () => {
           open: emptyPeriod(),
           closed: {
             added: {
-              included: { count: 6, tonnageDelta: 15 },
-              excluded: { count: 0, tonnageDelta: 0 }
+              balanceAffecting: { count: 6, tonnageDelta: 15 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
             },
             adjusted: emptyBucket()
           }

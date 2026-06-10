@@ -10,15 +10,15 @@
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.newLoadsTonnage', { tonnes: added.tonnageDelta }) }}</p>
         {% endif %}
 
-        {% if added.included.count > 0 %}
+        {% if added.balanceAffecting.count > 0 %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsIncluded', { count: added.included.count }) }}</p>
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsIncluded', { count: added.balanceAffecting.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
         {% endif %}
 
-        {% if added.excluded.count > 0 %}
+        {% if added.nonBalanceAffecting.count > 0 %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsExcluded', { count: added.excluded.count }) }}</p>
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsExcluded', { count: added.nonBalanceAffecting.count }) }}</p>
         {% endif %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
       {% else %}
@@ -50,15 +50,15 @@
           {% endif %}
         {% endif %}
 
-        {% if adjusted.included.count > 0 %}
+        {% if adjusted.balanceAffecting.count > 0 %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsIncluded', { count: adjusted.included.count }) }}</p>
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsIncluded', { count: adjusted.balanceAffecting.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
         {% endif %}
 
-        {% if adjusted.excluded.count > 0 %}
+        {% if adjusted.nonBalanceAffecting.count > 0 %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsExcluded', { count: adjusted.excluded.count }) }}</p>
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsExcluded', { count: adjusted.nonBalanceAffecting.count }) }}</p>
     <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedExcludedReason') }}</p>
         {% endif %}
     <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">

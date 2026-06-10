@@ -170,8 +170,8 @@
 
 /**
  * @typedef {{
- *   included: LoadSummary,
- *   excluded: LoadSummary
+ *   balanceAffecting: LoadSummary,
+ *   nonBalanceAffecting: LoadSummary
  * }} PeriodStatusByChange
  */
 

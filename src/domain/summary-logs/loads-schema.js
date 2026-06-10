@@ -55,8 +55,8 @@ const loadSummarySchema = Joi.object({
 })
 
 const periodStatusByChangeSchema = Joi.object({
-  included: loadSummarySchema.required(),
-  excluded: loadSummarySchema.required()
+  balanceAffecting: loadSummarySchema.required(),
+  nonBalanceAffecting: loadSummarySchema.required()
 })
 
 const periodStatusSchema = Joi.object({
