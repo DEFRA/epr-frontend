@@ -1,11 +1,27 @@
 import { afterEach, describe, it, expect } from 'vitest'
 import {
   config,
+  isEnhancedSummaryLogCheckPagesEnabled,
   isLocalEnvironment,
   isProductionEnvironment
 } from './config.js'
 
 describe('#config', () => {
+  describe(isEnhancedSummaryLogCheckPagesEnabled, () => {
+    afterEach(() => {
+      config.reset('featureFlags.enhancedSummaryLogCheckPages')
+    })
+
+    it('should return false by default', () => {
+      expect(isEnhancedSummaryLogCheckPagesEnabled()).toBe(false)
+    })
+
+    it('should return true when flag is enabled', () => {
+      config.set('featureFlags.enhancedSummaryLogCheckPages', true)
+      expect(isEnhancedSummaryLogCheckPagesEnabled()).toBe(true)
+    })
+  })
+
   describe(isProductionEnvironment, () => {
     afterEach(() => {
       config.reset('cdpEnvironment')

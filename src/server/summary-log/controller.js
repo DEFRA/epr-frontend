@@ -1,3 +1,4 @@
+import { isEnhancedSummaryLogCheckPagesEnabled } from '#config/config.js'
 import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
@@ -6,6 +7,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { renderEnhancedCheckView } from './enhanced-check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
 
 /**
@@ -39,6 +41,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   validation?: ValidationResponse,
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
+ *   loadsByReportingPeriod?: import('./types.js').LoadsByReportingPeriod,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   processingType?: ProcessingType,
  *   organisationId: string,
@@ -277,6 +280,7 @@ const getStatusData = async (
   const {
     accreditationNumber,
     loads,
+    loadsByReportingPeriod,
     loadsByWasteRecordType,
     processingType,
     status,
@@ -286,6 +290,7 @@ const getStatusData = async (
   return {
     accreditationNumber,
     loads,
+    loadsByReportingPeriod,
     loadsByWasteRecordType,
     processingType,
     status,
@@ -304,18 +309,19 @@ const getStatusData = async (
  * @param {RenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
-const renderCheckView = (
-  h,
-  localise,
-  {
+const renderCheckView = (h, localise, context) => {
+  if (isEnhancedSummaryLogCheckPagesEnabled()) {
+    return renderEnhancedCheckView(h, localise, context)
+  }
+
+  const {
     loads,
     loadsByWasteRecordType,
     organisationId,
     registrationId,
     summaryLogId,
     processingType
-  }
-) => {
+  } = context
   if (isRegisteredOnlyProcessingType(processingType)) {
     if (loadsByWasteRecordType === undefined) {
       throw new Error(
@@ -528,7 +534,12 @@ const getWasteBalanceData = async (
   idToken,
   logger
 ) => {
-  if (status !== summaryLogStatuses.submitted) {
+  const needsWasteBalance =
+    status === summaryLogStatuses.submitted ||
+    (status === summaryLogStatuses.validated &&
+      isEnhancedSummaryLogCheckPagesEnabled())
+
+  if (!needsWasteBalance) {
     return {}
   }
 
@@ -580,6 +591,7 @@ export const summaryLogUploadProgressController = {
     const {
       accreditationNumber,
       loads,
+      loadsByReportingPeriod,
       loadsByWasteRecordType,
       processingType,
       status,
@@ -620,6 +632,7 @@ export const summaryLogUploadProgressController = {
       validation,
       accreditationNumber,
       loads,
+      loadsByReportingPeriod,
       loadsByWasteRecordType,
       processingType,
       organisationId,

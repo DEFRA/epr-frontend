@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -19,7 +20,7 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
@@ -3394,5 +3395,848 @@ describe('registered-only check view', () => {
     expect(result).toStrictEqual(
       expect.stringContaining('Something went wrong')
     )
+  })
+})
+
+describe('enhanced check page', () => {
+  const organisationId = '123'
+  const registrationId = '456'
+  const summaryLogId = '789'
+  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+
+  const emptyBucket = () => ({
+    balanceAffecting: { count: 0, tonnageDelta: 0 },
+    nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+  })
+
+  const emptyPeriod = () => ({
+    added: emptyBucket(),
+    adjusted: emptyBucket()
+  })
+
+  beforeEach(() => {
+    config.set('featureFlags.enhancedSummaryLogCheckPages', true)
+    mockFetchSummaryLogStatus.mockReset().mockResolvedValue({
+      status: 'preprocessing'
+    })
+  })
+
+  afterEach(() => {
+    config.reset('featureFlags.enhancedSummaryLogCheckPages')
+  })
+
+  describe('accredited with open period new loads only', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 3, tonnageDelta: 10 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+    })
+
+    it('renders "Open periods: new loads" heading with tonnage', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: new loads/i
+        })
+      ).toBeDefined()
+      expect(
+        queryByText(main, /will add 10\.00 tonnes to your waste balance/)
+      ).not.toBeNull()
+    })
+
+    it('shows included and excluded count lines', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        queryByText(
+          main,
+          /3 new loads will be recorded \(and added to your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /1 new loads will be recorded \(but NOT added to your waste balance\)/
+        )
+      ).not.toBeNull()
+    })
+
+    it('shows "no adjusted loads" message and hides closed sections', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 3,
+          name: /there are no adjusted loads/i
+        })
+      ).toBeDefined()
+      expect(queryByText(main, /closed periods/i)).toBeNull()
+    })
+
+    it('includes the submit form', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          `action="/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}/submit"`
+        )
+      )
+      expect(result).toStrictEqual(expect.stringContaining('method="POST"'))
+      expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
+    })
+
+    it('renders the design caption and page heading', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 1,
+          name: /upload your summary log/i
+        })
+      ).toBeDefined()
+      expect(queryByText(main, 'Summary log')).not.toBeNull()
+      expect(queryByText(main, /check before confirming upload/i)).toBeNull()
+    })
+
+    it('does not render the reporting-periods intro paragraph', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        queryByText(
+          main,
+          /check the following to find out how your reporting periods are affected/i
+        )
+      ).toBeNull()
+    })
+
+    it('shows the upload warning with choose-again and home links', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        queryByText(main, /your data will not be saved until you upload it/i)
+      ).not.toBeNull()
+
+      const chooseFileLink = getByRole(main, 'link', {
+        name: /choose the file again/i
+      })
+      expect(chooseFileLink.getAttribute('href')).toBe(
+        `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+      )
+
+      const homeLink = getByRole(main, 'link', { name: /return to home/i })
+      expect(homeLink.getAttribute('href')).toBe(
+        `/organisations/${organisationId}`
+      )
+
+      expect(
+        queryByText(main, /will not be saved until you confirm upload/i)
+      ).toBeNull()
+    })
+
+    it('does not repeat the required-data sentence under excluded new loads', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // Included new loads keep the sentence; the excluded line must not repeat it.
+      expect(
+        getAllByText(
+          main,
+          /these loads include all the required summary log data/i
+        )
+      ).toHaveLength(1)
+    })
+
+    it('separates the new-loads sub-blocks with visible section breaks', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // A rule before the included block, before the excluded block, and one
+      // closing the section. The empty adjusted section adds none.
+      expect(
+        main.querySelectorAll('hr.govuk-section-break--visible')
+      ).toHaveLength(3)
+    })
+  })
+
+  describe('accredited with mixed open and closed period loads', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 2, tonnageDelta: 5 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closedPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 4, tonnageDelta: 8 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
+            },
+            adjusted: {
+              balanceAffecting: { count: 2, tonnageDelta: -3 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
+            }
+          }
+        }
+      })
+    })
+
+    it('renders section headings for new and adjusted loads', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      const h2s = getAllByRole(main, 'heading', { level: 2 })
+      const h2Texts = h2s.map((el) => el.textContent)
+      expect(h2Texts).toStrictEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/open periods: new loads/i),
+          expect.stringMatching(/closed periods: new loads/i),
+          expect.stringMatching(/closed periods: adjusted loads/i)
+        ])
+      )
+    })
+
+    it('shows directional tonnage for negative adjusted delta', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        queryByText(main, /will add 5\.00 tonnes to your waste balance/)
+      ).not.toBeNull()
+      expect(
+        queryByText(main, /will add 8\.00 tonnes to your waste balance/)
+      ).not.toBeNull()
+      expect(
+        queryByText(main, /will remove 3\.00 tonnes from your waste balance/)
+      ).not.toBeNull()
+    })
+
+    it('shows included and excluded count lines', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // Closed new loads: 4 included, 1 excluded
+      expect(
+        queryByText(
+          main,
+          /4 new loads will be recorded \(and added to your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /1 new loads will be recorded \(but NOT added to your waste balance\)/
+        )
+      ).not.toBeNull()
+
+      // Closed adjusted: 2 included, 1 excluded
+      expect(
+        queryByText(
+          main,
+          /2 adjusted loads will be recorded \(and reflected in your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /1 adjusted loads will be recorded \(NOT reflected in your waste balance\)/
+        )
+      ).not.toBeNull()
+    })
+
+    it('hides excluded line when excluded count is zero', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // Open new loads has 0 excluded, should not render a zero-count line
+      expect(queryByText(main, /0 new loads/)).toBeNull()
+    })
+
+    it('shows inset text on adjusted section', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toStrictEqual(
+        expect.stringContaining(
+          'Data has been added, removed or changed since this summary log was last uploaded'
+        )
+      )
+    })
+  })
+
+  describe('tonnage formatting', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 3, tonnageDelta: 1230.06 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 230.06 }
+            },
+            adjusted: emptyBucket()
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+    })
+
+    it('formats summed tonnage with thousand separators and 2dp', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // 1230.06 + 230.06 = 1460.12 (not 1460.1199999999999)
+      expect(
+        queryByText(main, /will add 1,460\.12 tonnes to your waste balance/)
+      ).not.toBeNull()
+    })
+  })
+
+  describe('accredited section with zero net tonnage', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 3, tonnageDelta: 0 }
+            },
+            adjusted: {
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 2, tonnageDelta: 0 }
+            }
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+    })
+
+    it('hides the tonnage sentence but keeps the loads, when tonnage is zero', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // No "will add/remove 0.00 tonnes" sentence on either section
+      expect(
+        queryByText(main, /will add 0\.00 tonnes to your waste balance/)
+      ).toBeNull()
+      expect(
+        queryByText(main, /tonnes (to|from) your waste balance/)
+      ).toBeNull()
+
+      // The loads themselves are still recorded against the section
+      expect(
+        queryByText(
+          main,
+          /3 new loads will be recorded \(but NOT added to your waste balance\)/
+        )
+      ).not.toBeNull()
+      expect(
+        queryByText(
+          main,
+          /2 adjusted loads will be recorded \(NOT reflected in your waste balance\)/
+        )
+      ).not.toBeNull()
+    })
+  })
+
+  describe('registered-only processing type', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_REGISTERED_ONLY',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 5, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+    })
+
+    it('shows total count without tonnage or included/excluded split', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: new loads/i
+        })
+      ).toBeDefined()
+      expect(queryByText(main, /5 new loads will be recorded/)).not.toBeNull()
+      expect(queryByText(main, /tonnes/)).toBeNull()
+      expect(queryByText(main, /waste balance/)).toBeNull()
+    })
+  })
+
+  describe('loadsByReportingPeriod missing', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT'
+      })
+    })
+
+    it('renders page without period sections', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(queryByText(main, /open periods/i)).toBeNull()
+      expect(queryByText(main, /closed periods/i)).toBeNull()
+    })
+
+    it('still includes the submit form', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
+    })
+  })
+
+  describe('all loads unchanged (zero added and adjusted)', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+    })
+
+    it('shows no period sections', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(queryByText(main, /open periods/i)).toBeNull()
+      expect(queryByText(main, /closed periods/i)).toBeNull()
+    })
+
+    it('still includes the submit form', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
+    })
+  })
+
+  describe('shows no-loads messages within a period that has some loads', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 3, tonnageDelta: 10 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+    })
+
+    it('shows "no adjusted loads" in open period alongside new loads', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: new loads/i
+        })
+      ).toBeDefined()
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /open periods: adjusted loads/i
+        })
+      ).toBeDefined()
+      expect(
+        getByRole(main, 'heading', {
+          level: 3,
+          name: /there are no adjusted loads/i
+        })
+      ).toBeDefined()
+    })
+  })
+
+  describe('waste balance projection for accredited', () => {
+    const accreditationId = 'accreditation-id-789'
+
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 3, tonnageDelta: 100 },
+              nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
+            },
+            adjusted: {
+              balanceAffecting: { count: 1, tonnageDelta: -20 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+            }
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+
+      mockFetchRegistrationAndAccreditation.mockResolvedValueOnce({
+        organisationData: { id: organisationId },
+        registration: { id: registrationId, accreditationId },
+        accreditation: {
+          id: accreditationId,
+          accreditationNumber: 'ACC-2025-001'
+        }
+      })
+
+      mockFetchWasteBalances.mockResolvedValueOnce({
+        [accreditationId]: {
+          amount: 5000,
+          availableAmount: 4500
+        }
+      })
+    })
+
+    it('shows projected waste balance in a centred grey panel', async ({
+      server
+    }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      // current: 4500, delta: 100 + (-20) = 80, projected: 4580
+      expect(main.textContent.replace(/\s+/g, ' ')).toMatch(
+        /your waste balance will be 4,580\.00 \(from 4,500\.00\)/
+      )
+      expect(
+        main.querySelector('.epr-check-balance-panel strong')?.textContent
+      ).toBe('4,580.00')
+      // Needs a bottom margin so it does not butt against the confirm button.
+      expect(
+        main.querySelector('.epr-check-balance-panel')?.className
+      ).toContain('govuk-!-margin-bottom-8')
+    })
+  })
+
+  describe('waste balance projection hidden for registered-only', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_REGISTERED_ONLY',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 0, tonnageDelta: 0 },
+              nonBalanceAffecting: { count: 5, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+    })
+
+    it('does not show waste balance projection', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toStrictEqual(
+        expect.stringContaining('your waste balance will be')
+      )
+    })
+  })
+
+  describe('only closed period loads', () => {
+    beforeEach(() => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'REPROCESSOR_INPUT',
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 6, tonnageDelta: 15 },
+              nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+            },
+            adjusted: emptyBucket()
+          }
+        }
+      })
+    })
+
+    it('hides open sections and shows closed new loads', async ({ server }) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+      const main = getByRole(body, 'main')
+
+      expect(queryByText(main, /open periods/i)).toBeNull()
+      expect(
+        getByRole(main, 'heading', {
+          level: 2,
+          name: /closed periods: new loads/i
+        })
+      ).toBeDefined()
+      expect(
+        queryByText(main, /will add 15\.00 tonnes to your waste balance/)
+      ).not.toBeNull()
+    })
   })
 })

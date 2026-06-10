@@ -165,9 +165,35 @@
  */
 
 /**
+ * @typedef {{ count: number, tonnageDelta: number }} LoadSummary
+ */
+
+/**
+ * @typedef {{
+ *   balanceAffecting: LoadSummary,
+ *   nonBalanceAffecting: LoadSummary
+ * }} PeriodStatusByChange
+ */
+
+/**
+ * @typedef {{
+ *   added: PeriodStatusByChange,
+ *   adjusted: PeriodStatusByChange
+ * }} PeriodStatus
+ */
+
+/**
+ * @typedef {{
+ *   openPeriodLoads: PeriodStatus,
+ *   closedPeriodLoads: PeriodStatus
+ * }} LoadsByReportingPeriod
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
+ *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   processingType?: ProcessingType
  *   status: string,

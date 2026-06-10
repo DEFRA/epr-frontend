@@ -1,0 +1,126 @@
+{% extends 'layouts/page.njk' %}
+
+{% macro periodNewLoads(periodLabel, added, isAccredited) %}
+  <section class="govuk-!-margin-top-8">
+    <h2 class="govuk-heading-l">{{ periodLabel }}: {{ localise('summary-log:enhancedCheck.newLoads') }}</h2>
+
+    {% if added.count > 0 %}
+      {% if isAccredited %}
+        {% if added.hasTonnageDelta %}
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.newLoadsTonnage', { tonnes: added.tonnageDelta }) }}</p>
+        {% endif %}
+
+        {% if added.balanceAffecting.count > 0 %}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsIncluded', { count: added.balanceAffecting.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+        {% endif %}
+
+        {% if added.nonBalanceAffecting.count > 0 %}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsExcluded', { count: added.nonBalanceAffecting.count }) }}</p>
+        {% endif %}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      {% else %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.newLoadsCount', { count: added.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      {% endif %}
+    {% else %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:noAddedLoadsHeading') }}</h3>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% macro periodAdjustedLoads(periodLabel, adjusted, isAccredited) %}
+  <section class="govuk-!-margin-top-8">
+    <h2 class="govuk-heading-l">{{ periodLabel }}: {{ localise('summary-log:enhancedCheck.adjustedLoads') }}</h2>
+
+    {% if adjusted.count > 0 %}
+    <div class="govuk-inset-text">
+      {{ localise('summary-log:enhancedCheck.adjustedInset') }}
+    </div>
+
+      {% if isAccredited %}
+        {% if adjusted.hasTonnageDelta %}
+          {% if adjusted.addsToBalance %}
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageAdd', { tonnes: adjusted.absoluteTonnage }) }}</p>
+          {% else %}
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedTonnageRemove', { tonnes: adjusted.absoluteTonnage }) }}</p>
+          {% endif %}
+        {% endif %}
+
+        {% if adjusted.balanceAffecting.count > 0 %}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsIncluded', { count: adjusted.balanceAffecting.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+        {% endif %}
+
+        {% if adjusted.nonBalanceAffecting.count > 0 %}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsExcluded', { count: adjusted.nonBalanceAffecting.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.adjustedExcludedReason') }}</p>
+        {% endif %}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      {% else %}
+    <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhancedCheck.adjustedLoadsCount', { count: adjusted.count }) }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhancedCheck.loadsRequiredData') }}</p>
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      {% endif %}
+    {% else %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:noAdjustedLoadsHeading') }}</h3>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">
+      <span class="govuk-caption-xl">{{ localise('summary-log:enhancedCheck.caption') }}</span>
+      {{ localise('summary-log:enhancedCheck.heading') }}
+    </h1>
+
+    <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
+
+    <div class="govuk-inset-text">
+      <p class="govuk-body">{{ localise('summary-log:enhancedCheck.warningPara1') }}</p>
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        <strong>{{ localise('summary-log:enhancedCheck.warningBold') }}</strong>
+        {{ localise('summary-log:enhancedCheck.warningChooseFileLead') }}
+        <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:enhancedCheck.warningChooseFileLink') }}</a>
+        {{ localise('summary-log:enhancedCheck.warningHomeLead') }}
+        <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:enhancedCheck.warningHomeLink') }}</a>).
+      </p>
+    </div>
+
+    {% if periodSections.open %}
+      {{ periodNewLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.added, isAccredited) }}
+      {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.openPeriods'), periodSections.open.adjusted, isAccredited) }}
+    {% endif %}
+
+    {% if periodSections.closed %}
+      {{ periodNewLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.added, isAccredited) }}
+      {{ periodAdjustedLoads(localise('summary-log:enhancedCheck.closedPeriods'), periodSections.closed.adjusted, isAccredited) }}
+    {% endif %}
+
+    {% if wasteBalanceProjection %}
+    <div class="epr-check-balance-panel govuk-!-text-align-centre govuk-!-padding-4 govuk-!-margin-top-8 govuk-!-margin-bottom-8">
+      <p class="govuk-body govuk-!-margin-bottom-0">
+        {{ localise('summary-log:enhancedCheck.wasteBalanceProjectionStart') }}
+        <strong>{{ wasteBalanceProjection.projectedBalance }}</strong>
+        {{ localise('summary-log:enhancedCheck.wasteBalanceProjectionFrom', { currentBalance: wasteBalanceProjection.currentBalance }) }}
+      </p>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
+      {{ govukButton({
+        text: localise('summary-log:confirmButton'),
+        preventDoubleClick: true
+      }) }}
+    </form>
+  </div>
+</div>
+{% endblock %}

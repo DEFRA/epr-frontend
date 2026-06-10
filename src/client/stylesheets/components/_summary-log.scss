@@ -1,3 +1,11 @@
+@use "govuk-frontend" as *;
+
+// GOV.UK ships no background-colour override, so per DS guidance we add our own
+// class for the projected waste balance summary panel.
+.epr-check-balance-panel {
+  background-color: govuk-colour("black", $variant: "tint-95");
+}
+
 // The "value entered" cell can hold an arbitrary, unbroken operator string
 // (e.g. a 100+ char free-text value). overflow-wrap: anywhere lets it break
 // mid-token so the cell can shrink and the table stays within its column,
