@@ -1,7 +1,8 @@
 {% extends 'layouts/page.njk' %}
 
-{# Each section follows the design's heading -> rule -> body -> rule banding.
-   No rule sits above the first heading; that gap is handled by the page chrome. #}
+{# Section banding follows the design: the heading plus any inset and tonnage
+   caption form an un-ruled intro, then a rule precedes every content block and a
+   trailing rule closes the section. No rule sits above the first heading. #}
 {% macro sectionRule() %}
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 {% endmacro %}
@@ -9,20 +10,22 @@
 {% macro newLoadsSection(change, headingKey, isAccredited) %}
 <section class="govuk-!-margin-top-6">
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
-  {{ sectionRule() }}
   {% if isAccredited %}
     {% if change.hasTonnageDelta %}
     <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsCaption', { tonnage: change.absoluteTonnage }) }}</p>
     {% endif %}
     {% if change.balanceAffecting.count > 0 %}
+    {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsAddedHeading', { count: change.balanceAffecting.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
     {% endif %}
     {% if change.nonBalanceAffecting.count > 0 %}
+    {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsNotAddedHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.loadsMissingData') }}</p>
     {% endif %}
   {% else %}
+    {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyNewLoadsHeading', { count: change.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
   {% endif %}
@@ -33,7 +36,6 @@
 {% macro adjustedLoadsSection(change, headingKey, isAccredited, showInset) %}
 <section class="govuk-!-margin-top-6">
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
-  {{ sectionRule() }}
   {% if showInset %}
   <div class="govuk-inset-text">{{ localise('summary-log:enhanced.adjustedDataChangedInset') }}</div>
   {% endif %}
@@ -46,13 +48,16 @@
       {% endif %}
     {% endif %}
     {% if change.balanceAffecting.count > 0 %}
+    {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustedLoadsReflectedHeading', { count: change.balanceAffecting.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedLoadsReflectedBody') }}</p>
     {% endif %}
     {% if change.nonBalanceAffecting.count > 0 %}
+    {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustmentsNotRelevantHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
     {% endif %}
   {% else %}
+    {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyAdjustedLoadsHeading', { count: change.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
   {% endif %}
