@@ -41,7 +41,7 @@ const FLAG = 'featureFlags.enhancedSummaryLogCheckPages'
 /** @type {PeriodStatusByChange} */
 const ZERO_CHANGE = {
   balanceAffecting: { count: 0, tonnageDelta: 0 },
-  nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+  nonBalanceAffecting: { count: 0 }
 }
 
 const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
@@ -84,21 +84,21 @@ describe('enhanced summary log check view', () => {
         openPeriodLoads: {
           added: {
             balanceAffecting: { count: 5, tonnageDelta: 10 },
-            nonBalanceAffecting: { count: 2, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 2 }
           },
           adjusted: {
             balanceAffecting: { count: 3, tonnageDelta: 6 },
-            nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 1 }
           }
         },
         closedPeriodLoads: {
           added: {
             balanceAffecting: { count: 4, tonnageDelta: 8 },
-            nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 0 }
           },
           adjusted: {
             balanceAffecting: { count: 2, tonnageDelta: -4 },
-            nonBalanceAffecting: { count: 1, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 1 }
           }
         }
       }
@@ -204,7 +204,7 @@ describe('enhanced summary log check view', () => {
         openPeriodLoads: {
           added: {
             balanceAffecting: { count: 0, tonnageDelta: 0 },
-            nonBalanceAffecting: { count: 3, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 3 }
           },
           adjusted: ZERO_CHANGE
         },
@@ -233,11 +233,11 @@ describe('enhanced summary log check view', () => {
         openPeriodLoads: {
           added: {
             balanceAffecting: { count: 0, tonnageDelta: 0 },
-            nonBalanceAffecting: { count: 4, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 4 }
           },
           adjusted: {
             balanceAffecting: { count: 0, tonnageDelta: 0 },
-            nonBalanceAffecting: { count: 2, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 2 }
           }
         },
         closedPeriodLoads: emptyPeriod()
@@ -277,7 +277,7 @@ describe('enhanced summary log check view', () => {
         openPeriodLoads: {
           added: {
             balanceAffecting: { count: 1, tonnageDelta: 2 },
-            nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 0 }
           },
           adjusted: ZERO_CHANGE
         },
@@ -309,7 +309,7 @@ describe('enhanced summary log check view', () => {
         closedPeriodLoads: {
           added: {
             balanceAffecting: { count: 1, tonnageDelta: 2 },
-            nonBalanceAffecting: { count: 0, tonnageDelta: 0 }
+            nonBalanceAffecting: { count: 0 }
           },
           adjusted: ZERO_CHANGE
         }
@@ -373,7 +373,7 @@ describe('enhanced summary log check view', () => {
     ).toBeDefined()
   })
 
-  it('renders a submit form posting to the submit endpoint', async ({
+  it('renders a submit form and a back link to the upload page', async ({
     server
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -385,7 +385,7 @@ describe('enhanced summary log check view', () => {
       }
     })
 
-    const { result } = await renderMain(server)
+    const { main, result } = await renderMain(server)
 
     expect(result).toStrictEqual(
       expect.stringContaining(
@@ -393,6 +393,16 @@ describe('enhanced summary log check view', () => {
       )
     )
     expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
+    expect(result).toStrictEqual(
+      expect.stringContaining('govuk-section-break--visible')
+    )
+
+    const backLink = getByRole(main, 'button', {
+      name: 'Go back to previous page'
+    })
+    expect(backLink.getAttribute('href')).toBe(
+      '/organisations/123/registrations/456/summary-logs/upload'
+    )
   })
 
   it('renders the legacy check page when the flag is off', async ({

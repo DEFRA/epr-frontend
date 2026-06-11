@@ -165,17 +165,22 @@
  */
 
 /**
- * A single count/tonnage bucket within a reporting-period change type. Present
- * for every leaf when loadsByReportingPeriod exists (zeros for empty buckets).
- * tonnageDelta can be negative (adjustments reducing tonnage) and non-zero on
- * the nonBalanceAffecting bucket (amendment reversals).
- * @typedef {{ count: number, tonnageDelta: number }} PeriodLoadSummary
+ * Balance-affecting bucket within a reporting-period change type. Carries the
+ * tonnage that moves the waste balance; tonnageDelta can be negative
+ * (adjustments reducing tonnage).
+ * @typedef {{ count: number, tonnageDelta: number }} BalanceAffectingBucket
+ */
+
+/**
+ * Non-balance-affecting bucket. These loads do not move the waste balance, so
+ * the backend sends count only (no tonnage).
+ * @typedef {{ count: number }} NonBalanceAffectingBucket
  */
 
 /**
  * @typedef {{
- *   balanceAffecting: PeriodLoadSummary,
- *   nonBalanceAffecting: PeriodLoadSummary
+ *   balanceAffecting: BalanceAffectingBucket,
+ *   nonBalanceAffecting: NonBalanceAffectingBucket
  * }} PeriodStatusByChange
  */
 
@@ -187,8 +192,8 @@
  */
 
 /**
- * loadsByReportingPeriod payload from the backend (epr-backend PR #1300).
- * Required on the response when status is VALIDATED, otherwise absent.
+ * loadsByReportingPeriod payload from the backend. Required on the response
+ * when status is VALIDATED, otherwise absent.
  * @typedef {{
  *   openPeriodLoads: PeriodStatus,
  *   closedPeriodLoads: PeriodStatus

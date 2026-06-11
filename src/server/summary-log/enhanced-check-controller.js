@@ -17,26 +17,30 @@ const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
 const ZERO_TONNAGE = formatTonnage(0)
 
 /** @type {{ count: number, tonnageDelta: number }} */
-const ZERO_BUCKET = { count: 0, tonnageDelta: 0 }
+const ZERO_BALANCE_AFFECTING = { count: 0, tonnageDelta: 0 }
+
+/** @type {{ count: number }} */
+const ZERO_NON_BALANCE_AFFECTING = { count: 0 }
 
 /**
- * Builds the view model for a single change type (added or adjusted), summing
- * the balance-affecting and non-balance-affecting buckets. Returns null when
- * the total count is zero so the template can hide the section.
+ * Builds the view model for a single change type (added or adjusted). Tonnage
+ * comes solely from the balance-affecting bucket; non-balance-affecting loads
+ * do not move the waste balance, so they contribute count only. Returns null
+ * when the total count is zero so the template can hide the section.
  * @param {PeriodStatusByChange} [change]
  * @returns {ChangeViewModel | null}
  */
 const buildChangeViewModel = (change) => {
-  const balanceAffecting = change?.balanceAffecting ?? ZERO_BUCKET
-  const nonBalanceAffecting = change?.nonBalanceAffecting ?? ZERO_BUCKET
+  const balanceAffecting = change?.balanceAffecting ?? ZERO_BALANCE_AFFECTING
+  const nonBalanceAffecting =
+    change?.nonBalanceAffecting ?? ZERO_NON_BALANCE_AFFECTING
   const count = balanceAffecting.count + nonBalanceAffecting.count
 
   if (count === 0) {
     return null
   }
 
-  const rawDelta =
-    balanceAffecting.tonnageDelta + nonBalanceAffecting.tonnageDelta
+  const rawDelta = balanceAffecting.tonnageDelta
   const absoluteTonnage = formatTonnage(Math.abs(rawDelta))
 
   return {

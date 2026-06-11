@@ -121,7 +121,8 @@
     "emptyOpenNewLoads": "No new loads have been added to your open period",
     "emptyOpenAdjustedLoads": "No adjustments have been made to your open period",
     "emptyClosedNewLoads": "No new loads have been added to your closed periods",
-    "emptyClosedAdjustedLoads": "No adjustments have been made to your closed periods"
+    "emptyClosedAdjustedLoads": "No adjustments have been made to your closed periods",
+    "goBackButton": "Go back to previous page"
   },
   "errorHeading": "Error checking status",
   "errorMessage": "Unable to check upload status",
