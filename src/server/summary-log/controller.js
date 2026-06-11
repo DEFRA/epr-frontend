@@ -520,7 +520,20 @@ const getUploadUrl = async (
 }
 
 /**
- * Gets waste balance data for a submitted summary log
+ * Determines whether the current waste balance is needed for this render: after
+ * submission (success page), or on the enhanced check page where it drives the
+ * projected balance panel.
+ * @param {string} status - Current summary log status
+ * @returns {boolean}
+ */
+const needsWasteBalance = (status) =>
+  status === summaryLogStatuses.submitted ||
+  (status === summaryLogStatuses.validated &&
+    isEnhancedSummaryLogCheckPagesEnabled())
+
+/**
+ * Gets waste balance data for a submitted summary log, or for the enhanced
+ * check page (validated, flag on)
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
@@ -535,7 +548,7 @@ const getWasteBalanceData = async (
   idToken,
   logger
 ) => {
-  if (status !== summaryLogStatuses.submitted) {
+  if (!needsWasteBalance(status)) {
     return {}
   }
 

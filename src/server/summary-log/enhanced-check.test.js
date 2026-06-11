@@ -1,6 +1,8 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
+import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import {
@@ -29,10 +31,40 @@ vi.mock(
   })
 )
 
+vi.mock(
+  import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js'),
+  () => ({
+    fetchRegistrationAndAccreditation: vi.fn()
+  })
+)
+
+vi.mock(
+  import('#server/common/helpers/waste-balance/fetch-waste-balances.js'),
+  () => ({
+    fetchWasteBalances: vi.fn()
+  })
+)
+
 const mockFetchSummaryLogStatus = vi.mocked(fetchSummaryLogStatus, {
   partial: true,
   deep: true
 })
+const mockFetchRegistrationAndAccreditation = vi.mocked(
+  fetchRegistrationAndAccreditation,
+  { partial: true, deep: true }
+)
+const mockFetchWasteBalances = vi.mocked(fetchWasteBalances, {
+  partial: true,
+  deep: true
+})
+
+/** Make the current accredited waste balance available to the check page. */
+const givenWasteBalance = (availableAmount) => {
+  mockFetchRegistrationAndAccreditation.mockResolvedValue({
+    registration: { accreditationId: 'acc-1' }
+  })
+  mockFetchWasteBalances.mockResolvedValue({ 'acc-1': { availableAmount } })
+}
 
 const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 
@@ -66,6 +98,12 @@ describe('enhanced summary log check view', () => {
     mockFetchSummaryLogStatus.mockReset().mockResolvedValue({
       status: 'preprocessing'
     })
+    // No accreditation by default, so the projection panel stays hidden unless a
+    // test opts in via givenWasteBalance().
+    mockFetchRegistrationAndAccreditation.mockReset().mockResolvedValue({
+      registration: { accreditationId: undefined }
+    })
+    mockFetchWasteBalances.mockReset().mockResolvedValue({})
     config.set(FLAG, true)
   })
 
@@ -402,6 +440,126 @@ describe('enhanced summary log check view', () => {
     })
     expect(backLink.getAttribute('href')).toBe(
       '/organisations/123/registrations/456/summary-logs/upload'
+    )
+  })
+
+  it('shows the projected waste balance panel for an accredited operator with a non-zero delta', async ({
+    server
+  }) => {
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 5, tonnageDelta: 10 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.stringContaining(
+        'If you upload this summary log to create a new report, your waste balance will be'
+      )
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining('<strong>110.00</strong>')
+    )
+    expect(result).toStrictEqual(expect.stringContaining('(from 100.00)'))
+  })
+
+  it('hides the projection panel when the net tonnage delta is zero', async ({
+    server
+  }) => {
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0 },
+            nonBalanceAffecting: { count: 3 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
+    )
+  })
+
+  it('hides the projection panel for a registered-only operator', async ({
+    server
+  }) => {
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0 },
+            nonBalanceAffecting: { count: 4 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
+    )
+  })
+
+  it('renders the page without the panel when the waste balance is unavailable', async ({
+    server
+  }) => {
+    // Default mocks: no accreditationId, so no balance can be fetched.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 5, tonnageDelta: 10 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main, result, statusCode } = await renderMain(server)
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByRole(main, 'heading', { name: 'Open periods: new loads' })
+    ).toBeDefined()
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
     )
   })
 

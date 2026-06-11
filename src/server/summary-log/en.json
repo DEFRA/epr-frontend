@@ -122,7 +122,9 @@
     "emptyOpenAdjustedLoads": "No adjustments have been made to your open period",
     "emptyClosedNewLoads": "No new loads have been added to your closed periods",
     "emptyClosedAdjustedLoads": "No adjustments have been made to your closed periods",
-    "goBackButton": "Go back to previous page"
+    "goBackButton": "Go back to previous page",
+    "projectionPrefix": "If you upload this summary log to create a new report, your waste balance will be",
+    "projectionSuffix": "(from {{current}})"
   },
   "errorHeading": "Error checking status",
   "errorMessage": "Unable to check upload status",

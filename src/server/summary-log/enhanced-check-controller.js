@@ -54,6 +54,43 @@ const buildChangeViewModel = (change) => {
 }
 
 /**
+ * Net tonnage a period contributes to the waste balance. Only balance-affecting
+ * loads move the balance; non-balance-affecting loads carry no tonnage.
+ * @param {PeriodStatus} [period]
+ * @returns {number}
+ */
+const periodBalanceDelta = (period) =>
+  (period?.added?.balanceAffecting?.tonnageDelta ?? 0) +
+  (period?.adjusted?.balanceAffecting?.tonnageDelta ?? 0)
+
+/**
+ * Builds the projected waste balance panel view model (accredited only). Hidden
+ * when the balance is unavailable or the net delta is zero (nothing to project).
+ * @param {boolean} isAccredited
+ * @param {number} [wasteBalance] - Current available waste balance
+ * @param {LoadsByReportingPeriod} [loadsByReportingPeriod]
+ * @returns {{ current: string, projected: string } | null}
+ */
+const buildWasteBalanceProjection = (
+  isAccredited,
+  wasteBalance,
+  loadsByReportingPeriod
+) => {
+  const netDelta =
+    periodBalanceDelta(loadsByReportingPeriod?.openPeriodLoads) +
+    periodBalanceDelta(loadsByReportingPeriod?.closedPeriodLoads)
+
+  if (!isAccredited || wasteBalance === undefined || netDelta === 0) {
+    return null
+  }
+
+  return {
+    current: formatTonnage(wasteBalance),
+    projected: formatTonnage(wasteBalance + netDelta)
+  }
+}
+
+/**
  * Builds the view model for a single period (open or closed). Returns null when
  * both change types are empty so the template hides the whole period.
  * @param {PeriodStatus} [period]
@@ -82,7 +119,8 @@ const buildPeriodViewModel = (period) => {
  *   processingType?: string,
  *   organisationId: string,
  *   registrationId: string,
- *   summaryLogId: string
+ *   summaryLogId: string,
+ *   wasteBalance?: number
  * }} context - View context
  * @returns {ResponseObject} Hapi view response
  */
@@ -94,7 +132,8 @@ export const renderEnhancedCheckView = (
     processingType,
     organisationId,
     registrationId,
-    summaryLogId
+    summaryLogId,
+    wasteBalance
   }
 ) => {
   const isAccredited =
@@ -111,6 +150,11 @@ export const renderEnhancedCheckView = (
     summaryLogId,
     isAccredited,
     periodSections: { open, closed },
-    isEmpty: open === null && closed === null
+    isEmpty: open === null && closed === null,
+    wasteBalanceProjection: buildWasteBalanceProjection(
+      isAccredited,
+      wasteBalance,
+      loadsByReportingPeriod
+    )
   })
 }
