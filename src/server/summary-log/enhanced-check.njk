@@ -85,10 +85,14 @@
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
 
     <div class="govuk-inset-text">
-      {{ localise('summary-log:checkWarningStart') }}
-      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
-      {{ localise('summary-log:checkWarningOr') }}
-      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
+      <p class="govuk-body">{{ localise('summary-log:enhanced.insetSaveWarning') }}</p>
+      <p class="govuk-body">
+        <strong>{{ localise('summary-log:enhanced.insetWrongLead') }}</strong>
+        {{ localise('summary-log:enhanced.insetEditAnd') }}
+        <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:enhanced.insetChooseFileLink') }}</a>
+        {{ localise('summary-log:enhanced.insetBeforeHome') }}
+        <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:enhanced.insetHomeLink') }}</a>).
+      </p>
     </div>
 
     {% if isEmpty %}

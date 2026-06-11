@@ -411,6 +411,7 @@ describe('enhanced summary log check view', () => {
     ).toBeDefined()
   })
 
+  /* eslint-disable vitest/max-expects -- single request, asserting all the new page chrome copy */
   it('uses the new page heading, intro and submit copy', async ({ server }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
@@ -432,7 +433,19 @@ describe('enhanced summary log check view', () => {
     // The legacy "Check the following..." intro line is gone from the new page
     expect(queryByText(main, /Check the following/)).toBeNull()
     expect(result).toStrictEqual(expect.not.stringContaining('Confirm upload'))
+
+    // The inset uses the new wording, not the legacy copy
+    expect(
+      getByText(main, /Your data will not be saved until you upload it\./)
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' })
+    ).toBeDefined()
+    expect(result).toStrictEqual(
+      expect.not.stringContaining('upload an updated summary log')
+    )
   })
+  /* eslint-enable vitest/max-expects */
 
   it('renders a submit form and a back link to the upload page', async ({
     server
