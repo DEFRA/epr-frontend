@@ -165,10 +165,64 @@
  */
 
 /**
+ * A single count/tonnage bucket within a reporting-period change type. Present
+ * for every leaf when loadsByReportingPeriod exists (zeros for empty buckets).
+ * tonnageDelta can be negative (adjustments reducing tonnage) and non-zero on
+ * the nonBalanceAffecting bucket (amendment reversals).
+ * @typedef {{ count: number, tonnageDelta: number }} PeriodLoadSummary
+ */
+
+/**
+ * @typedef {{
+ *   balanceAffecting: PeriodLoadSummary,
+ *   nonBalanceAffecting: PeriodLoadSummary
+ * }} PeriodStatusByChange
+ */
+
+/**
+ * @typedef {{
+ *   added: PeriodStatusByChange,
+ *   adjusted: PeriodStatusByChange
+ * }} PeriodStatus
+ */
+
+/**
+ * loadsByReportingPeriod payload from the backend (epr-backend PR #1300).
+ * Required on the response when status is VALIDATED, otherwise absent.
+ * @typedef {{
+ *   openPeriodLoads: PeriodStatus,
+ *   closedPeriodLoads: PeriodStatus
+ * }} LoadsByReportingPeriod
+ */
+
+/**
+ * View model for one change type (added or adjusted) within a period. Null when
+ * the total count is zero so the template hides the section.
+ * @typedef {{
+ *   count: number,
+ *   absoluteTonnage: string,
+ *   addsToBalance: boolean,
+ *   hasTonnageDelta: boolean,
+ *   balanceAffecting: { count: number },
+ *   nonBalanceAffecting: { count: number }
+ * }} ChangeViewModel
+ */
+
+/**
+ * View model for one period (open or closed). Null when both change types are
+ * null so the template hides the whole period.
+ * @typedef {{
+ *   added: ChangeViewModel | null,
+ *   adjusted: ChangeViewModel | null
+ * }} PeriodViewModel
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
+ *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,

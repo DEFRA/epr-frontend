@@ -327,6 +327,14 @@ export const config = convict({
       default: isProduction,
       env: 'AUDIT_ENABLED'
     }
+  },
+  featureFlags: {
+    enhancedSummaryLogCheckPages: {
+      doc: 'Feature Flag: Enhanced summary log check pages with open/closed period sections',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_ENHANCED_SUMMARY_LOG_CHECK_PAGES'
+    }
   }
 })
 
@@ -336,3 +344,6 @@ export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
 
 export const isLocalEnvironment = () => config.get('cdpEnvironment') === 'local'
+
+export const isEnhancedSummaryLogCheckPagesEnabled = () =>
+  config.get('featureFlags.enhancedSummaryLogCheckPages')

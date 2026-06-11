@@ -1,0 +1,115 @@
+{% extends 'layouts/page.njk' %}
+
+{% macro newLoadsSection(change, headingKey, isAccredited) %}
+<section class="govuk-!-margin-top-8">
+  <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
+  {% if isAccredited %}
+    {% if change.hasTonnageDelta %}
+    <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsCaption', { tonnage: change.absoluteTonnage }) }}</p>
+    {% endif %}
+    {% if change.balanceAffecting.count > 0 %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsAddedHeading', { count: change.balanceAffecting.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
+    {% endif %}
+    {% if change.nonBalanceAffecting.count > 0 %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsNotAddedHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.loadsMissingData') }}</p>
+    {% endif %}
+  {% else %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyNewLoadsHeading', { count: change.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{% macro adjustedLoadsSection(change, headingKey, isAccredited, showInset) %}
+<section class="govuk-!-margin-top-8">
+  <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
+  {% if showInset %}
+  <div class="govuk-inset-text">{{ localise('summary-log:enhanced.adjustedDataChangedInset') }}</div>
+  {% endif %}
+  {% if isAccredited %}
+    {% if change.hasTonnageDelta %}
+      {% if change.addsToBalance %}
+      <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedLoadsCaptionAdd', { tonnage: change.absoluteTonnage }) }}</p>
+      {% else %}
+      <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedLoadsCaptionRemove', { tonnage: change.absoluteTonnage }) }}</p>
+      {% endif %}
+    {% endif %}
+    {% if change.balanceAffecting.count > 0 %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustedLoadsReflectedHeading', { count: change.balanceAffecting.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedLoadsReflectedBody') }}</p>
+    {% endif %}
+    {% if change.nonBalanceAffecting.count > 0 %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustmentsNotRelevantHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
+    {% endif %}
+  {% else %}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyAdjustedLoadsHeading', { count: change.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{% macro emptySection(headingKey, emptyKey) %}
+<section class="govuk-!-margin-top-8">
+  <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
+  <p class="govuk-body">{{ localise('summary-log:enhanced.' + emptyKey) }}</p>
+</section>
+{% endmacro %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl">
+      <span class="govuk-caption-xl">{{ localise('summary-log:checkCaption') }}</span>
+      {{ localise('summary-log:checkHeading') }}
+    </h1>
+
+    <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
+    {% if isAccredited %}
+    <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
+    {% else %}
+    <p class="govuk-body">{{ localise('summary-log:registeredOnly.checkIntro2') }}</p>
+    {% endif %}
+
+    <div class="govuk-inset-text">
+      {{ localise('summary-log:checkWarningStart') }}
+      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
+      {{ localise('summary-log:checkWarningOr') }}
+      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
+    </div>
+
+    {% if isEmpty %}
+      {{ emptySection('openNewLoadsHeading', 'emptyOpenNewLoads') }}
+      {{ emptySection('openAdjustedLoadsHeading', 'emptyOpenAdjustedLoads') }}
+      {{ emptySection('closedNewLoadsHeading', 'emptyClosedNewLoads') }}
+      {{ emptySection('closedAdjustedLoadsHeading', 'emptyClosedAdjustedLoads') }}
+    {% else %}
+      {% if periodSections.open %}
+        {% if periodSections.open.added %}
+          {{ newLoadsSection(periodSections.open.added, 'openNewLoadsHeading', isAccredited) }}
+        {% endif %}
+        {% if periodSections.open.adjusted %}
+          {{ adjustedLoadsSection(periodSections.open.adjusted, 'openAdjustedLoadsHeading', isAccredited, true) }}
+        {% endif %}
+      {% endif %}
+      {% if periodSections.closed %}
+        {% if periodSections.closed.added %}
+          {{ newLoadsSection(periodSections.closed.added, 'closedNewLoadsHeading', isAccredited) }}
+        {% endif %}
+        {% if periodSections.closed.adjusted %}
+          {{ adjustedLoadsSection(periodSections.closed.adjusted, 'closedAdjustedLoadsHeading', isAccredited, false) }}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+    <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
+      {{ govukButton({
+        text: localise('summary-log:confirmButton'),
+        preventDoubleClick: true
+      }) }}
+    </form>
+  </div>
+</div>
+{% endblock %}
