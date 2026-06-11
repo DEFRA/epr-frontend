@@ -78,16 +78,11 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     <h1 class="govuk-heading-xl">
-      <span class="govuk-caption-xl">{{ localise('summary-log:checkCaption') }}</span>
-      {{ localise('summary-log:checkHeading') }}
+      <span class="govuk-caption-xl">{{ localise('summary-log:enhanced.pageCaption') }}</span>
+      {{ localise('summary-log:enhanced.pageHeading') }}
     </h1>
 
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
-    {% if isAccredited %}
-    <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
-    {% else %}
-    <p class="govuk-body">{{ localise('summary-log:registeredOnly.checkIntro2') }}</p>
-    {% endif %}
 
     <div class="govuk-inset-text">
       {{ localise('summary-log:checkWarningStart') }}
@@ -130,7 +125,7 @@
       <input type="hidden" name="crumb" value="{{ crumb }}" />
       <div class="govuk-button-group">
         {{ govukButton({
-          text: localise('summary-log:confirmButton'),
+          text: localise('summary-log:enhanced.submitButton'),
           preventDoubleClick: true
         }) }}
         {{ govukButton({

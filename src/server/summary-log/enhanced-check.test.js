@@ -411,6 +411,29 @@ describe('enhanced summary log check view', () => {
     ).toBeDefined()
   })
 
+  it('uses the new page heading, intro and submit copy', async ({ server }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main, result } = await renderMain(server)
+
+    expect(
+      getByRole(main, 'heading', { level: 1, name: /Upload your summary log/ })
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'button', { name: 'Upload summary log' })
+    ).toBeDefined()
+    // The legacy "Check the following..." intro line is gone from the new page
+    expect(queryByText(main, /Check the following/)).toBeNull()
+    expect(result).toStrictEqual(expect.not.stringContaining('Confirm upload'))
+  })
+
   it('renders a submit form and a back link to the upload page', async ({
     server
   }) => {
@@ -430,7 +453,6 @@ describe('enhanced summary log check view', () => {
         'action="/organisations/123/registrations/456/summary-logs/789/submit"'
       )
     )
-    expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
     expect(result).toStrictEqual(
       expect.stringContaining('govuk-section-break--visible')
     )

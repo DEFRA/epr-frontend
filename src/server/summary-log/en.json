@@ -89,6 +89,9 @@
   "complianceSubheading": "You must comply with your waste permit",
   "confirmButton": "Confirm upload",
   "enhanced": {
+    "pageCaption": "Summary log",
+    "pageHeading": "Upload your summary log",
+    "submitButton": "Upload summary log",
     "openNewLoadsHeading": "Open periods: new loads",
     "openAdjustedLoadsHeading": "Open periods: adjusted loads",
     "closedNewLoadsHeading": "Closed periods: new loads",
