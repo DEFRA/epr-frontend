@@ -1,9 +1,15 @@
 {% extends 'layouts/page.njk' %}
 
+{# Each section follows the design's heading -> rule -> body -> rule banding.
+   No rule sits above the first heading; that gap is handled by the page chrome. #}
+{% macro sectionRule() %}
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+{% endmacro %}
+
 {% macro newLoadsSection(change, headingKey, isAccredited) %}
 <section class="govuk-!-margin-top-6">
-  <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
+  {{ sectionRule() }}
   {% if isAccredited %}
     {% if change.hasTonnageDelta %}
     <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsCaption', { tonnage: change.absoluteTonnage }) }}</p>
@@ -20,13 +26,14 @@
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyNewLoadsHeading', { count: change.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
   {% endif %}
+  {{ sectionRule() }}
 </section>
 {% endmacro %}
 
 {% macro adjustedLoadsSection(change, headingKey, isAccredited, showInset) %}
 <section class="govuk-!-margin-top-6">
-  <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
+  {{ sectionRule() }}
   {% if showInset %}
   <div class="govuk-inset-text">{{ localise('summary-log:enhanced.adjustedDataChangedInset') }}</div>
   {% endif %}
@@ -49,14 +56,16 @@
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyAdjustedLoadsHeading', { count: change.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
   {% endif %}
+  {{ sectionRule() }}
 </section>
 {% endmacro %}
 
 {% macro emptySection(headingKey, emptyKey) %}
 <section class="govuk-!-margin-top-6">
-  <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
+  {{ sectionRule() }}
   <p class="govuk-body">{{ localise('summary-log:enhanced.' + emptyKey) }}</p>
+  {{ sectionRule() }}
 </section>
 {% endmacro %}
 
@@ -106,9 +115,7 @@
       {% endif %}
     {% endif %}
 
-    <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible govuk-!-margin-top-6">
-
-    <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+    <form class="govuk-!-margin-top-6" method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
       <input type="hidden" name="crumb" value="{{ crumb }}" />
       <div class="govuk-button-group">
         {{ govukButton({
