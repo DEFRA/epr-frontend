@@ -1,5 +1,8 @@
 import { isEnhancedSummaryLogCheckPagesEnabled } from '#config/config.js'
-import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
+import {
+  isRegisteredOnlyProcessingType,
+  PROCESSING_TYPES
+} from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
@@ -26,10 +29,6 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   SummaryLogsSession,
  *   ValidationResponse
  * } from './types.js'
- */
-
-/**
- * @typedef {'EXPORTER_REGISTERED_ONLY' | 'REPROCESSOR_REGISTERED_ONLY'} RegisteredOnlyProcessingType
  */
 
 /**
@@ -115,14 +114,6 @@ export const getWasteRecordSectionNumber = (processingType) => {
     ? undefined
     : WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
 }
-
-/**
- * @param {ProcessingType} [processingType]
- * @returns {processingType is RegisteredOnlyProcessingType}
- */
-const isRegisteredOnlyProcessingType = (processingType) =>
-  processingType === PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY ||
-  processingType === PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'

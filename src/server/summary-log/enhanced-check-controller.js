@@ -1,5 +1,5 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
+import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields.js'
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
@@ -141,9 +141,7 @@ export const renderEnhancedCheckView = (
     throw new Error('Expected loadsByReportingPeriod for validated summary log')
   }
 
-  const isAccredited =
-    processingType !== PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY &&
-    processingType !== PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
+  const isAccredited = !isRegisteredOnlyProcessingType(processingType)
 
   const open = buildPeriodViewModel(loadsByReportingPeriod.openPeriodLoads)
   const closed = buildPeriodViewModel(loadsByReportingPeriod.closedPeriodLoads)
