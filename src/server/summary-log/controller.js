@@ -53,6 +53,13 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * }} RenderContext
  */
 
+/**
+ * A validated summary log's render context. The backend guarantees a processing
+ * type on every validated response, so it is required here, narrowed at the
+ * render boundary by toValidatedContext.
+ * @typedef {RenderContext & { processingType: ProcessingType }} ValidatedRenderContext
+ */
+
 const SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE = Object.freeze({
   [PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY]: Object.freeze({
     [WASTE_RECORD_TYPE.RECEIVED]:
@@ -105,15 +112,13 @@ const REUPLOAD_STATES = new Set([
 ])
 
 /**
- * Gets the waste record section number to display in UI copy based on processing type
- * @param {ProcessingType} [processingType] - Processing type from summary log meta
+ * Gets the waste record section number to display in UI copy based on processing
+ * type. Registered-only types are not in the section map and return undefined.
+ * @param {ProcessingType} processingType - Processing type from summary log meta
  * @returns {number | undefined} Waste record section number (1 or 3)
  */
-export const getWasteRecordSectionNumber = (processingType) => {
-  return processingType === undefined
-    ? undefined
-    : WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
-}
+export const getWasteRecordSectionNumber = (processingType) =>
+  WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
@@ -297,7 +302,7 @@ const getStatusData = async (
  * misleading empty page.
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string) => string} localise - i18n localisation function
- * @param {RenderContext} context - View context
+ * @param {ValidatedRenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
 const renderCheckView = (h, localise, context) => {
@@ -455,7 +460,6 @@ const renderProgressView = (h, localise, { status, pollUrl }) => {
  * ) => ResponseObject>}
  */
 const viewResolvers = {
-  [summaryLogStatuses.validated]: renderCheckView,
   [summaryLogStatuses.submitting]: renderSubmittingView,
   [summaryLogStatuses.submitted]: renderSuccessView,
   [summaryLogStatuses.superseded]: renderSupersededView,
@@ -463,6 +467,22 @@ const viewResolvers = {
   [summaryLogStatuses.rejected]: renderValidationFailuresView,
   [summaryLogStatuses.validationFailed]: renderValidationFailuresView,
   [summaryLogStatuses.submissionFailed]: renderValidationFailuresView
+}
+
+/**
+ * Narrows a render context for a validated summary log. The backend guarantees
+ * a processingType on every validated response, so a missing one is a contract
+ * violation we fail loudly on here, at the boundary, rather than letting the
+ * render paths treat the operator as accredited.
+ * @param {RenderContext} context
+ * @returns {ValidatedRenderContext}
+ */
+const toValidatedContext = (context) => {
+  if (context.processingType === undefined) {
+    throw new Error('Expected processingType for validated summary log')
+  }
+
+  return { ...context, processingType: context.processingType }
 }
 
 /**
@@ -475,6 +495,11 @@ const viewResolvers = {
  */
 const renderViewForStatus = (options) => {
   const { h, localise, status } = options
+
+  if (status === summaryLogStatuses.validated) {
+    return renderCheckView(h, localise, toValidatedContext(options))
+  }
+
   const resolver = viewResolvers[status] ?? renderProgressView
 
   return resolver(h, localise, options)
