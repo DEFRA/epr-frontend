@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -16,10 +17,12 @@ import {
   getByTestId,
   getByText,
   queryAllByRole,
+  queryAllByText,
+  queryByRole,
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 import {
@@ -30,7 +33,7 @@ import {
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { RawLoadsByWasteRecordType } from './types.js'
+ * @import { PeriodStatusByChange, RawLoadsByWasteRecordType } from './types.js'
  */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -3394,5 +3397,601 @@ describe('registered-only check view', () => {
     expect(result).toStrictEqual(
       expect.stringContaining('Something went wrong')
     )
+  })
+})
+
+describe('enhanced summary log check view', () => {
+  const organisationId = '123'
+  const registrationId = '456'
+  const summaryLogId = '789'
+  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
+
+  const FLAG = 'featureFlags.enhancedSummaryLogCheckPages'
+
+  /** @type {PeriodStatusByChange} */
+  const ZERO_CHANGE = {
+    balanceAffecting: { count: 0, tonnageDelta: 0 },
+    nonBalanceAffecting: { count: 0 }
+  }
+
+  const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
+
+  /** Make the current accredited waste balance available to the check page. */
+  const givenWasteBalance = (availableAmount) => {
+    mockFetchRegistrationAndAccreditation.mockResolvedValue({
+      registration: { accreditationId: 'acc-1' }
+    })
+    mockFetchWasteBalances.mockResolvedValue({ 'acc-1': { availableAmount } })
+  }
+
+  const renderMain = async (server) => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+    const { body } = new JSDOM(result).window.document
+    return { main: getByRole(body, 'main'), result, statusCode }
+  }
+
+  beforeEach(() => {
+    mockFetchSummaryLogStatus.mockReset().mockResolvedValue({
+      status: 'preprocessing'
+    })
+    // No accreditation by default, so the projection panel stays hidden unless a
+    // test opts in via givenWasteBalance().
+    mockFetchRegistrationAndAccreditation.mockReset().mockResolvedValue({
+      registration: { accreditationId: undefined }
+    })
+    mockFetchWasteBalances.mockReset().mockResolvedValue({})
+    config.set(FLAG, true)
+  })
+
+  afterEach(() => {
+    config.reset(FLAG)
+  })
+
+  it('renders all four populated accredited sections with balance language', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 5, tonnageDelta: 10 },
+            nonBalanceAffecting: { count: 2 }
+          },
+          adjusted: {
+            balanceAffecting: { count: 3, tonnageDelta: 6 },
+            nonBalanceAffecting: { count: 1 }
+          }
+        },
+        closedPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 4, tonnageDelta: 8 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: {
+            balanceAffecting: { count: 2, tonnageDelta: -4 },
+            nonBalanceAffecting: { count: 1 }
+          }
+        }
+      }
+    })
+
+    const { main, statusCode } = await renderMain(server)
+
+    const hasHeading = (name) => Boolean(queryByRole(main, 'heading', { name }))
+    const hasText = (text) => Boolean(queryByText(main, text))
+    const hasAnyText = (text) => queryAllByText(main, text).length > 0
+
+    // A single structural assertion of the whole rendered page: every section
+    // heading and caption present, plus the counts that carry meaning (the
+    // "not relevant" heading appears in both periods, the data-changed inset
+    // only on open adjusted).
+    expect({
+      statusCode,
+      openNewLoadsHeading: hasHeading('Open periods: new loads'),
+      openNewLoadsCaption: hasText(
+        'These new loads will add 10.00 tonnes to your waste balance.'
+      ),
+      openNewLoadsAddedHeading: hasHeading(
+        '5 new loads will be recorded (and added to your waste balance)'
+      ),
+      loadsIncludeData: hasAnyText(
+        'These loads include all the required summary log data.'
+      ),
+      openNewLoadsNotAddedHeading: hasHeading(
+        '2 new loads will be recorded (but NOT added to your waste balance)'
+      ),
+      loadsMissingData: hasText(
+        'These loads are missing required summary log data. They will not be included in your waste balance until you add the missing data.'
+      ),
+      openAdjustedLoadsHeading: hasHeading('Open periods: adjusted loads'),
+      openAdjustedLoadsCaption: hasText(
+        'These adjusted loads will add 6.00 tonnes to your waste balance.'
+      ),
+      openAdjustedReflectedHeading: hasHeading(
+        '3 adjusted loads will be recorded (and reflected in your waste balance)'
+      ),
+      adjustedReflectedBody: hasAnyText(
+        "These could 'add to' or 'remove from' your waste balance, depending on the adjustment."
+      ),
+      notRelevantHeadings: queryAllByRole(main, 'heading', {
+        name: '1 adjustment is not relevant to your waste balance'
+      }).length,
+      closedNewLoadsHeading: hasHeading('Closed periods: new loads'),
+      closedNewLoadsAddedHeading: hasHeading(
+        '4 new loads will be recorded (and added to your waste balance)'
+      ),
+      closedAdjustedLoadsHeading: hasHeading('Closed periods: adjusted loads'),
+      closedAdjustedLoadsCaption: hasText(
+        'These adjusted loads will remove 4.00 tonnes from your waste balance.'
+      ),
+      dataChangedInsets: queryAllByText(
+        main,
+        'Data has been changed since this summary log was last uploaded.'
+      ).length
+    }).toStrictEqual({
+      statusCode: statusCodes.ok,
+      openNewLoadsHeading: true,
+      openNewLoadsCaption: true,
+      openNewLoadsAddedHeading: true,
+      loadsIncludeData: true,
+      openNewLoadsNotAddedHeading: true,
+      loadsMissingData: true,
+      openAdjustedLoadsHeading: true,
+      openAdjustedLoadsCaption: true,
+      openAdjustedReflectedHeading: true,
+      adjustedReflectedBody: true,
+      notRelevantHeadings: 2,
+      closedNewLoadsHeading: true,
+      closedNewLoadsAddedHeading: true,
+      closedAdjustedLoadsHeading: true,
+      closedAdjustedLoadsCaption: true,
+      dataChangedInsets: 1
+    })
+  })
+
+  it('hides the tonnage caption when a section has no net tonnage change', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0 },
+            nonBalanceAffecting: { count: 3 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect(
+      getByRole(main, 'heading', {
+        name: '3 new loads will be recorded (but NOT added to your waste balance)'
+      })
+    ).toBeDefined()
+    expect(queryByText(main, /will add .* tonnes/)).toBeNull()
+  })
+
+  it('renders totals-only section headings for registered-only', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0 },
+            nonBalanceAffecting: { count: 4 }
+          },
+          adjusted: {
+            balanceAffecting: { count: 0, tonnageDelta: 0 },
+            nonBalanceAffecting: { count: 2 }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasHeading = (name) => Boolean(queryByRole(main, 'heading', { name }))
+
+    // The totals-only headings carry no balance suffix (the accredited variant
+    // would read "... (and added to your waste balance)"), and the data-changed
+    // inset still shows on open adjusted.
+    expect({
+      openNewLoadsHeading: hasHeading('Open periods: new loads'),
+      regOnlyNewLoadsHeading: hasHeading('4 new loads will be recorded'),
+      regOnlyAdjustedLoadsHeading: hasHeading(
+        '2 adjusted loads will be recorded'
+      ),
+      dataChangedInset: Boolean(
+        queryByText(
+          main,
+          'Data has been changed since this summary log was last uploaded.'
+        )
+      )
+    }).toStrictEqual({
+      openNewLoadsHeading: true,
+      regOnlyNewLoadsHeading: true,
+      regOnlyAdjustedLoadsHeading: true,
+      dataChangedInset: true
+    })
+  })
+
+  it('hides the closed sections when only the open period has changes', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 1, tonnageDelta: 2 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect(
+      getByRole(main, 'heading', { name: 'Open periods: new loads' })
+    ).toBeDefined()
+    expect(
+      queryByRole(main, 'heading', { name: 'Closed periods: new loads' })
+    ).toBeNull()
+    expect(
+      queryByRole(main, 'heading', { name: 'Closed periods: adjusted loads' })
+    ).toBeNull()
+  })
+
+  it('hides the open sections when only the closed period has changes', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 1, tonnageDelta: 2 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        }
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect(
+      getByRole(main, 'heading', { name: 'Closed periods: new loads' })
+    ).toBeDefined()
+    expect(
+      queryByRole(main, 'heading', { name: 'Open periods: new loads' })
+    ).toBeNull()
+    expect(
+      queryByRole(main, 'heading', { name: 'Open periods: adjusted loads' })
+    ).toBeNull()
+  })
+
+  it('renders the four-section empty state when the whole page is empty', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect(
+      getByText(main, 'No new loads have been added to your open period')
+    ).toBeDefined()
+    expect(
+      getByText(main, 'No adjustments have been made to your open period')
+    ).toBeDefined()
+    expect(
+      getByText(main, 'No new loads have been added to your closed periods')
+    ).toBeDefined()
+    expect(
+      getByText(main, 'No adjustments have been made to your closed periods')
+    ).toBeDefined()
+  })
+
+  it('returns a 500 when a validated response is missing loadsByReportingPeriod', async ({
+    server
+  }) => {
+    // The backend always pairs a validated summary log with its period
+    // aggregate; a missing loadsByReportingPeriod is a contract violation, so we
+    // fail loudly rather than render a misleading empty page (mirrors the
+    // loadsByWasteRecordType invariant in renderCheckView).
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER'
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toStrictEqual(
+      expect.stringContaining('Something went wrong')
+    )
+  })
+
+  /* eslint-disable vitest/max-expects -- single request, asserting all the new page chrome copy */
+  it('uses the new page heading, intro and submit copy', async ({ server }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main, result } = await renderMain(server)
+
+    expect(
+      getByRole(main, 'heading', { level: 1, name: /Upload your summary log/ })
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'button', { name: 'Upload summary log' })
+    ).toBeDefined()
+    // The legacy "Check the following..." intro line is gone from the new page
+    expect(queryByText(main, /Check the following/)).toBeNull()
+    expect(result).toStrictEqual(expect.not.stringContaining('Confirm upload'))
+
+    // The inset uses the new wording, not the legacy copy
+    expect(
+      getByText(main, /Your data will not be saved until you upload it\./)
+    ).toBeDefined()
+    expect(
+      getByRole(main, 'link', { name: 'choose the file again' })
+    ).toBeDefined()
+    expect(result).toStrictEqual(
+      expect.not.stringContaining('upload an updated summary log')
+    )
+  })
+  /* eslint-enable vitest/max-expects */
+
+  it('renders a submit form and a back link to the upload page', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main, result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.stringContaining(
+        'action="/organisations/123/registrations/456/summary-logs/789/submit"'
+      )
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining('govuk-section-break--visible')
+    )
+
+    const backLink = getByRole(main, 'button', {
+      name: 'Go back to previous page'
+    })
+    expect(backLink.getAttribute('href')).toBe(
+      '/organisations/123/registrations/456/summary-logs/upload'
+    )
+  })
+
+  it('shows the projected waste balance panel for an accredited operator with a non-zero delta', async ({
+    server
+  }) => {
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 5, tonnageDelta: 10 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.stringContaining(
+        'If you upload this summary log to create a new report, your waste balance will be'
+      )
+    )
+    expect(result).toStrictEqual(
+      expect.stringContaining('<strong>110.00</strong>')
+    )
+    expect(result).toStrictEqual(expect.stringContaining('(from 100.00)'))
+  })
+
+  it('hides the projection panel when the net tonnage delta is zero', async ({
+    server
+  }) => {
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0 },
+            nonBalanceAffecting: { count: 3 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
+    )
+  })
+
+  it('hides the projection panel when the deltas cancel to a sub-penny float residue', async ({
+    server
+  }) => {
+    // 0.1 + 0.2 - 0.3 does not sum to exactly 0 in IEEE 754 (it lands on
+    // ~5.5e-17). An exact `netDelta === 0` gate would wrongly show the panel
+    // reading "will be 100.00 (from 100.00)". The rounded-to-2dp gate hides it.
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 1, tonnageDelta: 0.1 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: {
+            balanceAffecting: { count: 1, tonnageDelta: 0.2 },
+            nonBalanceAffecting: { count: 0 }
+          }
+        },
+        closedPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: { count: 1, tonnageDelta: -0.3 },
+            nonBalanceAffecting: { count: 0 }
+          }
+        }
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
+    )
+  })
+
+  it('hides the projection panel for a registered-only operator', async ({
+    server
+  }) => {
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0 },
+            nonBalanceAffecting: { count: 4 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
+    )
+  })
+
+  it('renders the page without the panel when the waste balance is unavailable', async ({
+    server
+  }) => {
+    // Default mocks: no accreditationId, so no balance can be fetched.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 5, tonnageDelta: 10 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main, result, statusCode } = await renderMain(server)
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(
+      getByRole(main, 'heading', { name: 'Open periods: new loads' })
+    ).toBeDefined()
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
+    )
+  })
+
+  it('renders the legacy check page when the flag is off', async ({
+    server
+  }) => {
+    config.set(FLAG, false)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect(
+      queryByRole(main, 'heading', { name: 'Open periods: new loads' })
+    ).toBeNull()
+    expect(
+      getByRole(main, 'heading', { name: /Check before confirming upload/ })
+    ).toBeDefined()
   })
 })

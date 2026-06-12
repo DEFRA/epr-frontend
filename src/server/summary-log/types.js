@@ -165,10 +165,69 @@
  */
 
 /**
+ * Balance-affecting bucket within a reporting-period change type. Carries the
+ * tonnage that moves the waste balance; tonnageDelta can be negative
+ * (adjustments reducing tonnage).
+ * @typedef {{ count: number, tonnageDelta: number }} BalanceAffectingBucket
+ */
+
+/**
+ * Non-balance-affecting bucket. These loads do not move the waste balance, so
+ * the backend sends count only (no tonnage).
+ * @typedef {{ count: number }} NonBalanceAffectingBucket
+ */
+
+/**
+ * @typedef {{
+ *   balanceAffecting: BalanceAffectingBucket,
+ *   nonBalanceAffecting: NonBalanceAffectingBucket
+ * }} PeriodStatusByChange
+ */
+
+/**
+ * @typedef {{
+ *   added: PeriodStatusByChange,
+ *   adjusted: PeriodStatusByChange
+ * }} PeriodStatus
+ */
+
+/**
+ * loadsByReportingPeriod payload from the backend. Required on the response
+ * when status is VALIDATED, otherwise absent.
+ * @typedef {{
+ *   openPeriodLoads: PeriodStatus,
+ *   closedPeriodLoads: PeriodStatus
+ * }} LoadsByReportingPeriod
+ */
+
+/**
+ * View model for one change type (added or adjusted) within a period. Null when
+ * the total count is zero so the template hides the section.
+ * @typedef {{
+ *   count: number,
+ *   absoluteTonnage: string,
+ *   addsToBalance: boolean,
+ *   hasTonnageDelta: boolean,
+ *   balanceAffecting: { count: number },
+ *   nonBalanceAffecting: { count: number }
+ * }} ChangeViewModel
+ */
+
+/**
+ * View model for one period (open or closed). Null when both change types are
+ * null so the template hides the whole period.
+ * @typedef {{
+ *   added: ChangeViewModel | null,
+ *   adjusted: ChangeViewModel | null
+ * }} PeriodViewModel
+ */
+
+/**
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
+ *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType
  *   status: string,
  *   validation?: ValidationResponse,

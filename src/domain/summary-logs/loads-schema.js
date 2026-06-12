@@ -49,6 +49,30 @@ export const loadsByWasteRecordTypeSchema = Joi.array()
   )
   .unique('wasteRecordType')
 
+const balanceAffectingBucketSchema = Joi.object({
+  count: nonNegativeInteger,
+  tonnageDelta: Joi.number().required()
+})
+
+const nonBalanceAffectingBucketSchema = Joi.object({
+  count: nonNegativeInteger
+})
+
+const periodStatusGroupSchema = Joi.object({
+  balanceAffecting: balanceAffectingBucketSchema.required(),
+  nonBalanceAffecting: nonBalanceAffectingBucketSchema.required()
+})
+
+const periodStatusByChangeSchema = Joi.object({
+  added: periodStatusGroupSchema.required(),
+  adjusted: periodStatusGroupSchema.required()
+})
+
+export const loadsByReportingPeriodSchema = Joi.object({
+  openPeriodLoads: periodStatusByChangeSchema.required(),
+  closedPeriodLoads: periodStatusByChangeSchema.required()
+})
+
 export const summaryLogStatusResponseSchema = Joi.object({
   status: Joi.string()
     .valid(
@@ -76,6 +100,7 @@ export const summaryLogStatusResponseSchema = Joi.object({
   }).optional(),
   loads: loadsSchema.optional(),
   loadsByWasteRecordType: loadsByWasteRecordTypeSchema.optional(),
+  loadsByReportingPeriod: loadsByReportingPeriodSchema.optional(),
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),
   accreditationNumber: Joi.string().optional()

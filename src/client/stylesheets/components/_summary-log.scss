@@ -1,3 +1,18 @@
+@use "govuk-frontend" as *;
+
+// Projected waste balance callout on the enhanced summary log check page. A
+// full light-grey panel with centred text, matching the CMA design (not the
+// inset-text left-border style).
+.epr-summary-log-projection {
+  background-color: govuk-colour("black", $variant: "tint-95");
+  padding: govuk-spacing(6);
+  text-align: center;
+
+  p {
+    margin-bottom: 0;
+  }
+}
+
 // The "value entered" cell can hold an arbitrary, unbroken operator string
 // (e.g. a 100+ char free-text value). overflow-wrap: anywhere lets it break
 // mid-token so the cell can shrink and the table stays within its column,

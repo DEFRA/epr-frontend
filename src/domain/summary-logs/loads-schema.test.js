@@ -85,4 +85,77 @@ describe('summaryLogStatusResponseSchema validation', () => {
       })
     })
   })
+
+  describe('loadsByReportingPeriod', () => {
+    // Mirrors the backend loadsByReportingPeriod contract: both periods, both
+    // change types, and both buckets, with a negative tonnageDelta to represent
+    // an adjustment that reduces the waste balance.
+    const loadsByReportingPeriod = {
+      openPeriodLoads: {
+        added: {
+          balanceAffecting: { count: 5, tonnageDelta: 10 },
+          nonBalanceAffecting: { count: 2 }
+        },
+        adjusted: {
+          balanceAffecting: { count: 3, tonnageDelta: 6 },
+          nonBalanceAffecting: { count: 1 }
+        }
+      },
+      closedPeriodLoads: {
+        added: {
+          balanceAffecting: { count: 4, tonnageDelta: 8 },
+          nonBalanceAffecting: { count: 0 }
+        },
+        adjusted: {
+          balanceAffecting: { count: 2, tonnageDelta: -4 },
+          nonBalanceAffecting: { count: 1 }
+        }
+      }
+    }
+
+    it('should accept a realistic payload and preserve it intact when stripping unknown keys', () => {
+      const { error, value } = summaryLogStatusResponseSchema.validate(
+        { status: 'validated', loadsByReportingPeriod },
+        { stripUnknown: true }
+      )
+
+      expect(error).toBeUndefined()
+      // Guards against the field being dropped on the floor: before it was added
+      // to the schema, stripUnknown would have removed it from the response.
+      expect(value.loadsByReportingPeriod).toStrictEqual(loadsByReportingPeriod)
+    })
+
+    it('should reject a payload missing a required bucket', () => {
+      const { error } = summaryLogStatusResponseSchema.validate({
+        status: 'validated',
+        loadsByReportingPeriod: {
+          ...loadsByReportingPeriod,
+          openPeriodLoads: {
+            added: { balanceAffecting: { count: 5, tonnageDelta: 10 } },
+            adjusted: loadsByReportingPeriod.openPeriodLoads.adjusted
+          }
+        }
+      })
+
+      expect(error?.message).toContain('nonBalanceAffecting')
+    })
+
+    it('should reject a balance-affecting bucket missing its tonnageDelta', () => {
+      const { error } = summaryLogStatusResponseSchema.validate({
+        status: 'validated',
+        loadsByReportingPeriod: {
+          ...loadsByReportingPeriod,
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 5 },
+              nonBalanceAffecting: { count: 2 }
+            },
+            adjusted: loadsByReportingPeriod.openPeriodLoads.adjusted
+          }
+        }
+      })
+
+      expect(error?.message).toContain('tonnageDelta')
+    })
+  })
 })

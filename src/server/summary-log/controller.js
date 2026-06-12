@@ -1,4 +1,8 @@
-import { PROCESSING_TYPES } from '#domain/summary-logs/meta-fields.js'
+import { isEnhancedSummaryLogCheckPagesEnabled } from '#config/config.js'
+import {
+  isRegisteredOnlyProcessingType,
+  PROCESSING_TYPES
+} from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
@@ -6,6 +10,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { renderEnhancedCheckView } from './enhanced-check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
 
 /**
@@ -27,10 +32,6 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  */
 
 /**
- * @typedef {'EXPORTER_REGISTERED_ONLY' | 'REPROCESSOR_REGISTERED_ONLY'} RegisteredOnlyProcessingType
- */
-
-/**
  * Context passed to every view resolver. Fields populated depend on the
  * backend status, so all data-bearing properties are optional and each
  * resolver destructures only what it needs.
@@ -40,6 +41,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
  *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
+ *   loadsByReportingPeriod?: import('./types.js').LoadsByReportingPeriod,
  *   processingType?: ProcessingType,
  *   organisationId: string,
  *   registrationId: string,
@@ -112,14 +114,6 @@ export const getWasteRecordSectionNumber = (processingType) => {
     ? undefined
     : WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
 }
-
-/**
- * @param {ProcessingType} [processingType]
- * @returns {processingType is RegisteredOnlyProcessingType}
- */
-const isRegisteredOnlyProcessingType = (processingType) =>
-  processingType === PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY ||
-  processingType === PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
 
 const VIEW_NAME = 'summary-log/progress'
 const CHECK_VIEW_NAME = 'summary-log/check'
@@ -278,6 +272,7 @@ const getStatusData = async (
     accreditationNumber,
     loads,
     loadsByWasteRecordType,
+    loadsByReportingPeriod,
     processingType,
     status,
     validation
@@ -287,6 +282,7 @@ const getStatusData = async (
     accreditationNumber,
     loads,
     loadsByWasteRecordType,
+    loadsByReportingPeriod,
     processingType,
     status,
     validation
@@ -304,18 +300,20 @@ const getStatusData = async (
  * @param {RenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
-const renderCheckView = (
-  h,
-  localise,
-  {
+const renderCheckView = (h, localise, context) => {
+  if (isEnhancedSummaryLogCheckPagesEnabled()) {
+    return renderEnhancedCheckView(h, localise, context)
+  }
+
+  const {
     loads,
     loadsByWasteRecordType,
     organisationId,
     registrationId,
     summaryLogId,
     processingType
-  }
-) => {
+  } = context
+
   if (isRegisteredOnlyProcessingType(processingType)) {
     if (loadsByWasteRecordType === undefined) {
       throw new Error(
@@ -513,7 +511,20 @@ const getUploadUrl = async (
 }
 
 /**
- * Gets waste balance data for a submitted summary log
+ * Determines whether the current waste balance is needed for this render: after
+ * submission (success page), or on the enhanced check page where it drives the
+ * projected balance panel.
+ * @param {string} status - Current summary log status
+ * @returns {boolean}
+ */
+const needsWasteBalance = (status) =>
+  status === summaryLogStatuses.submitted ||
+  (status === summaryLogStatuses.validated &&
+    isEnhancedSummaryLogCheckPagesEnabled())
+
+/**
+ * Gets waste balance data for a submitted summary log, or for the enhanced
+ * check page (validated, flag on)
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
@@ -528,7 +539,7 @@ const getWasteBalanceData = async (
   idToken,
   logger
 ) => {
-  if (status !== summaryLogStatuses.submitted) {
+  if (!needsWasteBalance(status)) {
     return {}
   }
 
@@ -581,6 +592,7 @@ export const summaryLogUploadProgressController = {
       accreditationNumber,
       loads,
       loadsByWasteRecordType,
+      loadsByReportingPeriod,
       processingType,
       status,
       validation
@@ -621,6 +633,7 @@ export const summaryLogUploadProgressController = {
       accreditationNumber,
       loads,
       loadsByWasteRecordType,
+      loadsByReportingPeriod,
       processingType,
       organisationId,
       registrationId,
