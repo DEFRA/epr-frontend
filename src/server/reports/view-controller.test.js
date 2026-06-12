@@ -27,7 +27,7 @@ async function loadPage({ server, registrationAndAccreditation }) {
   const registrationId = registrationAndAccreditation.registration?.id
   return await server.inject({
     method: 'GET',
-    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/view`,
+    url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/view`,
     auth: mockAuth
   })
 }

@@ -15,6 +15,7 @@ describe(updateReport, () => {
   const year = 2026
   const cadence = 'quarterly'
   const period = 1
+  const submissionNumber = 1
   const idToken = 'test-token'
 
   const mockResponse = { ok: true }
@@ -27,17 +28,20 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: 'Supply chain disruption in February' },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
       {
         method: 'PATCH',
         headers: {
@@ -54,17 +58,20 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit' },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
       {
         method: 'PATCH',
         headers: {
@@ -79,11 +86,14 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: '' },
       idToken
     )
@@ -100,17 +110,20 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      'org/123',
-      'reg&456',
-      year,
-      cadence,
-      period,
+      {
+        organisationId: 'org/123',
+        registrationId: 'reg&456',
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: 'notes' },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1',
       expect.any(Object)
     )
   })
@@ -119,11 +132,14 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     const result = await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: 'notes' },
       idToken
     )
@@ -137,11 +153,14 @@ describe(updateReport, () => {
 
     await expect(
       updateReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
+        {
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber
+        },
         { supportingInformation: 'notes' },
         idToken
       )

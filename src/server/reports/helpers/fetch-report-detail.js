@@ -11,6 +11,7 @@ import { SummaryLogChangedError } from './summary-log-changed.js'
  * @param {number} year
  * @param {string} cadence
  * @param {number} period
+ * @param {number} submissionNumber
  * @param {string} idToken
  * @returns {Promise<ReportDetailResponse>}
  */
@@ -20,9 +21,10 @@ export async function fetchReportDetail(
   year,
   cadence,
   period,
+  submissionNumber,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
 
   const report = await fetchReportBackend(path, {
     method: 'GET',

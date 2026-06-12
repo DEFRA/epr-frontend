@@ -13,7 +13,8 @@ import { CADENCE } from '../constants.js'
  *   registrationId: string,
  *   year: number,
  *   cadence: CadenceValue,
- *   period: number
+ *   period: number,
+ *   submissionNumber: number
  * }} PeriodParams
  */
 
@@ -26,5 +27,6 @@ export const periodParamsSchema = Joi.object({
   registrationId: Joi.string().required(),
   year: Joi.number().integer().min(MIN_YEAR).max(MAX_YEAR).required(),
   cadence: Joi.string().valid(CADENCE.MONTHLY, CADENCE.QUARTERLY).required(),
-  period: Joi.number().integer().min(1).max(MAX_PERIOD).required()
+  period: Joi.number().integer().min(1).max(MAX_PERIOD).required(),
+  submissionNumber: Joi.number().integer().min(1).required()
 })

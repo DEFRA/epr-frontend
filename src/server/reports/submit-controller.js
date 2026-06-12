@@ -119,8 +119,14 @@ export const submitGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
@@ -136,6 +142,7 @@ export const submitGetController = {
         year,
         cadence,
         period,
+        submissionNumber,
         session.idToken
       )
     ])
@@ -147,7 +154,7 @@ export const submitGetController = {
     if (status.currentStatus === SUBMISSION_STATUS.SUBMITTED) {
       return h.redirect(
         request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submitted`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
         )
       )
     }
@@ -162,6 +169,7 @@ export const submitGetController = {
       year,
       cadence,
       period,
+      submissionNumber,
       localise,
       localiseUrl: (url) => request.localiseUrl(url)
     })
@@ -228,6 +236,7 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
  *   year: number,
  *   cadence: CadenceValue,
  *   period: number,
+ *   submissionNumber: number,
  *   localise: import('./helpers/format-period-label.js').Localise,
  *   localiseUrl: (url: string) => string
  * }} params
@@ -243,6 +252,7 @@ function buildViewData({
   year,
   cadence,
   period,
+  submissionNumber,
   localise,
   localiseUrl
 }) {
@@ -328,7 +338,9 @@ function buildViewData({
     // Form
     version: reportDetail.version,
 
-    deleteUrl: localiseUrl(`${reportsUrl}/${year}/${cadence}/${period}/delete`)
+    deleteUrl: localiseUrl(
+      `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
+    )
   }
 }
 
@@ -348,26 +360,35 @@ export const submitPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const { version } = request.payload
     const session = request.auth.credentials
 
     const transition = { status: SUBMISSION_STATUS.SUBMITTED, version }
 
     await updateReportStatus(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       transition,
       session.idToken
     )
 
     return h.redirect(
       request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submitted`
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
       )
     )
   }

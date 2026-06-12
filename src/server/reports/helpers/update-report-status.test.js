@@ -15,6 +15,7 @@ describe(updateReportStatus, () => {
   const year = 2026
   const cadence = 'quarterly'
   const period = 1
+  const submissionNumber = 1
   const idToken = 'test-token'
 
   const mockResponse = { ok: true }
@@ -27,17 +28,20 @@ describe(updateReportStatus, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReportStatus(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit', version: 1 },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/status',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1/status',
       {
         method: 'POST',
         headers: {
@@ -52,17 +56,20 @@ describe(updateReportStatus, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReportStatus(
-      'org/123',
-      'reg&456',
-      year,
-      cadence,
-      period,
+      {
+        organisationId: 'org/123',
+        registrationId: 'reg&456',
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit', version: 1 },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/status',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1/status',
       expect.any(Object)
     )
   })
@@ -71,11 +78,14 @@ describe(updateReportStatus, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     const result = await updateReportStatus(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit', version: 1 },
       idToken
     )
@@ -89,13 +99,15 @@ describe(updateReportStatus, () => {
 
     await expect(
       updateReportStatus(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
+        {
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber
+        },
         'ready_to_submit',
-        1,
         idToken
       )
     ).rejects.toThrow('Network error')
