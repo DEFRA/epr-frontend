@@ -254,7 +254,8 @@ describe('#summaryLogUploadProgressController', () => {
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER'
       })
 
       const { result, statusCode } = await server.inject({
@@ -283,7 +284,8 @@ describe('#summaryLogUploadProgressController', () => {
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER'
       })
 
       const { result, statusCode } = await server.inject({
@@ -303,7 +305,8 @@ describe('#summaryLogUploadProgressController', () => {
       server
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER'
       })
 
       const { result, statusCode } = await server.inject({
@@ -431,6 +434,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: {
@@ -473,6 +477,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
@@ -544,6 +549,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 3, rowIds: ['1092', '1093', '1094'] },
@@ -580,6 +586,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 1, rowIds: ['1092'] },
@@ -620,6 +627,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: {
@@ -663,6 +671,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
@@ -698,6 +707,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
@@ -733,6 +743,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
@@ -769,6 +780,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
@@ -802,6 +814,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: { count: 0, rowIds: [] },
@@ -845,6 +858,7 @@ describe('#summaryLogUploadProgressController', () => {
     }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
         loads: {
           added: {
             included: {
@@ -926,6 +940,7 @@ describe('#summaryLogUploadProgressController', () => {
       }) => {
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.validated,
+          processingType: 'EXPORTER',
           loads: {
             added: {
               included: { count: 0, rowIds: [] },
@@ -3731,6 +3746,32 @@ describe('enhanced summary log check view', () => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER'
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toStrictEqual(
+      expect.stringContaining('Something went wrong')
+    )
+  })
+
+  it('returns a 500 when a validated response is missing processingType', async ({
+    server
+  }) => {
+    // The backend requires processingType on every validated response, so a
+    // missing one is a contract violation: fail loudly at the boundary rather
+    // than render the page as though the operator were accredited.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
     })
 
     const { result, statusCode } = await server.inject({

@@ -3,6 +3,7 @@ import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
+ * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
  *   ChangeViewModel,
  *   LoadsByReportingPeriod,
@@ -117,7 +118,7 @@ const buildPeriodViewModel = (period) => {
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {{
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
- *   processingType?: string,
+ *   processingType: ProcessingType,
  *   organisationId: string,
  *   registrationId: string,
  *   summaryLogId: string,
