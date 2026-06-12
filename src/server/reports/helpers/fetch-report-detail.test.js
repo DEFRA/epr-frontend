@@ -17,6 +17,7 @@ describe(fetchReportDetail, () => {
   const year = 2026
   const cadence = 'quarterly'
   const period = 1
+  const submissionNumber = 1
   const idToken = 'test-token'
 
   const mockResponse = {
@@ -76,11 +77,12 @@ describe(fetchReportDetail, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/1',
       {
         method: 'GET',
         headers: {
@@ -99,11 +101,12 @@ describe(fetchReportDetail, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/1',
       expect.any(Object)
     )
   })
@@ -117,6 +120,7 @@ describe(fetchReportDetail, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       idToken
     )
 
@@ -134,6 +138,7 @@ describe(fetchReportDetail, () => {
         year,
         cadence,
         period,
+        submissionNumber,
         idToken
       )
     ).rejects.toThrow('Network error')
@@ -155,6 +160,7 @@ describe(fetchReportDetail, () => {
         year,
         cadence,
         period,
+        submissionNumber,
         idToken
       )
     ).rejects.toBeInstanceOf(SummaryLogChangedError)
@@ -175,6 +181,7 @@ describe(fetchReportDetail, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       idToken
     ).catch((e) => e)
 

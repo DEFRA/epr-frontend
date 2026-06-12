@@ -78,7 +78,7 @@ const reportDetail = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/tonnes-recycled`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/tonnes-recycled`
 
 describe('#tonnesRecycledController', () => {
   beforeEach(() => {
@@ -151,7 +151,7 @@ describe('#tonnesRecycledController', () => {
         registeredOnlyReprocessor
       )
 
-      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-recycled`
+      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/tonnes-recycled`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -232,7 +232,7 @@ describe('#tonnesRecycledController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/tonnes-not-recycled`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/tonnes-not-recycled`
         )
       })
 
@@ -256,6 +256,7 @@ describe('#tonnesRecycledController', () => {
           registrationId,
           2026,
           'monthly',
+          1,
           1,
           { tonnageRecycled: 100.5 },
           'mock-id-token'

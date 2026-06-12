@@ -15,6 +15,7 @@ describe(updateReport, () => {
   const year = 2026
   const cadence = 'quarterly'
   const period = 1
+  const submissionNumber = 1
   const idToken = 'test-token'
 
   const mockResponse = { ok: true }
@@ -32,12 +33,13 @@ describe(updateReport, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       { supportingInformation: 'Supply chain disruption in February' },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/1',
       {
         method: 'PATCH',
         headers: {
@@ -59,12 +61,13 @@ describe(updateReport, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       { status: 'ready_to_submit' },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/1',
       {
         method: 'PATCH',
         headers: {
@@ -84,6 +87,7 @@ describe(updateReport, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       { supportingInformation: '' },
       idToken
     )
@@ -105,12 +109,13 @@ describe(updateReport, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       { supportingInformation: 'notes' },
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/1',
       expect.any(Object)
     )
   })
@@ -124,6 +129,7 @@ describe(updateReport, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       { supportingInformation: 'notes' },
       idToken
     )
@@ -142,6 +148,7 @@ describe(updateReport, () => {
         year,
         cadence,
         period,
+        submissionNumber,
         { supportingInformation: 'notes' },
         idToken
       )

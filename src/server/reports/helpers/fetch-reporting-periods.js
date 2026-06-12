@@ -37,6 +37,7 @@ export async function fetchReportingPeriods(
  * @typedef {{
  *   year: number,
  *   period: number,
+ *   submissionNumber: number,
  *   startDate: string,
  *   endDate: string,
  *   dueDate: string,

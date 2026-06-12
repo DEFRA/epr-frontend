@@ -20,8 +20,14 @@ export const createdController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
@@ -39,6 +45,7 @@ export const createdController = {
         year,
         cadence,
         period,
+        submissionNumber,
         session.idToken
       )
     ])
@@ -54,7 +61,7 @@ export const createdController = {
     const formattedDueDate = formatDate(reportDetail.dueDate)
 
     const homeUrl = `/organisations/${organisationId}`
-    const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/view`
+    const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/${submissionNumber}/view`
 
     return h.view('reports/created', {
       pageTitle: localise('reports:createdPageTitle', {

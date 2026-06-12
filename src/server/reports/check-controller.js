@@ -187,8 +187,14 @@ export const checkGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
@@ -205,6 +211,7 @@ export const checkGetController = {
       year,
       cadence,
       period,
+      submissionNumber,
       session.idToken
     )
 
@@ -216,7 +223,7 @@ export const checkGetController = {
       )
     }
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
     const cadenceLabel = localise(`reports:${cadence}Heading`)
@@ -253,8 +260,14 @@ export const checkPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const { version } = request.payload
     const session = request.auth.credentials
 
@@ -266,13 +279,14 @@ export const checkPostController = {
       year,
       cadence,
       period,
+      submissionNumber,
       transition,
       session.idToken
     )
 
     return h.redirect(
       request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/created`
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/created`
       )
     )
   }

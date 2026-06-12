@@ -72,7 +72,7 @@ const reportDetail = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-not-exported`
+const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/tonnes-not-exported`
 
 describe('#tonnesNotExportedController', () => {
   beforeEach(() => {
@@ -223,7 +223,7 @@ describe('#tonnesNotExportedController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/supporting-information`
       )
     })
 
@@ -330,6 +330,7 @@ describe('#tonnesNotExportedController', () => {
         registrationId,
         2026,
         'quarterly',
+        1,
         1,
         { tonnageNotExported: 15.5 },
         'mock-id-token'

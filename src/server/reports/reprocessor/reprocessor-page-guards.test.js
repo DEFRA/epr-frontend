@@ -32,7 +32,8 @@ const mockRequest = {
     registrationId: 'reg-001',
     year: 2026,
     cadence: 'monthly',
-    period: 1
+    period: 1,
+    submissionNumber: 1
   },
   auth: { credentials: { idToken: 'mock-id-token' } }
 }

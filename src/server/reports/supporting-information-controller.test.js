@@ -89,7 +89,7 @@ const reportDetailWithSupportingInfo = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/supporting-information`
 
 describe('#supportingInformationController', () => {
   beforeEach(() => {
@@ -255,7 +255,7 @@ describe('#supportingInformationController', () => {
         expect(deleteLink).not.toBeNull()
         expect(deleteLink?.textContent).toContain('Delete report')
         expect(deleteLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/delete`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/delete`
         )
       })
 
@@ -275,7 +275,7 @@ describe('#supportingInformationController', () => {
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-not-exported`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/tonnes-not-exported`
         )
       })
 
@@ -290,7 +290,7 @@ describe('#supportingInformationController', () => {
           }
         })
 
-        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/supporting-information`
+        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -304,7 +304,7 @@ describe('#supportingInformationController', () => {
         const backLink = body.querySelector('.govuk-back-link')
 
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-prns`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/free-prns`
         )
       })
 
@@ -319,7 +319,7 @@ describe('#supportingInformationController', () => {
           }
         })
 
-        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
+        const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -333,7 +333,7 @@ describe('#supportingInformationController', () => {
         const backLink = body.querySelector('.govuk-back-link')
 
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-not-recycled`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/tonnes-not-recycled`
         )
       })
 
@@ -344,7 +344,7 @@ describe('#supportingInformationController', () => {
           accreditedExporter
         )
 
-        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/supporting-information`
+        const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/supporting-information`
 
         const { result } = await server.inject({
           method: 'GET',
@@ -359,7 +359,7 @@ describe('#supportingInformationController', () => {
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/free-perns`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/free-perns`
         )
       })
     })
@@ -441,7 +441,7 @@ describe('#supportingInformationController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/check-your-answers`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/check-your-answers`
         )
       })
 
@@ -469,6 +469,7 @@ describe('#supportingInformationController', () => {
           registrationId,
           2026,
           'quarterly',
+          1,
           1,
           { supportingInformation: 'Notes for regulator' },
           'mock-id-token'
@@ -499,6 +500,7 @@ describe('#supportingInformationController', () => {
           registrationId,
           2026,
           'quarterly',
+          1,
           1,
           { supportingInformation: '' },
           'mock-id-token'
@@ -556,6 +558,7 @@ describe('#supportingInformationController', () => {
           registrationId,
           2026,
           'quarterly',
+          1,
           1,
           { supportingInformation: 'Partial notes' },
           'mock-id-token'
@@ -694,7 +697,7 @@ describe('#supportingInformationController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -706,7 +709,7 @@ describe('#supportingInformationController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/supporting-information`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -718,7 +721,7 @@ describe('#supportingInformationController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/supporting-information`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/1/supporting-information`
 
       const { statusCode } = await server.inject({
         method: 'GET',

@@ -7,6 +7,7 @@ import { fetchReportBackend } from './fetch-report-backend.js'
  * @param {number} year
  * @param {string} cadence
  * @param {number} period
+ * @param {number} submissionNumber
  * @param {Record<string, unknown>} fields - Fields to update (e.g. { supportingInformation } or { status })
  * @param {string} idToken
  * @returns {Promise<unknown>}
@@ -17,10 +18,11 @@ export async function updateReport(
   year,
   cadence,
   period,
+  submissionNumber,
   fields,
   idToken
 ) {
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/${submissionNumber}`
 
   return fetchReportBackend(path, {
     method: 'PATCH',
