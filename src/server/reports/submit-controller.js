@@ -374,12 +374,14 @@ export const submitPostController = {
     const transition = { status: SUBMISSION_STATUS.SUBMITTED, version }
 
     await updateReportStatus(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       transition,
       session.idToken
     )

@@ -28,12 +28,14 @@ describe(updateReportStatus, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReportStatus(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit', version: 1 },
       idToken
     )
@@ -54,12 +56,14 @@ describe(updateReportStatus, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReportStatus(
-      'org/123',
-      'reg&456',
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId: 'org/123',
+        registrationId: 'reg&456',
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit', version: 1 },
       idToken
     )
@@ -74,12 +78,14 @@ describe(updateReportStatus, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     const result = await updateReportStatus(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit', version: 1 },
       idToken
     )
@@ -93,12 +99,14 @@ describe(updateReportStatus, () => {
 
     await expect(
       updateReportStatus(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
+        {
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber
+        },
         'ready_to_submit',
         idToken
       )

@@ -334,12 +334,14 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         })
 
         expect(updateReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'monthly',
-          1,
-          1,
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'monthly',
+            period: 1,
+            submissionNumber: 1
+          },
           { prnRevenue: 1576.12 },
           'mock-id-token'
         )

@@ -465,12 +465,14 @@ describe('#supportingInformationController', () => {
         })
 
         expect(updateReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'quarterly',
-          1,
-          1,
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'quarterly',
+            period: 1,
+            submissionNumber: 1
+          },
           { supportingInformation: 'Notes for regulator' },
           'mock-id-token'
         )
@@ -496,12 +498,14 @@ describe('#supportingInformationController', () => {
         })
 
         expect(updateReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'quarterly',
-          1,
-          1,
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'quarterly',
+            period: 1,
+            submissionNumber: 1
+          },
           { supportingInformation: '' },
           'mock-id-token'
         )
@@ -554,12 +558,14 @@ describe('#supportingInformationController', () => {
         })
 
         expect(updateReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'quarterly',
-          1,
-          1,
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'quarterly',
+            period: 1,
+            submissionNumber: 1
+          },
           { supportingInformation: 'Partial notes' },
           'mock-id-token'
         )

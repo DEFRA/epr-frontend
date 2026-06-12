@@ -28,12 +28,14 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: 'Supply chain disruption in February' },
       idToken
     )
@@ -56,12 +58,14 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { status: 'ready_to_submit' },
       idToken
     )
@@ -82,12 +86,14 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: '' },
       idToken
     )
@@ -104,12 +110,14 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     await updateReport(
-      'org/123',
-      'reg&456',
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId: 'org/123',
+        registrationId: 'reg&456',
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: 'notes' },
       idToken
     )
@@ -124,12 +132,14 @@ describe(updateReport, () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
     const result = await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation: 'notes' },
       idToken
     )
@@ -143,12 +153,14 @@ describe(updateReport, () => {
 
     await expect(
       updateReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
+        {
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber
+        },
         { supportingInformation: 'notes' },
         idToken
       )

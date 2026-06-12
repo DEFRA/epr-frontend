@@ -152,12 +152,14 @@ function createSimplePostHandler(fieldName, nextPage) {
       } = request.params
 
       await updateReport(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
+        {
+          organisationId,
+          registrationId,
+          year,
+          cadence,
+          period,
+          submissionNumber
+        },
         { [fieldName]: fieldValue },
         request.auth.credentials.idToken
       )
@@ -281,12 +283,14 @@ function createTonnagePostHandler(
     }
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { [fieldName]: fieldValue },
       session.idToken
     )
