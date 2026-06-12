@@ -17,6 +17,7 @@ import {
   getByTestId,
   getByText,
   queryAllByRole,
+  queryAllByText,
   queryByRole,
   queryByText
 } from '@testing-library/dom'
@@ -3450,7 +3451,6 @@ describe('enhanced summary log check view', () => {
     config.reset(FLAG)
   })
 
-  /* eslint-disable vitest/max-expects -- single request, asserting every part of the rendered accredited page */
   it('renders all four populated accredited sections with balance language', async ({
     server
   }) => {
@@ -3483,93 +3483,77 @@ describe('enhanced summary log check view', () => {
 
     const { main, statusCode } = await renderMain(server)
 
-    expect(statusCode).toBe(statusCodes.ok)
+    const hasHeading = (name) => Boolean(queryByRole(main, 'heading', { name }))
+    const hasText = (text) => Boolean(queryByText(main, text))
+    const hasAnyText = (text) => queryAllByText(main, text).length > 0
 
-    expect(
-      getByRole(main, 'heading', { name: 'Open periods: new loads' })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
+    // A single structural assertion of the whole rendered page: every section
+    // heading and caption present, plus the counts that carry meaning (the
+    // "not relevant" heading appears in both periods, the data-changed inset
+    // only on open adjusted).
+    expect({
+      statusCode,
+      openNewLoadsHeading: hasHeading('Open periods: new loads'),
+      openNewLoadsCaption: hasText(
         'These new loads will add 10.00 tonnes to your waste balance.'
-      )
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', {
-        name: '5 new loads will be recorded (and added to your waste balance)'
-      })
-    ).toBeDefined()
-    expect(
-      getAllByText(
-        main,
+      ),
+      openNewLoadsAddedHeading: hasHeading(
+        '5 new loads will be recorded (and added to your waste balance)'
+      ),
+      loadsIncludeData: hasAnyText(
         'These loads include all the required summary log data.'
-      ).length
-    ).toBeGreaterThan(0)
-    expect(
-      getByRole(main, 'heading', {
-        name: '2 new loads will be recorded (but NOT added to your waste balance)'
-      })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
+      ),
+      openNewLoadsNotAddedHeading: hasHeading(
+        '2 new loads will be recorded (but NOT added to your waste balance)'
+      ),
+      loadsMissingData: hasText(
         'These loads are missing required summary log data. They will not be included in your waste balance until you add the missing data.'
-      )
-    ).toBeDefined()
-
-    expect(
-      getByRole(main, 'heading', { name: 'Open periods: adjusted loads' })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
+      ),
+      openAdjustedLoadsHeading: hasHeading('Open periods: adjusted loads'),
+      openAdjustedLoadsCaption: hasText(
         'These adjusted loads will add 6.00 tonnes to your waste balance.'
-      )
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', {
-        name: '3 adjusted loads will be recorded (and reflected in your waste balance)'
-      })
-    ).toBeDefined()
-    expect(
-      getAllByText(
-        main,
+      ),
+      openAdjustedReflectedHeading: hasHeading(
+        '3 adjusted loads will be recorded (and reflected in your waste balance)'
+      ),
+      adjustedReflectedBody: hasAnyText(
         "These could 'add to' or 'remove from' your waste balance, depending on the adjustment."
-      ).length
-    ).toBeGreaterThan(0)
-    expect(
-      getAllByRole(main, 'heading', {
+      ),
+      notRelevantHeadings: queryAllByRole(main, 'heading', {
         name: '1 adjustment is not relevant to your waste balance'
-      })
-    ).toHaveLength(2)
-
-    expect(
-      getByRole(main, 'heading', { name: 'Closed periods: new loads' })
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', {
-        name: '4 new loads will be recorded (and added to your waste balance)'
-      })
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', { name: 'Closed periods: adjusted loads' })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
+      }).length,
+      closedNewLoadsHeading: hasHeading('Closed periods: new loads'),
+      closedNewLoadsAddedHeading: hasHeading(
+        '4 new loads will be recorded (and added to your waste balance)'
+      ),
+      closedAdjustedLoadsHeading: hasHeading('Closed periods: adjusted loads'),
+      closedAdjustedLoadsCaption: hasText(
         'These adjusted loads will remove 4.00 tonnes from your waste balance.'
-      )
-    ).toBeDefined()
-
-    // The "data changed" inset appears on the open adjusted section only
-    expect(
-      getAllByText(
+      ),
+      dataChangedInsets: queryAllByText(
         main,
         'Data has been changed since this summary log was last uploaded.'
-      )
-    ).toHaveLength(1)
+      ).length
+    }).toStrictEqual({
+      statusCode: statusCodes.ok,
+      openNewLoadsHeading: true,
+      openNewLoadsCaption: true,
+      openNewLoadsAddedHeading: true,
+      loadsIncludeData: true,
+      openNewLoadsNotAddedHeading: true,
+      loadsMissingData: true,
+      openAdjustedLoadsHeading: true,
+      openAdjustedLoadsCaption: true,
+      openAdjustedReflectedHeading: true,
+      adjustedReflectedBody: true,
+      notRelevantHeadings: 2,
+      closedNewLoadsHeading: true,
+      closedNewLoadsAddedHeading: true,
+      closedAdjustedLoadsHeading: true,
+      closedAdjustedLoadsCaption: true,
+      dataChangedInsets: 1
+    })
   })
-  /* eslint-enable vitest/max-expects */
 
   it('hides the tonnage caption when a section has no net tonnage change', async ({
     server
@@ -3599,7 +3583,6 @@ describe('enhanced summary log check view', () => {
     expect(queryByText(main, /will add .* tonnes/)).toBeNull()
   })
 
-  /* eslint-disable vitest/max-expects -- single request, asserting the totals-only registered-only layout */
   it('renders totals-only sections for registered-only with no balance language', async ({
     server
   }) => {
@@ -3623,26 +3606,33 @@ describe('enhanced summary log check view', () => {
 
     const { main } = await renderMain(server)
 
-    expect(
-      getByRole(main, 'heading', { name: 'Open periods: new loads' })
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', { name: '4 new loads will be recorded' })
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', { name: '2 adjusted loads will be recorded' })
-    ).toBeDefined()
-    // open adjusted still carries the data-changed inset
-    expect(
-      getByText(
-        main,
-        'Data has been changed since this summary log was last uploaded.'
-      )
-    ).toBeDefined()
-    expect(queryByText(main, /waste balance/)).toBeNull()
-    expect(queryByText(main, /tonnes/)).toBeNull()
+    const hasHeading = (name) => Boolean(queryByRole(main, 'heading', { name }))
+
+    // Totals-only headings present; the data-changed inset still shows on open
+    // adjusted; and no balance language (waste balance / tonnes) leaks through.
+    expect({
+      openNewLoadsHeading: hasHeading('Open periods: new loads'),
+      regOnlyNewLoadsHeading: hasHeading('4 new loads will be recorded'),
+      regOnlyAdjustedLoadsHeading: hasHeading(
+        '2 adjusted loads will be recorded'
+      ),
+      dataChangedInset: Boolean(
+        queryByText(
+          main,
+          'Data has been changed since this summary log was last uploaded.'
+        )
+      ),
+      wasteBalanceLanguage: queryByText(main, /waste balance/),
+      tonnesLanguage: queryByText(main, /tonnes/)
+    }).toStrictEqual({
+      openNewLoadsHeading: true,
+      regOnlyNewLoadsHeading: true,
+      regOnlyAdjustedLoadsHeading: true,
+      dataChangedInset: true,
+      wasteBalanceLanguage: null,
+      tonnesLanguage: null
+    })
   })
-  /* eslint-enable vitest/max-expects */
 
   it('hides the closed sections when only the open period has changes', async ({
     server
@@ -3734,20 +3724,28 @@ describe('enhanced summary log check view', () => {
     ).toBeDefined()
   })
 
-  it('falls back to the empty state when loadsByReportingPeriod is absent', async ({
+  it('returns a 500 when a validated response is missing loadsByReportingPeriod', async ({
     server
   }) => {
+    // The backend always pairs a validated summary log with its period
+    // aggregate; a missing loadsByReportingPeriod is a contract violation, so we
+    // fail loudly rather than render a misleading empty page (mirrors the
+    // loadsByWasteRecordType invariant in renderCheckView).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER'
     })
 
-    const { main, statusCode } = await renderMain(server)
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(
-      getByText(main, 'No new loads have been added to your open period')
-    ).toBeDefined()
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toStrictEqual(
+      expect.stringContaining('Something went wrong')
+    )
   })
 
   /* eslint-disable vitest/max-expects -- single request, asserting all the new page chrome copy */
