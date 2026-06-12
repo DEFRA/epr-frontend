@@ -208,7 +208,7 @@ async function buildViewData(
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodShort = formatPeriodShort({ year, period }, cadence, localise)
   const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}/${submissionNumber}`
+  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
   const pageFields = buildPageFields({
     registration,

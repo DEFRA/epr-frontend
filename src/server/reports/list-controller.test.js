@@ -427,7 +427,7 @@ describe('#listReportsController', () => {
 
       expect(selectLinks).toHaveLength(3)
       expect(selectLinks[0]?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/1'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
       )
       expect(selectLinks[0]?.textContent).toContain('Select')
     })
@@ -566,7 +566,7 @@ describe('#listReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('Continue')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/1/tonnes-recycled'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/tonnes-recycled'
       )
     })
 
@@ -589,7 +589,7 @@ describe('#listReportsController', () => {
       const link = body.querySelector('.govuk-table a.govuk-link')
 
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/1/prn-summary'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/prn-summary'
       )
     })
 
@@ -656,7 +656,7 @@ describe('#listReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('Review and submit')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/1/submit'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/submit'
       )
     })
   })
@@ -703,7 +703,7 @@ describe('#listReportsController', () => {
       expect(link).not.toBeNull()
       expect(link?.textContent).toContain('View')
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/1/view'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/view'
       )
     })
 
@@ -1005,7 +1005,7 @@ describe('#listReportsController', () => {
 
       expect(selectLinks).toHaveLength(1)
       expect(selectLinks[0]?.getAttribute('href')).toBe(
-        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/1'
+        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1'
       )
       expect(selectLinks[0]?.textContent).toContain('Select')
     })
@@ -1045,7 +1045,7 @@ describe('#listReportsController', () => {
       const link = body.querySelector('.govuk-table a.govuk-link')
 
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/1/tonnes-not-exported'
+        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1/tonnes-not-exported'
       )
     })
 
@@ -1091,7 +1091,7 @@ describe('#listReportsController', () => {
       const link = body.querySelector('.govuk-table a.govuk-link')
 
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/1/supporting-information'
+        '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1/supporting-information'
       )
     })
 
@@ -1153,7 +1153,7 @@ describe('#listReportsController', () => {
 
       expect(link).not.toBeNull()
       expect(link?.getAttribute('href')).toBe(
-        '/organisations/org-789/registrations/reg-003/reports/2026/quarterly/1/1'
+        '/organisations/org-789/registrations/reg-003/reports/2026/quarterly/1/submissions/1'
       )
       expect(link?.textContent).toContain('Select')
 

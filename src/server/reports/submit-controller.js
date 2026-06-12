@@ -154,7 +154,7 @@ export const submitGetController = {
     if (status.currentStatus === SUBMISSION_STATUS.SUBMITTED) {
       return h.redirect(
         request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/submitted`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
         )
       )
     }
@@ -339,7 +339,7 @@ function buildViewData({
     version: reportDetail.version,
 
     deleteUrl: localiseUrl(
-      `${reportsUrl}/${year}/${cadence}/${period}/${submissionNumber}/delete`
+      `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
     )
   }
 }
@@ -388,7 +388,7 @@ export const submitPostController = {
 
     return h.redirect(
       request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/submitted`
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
       )
     )
   }

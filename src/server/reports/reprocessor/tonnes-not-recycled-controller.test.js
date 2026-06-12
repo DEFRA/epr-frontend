@@ -70,8 +70,8 @@ const reportDetail = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/tonnes-not-recycled`
-const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/tonnes-not-recycled`
+const monthlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/tonnes-not-recycled`
+const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/tonnes-not-recycled`
 
 describe('#tonnesNotRecycledController', () => {
   beforeEach(() => {
@@ -194,7 +194,7 @@ describe('#tonnesNotRecycledController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/prn-summary`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/prn-summary`
         )
       })
 
@@ -258,7 +258,7 @@ describe('#tonnesNotRecycledController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/supporting-information`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/supporting-information`
         )
       })
     })

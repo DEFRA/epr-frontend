@@ -52,7 +52,7 @@ export const createController = {
       }
     }
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
     const nextPage = `${basePath}${getInProgressActionPath(registration, accreditation, cadence)}`
 

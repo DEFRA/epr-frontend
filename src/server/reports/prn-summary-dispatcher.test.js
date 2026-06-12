@@ -53,7 +53,7 @@ const reportDetail = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/prn-summary`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/prn-summary`
 
 describe('#prnSummaryDispatcher', () => {
   beforeEach(() => {
