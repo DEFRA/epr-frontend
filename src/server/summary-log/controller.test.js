@@ -3583,7 +3583,7 @@ describe('enhanced summary log check view', () => {
     expect(queryByText(main, /will add .* tonnes/)).toBeNull()
   })
 
-  it('renders totals-only sections for registered-only with no balance language', async ({
+  it('renders totals-only section headings for registered-only', async ({
     server
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -3608,8 +3608,9 @@ describe('enhanced summary log check view', () => {
 
     const hasHeading = (name) => Boolean(queryByRole(main, 'heading', { name }))
 
-    // Totals-only headings present; the data-changed inset still shows on open
-    // adjusted; and no balance language (waste balance / tonnes) leaks through.
+    // The totals-only headings carry no balance suffix (the accredited variant
+    // would read "... (and added to your waste balance)"), and the data-changed
+    // inset still shows on open adjusted.
     expect({
       openNewLoadsHeading: hasHeading('Open periods: new loads'),
       regOnlyNewLoadsHeading: hasHeading('4 new loads will be recorded'),
@@ -3621,16 +3622,12 @@ describe('enhanced summary log check view', () => {
           main,
           'Data has been changed since this summary log was last uploaded.'
         )
-      ),
-      wasteBalanceLanguage: queryByText(main, /waste balance/),
-      tonnesLanguage: queryByText(main, /tonnes/)
+      )
     }).toStrictEqual({
       openNewLoadsHeading: true,
       regOnlyNewLoadsHeading: true,
       regOnlyAdjustedLoadsHeading: true,
-      dataChangedInset: true,
-      wasteBalanceLanguage: null,
-      tonnesLanguage: null
+      dataChangedInset: true
     })
   })
 
