@@ -61,7 +61,7 @@ const mockReportDetail = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1`
+const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1`
 const createdUrl = `${basePeriodPath}/created`
 const listUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
@@ -350,7 +350,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/created`,
+        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/1/created`,
         auth: mockAuth
       })
 
@@ -360,7 +360,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid year', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/created`,
+        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/1/created`,
         auth: mockAuth
       })
 
@@ -370,7 +370,7 @@ describe('#createdController', () => {
     it('should return 400 for invalid period', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/created`,
+        url: `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/1/created`,
         auth: mockAuth
       })
 

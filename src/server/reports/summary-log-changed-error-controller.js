@@ -14,14 +14,20 @@ export const summaryLogChangedErrorGetController = {
    */
   async handler(request, h) {
     const { t: localise } = request
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
 
     const reportsUrl = request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports`
     )
 
-    const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+    const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
 
     if (request.yar.get('summaryLogChangedError') !== periodBase) {
       return h.redirect(reportsUrl)
@@ -51,8 +57,14 @@ export const summaryLogChangedErrorPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
 
     await deleteReport(
@@ -61,6 +73,7 @@ export const summaryLogChangedErrorPostController = {
       year,
       cadence,
       period,
+      submissionNumber,
       session.idToken
     )
 

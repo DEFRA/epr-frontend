@@ -182,8 +182,14 @@ export const detailController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
@@ -202,6 +208,7 @@ export const detailController = {
       year,
       cadence,
       period,
+      submissionNumber,
       session.idToken
     )
 

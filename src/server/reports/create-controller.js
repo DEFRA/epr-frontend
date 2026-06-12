@@ -13,8 +13,14 @@ export const createController = {
     }
   },
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
 
     const { registration, accreditation } =
@@ -33,6 +39,7 @@ export const createController = {
         year,
         cadence,
         period,
+        submissionNumber,
         session.idToken
       )
     } catch (error) {
@@ -45,7 +52,7 @@ export const createController = {
       }
     }
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
 
     const nextPage = `${basePath}${getInProgressActionPath(registration, accreditation, cadence)}`
 

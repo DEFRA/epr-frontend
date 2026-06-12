@@ -15,6 +15,7 @@ describe(createReport, () => {
   const year = 2026
   const cadence = 'monthly'
   const period = 1
+  const submissionNumber = 1
   const idToken = 'test-token'
 
   const mockResponse = {
@@ -35,11 +36,12 @@ describe(createReport, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       idToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/monthly/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/monthly/1/1',
       {
         method: 'POST',
         headers: {
@@ -52,10 +54,18 @@ describe(createReport, () => {
   it('encodes URL path parameters with special characters', async () => {
     fetchJsonFromBackend.mockResolvedValue(mockResponse)
 
-    await createReport('org/123', 'reg&456', year, 'quarterly', period, idToken)
+    await createReport(
+      'org/123',
+      'reg&456',
+      year,
+      'quarterly',
+      period,
+      submissionNumber,
+      idToken
+    )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/1',
       expect.any(Object)
     )
   })
@@ -69,6 +79,7 @@ describe(createReport, () => {
       year,
       cadence,
       period,
+      submissionNumber,
       idToken
     )
 
@@ -86,6 +97,7 @@ describe(createReport, () => {
         year,
         cadence,
         period,
+        submissionNumber,
         idToken
       )
     ).rejects.toThrow('Network error')

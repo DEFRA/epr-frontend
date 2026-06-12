@@ -306,9 +306,9 @@ const accreditedExporterReportDetail = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submit`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/submit`
 const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-const submittedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submitted`
+const submittedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/submitted`
 
 /** Inject a GET request and return the parsed DOM body. */
 async function getBody(server) {
@@ -1256,7 +1256,7 @@ describe('#submitController', () => {
           )
           vi.mocked(fetchReportDetail).mockResolvedValue(report)
 
-          const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/submit`
+          const url = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/1/submit`
           const { result } = await server.inject({
             method: 'GET',
             url,
@@ -1268,7 +1268,7 @@ describe('#submitController', () => {
           })
 
           expect(deleteButton.getAttribute('href')).toBe(
-            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/delete`
+            `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/${cadence}/${period}/1/delete`
           )
           expect(deleteButton.classList.contains('govuk-button--warning')).toBe(
             true
@@ -1352,6 +1352,7 @@ describe('#submitController', () => {
           2026,
           'quarterly',
           1,
+          1,
           { status: 'submitted', version: 1 },
           'mock-id-token'
         )
@@ -1380,7 +1381,7 @@ describe('#submitController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submit`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/1/submit`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1392,7 +1393,7 @@ describe('#submitController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submit`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/1/submit`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1404,7 +1405,7 @@ describe('#submitController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submit`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/1/submit`
 
       const { statusCode } = await server.inject({
         method: 'GET',

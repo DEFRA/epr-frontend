@@ -241,7 +241,7 @@ const accreditedExporterReportDetail = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/check-your-answers`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/check-your-answers`
 
 describe('#checkController', () => {
   beforeEach(() => {
@@ -810,7 +810,7 @@ describe('#checkController', () => {
         expect(changeLink).not.toBeNull()
         expect(changeLink?.textContent).toContain('Change')
         expect(changeLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/supporting-information`
         )
       })
 
@@ -865,7 +865,7 @@ describe('#checkController', () => {
         expect(deleteLink).not.toBeNull()
         expect(deleteLink?.textContent).toContain('Delete and start again')
         expect(deleteLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/delete`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/delete`
         )
       })
 
@@ -903,7 +903,7 @@ describe('#checkController', () => {
 
         expect(backLink).not.toBeNull()
         expect(backLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/supporting-information`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/supporting-information`
         )
       })
     })
@@ -1285,7 +1285,7 @@ describe('#checkController', () => {
         )
 
         expect(changeLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-recycled`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/tonnes-recycled`
         )
       })
 
@@ -1306,7 +1306,7 @@ describe('#checkController', () => {
         )
 
         expect(changeLink?.getAttribute('href')).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/tonnes-not-recycled`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/tonnes-not-recycled`
         )
       })
 
@@ -1717,7 +1717,7 @@ describe('#checkController', () => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/created`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/created`
         )
       })
 
@@ -1742,6 +1742,7 @@ describe('#checkController', () => {
           2026,
           'quarterly',
           1,
+          1,
           { status: 'ready_to_submit', version: 1 },
           'mock-id-token'
         )
@@ -1751,7 +1752,7 @@ describe('#checkController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/check-your-answers`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/1/check-your-answers`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1763,7 +1764,7 @@ describe('#checkController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/check-your-answers`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/1/check-your-answers`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1775,7 +1776,7 @@ describe('#checkController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/check-your-answers`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/1/check-your-answers`
 
       const { statusCode } = await server.inject({
         method: 'GET',

@@ -24,7 +24,8 @@ const registrationId = 'reg-001'
 const year = 2026
 const cadence = 'quarterly'
 const period = 1
-const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+const submissionNumber = 1
+const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
 const detailUrl = periodBase
 
 /** @type {RegistrationWithAccreditation} */
