@@ -3877,6 +3877,46 @@ describe('enhanced summary log check view', () => {
     )
   })
 
+  it('hides the projection panel when the deltas cancel to a sub-penny float residue', async ({
+    server
+  }) => {
+    // 0.1 + 0.2 - 0.3 does not sum to exactly 0 in IEEE 754 (it lands on
+    // ~5.5e-17). An exact `netDelta === 0` gate would wrongly show the panel
+    // reading "will be 100.00 (from 100.00)". The rounded-to-2dp gate hides it.
+    givenWasteBalance(100)
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 1, tonnageDelta: 0.1 },
+            nonBalanceAffecting: { count: 0 }
+          },
+          adjusted: {
+            balanceAffecting: { count: 1, tonnageDelta: 0.2 },
+            nonBalanceAffecting: { count: 0 }
+          }
+        },
+        closedPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: { count: 1, tonnageDelta: -0.3 },
+            nonBalanceAffecting: { count: 0 }
+          }
+        }
+      }
+    })
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.not.stringContaining(
+        'If you upload this summary log to create a new report'
+      )
+    )
+  })
+
   it('hides the projection panel for a registered-only operator', async ({
     server
   }) => {

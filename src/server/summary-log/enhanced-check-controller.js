@@ -80,7 +80,12 @@ const buildWasteBalanceProjection = (
     periodBalanceDelta(loadsByReportingPeriod?.openPeriodLoads) +
     periodBalanceDelta(loadsByReportingPeriod?.closedPeriodLoads)
 
-  if (!isAccredited || wasteBalance === undefined || netDelta === 0) {
+  // Compare on the rounded (2dp) value rather than === 0: the delta is a sum of
+  // up to four floats, so exact cancellation can leave a sub-penny residue, and
+  // a real delta below half a penny rounds away to nothing visible anyway.
+  const netDeltaIsZero = formatTonnage(netDelta) === ZERO_TONNAGE
+
+  if (!isAccredited || wasteBalance === undefined || netDeltaIsZero) {
     return null
   }
 
