@@ -252,12 +252,14 @@ describe('#tonnesRecycledController', () => {
         })
 
         expect(updateReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'monthly',
-          1,
-          1,
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'monthly',
+            period: 1,
+            submissionNumber: 1
+          },
           { tonnageRecycled: 100.5 },
           'mock-id-token'
         )

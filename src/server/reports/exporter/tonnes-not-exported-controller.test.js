@@ -326,12 +326,14 @@ describe('#tonnesNotExportedController', () => {
       })
 
       expect(updateReport).toHaveBeenCalledWith(
-        organisationId,
-        registrationId,
-        2026,
-        'quarterly',
-        1,
-        1,
+        {
+          organisationId,
+          registrationId,
+          year: 2026,
+          cadence: 'quarterly',
+          period: 1,
+          submissionNumber: 1
+        },
         { tonnageNotExported: 15.5 },
         'mock-id-token'
       )

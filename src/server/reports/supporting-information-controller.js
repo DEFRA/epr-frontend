@@ -183,12 +183,14 @@ export const supportingInformationPostController = {
     const { supportingInformation, action } = request.payload
 
     await updateReport(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation },
       request.auth.credentials.idToken
     )
