@@ -58,7 +58,7 @@ const reportDetail = {
 }
 
 const baseUrl =
-  '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/1/prn-summary'
+  '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/prn-summary'
 
 describe('#prnSummaryDispatcher cross-registration routing', () => {
   beforeEach(() => {

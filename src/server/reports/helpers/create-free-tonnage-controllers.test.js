@@ -101,7 +101,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     prn: { ...reportDetail.prn, freeTonnage: 5 }
   }
 
-  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/${subtree.urlSlug}`
+  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/${subtree.urlSlug}`
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -227,7 +227,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     })
 
     it('should return 404 for quarterly cadence', async ({ server }) => {
-      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/${subtree.urlSlug}`
+      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/${subtree.urlSlug}`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -309,7 +309,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/1/supporting-information`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/supporting-information`
         )
       })
 

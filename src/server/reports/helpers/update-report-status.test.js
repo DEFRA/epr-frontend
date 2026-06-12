@@ -41,7 +41,7 @@ describe(updateReportStatus, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/1/status',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1/status',
       {
         method: 'POST',
         headers: {
@@ -69,7 +69,7 @@ describe(updateReportStatus, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/1/status',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1/status',
       expect.any(Object)
     )
   })

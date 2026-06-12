@@ -58,7 +58,7 @@ export const reports = {
   plugin: {
     name: 'reports',
     register(server) {
-      const periodPath = `${basePath}/{year}/{cadence}/{period}/{submissionNumber}`
+      const periodPath = `${basePath}/{year}/{cadence}/{period}/submissions/{submissionNumber}`
 
       server.route([
         {
@@ -221,7 +221,7 @@ export const reports = {
             period,
             submissionNumber
           } = request.params
-          const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
+          const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
           request.yar.set('summaryLogChangedError', base)
           return h.redirect(request.localiseUrl(`${base}/${errorRoute}`))
         },

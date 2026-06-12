@@ -61,7 +61,7 @@ export const createdController = {
     const formattedDueDate = formatDate(reportDetail.dueDate)
 
     const homeUrl = `/organisations/${organisationId}`
-    const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/${submissionNumber}/view`
+    const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`
 
     return h.view('reports/created', {
       pageTitle: localise('reports:createdPageTitle', {

@@ -99,7 +99,7 @@ async function buildViewData(request, options = {}) {
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
+  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
@@ -112,7 +112,7 @@ async function buildViewData(request, options = {}) {
     heading: localise('reports:supportingInformationHeading'),
     backUrl: request.localiseUrl(backPage),
     deleteUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/delete`
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
     ),
     maxLength: MAX_SUPPORTING_INFO_LENGTH,
     value: options.value ?? reportDetail.supportingInformation ?? '',
@@ -200,7 +200,7 @@ export const supportingInformationPostController = {
     if (action === 'continue') {
       return h.redirect(
         request.localiseUrl(
-          `${basePath}/${year}/${cadence}/${period}/${submissionNumber}/check-your-answers`
+          `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}/check-your-answers`
         )
       )
     }

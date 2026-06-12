@@ -223,7 +223,7 @@ export const checkGetController = {
       )
     }
 
-    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
+    const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
     const cadenceLabel = localise(`reports:${cadence}Heading`)
@@ -288,7 +288,7 @@ export const checkPostController = {
 
     return h.redirect(
       request.localiseUrl(
-        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}/created`
+        `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/created`
       )
     )
   }

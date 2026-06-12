@@ -19,7 +19,7 @@ export function getRedirectUrl(request, params, action, nextPage) {
 
   if (action === 'continue') {
     return request.localiseUrl(
-      `${basePath}/${year}/${cadence}/${period}/${submissionNumber}/${nextPage}`
+      `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}/${nextPage}`
     )
   }
 

@@ -39,7 +39,7 @@ const registeredOnlyExporter = {
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/delete`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
 
 describe('#deleteController', () => {
   beforeEach(() => {
@@ -327,7 +327,7 @@ describe('#deleteController', () => {
 
   describe('param validation', () => {
     it('should return 400 for invalid cadence', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/1/delete`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/invalid/1/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -339,7 +339,7 @@ describe('#deleteController', () => {
     })
 
     it('should return 400 for invalid year', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/1/delete`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2023/quarterly/1/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -351,7 +351,7 @@ describe('#deleteController', () => {
     })
 
     it('should return 400 for invalid period', async ({ server }) => {
-      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/1/delete`
+      const invalidUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/13/submissions/1/delete`
 
       const { statusCode } = await server.inject({
         method: 'GET',

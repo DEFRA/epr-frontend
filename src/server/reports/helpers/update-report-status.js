@@ -16,7 +16,7 @@ export async function updateReportStatus(periodParams, transition, idToken) {
     period,
     submissionNumber
   } = periodParams
-  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/${submissionNumber}/status`
+  const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}/status`
 
   return fetchReportBackend(path, {
     method: 'POST',

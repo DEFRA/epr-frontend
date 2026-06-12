@@ -23,8 +23,8 @@ const mockAuth = buildMockAuth()
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
-const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1/summary-log-changed-error`
-const periodUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/1`
+const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/summary-log-changed-error`
+const periodUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
 
 /**
  * Trigger the onPreResponse redirect to the error page, returning the

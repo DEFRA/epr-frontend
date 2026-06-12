@@ -27,7 +27,7 @@ export const summaryLogChangedErrorGetController = {
       `/organisations/${organisationId}/registrations/${registrationId}/reports`
     )
 
-    const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/${submissionNumber}`
+    const periodBase = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
     if (request.yar.get('summaryLogChangedError') !== periodBase) {
       return h.redirect(reportsUrl)

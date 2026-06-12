@@ -41,7 +41,7 @@ describe(updateReport, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
       {
         method: 'PATCH',
         headers: {
@@ -71,7 +71,7 @@ describe(updateReport, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/1',
+      '/v1/organisations/org-123/registrations/reg-456/reports/2026/quarterly/1/submissions/1',
       {
         method: 'PATCH',
         headers: {
@@ -123,7 +123,7 @@ describe(updateReport, () => {
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
-      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/1',
+      '/v1/organisations/org%2F123/registrations/reg%26456/reports/2026/quarterly/1/submissions/1',
       expect.any(Object)
     )
   })
