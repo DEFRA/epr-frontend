@@ -3105,10 +3105,6 @@ describe('#getWasteRecordSectionNumber', () => {
     expect(getWasteRecordSectionNumber('EXPORTER')).toBe(1)
   })
 
-  test('returns undefined for undefined processingType', () => {
-    expect(getWasteRecordSectionNumber(undefined)).toBeUndefined()
-  })
-
   test('returns undefined for unknown processingType', () => {
     expect(
       getWasteRecordSectionNumber(
