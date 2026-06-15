@@ -19,8 +19,14 @@ export const submittedController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
     const { t: localise } = request
 
@@ -38,6 +44,7 @@ export const submittedController = {
         year,
         cadence,
         period,
+        submissionNumber,
         session.idToken
       )
     ])
@@ -68,7 +75,7 @@ export const submittedController = {
       viewReportLink: {
         text: localise('reports:submittedViewReport'),
         href: request.localiseUrl(
-          `${reportsUrl}/${year}/${cadence}/${period}/view`
+          `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`
         )
       }
     })

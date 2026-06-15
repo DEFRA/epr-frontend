@@ -98,7 +98,7 @@ const reportDetail = {
 }
 
 const detailUrl =
-  '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1'
+  '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1'
 
 describe('#createReportController', () => {
   beforeEach(() => {
@@ -138,6 +138,7 @@ describe('#createReportController', () => {
         2026,
         'quarterly',
         1,
+        1,
         'mock-id-token'
       )
     })
@@ -159,14 +160,14 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/tonnes-recycled'
+        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/tonnes-recycled'
       )
     })
   })
 
   describe('for accredited exporter with monthly cadence', () => {
     const monthlyDetailUrl =
-      '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+      '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
 
     beforeEach(() => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -200,7 +201,7 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/prn-summary'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/prn-summary'
       )
     })
   })
@@ -254,7 +255,7 @@ describe('#createReportController', () => {
       server
     }) => {
       const monthlyUrl =
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
 
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
@@ -278,7 +279,7 @@ describe('#createReportController', () => {
 
   describe('for accredited reprocessor with monthly cadence', () => {
     const monthlyDetailUrl =
-      '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1'
+      '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
 
     const accreditedReprocessorRegistration = {
       ...reprocessorRegistration,
@@ -318,7 +319,7 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/tonnes-recycled'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/tonnes-recycled'
       )
     })
   })
@@ -350,7 +351,7 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/tonnes-not-exported'
+        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/tonnes-not-exported'
       )
     })
   })
@@ -386,7 +387,7 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/supporting-information'
+        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/supporting-information'
       )
     })
   })
@@ -419,7 +420,7 @@ describe('#createReportController', () => {
 
       expect(statusCode).toBe(statusCodes.found)
       expect(headers.location).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/tonnes-recycled'
+        '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1/tonnes-recycled'
       )
     })
   })

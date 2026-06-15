@@ -21,8 +21,14 @@ import { formatPeriodLabel, formatPeriodShort } from './format-period-label.js'
  * }>}
  */
 async function fetchGuardedData(isMatchingRegistration, request) {
-  const { organisationId, registrationId, year, cadence, period } =
-    request.params
+  const {
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period,
+    submissionNumber
+  } = request.params
   const session = request.auth.credentials
 
   const [{ registration, accreditation }, reportDetail] = await Promise.all([
@@ -37,6 +43,7 @@ async function fetchGuardedData(isMatchingRegistration, request) {
       year,
       cadence,
       period,
+      submissionNumber,
       session.idToken
     )
   ])
@@ -175,8 +182,14 @@ async function buildViewData(
   buildPageFields,
   options = {}
 ) {
-  const { organisationId, registrationId, year, cadence, period } =
-    request.params
+  const {
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period,
+    submissionNumber
+  } = request.params
   const { t: localise } = request
 
   const { registration, accreditation, reportDetail } = options.accreditedOnly
@@ -195,7 +208,7 @@ async function buildViewData(
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const periodShort = formatPeriodShort({ year, period }, cadence, localise)
   const reportsListPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
-  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}`
+  const periodPath = `${reportsListPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
   const pageFields = buildPageFields({
     registration,

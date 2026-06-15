@@ -94,8 +94,14 @@ export const deletePostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
     const session = request.auth.credentials
 
     await deleteReport(
@@ -104,6 +110,7 @@ export const deletePostController = {
       year,
       cadence,
       period,
+      submissionNumber,
       session.idToken
     )
 

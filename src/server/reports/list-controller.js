@@ -148,7 +148,7 @@ function buildRows({
   const submittedRows = []
 
   for (const period of reportingPeriods) {
-    const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}`
+    const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
 
     const label = formatPeriodLabel(period, cadence, localise)
 

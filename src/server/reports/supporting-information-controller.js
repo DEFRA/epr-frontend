@@ -68,8 +68,14 @@ function getBackPage(basePath, registration, accreditation) {
  * @param {object} [options.errorSummary] - Error summary for govukErrorSummary
  */
 async function buildViewData(request, options = {}) {
-  const { organisationId, registrationId, year, cadence, period } =
-    request.params
+  const {
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period,
+    submissionNumber
+  } = request.params
   const session = request.auth.credentials
   const { t: localise } = request
 
@@ -86,13 +92,14 @@ async function buildViewData(request, options = {}) {
     year,
     cadence,
     period,
+    submissionNumber,
     session.idToken
   )
 
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
-  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}`
+  const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
@@ -105,7 +112,7 @@ async function buildViewData(request, options = {}) {
     heading: localise('reports:supportingInformationHeading'),
     backUrl: request.localiseUrl(backPage),
     deleteUrl: request.localiseUrl(
-      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/delete`
+      `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
     ),
     maxLength: MAX_SUPPORTING_INFO_LENGTH,
     value: options.value ?? reportDetail.supportingInformation ?? '',
@@ -165,16 +172,25 @@ export const supportingInformationPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    const { organisationId, registrationId, year, cadence, period } =
-      request.params
-    const { supportingInformation, action } = request.payload
-
-    await updateReport(
+    const {
       organisationId,
       registrationId,
       year,
       cadence,
       period,
+      submissionNumber
+    } = request.params
+    const { supportingInformation, action } = request.payload
+
+    await updateReport(
+      {
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber
+      },
       { supportingInformation },
       request.auth.credentials.idToken
     )
@@ -184,7 +200,7 @@ export const supportingInformationPostController = {
     if (action === 'continue') {
       return h.redirect(
         request.localiseUrl(
-          `${basePath}/${year}/${cadence}/${period}/check-your-answers`
+          `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}/check-your-answers`
         )
       )
     }

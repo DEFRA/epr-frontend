@@ -101,7 +101,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     prn: { ...reportDetail.prn, totalRevenue: 1576.12 }
   }
 
-  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/prn-summary`
+  const baseUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/prn-summary`
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -224,7 +224,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     })
 
     it('should return 404 for quarterly cadence', async ({ server }) => {
-      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/prn-summary`
+      const quarterlyUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/prn-summary`
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -308,7 +308,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/${subtree.redirectSlug}`
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/monthly/1/submissions/1/${subtree.redirectSlug}`
         )
 
         expect(server.loggerMocks.info).toHaveBeenCalledWith({
@@ -334,11 +334,14 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
         })
 
         expect(updateReport).toHaveBeenCalledWith(
-          organisationId,
-          registrationId,
-          2026,
-          'monthly',
-          1,
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'monthly',
+            period: 1,
+            submissionNumber: 1
+          },
           { prnRevenue: 1576.12 },
           'mock-id-token'
         )
