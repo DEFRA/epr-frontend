@@ -1,42 +1,23 @@
 import { config } from '#config/config.js'
+import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest'
+import { describe, expect, vi } from 'vitest'
 import { controller } from './post-controller.js'
 
 describe('account linking POST controller', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const mockBackendServer = setupServer()
-
-  beforeAll(() => {
-    mockBackendServer.listen()
-  })
-
-  afterEach(() => {
-    mockBackendServer.resetHandlers()
-  })
-
-  afterAll(() => {
-    mockBackendServer.close()
-  })
 
   describe('when validation passes', () => {
-    it('should call backend link endpoint and redirect to organisation account home', async () => {
+    it('should call backend link endpoint and redirect to organisation account home', async ({
+      msw
+    }) => {
       const organisationId = 'org-123'
       const mockIdToken = 'mock-id-token'
       const mockSession = {
         idToken: mockIdToken
       }
 
-      mockBackendServer.use(
+      msw.use(
         http.post(
           `${backendUrl}/v1/organisations/${organisationId}/link`,
           ({ request }) => {
@@ -89,14 +70,16 @@ describe('account linking POST controller', () => {
       expect(result).toBe('redirect-response')
     })
 
-    it('should redirect without updating cache when sessionId is not present', async () => {
+    it('should redirect without updating cache when sessionId is not present', async ({
+      msw
+    }) => {
       const organisationId = 'org-456'
       const mockIdToken = 'mock-id-token'
       const mockSession = {
         idToken: mockIdToken
       }
 
-      mockBackendServer.use(
+      msw.use(
         http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
           HttpResponse.json({})
         )
@@ -126,7 +109,7 @@ describe('account linking POST controller', () => {
   })
 
   describe('when validation fails', () => {
-    it('should render error view with error messages', async () => {
+    it('should render error view with error messages', async ({ msw }) => {
       const mockOrganisations = {
         current: {
           id: 'defra-org-123',
@@ -142,7 +125,7 @@ describe('account linking POST controller', () => {
         ]
       }
 
-      mockBackendServer.use(
+      msw.use(
         http.get(`${backendUrl}/v1/me/organisations`, () => {
           return HttpResponse.json({ organisations: mockOrganisations })
         })

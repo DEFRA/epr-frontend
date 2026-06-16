@@ -1,30 +1,19 @@
 import { config } from '#config/config.js'
+import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
 import { linkOrganisation } from './link-organisation.js'
 
 describe(linkOrganisation, () => {
   const backendUrl = config.get('eprBackendUrl')
-  const mockBackendServer = setupServer()
 
-  beforeAll(() => {
-    mockBackendServer.listen()
-  })
-
-  afterEach(() => {
-    mockBackendServer.resetHandlers()
-  })
-
-  afterAll(() => {
-    mockBackendServer.close()
-  })
-
-  it('should successfully link organisation with correct auth token', async () => {
+  it('should successfully link organisation with correct auth token', async ({
+    msw
+  }) => {
     const organisationId = 'org-123'
     const idToken = 'valid-id-token'
 
-    mockBackendServer.use(
+    msw.use(
       http.post(
         `${backendUrl}/v1/organisations/${organisationId}/link`,
         ({ request }) => {
@@ -44,11 +33,11 @@ describe(linkOrganisation, () => {
     ).resolves.toBeUndefined()
   })
 
-  it('should throw error when backend returns 401', async () => {
+  it('should throw error when backend returns 401', async ({ msw }) => {
     const organisationId = 'org-456'
     const idToken = 'invalid-token'
 
-    mockBackendServer.use(
+    msw.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
         return HttpResponse.json({ error: 'Unauthorised' }, { status: 401 })
       })
@@ -64,11 +53,11 @@ describe(linkOrganisation, () => {
     })
   })
 
-  it('should throw error when backend returns 404', async () => {
+  it('should throw error when backend returns 404', async ({ msw }) => {
     const organisationId = 'non-existent-org'
     const idToken = 'valid-token'
 
-    mockBackendServer.use(
+    msw.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
         return HttpResponse.json(
           { error: 'Organisation not found' },
@@ -87,11 +76,11 @@ describe(linkOrganisation, () => {
     })
   })
 
-  it('should throw error when backend returns 500', async () => {
+  it('should throw error when backend returns 500', async ({ msw }) => {
     const organisationId = 'org-789'
     const idToken = 'valid-token'
 
-    mockBackendServer.use(
+    msw.use(
       http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () => {
         return HttpResponse.json(
           { error: 'Internal server error' },

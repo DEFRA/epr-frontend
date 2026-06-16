@@ -1,26 +1,15 @@
 import { config } from '#config/config.js'
+import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
 import { provideUserOrganisations } from './provide-user-organisations.js'
 
 const backendUrl = config.get('eprBackendUrl')
-const mockBackendServer = setupServer()
 
 describe(provideUserOrganisations, () => {
-  beforeAll(() => {
-    mockBackendServer.listen()
-  })
-
-  afterEach(() => {
-    mockBackendServer.resetHandlers()
-  })
-
-  afterAll(() => {
-    mockBackendServer.close()
-  })
-
-  it('should fetch and return organisations when session exists', async () => {
+  it('should fetch and return organisations when session exists', async ({
+    msw
+  }) => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
@@ -30,7 +19,7 @@ describe(provideUserOrganisations, () => {
       unlinked: []
     }
 
-    mockBackendServer.use(
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, ({ request }) => {
         const authHeader = request.headers.get('Authorization')
 
@@ -65,8 +54,10 @@ describe(provideUserOrganisations, () => {
     expect(result).toBeNull()
   })
 
-  it('should throw error when backend returns 401 unauthorized', async () => {
-    mockBackendServer.use(
+  it('should throw error when backend returns 401 unauthorized', async ({
+    msw
+  }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
       })
@@ -83,8 +74,10 @@ describe(provideUserOrganisations, () => {
     )
   })
 
-  it('should throw error when backend returns 500 server error', async () => {
-    mockBackendServer.use(
+  it('should throw error when backend returns 500 server error', async ({
+    msw
+  }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json(
           { error: 'Internal Server Error' },
