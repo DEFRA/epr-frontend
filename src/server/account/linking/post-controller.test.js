@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
@@ -18,17 +19,11 @@ describe('account linking POST controller', () => {
       }
 
       msw.use(
-        http.post(
+        bearerAuthHandler(
+          'post',
           `${backendUrl}/v1/organisations/${organisationId}/link`,
-          ({ request }) => {
-            const authHeader = request.headers.get('Authorization')
-
-            if (authHeader === `Bearer ${mockIdToken}`) {
-              return HttpResponse.json({})
-            }
-
-            return HttpResponse.json({ error: 'Unauthorised' }, { status: 401 })
-          }
+          mockIdToken,
+          () => HttpResponse.json({})
         )
       )
 
