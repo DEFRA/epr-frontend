@@ -12,6 +12,7 @@ vi.mock(import('node:crypto'), () => ({
 }))
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
+vi.mock(import('#server/auth/helpers/add-user-to-organisation.js'))
 vi.mock(import('#server/common/helpers/metrics/index.js'))
 
 describe('#authCallbackController', () => {
