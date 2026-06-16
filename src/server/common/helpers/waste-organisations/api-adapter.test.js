@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { beforeEach, it as base } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { afterAll, afterEach, beforeAll, describe, expect, vi } from 'vitest'
@@ -45,7 +46,7 @@ const mockApiOrganisations = [
   }
 ]
 
-const mockLogger = { warn: vi.fn() }
+const mockLogger = createMockLogger()
 
 const apiUrl = 'http://waste-orgs-test.api'
 

@@ -10,6 +10,10 @@ import fixture from '../../../../../fixtures/waste-organisations/organisations.j
 import { createWasteOrganisationsPlugin } from './waste-organisations.plugin.js'
 
 /**
+ * @import { WasteOrganisation } from './types.js'
+ */
+
+/**
  * Registers a minimal logger on each request so the API adapter
  * can call request.logger.warn().
  */
@@ -47,7 +51,9 @@ describe('#createWasteOrganisationsPlugin', () => {
     it('should return fixture organisations', async () => {
       await server.register(
         createWasteOrganisationsPlugin({
-          initialOrganisations: fixture.organisations
+          initialOrganisations: /** @type {WasteOrganisation[]} */ (
+            fixture.organisations
+          )
         })
       )
       server.route({
@@ -69,7 +75,23 @@ describe('#createWasteOrganisationsPlugin', () => {
     })
 
     it('should return custom initial organisations', async () => {
-      const customOrgs = [{ id: 'custom-1', name: 'Custom' }]
+      const customOrgs = [
+        {
+          id: 'custom-1',
+          name: 'Custom',
+          tradingName: null,
+          businessCountry: null,
+          companiesHouseNumber: null,
+          address: {
+            addressLine1: null,
+            addressLine2: null,
+            town: null,
+            county: null,
+            postcode: null,
+            country: null
+          }
+        }
+      ]
       await server.register(
         createWasteOrganisationsPlugin({ initialOrganisations: customOrgs })
       )

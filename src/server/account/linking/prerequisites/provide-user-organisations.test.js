@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -7,7 +8,7 @@ import { provideUserOrganisations } from './provide-user-organisations.js'
 
 const backendUrl = config.get('eprBackendUrl')
 
-describe(provideUserOrganisations, () => {
+describe('#provideUserOrganisations', () => {
   it('should fetch and return organisations when session exists', async ({
     msw
   }) => {
@@ -29,11 +30,7 @@ describe(provideUserOrganisations, () => {
       )
     )
 
-    const mockRequest = {
-      auth: {
-        credentials: { idToken: 'mock-id-token' }
-      }
-    }
+    const mockRequest = { auth: buildMockAuth() }
 
     const result = await provideUserOrganisations.method(mockRequest)
 
@@ -61,11 +58,7 @@ describe(provideUserOrganisations, () => {
       })
     )
 
-    const mockRequest = {
-      auth: {
-        credentials: { idToken: 'invalid-token' }
-      }
-    }
+    const mockRequest = { auth: buildMockAuth({ idToken: 'invalid-token' }) }
 
     await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
       '401 Unauthorized'
@@ -84,11 +77,7 @@ describe(provideUserOrganisations, () => {
       })
     )
 
-    const mockRequest = {
-      auth: {
-        credentials: { idToken: 'mock-id-token' }
-      }
-    }
+    const mockRequest = { auth: buildMockAuth() }
 
     await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
       '500 Internal Server Error'

@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { asRequest, asToolkit } from '#server/common/test-helpers/hapi-mocks.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
@@ -53,7 +54,10 @@ describe('account linking POST controller', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(
+        asRequest(mockRequest),
+        asToolkit(mockH)
+      )
 
       expect(mockCacheSet).toHaveBeenCalledExactlyOnceWith('mock-session-id', {
         idToken: mockIdToken,
@@ -94,7 +98,10 @@ describe('account linking POST controller', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(
+        asRequest(mockRequest),
+        asToolkit(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
         `/organisations/${organisationId}`
@@ -153,8 +160,8 @@ describe('account linking POST controller', () => {
       }
 
       const result = await controller.options.validate.failAction(
-        mockRequest,
-        mockH
+        asRequest(mockRequest),
+        asToolkit(mockH)
       )
 
       expect(mockH.view).toHaveBeenCalledWith(
