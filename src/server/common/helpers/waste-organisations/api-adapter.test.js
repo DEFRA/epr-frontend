@@ -1,16 +1,7 @@
-import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import {
-  afterAll,
-  afterEach,
-  it as base,
-  beforeAll,
-  describe,
-  expect,
-  vi
-} from 'vitest'
-
 import { config } from '#config/config.js'
+import { beforeEach, it as base } from '#vite/fixtures/server.js'
+import { http, HttpResponse } from 'msw'
+import { afterAll, afterEach, beforeAll, describe, expect, vi } from 'vitest'
 
 import { createApiWasteOrganisationsService } from './api-adapter.js'
 import { testWasteOrganisationsServiceContract } from './port.contract.js'
@@ -58,12 +49,6 @@ const mockLogger = { warn: vi.fn() }
 
 const apiUrl = 'http://waste-orgs-test.api'
 
-const server = setupServer(
-  http.get(apiUrl, () => {
-    return HttpResponse.json({ organisations: mockApiOrganisations })
-  })
-)
-
 const it = base.extend({
   // eslint-disable-next-line no-empty-pattern
   wasteOrganisationsService: async ({}, use) => {
@@ -74,7 +59,6 @@ const it = base.extend({
 
 describe('#createApiWasteOrganisationsService', () => {
   beforeAll(() => {
-    server.listen({ onUnhandledRequest: 'error' })
     config.set('wasteOrganisationsApi.url', apiUrl)
     config.set('wasteOrganisationsApi.username', 'testuser')
     config.set('wasteOrganisationsApi.password', 'testpass')
@@ -82,13 +66,19 @@ describe('#createApiWasteOrganisationsService', () => {
     config.set('isDevelopment', true)
   })
 
+  beforeEach(({ msw }) => {
+    msw.use(
+      http.get(apiUrl, () =>
+        HttpResponse.json({ organisations: mockApiOrganisations })
+      )
+    )
+  })
+
   afterEach(() => {
-    server.resetHandlers()
     vi.clearAllMocks()
   })
 
   afterAll(() => {
-    server.close()
     config.reset('wasteOrganisationsApi.url')
     config.reset('wasteOrganisationsApi.username')
     config.reset('wasteOrganisationsApi.password')
@@ -136,8 +126,8 @@ describe('#createApiWasteOrganisationsService', () => {
   })
 
   describe('missing registrations warnings', () => {
-    it('warns when an organisation has no registrations', async () => {
-      server.use(
+    it('warns when an organisation has no registrations', async ({ msw }) => {
+      msw.use(
         http.get(apiUrl, () =>
           HttpResponse.json({
             organisations: [
@@ -159,8 +149,10 @@ describe('#createApiWasteOrganisationsService', () => {
       })
     })
 
-    it('warns when an organisation has empty registrations array', async () => {
-      server.use(
+    it('warns when an organisation has empty registrations array', async ({
+      msw
+    }) => {
+      msw.use(
         http.get(apiUrl, () =>
           HttpResponse.json({
             organisations: [
@@ -181,8 +173,10 @@ describe('#createApiWasteOrganisationsService', () => {
       expect(mockLogger.warn).toHaveBeenCalledTimes(1)
     })
 
-    it('warns when registrations exist but none are producer types', async () => {
-      server.use(
+    it('warns when registrations exist but none are producer types', async ({
+      msw
+    }) => {
+      msw.use(
         http.get(apiUrl, () =>
           HttpResponse.json({
             organisations: [
@@ -205,8 +199,10 @@ describe('#createApiWasteOrganisationsService', () => {
       expect(mockLogger.warn).toHaveBeenCalledTimes(1)
     })
 
-    it('warns when an organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME', async () => {
-      server.use(
+    it('warns when an organisation has both LARGE_PRODUCER and COMPLIANCE_SCHEME', async ({
+      msw
+    }) => {
+      msw.use(
         http.get(apiUrl, () =>
           HttpResponse.json({
             organisations: [
@@ -247,10 +243,10 @@ describe('#createApiWasteOrganisationsService', () => {
   })
 
   describe('authentication', () => {
-    it('should send correct authentication headers', async () => {
+    it('should send correct authentication headers', async ({ msw }) => {
       let capturedHeaders = {}
 
-      server.use(
+      msw.use(
         http.get(apiUrl, ({ request }) => {
           capturedHeaders = Object.fromEntries(request.headers.entries())
           return HttpResponse.json({ organisations: mockApiOrganisations })
@@ -265,11 +261,11 @@ describe('#createApiWasteOrganisationsService', () => {
       expect(capturedHeaders['x-api-key']).toBe('test-key')
     })
 
-    it('should not send x-api-key header in production', async () => {
+    it('should not send x-api-key header in production', async ({ msw }) => {
       config.set('isDevelopment', false)
       let capturedHeaders = {}
 
-      server.use(
+      msw.use(
         http.get(apiUrl, ({ request }) => {
           capturedHeaders = Object.fromEntries(request.headers.entries())
           return HttpResponse.json({ organisations: mockApiOrganisations })
