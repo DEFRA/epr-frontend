@@ -68,23 +68,20 @@ const performSignInFlow = async (server, mswServer, { idToken, publicKey }) => {
   })
 }
 
-async function generateIdToken(payload) {
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', {
-    modulusLength: 4096,
-    publicKeyEncoding: {
-      type: 'spki',
-      format: 'jwk'
-    },
-    privateKeyEncoding: {
-      type: 'pkcs8',
-      format: 'pem'
-    }
+async function generateIdToken(/** @type {Record<string, unknown>} */ payload) {
+  const { privateKey: privateKeyObject, publicKey: publicKeyObject } =
+    generateKeyPairSync('rsa', { modulusLength: 4096 })
+
+  const publicKey = publicKeyObject.export({ format: 'jwk' })
+  const privateKeyPem = privateKeyObject.export({
+    type: 'pkcs8',
+    format: 'pem'
   })
 
   const jwt = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'RS256', kid: 'test-key-id' })
     .setExpirationTime('2h')
-    .sign(createPrivateKey(privateKey))
+    .sign(createPrivateKey(privateKeyPem))
 
   return { idToken: jwt, publicKey }
 }
