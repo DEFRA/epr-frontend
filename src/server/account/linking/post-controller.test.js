@@ -11,17 +11,11 @@ import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
-/**
- * @import { ServerInjectOptions } from '@hapi/hapi'
- */
-
 const backendUrl = config.get('eprBackendUrl')
 const url = '/account/linking'
 const organisationId = 'org-1'
 
-const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
-  /** @type {unknown} */ (buildMockAuth())
-)
+const mockAuth = buildMockAuth()
 
 const userOrganisations = {
   current: { id: 'defra-org-123', name: 'My Defra Organisation' },
