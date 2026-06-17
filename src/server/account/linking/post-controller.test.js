@@ -1,212 +1,135 @@
 import { config } from '#config/config.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { mergeCookies } from '#server/common/test-helpers/cookie-helper.js'
+import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
+import Iron from '@hapi/iron'
+import { getByRole } from '@testing-library/dom'
+import { JSDOM } from 'jsdom'
 import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest'
-import { controller } from './post-controller.js'
+import { describe, expect } from 'vitest'
+
+const backendUrl = config.get('eprBackendUrl')
+const url = '/account/linking'
+const organisationId = 'org-1'
+
+const mockAuth = buildMockAuth()
+
+const userOrganisations = {
+  current: { id: 'defra-org-123', name: 'My Defra Organisation' },
+  linked: null,
+  unlinked: [
+    { id: organisationId, name: 'Test Company Ltd', orgId: '12345678' }
+  ]
+}
+
+// Authorises on the session idToken, so a 200 also proves the handler forwards
+// the bearer token to the backend link endpoint.
+const linkSucceeds = () =>
+  bearerAuthHandler(
+    'post',
+    `${backendUrl}/v1/organisations/${organisationId}/link`,
+    'mock-id-token',
+    () => HttpResponse.json({})
+  )
 
 describe('account linking POST controller', () => {
-  const backendUrl = config.get('eprBackendUrl')
-  const mockBackendServer = setupServer()
-
-  beforeAll(() => {
-    mockBackendServer.listen()
-  })
-
-  afterEach(() => {
-    mockBackendServer.resetHandlers()
-  })
-
-  afterAll(() => {
-    mockBackendServer.close()
-  })
-
-  describe('when validation passes', () => {
-    it('should call backend link endpoint and redirect to organisation account home', async () => {
-      const organisationId = 'org-123'
-      const mockIdToken = 'mock-id-token'
-      const mockSession = {
-        idToken: mockIdToken
-      }
-
-      mockBackendServer.use(
-        http.post(
-          `${backendUrl}/v1/organisations/${organisationId}/link`,
-          ({ request }) => {
-            const authHeader = request.headers.get('Authorization')
-
-            if (authHeader === `Bearer ${mockIdToken}`) {
-              return HttpResponse.json({})
-            }
-
-            return HttpResponse.json({ error: 'Unauthorised' }, { status: 401 })
-          }
-        )
+  beforeEach(({ msw }) => {
+    msw.use(
+      http.get(`${backendUrl}/v1/me/organisations`, () =>
+        HttpResponse.json({ organisations: userOrganisations })
       )
+    )
+  })
 
-      const mockCacheSet = vi.fn().mockResolvedValue(undefined)
-      const mockRequest = {
-        payload: {
-          organisationId
-        },
-        auth: {
-          credentials: mockSession
-        },
-        state: {
-          userSession: {
-            sessionId: 'mock-session-id'
-          }
-        },
-        server: {
-          app: {
-            cache: {
-              set: mockCacheSet
-            }
-          }
-        }
-      }
-
-      const mockH = {
-        redirect: vi.fn().mockReturnValue('redirect-response')
-      }
-
-      const result = await controller.handler(mockRequest, mockH)
-
-      expect(mockCacheSet).toHaveBeenCalledExactlyOnceWith('mock-session-id', {
-        idToken: mockIdToken,
-        linkedOrganisationId: organisationId
-      })
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        `/organisations/${organisationId}`
-      )
-      expect(result).toBe('redirect-response')
+  it('should reject a POST without a CSRF token', async ({ server }) => {
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      payload: { organisationId }
     })
 
-    it('should redirect without updating cache when sessionId is not present', async () => {
-      const organisationId = 'org-456'
-      const mockIdToken = 'mock-id-token'
-      const mockSession = {
-        idToken: mockIdToken
-      }
-
-      mockBackendServer.use(
-        http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
-          HttpResponse.json({})
-        )
-      )
-
-      const mockRequest = {
-        payload: {
-          organisationId
-        },
-        auth: {
-          credentials: mockSession
-        },
-        state: {}
-      }
-
-      const mockH = {
-        redirect: vi.fn().mockReturnValue('redirect-response')
-      }
-
-      const result = await controller.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        `/organisations/${organisationId}`
-      )
-      expect(result).toBe('redirect-response')
-    })
+    expect(statusCode).toBe(statusCodes.forbidden)
   })
 
-  describe('when validation fails', () => {
-    it('should render error view with error messages', async () => {
-      const mockOrganisations = {
-        current: {
-          id: 'defra-org-123',
-          name: 'My Defra Organisation'
-        },
-        linked: null,
-        unlinked: [
-          {
-            id: 'org-1',
-            name: 'Test Company Ltd',
-            orgId: '12345678'
-          }
-        ]
-      }
+  it('should link the organisation and redirect to its dashboard', async ({
+    server,
+    msw
+  }) => {
+    msw.use(linkSucceeds())
 
-      mockBackendServer.use(
-        http.get(`${backendUrl}/v1/me/organisations`, () => {
-          return HttpResponse.json({ organisations: mockOrganisations })
-        })
-      )
-
-      const mockSession = {
-        idToken: 'mock-id-token'
-      }
-
-      const mockRequest = {
-        payload: {},
-        auth: {
-          credentials: mockSession
-        },
-        t: vi.fn((key) => {
-          const translations = {
-            'account:linking:pageTitle': 'Link Organisation',
-            'account:linking:errorNoSelection': 'Select an organisation to link'
-          }
-          return translations[key] || key
-        })
-      }
-
-      const mockView = {
-        takeover: vi.fn().mockReturnValue('view-with-errors')
-      }
-
-      const mockH = {
-        view: vi.fn().mockReturnValue(mockView)
-      }
-
-      const result = await controller.options.validate.failAction(
-        mockRequest,
-        mockH
-      )
-
-      expect(mockH.view).toHaveBeenCalledWith(
-        'account/linking/index',
-        expect.objectContaining({
-          pageTitle: 'Link Organisation',
-          unlinked: [
-            {
-              id: 'org-1',
-              displayName: 'Test Company Ltd (ID: 12345678)',
-              name: 'Test Company Ltd'
-            }
-          ],
-          organisationName: 'My Defra Organisation',
-          errors: {
-            organisationId: {
-              text: 'Select an organisation to link'
-            }
-          },
-          errorSummary: [
-            {
-              text: 'Select an organisation to link',
-              href: '#organisationId'
-            }
-          ]
-        })
-      )
-
-      expect(mockView.takeover).toHaveBeenCalledTimes(1)
-      expect(result).toBe('view-with-errors')
+    const { cookie, crumb } = await getCsrfToken(server, url, {
+      auth: mockAuth
     })
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`/organisations/${organisationId}`)
+  })
+
+  it('should store the linked organisation on the session when signed in', async ({
+    server,
+    msw
+  }) => {
+    msw.use(linkSucceeds())
+
+    const sessionId = 'mock-session-id'
+    const sealedSession = await Iron.seal(
+      { sessionId },
+      config.get('session.cookie.password'),
+      Iron.defaults
+    )
+    const { cookie, crumb } = await getCsrfToken(server, url, {
+      auth: mockAuth
+    })
+
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie: mergeCookies(cookie, `userSession=${sealedSession}`) },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+
+    const cached = await server.app.cache.get(sessionId)
+
+    expect(cached?.linkedOrganisationId).toBe(organisationId)
+  })
+
+  it('should re-render with an error when no organisation is selected', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(server, url, {
+      auth: mockAuth
+    })
+
+    const { statusCode, result } = await server.inject({
+      method: 'POST',
+      url,
+      auth: mockAuth,
+      headers: { cookie },
+      payload: { crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+
+    const { body } = new JSDOM(result).window.document
+    const main = getByRole(body, 'main')
+
+    expect(
+      getByRole(main, 'link', { name: 'Select an organisation to link' })
+    ).toBeDefined()
   })
 })

@@ -1,39 +1,25 @@
 import { config } from '#config/config.js'
+import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
 import { addUserToOrganisation } from './add-user-to-organisation.js'
 
 describe('#addUserToOrganisation', () => {
   const backendUrl = config.get('eprBackendUrl')
   const mockIdToken = 'mock-id-token-12345'
   const organisationId = 'org-123'
+  const userEndpoint = `${backendUrl}/v1/organisations/${organisationId}/user`
 
-  const mockServer = setupServer(
-    http.put(
-      `${backendUrl}/v1/organisations/${organisationId}/user`,
-      ({ request }) => {
-        const authHeader = request.headers.get('Authorization')
-
-        if (authHeader === `Bearer ${mockIdToken}`) {
-          return new HttpResponse(null, { status: 200 })
-        }
-
-        return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+  beforeEach(({ msw }) => {
+    msw.use(
+      bearerAuthHandler(
+        'put',
+        userEndpoint,
+        mockIdToken,
+        () => new HttpResponse(null, { status: 200 })
+      )
     )
-  )
-
-  beforeAll(() => {
-    mockServer.listen()
-  })
-
-  afterEach(() => {
-    mockServer.resetHandlers()
-  })
-
-  afterAll(() => {
-    mockServer.close()
   })
 
   it('should add user to organisation successfully with valid token', async () => {
@@ -53,9 +39,9 @@ describe('#addUserToOrganisation', () => {
     })
   })
 
-  it('should throw error when backend returns 500', async () => {
-    mockServer.use(
-      http.put(`${backendUrl}/v1/organisations/${organisationId}/user`, () =>
+  it('should throw error when backend returns 500', async ({ msw }) => {
+    msw.use(
+      http.put(userEndpoint, () =>
         HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })
       )
     )
@@ -70,12 +56,8 @@ describe('#addUserToOrganisation', () => {
     })
   })
 
-  it('should throw error when network request fails', async () => {
-    mockServer.use(
-      http.put(`${backendUrl}/v1/organisations/${organisationId}/user`, () =>
-        HttpResponse.error()
-      )
-    )
+  it('should throw error when network request fails', async ({ msw }) => {
+    msw.use(http.put(userEndpoint, () => HttpResponse.error()))
 
     await expect(
       addUserToOrganisation(organisationId, mockIdToken)

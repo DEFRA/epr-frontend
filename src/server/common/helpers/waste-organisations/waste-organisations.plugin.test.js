@@ -1,21 +1,17 @@
-import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it
-} from 'vitest'
-
 import { config } from '#config/config.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
+import { http, HttpResponse } from 'msw'
+import { afterEach, describe, expect } from 'vitest'
+
 import hapi from '@hapi/hapi'
 
 import fixture from '../../../../../fixtures/waste-organisations/organisations.json' with { type: 'json' }
 
 import { createWasteOrganisationsPlugin } from './waste-organisations.plugin.js'
+
+/**
+ * @import { WasteOrganisation } from './types.js'
+ */
 
 /**
  * Registers a minimal logger on each request so the API adapter
@@ -55,7 +51,9 @@ describe('#createWasteOrganisationsPlugin', () => {
     it('should return fixture organisations', async () => {
       await server.register(
         createWasteOrganisationsPlugin({
-          initialOrganisations: fixture.organisations
+          initialOrganisations: /** @type {WasteOrganisation[]} */ (
+            fixture.organisations
+          )
         })
       )
       server.route({
@@ -77,7 +75,23 @@ describe('#createWasteOrganisationsPlugin', () => {
     })
 
     it('should return custom initial organisations', async () => {
-      const customOrgs = [{ id: 'custom-1', name: 'Custom' }]
+      const customOrgs = [
+        {
+          id: 'custom-1',
+          name: 'Custom',
+          tradingName: null,
+          businessCountry: null,
+          companiesHouseNumber: null,
+          address: {
+            addressLine1: null,
+            addressLine2: null,
+            town: null,
+            county: null,
+            postcode: null,
+            country: null
+          }
+        }
+      ]
       await server.register(
         createWasteOrganisationsPlugin({ initialOrganisations: customOrgs })
       )
@@ -112,17 +126,13 @@ describe('#createWasteOrganisationsPlugin', () => {
       }
     ]
 
-    const msw = setupServer(
-      http.get(apiUrl, () =>
-        HttpResponse.json({ organisations: mockApiOrganisations })
+    beforeEach(({ msw }) => {
+      msw.use(
+        http.get(apiUrl, () =>
+          HttpResponse.json({ organisations: mockApiOrganisations })
+        )
       )
-    )
 
-    beforeAll(() => {
-      msw.listen({ onUnhandledRequest: 'error' })
-    })
-
-    beforeEach(() => {
       config.set('wasteOrganisationsApi.useInMemory', false)
       config.set('wasteOrganisationsApi.url', apiUrl)
       config.set('wasteOrganisationsApi.username', 'testuser')
@@ -132,17 +142,12 @@ describe('#createWasteOrganisationsPlugin', () => {
     })
 
     afterEach(() => {
-      msw.resetHandlers()
       config.reset('wasteOrganisationsApi.useInMemory')
       config.reset('wasteOrganisationsApi.url')
       config.reset('wasteOrganisationsApi.username')
       config.reset('wasteOrganisationsApi.password')
       config.reset('wasteOrganisationsApi.key')
       config.reset('isDevelopment')
-    })
-
-    afterAll(() => {
-      msw.close()
     })
 
     it('should return organisations from API with registrationType extracted', async () => {

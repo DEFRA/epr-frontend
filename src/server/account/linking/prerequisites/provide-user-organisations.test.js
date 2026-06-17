@@ -1,26 +1,17 @@
 import { config } from '#config/config.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
 import { provideUserOrganisations } from './provide-user-organisations.js'
 
 const backendUrl = config.get('eprBackendUrl')
-const mockBackendServer = setupServer()
 
-describe(provideUserOrganisations, () => {
-  beforeAll(() => {
-    mockBackendServer.listen()
-  })
-
-  afterEach(() => {
-    mockBackendServer.resetHandlers()
-  })
-
-  afterAll(() => {
-    mockBackendServer.close()
-  })
-
-  it('should fetch and return organisations when session exists', async () => {
+describe('#provideUserOrganisations', () => {
+  it('should fetch and return organisations when session exists', async ({
+    msw
+  }) => {
     const mockOrganisations = {
       current: {
         id: 'defra-org-123',
@@ -30,23 +21,16 @@ describe(provideUserOrganisations, () => {
       unlinked: []
     }
 
-    mockBackendServer.use(
-      http.get(`${backendUrl}/v1/me/organisations`, ({ request }) => {
-        const authHeader = request.headers.get('Authorization')
-
-        if (authHeader === 'Bearer mock-id-token') {
-          return HttpResponse.json({ organisations: mockOrganisations })
-        }
-
-        return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      })
+    msw.use(
+      bearerAuthHandler(
+        'get',
+        `${backendUrl}/v1/me/organisations`,
+        'mock-id-token',
+        () => HttpResponse.json({ organisations: mockOrganisations })
+      )
     )
 
-    const mockRequest = {
-      auth: {
-        credentials: { idToken: 'mock-id-token' }
-      }
-    }
+    const mockRequest = { auth: buildMockAuth() }
 
     const result = await provideUserOrganisations.method(mockRequest)
 
@@ -65,26 +49,26 @@ describe(provideUserOrganisations, () => {
     expect(result).toBeNull()
   })
 
-  it('should throw error when backend returns 401 unauthorized', async () => {
-    mockBackendServer.use(
+  it('should throw error when backend returns 401 unauthorized', async ({
+    msw
+  }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
       })
     )
 
-    const mockRequest = {
-      auth: {
-        credentials: { idToken: 'invalid-token' }
-      }
-    }
+    const mockRequest = { auth: buildMockAuth({ idToken: 'invalid-token' }) }
 
     await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
       '401 Unauthorized'
     )
   })
 
-  it('should throw error when backend returns 500 server error', async () => {
-    mockBackendServer.use(
+  it('should throw error when backend returns 500 server error', async ({
+    msw
+  }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json(
           { error: 'Internal Server Error' },
@@ -93,11 +77,7 @@ describe(provideUserOrganisations, () => {
       })
     )
 
-    const mockRequest = {
-      auth: {
-        credentials: { idToken: 'mock-id-token' }
-      }
-    }
+    const mockRequest = { auth: buildMockAuth() }
 
     await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
       '500 Internal Server Error'

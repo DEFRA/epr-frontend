@@ -1,7 +1,8 @@
 import { config } from '#config/config.js'
+import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect } from 'vitest'
 import { fetchUserOrganisations } from './fetch-user-organisations.js'
 
 /**
@@ -42,28 +43,15 @@ describe('#fetchUserOrganisations', () => {
     }
   }
 
-  const mockServer = setupServer(
-    http.get(`${backendUrl}/v1/me/organisations`, ({ request }) => {
-      const authHeader = request.headers.get('Authorization')
-
-      if (authHeader === `Bearer ${mockIdToken}`) {
-        return HttpResponse.json(mockOrganisationsResponse)
-      }
-
-      return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    })
-  )
-
-  beforeAll(() => {
-    mockServer.listen()
-  })
-
-  afterEach(() => {
-    mockServer.resetHandlers()
-  })
-
-  afterAll(() => {
-    mockServer.close()
+  beforeEach(({ msw }) => {
+    msw.use(
+      bearerAuthHandler(
+        'get',
+        `${backendUrl}/v1/me/organisations`,
+        mockIdToken,
+        () => HttpResponse.json(mockOrganisationsResponse)
+      )
+    )
   })
 
   it('should fetch user organisations successfully with valid token', async () => {
@@ -91,8 +79,10 @@ describe('#fetchUserOrganisations', () => {
     })
   })
 
-  it('should handle organisations with no linked organisation', async () => {
-    mockServer.use(
+  it('should handle organisations with no linked organisation', async ({
+    msw
+  }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json({
           organisations: {
@@ -119,8 +109,8 @@ describe('#fetchUserOrganisations', () => {
     expect(result.unlinked).toHaveLength(1)
   })
 
-  it('should handle empty unlinked organisations array', async () => {
-    mockServer.use(
+  it('should handle empty unlinked organisations array', async ({ msw }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json({
           organisations: {
@@ -160,8 +150,8 @@ describe('#fetchUserOrganisations', () => {
     )
   })
 
-  it('should throw error when backend returns 500', async () => {
-    mockServer.use(
+  it('should throw error when backend returns 500', async ({ msw }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.json(
           { error: 'Internal Server Error' },
@@ -178,8 +168,8 @@ describe('#fetchUserOrganisations', () => {
     })
   })
 
-  it('should throw error when network request fails', async () => {
-    mockServer.use(
+  it('should throw error when network request fails', async ({ msw }) => {
+    msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () => {
         return HttpResponse.error()
       })

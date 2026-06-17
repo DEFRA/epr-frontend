@@ -1,8 +1,8 @@
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 
 /**
- * @import { HapiRequest } from '#server/common/hapi-types.js'
  * @import { UserOrganisations } from '#server/auth/types/organisations.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
  */
 
 /**
@@ -15,7 +15,9 @@ import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisa
 
 const provideUserOrganisations = {
   /**
-   * @param {HapiRequest} request
+   * Runs as a `pre` on routes where the session is optional (try-mode), so
+   * `credentials` may be absent when the user is not logged in.
+   * @param {{ auth: { credentials: UserSession | null } }} request
    * @returns {Promise<UserOrganisations | null>}
    */
   method: async (request) => {
