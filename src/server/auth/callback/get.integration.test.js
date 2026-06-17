@@ -68,23 +68,20 @@ const performSignInFlow = async (server, mswServer, { idToken, publicKey }) => {
   })
 }
 
-async function generateIdToken(payload) {
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', {
-    modulusLength: 4096,
-    publicKeyEncoding: {
-      type: 'spki',
-      format: 'jwk'
-    },
-    privateKeyEncoding: {
-      type: 'pkcs8',
-      format: 'pem'
-    }
+async function generateIdToken(/** @type {Record<string, unknown>} */ payload) {
+  const { privateKey: privateKeyObject, publicKey: publicKeyObject } =
+    generateKeyPairSync('rsa', { modulusLength: 4096 })
+
+  const publicKey = publicKeyObject.export({ format: 'jwk' })
+  const privateKeyPem = privateKeyObject.export({
+    type: 'pkcs8',
+    format: 'pem'
   })
 
   const jwt = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'RS256', kid: 'test-key-id' })
     .setExpirationTime('2h')
-    .sign(createPrivateKey(privateKey))
+    .sign(createPrivateKey(privateKeyPem))
 
   return { idToken: jwt, publicKey }
 }
@@ -95,7 +92,7 @@ describe('/auth/callback - GET integration', async () => {
     email: 'user@email.com'
   })
 
-  describe('on successful return from Defra ID', () => {
+  describe('on successful return from Defra ID - unlinked organisation', () => {
     beforeEach(({ msw }) => {
       const backendUrl = config.get('eprBackendUrl')
       msw.use(
@@ -119,6 +116,90 @@ describe('/auth/callback - GET integration', async () => {
 
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toBe('/account/linking')
+    })
+
+    it('records sign in success metric', async ({ server, msw }) => {
+      await performSignInFlow(server, msw, idTokenAndPublicKey)
+
+      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
+    })
+
+    it('audits a successful sign in attempt', async ({ server, msw }) => {
+      await performSignInFlow(server, msw, idTokenAndPublicKey)
+
+      expect(mock.cdpAuditing).toHaveBeenCalledTimes(1)
+      expect(mock.cdpAuditing).toHaveBeenCalledWith({
+        event: {
+          category: 'access',
+          action: 'sign-in'
+        },
+        context: {},
+        user: {
+          id: 'user-id',
+          email: 'user@email.com'
+        }
+      })
+    })
+  })
+
+  describe('on successful return from Defra ID - linked organisation', () => {
+    const userOrganisationsResponse = {
+      organisations: {
+        current: { id: 'organisation-id', name: 'company-name' },
+        linked: {
+          id: 'linked-org-id',
+          name: 'Linked Company',
+          linkedBy: { id: 'user-id', email: 'user@email.com' },
+          linkedAt: '2025-01-01T00:00:00.000Z'
+        },
+        unlinked: []
+      }
+    }
+
+    beforeEach(({ msw }) => {
+      const backendUrl = config.get('eprBackendUrl')
+
+      msw.use(
+        http.get(`${backendUrl}/v1/me/organisations`, () => {
+          return HttpResponse.json(userOrganisationsResponse)
+        }),
+        http.put(
+          `${backendUrl}/v1/organisations/:organisationId/user`,
+          () => new HttpResponse(null, { status: 200 })
+        )
+      )
+    })
+
+    it('redirects to organisation dashboard', async ({ server, msw }) => {
+      const response = await performSignInFlow(server, msw, idTokenAndPublicKey)
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/organisations/linked-org-id')
+    })
+
+    it('calls add user to organisation API with the linked organisation id', async ({
+      server,
+      msw
+    }) => {
+      const backendUrl = config.get('eprBackendUrl')
+      let capturedOrganisationId
+
+      msw.use(
+        http.get(`${backendUrl}/v1/me/organisations`, () => {
+          return HttpResponse.json(userOrganisationsResponse)
+        }),
+        http.put(
+          `${backendUrl}/v1/organisations/:organisationId/user`,
+          ({ params }) => {
+            capturedOrganisationId = params.organisationId
+            return new HttpResponse(null, { status: 200 })
+          }
+        )
+      )
+
+      await performSignInFlow(server, msw, idTokenAndPublicKey)
+
+      expect(capturedOrganisationId).toBe('linked-org-id')
     })
 
     it('records sign in success metric', async ({ server, msw }) => {
@@ -209,7 +290,11 @@ describe('/auth/callback - GET integration', async () => {
               unlinked: []
             }
           })
-        })
+        }),
+        http.put(
+          `${backendUrl}/v1/organisations/:organisationId/user`,
+          () => new HttpResponse(null, { status: 200 })
+        )
       )
 
       const invitedUserToken = await generateIdToken({
@@ -241,7 +326,11 @@ describe('/auth/callback - GET integration', async () => {
               unlinked: []
             }
           })
-        })
+        }),
+        http.put(
+          `${backendUrl}/v1/organisations/:organisationId/user`,
+          () => new HttpResponse(null, { status: 200 })
+        )
       )
 
       const linkerToken = await generateIdToken({

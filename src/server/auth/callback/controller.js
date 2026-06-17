@@ -1,4 +1,5 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
+import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
@@ -68,6 +69,8 @@ const controller = {
       if (!organisations.linked) {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
+
+      await addUserToOrganisation(organisations.linked.id, session.idToken)
 
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
