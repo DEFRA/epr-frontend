@@ -31,6 +31,8 @@ export const MAX_PERCENTAGE = 100
 export const MIN_DATE = '2000-01-01'
 export const MAX_DATE = '2100-01-01'
 
+export const ROW_ID_MINIMUM = 1000
+
 export const MAX_TEXT_LENGTH = 100
 
 /**

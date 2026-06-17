@@ -1,6 +1,7 @@
 import { PATHS } from './journey.js'
 import { getDraft, saveDraft, clearDraft } from './draft.js'
 import { buildSummaryRows, deriveTotals } from './summary.js'
+import { assignRowId } from './row-id.js'
 
 const COMPLETE_KEY = 'receivedLoadComplete'
 
@@ -80,6 +81,7 @@ export const checkPostController = {
     }
     const { tonnageForRecycling } = deriveTotals(draft)
     request.yar.set(COMPLETE_KEY, {
+      rowId: assignRowId(request),
       wasteDescription: draft.wasteDescription,
       tonnageForRecycling
     })
@@ -100,6 +102,7 @@ export const confirmationController = {
     request.yar.clear(COMPLETE_KEY)
     return h.view('received-loads/confirmation', {
       pageTitle: 'Received load added',
+      rowId: completed.rowId,
       wasteDescription: completed.wasteDescription,
       tonnageForRecycling: completed.tonnageForRecycling,
       startUrl: PATHS.start

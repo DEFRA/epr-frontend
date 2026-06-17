@@ -2,6 +2,7 @@
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 {% from "govuk/components/textarea/macro.njk" import govukTextarea %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
@@ -16,6 +17,17 @@
 
       <h1 class="govuk-heading-l">{{ heading }}</h1>
       <p class="govuk-body">These details are optional. Leave blank any you do not have.</p>
+
+      {{ govukSelect({
+        id: "savedSupplier",
+        name: "savedSupplier",
+        attributes: { "data-supplier-picker": "" },
+        label: { text: "Search your saved suppliers (optional)", classes: "govuk-label--m" },
+        hint: { text: "If you have received from this supplier before, search for them to fill in the details below. To add a new supplier, leave this blank and enter their details." },
+        items: supplierItems
+      }) }}
+
+      <script type="application/json" data-supplier-data>{{ knownSuppliers | dump | safe }}</script>
 
       <form method="post" action="{{ formAction }}" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">

@@ -16,6 +16,7 @@ import {
   MIN_WEIGHT
 } from './reference-data.js'
 import { calculateNetWeight } from './calculations.js'
+import { KNOWN_SUPPLIERS } from './known-suppliers.js'
 
 const BASE = '/received-loads'
 
@@ -36,6 +37,14 @@ export const PATHS = Object.freeze({
 const selectItems = (values, selected, placeholder) => [
   { value: '', text: placeholder },
   ...values.map((value) => ({ value, text: value, selected: value === selected }))
+]
+
+const supplierSelectItems = () => [
+  { value: '', text: 'Search your saved suppliers' },
+  ...KNOWN_SUPPLIERS.map((supplier) => ({
+    value: supplier.id,
+    text: supplier.supplierName
+  }))
 ]
 
 const yesNoItems = (selected) => [
@@ -188,6 +197,10 @@ export const STEPS = Object.freeze([
     schema: supplierSchema,
     back: PATHS.recyclability,
     next: PATHS.carrier,
+    viewModel: () => ({
+      supplierItems: supplierSelectItems(),
+      knownSuppliers: KNOWN_SUPPLIERS
+    }),
     collect: (payload) => ({
       supplierName: payload.supplierName ?? '',
       supplierAddress: payload.supplierAddress ?? '',
