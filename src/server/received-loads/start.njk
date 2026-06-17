@@ -1,0 +1,25 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Add a received load</h1>
+
+      <p class="govuk-body">
+        Use this service to add a single load of waste received for reprocessing,
+        instead of recording it in the summary log spreadsheet.
+      </p>
+      <p class="govuk-body">
+        You will be asked for the date received, the waste type, weights and
+        recyclable proportion, and supplier and carrier details. The net weight
+        and tonnage received for recycling are worked out for you.
+      </p>
+
+      {{ govukButton({
+        text: "Start now",
+        href: startUrl,
+        isStartButton: true
+      }) }}
+    </div>
+  </div>
+{% endblock %}

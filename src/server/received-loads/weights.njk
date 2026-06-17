@@ -1,0 +1,62 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backUrl }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorSummary %}
+        {{ govukErrorSummary(errorSummary) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+      <p class="govuk-body">The net weight is worked out from these figures (gross weight minus tare and pallet weights).</p>
+
+      <form method="post" action="{{ formAction }}" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {{ govukInput({
+          id: "grossWeight",
+          name: "grossWeight",
+          label: { text: "Gross weight", classes: "govuk-label--m" },
+          classes: "govuk-input--width-10",
+          spellcheck: false,
+          inputmode: "decimal",
+          suffix: { text: "tonnes" },
+          value: values.grossWeight,
+          errorMessage: errors.grossWeight
+        }) }}
+
+        {{ govukInput({
+          id: "tareWeight",
+          name: "tareWeight",
+          label: { text: "Tare weight", classes: "govuk-label--m" },
+          classes: "govuk-input--width-10",
+          spellcheck: false,
+          inputmode: "decimal",
+          suffix: { text: "tonnes" },
+          value: values.tareWeight,
+          errorMessage: errors.tareWeight
+        }) }}
+
+        {{ govukInput({
+          id: "palletWeight",
+          name: "palletWeight",
+          label: { text: "Pallet weight", classes: "govuk-label--m" },
+          classes: "govuk-input--width-10",
+          spellcheck: false,
+          inputmode: "decimal",
+          suffix: { text: "tonnes" },
+          value: values.palletWeight,
+          errorMessage: errors.palletWeight
+        }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/panel/macro.njk" import govukPanel %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ govukPanel({
+        titleText: "Received load added",
+        html: "Tonnage received for recycling<br><strong>" + tonnageForRecycling + " tonnes</strong>"
+      }) }}
+
+      <p class="govuk-body">
+        You have added a received load of {{ wasteDescription }} to this summary log.
+      </p>
+      <p class="govuk-body">
+        In the full service this load would now be saved and included in your
+        waste balance. This prototype does not save anything.
+      </p>
+
+      <p class="govuk-body">
+        <a class="govuk-link" href="{{ startUrl }}">Add another received load</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

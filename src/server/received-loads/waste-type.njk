@@ -1,0 +1,43 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backUrl }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorSummary %}
+        {{ govukErrorSummary(errorSummary) }}
+      {% endif %}
+
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+
+      <form method="post" action="{{ formAction }}" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {{ govukSelect({
+          id: "ewcCode",
+          name: "ewcCode",
+          label: { text: "EWC code", classes: "govuk-label--m" },
+          hint: { text: "The European Waste Catalogue code for this waste" },
+          items: ewcItems,
+          errorMessage: errors.ewcCode
+        }) }}
+
+        {{ govukSelect({
+          id: "wasteDescription",
+          name: "wasteDescription",
+          label: { text: "Waste description", classes: "govuk-label--m" },
+          hint: { text: "The description that best matches the material" },
+          items: descriptionItems,
+          errorMessage: errors.wasteDescription
+        }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

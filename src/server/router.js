@@ -10,6 +10,7 @@ import { login } from '#server/login/index.js'
 import { logout } from '#server/logout/index.js'
 import { organisations } from '#server/organisations/index.js'
 import { prns } from '#server/prns/index.js'
+import { receivedLoads } from '#server/received-loads/index.js'
 import { registrations } from '#server/registrations/index.js'
 import { reports } from '#server/reports/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
@@ -37,6 +38,7 @@ export const router = {
         logout,
         organisations,
         prns,
+        receivedLoads,
         registrations,
         reports,
         summaryLog,
