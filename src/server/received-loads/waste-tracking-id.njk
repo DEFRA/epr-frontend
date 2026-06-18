@@ -1,0 +1,37 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backUrl }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorSummary %}
+        {{ govukErrorSummary(errorSummary) }}
+      {% endif %}
+
+      <form method="post" action="{{ formAction }}" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {{ govukInput({
+          id: "wasteTrackingId",
+          name: "wasteTrackingId",
+          label: {
+            text: "Enter your waste tracking ID",
+            isPageHeading: true,
+            classes: "govuk-label--l"
+          },
+          hint: { text: "This is on the waste transfer note for the movement. For this prototype, try " + (examples | join(", ")) + "." },
+          classes: "govuk-input--width-20",
+          value: values.wasteTrackingId,
+          errorMessage: errors.wasteTrackingId
+        }) }}
+
+        {{ govukButton({ text: "Find movement" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

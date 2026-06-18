@@ -1,0 +1,27 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backUrl }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">Check the details from waste tracking</h1>
+
+      {{ govukInsetText({
+        text: "These details come from waste tracking and cannot be changed. You will add the weights, recyclable proportion and supplier details next."
+      }) }}
+
+      {{ govukSummaryList({ rows: rows }) }}
+
+      {{ govukButton({
+        text: "Continue",
+        href: continueUrl,
+        isStartButton: false
+      }) }}
+    </div>
+  </div>
+{% endblock %}

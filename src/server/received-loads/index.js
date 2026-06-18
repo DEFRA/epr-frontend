@@ -3,6 +3,11 @@ import { createStepRoutes } from './step-factory.js'
 import {
   startController,
   baseRedirectController,
+  methodGetController,
+  methodPostController,
+  wasteTrackingIdGetController,
+  wasteTrackingIdPostController,
+  trackingDetailsController,
   checkGetController,
   checkPostController,
   confirmationController
@@ -22,6 +27,11 @@ export const receivedLoads = {
       server.route([
         baseRedirectController,
         startController,
+        methodGetController,
+        methodPostController,
+        wasteTrackingIdGetController,
+        wasteTrackingIdPostController,
+        trackingDetailsController,
         ...STEPS.flatMap(createStepRoutes),
         checkGetController,
         checkPostController,

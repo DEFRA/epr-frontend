@@ -23,6 +23,9 @@ const BASE = '/received-loads'
 export const PATHS = Object.freeze({
   base: BASE,
   start: `${BASE}/start`,
+  method: `${BASE}/how`,
+  wasteTrackingId: `${BASE}/waste-tracking-id`,
+  trackingDetails: `${BASE}/waste-tracking-details`,
   dateReceived: `${BASE}/date-received`,
   wasteType: `${BASE}/waste-type`,
   prn: `${BASE}/prn`,
@@ -80,6 +83,7 @@ export const STEPS = Object.freeze([
     template: 'received-loads/date-received',
     title: 'Date received for reprocessing',
     schema: dateReceivedSchema,
+    dwtLocked: true,
     back: PATHS.start,
     next: PATHS.wasteType,
     anchors: { dateReceived: 'dateReceived-day' },
@@ -97,6 +101,7 @@ export const STEPS = Object.freeze([
     template: 'received-loads/waste-type',
     title: 'Waste type',
     schema: wasteTypeSchema,
+    dwtLocked: true,
     back: PATHS.dateReceived,
     next: PATHS.prn,
     viewModel: (values) => ({
@@ -117,7 +122,8 @@ export const STEPS = Object.freeze([
     template: 'received-loads/prn',
     title: 'PRN or PERN',
     schema: prnIssuedSchema,
-    back: PATHS.wasteType,
+    back: (draft) =>
+      draft.fromWasteTracking ? PATHS.trackingDetails : PATHS.wasteType,
     next: PATHS.weights,
     viewModel: (values) => ({ prnItems: yesNoItems(values.prnIssued) }),
     collect: (payload) => ({ prnIssued: payload.prnIssued })
@@ -217,12 +223,19 @@ export const STEPS = Object.freeze([
     schema: carrierSchema,
     back: PATHS.supplier,
     next: PATHS.check,
-    collect: (payload) => ({
-      carrierName: payload.carrierName ?? '',
-      cbdRegNumber: payload.cbdRegNumber ?? '',
-      vehicleRegistration: payload.vehicleRegistration ?? '',
-      weighbridgeTicket: payload.weighbridgeTicket ?? '',
-      yourReference: payload.yourReference ?? ''
-    })
+    viewModel: (values) => ({ dwtLocked: Boolean(values.fromWasteTracking) }),
+    collect: (payload, draft) =>
+      draft.fromWasteTracking
+        ? {
+            weighbridgeTicket: payload.weighbridgeTicket ?? '',
+            yourReference: payload.yourReference ?? ''
+          }
+        : {
+            carrierName: payload.carrierName ?? '',
+            cbdRegNumber: payload.cbdRegNumber ?? '',
+            vehicleRegistration: payload.vehicleRegistration ?? '',
+            weighbridgeTicket: payload.weighbridgeTicket ?? '',
+            yourReference: payload.yourReference ?? ''
+          }
   }
 ])

@@ -13,7 +13,8 @@ const COUNTER_KEY = 'receivedLoadNextRowId'
  * @returns {number}
  */
 export const assignRowId = (request) => {
-  const rowId = request.yar.get(COUNTER_KEY) ?? ROW_ID_MINIMUM
+  const stored = request.yar.get(COUNTER_KEY)
+  const rowId = typeof stored === 'number' ? stored : ROW_ID_MINIMUM
   request.yar.set(COUNTER_KEY, rowId + 1)
   return rowId
 }

@@ -6,7 +6,7 @@ const DRAFT_KEY = 'receivedLoadDraft'
  * collected so far across the journey's steps.
  *
  * @param {import('@hapi/hapi').Request} request
- * @returns {Record<string, string>}
+ * @returns {Record<string, any>}
  */
 export const getDraft = (request) => request.yar.get(DRAFT_KEY) ?? {}
 
@@ -14,7 +14,7 @@ export const getDraft = (request) => request.yar.get(DRAFT_KEY) ?? {}
  * Persists the draft back to the session.
  *
  * @param {import('@hapi/hapi').Request} request
- * @param {Record<string, string>} draft
+ * @param {Record<string, any>} draft
  */
 export const saveDraft = (request, draft) => {
   request.yar.set(DRAFT_KEY, draft)

@@ -1,0 +1,46 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+  {{ govukBackLink({ text: "Back", href: backUrl }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errorSummary %}
+        {{ govukErrorSummary(errorSummary) }}
+      {% endif %}
+
+      <form method="post" action="{{ formAction }}" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {{ govukRadios({
+          name: "addMethod",
+          fieldset: {
+            legend: {
+              text: "How do you want to add this received load?",
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          items: [
+            {
+              value: "tracking",
+              text: "Use a waste tracking ID",
+              hint: { text: "We will fetch the date, waste type and carrier details from waste tracking" }
+            },
+            {
+              value: "manual",
+              text: "Enter the details manually"
+            }
+          ],
+          errorMessage: errors.addMethod
+        }) }}
+
+        {{ govukButton({ text: "Continue" }) }}
+      </form>
+    </div>
+  </div>
+{% endblock %}

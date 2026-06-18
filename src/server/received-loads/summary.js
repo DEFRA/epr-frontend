@@ -69,6 +69,25 @@ const change = (path, hidden) => ({
 })
 
 /**
+ * The read-only summary of the fields taken from waste tracking, shown for
+ * confirmation before the rest of the journey. None have a change link: waste
+ * tracking is the source of truth for these fields.
+ *
+ * @param {Record<string, any>} draft
+ */
+export const buildWasteTrackingRows = (draft) => {
+  const row = (key, value) => ({ key: { text: key }, value: { text: value } })
+  return [
+    row('Date received', formatDate(draft.dateReceived)),
+    row('EWC code', text(draft.ewcCode)),
+    row('Waste description', text(draft.wasteDescription)),
+    row('Carrier name', text(draft.carrierName)),
+    row('CBD registration number', text(draft.cbdRegNumber)),
+    row('Vehicle registration number', text(draft.vehicleRegistration))
+  ]
+}
+
+/**
  * Builds the GOV.UK summary-list rows for the check-your-answers page.
  * Derived rows (net weight, tonnage) have no change link.
  *
@@ -82,10 +101,13 @@ export const buildSummaryRows = (draft) => {
     ...(path ? { actions: change(path, hidden) } : {})
   })
 
+  // Fields sourced from waste tracking are locked: they keep no change link.
+  const editable = (path) => (draft.fromWasteTracking ? undefined : path)
+
   return [
-    row('Date received', formatDate(draft.dateReceived), PATHS.dateReceived, 'date received'),
-    row('EWC code', text(draft.ewcCode), PATHS.wasteType, 'EWC code'),
-    row('Waste description', text(draft.wasteDescription), PATHS.wasteType, 'waste description'),
+    row('Date received', formatDate(draft.dateReceived), editable(PATHS.dateReceived), 'date received'),
+    row('EWC code', text(draft.ewcCode), editable(PATHS.wasteType), 'EWC code'),
+    row('Waste description', text(draft.wasteDescription), editable(PATHS.wasteType), 'waste description'),
     row('PRN or PERN issued', text(draft.prnIssued), PATHS.prn, 'whether a PRN or PERN was issued'),
     row('Gross weight', formatTonnes(draft.grossWeight), PATHS.weights, 'gross weight'),
     row('Tare weight', formatTonnes(draft.tareWeight), PATHS.weights, 'tare weight'),
@@ -102,9 +124,9 @@ export const buildSummaryRows = (draft) => {
     row('Supplier email address', text(draft.supplierEmail), PATHS.supplier, 'supplier email address'),
     row('Supplier phone number', text(draft.supplierPhone), PATHS.supplier, 'supplier phone number'),
     row('Activities carried out by supplier', text(draft.activitiesCarriedOut), PATHS.supplier, 'activities carried out by the supplier'),
-    row('Carrier name', text(draft.carrierName), PATHS.carrier, 'carrier name'),
-    row('CBD registration number', text(draft.cbdRegNumber), PATHS.carrier, 'CBD registration number'),
-    row('Vehicle registration number', text(draft.vehicleRegistration), PATHS.carrier, 'vehicle registration number'),
+    row('Carrier name', text(draft.carrierName), editable(PATHS.carrier), 'carrier name'),
+    row('CBD registration number', text(draft.cbdRegNumber), editable(PATHS.carrier), 'CBD registration number'),
+    row('Vehicle registration number', text(draft.vehicleRegistration), editable(PATHS.carrier), 'vehicle registration number'),
     row('Weighbridge ticket number', text(draft.weighbridgeTicket), PATHS.carrier, 'weighbridge ticket number'),
     row('Your reference', text(draft.yourReference), PATHS.carrier, 'your reference')
   ]

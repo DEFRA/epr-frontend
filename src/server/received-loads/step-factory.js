@@ -8,8 +8,9 @@ import { PATHS } from './journey.js'
  * @property {string} template
  * @property {string} title
  * @property {import('joi').ObjectSchema} schema
- * @property {string} back
+ * @property {string | ((draft: Record<string, any>) => string)} back
  * @property {string} next
+ * @property {boolean} [dwtLocked]
  * @property {Record<string, string>} [anchors]
  * @property {(values: Record<string, any>, errors: Record<string, { text: string }>) => Record<string, any>} [viewModel]
  * @property {(payload: Record<string, any>, draft: Record<string, any>) => { field: string, message: string }[]} [check]
@@ -17,6 +18,9 @@ import { PATHS } from './journey.js'
  */
 
 const isFromCheck = (request) => request.query.from === 'check'
+
+const resolveBack = (step, request) =>
+  typeof step.back === 'function' ? step.back(getDraft(request)) : step.back
 
 /**
  * Builds the view context for a step, including the back link and form action,
@@ -32,7 +36,7 @@ const buildView = (step, request, values, errorView) => ({
   pageTitle: step.title,
   heading: step.title,
   formAction: isFromCheck(request) ? `${step.path}?from=check` : step.path,
-  backUrl: isFromCheck(request) ? PATHS.check : step.back,
+  backUrl: isFromCheck(request) ? PATHS.check : resolveBack(step, request),
   values,
   ...(step.viewModel ? step.viewModel(values, errorView?.errors ?? {}) : {}),
   errors: errorView?.errors ?? {},
@@ -54,13 +58,18 @@ export const createStepRoutes = (step) => {
     return h.view(step.template, buildView(step, request, values, errorView)).takeover()
   }
 
+  const isDwtLocked = (request) =>
+    step.dwtLocked && getDraft(request).fromWasteTracking
+
   return [
     {
       method: 'GET',
       path: step.path,
       options: { auth: false },
       handler: (request, h) =>
-        h.view(step.template, buildView(step, request, getDraft(request)))
+        isDwtLocked(request)
+          ? h.redirect(PATHS.trackingDetails)
+          : h.view(step.template, buildView(step, request, getDraft(request)))
     },
     {
       method: 'POST',
@@ -79,6 +88,9 @@ export const createStepRoutes = (step) => {
         }
       },
       handler: (request, h) => {
+        if (isDwtLocked(request)) {
+          return h.redirect(PATHS.trackingDetails)
+        }
         const draft = getDraft(request)
         const issues = step.check ? step.check(request.payload, draft) : []
         if (issues.length > 0) {
