@@ -411,7 +411,7 @@ describe('#listReportsController', () => {
       expect(table?.textContent).toContain('March 2026')
     })
 
-    it('should display Select links for accredited reprocessor periods', async ({
+    it('should display Create draft links for accredited reprocessor periods', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -429,7 +429,7 @@ describe('#listReportsController', () => {
       expect(selectLinks[0]?.getAttribute('href')).toBe(
         '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
       )
-      expect(selectLinks[0]?.textContent).toContain('Select')
+      expect(selectLinks[0]?.textContent).toContain('Create draft')
     })
 
     it('should not display Quarterly subheading', async ({ server }) => {
@@ -551,7 +551,9 @@ describe('#listReportsController', () => {
       ])
     })
 
-    it('should display Continue link instead of Select', async ({ server }) => {
+    it('should display Continue link instead of Create draft', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -803,7 +805,7 @@ describe('#listReportsController', () => {
             '20 March 2026',
             'Continue February 2026'
           ],
-          ['March 2026', '', '20 April 2026', 'Select March 2026']
+          ['March 2026', '', '20 April 2026', 'Create draft March 2026']
         ]
       })
     })
@@ -991,7 +993,7 @@ describe('#listReportsController', () => {
       expect(table?.textContent).toContain('Quarter 1, 2026')
     })
 
-    it('should display Select links for exporter', async ({ server }) => {
+    it('should display Create draft links for exporter', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: exporterUrl,
@@ -1007,7 +1009,7 @@ describe('#listReportsController', () => {
       expect(selectLinks[0]?.getAttribute('href')).toBe(
         '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1'
       )
-      expect(selectLinks[0]?.textContent).toContain('Select')
+      expect(selectLinks[0]?.textContent).toContain('Create draft')
     })
 
     it('should link Continue to tonnes-not-exported for in-progress report', async ({
@@ -1137,7 +1139,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchReportingPeriods).mockResolvedValue(quarterlyResponse)
     })
 
-    it('should display Select links for reprocessor periods', async ({
+    it('should display Create draft links for reprocessor periods', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -1155,7 +1157,7 @@ describe('#listReportsController', () => {
       expect(link?.getAttribute('href')).toBe(
         '/organisations/org-789/registrations/reg-003/reports/2026/quarterly/1/submissions/1'
       )
-      expect(link?.textContent).toContain('Select')
+      expect(link?.textContent).toContain('Create draft')
 
       const hidden = link?.querySelector('.govuk-visually-hidden')
       expect(hidden?.textContent).toBe('Quarter 1, 2026')
