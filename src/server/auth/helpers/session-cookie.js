@@ -97,13 +97,11 @@ const createBlockingRefresh = (verifyToken) => {
 
   /** @type {ReturnType<typeof createBlockingRefresh>} */
   const blockingRefresh = async (request, userSession) => {
-    const refreshedSession = await request
-      .metrics()
-      .timer(
-        'tokenRefreshDuration',
-        () => refreshIdTokenAndUpdateSession(request, userSession),
-        { type: 'blocking' }
-      )
+    const refreshedSession = await request.metrics.timer(
+      'tokenRefreshDuration',
+      () => refreshIdTokenAndUpdateSession(request, userSession),
+      { type: 'blocking' }
+    )
 
     request.logger.info({
       message: 'Token refresh complete (blocking)',
@@ -131,13 +129,11 @@ const createBackgroundRefresh = (verifyToken) => {
   /** @type {ReturnType<typeof createBackgroundRefresh>} */
   const backgroundRefresh = (request, userSession) => {
     const run = async () => {
-      const refreshedSession = await request
-        .metrics()
-        .timer(
-          'tokenRefreshDuration',
-          () => refreshIdTokenAndUpdateSession(request, userSession),
-          { type: 'background' }
-        )
+      const refreshedSession = await request.metrics.timer(
+        'tokenRefreshDuration',
+        () => refreshIdTokenAndUpdateSession(request, userSession),
+        { type: 'background' }
+      )
 
       request.logger.info({
         message: 'Token refresh complete (background)',

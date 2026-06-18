@@ -98,7 +98,7 @@
  *   i18n: i18n,
  *   localiseUrl: (url: string) => string,
  *   wasteOrganisationsService: WasteOrganisationsService,
- *   metrics: () => Metrics,
+ *   metrics: Metrics,
  *   cookieAuth: CookieAuth
  * }} HapiRequest
  */
