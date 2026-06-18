@@ -1,6 +1,10 @@
 import { config } from '#config/config.js'
 import { dropUserSession } from '#server/auth/helpers/drop-user-session.js'
 import { logoutController } from '#server/logout/controller.js'
+import {
+  asRequest,
+  asToolkit
+} from '#server/common/test-helpers/request-helper.js'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
@@ -27,7 +31,10 @@ describe('#logoutController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await logoutController.handler(mockRequest, mockH)
+      const result = await logoutController.handler(
+        asRequest(mockRequest),
+        asToolkit(mockH)
+      )
 
       expect(dropUserSession).not.toHaveBeenCalled()
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/logged-out')
@@ -68,7 +75,10 @@ describe('#logoutController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await logoutController.handler(mockRequest, mockH)
+      const result = await logoutController.handler(
+        asRequest(mockRequest),
+        asToolkit(mockH)
+      )
 
       expect(dropUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
       expect(mockRequest.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
