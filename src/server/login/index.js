@@ -1,5 +1,3 @@
-import { metrics } from '#server/common/helpers/metrics/index.js'
-
 /**
  * Login plugin
  * Registers the /login route that triggers OIDC authentication
@@ -15,8 +13,8 @@ const login = {
           options: {
             ext: {
               onPreAuth: {
-                method: async (_request, h) => {
-                  await metrics.signInAttempted()
+                method: async (request, h) => {
+                  await request.metrics.counter('signInAttempted')
                   return h.continue
                 }
               }

@@ -1,18 +1,9 @@
+import { Metrics } from '@defra/cdp-metrics'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
 import { describe, expect, vi } from 'vitest'
 
-const mockSignInAttemptedMetric = vi.fn()
-
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signInAttempted: () => mockSignInAttemptedMetric()
-    }
-  })
-)
+const counterSpy = vi.spyOn(Metrics.prototype, 'counter').mockResolvedValue()
 
 describe('#loginController - integration', () => {
   describe('login flow', () => {
@@ -46,7 +37,7 @@ describe('#loginController - integration', () => {
           url
         })
 
-        expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
+        expect(counterSpy).toHaveBeenCalledWith('signInAttempted')
       }
     )
   })

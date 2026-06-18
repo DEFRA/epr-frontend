@@ -1,21 +1,12 @@
+import { Metrics } from '@defra/cdp-metrics'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
-const mockSignOutSuccessMetric = vi.fn()
+const counterSpy = vi.spyOn(Metrics.prototype, 'counter').mockResolvedValue()
 const mockCdpAuditing = vi.fn()
-
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signOutSuccess: () => mockSignOutSuccessMetric()
-    }
-  })
-)
 
 vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mockCdpAuditing(...args)
@@ -89,7 +80,7 @@ describe('#logoutController - integration', () => {
         auth: mockAuth
       })
 
-      expect(mockSignOutSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(counterSpy).toHaveBeenCalledWith('signOutSuccess')
     })
   })
 
@@ -119,7 +110,7 @@ describe('#logoutController - integration', () => {
         url: '/logout'
       })
 
-      expect(mockSignOutSuccessMetric).not.toHaveBeenCalled()
+      expect(counterSpy).not.toHaveBeenCalledWith('signOutSuccess')
     })
   })
 })

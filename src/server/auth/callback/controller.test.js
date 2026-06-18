@@ -1,8 +1,7 @@
 import { controller } from '#server/auth/callback/controller.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
-import * as metricsModule from '#server/common/helpers/metrics/index.js'
 import Boom from '@hapi/boom'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 vi.mock(import('node:crypto'), () => ({
   randomUUID: vi.fn(() => 'mock-uuid-1234'),
@@ -13,17 +12,8 @@ vi.mock(import('node:crypto'), () => ({
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
 vi.mock(import('#server/auth/helpers/add-user-to-organisation.js'))
-vi.mock(import('#server/common/helpers/metrics/index.js'))
 
 describe('#authCallbackController', () => {
-  beforeEach(() => {
-    vi.mocked(metricsModule.metrics.signInSuccess).mockResolvedValue(undefined)
-    vi.mocked(metricsModule.metrics.signInFailure).mockResolvedValue(undefined)
-    vi.mocked(
-      metricsModule.metrics.signInSuccessNonInitialUser
-    ).mockResolvedValue(undefined)
-  })
-
   describe('when user is authenticated', () => {
     it('should create session and redirect to flash referrer', async () => {
       const mockProfile = {
@@ -56,6 +46,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -145,6 +136,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -233,6 +225,7 @@ describe('#authCallbackController', () => {
         ).mockResolvedValue(mockOrganisations)
 
         const mockRequest = {
+          metrics: { counter: vi.fn() },
           auth: {
             isAuthenticated: true,
             credentials: {
@@ -305,6 +298,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -393,6 +387,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -471,6 +466,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -517,6 +513,7 @@ describe('#authCallbackController', () => {
   describe('when user is not authenticated', () => {
     it('should redirect to referrer without creating session', async () => {
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: false
         },
@@ -554,6 +551,7 @@ describe('#authCallbackController', () => {
 
     it('should redirect to home when no referrer and not authenticated', async () => {
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: false
         },
@@ -605,6 +603,7 @@ describe('#authCallbackController', () => {
       ).mockRejectedValue(boomError)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -699,6 +698,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -773,6 +773,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {
@@ -836,6 +837,7 @@ describe('#authCallbackController', () => {
       ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           isAuthenticated: true,
           credentials: {

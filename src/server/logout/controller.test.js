@@ -16,6 +16,7 @@ describe('#logoutController', () => {
   describe('when user is not authenticated', () => {
     test('should redirect to logged-out page when auth credentials is null', async () => {
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         auth: {
           credentials: null
         },
@@ -50,6 +51,7 @@ describe('#logoutController', () => {
       config.set('appBaseUrl', appBaseUrl)
 
       const mockRequest = {
+        metrics: { counter: vi.fn() },
         cookieAuth: {
           clear: vi.fn()
         },

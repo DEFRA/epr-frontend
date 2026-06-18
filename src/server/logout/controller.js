@@ -2,7 +2,6 @@ import { getRedirectUrl } from '#server/auth/helpers/get-redirect-url.js'
 import { paths } from '#server/paths.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
-import { metrics } from '#server/common/helpers/metrics/index.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -31,7 +30,7 @@ const logoutController = {
     await removeUserSession(request)
 
     auditSignOut(session.profile.id, session.profile.email)
-    await metrics.signOutSuccess()
+    await request.metrics.counter('signOutSuccess')
 
     const logoutUrl = new URL(session.urls.logout)
     logoutUrl.searchParams.append('id_token_hint', session.idToken)
