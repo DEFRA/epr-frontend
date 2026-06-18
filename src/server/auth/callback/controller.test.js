@@ -7,12 +7,19 @@ import {
 import Boom from '@hapi/boom'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock(import('node:crypto'), () => ({
-  randomUUID: vi.fn(() => 'mock-uuid-1234'),
-  createHash: vi.fn(() => ({
-    update: vi.fn((input) => ({ digest: vi.fn(() => `${input}-hashed`) }))
-  }))
-}))
+vi.mock(
+  import('node:crypto'),
+  () =>
+    // partial mock cast to the module type; only the members used here are stubbed
+    /** @type {typeof import('node:crypto')} */ (
+      /** @type {unknown} */ ({
+        randomUUID: vi.fn(() => 'mock-uuid-1234'),
+        createHash: vi.fn(() => ({
+          update: vi.fn((input) => ({ digest: vi.fn(() => `${input}-hashed`) }))
+        }))
+      })
+    )
+)
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
 vi.mock(import('#server/auth/helpers/add-user-to-organisation.js'))
