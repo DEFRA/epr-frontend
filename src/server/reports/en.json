@@ -1,10 +1,10 @@
 {
   "accreditationLabel": "Accreditation",
   "actionContinue": "Continue",
+  "actionCreateDraft": "Create draft",
   "actionRequiredEmpty": "You do not currently have any reports that require an action.",
   "actionRequiredHeading": "Action required",
   "actionReviewAndSubmit": "Review and submit",
-  "actionSelect": "Select",
   "actionView": "View",
   "activityColumn": "Activity",
   "addressColumn": "Address",

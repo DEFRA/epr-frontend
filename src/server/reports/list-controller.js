@@ -101,7 +101,7 @@ const buildActionCell = ({
 }) => {
   const { actionPath, actionLabel } =
     status === null
-      ? { actionPath: '', actionLabel: localise('reports:actionSelect') }
+      ? { actionPath: '', actionLabel: localise('reports:actionCreateDraft') }
       : {
           actionPath: getActionPath(
             status,
