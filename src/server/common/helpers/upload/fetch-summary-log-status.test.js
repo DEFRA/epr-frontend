@@ -1,7 +1,8 @@
 import { config } from '#config/config.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
-import { afterAll, beforeAll, describe, expect } from 'vitest'
+import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { fetchSummaryLogStatus } from './fetch-summary-log-status.js'
 
 describe(fetchSummaryLogStatus, () => {
@@ -160,6 +161,37 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     expect(result).not.toHaveProperty('unknownField')
+  })
+
+  it('should log a warning and still return the value when the response fails schema validation', async ({
+    msw
+  }) => {
+    const warnSpy = vi
+      .spyOn(createLogger(), 'warn')
+      .mockImplementation(() => {})
+
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        () =>
+          HttpResponse.json({
+            status: 'validated',
+            loadsByReportingPeriod: { openPeriodLoads: 'not-an-object' }
+          })
+      )
+    )
+
+    const result = await fetchSummaryLogStatus(
+      organisationId,
+      registrationId,
+      summaryLogId,
+      { idToken: 'test-id-token' }
+    )
+
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    expect(result.status).toBe('validated')
+
+    warnSpy.mockRestore()
   })
 
   it('should throw a Boom notFound error when the backend returns 404', async ({

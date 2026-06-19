@@ -120,6 +120,11 @@ const splitBalanceAffecting = (bucket, ctx) => {
   const withoutData = rows.filter((row) => row.exclusionReasons.length > 0)
   const withDataDelta = withData.reduce((sum, row) => sum + row.tonnageDelta, 0)
 
+  // The withData heading direction is computed from its own delta. The
+  // withoutData heading hardcodes "reduced" in copy, which holds because a
+  // missing-data row only reaches a balance-affecting bucket by reversing its
+  // earlier contribution: the backend zeroes an excluded row's amount, so the
+  // adjusted leg is -oldAmount (negative). See period-status.js in epr-backend.
   return {
     count: bucket.count,
     withData: {

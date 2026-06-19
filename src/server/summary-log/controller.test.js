@@ -4063,6 +4063,11 @@ describe('enhanced summary log check view', () => {
     })
   })
 
+  // The with-data row is positive (+6) and the missing-data row negative (-1),
+  // mirroring the backend invariant that a missing-data row only reaches a
+  // balance-affecting bucket by reversing its earlier contribution. So the
+  // with-data heading reads "added" (its own delta) and the missing-data
+  // heading reads "reduced" (hardcoded copy that the invariant guarantees).
   it('splits adjusted balance-affecting loads into data sub-groups with direction and no per-row reason', async ({
     server
   }) => {

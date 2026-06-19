@@ -28,7 +28,7 @@
    the row-id-list convention. #}
 {% macro loadsAccordion(count, rows, tooManyMessage) %}
   {% if count > 99 %}
-  <p class="govuk-body">{{ tooManyMessage | safe }}</p>
+  <p class="govuk-body">{{ tooManyMessage }}</p>
   {% else %}
   <details class="govuk-details">
     <summary class="govuk-details__summary">
@@ -46,7 +46,7 @@
    missing-data sub-group (which always reduces the balance). #}
 {% macro adjustedBalanceAccordion(balanceAffecting, tooManyMessage) %}
   {% if balanceAffecting.count > 99 %}
-  <p class="govuk-body">{{ tooManyMessage | safe }}</p>
+  <p class="govuk-body">{{ tooManyMessage }}</p>
   {% else %}
   <details class="govuk-details">
     <summary class="govuk-details__summary">

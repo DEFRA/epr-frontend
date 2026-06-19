@@ -190,15 +190,18 @@
  * Balance-affecting bucket within a reporting-period change type. Carries the
  * tonnage that moves the waste balance; tonnageDelta can be negative
  * (adjustments reducing tonnage). The backend always sends a (capped) rows
- * array, but the frontend does not validate the response, so rows is treated
- * as optional and defended against at the consumption boundary.
+ * array; the frontend schema keeps rows optional so response validation never
+ * strips the row identity the check page renders, and the consumption boundary
+ * defends against its absence (rows ?? []).
  * @typedef {{ count: number, tonnageDelta: number, rows?: LoadRow[] }} BalanceAffectingBucket
  */
 
 /**
  * View model for a balance-affecting bucket. The adjusted accordion splits its
  * rows into loads with all required data (the heading reflects the group's
- * direction) and loads still missing data (which always reduce the balance).
+ * direction) and loads still missing data. The missing-data heading hardcodes
+ * "reduced": such a row only becomes balance-affecting by reversing its earlier
+ * contribution, so its delta is always negative (see splitBalanceAffecting).
  * @typedef {{
  *   count: number,
  *   withData: { addsToBalance: boolean, rows: LoadRowViewModel[] },
