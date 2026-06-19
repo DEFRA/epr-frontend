@@ -3421,8 +3421,8 @@ describe('enhanced summary log check view', () => {
 
   /** @type {PeriodStatusByChange} */
   const ZERO_CHANGE = {
-    balanceAffecting: { count: 0, tonnageDelta: 0 },
-    nonBalanceAffecting: { count: 0 }
+    balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+    nonBalanceAffecting: { count: 0, rows: [] }
   }
 
   const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
@@ -3517,9 +3517,6 @@ describe('enhanced summary log check view', () => {
       openNewLoadsNotAddedHeading: hasHeading(
         '2 new loads will be recorded (but NOT added to your waste balance)'
       ),
-      loadsMissingData: hasText(
-        'These loads are missing required summary log data. They will not be included in your waste balance until you add the missing data.'
-      ),
       openAdjustedLoadsHeading: hasHeading('Open periods: adjusted loads'),
       openAdjustedLoadsCaption: hasText(
         'These adjusted loads will add 6.00 tonnes to your waste balance.'
@@ -3552,7 +3549,6 @@ describe('enhanced summary log check view', () => {
       openNewLoadsAddedHeading: true,
       loadsIncludeData: true,
       openNewLoadsNotAddedHeading: true,
-      loadsMissingData: true,
       openAdjustedLoadsHeading: true,
       openAdjustedLoadsCaption: true,
       openAdjustedReflectedHeading: true,
@@ -4007,6 +4003,369 @@ describe('enhanced summary log check view', () => {
         'If you upload this summary log to create a new report'
       )
     )
+  })
+
+  it('lists new non-balance-affecting loads in an accordion with worksheet, row ID and reason', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 2,
+              rows: [
+                {
+                  rowId: '5',
+                  wasteRecordType: 'exported',
+                  exclusionReasons: ['MISSING_REQUIRED_FIELD'],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '8',
+                  wasteRecordType: 'sentOn',
+                  exclusionReasons: ['PRODUCT_WEIGHT_NOT_ADDED'],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      disclosure: hasText('Show 2 loads'),
+      exportedRow: hasText(
+        'Exported (sections 1, 2 and 3), Row ID: 5, Required summary log data is missing'
+      ),
+      sentOnRow: hasText(
+        'Sent on (sections 4 and 5), Row ID: 8, Product weight is missing'
+      )
+    }).toStrictEqual({
+      disclosure: true,
+      exportedRow: true,
+      sentOnRow: true
+    })
+  })
+
+  it('splits adjusted balance-affecting loads into data sub-groups with direction and no per-row reason', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: {
+              count: 2,
+              tonnageDelta: 5,
+              rows: [
+                {
+                  rowId: '1',
+                  wasteRecordType: 'exported',
+                  exclusionReasons: [],
+                  tonnageDelta: 6
+                },
+                {
+                  rowId: '2',
+                  wasteRecordType: 'sentOn',
+                  exclusionReasons: ['MISSING_REQUIRED_FIELD'],
+                  tonnageDelta: -1
+                }
+              ]
+            },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      disclosure: hasText('Show 2 loads'),
+      withDataHeading: hasText(
+        'This load has all the required summary log data and has added to your waste balance'
+      ),
+      withDataRow: hasText('Exported (sections 1, 2 and 3), Row ID: 1'),
+      withoutDataHeading: hasText(
+        'This load does NOT have all the required summary log data and has reduced your waste balance'
+      ),
+      // The reason is suppressed for adjusted rows: an exact-text match would
+      // miss if "Required summary log data is missing" were appended.
+      withoutDataRow: hasText('Sent on (sections 4 and 5), Row ID: 2')
+    }).toStrictEqual({
+      disclosure: true,
+      withDataHeading: true,
+      withDataRow: true,
+      withoutDataHeading: true,
+      withoutDataRow: true
+    })
+  })
+
+  it('lists adjusted not-relevant loads in an accordion with worksheet and row ID only', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 1,
+              rows: [
+                {
+                  rowId: '9',
+                  wasteRecordType: 'exported',
+                  exclusionReasons: [],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      heading: hasText('1 adjustment is not relevant to your waste balance'),
+      disclosure: hasText('Show 1 load'),
+      row: hasText('Exported (sections 1, 2 and 3), Row ID: 9')
+    }).toStrictEqual({
+      heading: true,
+      disclosure: true,
+      row: true
+    })
+  })
+
+  it('lists registered-only loads in an accordion with worksheet and row ID only', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 2,
+              rows: [
+                {
+                  rowId: '3',
+                  wasteRecordType: 'received',
+                  exclusionReasons: [],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '7',
+                  wasteRecordType: 'exported',
+                  exclusionReasons: [],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      heading: hasText('2 new loads will be recorded'),
+      disclosure: hasText('Show 2 loads'),
+      receivedRow: hasText('Received (section 1), Row ID: 3'),
+      exportedRow: hasText('Exported (sections 2 and 3), Row ID: 7')
+    }).toStrictEqual({
+      heading: true,
+      disclosure: true,
+      receivedRow: true,
+      exportedRow: true
+    })
+  })
+
+  it('suppresses the new-loads accordion and shows the too-many message over the cap', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: { count: 100, rows: [] }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect({
+      disclosure: Boolean(queryByText(main, 'Show 100 loads')),
+      tooMany: Boolean(
+        queryByText(
+          main,
+          'As there are 100 or more loads, we are not able to list them all here.'
+        )
+      )
+    }).toStrictEqual({ disclosure: false, tooMany: true })
+  })
+
+  it('suppresses the adjusted balance-affecting accordion over the cap', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: { count: 100, tonnageDelta: 50, rows: [] },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    expect({
+      disclosure: Boolean(queryByText(main, 'Show 100 loads')),
+      tooMany: Boolean(
+        queryByText(
+          main,
+          'As there are 100 or more adjusted loads, we are not able to list them all here.'
+        )
+      )
+    }).toStrictEqual({ disclosure: false, tooMany: true })
+  })
+
+  it('renders PRN_ISSUED as PRN for reprocessors and PERN for exporters', async ({
+    server
+  }) => {
+    const prnIssuedRow = (wasteRecordType) => ({
+      status: summaryLogStatuses.validated,
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 1,
+              rows: [
+                {
+                  rowId: '4',
+                  wasteRecordType,
+                  exclusionReasons: ['PRN_ISSUED'],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      ...prnIssuedRow('received'),
+      processingType: 'REPROCESSOR_INPUT'
+    })
+    const reprocessor = await renderMain(server)
+
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      ...prnIssuedRow('exported'),
+      processingType: 'EXPORTER'
+    })
+    const exporter = await renderMain(server)
+
+    expect({
+      reprocessor: Boolean(
+        queryByText(
+          reprocessor.main,
+          'Received (sections 1, 2 and 3), Row ID: 4, A PRN was already issued for this load'
+        )
+      ),
+      exporter: Boolean(
+        queryByText(
+          exporter.main,
+          'Exported (sections 1, 2 and 3), Row ID: 4, A PERN was already issued for this load'
+        )
+      )
+    }).toStrictEqual({ reprocessor: true, exporter: true })
+  })
+
+  it('renders an unmapped exclusion code as a row with no reason', async ({
+    server
+  }) => {
+    // OUTSIDE_ACCREDITATION_PERIOD is filtered out upstream and should never
+    // reach the frontend; if any unmapped code does, the row degrades to
+    // worksheet and row id alone rather than rendering a raw code.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 1,
+              rows: [
+                {
+                  rowId: '6',
+                  wasteRecordType: 'exported',
+                  exclusionReasons: ['OUTSIDE_ACCREDITATION_PERIOD'],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    // Exact-text match: an appended reason would change the bullet and miss.
+    expect(
+      queryByText(main, 'Exported (sections 1, 2 and 3), Row ID: 6')
+    ).not.toBeNull()
   })
 
   it('renders the legacy check page when the flag is off', async ({
