@@ -55,14 +55,14 @@
     <div class="govuk-details__text">
       {% if balanceAffecting.withData.rows.length > 0 %}
         {% if balanceAffecting.withData.addsToBalance %}
-        <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedWithDataAdded', { count: balanceAffecting.withData.rows.length }) }}</p>
+        <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithDataAdded', { count: balanceAffecting.withData.rows.length }) }}</p>
         {% else %}
-        <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedWithDataReduced', { count: balanceAffecting.withData.rows.length }) }}</p>
+        <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithDataReduced', { count: balanceAffecting.withData.rows.length }) }}</p>
         {% endif %}
         {{ loadRows(balanceAffecting.withData.rows) }}
       {% endif %}
       {% if balanceAffecting.withoutData.rows.length > 0 %}
-      <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedWithoutData', { count: balanceAffecting.withoutData.rows.length }) }}</p>
+      <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithoutData', { count: balanceAffecting.withoutData.rows.length }) }}</p>
       {{ loadRows(balanceAffecting.withoutData.rows) }}
       {% endif %}
     </div>
