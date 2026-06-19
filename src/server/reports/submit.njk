@@ -1,6 +1,8 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
@@ -17,6 +19,13 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
+
+      {% if errorSummary %}
+        {{ govukErrorSummary({
+          titleText: errorSummary.titleText,
+          errorList: errorSummary.errorList
+        }) }}
+      {% endif %}
 
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
@@ -222,6 +231,21 @@
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         <input type="hidden" name="version" value="{{ version }}" />
+
+        {{ govukInput({
+          label: {
+            text: localise("reports:submitDeclarationFullNameLabel"),
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: localise("reports:submitDeclarationFullNameHint")
+          },
+          id: "submissionDeclaredBy",
+          name: "submissionDeclaredBy",
+          value: submissionDeclaredBy if submissionDeclaredBy else "",
+          autocomplete: "name",
+          errorMessage: errors.submissionDeclaredBy if errors else null
+        }) }}
 
         <div class="govuk-button-group">
           {{ govukButton({
