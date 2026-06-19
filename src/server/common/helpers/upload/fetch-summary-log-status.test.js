@@ -85,6 +85,57 @@ describe(fetchSummaryLogStatus, () => {
     expect(result.loadsByWasteRecordType).toStrictEqual(loadsByWasteRecordType)
   })
 
+  it('should preserve loadsByReportingPeriod row detail in the response', async ({
+    msw
+  }) => {
+    const emptyGroup = () => ({
+      balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+      nonBalanceAffecting: { count: 0, rows: [] }
+    })
+    const rows = [
+      {
+        rowId: '1000',
+        wasteRecordType: 'received',
+        exclusionReasons: ['MISSING_REQUIRED_FIELD'],
+        tonnageDelta: 0
+      }
+    ]
+    const loadsByReportingPeriod = {
+      openPeriodLoads: {
+        added: {
+          balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+          nonBalanceAffecting: { count: 1, rows }
+        },
+        adjusted: emptyGroup()
+      },
+      closedPeriodLoads: { added: emptyGroup(), adjusted: emptyGroup() }
+    }
+
+    msw.use(
+      http.get(
+        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
+        () =>
+          HttpResponse.json({
+            status: 'validated',
+            processingType: 'REPROCESSOR_INPUT',
+            loadsByReportingPeriod
+          })
+      )
+    )
+
+    const result = await fetchSummaryLogStatus(
+      organisationId,
+      registrationId,
+      summaryLogId,
+      { idToken: 'test-id-token' }
+    )
+
+    expect(
+      result.loadsByReportingPeriod.openPeriodLoads.added.nonBalanceAffecting
+        .rows
+    ).toStrictEqual(rows)
+  })
+
   it('should strip unknown fields from the response', async ({ msw }) => {
     msw.use(
       http.get(
