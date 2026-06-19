@@ -1,5 +1,10 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
-import { isRegisteredOnlyProcessingType } from '#domain/summary-logs/meta-fields.js'
+import { CLASSIFICATION_REASON } from '#domain/summary-logs/classification-reason.js'
+import { MAX_ROWS_PER_BUCKET } from '#domain/summary-logs/loads-schema.js'
+import {
+  isExporterType,
+  isRegisteredOnlyProcessingType
+} from '#domain/summary-logs/meta-fields.js'
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
@@ -20,21 +25,15 @@ const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
 
 const ZERO_TONNAGE = formatTonnage(0)
 
-/** Exclusion codes that resolve to a fixed reason string (PRN_ISSUED varies). */
-const FIXED_REASON_CODES = new Set([
-  'MISSING_REQUIRED_FIELD',
-  'PRODUCT_WEIGHT_NOT_ADDED',
-  'ORS_NOT_APPROVED'
-])
-
 /**
- * Exporters issue PERNs, reprocessors PRNs, so the same PRN_ISSUED code renders
- * differently by processing type.
- * @param {ProcessingType} processingType
- * @returns {boolean}
+ * Exclusion codes that resolve to a fixed reason string (PRN_ISSUED varies).
+ * @type {ReadonlySet<string>}
  */
-const isExporterType = (processingType) =>
-  processingType === 'EXPORTER' || processingType === 'EXPORTER_REGISTERED_ONLY'
+const FIXED_REASON_CODES = new Set([
+  CLASSIFICATION_REASON.MISSING_REQUIRED_FIELD,
+  CLASSIFICATION_REASON.PRODUCT_WEIGHT_NOT_ADDED,
+  CLASSIFICATION_REASON.ORS_NOT_APPROVED
+])
 
 /**
  * Locale key under enhanced.reason for one exclusion code, or null when the
@@ -45,7 +44,7 @@ const isExporterType = (processingType) =>
  * @returns {string | null}
  */
 const reasonKey = (code, processingType) => {
-  if (code === 'PRN_ISSUED') {
+  if (code === CLASSIFICATION_REASON.PRN_ISSUED) {
     return isExporterType(processingType) ? 'PERN_ISSUED' : 'PRN_ISSUED'
   }
   return FIXED_REASON_CODES.has(code) ? code : null
@@ -144,7 +143,7 @@ const splitBalanceAffecting = (bucket, ctx) => {
  * other bucket lists worksheet and row id alone.
  * @param {PeriodStatusByChange} change
  * @param {{ processingType: ProcessingType, localise: Localise }} ctx
- * @param {'added' | 'adjusted'} changeKind
+ * @param {keyof PeriodStatus} changeKind
  * @returns {ChangeViewModel | null}
  */
 const buildChangeViewModel = (change, ctx, changeKind) => {
@@ -283,6 +282,7 @@ export const renderEnhancedCheckView = (
     registrationId,
     summaryLogId,
     isAccredited,
+    maxRowsPerBucket: MAX_ROWS_PER_BUCKET,
     periodSections: { open, closed },
     isEmpty: open === null && closed === null,
     wasteBalanceProjection: buildWasteBalanceProjection(

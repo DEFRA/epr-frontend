@@ -1,0 +1,10 @@
+// copied from matching file in epr-backend - keep in sync (as much as we need)
+
+/** Exclusion reason codes a load can carry, as produced by the backend. */
+export const CLASSIFICATION_REASON = Object.freeze({
+  MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
+  PRN_ISSUED: 'PRN_ISSUED',
+  OUTSIDE_ACCREDITATION_PERIOD: 'OUTSIDE_ACCREDITATION_PERIOD',
+  PRODUCT_WEIGHT_NOT_ADDED: 'PRODUCT_WEIGHT_NOT_ADDED',
+  ORS_NOT_APPROVED: 'ORS_NOT_APPROVED'
+})

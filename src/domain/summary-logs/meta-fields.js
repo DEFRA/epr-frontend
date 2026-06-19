@@ -15,10 +15,18 @@ export const PROCESSING_TYPES = Object.freeze({
 
 /** @typedef {'EXPORTER_REGISTERED_ONLY' | 'REPROCESSOR_REGISTERED_ONLY'} RegisteredOnlyProcessingType */
 
+/** @typedef {'EXPORTER' | 'EXPORTER_REGISTERED_ONLY'} ExporterProcessingType */
+
 /** @type {ReadonlySet<string>} */
 const REGISTERED_ONLY_PROCESSING_TYPES = new Set([
   PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY,
   PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY
+])
+
+/** @type {ReadonlySet<string>} */
+const EXPORTER_PROCESSING_TYPES = new Set([
+  PROCESSING_TYPES.EXPORTER,
+  PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY
 ])
 
 /**
@@ -29,3 +37,12 @@ const REGISTERED_ONLY_PROCESSING_TYPES = new Set([
  */
 export const isRegisteredOnlyProcessingType = (processingType) =>
   REGISTERED_ONLY_PROCESSING_TYPES.has(processingType)
+
+/**
+ * Whether a processing type is an exporter variant. Exporters issue PERNs where
+ * reprocessors issue PRNs, so some labelling differs by this.
+ * @param {ProcessingType} processingType
+ * @returns {processingType is ExporterProcessingType}
+ */
+export const isExporterType = (processingType) =>
+  EXPORTER_PROCESSING_TYPES.has(processingType)
