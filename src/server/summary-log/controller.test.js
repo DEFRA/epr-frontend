@@ -33,7 +33,8 @@ import {
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { PeriodStatusByChange, RawLoadsByWasteRecordType } from './types.js'
+ * @import { WasteRecordType } from '#domain/waste-records/model.js'
+ * @import { LoadRow, PeriodStatusByChange, RawLoadsByWasteRecordType, SummaryLogStatusResponse } from './types.js'
  */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -4367,6 +4368,291 @@ describe('enhanced summary log check view', () => {
       queryByText(main, 'Exported (sections 1, 2 and 3), Row ID: 6')
     ).not.toBeNull()
   })
+
+  // The single source of truth for where an exclusion reason surfaces: only on
+  // NEW loads that will NOT add to the balance. The other three bucket
+  // positions list worksheet and Row ID alone (added.balanceAffecting is
+  // count-only with no accordion; both adjusted buckets list rows without a
+  // reason). The richer per-position tests above prove the surrounding
+  // behaviour (the data sub-group split, the direction wording, the headings);
+  // this table states the reason-visibility rule on its own.
+  const REASON_CODE = 'MISSING_REQUIRED_FIELD'
+  const REASON_TEXT = 'Required summary log data is missing'
+
+  /**
+   * A validated response with one excluded row placed at a single bucket
+   * position, so the assertion isolates whether that position renders the
+   * reason. Balance-affecting buckets carry a non-zero tonnageDelta so the row
+   * genuinely moves the balance.
+   * @param {'added' | 'adjusted'} change
+   * @param {'balanceAffecting' | 'nonBalanceAffecting'} bucket
+   * @returns {SummaryLogStatusResponse}
+   */
+  const responseWithReasonAt = (change, bucket) => {
+    const movesBalance = bucket === 'balanceAffecting'
+    /** @type {LoadRow} */
+    const row = {
+      rowId: '5',
+      wasteRecordType: 'exported',
+      exclusionReasons: [REASON_CODE],
+      tonnageDelta: movesBalance ? -1 : 0
+    }
+    /** @type {PeriodStatusByChange} */
+    const group =
+      bucket === 'balanceAffecting'
+        ? {
+            balanceAffecting: { count: 1, tonnageDelta: -1, rows: [row] },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        : {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: { count: 1, rows: [row] }
+          }
+    const openPeriodLoads =
+      change === 'added'
+        ? { added: group, adjusted: ZERO_CHANGE }
+        : { added: ZERO_CHANGE, adjusted: group }
+    return {
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads,
+        closedPeriodLoads: emptyPeriod()
+      }
+    }
+  }
+
+  /**
+   * @type {Array<{
+   *   change: 'added' | 'adjusted',
+   *   bucket: 'balanceAffecting' | 'nonBalanceAffecting',
+   *   showsReason: boolean
+   * }>}
+   */
+  const reasonVisibilityCases = [
+    { change: 'added', bucket: 'nonBalanceAffecting', showsReason: true },
+    { change: 'added', bucket: 'balanceAffecting', showsReason: false },
+    { change: 'adjusted', bucket: 'balanceAffecting', showsReason: false },
+    { change: 'adjusted', bucket: 'nonBalanceAffecting', showsReason: false }
+  ]
+
+  it.for(reasonVisibilityCases)(
+    'shows the exclusion reason only on new non-balance-affecting loads ($change / $bucket)',
+    async ({ change, bucket, showsReason }, { server }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        responseWithReasonAt(change, bucket)
+      )
+
+      const { main } = await renderMain(server)
+
+      expect(Boolean(queryByText(main, new RegExp(REASON_TEXT)))).toBe(
+        showsReason
+      )
+    }
+  )
+
+  /**
+   * A validated response with a single new, non-balance-affecting row of the
+   * given waste record type. This is the one accordion that lists rows for
+   * every processing type (registered-only sources its accordion from the same
+   * bucket), so it isolates the worksheet-name and reason lookups.
+   * @param {ProcessingType} processingType
+   * @param {WasteRecordType} wasteRecordType
+   * @param {string[]} exclusionReasons
+   * @returns {SummaryLogStatusResponse}
+   */
+  const responseWithNewNonBalanceRow = (
+    processingType,
+    wasteRecordType,
+    exclusionReasons
+  ) => ({
+    status: summaryLogStatuses.validated,
+    processingType,
+    loadsByReportingPeriod: {
+      openPeriodLoads: {
+        added: {
+          balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+          nonBalanceAffecting: {
+            count: 1,
+            rows: [
+              { rowId: '5', wasteRecordType, exclusionReasons, tonnageDelta: 0 }
+            ]
+          }
+        },
+        adjusted: ZERO_CHANGE
+      },
+      closedPeriodLoads: emptyPeriod()
+    }
+  })
+
+  // The single source of truth for the worksheet (tab) name shown in each load
+  // row, keyed by processing type and waste record type. The name is the
+  // operator's actual spreadsheet tab, so a wrong string would point them at
+  // the wrong place in their own file. Every combination the backend can emit
+  // is listed here; a typo in any locale entry fails its row.
+  /**
+   * @type {Array<{
+   *   processingType: ProcessingType,
+   *   wasteRecordType: WasteRecordType,
+   *   worksheetName: string
+   * }>}
+   */
+  const worksheetNameCases = [
+    {
+      processingType: 'REPROCESSOR_INPUT',
+      wasteRecordType: 'received',
+      worksheetName: 'Received (sections 1, 2 and 3)'
+    },
+    {
+      processingType: 'REPROCESSOR_INPUT',
+      wasteRecordType: 'processed',
+      worksheetName: 'Reprocessed (section 4)'
+    },
+    {
+      processingType: 'REPROCESSOR_INPUT',
+      wasteRecordType: 'sentOn',
+      worksheetName: 'Sent on (sections 5, 6 and 7)'
+    },
+    {
+      processingType: 'REPROCESSOR_OUTPUT',
+      wasteRecordType: 'received',
+      worksheetName: 'Received (sections 1 and 2)'
+    },
+    {
+      processingType: 'REPROCESSOR_OUTPUT',
+      wasteRecordType: 'processed',
+      worksheetName: 'Reprocessed (sections 3 and 4)'
+    },
+    {
+      processingType: 'REPROCESSOR_OUTPUT',
+      wasteRecordType: 'sentOn',
+      worksheetName: 'Sent on (sections 5 and 6)'
+    },
+    {
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      worksheetName: 'Exported (sections 1, 2 and 3)'
+    },
+    {
+      processingType: 'EXPORTER',
+      wasteRecordType: 'sentOn',
+      worksheetName: 'Sent on (sections 4 and 5)'
+    },
+    {
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      wasteRecordType: 'received',
+      worksheetName: 'Received (section 1)'
+    },
+    {
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      wasteRecordType: 'sentOn',
+      worksheetName: 'Sent on (section 2)'
+    },
+    {
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      wasteRecordType: 'received',
+      worksheetName: 'Received (section 1)'
+    },
+    {
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      wasteRecordType: 'exported',
+      worksheetName: 'Exported (sections 2 and 3)'
+    },
+    {
+      processingType: 'EXPORTER_REGISTERED_ONLY',
+      wasteRecordType: 'sentOn',
+      worksheetName: 'Sent on (section 4)'
+    }
+  ]
+
+  it.for(worksheetNameCases)(
+    'renders the worksheet name for $processingType / $wasteRecordType',
+    async ({ processingType, wasteRecordType, worksheetName }, { server }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        responseWithNewNonBalanceRow(processingType, wasteRecordType, [])
+      )
+
+      const { main } = await renderMain(server)
+
+      // Exact-match the whole bullet: a wrong worksheet name, or an unexpected
+      // appended reason, changes the text and fails.
+      expect(queryByText(main, `${worksheetName}, Row ID: 5`)).not.toBeNull()
+    }
+  )
+
+  // The single source of truth for the exclusion-reason display strings. Every
+  // CLASSIFICATION_REASON code the frontend can receive maps to one string;
+  // PRN_ISSUED renders as PRN for reprocessors and PERN for exporters, and any
+  // unmapped code degrades to no reason rather than a raw code. Reasons surface
+  // only on new non-balance-affecting rows (see the visibility table above), so
+  // that is where this asserts them.
+  /**
+   * @type {Array<{
+   *   code: string,
+   *   processingType: ProcessingType,
+   *   wasteRecordType: WasteRecordType,
+   *   expectedBullet: string
+   * }>}
+   */
+  const reasonTextCases = [
+    {
+      code: 'MISSING_REQUIRED_FIELD',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Exported (sections 1, 2 and 3), Row ID: 5, Required summary log data is missing'
+    },
+    {
+      code: 'PRODUCT_WEIGHT_NOT_ADDED',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Exported (sections 1, 2 and 3), Row ID: 5, Product weight is missing'
+    },
+    {
+      code: 'ORS_NOT_APPROVED',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Exported (sections 1, 2 and 3), Row ID: 5, The ORS was not approved at the date of export'
+    },
+    {
+      code: 'PRN_ISSUED',
+      processingType: 'REPROCESSOR_INPUT',
+      wasteRecordType: 'received',
+      expectedBullet:
+        'Received (sections 1, 2 and 3), Row ID: 5, A PRN was already issued for this load'
+    },
+    {
+      code: 'PRN_ISSUED',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Exported (sections 1, 2 and 3), Row ID: 5, A PERN was already issued for this load'
+    },
+    {
+      code: 'OUTSIDE_ACCREDITATION_PERIOD',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet: 'Exported (sections 1, 2 and 3), Row ID: 5'
+    }
+  ]
+
+  it.for(reasonTextCases)(
+    'renders the $code reason for a $processingType row',
+    async (
+      { code, processingType, wasteRecordType, expectedBullet },
+      { server }
+    ) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce(
+        responseWithNewNonBalanceRow(processingType, wasteRecordType, [code])
+      )
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, expectedBullet)).not.toBeNull()
+    }
+  )
 
   it('renders the legacy check page when the flag is off', async ({
     server
