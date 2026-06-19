@@ -26,6 +26,7 @@ describe(fetchSummaryLogStatus, () => {
       validation: null
     }
 
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.get(
@@ -44,8 +45,11 @@ describe(fetchSummaryLogStatus, () => {
       { idToken: 'test-id-token' }
     )
 
-    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
-    expect(capturedRequest.headers.get('authorization')).toBe(
+    expect(capturedRequest).toBeDefined()
+    expect(capturedRequest?.headers.get('content-type')).toBe(
+      'application/json'
+    )
+    expect(capturedRequest?.headers.get('authorization')).toBe(
       'Bearer test-id-token'
     )
     expect(result).toStrictEqual(mockResponse)
@@ -131,7 +135,7 @@ describe(fetchSummaryLogStatus, () => {
     )
 
     expect(
-      result.loadsByReportingPeriod.openPeriodLoads.added.nonBalanceAffecting
+      result.loadsByReportingPeriod?.openPeriodLoads.added.nonBalanceAffecting
         .rows
     ).toStrictEqual(rows)
   })
