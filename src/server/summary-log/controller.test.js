@@ -4336,12 +4336,13 @@ describe('enhanced summary log check view', () => {
     }).toStrictEqual({ reprocessor: true, exporter: true })
   })
 
-  it('renders an unmapped exclusion code as a row with no reason', async ({
+  it('renders an unmapped exclusion code verbatim as the reason', async ({
     server
   }) => {
     // OUTSIDE_ACCREDITATION_PERIOD is filtered out upstream and should never
-    // reach the frontend; if any unmapped code does, the row degrades to
-    // worksheet and row id alone rather than rendering a raw code.
+    // reach the frontend; if any unmapped code does, the raw backend const is
+    // shown as the reason rather than dropped, so nothing the operator should
+    // see is hidden.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER',
@@ -4369,9 +4370,12 @@ describe('enhanced summary log check view', () => {
 
     const { main } = await renderMain(server)
 
-    // Exact-text match: an appended reason would change the bullet and miss.
+    // Exact-text match: the raw const is appended after the row id full stop.
     expect(
-      queryByText(main, 'Exported (sections 1, 2 and 3), Row ID: 6')
+      queryByText(
+        main,
+        'Exported (sections 1, 2 and 3), Row ID: 6. OUTSIDE_ACCREDITATION_PERIOD'
+      )
     ).not.toBeNull()
   })
 
@@ -4640,7 +4644,8 @@ describe('enhanced summary log check view', () => {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet: 'Exported (sections 1, 2 and 3), Row ID: 5'
+      expectedBullet:
+        'Exported (sections 1, 2 and 3), Row ID: 5. OUTSIDE_ACCREDITATION_PERIOD'
     }
   ]
 

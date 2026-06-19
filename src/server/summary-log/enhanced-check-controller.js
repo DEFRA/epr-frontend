@@ -38,8 +38,8 @@ const isExporterType = (processingType) =>
 
 /**
  * Locale key under enhanced.reason for one exclusion code, or null when the
- * code carries no display string (so an unmapped code degrades to no reason
- * rather than a raw key).
+ * code has no mapping (the caller then falls back to the raw code rather than
+ * a translation).
  * @param {string} code
  * @param {ProcessingType} processingType
  * @returns {string | null}
@@ -53,17 +53,19 @@ const reasonKey = (code, processingType) => {
 
 /**
  * Joins the load's distinct exclusion reasons into one display string, or null
- * when it carries none (an included load).
+ * when it carries none (an included load). A code we have no translation for
+ * falls back to the raw backend const rather than being dropped, so a new
+ * backend reason still surfaces something to the operator.
  * @param {string[]} exclusionReasons
  * @param {ProcessingType} processingType
  * @param {Localise} localise
  * @returns {string | null}
  */
 const resolveReasonText = (exclusionReasons, processingType, localise) => {
-  const texts = exclusionReasons
-    .map((code) => reasonKey(code, processingType))
-    .filter((key) => key !== null)
-    .map((key) => localise(`summary-log:enhanced.reason.${key}`))
+  const texts = exclusionReasons.map((code) => {
+    const key = reasonKey(code, processingType)
+    return key === null ? code : localise(`summary-log:enhanced.reason.${key}`)
+  })
   return texts.length > 0 ? texts.join(', ') : null
 }
 
