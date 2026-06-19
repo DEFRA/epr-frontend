@@ -3507,37 +3507,37 @@ describe('enhanced summary log check view', () => {
       statusCode,
       openNewLoadsHeading: hasHeading('Open periods: new loads'),
       openNewLoadsCaption: hasText(
-        'These new loads will add 10.00 tonnes to your waste balance.'
+        'The new loads will add 10.00 tonnes to your waste balance.'
       ),
       openNewLoadsAddedHeading: hasHeading(
-        '5 new loads will be recorded (and added to your waste balance)'
+        '5 new loads will be recorded (and will add to your waste balance)'
       ),
       loadsIncludeData: hasAnyText(
-        'These loads include all the required summary log data.'
+        'The loads include all the required summary log data.'
       ),
       openNewLoadsNotAddedHeading: hasHeading(
-        '2 new loads will be recorded (but NOT added to your waste balance)'
+        '2 new loads will be recorded (but will NOT add to your waste balance)'
       ),
       openAdjustedLoadsHeading: hasHeading('Open periods: adjusted loads'),
       openAdjustedLoadsCaption: hasText(
-        'These adjusted loads will add 6.00 tonnes to your waste balance.'
+        'The adjusted loads will add 6.00 tonnes to your waste balance.'
       ),
       openAdjustedReflectedHeading: hasHeading(
-        '3 adjusted loads will be recorded (and reflected in your waste balance)'
+        '3 adjusted loads will be recorded (and will reflect in your waste balance)'
       ),
       adjustedReflectedBody: hasAnyText(
-        "These could 'add to' or 'remove from' your waste balance, depending on the adjustment."
+        "These loads could 'add to' or 'remove from' your waste balance, depending on the adjustment."
       ),
       notRelevantHeadings: queryAllByRole(main, 'heading', {
-        name: '1 adjustment is not relevant to your waste balance'
+        name: '1 change is NOT relevant to your waste balance'
       }).length,
       closedNewLoadsHeading: hasHeading('Closed periods: new loads'),
       closedNewLoadsAddedHeading: hasHeading(
-        '4 new loads will be recorded (and added to your waste balance)'
+        '4 new loads will be recorded (and will add to your waste balance)'
       ),
       closedAdjustedLoadsHeading: hasHeading('Closed periods: adjusted loads'),
       closedAdjustedLoadsCaption: hasText(
-        'These adjusted loads will remove 4.00 tonnes from your waste balance.'
+        'The adjusted loads will remove 4.00 tonnes from your waste balance.'
       ),
       dataChangedInsets: queryAllByText(
         main,
@@ -3585,7 +3585,7 @@ describe('enhanced summary log check view', () => {
 
     expect(
       getByRole(main, 'heading', {
-        name: '3 new loads will be recorded (but NOT added to your waste balance)'
+        name: '3 new loads will be recorded (but will NOT add to your waste balance)'
       })
     ).toBeDefined()
     expect(queryByText(main, /will add .* tonnes/)).toBeNull()
@@ -4045,14 +4045,18 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
+      notAddedBody: hasText(
+        'These loads could be missing required summary log data that stops them from adding to your waste balance.'
+      ),
       disclosure: hasText('Show 2 loads'),
       exportedRow: hasText(
-        'Exported (sections 1, 2 and 3), Row ID: 5, Required summary log data is missing'
+        'Exported (sections 1, 2 and 3), Row ID: 5. Required summary log data is missing'
       ),
       sentOnRow: hasText(
-        'Sent on (sections 4 and 5), Row ID: 8, Product weight is missing'
+        'Sent on (sections 4 and 5), Row ID: 8. Product weight is missing'
       )
     }).toStrictEqual({
+      notAddedBody: true,
       disclosure: true,
       exportedRow: true,
       sentOnRow: true
@@ -4152,7 +4156,7 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
-      heading: hasText('1 adjustment is not relevant to your waste balance'),
+      heading: hasText('1 change is NOT relevant to your waste balance'),
       disclosure: hasText('Show 1 load'),
       row: hasText('Exported (sections 1, 2 and 3), Row ID: 9')
     }).toStrictEqual({
@@ -4202,11 +4206,13 @@ describe('enhanced summary log check view', () => {
 
     expect({
       heading: hasText('2 new loads will be recorded'),
+      body: hasText('These have been added to your summary log.'),
       disclosure: hasText('Show 2 loads'),
       receivedRow: hasText('Received (section 1), Row ID: 3'),
       exportedRow: hasText('Exported (sections 2 and 3), Row ID: 7')
     }).toStrictEqual({
       heading: true,
+      body: true,
       disclosure: true,
       receivedRow: true,
       exportedRow: true
@@ -4318,13 +4324,13 @@ describe('enhanced summary log check view', () => {
       reprocessor: Boolean(
         queryByText(
           reprocessor.main,
-          'Received (sections 1, 2 and 3), Row ID: 4, A PRN was already issued for this load'
+          'Received (sections 1, 2 and 3), Row ID: 4. A PRN was already issued for this load'
         )
       ),
       exporter: Boolean(
         queryByText(
           exporter.main,
-          'Exported (sections 1, 2 and 3), Row ID: 4, A PERN was already issued for this load'
+          'Exported (sections 1, 2 and 3), Row ID: 4. A PERN was already issued for this load'
         )
       )
     }).toStrictEqual({ reprocessor: true, exporter: true })
@@ -4600,35 +4606,35 @@ describe('enhanced summary log check view', () => {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5, Required summary log data is missing'
+        'Exported (sections 1, 2 and 3), Row ID: 5. Required summary log data is missing'
     },
     {
       code: 'PRODUCT_WEIGHT_NOT_ADDED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5, Product weight is missing'
+        'Exported (sections 1, 2 and 3), Row ID: 5. Product weight is missing'
     },
     {
       code: 'ORS_NOT_APPROVED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5, The ORS was not approved at the date of export'
+        'Exported (sections 1, 2 and 3), Row ID: 5. The ORS was not approved at the date of export'
     },
     {
       code: 'PRN_ISSUED',
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'received',
       expectedBullet:
-        'Received (sections 1, 2 and 3), Row ID: 5, A PRN was already issued for this load'
+        'Received (sections 1, 2 and 3), Row ID: 5. A PRN was already issued for this load'
     },
     {
       code: 'PRN_ISSUED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5, A PERN was already issued for this load'
+        'Exported (sections 1, 2 and 3), Row ID: 5. A PERN was already issued for this load'
     },
     {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
