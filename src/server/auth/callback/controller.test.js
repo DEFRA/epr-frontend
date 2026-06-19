@@ -24,10 +24,6 @@ vi.mock(
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
 vi.mock(import('#server/auth/helpers/add-user-to-organisation.js'))
 
-/**
- * @import { UserOrganisations } from '../types/organisations.js'
- */
-
 describe('#authCallbackController', () => {
   describe('when user is authenticated', () => {
     it('should create session and redirect to flash referrer', async () => {
@@ -47,6 +43,7 @@ describe('#authCallbackController', () => {
         linked: {
           id: 'defra-org-uuid',
           name: 'Test Defra Organisation',
+          orgId: 'epr-org-id',
           linkedBy: {
             email: 'user@example.com',
             id: 'user-123'
@@ -58,11 +55,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
@@ -147,6 +140,7 @@ describe('#authCallbackController', () => {
         linked: {
           id: 'defra-org-uuid',
           name: 'Test Organisation',
+          orgId: 'epr-org-id',
           linkedBy: { email: 'user@example.com', id: 'user-456' },
           linkedAt: '2025-12-10T09:00:00.000Z'
         },
@@ -155,11 +149,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
@@ -237,6 +227,7 @@ describe('#authCallbackController', () => {
           linked: {
             id: 'linked-org-uuid',
             name: 'Test Defra Organisation',
+            orgId: 'epr-org-id',
             linkedBy: {
               email: 'user@example.com',
               id: 'user-123'
@@ -248,11 +239,7 @@ describe('#authCallbackController', () => {
 
         vi.mocked(
           fetchUserOrganisationsModule.fetchUserOrganisations
-        ).mockResolvedValue(
-          /** @type {UserOrganisations} */ (
-            /** @type {unknown} */ (mockOrganisations)
-          )
-        )
+        ).mockResolvedValue(mockOrganisations)
 
         const mockRequest = {
           metrics: { counter: vi.fn() },
@@ -317,6 +304,7 @@ describe('#authCallbackController', () => {
         linked: {
           id: 'linked-org-uuid',
           name: 'Test Defra Organisation',
+          orgId: 'epr-org-id',
           linkedBy: {
             email: 'user@example.com',
             id: 'user-123'
@@ -328,11 +316,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
@@ -402,6 +386,7 @@ describe('#authCallbackController', () => {
         linked: {
           id: 'linked-org-id',
           name: 'Linked Organisation',
+          orgId: 'epr-org-id',
           linkedBy: {
             email: 'user@example.com',
             id: 'user-123'
@@ -424,11 +409,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
@@ -507,11 +488,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
@@ -735,6 +712,7 @@ describe('#authCallbackController', () => {
         linked: {
           id: 'defra-org-uuid',
           name: 'Defra Registered Company Ltd',
+          orgId: 'epr-org-id',
           linkedBy: {
             email: 'admin@example.com',
             id: 'admin-user-123'
@@ -752,11 +730,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
@@ -834,11 +808,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
@@ -905,11 +875,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(
-        /** @type {UserOrganisations} */ (
-          /** @type {unknown} */ (mockOrganisations)
-        )
-      )
+      ).mockResolvedValue(mockOrganisations)
 
       const mockRequest = {
         metrics: { counter: vi.fn() },
