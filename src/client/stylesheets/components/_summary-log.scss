@@ -28,12 +28,6 @@
   &__rows {
     margin-left: 0;
   }
-
-  // Tighten the default bullet indent (govuk-spacing(4)) so the row IDs sit
-  // closer under their section label.
-  .govuk-list--bullet {
-    padding-left: govuk-spacing(3);
-  }
 }
 
 // Leading gap before each period group (open, closed) on the enhanced check
