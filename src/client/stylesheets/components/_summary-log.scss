@@ -28,6 +28,25 @@
   &__rows {
     margin-left: 0;
   }
+
+  // Halve the default bullet indent (govuk-spacing(4)) so the row IDs sit closer
+  // under their section label.
+  .govuk-list--bullet {
+    padding-left: govuk-spacing(2);
+  }
+}
+
+// Leading gap before each period group (open, closed) on the enhanced check
+// page, separating the two groups. The GOV.UK spacing scale caps at point 9
+// (60px on tablet+), which the design wants exceeded, so the gap is composed
+// from scale units here rather than via a govuk-!-margin-top-* utility. Mobile
+// keeps the point-9 gap; tablet and up goes one step beyond.
+.epr-period-group {
+  margin-top: govuk-spacing(7);
+
+  @include govuk-media-query($from: tablet) {
+    margin-top: govuk-spacing(9) + govuk-spacing(6);
+  }
 }
 
 // The "value entered" cell can hold an arbitrary, unbroken operator string
