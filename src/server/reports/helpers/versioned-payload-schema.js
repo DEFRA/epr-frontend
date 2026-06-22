@@ -23,14 +23,17 @@ export const submitPayloadSchema = Joi.object({
   version: Joi.number().integer().min(1).required(),
   crumb: Joi.string(),
   submissionDeclaredBy: Joi.string()
-    .min(MIN_DECLARER_NAME_LENGTH)
-    .max(MAX_DECLARER_NAME_LENGTH)
     .custom((value, helpers) => {
+      if (value.trim().length === 0) {
+        return helpers.error('string.empty')
+      }
       if (INVALID_DECLARER_NAME_CHARS_PATTERN.test(value)) {
         return helpers.error('string.invalidChars')
       }
-      return value
+      return value.trim()
     })
+    .min(MIN_DECLARER_NAME_LENGTH)
+    .max(MAX_DECLARER_NAME_LENGTH)
     .required()
     .messages({
       'string.empty': 'reports:submitDeclarationFullNameErrorEmpty',

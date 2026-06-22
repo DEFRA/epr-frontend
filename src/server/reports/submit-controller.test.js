@@ -1423,6 +1423,50 @@ describe('#submitController', () => {
         )
       })
 
+      it('should re-render form with empty error when name is only whitespace', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: '            ' }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'You must enter your full name as it appears on this account'
+        )
+      })
+
+      it('should re-render form with too short error when name is whitespace-padded single char', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: '        h' }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'Your name must be more than one character'
+        )
+      })
+
       it('should re-render form with error when name is too short (1 char)', async ({
         server
       }) => {
