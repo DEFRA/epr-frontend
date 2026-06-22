@@ -163,19 +163,19 @@
     {# Each period group (open, closed) carries a larger leading margin than the
        sections within it, so the two groups read as distinct blocks. The first
        section's own margin collapses into the wrapper's, so within-group spacing
-       is unchanged. #}
+       is unchanged. Point 9 is the largest step on the GOV.UK spacing scale. #}
     {% if isEmpty %}
-      <div class="govuk-!-margin-top-8">
+      <div class="govuk-!-margin-top-9">
         {{ emptySection('openNewLoadsHeading', 'emptyOpenNewLoads') }}
         {{ emptySection('openAdjustedLoadsHeading', 'emptyOpenAdjustedLoads') }}
       </div>
-      <div class="govuk-!-margin-top-8">
+      <div class="govuk-!-margin-top-9">
         {{ emptySection('closedNewLoadsHeading', 'emptyClosedNewLoads') }}
         {{ emptySection('closedAdjustedLoadsHeading', 'emptyClosedAdjustedLoads') }}
       </div>
     {% else %}
       {% if periodSections.open %}
-      <div class="govuk-!-margin-top-8">
+      <div class="govuk-!-margin-top-9">
         {% if periodSections.open.added %}
           {{ newLoadsSection(periodSections.open.added, 'openNewLoadsHeading', isAccredited) }}
         {% endif %}
@@ -185,7 +185,7 @@
       </div>
       {% endif %}
       {% if periodSections.closed %}
-      <div class="govuk-!-margin-top-8">
+      <div class="govuk-!-margin-top-9">
         {% if periodSections.closed.added %}
           {{ newLoadsSection(periodSections.closed.added, 'closedNewLoadsHeading', isAccredited) }}
         {% endif %}
