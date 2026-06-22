@@ -134,6 +134,7 @@
     "goBackButton": "Go back to previous page",
     "projectionPrefix": "If you upload this summary log to create a new report, your waste balance will be",
     "projectionSuffix": "(from {{current}})",
+    "projectionUnchangedPrefix": "If you upload this summary log to create a new report, your waste balance will still be",
     "loadRow": "Row ID: {{rowId}}",
     "loadRowWithReason": "Row ID: {{rowId}}. {{reason}}",
     "tooManyLoads": "As there are 100 or more loads, we are not able to list them all here.",

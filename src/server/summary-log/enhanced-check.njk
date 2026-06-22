@@ -207,7 +207,11 @@
 
     {% if wasteBalanceProjection %}
     <div class="epr-summary-log-projection govuk-!-margin-top-6">
+      {% if wasteBalanceProjection.unchanged %}
+      <p class="govuk-body">{{ localise('summary-log:enhanced.projectionUnchangedPrefix') }} <strong>{{ wasteBalanceProjection.projected }}</strong></p>
+      {% else %}
       <p class="govuk-body">{{ localise('summary-log:enhanced.projectionPrefix') }} <strong>{{ wasteBalanceProjection.projected }}</strong> {{ localise('summary-log:enhanced.projectionSuffix', { current: wasteBalanceProjection.current }) }}</p>
+      {% endif %}
     </div>
     {% endif %}
 

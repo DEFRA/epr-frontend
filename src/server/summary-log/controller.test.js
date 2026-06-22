@@ -3864,7 +3864,7 @@ describe('enhanced summary log check view', () => {
     expect(result).toStrictEqual(expect.stringContaining('(from 100.00)'))
   })
 
-  it('hides the projection panel when the net tonnage delta is zero', async ({
+  it('shows the unchanged projection panel when the net tonnage delta is zero', async ({
     server
   }) => {
     givenWasteBalance(100)
@@ -3886,18 +3886,23 @@ describe('enhanced summary log check view', () => {
     const { result } = await renderMain(server)
 
     expect(result).toStrictEqual(
-      expect.not.stringContaining(
-        'If you upload this summary log to create a new report'
+      expect.stringContaining(
+        'If you upload this summary log to create a new report, your waste balance will still be'
       )
     )
+    expect(result).toStrictEqual(
+      expect.stringContaining('<strong>100.00</strong>')
+    )
+    // The unchanged wording carries no "(from ...)" suffix.
+    expect(result).toStrictEqual(expect.not.stringContaining('(from'))
   })
 
-  it('hides the projection panel when the deltas cancel to a sub-penny float residue', async ({
+  it('shows the unchanged projection panel when the deltas cancel to a sub-penny float residue', async ({
     server
   }) => {
     // 0.1 + 0.2 - 0.3 does not sum to exactly 0 in IEEE 754 (it lands on
-    // ~5.5e-17). An exact `netDelta === 0` gate would wrongly show the panel
-    // reading "will be 100.00 (from 100.00)". The rounded-to-2dp gate hides it.
+    // ~5.5e-17). The rounded-to-2dp gate treats this as no change, so the panel
+    // reads "will still be 100.00" rather than "will be 100.00 (from 100.00)".
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
@@ -3926,10 +3931,14 @@ describe('enhanced summary log check view', () => {
     const { result } = await renderMain(server)
 
     expect(result).toStrictEqual(
-      expect.not.stringContaining(
-        'If you upload this summary log to create a new report'
+      expect.stringContaining(
+        'If you upload this summary log to create a new report, your waste balance will still be'
       )
     )
+    expect(result).toStrictEqual(
+      expect.stringContaining('<strong>100.00</strong>')
+    )
+    expect(result).toStrictEqual(expect.not.stringContaining('(from'))
   })
 
   it('hides the projection panel for a registered-only operator', async ({

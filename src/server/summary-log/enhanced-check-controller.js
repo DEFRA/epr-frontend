@@ -225,17 +225,22 @@ const periodBalanceDelta = (period) =>
 
 /**
  * Builds the projected waste balance panel view model (accredited only). Hidden
- * when the balance is unavailable or the net delta is zero (nothing to project).
+ * only when the balance is unavailable. When the net delta rounds to zero the
+ * panel still shows, flagged `unchanged` so the template reads "will still be".
  * @param {boolean} isAccredited
  * @param {number | undefined} wasteBalance - Current available waste balance
  * @param {LoadsByReportingPeriod} loadsByReportingPeriod
- * @returns {{ current: string, projected: string } | null}
+ * @returns {{ current: string, projected: string, unchanged: boolean } | null}
  */
 const buildWasteBalanceProjection = (
   isAccredited,
   wasteBalance,
   loadsByReportingPeriod
 ) => {
+  if (!isAccredited || wasteBalance === undefined) {
+    return null
+  }
+
   const netDelta =
     periodBalanceDelta(loadsByReportingPeriod.openPeriodLoads) +
     periodBalanceDelta(loadsByReportingPeriod.closedPeriodLoads)
@@ -243,15 +248,12 @@ const buildWasteBalanceProjection = (
   // Compare on the rounded (2dp) value rather than === 0: the delta is a sum of
   // up to four floats, so exact cancellation can leave a sub-penny residue, and
   // a real delta below half a penny rounds away to nothing visible anyway.
-  const netDeltaIsZero = formatTonnage(netDelta) === ZERO_TONNAGE
-
-  if (!isAccredited || wasteBalance === undefined || netDeltaIsZero) {
-    return null
-  }
+  const unchanged = formatTonnage(netDelta) === ZERO_TONNAGE
 
   return {
     current: formatTonnage(wasteBalance),
-    projected: formatTonnage(wasteBalance + netDelta)
+    projected: formatTonnage(wasteBalance + netDelta),
+    unchanged
   }
 }
 
