@@ -7,6 +7,69 @@
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 {% endmacro %}
 
+{# Bullet list of loads: the operator's worksheet (tab) name, Row ID, and any
+   exclusion reason. The reason is omitted where the row carries none. #}
+{% macro loadRows(rows) %}
+  <ul class="govuk-list govuk-list--bullet">
+    {% for row in rows %}
+    <li>
+      {% if row.reasonText %}
+      {{ localise('summary-log:enhanced.loadRowWithReason', { worksheetName: row.worksheetName, rowId: row.rowId, reason: row.reasonText }) }}
+      {% else %}
+      {{ localise('summary-log:enhanced.loadRow', { worksheetName: row.worksheetName, rowId: row.rowId }) }}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{# "Show [x] load[s]" disclosure wrapping the bullet list of rows. Over the cap
+   (more than 99 loads) the list is suppressed for the too-many message, matching
+   the row-id-list convention. #}
+{% macro loadsAccordion(count, rows, tooManyMessage) %}
+  {% if count >= maxRowsPerBucket %}
+  <p class="govuk-body">{{ tooManyMessage }}</p>
+  {% else %}
+  <details class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: count }) }}</span>
+    </summary>
+    <div class="govuk-details__text">
+      {{ loadRows(rows) }}
+    </div>
+  </details>
+  {% endif %}
+{% endmacro %}
+
+{# Adjusted balance-affecting disclosure: one "Show [x] load[s]" toggle holding
+   the with-data sub-group (its heading reflects the group's direction) and the
+   missing-data sub-group (which always reduces the balance). #}
+{% macro adjustedBalanceAccordion(balanceAffecting, tooManyMessage) %}
+  {% if balanceAffecting.count >= maxRowsPerBucket %}
+  <p class="govuk-body">{{ tooManyMessage }}</p>
+  {% else %}
+  <details class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: balanceAffecting.count }) }}</span>
+    </summary>
+    <div class="govuk-details__text">
+      {% if balanceAffecting.withData.rows.length > 0 %}
+        {% if balanceAffecting.withData.addsToBalance %}
+        <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithDataAdded', { count: balanceAffecting.withData.rows.length }) }}</p>
+        {% else %}
+        <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithDataReduced', { count: balanceAffecting.withData.rows.length }) }}</p>
+        {% endif %}
+        {{ loadRows(balanceAffecting.withData.rows) }}
+      {% endif %}
+      {% if balanceAffecting.withoutData.rows.length > 0 %}
+      <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithoutData', { count: balanceAffecting.withoutData.rows.length }) }}</p>
+      {{ loadRows(balanceAffecting.withoutData.rows) }}
+      {% endif %}
+    </div>
+  </details>
+  {% endif %}
+{% endmacro %}
+
 {% macro newLoadsSection(change, headingKey, isAccredited) %}
 <section class="govuk-!-margin-top-6">
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
@@ -22,12 +85,14 @@
     {% if change.nonBalanceAffecting.count > 0 %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsNotAddedHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:enhanced.loadsMissingData') }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsNotAddedBody') }}</p>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.rows, localise('summary-log:enhanced.tooManyLoads')) }}
     {% endif %}
   {% else %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyNewLoadsHeading', { count: change.count }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.regOnlyLoadsBody') }}</p>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.rows, localise('summary-log:enhanced.tooManyLoads')) }}
   {% endif %}
   {{ sectionRule() }}
 </section>
@@ -51,15 +116,18 @@
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustedLoadsReflectedHeading', { count: change.balanceAffecting.count }) }}</h3>
     <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedLoadsReflectedBody') }}</p>
+    {{ adjustedBalanceAccordion(change.balanceAffecting, localise('summary-log:tooManyAdjustedLoadsToList')) }}
     {% endif %}
     {% if change.nonBalanceAffecting.count > 0 %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustmentsNotRelevantHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.rows, localise('summary-log:tooManyAdjustedLoadsToList')) }}
     {% endif %}
   {% else %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.regOnlyAdjustedLoadsHeading', { count: change.count }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:enhanced.loadsIncludeData') }}</p>
+    <p class="govuk-body">{{ localise('summary-log:enhanced.regOnlyLoadsBody') }}</p>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.rows, localise('summary-log:tooManyAdjustedLoadsToList')) }}
   {% endif %}
   {{ sectionRule() }}
 </section>
