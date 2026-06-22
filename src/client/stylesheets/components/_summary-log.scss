@@ -21,7 +21,7 @@
   margin-bottom: 0;
 
   &__section {
-    @include govuk-font($size: 19, $weight: bold);
+    @include govuk-font($size: 19);
     margin-top: govuk-spacing(3);
   }
 
@@ -29,10 +29,10 @@
     margin-left: 0;
   }
 
-  // Halve the default bullet indent (govuk-spacing(4)) so the row IDs sit closer
-  // under their section label.
+  // Tighten the default bullet indent (govuk-spacing(4)) so the row IDs sit
+  // closer under their section label.
   .govuk-list--bullet {
-    padding-left: govuk-spacing(2);
+    padding-left: govuk-spacing(3);
   }
 }
 
@@ -45,7 +45,7 @@
   margin-top: govuk-spacing(7);
 
   @include govuk-media-query($from: tablet) {
-    margin-top: govuk-spacing(9) + govuk-spacing(6);
+    margin-top: govuk-spacing(9) + govuk-spacing(2);
   }
 }
 
