@@ -21,7 +21,8 @@ import { formatExportTonnages } from './helpers/format-export-tonnages.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
-import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
+import { buildValidationErrors } from './helpers/validation.js'
+import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -29,7 +30,7 @@ import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
- * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'
+ * @import { SubmitPayload } from './helpers/versioned-payload-schema.js'
  */
 
 /**
@@ -107,77 +108,6 @@ const buildWasteSentOnViewData = (wasteSent) => ({
   totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
 })
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams }>>} */
-export const submitGetController = {
-  options: {
-    validate: {
-      params: periodParamsSchema
-    }
-  },
-  /**
-   * @param {HapiRequest & { params: PeriodParams }} request
-   * @param {ResponseToolkit} h
-   */
-  async handler(request, h) {
-    const {
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber
-    } = request.params
-    const session = request.auth.credentials
-    const { t: localise } = request
-
-    const [{ registration, accreditation }, reportDetail] = await Promise.all([
-      fetchRegistrationAndAccreditation(
-        organisationId,
-        registrationId,
-        session.idToken
-      ),
-      fetchReportDetail(
-        organisationId,
-        registrationId,
-        year,
-        cadence,
-        period,
-        submissionNumber,
-        session.idToken
-      )
-    ])
-
-    const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
-      reportDetail.status
-    )
-
-    if (status.currentStatus === SUBMISSION_STATUS.SUBMITTED) {
-      return h.redirect(
-        request.localiseUrl(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
-        )
-      )
-    }
-
-    const viewData = buildViewData({
-      registration,
-      accreditation,
-      reportDetail,
-      status,
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber,
-      localise,
-      localiseUrl: (url) => request.localiseUrl(url)
-    })
-
-    return h.view('reports/submit', viewData)
-  }
-}
-
 /**
  * @param {{ localise: import('./helpers/format-period-label.js').Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
  * @returns {object}
@@ -226,36 +156,65 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 })
 
 /**
- * @param {{
- *   registration: object,
- *   accreditation: object | undefined,
+ * @typedef {{
+ *   registration: import('#domain/organisations/registration.js').Registration,
+ *   accreditation: object | null,
  *   reportDetail: ReportDetailResponse,
- *   status: NonNullable<ReportDetailResponse['status']>,
- *   organisationId: string,
- *   registrationId: string,
+ *   reportsUrl: string,
+ *   localise: import('./helpers/format-period-label.js').Localise,
  *   year: number,
  *   cadence: CadenceValue,
  *   period: number,
  *   submissionNumber: number,
- *   localise: import('./helpers/format-period-label.js').Localise,
- *   localiseUrl: (url: string) => string
- * }} params
+ *   submissionDeclaredBy?: string | null,
+ *   errors?: object | null,
+ *   errorSummary?: object | null
+ * }} BuildViewModelParams
+ */
+
+/**
+ * @param {ReportDetailResponse['prn']} prn
  * @returns {object}
  */
-function buildViewData({
+const buildPrnViewData = (prn) => ({
+  averagePricePerTonne: prn?.averagePricePerTonne,
+  freeTonnage: prn?.freeTonnage,
+  issuedTonnage: prn?.issuedTonnage,
+  totalRevenue: prn?.totalRevenue
+})
+
+/**
+ * @param {import('./helpers/format-period-label.js').Localise} localise
+ * @param {string} organisationName
+ * @returns {string[]}
+ */
+const buildDeclarationItems = (localise, organisationName) => [
+  localise('reports:submitDeclarationItem1', { organisationName }),
+  localise('reports:submitDeclarationItem2'),
+  localise('reports:submitDeclarationItem3')
+]
+
+/**
+ * @param {BuildViewModelParams} params
+ * @returns {object}
+ */
+function buildViewModel({
   registration,
   accreditation,
   reportDetail,
-  status,
-  organisationId,
-  registrationId,
+  reportsUrl,
+  localise,
   year,
   cadence,
   period,
   submissionNumber,
-  localise,
-  localiseUrl
+  submissionDeclaredBy,
+  errors,
+  errorSummary
 }) {
+  const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
+    reportDetail.status
+  )
   const material = getDisplayMaterial(registration)
   const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
@@ -264,10 +223,7 @@ function buildViewData({
   const isRegisteredOnlyExporter = isExporter && !accreditation
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
-
   const { createdBy, createdOn } = getCreationDetails(status.created, localise)
-
-  const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
   return {
     ...buildPageLabels({
@@ -282,80 +238,170 @@ function buildViewData({
     isExporter,
     isRegisteredOnlyExporter,
     showApprovalColumn: isAccreditedExporter,
-    backUrl: localiseUrl(reportsUrl),
-
-    // Inset text
+    backUrl: reportsUrl,
     insetText: localise('reports:submitInsetText'),
-
-    // Details section
     statusTag: localise('reports:statusReadyToSubmit'),
     createdByLabel: localise('reports:submitCreatedByLabel'),
     createdBy,
     createdOnLabel: localise('reports:submitCreatedOnLabel'),
     createdOn,
-
-    // Your report summary list
     periodLabel,
     material,
     site: reportDetail.details.site,
-
-    // Waste received
     wasteReceived: buildWasteReceivedViewData(recyclingActivity),
-
-    // Waste exported (exporters only — always show section with defaults)
     wasteExported: buildWasteExported(
       exportActivity,
       isExporter,
       isAccreditedExporter
     ),
-
-    // Waste sent on
     wasteSentOn: buildWasteSentOnViewData(wasteSent),
-
-    // PRNs
-    prn: {
-      averagePricePerTonne: reportDetail.prn?.averagePricePerTonne,
-      freeTonnage: reportDetail.prn?.freeTonnage,
-      issuedTonnage: reportDetail.prn?.issuedTonnage,
-      totalRevenue: reportDetail.prn?.totalRevenue
-    },
-
-    // Recycling activity
+    prn: buildPrnViewData(reportDetail.prn),
     recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),
-
-    // Supporting information
     supportingInformation:
       reportDetail.supportingInformation ||
       localise('reports:supportingInformationNone'),
-
-    // Declaration
-    declarationItems: [
-      localise('reports:submitDeclarationItem1'),
-      localise('reports:submitDeclarationItem2'),
-      localise('reports:submitDeclarationItem3')
-    ],
-
-    // Form
+    declarationItems: buildDeclarationItems(localise, registration.orgName),
     version: reportDetail.version,
-
-    deleteUrl: localiseUrl(
-      `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
-    )
+    submissionDeclaredBy: submissionDeclaredBy ?? null,
+    errors: errors ?? null,
+    errorSummary: errorSummary ?? null,
+    deleteUrl: `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
   }
 }
 
-/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams, payload: VersionedPayload }>>} */
+/**
+ * @param {HapiRequest & { params: PeriodParams }} request
+ * @param {{ submissionDeclaredBy?: string | null, errors?: object | null, errorSummary?: object | null }} [options]
+ * @returns {Promise<object>}
+ */
+async function buildViewData(request, options = {}) {
+  const {
+    organisationId,
+    registrationId,
+    year,
+    cadence,
+    period,
+    submissionNumber
+  } = request.params
+  const session = request.auth.credentials
+  const { t: localise } = request
+
+  const [{ registration, accreditation }, reportDetail] = await Promise.all([
+    fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    ),
+    fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber,
+      session.idToken
+    )
+  ])
+
+  const reportsUrl = request.localiseUrl(
+    `/organisations/${organisationId}/registrations/${registrationId}/reports`
+  )
+
+  return buildViewModel({
+    registration,
+    accreditation,
+    reportDetail,
+    reportsUrl,
+    localise,
+    year,
+    cadence,
+    period,
+    submissionNumber,
+    ...options
+  })
+}
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams }>>} */
+export const submitGetController = {
+  options: {
+    validate: {
+      params: periodParamsSchema
+    }
+  },
+  /**
+   * @param {HapiRequest & { params: PeriodParams }} request
+   * @param {ResponseToolkit} h
+   */
+  async handler(request, h) {
+    const {
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber
+    } = request.params
+    const session = request.auth.credentials
+
+    const reportDetail = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber,
+      session.idToken
+    )
+
+    const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
+      reportDetail.status
+    )
+
+    if (status.currentStatus === SUBMISSION_STATUS.SUBMITTED) {
+      return h.redirect(
+        request.localiseUrl(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
+        )
+      )
+    }
+
+    const viewData = await buildViewData(request)
+
+    return h.view('reports/submit', viewData)
+  }
+}
+
+/** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: PeriodParams, payload: SubmitPayload }>>} */
 export const submitPostController = {
   options: {
     validate: {
       params: periodParamsSchema,
-      payload: versionedPayloadSchema
+      payload: submitPayloadSchema,
+      /**
+       * @param {HapiRequest & { params: PeriodParams, payload: SubmitPayload }} request
+       * @param {ResponseToolkit} h
+       * @param {Error | undefined} error
+       */
+      async failAction(request, h, error) {
+        const { errors, errorSummary } = buildValidationErrors(
+          request,
+          /** @type {import('joi').ValidationError} */ (error)
+        )
+
+        const viewData = await buildViewData(request, {
+          submissionDeclaredBy: request.payload?.submissionDeclaredBy,
+          errors,
+          errorSummary
+        })
+
+        return h.view('reports/submit', viewData).takeover()
+      }
     }
   },
   /**
    * @param {HapiRequest & {
    *   params: PeriodParams,
-   *   payload: VersionedPayload
+   *   payload: SubmitPayload
    * }} request
    * @param {ResponseToolkit} h
    */
@@ -368,10 +414,14 @@ export const submitPostController = {
       period,
       submissionNumber
     } = request.params
-    const { version } = request.payload
+    const { version, submissionDeclaredBy } = request.payload
     const session = request.auth.credentials
 
-    const transition = { status: SUBMISSION_STATUS.SUBMITTED, version }
+    const transition = {
+      status: SUBMISSION_STATUS.SUBMITTED,
+      version,
+      submissionDeclaredBy
+    }
 
     await updateReportStatus(
       {
