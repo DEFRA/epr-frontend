@@ -3501,8 +3501,7 @@ describe('enhanced summary log check view', () => {
 
     // A single structural assertion of the whole rendered page: every section
     // heading and caption present, plus the counts that carry meaning (the
-    // "not relevant" heading appears in both periods, the data-changed inset
-    // only on open adjusted).
+    // "not relevant" heading appears in both periods).
     expect({
       statusCode,
       openNewLoadsHeading: hasHeading('Open periods: new loads'),
@@ -3538,11 +3537,7 @@ describe('enhanced summary log check view', () => {
       closedAdjustedLoadsHeading: hasHeading('Closed periods: adjusted loads'),
       closedAdjustedLoadsCaption: hasText(
         'The adjusted loads will remove 4.00 tonnes from your waste balance.'
-      ),
-      dataChangedInsets: queryAllByText(
-        main,
-        'Data has been changed since this summary log was last uploaded.'
-      ).length
+      )
     }).toStrictEqual({
       statusCode: statusCodes.ok,
       openNewLoadsHeading: true,
@@ -3558,8 +3553,7 @@ describe('enhanced summary log check view', () => {
       closedNewLoadsHeading: true,
       closedNewLoadsAddedHeading: true,
       closedAdjustedLoadsHeading: true,
-      closedAdjustedLoadsCaption: true,
-      dataChangedInsets: 1
+      closedAdjustedLoadsCaption: true
     })
   })
 
@@ -3617,25 +3611,17 @@ describe('enhanced summary log check view', () => {
     const hasHeading = (name) => Boolean(queryByRole(main, 'heading', { name }))
 
     // The totals-only headings carry no balance suffix (the accredited variant
-    // would read "... (and added to your waste balance)"), and the data-changed
-    // inset still shows on open adjusted.
+    // would read "... (and added to your waste balance)").
     expect({
       openNewLoadsHeading: hasHeading('Open periods: new loads'),
       regOnlyNewLoadsHeading: hasHeading('4 new loads will be recorded'),
       regOnlyAdjustedLoadsHeading: hasHeading(
         '2 adjusted loads will be recorded'
-      ),
-      dataChangedInset: Boolean(
-        queryByText(
-          main,
-          'Data has been changed since this summary log was last uploaded.'
-        )
       )
     }).toStrictEqual({
       openNewLoadsHeading: true,
       regOnlyNewLoadsHeading: true,
-      regOnlyAdjustedLoadsHeading: true,
-      dataChangedInset: true
+      regOnlyAdjustedLoadsHeading: true
     })
   })
 
@@ -4050,11 +4036,9 @@ describe('enhanced summary log check view', () => {
       ),
       disclosure: hasText('Show 2 loads'),
       exportedRow: hasText(
-        'Exported (sections 1, 2 and 3), Row ID: 5. Required summary log data is missing'
+        'Exported, Row ID: 5. Required summary log data is missing'
       ),
-      sentOnRow: hasText(
-        'Sent on (sections 4 and 5), Row ID: 8. Product weight is missing'
-      )
+      sentOnRow: hasText('Sent on, Row ID: 8. Product weight is missing')
     }).toStrictEqual({
       notAddedBody: true,
       disclosure: true,
@@ -4112,13 +4096,13 @@ describe('enhanced summary log check view', () => {
       withDataHeading: hasText(
         'This load has all the required summary log data and has added to your waste balance'
       ),
-      withDataRow: hasText('Exported (sections 1, 2 and 3), Row ID: 1'),
+      withDataRow: hasText('Exported, Row ID: 1'),
       withoutDataHeading: hasText(
         'This load does NOT have all the required summary log data and has reduced your waste balance'
       ),
       // The reason is suppressed for adjusted rows: an exact-text match would
       // miss if "Required summary log data is missing" were appended.
-      withoutDataRow: hasText('Sent on (sections 4 and 5), Row ID: 2')
+      withoutDataRow: hasText('Sent on, Row ID: 2')
     }).toStrictEqual({
       disclosure: true,
       withDataHeading: true,
@@ -4163,7 +4147,7 @@ describe('enhanced summary log check view', () => {
     expect({
       heading: hasText('1 change is NOT relevant to your waste balance'),
       disclosure: hasText('Show 1 load'),
-      row: hasText('Exported (sections 1, 2 and 3), Row ID: 9')
+      row: hasText('Exported, Row ID: 9')
     }).toStrictEqual({
       heading: true,
       disclosure: true,
@@ -4213,8 +4197,8 @@ describe('enhanced summary log check view', () => {
       heading: hasText('2 new loads will be recorded'),
       body: hasText('These have been added to your summary log.'),
       disclosure: hasText('Show 2 loads'),
-      receivedRow: hasText('Received (section 1), Row ID: 3'),
-      exportedRow: hasText('Exported (sections 2 and 3), Row ID: 7')
+      receivedRow: hasText('Received, Row ID: 3'),
+      exportedRow: hasText('Exported, Row ID: 7')
     }).toStrictEqual({
       heading: true,
       body: true,
@@ -4329,13 +4313,13 @@ describe('enhanced summary log check view', () => {
       reprocessor: Boolean(
         queryByText(
           reprocessor.main,
-          'Received (sections 1, 2 and 3), Row ID: 4. A PRN was already issued for this load'
+          'Received, Row ID: 4. A PRN was already issued for this load'
         )
       ),
       exporter: Boolean(
         queryByText(
           exporter.main,
-          'Exported (sections 1, 2 and 3), Row ID: 4. A PERN was already issued for this load'
+          'Exported, Row ID: 4. A PERN was already issued for this load'
         )
       )
     }).toStrictEqual({ reprocessor: true, exporter: true })
@@ -4377,10 +4361,7 @@ describe('enhanced summary log check view', () => {
 
     // Exact-text match: the raw const is appended after the row id full stop.
     expect(
-      queryByText(
-        main,
-        'Exported (sections 1, 2 and 3), Row ID: 6. OUTSIDE_ACCREDITATION_PERIOD'
-      )
+      queryByText(main, 'Exported, Row ID: 6. OUTSIDE_ACCREDITATION_PERIOD')
     ).not.toBeNull()
   })
 
@@ -4501,10 +4482,10 @@ describe('enhanced summary log check view', () => {
   })
 
   // The single source of truth for the worksheet (tab) name shown in each load
-  // row, keyed by processing type and waste record type. The name is the
-  // operator's actual spreadsheet tab, so a wrong string would point them at
-  // the wrong place in their own file. Every combination the backend can emit
-  // is listed here; a typo in any locale entry fails its row.
+  // row, keyed by processing type and waste record type. Per the design these
+  // are the plain tab names with the parenthesised section numbers dropped.
+  // Every combination the backend can emit is listed here; a typo in any locale
+  // entry fails its row.
   /**
    * @type {Array<{
    *   processingType: ProcessingType,
@@ -4516,67 +4497,67 @@ describe('enhanced summary log check view', () => {
     {
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'received',
-      worksheetName: 'Received (sections 1, 2 and 3)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'processed',
-      worksheetName: 'Reprocessed (section 4)'
+      worksheetName: 'Reprocessed'
     },
     {
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (sections 5, 6 and 7)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'REPROCESSOR_OUTPUT',
       wasteRecordType: 'received',
-      worksheetName: 'Received (sections 1 and 2)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'REPROCESSOR_OUTPUT',
       wasteRecordType: 'processed',
-      worksheetName: 'Reprocessed (sections 3 and 4)'
+      worksheetName: 'Reprocessed'
     },
     {
       processingType: 'REPROCESSOR_OUTPUT',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (sections 5 and 6)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      worksheetName: 'Exported (sections 1, 2 and 3)'
+      worksheetName: 'Exported'
     },
     {
       processingType: 'EXPORTER',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (sections 4 and 5)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'REPROCESSOR_REGISTERED_ONLY',
       wasteRecordType: 'received',
-      worksheetName: 'Received (section 1)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'REPROCESSOR_REGISTERED_ONLY',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (section 2)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       wasteRecordType: 'received',
-      worksheetName: 'Received (section 1)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       wasteRecordType: 'exported',
-      worksheetName: 'Exported (sections 2 and 3)'
+      worksheetName: 'Exported'
     },
     {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (section 4)'
+      worksheetName: 'Sent on'
     }
   ]
 
@@ -4615,42 +4596,40 @@ describe('enhanced summary log check view', () => {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. Required summary log data is missing'
+        'Exported, Row ID: 5. Required summary log data is missing'
     },
     {
       code: 'PRODUCT_WEIGHT_NOT_ADDED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. Product weight is missing'
+      expectedBullet: 'Exported, Row ID: 5. Product weight is missing'
     },
     {
       code: 'ORS_NOT_APPROVED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. The ORS was not approved at the date of export'
+        'Exported, Row ID: 5. The ORS was not approved at the date of export'
     },
     {
       code: 'PRN_ISSUED',
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'received',
       expectedBullet:
-        'Received (sections 1, 2 and 3), Row ID: 5. A PRN was already issued for this load'
+        'Received, Row ID: 5. A PRN was already issued for this load'
     },
     {
       code: 'PRN_ISSUED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. A PERN was already issued for this load'
+        'Exported, Row ID: 5. A PERN was already issued for this load'
     },
     {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. OUTSIDE_ACCREDITATION_PERIOD'
+      expectedBullet: 'Exported, Row ID: 5. OUTSIDE_ACCREDITATION_PERIOD'
     }
   ]
 

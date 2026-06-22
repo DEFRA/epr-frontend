@@ -98,12 +98,9 @@
 </section>
 {% endmacro %}
 
-{% macro adjustedLoadsSection(change, headingKey, isAccredited, showInset) %}
+{% macro adjustedLoadsSection(change, headingKey, isAccredited) %}
 <section class="govuk-!-margin-top-6">
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
-  {% if showInset %}
-  <div class="govuk-inset-text">{{ localise('summary-log:enhanced.adjustedDataChangedInset') }}</div>
-  {% endif %}
   {% if isAccredited %}
     {% if change.hasTonnageDelta %}
       {% if change.addsToBalance %}
@@ -144,7 +141,7 @@
 
 {% block content %}
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
+  <div class="govuk-grid-column-full">
     <h1 class="govuk-heading-xl">
       <span class="govuk-caption-xl">{{ localise('summary-log:enhanced.pageCaption') }}</span>
       {{ localise('summary-log:enhanced.pageHeading') }}
@@ -163,27 +160,39 @@
       </p>
     </div>
 
+    {# Each period group (open, closed) carries a larger leading margin than the
+       sections within it, so the two groups read as distinct blocks. The first
+       section's own margin collapses into the wrapper's, so within-group spacing
+       is unchanged. #}
     {% if isEmpty %}
-      {{ emptySection('openNewLoadsHeading', 'emptyOpenNewLoads') }}
-      {{ emptySection('openAdjustedLoadsHeading', 'emptyOpenAdjustedLoads') }}
-      {{ emptySection('closedNewLoadsHeading', 'emptyClosedNewLoads') }}
-      {{ emptySection('closedAdjustedLoadsHeading', 'emptyClosedAdjustedLoads') }}
+      <div class="govuk-!-margin-top-8">
+        {{ emptySection('openNewLoadsHeading', 'emptyOpenNewLoads') }}
+        {{ emptySection('openAdjustedLoadsHeading', 'emptyOpenAdjustedLoads') }}
+      </div>
+      <div class="govuk-!-margin-top-8">
+        {{ emptySection('closedNewLoadsHeading', 'emptyClosedNewLoads') }}
+        {{ emptySection('closedAdjustedLoadsHeading', 'emptyClosedAdjustedLoads') }}
+      </div>
     {% else %}
       {% if periodSections.open %}
+      <div class="govuk-!-margin-top-8">
         {% if periodSections.open.added %}
           {{ newLoadsSection(periodSections.open.added, 'openNewLoadsHeading', isAccredited) }}
         {% endif %}
         {% if periodSections.open.adjusted %}
-          {{ adjustedLoadsSection(periodSections.open.adjusted, 'openAdjustedLoadsHeading', isAccredited, true) }}
+          {{ adjustedLoadsSection(periodSections.open.adjusted, 'openAdjustedLoadsHeading', isAccredited) }}
         {% endif %}
+      </div>
       {% endif %}
       {% if periodSections.closed %}
+      <div class="govuk-!-margin-top-8">
         {% if periodSections.closed.added %}
           {{ newLoadsSection(periodSections.closed.added, 'closedNewLoadsHeading', isAccredited) }}
         {% endif %}
         {% if periodSections.closed.adjusted %}
-          {{ adjustedLoadsSection(periodSections.closed.adjusted, 'closedAdjustedLoadsHeading', isAccredited, false) }}
+          {{ adjustedLoadsSection(periodSections.closed.adjusted, 'closedAdjustedLoadsHeading', isAccredited) }}
         {% endif %}
+      </div>
       {% endif %}
     {% endif %}
 
