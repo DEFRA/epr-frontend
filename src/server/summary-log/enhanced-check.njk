@@ -83,7 +83,7 @@
   <h2 class="govuk-heading-l">{{ localise('summary-log:enhanced.' + headingKey) }}</h2>
   {% if isAccredited %}
     {% if change.hasTonnageDelta %}
-    <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsCaption', { tonnage: change.absoluteTonnage }) }}</p>
+    <p class="govuk-caption-l">{{ localise('summary-log:enhanced.newLoadsCaption', { tonnage: change.absoluteTonnage }) }}</p>
     {% endif %}
     {% if change.balanceAffecting.count > 0 %}
     {{ sectionRule() }}
@@ -112,9 +112,9 @@
   {% if isAccredited %}
     {% if change.hasTonnageDelta %}
       {% if change.addsToBalance %}
-      <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedLoadsCaptionAdd', { tonnage: change.absoluteTonnage }) }}</p>
+      <p class="govuk-caption-l">{{ localise('summary-log:enhanced.adjustedLoadsCaptionAdd', { tonnage: change.absoluteTonnage }) }}</p>
       {% else %}
-      <p class="govuk-body">{{ localise('summary-log:enhanced.adjustedLoadsCaptionRemove', { tonnage: change.absoluteTonnage }) }}</p>
+      <p class="govuk-caption-l">{{ localise('summary-log:enhanced.adjustedLoadsCaptionRemove', { tonnage: change.absoluteTonnage }) }}</p>
       {% endif %}
     {% endif %}
     {% if change.balanceAffecting.count > 0 %}
