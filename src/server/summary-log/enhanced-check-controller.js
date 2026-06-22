@@ -5,14 +5,17 @@ import {
   isExporterType,
   isRegisteredOnlyProcessingType
 } from '#domain/summary-logs/meta-fields.js'
+import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
+ * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
  *   ChangeViewModel,
  *   LoadRow,
  *   LoadRowViewModel,
+ *   LoadSectionViewModel,
  *   Localise,
  *   LoadsByReportingPeriod,
  *   PeriodStatus,
@@ -24,6 +27,18 @@ import {
 const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
 
 const ZERO_TONNAGE = formatTonnage(0)
+
+/**
+ * Order sections are listed in, following the summary log's flow rather than
+ * the WASTE_RECORD_TYPE enum's alphabetical order.
+ * @type {WasteRecordType[]}
+ */
+const SECTION_ORDER = [
+  WASTE_RECORD_TYPE.RECEIVED,
+  WASTE_RECORD_TYPE.PROCESSED,
+  WASTE_RECORD_TYPE.EXPORTED,
+  WASTE_RECORD_TYPE.SENT_ON
+]
 
 /**
  * Exclusion codes that resolve to a fixed reason string (PRN_ISSUED varies).
@@ -69,23 +84,20 @@ const resolveReasonText = (exclusionReasons, processingType, localise) => {
 }
 
 /**
- * Projects one backend row into a view row: the operator's worksheet (tab)
- * name, the row id, and (only where the design surfaces it) the exclusion
- * reason text. Adjusted loads list worksheet and row id alone, so includeReason
- * is false for them even when the row carries exclusion codes.
+ * Projects one backend row into a view row: the row id and (only where the
+ * design surfaces it) the exclusion reason text. The worksheet (tab) name is
+ * carried by the enclosing section, not the row. Adjusted loads list the row id
+ * alone, so includeReason is false for them even when the row carries codes.
  * @param {LoadRow} row
  * @param {{ processingType: ProcessingType, localise: Localise }} ctx
  * @param {boolean} includeReason
  * @returns {LoadRowViewModel}
  */
 const mapLoadRow = (
-  { rowId, wasteRecordType, exclusionReasons },
+  { rowId, exclusionReasons },
   { processingType, localise },
   includeReason
 ) => ({
-  worksheetName: localise(
-    `summary-log:enhanced.worksheet.${processingType}.${wasteRecordType}`
-  ),
   rowId,
   reasonText: includeReason
     ? resolveReasonText(exclusionReasons, processingType, localise)
@@ -93,16 +105,39 @@ const mapLoadRow = (
 })
 
 /**
- * Projects a bucket's rows into view rows. Buckets always carry a rows array
- * from the backend, but tolerate its absence (older fixtures) by treating it
- * as empty.
+ * Localised worksheet (tab) name for a waste record type, used as the section
+ * label grouping the rows that belong to that tab.
+ * @param {WasteRecordType} wasteRecordType
+ * @param {{ processingType: ProcessingType, localise: Localise }} ctx
+ * @returns {string}
+ */
+const sectionLabel = (wasteRecordType, { processingType, localise }) =>
+  localise(
+    `summary-log:enhanced.worksheet.${processingType}.${wasteRecordType}`
+  )
+
+/**
+ * Groups a bucket's rows into sections by waste record type, in the canonical
+ * summary-log flow order (SECTION_ORDER). Empty sections are dropped, so only
+ * sections that carry rows are labelled. Buckets always carry a rows array from
+ * the backend, but tolerate its absence (older fixtures) by treating it as empty.
  * @param {LoadRow[] | undefined} rows
  * @param {{ processingType: ProcessingType, localise: Localise }} ctx
  * @param {boolean} includeReason
- * @returns {LoadRowViewModel[]}
+ * @returns {LoadSectionViewModel[]}
  */
-const mapLoadRows = (rows, ctx, includeReason) =>
-  (rows ?? []).map((row) => mapLoadRow(row, ctx, includeReason))
+const groupRowsIntoSections = (rows, ctx, includeReason) =>
+  SECTION_ORDER.map((wasteRecordType) => {
+    const sectionRows = (rows ?? []).filter(
+      (row) => row.wasteRecordType === wasteRecordType
+    )
+    return sectionRows.length === 0
+      ? null
+      : {
+          sectionName: sectionLabel(wasteRecordType, ctx),
+          rows: sectionRows.map((row) => mapLoadRow(row, ctx, includeReason))
+        }
+  }).filter((section) => section !== null)
 
 /**
  * Splits a balance-affecting bucket's rows into the two sub-groups the adjusted
@@ -128,9 +163,13 @@ const splitBalanceAffecting = (bucket, ctx) => {
     count: bucket.count,
     withData: {
       addsToBalance: withDataDelta >= 0,
-      rows: mapLoadRows(withData, ctx, false)
+      count: withData.length,
+      sections: groupRowsIntoSections(withData, ctx, false)
     },
-    withoutData: { rows: mapLoadRows(withoutData, ctx, false) }
+    withoutData: {
+      count: withoutData.length,
+      sections: groupRowsIntoSections(withoutData, ctx, false)
+    }
   }
 }
 
@@ -165,7 +204,11 @@ const buildChangeViewModel = (change, ctx, changeKind) => {
     balanceAffecting: splitBalanceAffecting(balanceAffecting, ctx),
     nonBalanceAffecting: {
       count: nonBalanceAffecting.count,
-      rows: mapLoadRows(nonBalanceAffecting.rows, ctx, changeKind === 'added')
+      sections: groupRowsIntoSections(
+        nonBalanceAffecting.rows,
+        ctx,
+        changeKind === 'added'
+      )
     }
   }
 }
