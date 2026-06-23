@@ -1,10 +1,13 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import * as cheerio from 'cheerio'
 import { beforeEach, describe, expect, vi } from 'vitest'
+
+/** @import {Organisation} from '#domain/organisations/model.js' */
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
@@ -21,21 +24,14 @@ vi.mock(
   })
 )
 
-const mockOrganisationData = {
-  id: '123',
-  registrations: [{ id: '456', status: 'approved' }]
-}
+const mockOrganisationData = /** @type {Organisation} */ (
+  /** @type {unknown} */ ({
+    id: '123',
+    registrations: [{ id: '456', status: 'approved' }]
+  })
+)
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
+const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 
 describe('#summaryLogUploadController', () => {
   const organisationId = '123'
@@ -83,7 +79,7 @@ describe('#summaryLogUploadController', () => {
     const uploadError = Boom.notFound(
       'Failed to fetch from backend at url: http://backend.url/v1/organisations/123/registrations/456/summary-logs: 404 Not Found'
     )
-    initiateSummaryLogUpload.mockRejectedValueOnce(uploadError)
+    vi.mocked(initiateSummaryLogUpload).mockRejectedValueOnce(uploadError)
 
     const { result } = await server.inject({
       method: 'GET',
@@ -91,7 +87,9 @@ describe('#summaryLogUploadController', () => {
       auth: mockAuth
     })
 
-    const $ = cheerio.load(result)
+    const $ = cheerio.load(
+      /** @type {string} */ (/** @type {unknown} */ (result))
+    )
 
     expect($('main h1').text()).toBe('Summary log upload error')
     expect($('main p').text()).toBe('Failed to initialise upload')
