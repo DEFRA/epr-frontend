@@ -1,5 +1,6 @@
 {% extends 'layouts/page.njk' %}
 {% from "summary-log-upload/macro.njk" import summaryLogUpload %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -17,11 +18,12 @@
           {{ heading }}
         </h1>
 
-        <p>{{ introText }}</p>
+        {{ govukInsetText({ text: introText }) }}
 
         {{ summaryLogUpload({
           uploadUrl: uploadUrl,
           fileUploadLabel: localise("summary-log-upload:fileUploadLabel"),
+          helperText: localise("summary-log-upload:helperText"),
           buttonText: localise("summary-log-upload:continueButton")
         }) }}
       </div>

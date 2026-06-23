@@ -126,24 +126,26 @@ describe('#summaryLogUploadController', () => {
   })
 
   describe('page content', () => {
-    it('should render caption "Upload summary log"', async ({ server }) => {
+    it('should render caption "Summary log"', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url,
         auth: mockAuth
       })
 
-      expect(result).toContain('Upload summary log')
+      expect(result).toContain('govuk-caption-xl">Summary log')
     })
 
-    it('should render heading "Choose file"', async ({ server }) => {
+    it('should render heading "Upload your summary log"', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url,
         auth: mockAuth
       })
 
-      expect(result).toContain('Choose file')
+      expect(result).toContain('Upload your summary log')
     })
 
     it('should render intro text', async ({ server }) => {
@@ -158,7 +160,7 @@ describe('#summaryLogUploadController', () => {
       )
     })
 
-    it('should render file upload with label "Upload XLSX file"', async ({
+    it('should render file upload with label "Choose XLSX file"', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -167,7 +169,19 @@ describe('#summaryLogUploadController', () => {
         auth: mockAuth
       })
 
-      expect(result).toContain('Upload XLSX file')
+      expect(result).toContain('Choose XLSX file')
+    })
+
+    it('should render helper text below the file input', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      expect(result).toContain(
+        'Your chosen file will be checked for errors, new data and data changes when you continue.'
+      )
     })
 
     it('should render file upload label in bold', async ({ server }) => {
@@ -201,14 +215,16 @@ describe('#summaryLogUploadController', () => {
       expect(result).not.toContain('Why this is needed')
     })
 
-    it('should not render inset text', async ({ server }) => {
+    it('should render intro text as an inset text component', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url,
         auth: mockAuth
       })
 
-      expect(result).not.toContain('govuk-inset-text')
+      expect(result).toContain('govuk-inset-text')
     })
   })
 
