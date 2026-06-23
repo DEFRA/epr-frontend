@@ -1051,7 +1051,9 @@ describe('#summaryLogUploadProgressController', () => {
           )
 
           expect(panelBody).not.toBeNull()
-          expect(panelBody?.textContent).toContain('Your updated waste balance')
+          expect(panelBody?.textContent).toContain(
+            'Your updated waste balance is'
+          )
           expect(panelBody?.textContent).toContain(expected)
           expect(panelBody?.textContent).toContain('tonnes')
         }

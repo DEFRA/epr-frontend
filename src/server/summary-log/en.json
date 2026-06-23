@@ -299,5 +299,5 @@
   "validationFailuresDescription2_one": "You'll need to fix your summary log error before you can upload this file.",
   "validationFailuresDescription2_other": "You'll need to fix all of your summary log errors before you can upload this file.",
   "validationFailuresHeading": "Your summary log cannot be uploaded",
-  "wasteBalanceLabel": "Your updated waste balance"
+  "wasteBalanceLabel": "Your updated waste balance is"
 }
