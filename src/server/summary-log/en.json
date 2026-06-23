@@ -227,9 +227,9 @@
   "processingBullet1": "errors",
   "processingBullet2": "new data",
   "processingBullet3": "changes to previously uploaded data",
-  "processingHeading": "Your file is being checked",
+  "processingHeading": "Your summary log is being checked",
   "processingKeepOpen": "Keep this page open and do not refresh it.",
-  "processingMessage": "Your summary log is being checked for",
+  "processingMessage": "The file is being checked for",
   "processingTakeTime": "This may take a few minutes.",
   "registeredOnly": {
     "checkIntro2": "Check the following before confirming the upload.",
