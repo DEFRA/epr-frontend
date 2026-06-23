@@ -177,13 +177,23 @@
  */
 
 /**
- * A load projected for display: the operator's worksheet (tab) name, the row
- * id, and the exclusion reason text (null when the load carries none).
+ * A load projected for display: the row id and the exclusion reason text (null
+ * when the load carries none). The worksheet (tab) name lives on the enclosing
+ * {@link LoadSectionViewModel}, not the row.
  * @typedef {{
- *   worksheetName: string,
  *   rowId: RowId,
  *   reasonText: string | null
  * }} LoadRowViewModel
+ */
+
+/**
+ * A group of load rows sharing one worksheet (tab), rendered as a labelled
+ * section in a load list. Sections are emitted in the summary-log flow order
+ * and only when they carry rows.
+ * @typedef {{
+ *   sectionName: string,
+ *   rows: LoadRowViewModel[]
+ * }} LoadSectionViewModel
  */
 
 /**
@@ -204,8 +214,12 @@
  * contribution, so its delta is always negative (see splitBalanceAffecting).
  * @typedef {{
  *   count: number,
- *   withData: { addsToBalance: boolean, rows: LoadRowViewModel[] },
- *   withoutData: { rows: LoadRowViewModel[] }
+ *   withData: {
+ *     addsToBalance: boolean,
+ *     count: number,
+ *     sections: LoadSectionViewModel[]
+ *   },
+ *   withoutData: { count: number, sections: LoadSectionViewModel[] }
  * }} BalanceAffectingViewModel
  */
 
@@ -248,7 +262,7 @@
  *   addsToBalance: boolean,
  *   hasTonnageDelta: boolean,
  *   balanceAffecting: BalanceAffectingViewModel,
- *   nonBalanceAffecting: { count: number, rows: LoadRowViewModel[] }
+ *   nonBalanceAffecting: { count: number, sections: LoadSectionViewModel[] }
  * }} ChangeViewModel
  */
 

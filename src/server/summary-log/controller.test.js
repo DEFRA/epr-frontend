@@ -3501,8 +3501,7 @@ describe('enhanced summary log check view', () => {
 
     // A single structural assertion of the whole rendered page: every section
     // heading and caption present, plus the counts that carry meaning (the
-    // "not relevant" heading appears in both periods, the data-changed inset
-    // only on open adjusted).
+    // "not relevant" heading appears in both periods).
     expect({
       statusCode,
       openNewLoadsHeading: hasHeading('Open periods: new loads'),
@@ -3538,11 +3537,7 @@ describe('enhanced summary log check view', () => {
       closedAdjustedLoadsHeading: hasHeading('Closed periods: adjusted loads'),
       closedAdjustedLoadsCaption: hasText(
         'The adjusted loads will remove 4.00 tonnes from your waste balance.'
-      ),
-      dataChangedInsets: queryAllByText(
-        main,
-        'Data has been changed since this summary log was last uploaded.'
-      ).length
+      )
     }).toStrictEqual({
       statusCode: statusCodes.ok,
       openNewLoadsHeading: true,
@@ -3558,8 +3553,7 @@ describe('enhanced summary log check view', () => {
       closedNewLoadsHeading: true,
       closedNewLoadsAddedHeading: true,
       closedAdjustedLoadsHeading: true,
-      closedAdjustedLoadsCaption: true,
-      dataChangedInsets: 1
+      closedAdjustedLoadsCaption: true
     })
   })
 
@@ -3617,25 +3611,17 @@ describe('enhanced summary log check view', () => {
     const hasHeading = (name) => Boolean(queryByRole(main, 'heading', { name }))
 
     // The totals-only headings carry no balance suffix (the accredited variant
-    // would read "... (and added to your waste balance)"), and the data-changed
-    // inset still shows on open adjusted.
+    // would read "... (and added to your waste balance)").
     expect({
       openNewLoadsHeading: hasHeading('Open periods: new loads'),
       regOnlyNewLoadsHeading: hasHeading('4 new loads will be recorded'),
       regOnlyAdjustedLoadsHeading: hasHeading(
         '2 adjusted loads will be recorded'
-      ),
-      dataChangedInset: Boolean(
-        queryByText(
-          main,
-          'Data has been changed since this summary log was last uploaded.'
-        )
       )
     }).toStrictEqual({
       openNewLoadsHeading: true,
       regOnlyNewLoadsHeading: true,
-      regOnlyAdjustedLoadsHeading: true,
-      dataChangedInset: true
+      regOnlyAdjustedLoadsHeading: true
     })
   })
 
@@ -3878,7 +3864,7 @@ describe('enhanced summary log check view', () => {
     expect(result).toStrictEqual(expect.stringContaining('(from 100.00)'))
   })
 
-  it('hides the projection panel when the net tonnage delta is zero', async ({
+  it('shows the unchanged projection panel when the net tonnage delta is zero', async ({
     server
   }) => {
     givenWasteBalance(100)
@@ -3900,18 +3886,23 @@ describe('enhanced summary log check view', () => {
     const { result } = await renderMain(server)
 
     expect(result).toStrictEqual(
-      expect.not.stringContaining(
-        'If you upload this summary log to create a new report'
+      expect.stringContaining(
+        'If you upload this summary log to create a new report, your waste balance will still be'
       )
     )
+    expect(result).toStrictEqual(
+      expect.stringContaining('<strong>100.00</strong>')
+    )
+    // The unchanged wording carries no "(from ...)" suffix.
+    expect(result).toStrictEqual(expect.not.stringContaining('(from'))
   })
 
-  it('hides the projection panel when the deltas cancel to a sub-penny float residue', async ({
+  it('shows the unchanged projection panel when the deltas cancel to a sub-penny float residue', async ({
     server
   }) => {
     // 0.1 + 0.2 - 0.3 does not sum to exactly 0 in IEEE 754 (it lands on
-    // ~5.5e-17). An exact `netDelta === 0` gate would wrongly show the panel
-    // reading "will be 100.00 (from 100.00)". The rounded-to-2dp gate hides it.
+    // ~5.5e-17). The rounded-to-2dp gate treats this as no change, so the panel
+    // reads "will still be 100.00" rather than "will be 100.00 (from 100.00)".
     givenWasteBalance(100)
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
@@ -3940,10 +3931,14 @@ describe('enhanced summary log check view', () => {
     const { result } = await renderMain(server)
 
     expect(result).toStrictEqual(
-      expect.not.stringContaining(
-        'If you upload this summary log to create a new report'
+      expect.stringContaining(
+        'If you upload this summary log to create a new report, your waste balance will still be'
       )
     )
+    expect(result).toStrictEqual(
+      expect.stringContaining('<strong>100.00</strong>')
+    )
+    expect(result).toStrictEqual(expect.not.stringContaining('(from'))
   })
 
   it('hides the projection panel for a registered-only operator', async ({
@@ -4049,18 +4044,68 @@ describe('enhanced summary log check view', () => {
         'These loads could be missing required summary log data that stops them from adding to your waste balance.'
       ),
       disclosure: hasText('Show 2 loads'),
-      exportedRow: hasText(
-        'Exported (sections 1, 2 and 3), Row ID: 5. Required summary log data is missing'
-      ),
-      sentOnRow: hasText(
-        'Sent on (sections 4 and 5), Row ID: 8. Product weight is missing'
-      )
+      exportedSection: hasText('Exported'),
+      exportedRow: hasText('Row ID: 5. Required summary log data is missing'),
+      sentOnSection: hasText('Sent on'),
+      sentOnRow: hasText('Row ID: 8. Product weight is missing')
     }).toStrictEqual({
       notAddedBody: true,
       disclosure: true,
+      exportedSection: true,
       exportedRow: true,
+      sentOnSection: true,
       sentOnRow: true
     })
+  })
+
+  it('groups load rows by section in received, processed, exported, sent-on order', async ({
+    server
+  }) => {
+    // Rows arrive jumbled; the page groups them under section labels in the
+    // canonical summary-log flow order regardless of the order received.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 3,
+              rows: [
+                {
+                  rowId: '300',
+                  wasteRecordType: 'sentOn',
+                  exclusionReasons: [],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '100',
+                  wasteRecordType: 'received',
+                  exclusionReasons: [],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '200',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const sectionLabels = [...main.querySelectorAll('dt')].map((dt) =>
+      dt.textContent.trim()
+    )
+    expect(sectionLabels).toStrictEqual(['Received', 'Reprocessed', 'Sent on'])
   })
 
   // The with-data row is positive (+6) and the missing-data row negative (-1),
@@ -4112,18 +4157,23 @@ describe('enhanced summary log check view', () => {
       withDataHeading: hasText(
         'This load has all the required summary log data and has added to your waste balance'
       ),
-      withDataRow: hasText('Exported (sections 1, 2 and 3), Row ID: 1'),
+      withDataSection: hasText('Exported'),
+      withDataRow: hasText('Row ID: 1'),
       withoutDataHeading: hasText(
         'This load does NOT have all the required summary log data and has reduced your waste balance'
       ),
-      // The reason is suppressed for adjusted rows: an exact-text match would
-      // miss if "Required summary log data is missing" were appended.
-      withoutDataRow: hasText('Sent on (sections 4 and 5), Row ID: 2')
+      withoutDataSection: hasText('Sent on'),
+      // The reason is suppressed for adjusted rows: an exact-text match against
+      // the bare row would miss if "Required summary log data is missing" were
+      // appended.
+      withoutDataRow: hasText('Row ID: 2')
     }).toStrictEqual({
       disclosure: true,
       withDataHeading: true,
+      withDataSection: true,
       withDataRow: true,
       withoutDataHeading: true,
+      withoutDataSection: true,
       withoutDataRow: true
     })
   })
@@ -4163,10 +4213,12 @@ describe('enhanced summary log check view', () => {
     expect({
       heading: hasText('1 change is NOT relevant to your waste balance'),
       disclosure: hasText('Show 1 load'),
-      row: hasText('Exported (sections 1, 2 and 3), Row ID: 9')
+      section: hasText('Exported'),
+      row: hasText('Row ID: 9')
     }).toStrictEqual({
       heading: true,
       disclosure: true,
+      section: true,
       row: true
     })
   })
@@ -4213,13 +4265,17 @@ describe('enhanced summary log check view', () => {
       heading: hasText('2 new loads will be recorded'),
       body: hasText('These have been added to your summary log.'),
       disclosure: hasText('Show 2 loads'),
-      receivedRow: hasText('Received (section 1), Row ID: 3'),
-      exportedRow: hasText('Exported (sections 2 and 3), Row ID: 7')
+      receivedSection: hasText('Received'),
+      receivedRow: hasText('Row ID: 3'),
+      exportedSection: hasText('Exported'),
+      exportedRow: hasText('Row ID: 7')
     }).toStrictEqual({
       heading: true,
       body: true,
       disclosure: true,
+      receivedSection: true,
       receivedRow: true,
+      exportedSection: true,
       exportedRow: true
     })
   })
@@ -4329,13 +4385,13 @@ describe('enhanced summary log check view', () => {
       reprocessor: Boolean(
         queryByText(
           reprocessor.main,
-          'Received (sections 1, 2 and 3), Row ID: 4. A PRN was already issued for this load'
+          'Row ID: 4. A PRN was already issued for this load'
         )
       ),
       exporter: Boolean(
         queryByText(
           exporter.main,
-          'Exported (sections 1, 2 and 3), Row ID: 4. A PERN was already issued for this load'
+          'Row ID: 4. A PERN was already issued for this load'
         )
       )
     }).toStrictEqual({ reprocessor: true, exporter: true })
@@ -4377,10 +4433,7 @@ describe('enhanced summary log check view', () => {
 
     // Exact-text match: the raw const is appended after the row id full stop.
     expect(
-      queryByText(
-        main,
-        'Exported (sections 1, 2 and 3), Row ID: 6. OUTSIDE_ACCREDITATION_PERIOD'
-      )
+      queryByText(main, 'Row ID: 6. OUTSIDE_ACCREDITATION_PERIOD')
     ).not.toBeNull()
   })
 
@@ -4501,10 +4554,10 @@ describe('enhanced summary log check view', () => {
   })
 
   // The single source of truth for the worksheet (tab) name shown in each load
-  // row, keyed by processing type and waste record type. The name is the
-  // operator's actual spreadsheet tab, so a wrong string would point them at
-  // the wrong place in their own file. Every combination the backend can emit
-  // is listed here; a typo in any locale entry fails its row.
+  // row, keyed by processing type and waste record type. Per the design these
+  // are the plain tab names with the parenthesised section numbers dropped.
+  // Every combination the backend can emit is listed here; a typo in any locale
+  // entry fails its row.
   /**
    * @type {Array<{
    *   processingType: ProcessingType,
@@ -4516,67 +4569,67 @@ describe('enhanced summary log check view', () => {
     {
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'received',
-      worksheetName: 'Received (sections 1, 2 and 3)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'processed',
-      worksheetName: 'Reprocessed (section 4)'
+      worksheetName: 'Reprocessed'
     },
     {
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (sections 5, 6 and 7)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'REPROCESSOR_OUTPUT',
       wasteRecordType: 'received',
-      worksheetName: 'Received (sections 1 and 2)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'REPROCESSOR_OUTPUT',
       wasteRecordType: 'processed',
-      worksheetName: 'Reprocessed (sections 3 and 4)'
+      worksheetName: 'Reprocessed'
     },
     {
       processingType: 'REPROCESSOR_OUTPUT',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (sections 5 and 6)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      worksheetName: 'Exported (sections 1, 2 and 3)'
+      worksheetName: 'Exported'
     },
     {
       processingType: 'EXPORTER',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (sections 4 and 5)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'REPROCESSOR_REGISTERED_ONLY',
       wasteRecordType: 'received',
-      worksheetName: 'Received (section 1)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'REPROCESSOR_REGISTERED_ONLY',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (section 2)'
+      worksheetName: 'Sent on'
     },
     {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       wasteRecordType: 'received',
-      worksheetName: 'Received (section 1)'
+      worksheetName: 'Received'
     },
     {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       wasteRecordType: 'exported',
-      worksheetName: 'Exported (sections 2 and 3)'
+      worksheetName: 'Exported'
     },
     {
       processingType: 'EXPORTER_REGISTERED_ONLY',
       wasteRecordType: 'sentOn',
-      worksheetName: 'Sent on (section 4)'
+      worksheetName: 'Sent on'
     }
   ]
 
@@ -4589,9 +4642,9 @@ describe('enhanced summary log check view', () => {
 
       const { main } = await renderMain(server)
 
-      // Exact-match the whole bullet: a wrong worksheet name, or an unexpected
-      // appended reason, changes the text and fails.
-      expect(queryByText(main, `${worksheetName}, Row ID: 5`)).not.toBeNull()
+      // The worksheet name renders as the section label (a <dt>) the row sits
+      // under; a wrong string in any locale entry fails its row.
+      expect(queryByText(main, worksheetName)).not.toBeNull()
     }
   )
 
@@ -4614,43 +4667,38 @@ describe('enhanced summary log check view', () => {
       code: 'MISSING_REQUIRED_FIELD',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. Required summary log data is missing'
+      expectedBullet: 'Row ID: 5. Required summary log data is missing'
     },
     {
       code: 'PRODUCT_WEIGHT_NOT_ADDED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. Product weight is missing'
+      expectedBullet: 'Row ID: 5. Product weight is missing'
     },
     {
       code: 'ORS_NOT_APPROVED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. The ORS was not approved at the date of export'
+        'Row ID: 5. The ORS was not approved at the date of export'
     },
     {
       code: 'PRN_ISSUED',
       processingType: 'REPROCESSOR_INPUT',
       wasteRecordType: 'received',
-      expectedBullet:
-        'Received (sections 1, 2 and 3), Row ID: 5. A PRN was already issued for this load'
+      expectedBullet: 'Row ID: 5. A PRN was already issued for this load'
     },
     {
       code: 'PRN_ISSUED',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. A PERN was already issued for this load'
+      expectedBullet: 'Row ID: 5. A PERN was already issued for this load'
     },
     {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
-      expectedBullet:
-        'Exported (sections 1, 2 and 3), Row ID: 5. OUTSIDE_ACCREDITATION_PERIOD'
+      expectedBullet: 'Row ID: 5. OUTSIDE_ACCREDITATION_PERIOD'
     }
   ]
 

@@ -102,7 +102,6 @@
     "openAdjustedLoadsHeading": "Open periods: adjusted loads",
     "closedNewLoadsHeading": "Closed periods: new loads",
     "closedAdjustedLoadsHeading": "Closed periods: adjusted loads",
-    "adjustedDataChangedInset": "Data has been changed since this summary log was last uploaded.",
     "newLoadsCaption": "The new loads will add {{tonnage}} tonnes to your waste balance.",
     "adjustedLoadsCaptionAdd": "The adjusted loads will add {{tonnage}} tonnes to your waste balance.",
     "adjustedLoadsCaptionRemove": "The adjusted loads will remove {{tonnage}} tonnes from your waste balance.",
@@ -135,8 +134,9 @@
     "goBackButton": "Go back to previous page",
     "projectionPrefix": "If you upload this summary log to create a new report, your waste balance will be",
     "projectionSuffix": "(from {{current}})",
-    "loadRow": "{{worksheetName}}, Row ID: {{rowId}}",
-    "loadRowWithReason": "{{worksheetName}}, Row ID: {{rowId}}. {{reason}}",
+    "projectionUnchangedPrefix": "If you upload this summary log to create a new report, your waste balance will still be",
+    "loadRow": "Row ID: {{rowId}}",
+    "loadRowWithReason": "Row ID: {{rowId}}. {{reason}}",
     "tooManyLoads": "As there are 100 or more loads, we are not able to list them all here.",
     "adjustedWithDataAdded": "",
     "adjustedWithDataAdded_one": "This load has all the required summary log data and has added to your waste balance",
@@ -156,27 +156,27 @@
     },
     "worksheet": {
       "REPROCESSOR_INPUT": {
-        "received": "Received (sections 1, 2 and 3)",
-        "processed": "Reprocessed (section 4)",
-        "sentOn": "Sent on (sections 5, 6 and 7)"
+        "received": "Received",
+        "processed": "Reprocessed",
+        "sentOn": "Sent on"
       },
       "REPROCESSOR_OUTPUT": {
-        "received": "Received (sections 1 and 2)",
-        "processed": "Reprocessed (sections 3 and 4)",
-        "sentOn": "Sent on (sections 5 and 6)"
+        "received": "Received",
+        "processed": "Reprocessed",
+        "sentOn": "Sent on"
       },
       "EXPORTER": {
-        "exported": "Exported (sections 1, 2 and 3)",
-        "sentOn": "Sent on (sections 4 and 5)"
+        "exported": "Exported",
+        "sentOn": "Sent on"
       },
       "REPROCESSOR_REGISTERED_ONLY": {
-        "received": "Received (section 1)",
-        "sentOn": "Sent on (section 2)"
+        "received": "Received",
+        "sentOn": "Sent on"
       },
       "EXPORTER_REGISTERED_ONLY": {
-        "received": "Received (section 1)",
-        "exported": "Exported (sections 2 and 3)",
-        "sentOn": "Sent on (section 4)"
+        "received": "Received",
+        "exported": "Exported",
+        "sentOn": "Sent on"
       }
     }
   },
