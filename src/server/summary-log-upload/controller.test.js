@@ -4,7 +4,9 @@ import * as fetchOrganisationModule from '#server/common/helpers/organisations/f
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
+import { getByLabelText, getByRole, getByText } from '@testing-library/dom'
 import * as cheerio from 'cheerio'
+import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import {Organisation} from '#domain/organisations/model.js' */
@@ -124,6 +126,9 @@ describe('#summaryLogUploadController', () => {
   })
 
   describe('page content', () => {
+    const introText =
+      'You can upload the latest version of your summary log whenever you need to add or adjust waste records.'
+
     it('should render caption "Summary log"', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -131,34 +136,15 @@ describe('#summaryLogUploadController', () => {
         auth: mockAuth
       })
 
-      expect(result).toContain('govuk-caption-xl">Summary log')
-    })
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
 
-    it('should render heading "Upload your summary log"', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toContain('Upload your summary log')
-    })
-
-    it('should render intro text', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toContain(
-        'You can upload the latest version of your summary log whenever you need to add or adjust waste records.'
+      expect(getByText(main, 'Summary log').className).toContain(
+        'govuk-caption-xl'
       )
     })
 
-    it('should render file upload with label "Choose XLSX file"', async ({
+    it('should render heading "Upload your summary log" as an h1', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -167,7 +153,75 @@ describe('#summaryLogUploadController', () => {
         auth: mockAuth
       })
 
-      expect(result).toContain('Choose XLSX file')
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByRole(main, 'heading', {
+          level: 1,
+          name: /Upload your summary log/i
+        })
+      ).toBeDefined()
+    })
+
+    it('should render the intro as a lead paragraph', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, introText).className).toContain('govuk-body-l')
+    })
+
+    it('should wrap the intro in an inset text component', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
+
+      expect(main.querySelector('.govuk-inset-text')?.textContent).toContain(
+        introText
+      )
+    })
+
+    it('should render file upload labelled "Choose XLSX file"', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByLabelText(main, 'Choose XLSX file')).toBeDefined()
+    })
+
+    it('should render the file upload label in bold', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
+
+      expect(getByText(main, 'Choose XLSX file').className).toContain(
+        'govuk-!-font-weight-bold'
+      )
     })
 
     it('should render helper text below the file input', async ({ server }) => {
@@ -177,29 +231,28 @@ describe('#summaryLogUploadController', () => {
         auth: mockAuth
       })
 
-      expect(result).toContain(
-        'Your chosen file will be checked for errors, new data and data changes when you continue.'
-      )
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
+
+      expect(
+        getByText(
+          main,
+          'Your chosen file will be checked for errors, new data and data changes when you continue.'
+        )
+      ).toBeDefined()
     })
 
-    it('should render file upload label in bold', async ({ server }) => {
+    it('should render a Continue button', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url,
         auth: mockAuth
       })
 
-      expect(result).toContain('govuk-!-font-weight-bold')
-    })
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
 
-    it('should render Continue button', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toContain('Continue')
+      expect(getByRole(main, 'button', { name: 'Continue' })).toBeDefined()
     })
 
     it('should not render accordion sections', async ({ server }) => {
@@ -209,20 +262,11 @@ describe('#summaryLogUploadController', () => {
         auth: mockAuth
       })
 
-      expect(result).not.toContain('govuk-accordion')
-      expect(result).not.toContain('Why this is needed')
-    })
+      const { body } = new JSDOM(result).window.document
+      const main = getByRole(body, 'main')
 
-    it('should render intro text as an inset text component', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toContain('govuk-inset-text')
+      expect(main.querySelector('.govuk-accordion')).toBeNull()
+      expect(main.textContent).not.toContain('Why this is needed')
     })
   })
 
