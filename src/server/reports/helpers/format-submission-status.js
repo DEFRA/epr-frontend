@@ -23,7 +23,7 @@ const statusLabelKeys = {
 
 /** @type {Record<SubmissionStatusValue, string>} */
 const actionLabelKeys = {
-  [SUBMISSION_STATUS.DUE]: 'reports:actionSelect',
+  [SUBMISSION_STATUS.DUE]: 'reports:actionCreateDraft',
   [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:actionContinue',
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:actionReviewAndSubmit',
   [SUBMISSION_STATUS.SUBMITTED]: 'reports:actionView'

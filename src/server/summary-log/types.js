@@ -165,16 +165,69 @@
  */
 
 /**
+ * One listed load from a bucket: its identity, the distinct exclusion reason
+ * codes (empty for an included load) and the signed tonnage this leg
+ * contributed to the period balance (0 for a non-balance-affecting load).
+ * @typedef {{
+ *   rowId: RowId,
+ *   wasteRecordType: WasteRecordType,
+ *   exclusionReasons: string[],
+ *   tonnageDelta: number
+ * }} LoadRow
+ */
+
+/**
+ * A load projected for display: the row id and the exclusion reason text (null
+ * when the load carries none). The worksheet (tab) name lives on the enclosing
+ * {@link LoadSectionViewModel}, not the row.
+ * @typedef {{
+ *   rowId: RowId,
+ *   reasonText: string | null
+ * }} LoadRowViewModel
+ */
+
+/**
+ * A group of load rows sharing one worksheet (tab), rendered as a labelled
+ * section in a load list. Sections are emitted in the summary-log flow order
+ * and only when they carry rows.
+ * @typedef {{
+ *   sectionName: string,
+ *   rows: LoadRowViewModel[]
+ * }} LoadSectionViewModel
+ */
+
+/**
  * Balance-affecting bucket within a reporting-period change type. Carries the
  * tonnage that moves the waste balance; tonnageDelta can be negative
- * (adjustments reducing tonnage).
- * @typedef {{ count: number, tonnageDelta: number }} BalanceAffectingBucket
+ * (adjustments reducing tonnage). The backend always sends a (capped) rows
+ * array; the frontend schema keeps rows optional so response validation never
+ * strips the row identity the check page renders, and the consumption boundary
+ * defends against its absence (rows ?? []).
+ * @typedef {{ count: number, tonnageDelta: number, rows?: LoadRow[] }} BalanceAffectingBucket
+ */
+
+/**
+ * View model for a balance-affecting bucket. The adjusted accordion splits its
+ * rows into loads with all required data (the heading reflects the group's
+ * direction) and loads still missing data. The missing-data heading hardcodes
+ * "reduced": such a row only becomes balance-affecting by reversing its earlier
+ * contribution, so its delta is always negative (see splitBalanceAffecting).
+ * @typedef {{
+ *   count: number,
+ *   withData: {
+ *     addsToBalance: boolean,
+ *     count: number,
+ *     sections: LoadSectionViewModel[]
+ *   },
+ *   withoutData: { count: number, sections: LoadSectionViewModel[] }
+ * }} BalanceAffectingViewModel
  */
 
 /**
  * Non-balance-affecting bucket. These loads do not move the waste balance, so
- * the backend sends count only (no tonnage).
- * @typedef {{ count: number }} NonBalanceAffectingBucket
+ * the backend sends count and rows only (no tonnage). Rows is optional for the
+ * same trust-boundary reason as {@link BalanceAffectingBucket}.
+ * @typedef {{ count: number, rows?: LoadRow[] }} NonBalanceAffectingBucket
  */
 
 /**
@@ -208,8 +261,8 @@
  *   absoluteTonnage: string,
  *   addsToBalance: boolean,
  *   hasTonnageDelta: boolean,
- *   balanceAffecting: { count: number },
- *   nonBalanceAffecting: { count: number }
+ *   balanceAffecting: BalanceAffectingViewModel,
+ *   nonBalanceAffecting: { count: number, sections: LoadSectionViewModel[] }
  * }} ChangeViewModel
  */
 

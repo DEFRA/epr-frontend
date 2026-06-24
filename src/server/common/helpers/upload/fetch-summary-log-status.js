@@ -1,5 +1,6 @@
 import { summaryLogStatusResponseSchema } from '#domain/summary-logs/loads-schema.js'
 import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-backend.js'
+import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
  * @import { SummaryLogStatusResponse } from '#server/summary-log/types.js'
@@ -25,8 +26,18 @@ const fetchSummaryLogStatus = async (
     { method: 'GET', headers: { Authorization: `Bearer ${idToken}` } }
   )
 
-  return summaryLogStatusResponseSchema.validate(data, { stripUnknown: true })
-    .value
+  // stripUnknown drops fields outside the schema; we keep the validated value
+  // regardless of error so a backend drift degrades gracefully rather than
+  // 500ing the page, but we log any violation so the drift is observable.
+  const { value, error } = summaryLogStatusResponseSchema.validate(data, {
+    stripUnknown: true
+  })
+  if (error) {
+    createLogger().warn({
+      message: `Summary log status response failed validation: ${error.message}`
+    })
+  }
+  return value
 }
 
 export { fetchSummaryLogStatus }

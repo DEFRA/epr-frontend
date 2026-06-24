@@ -64,8 +64,8 @@ describe('#format-submission-status', () => {
       )
     })
 
-    it('returns "Select" action for "due" status', () => {
-      expect(getActionLabel('due', localise)).toBe('reports:actionSelect')
+    it('returns "Create draft" action for "due" status', () => {
+      expect(getActionLabel('due', localise)).toBe('reports:actionCreateDraft')
     })
 
     it('returns "Review and submit" action for "ready_to_submit" status', () => {
