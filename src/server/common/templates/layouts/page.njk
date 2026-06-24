@@ -19,13 +19,15 @@
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
 {% endblock %}
 
-{% block header %}
+{% block govukHeader %}
   {{ govukHeader({
     homepageUrl: "https://www.gov.uk/",
     classes: "app-header",
     containerClasses: "govuk-width-container"
   }) }}
+{% endblock %}
 
+{% block govukServiceNavigation %}
   {{ govukServiceNavigation({
     serviceName: localise('common:serviceName'),
     serviceUrl: localiseUrl(serviceUrl),
@@ -35,7 +37,7 @@
 
 {% block pageTitle %}{{ pageTitle }} | {{ localise('common:serviceName') }}{% endblock %}
 
-{% block beforeContent %}
+{% block containerStart %}
   {{ govukPhaseBanner({
     tag: {
       text: "Beta"
