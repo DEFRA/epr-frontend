@@ -488,7 +488,9 @@ describe('#listReportsController', () => {
       ])
     })
 
-    it('should display Due tag for ended periods', async ({ server }) => {
+    it('should display Overdue and Due tags for ended periods', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -501,7 +503,7 @@ describe('#listReportsController', () => {
       const tagData = extractTagData(body)
 
       expect(tagData).toStrictEqual([
-        { text: 'Due', modifier: 'govuk-tag--orange' },
+        { text: 'Overdue', modifier: 'govuk-tag--red' },
         { text: 'Due', modifier: 'govuk-tag--orange' }
       ])
     })
