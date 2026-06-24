@@ -8,6 +8,7 @@ import { SUBMISSION_STATUS } from '../constants.js'
 /** @type {Record<SubmissionStatusValue, string>} */
 const tagClasses = {
   [SUBMISSION_STATUS.DUE]: cssClasses.tag.orange,
+  [SUBMISSION_STATUS.OVERDUE]: cssClasses.tag.red,
   [SUBMISSION_STATUS.IN_PROGRESS]: cssClasses.tag.yellow,
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: cssClasses.tag.blue,
   [SUBMISSION_STATUS.SUBMITTED]: cssClasses.tag.green
@@ -16,6 +17,7 @@ const tagClasses = {
 /** @type {Record<SubmissionStatusValue, string>} */
 const statusLabelKeys = {
   [SUBMISSION_STATUS.DUE]: 'reports:statusDue',
+  [SUBMISSION_STATUS.OVERDUE]: 'reports:statusOverdue',
   [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:statusInProgress',
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:statusReadyToSubmit',
   [SUBMISSION_STATUS.SUBMITTED]: 'reports:statusSubmitted'
@@ -24,6 +26,7 @@ const statusLabelKeys = {
 /** @type {Record<SubmissionStatusValue, string>} */
 const actionLabelKeys = {
   [SUBMISSION_STATUS.DUE]: 'reports:actionCreateDraft',
+  [SUBMISSION_STATUS.OVERDUE]: 'reports:actionCreateDraft',
   [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:actionContinue',
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:actionReviewAndSubmit',
   [SUBMISSION_STATUS.SUBMITTED]: 'reports:actionView'
