@@ -135,12 +135,6 @@ export const config = convict({
     default: isProduction,
     env: 'ENABLE_SECURE_CONTEXT'
   },
-  isMetricsEnabled: {
-    doc: 'Enable metrics reporting',
-    format: Boolean,
-    default: isProduction,
-    env: 'ENABLE_METRICS'
-  },
   session: {
     cache: {
       engine: {

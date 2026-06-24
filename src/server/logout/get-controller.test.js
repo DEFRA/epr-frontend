@@ -1,39 +1,22 @@
+import { Metrics } from '@defra/cdp-metrics'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
-const mockSignOutSuccessMetric = vi.fn()
+const counterSpy = vi.spyOn(Metrics.prototype, 'counter').mockResolvedValue()
 const mockCdpAuditing = vi.fn()
-
-vi.mock(
-  import('#server/common/helpers/metrics/index.js'),
-  async (importOriginal) => ({
-    metrics: {
-      ...(await importOriginal()).metrics,
-      signOutSuccess: () => mockSignOutSuccessMetric()
-    }
-  })
-)
 
 vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mockCdpAuditing(...args)
 }))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-id',
-      email: 'user@email.com'
-    },
-    urls: {
-      logout: 'http://defra-id.auth/logout'
-    }
-  }
-}
+const mockAuth = buildMockAuth({
+  idToken: 'test-id-token',
+  profile: { id: 'user-id', email: 'user@email.com' }
+})
 
 describe('#logoutController - integration', () => {
   beforeEach(() => {
@@ -52,7 +35,9 @@ describe('#logoutController - integration', () => {
 
       expect(response.statusCode).toBe(statusCodes.found)
 
-      const redirectUrl = new URL(response.headers.location)
+      const redirectUrl = new URL(
+        /** @type {string} */ (response.headers['location'])
+      )
 
       expect(redirectUrl.host).toBe('defra-id.auth')
       expect(redirectUrl.pathname).toBe('/logout')
@@ -89,7 +74,7 @@ describe('#logoutController - integration', () => {
         auth: mockAuth
       })
 
-      expect(mockSignOutSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(counterSpy).toHaveBeenCalledWith('signOutSuccess')
     })
   })
 
@@ -119,7 +104,7 @@ describe('#logoutController - integration', () => {
         url: '/logout'
       })
 
-      expect(mockSignOutSuccessMetric).not.toHaveBeenCalled()
+      expect(counterSpy).not.toHaveBeenCalledWith('signOutSuccess')
     })
   })
 })

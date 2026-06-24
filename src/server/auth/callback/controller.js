@@ -3,7 +3,6 @@ import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisa
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
-import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID, createHash } from 'node:crypto'
 
@@ -42,7 +41,7 @@ const controller = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
-      await metrics.signInFailure()
+      await request.metrics.counter('signInFailure')
     }
 
     if (request.auth.isAuthenticated) {
@@ -52,7 +51,7 @@ const controller = {
       await request.server.app.cache.set(sessionId, session)
 
       auditSignIn(session.profile.id, session.profile.email)
-      await metrics.signInSuccess()
+      await request.metrics.counter('signInSuccess')
 
       request.cookieAuth.set({ sessionId })
 
@@ -75,7 +74,7 @@ const controller = {
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
       if (!isInitialUser) {
-        await metrics.signInSuccessNonInitialUser()
+        await request.metrics.counter('signInSuccessNonInitialUser')
       }
 
       // Store linked organisation ID in session for navigation
