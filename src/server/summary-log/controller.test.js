@@ -168,12 +168,12 @@ describe('#summaryLogUploadProgressController', () => {
       expect(
         getByRole(pageBody, 'heading', {
           level: 1,
-          name: 'Your file is being checked'
+          name: 'Your summary log is being checked'
         })
       ).toBeDefined()
       const paragraphs = getAllByRole(pageBody, 'paragraph')
       expect(paragraphs[0].textContent?.trim()).toBe(
-        'Your summary log is being checked for:'
+        'The file is being checked for:'
       )
       expect(
         getAllByRole(pageBody, 'listitem').map((li) => li.textContent?.trim())
@@ -207,7 +207,7 @@ describe('#summaryLogUploadProgressController', () => {
       })
 
       expect(result).toStrictEqual(
-        expect.stringContaining('Your file is being checked')
+        expect.stringContaining('Your summary log is being checked')
       )
       expect(result).toStrictEqual(enablesClientSidePolling())
       expect(statusCode).toBe(statusCodes.ok)
@@ -1051,7 +1051,9 @@ describe('#summaryLogUploadProgressController', () => {
           )
 
           expect(panelBody).not.toBeNull()
-          expect(panelBody?.textContent).toContain('Your updated waste balance')
+          expect(panelBody?.textContent).toContain(
+            'Your updated waste balance is'
+          )
           expect(panelBody?.textContent).toContain(expected)
           expect(panelBody?.textContent).toContain('tonnes')
         }
