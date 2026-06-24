@@ -35,7 +35,7 @@ const stubUser = {
 const baseRegistration = {
   id: 'reg-001',
   approvedPersons: [],
-  formSubmissionTime: new Date('2026-01-01'),
+  formSubmissionTime: '2026-01-01T00:00:00.000Z',
   material: 'plastic',
   orgName: 'Test Organisation',
   site: {
@@ -57,7 +57,7 @@ const baseOrganisation = {
   id: 'org-123',
   accreditations: [],
   companyDetails: { name: 'Test Organisation' },
-  formSubmissionTime: new Date('2026-01-01'),
+  formSubmissionTime: '2026-01-01T00:00:00.000Z',
   orgId: 1,
   registrations: [],
   schemaVersion: 1,
@@ -76,7 +76,10 @@ const baseOrganisation = {
  */
 function buildRegistration(overrides = {}) {
   return {
-    organisationData: { ...baseOrganisation, ...overrides.organisationData },
+    organisationData: /** @type {Organisation} */ ({
+      ...baseOrganisation,
+      ...overrides.organisationData
+    }),
     registration: /** @type {RegistrationApproved} */ ({
       ...baseRegistration,
       ...overrides.registration
@@ -772,13 +775,26 @@ describe('#submitController', () => {
         const body = await getBody(server)
 
         expect(body.textContent).toContain(
-          'By submitting this report to your regulator you confirm that'
+          'By entering your name and submitting this report, you are verifying:'
         )
-        expect(body.textContent).toContain('you are an approved person')
-        expect(body.textContent).toContain('as accurate as reasonably possible')
         expect(body.textContent).toContain(
-          'false or misleading information may result in enforcement action'
+          'you are an approved person or delegated person who is eligible to submit this report on behalf of Test Organisation'
         )
+        expect(body.textContent).toContain(
+          'the information you are submitting is accurate'
+        )
+        expect(body.textContent).toContain(
+          'you understand that you may face enforcement action if you submit false or misleading data.'
+        )
+      })
+
+      it('should display Enter your full name input', async ({ server }) => {
+        const body = await getBody(server)
+        const input = body.querySelector('#submissionDeclaredBy')
+
+        expect(input).not.toBeNull()
+        expect(input.getAttribute('name')).toBe('submissionDeclaredBy')
+        expect(input.getAttribute('autocomplete')).toBe('name')
       })
 
       it('should display Confirm and submit button', async ({ server }) => {
@@ -1331,7 +1347,7 @@ describe('#submitController', () => {
     })
 
     describe('when Confirm and submit is clicked', () => {
-      it('should call updateReportStatus with submitted status', async ({
+      it('should call updateReportStatus with submitted status and submissionDeclaredBy', async ({
         server
       }) => {
         const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
@@ -1343,7 +1359,7 @@ describe('#submitController', () => {
           url: baseUrl,
           auth: mockAuth,
           headers: { cookie },
-          payload: { crumb, version: 1 }
+          payload: { crumb, version: 1, submissionDeclaredBy: 'Test User' }
         })
 
         expect(updateReportStatus).toHaveBeenCalledWith(
@@ -1355,7 +1371,11 @@ describe('#submitController', () => {
             period: 1,
             submissionNumber: 1
           },
-          { status: 'submitted', version: 1 },
+          {
+            status: 'submitted',
+            version: 1,
+            submissionDeclaredBy: 'Test User'
+          },
           'mock-id-token'
         )
       })
@@ -1372,11 +1392,169 @@ describe('#submitController', () => {
           url: baseUrl,
           auth: mockAuth,
           headers: { cookie },
-          payload: { crumb, version: 1 }
+          payload: { crumb, version: 1, submissionDeclaredBy: 'Test User' }
         })
 
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(submittedUrl)
+      })
+    })
+
+    describe('validation errors for submissionDeclaredBy', () => {
+      it('should re-render form with error when name is empty', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: '' }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'You must enter your full name as it appears on this account'
+        )
+      })
+
+      it('should re-render form with empty error when name is only whitespace', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: '            ' }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'You must enter your full name as it appears on this account'
+        )
+      })
+
+      it('should re-render form with too short error when name is whitespace-padded single char', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: '        h' }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'Your name must be more than one character'
+        )
+      })
+
+      it('should re-render form with error when name is too short (1 char)', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: 'A' }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'Your name must be more than one character'
+        )
+      })
+
+      it('should re-render form with error when name is too long (256 chars)', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: 'A'.repeat(256) }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'Your name must be fewer than 255 characters'
+        )
+      })
+
+      it('should re-render form with error when name contains invalid characters', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: {
+            crumb,
+            version: 1,
+            submissionDeclaredBy: 'James@bond.com'
+          }
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(body.textContent).toContain(
+          'Your name cannot contain these characters: @, #, $, %, &, <, >'
+        )
+      })
+
+      it('should preserve entered name value on re-render', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+          auth: mockAuth
+        })
+
+        const { result } = await server.inject({
+          method: 'POST',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: 'A' }
+        })
+        const body = new JSDOM(result).window.document.body
+        const input = body.querySelector('#submissionDeclaredBy')
+
+        expect(input?.getAttribute('value')).toBe('A')
       })
     })
   })

@@ -13,6 +13,36 @@
   }
 }
 
+// Loads grouped by worksheet (tab) inside a "Show [x] loads" disclosure on the
+// enhanced check page. The section name is a bold term; its Row IDs sit in a
+// bulleted list below, with the browser's default <dd> indent removed so the
+// bullets align under the section name.
+.epr-load-sections {
+  margin-bottom: 0;
+
+  &__section {
+    @include govuk-font($size: 19);
+    margin-top: govuk-spacing(3);
+  }
+
+  &__rows {
+    margin-left: 0;
+  }
+}
+
+// Leading gap before each period group (open, closed) on the enhanced check
+// page, separating the two groups. The GOV.UK spacing scale caps at point 9
+// (60px on tablet+), which the design wants exceeded, so the gap is composed
+// from scale units here rather than via a govuk-!-margin-top-* utility. Mobile
+// keeps the point-9 gap; tablet and up goes one step beyond.
+.epr-period-group {
+  margin-top: govuk-spacing(7);
+
+  @include govuk-media-query($from: tablet) {
+    margin-top: govuk-spacing(9) + govuk-spacing(2);
+  }
+}
+
 // The "value entered" cell can hold an arbitrary, unbroken operator string
 // (e.g. a 100+ char free-text value). overflow-wrap: anywhere lets it break
 // mid-token so the cell can shrink and the table stays within its column,

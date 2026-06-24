@@ -49,13 +49,34 @@ export const loadsByWasteRecordTypeSchema = Joi.array()
   )
   .unique('wasteRecordType')
 
-const balanceAffectingBucketSchema = Joi.object({
-  count: nonNegativeInteger,
+// One listed load within a bucket, mirroring the backend's rowDetailSchema.
+// Kept optional on the buckets so validation never strips the row identity the
+// check page renders, while tolerating a backend that omits it.
+const rowDetailSchema = Joi.object({
+  rowId: Joi.string().required(),
+  wasteRecordType: Joi.string()
+    .valid(...Object.values(WASTE_RECORD_TYPE))
+    .required(),
+  exclusionReasons: Joi.array().items(Joi.string()).required(),
   tonnageDelta: Joi.number().required()
 })
 
+// Mirrors epr-backend: each bucket's rows are truncated to this cap, so a count
+// at or above it means the listed rows are incomplete and the view shows a
+// "too many to list" message instead.
+export const MAX_ROWS_PER_BUCKET = 100
+
+const rowsSchema = Joi.array().items(rowDetailSchema).max(MAX_ROWS_PER_BUCKET)
+
+const balanceAffectingBucketSchema = Joi.object({
+  count: nonNegativeInteger,
+  tonnageDelta: Joi.number().required(),
+  rows: rowsSchema
+})
+
 const nonBalanceAffectingBucketSchema = Joi.object({
-  count: nonNegativeInteger
+  count: nonNegativeInteger,
+  rows: rowsSchema
 })
 
 const periodStatusGroupSchema = Joi.object({
