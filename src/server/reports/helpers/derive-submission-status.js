@@ -12,12 +12,10 @@ const ISO_DATE_FORMAT = 'YYYY-MM-DD'
  * Dates are compared as ISO date strings (YYYY-MM-DD), which sort
  * chronologically: a period is overdue once the current UTC date is past its
  * due date, i.e. from the 21st when the due date is the 20th.
- * @param {string} endDate - ISO date string for the period end (e.g. "2026-01-31")
- * @param {string} dueDate - ISO date string for the due date (e.g. "2026-02-20")
- * @param {{ id: string, status: SubmissionStatusValue } | null} report - persisted report, or null
+ * @param {{ endDate: string, dueDate: string, report: { id: string, status: SubmissionStatusValue } | null }} period
  * @returns {SubmissionStatusValue | null}
  */
-export function deriveSubmissionStatus(endDate, dueDate, report) {
+export function deriveSubmissionStatus({ endDate, dueDate, report }) {
   if (report !== null) {
     return report.status
   }
