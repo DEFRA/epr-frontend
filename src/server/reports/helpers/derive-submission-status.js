@@ -21,13 +21,13 @@ export function deriveSubmissionStatus({ endDate, dueDate, report }) {
   }
 
   const today = new Date().toISOString().slice(0, ISO_DATE_FORMAT.length)
-  const periodEnded = today > endDate
+  const periodEnded = today.localeCompare(endDate) > 0
 
   if (!periodEnded) {
     return null
   }
 
-  const overdue = today > dueDate
+  const overdue = today.localeCompare(dueDate) > 0
 
   return overdue ? SUBMISSION_STATUS.OVERDUE : SUBMISSION_STATUS.DUE
 }
