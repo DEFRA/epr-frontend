@@ -15,24 +15,22 @@ describe('#deriveSubmissionStatus', () => {
     vi.useRealTimers()
   })
 
-  it('returns report status when report exists', () => {
-    const report = {
-      id: 'report-123',
-      status: SUBMISSION_STATUS.IN_PROGRESS
+  it.each(
+    /** @type {Array<{ status: import('#server/reports/constants.js').SubmissionStatusValue }>} */ ([
+      { status: SUBMISSION_STATUS.IN_PROGRESS },
+      { status: SUBMISSION_STATUS.READY_TO_SUBMIT },
+      { status: SUBMISSION_STATUS.SUBMITTED }
+    ])
+  )(
+    'returns the persisted "$status" status even though the due date has passed',
+    ({ status }) => {
+      const report = { id: 'report-123', status }
+
+      expect(deriveSubmissionStatus('2026-01-31', '2026-02-20', report)).toBe(
+        status
+      )
     }
-
-    expect(deriveSubmissionStatus('2026-01-31', '2026-02-20', report)).toBe(
-      'in_progress'
-    )
-  })
-
-  it('returns report status when report is submitted', () => {
-    const report = { id: 'report-456', status: SUBMISSION_STATUS.SUBMITTED }
-
-    expect(deriveSubmissionStatus('2026-01-31', '2026-02-20', report)).toBe(
-      'submitted'
-    )
-  })
+  )
 
   it('returns null when period has not ended', () => {
     expect(deriveSubmissionStatus('2026-03-31', '2026-04-20', null)).toBeNull()
