@@ -35,15 +35,19 @@
   }) }}
 {% endblock %}
 
-{% block pageTitle %}{{ pageTitle }} | {{ localise('common:serviceName') }}{% endblock %}
-
-{% block beforeContent %}
+{% block headerEnd %}
   {{ govukPhaseBanner({
     tag: {
       text: "Beta"
     },
+    classes: "govuk-width-container",
     html: 'This is a new service. Help us improve it and <a class="govuk-link" href="mailto:eprcustomerservice@defra.gov.uk">give your feedback by email</a>.'
   }) }}
+{% endblock %}
+
+{% block pageTitle %}{{ pageTitle }} | {{ localise('common:serviceName') }}{% endblock %}
+
+{% block beforeContent %}
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({
       items: breadcrumbs
