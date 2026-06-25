@@ -1,10 +1,10 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
-import { formatDate } from '#server/common/helpers/format-date.js'
+import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { CADENCE, SUBMISSION_STATUS } from './constants.js'
+import { SUBMISSION_STATUS } from './constants.js'
 import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -50,7 +50,7 @@ const formatSubmittedDateTime = (isoString) => {
   if (!isoString) {
     return ''
   }
-  return `${formatDate(isoString)}, ${formatTime(isoString)}`
+  return `${formatDateShort(isoString)}, ${formatTime(isoString)}`
 }
 
 /** @type {Partial<Record<SubmissionStatusValue, string>>} */
@@ -180,7 +180,7 @@ function buildRows({
       activeRows.push([
         { text: label },
         { html: statusTagHtml },
-        { text: formatDate(period.dueDate) },
+        { text: formatDateShort(period.dueDate) },
         actionCell
       ])
     }
@@ -222,6 +222,21 @@ const buildHeaders = (localise) => ({
   ]
 })
 
+/**
+ * @param {ReportingPeriod[]} reportingPeriods
+ * @param {TFunction} localise
+ * @returns {string | null}
+ */
+const buildApprovedPersonBanner = (reportingPeriods, localise) => {
+  const count = reportingPeriods.filter(
+    (p) =>
+      deriveSubmissionStatus(p.endDate, p.report) ===
+      SUBMISSION_STATUS.READY_TO_SUBMIT
+  ).length
+
+  return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null
+}
+
 /** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: ReportListParams }>>} */
 export const listController = {
   async handler(request, h) {
@@ -241,12 +256,6 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
-    const cadenceHeading = localise(
-      cadence === CADENCE.MONTHLY
-        ? 'reports:monthlyHeading'
-        : 'reports:quarterlyHeading'
-    )
-
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 
     const { activeRows, submittedRows } = buildRows({
@@ -259,16 +268,21 @@ export const listController = {
       reportingPeriods
     })
 
+    const approvedPersonBanner = buildApprovedPersonBanner(
+      reportingPeriods,
+      localise
+    )
+
     const viewData = {
       active: {
         head: activeHeader,
         rows: activeRows,
         emptyMessage: localise('reports:actionRequiredEmpty')
       },
+      approvedPersonBanner,
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
-      cadenceHeading,
       heading: localise('reports:heading'),
       material,
       pageTitle: localise('reports:pageTitle', { material }),

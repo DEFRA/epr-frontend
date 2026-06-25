@@ -18,7 +18,15 @@
         {{ heading }}
       </h1>
 
-      <h2 class="govuk-heading-m">{{ cadenceHeading }}</h2>
+      {% if approvedPersonBanner %}
+        <div class="govuk-warning-text">
+          <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+          <strong class="govuk-warning-text__text">
+            <span class="govuk-visually-hidden">{{ localise("common:warning") }}</span>
+            {{ approvedPersonBanner }}
+          </strong>
+        </div>
+      {% endif %}
 
       <h3 class="govuk-heading-m">{{ localise("reports:actionRequiredHeading") }}</h3>
       {% if active.rows.length %}
