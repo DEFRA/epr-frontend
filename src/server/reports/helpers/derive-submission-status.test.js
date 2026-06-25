@@ -28,7 +28,12 @@ describe('#deriveSubmissionStatus', () => {
   )(
     'returns the persisted "$status" status even though the due date has passed',
     ({ status }) => {
-      const report = { id: 'report-123', status }
+      const report = {
+        id: 'report-123',
+        status,
+        submittedAt: null,
+        submittedBy: null
+      }
 
       expect(
         deriveSubmissionStatus({

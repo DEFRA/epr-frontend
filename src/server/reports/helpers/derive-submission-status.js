@@ -2,9 +2,13 @@ import { SUBMISSION_STATUS } from '../constants.js'
 
 /**
  * @import { SubmissionStatusValue } from '../constants.js'
+ * @import { ReportingPeriod } from './fetch-reporting-periods.js'
  */
 
 const ISO_DATE_FORMAT = 'YYYY-MM-DD'
+
+const currentIsoDate = () =>
+  new Date().toISOString().slice(0, ISO_DATE_FORMAT.length)
 
 /**
  * Derive the submission status for a reporting period.
@@ -12,7 +16,7 @@ const ISO_DATE_FORMAT = 'YYYY-MM-DD'
  * Dates are compared as ISO date strings (YYYY-MM-DD), which sort
  * chronologically: a period is overdue once the current UTC date is past its
  * due date, i.e. from the 21st when the due date is the 20th.
- * @param {{ endDate: string, dueDate: string, report: { id: string, status: SubmissionStatusValue } | null }} period
+ * @param {Pick<ReportingPeriod, 'endDate' | 'dueDate' | 'report'>} period
  * @returns {SubmissionStatusValue | null}
  */
 export function deriveSubmissionStatus({ endDate, dueDate, report }) {
@@ -20,9 +24,9 @@ export function deriveSubmissionStatus({ endDate, dueDate, report }) {
     return report.status
   }
 
-  const today = new Date().toISOString().slice(0, ISO_DATE_FORMAT.length)
-  const periodEnded = today.localeCompare(endDate) > 0
+  const today = currentIsoDate()
 
+  const periodEnded = today.localeCompare(endDate) > 0
   if (!periodEnded) {
     return null
   }
