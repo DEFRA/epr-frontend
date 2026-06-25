@@ -159,7 +159,8 @@
     "reason": {
       "MISSING_REQUIRED_FIELD": "Required summary log data is missing",
       "PRODUCT_WEIGHT_NOT_ADDED": "Product weight is missing",
-      "ORS_NOT_APPROVED": "The ORS was not approved at the date of export",
+      "ORS_NOT_APPROVED": "The Overseas Reprocessing Site was not approved at the date of export",
+      "ORS_NOT_FOUND": "The OSR_ID has no matching overseas site registration",
       "PRN_ISSUED": "A PRN was already issued for this load",
       "PERN_ISSUED": "A PERN was already issued for this load"
     },

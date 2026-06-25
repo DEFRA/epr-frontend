@@ -4835,7 +4835,14 @@ describe('enhanced summary log check view', () => {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Row ID: 5. The ORS was not approved at the date of export'
+        'Row ID: 5. The Overseas Reprocessing Site was not approved at the date of export'
+    },
+    {
+      code: 'ORS_NOT_FOUND',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Row ID: 5. The OSR_ID has no matching overseas site registration'
     },
     {
       code: 'PRN_ISSUED',
