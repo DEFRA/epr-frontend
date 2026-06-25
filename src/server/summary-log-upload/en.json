@@ -1,11 +1,12 @@
 {
-  "caption": "Upload summary log",
+  "caption": "Summary log",
   "continueButton": "Continue",
   "errorGeneric": "Failed to initialise upload",
   "errorHeading": "Summary log upload error",
   "errorPageTitle": "Summary log: upload error",
-  "fileUploadLabel": "Upload XLSX file",
-  "heading": "Choose file",
+  "fileUploadLabel": "Choose XLSX file",
+  "heading": "Upload your summary log",
+  "helperText": "Your chosen file will be checked for errors, new data and data changes when you continue.",
   "introText": "You can upload the latest version of your summary log whenever you need to add or adjust waste records.",
   "pageTitle": "Summary log: upload"
 }

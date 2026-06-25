@@ -17,11 +17,14 @@
           {{ heading }}
         </h1>
 
-        <p>{{ introText }}</p>
+        <div class="govuk-inset-text">
+          <p class="govuk-body-l">{{ introText }}</p>
+        </div>
 
         {{ summaryLogUpload({
           uploadUrl: uploadUrl,
           fileUploadLabel: localise("summary-log-upload:fileUploadLabel"),
+          helperText: localise("summary-log-upload:helperText"),
           buttonText: localise("summary-log-upload:continueButton")
         }) }}
       </div>

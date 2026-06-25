@@ -8,6 +8,7 @@
     - uploadUrl: (required) Form action URL
     - fileUploadLabel: (required) Label text for file input
     - buttonText: (required) Submit button text
+    - helperText: (optional) Text rendered below the file input
     - formErrors: (optional) Error message to display
     - cancelUrl: (optional) URL for cancel button - if provided with cancelButtonText, renders a secondary button
     - cancelButtonText: (optional) Text for cancel button
@@ -43,6 +44,10 @@
       },
       errorMessage: summaryLogUploadError
     }) }}
+
+    {% if params.helperText %}
+      <p class="govuk-body">{{ params.helperText }}</p>
+    {% endif %}
 
     <div class="govuk-button-group">
       {{ govukButton({

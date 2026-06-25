@@ -227,9 +227,9 @@
   "processingBullet1": "errors",
   "processingBullet2": "new data",
   "processingBullet3": "changes to previously uploaded data",
-  "processingHeading": "Your file is being checked",
+  "processingHeading": "Your summary log is being checked",
   "processingKeepOpen": "Keep this page open and do not refresh it.",
-  "processingMessage": "Your summary log is being checked for",
+  "processingMessage": "The file is being checked for",
   "processingTakeTime": "This may take a few minutes.",
   "registeredOnly": {
     "checkIntro2": "Check the following before confirming the upload.",
@@ -299,5 +299,5 @@
   "validationFailuresDescription2_one": "You'll need to fix your summary log error before you can upload this file.",
   "validationFailuresDescription2_other": "You'll need to fix all of your summary log errors before you can upload this file.",
   "validationFailuresHeading": "Your summary log cannot be uploaded",
-  "wasteBalanceLabel": "Your updated waste balance"
+  "wasteBalanceLabel": "Your updated waste balance is"
 }
