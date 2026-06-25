@@ -535,7 +535,7 @@ describe('#detailReportsController', () => {
       const inset = body.querySelector('.govuk-inset-text')
 
       expect(inset?.textContent).toContain('3:09pm')
-      expect(inset?.textContent).toContain('15 February')
+      expect(inset?.textContent).toContain('15 February 2026')
     })
 
     it('should display overview text', async ({ server }) => {
@@ -553,9 +553,7 @@ describe('#detailReportsController', () => {
       )
     })
 
-    it('should display correction text with upload link', async ({
-      server
-    }) => {
+    it('should display upload new summary log button', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: detailUrl,
@@ -568,9 +566,30 @@ describe('#detailReportsController', () => {
       const link = body.querySelector('a[href*="summary-logs/upload"]')
 
       expect(link).not.toBeNull()
-      expect(link?.textContent).toContain('upload an updated summary log')
+      expect(link?.textContent).toContain('Upload new summary log')
       expect(link?.getAttribute('href')).toBe(
         '/organisations/org-123/registrations/reg-001/summary-logs/upload'
+      )
+    })
+
+    it('should display cancel and return to reports link', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: detailUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const link = body.querySelector('a[href*="/reports"]')
+
+      expect(link).not.toBeNull()
+      expect(link?.textContent).toContain('Cancel and return to reports')
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports'
       )
     })
 

@@ -136,9 +136,7 @@ function buildViewData(
     ),
     lastUploadedAt: reportDetail.source?.lastUploadedAt
       ? {
-          date: formatDate(reportDetail.source.lastUploadedAt, {
-            includeYear: false
-          }),
+          date: formatDate(reportDetail.source.lastUploadedAt),
           time: formatTime(reportDetail.source.lastUploadedAt)
         }
       : null,

@@ -19,19 +19,13 @@
       <span class="govuk-caption-xl">{{ material }}</span>
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
-      <p class="govuk-body">{{ localise("reports:overviewIntro", { periodLabel: periodLabel }) }}</p>
-
       {% if lastUploadedAt %}
         {{ govukInsetText({
           text: localise("reports:lastUploadedAt", { time: lastUploadedAt.time, date: lastUploadedAt.date })
         }) }}
-
-        <p class="govuk-body">
-          {{ localise("reports:correctionPrefix") }}
-          <a href="{{ uploadUrl }}" class="govuk-link">{{ localise("reports:correctionLink") }}</a>
-          {{ localise("reports:correctionSuffix") }}
-        </p>
       {% endif %}
+
+      <p class="govuk-body">{{ localise("reports:overviewIntro", { periodLabel: periodLabel }) }}</p>
 
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
@@ -163,7 +157,15 @@
           text: localise("reports:useThisData"),
           preventDoubleClick: true
         }) }}
+        {{ govukButton({
+          text: localise("reports:uploadNewSummaryLog"),
+          href: uploadUrl,
+          classes: "govuk-button--secondary"
+        }) }}
       </form>
+      <p class="govuk-body">
+        <a href="{{ backUrl }}" class="govuk-link">{{ localise("reports:cancelAndReturn") }}</a>
+      </p>
 
     </div>
   </div>
