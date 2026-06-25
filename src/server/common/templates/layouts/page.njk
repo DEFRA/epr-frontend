@@ -37,7 +37,7 @@
 
 {% block pageTitle %}{{ pageTitle }} | {{ localise('common:serviceName') }}{% endblock %}
 
-{% block containerStart %}
+{% block beforeContent %}
   {{ govukPhaseBanner({
     tag: {
       text: "Beta"
