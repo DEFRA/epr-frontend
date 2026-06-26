@@ -220,7 +220,8 @@
     {% if showClosedPeriodImportant %}
       {{ govukNotificationBanner({
         titleText: localise('summary-log:closedPeriodAdjustments.importantTitle'),
-        text: localise('summary-log:closedPeriodAdjustments.importantBody')
+        text: localise('summary-log:closedPeriodAdjustments.importantBody'),
+        classes: 'govuk-!-margin-top-6'
       }) }}
     {% endif %}
 
