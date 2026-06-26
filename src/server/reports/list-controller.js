@@ -229,9 +229,7 @@ const buildHeaders = (localise) => ({
  */
 const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   const count = reportingPeriods.filter(
-    (p) =>
-      deriveSubmissionStatus(p.endDate, p.report) ===
-      SUBMISSION_STATUS.READY_TO_SUBMIT
+    (p) => deriveSubmissionStatus(p) === SUBMISSION_STATUS.READY_TO_SUBMIT
   ).length
 
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null

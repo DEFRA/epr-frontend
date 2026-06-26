@@ -135,7 +135,7 @@ describe('#submittedController', () => {
 
       expect(insetText).not.toBeNull()
       expect(insetText.textContent).toContain(
-        'you may need to submit an updated report for this period'
+        "you'll need to submit a new report for this period"
       )
     })
 
