@@ -115,6 +115,7 @@
   "statusColumn": "Status",
   "statusDue": "Due",
   "statusInProgress": "In progress",
+  "statusOverdue": "Overdue",
   "statusReadyToSubmit": "Ready to submit",
   "statusSubmitted": "Submitted",
   "submitAvgPrice": "Average price per tonne of {{noteTypePlural}}",
