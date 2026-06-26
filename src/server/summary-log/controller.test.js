@@ -1178,6 +1178,109 @@ describe('#summaryLogUploadProgressController', () => {
       })
     })
 
+    describe('closed-period adjustments "Further action needed" section', () => {
+      const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+
+      const ZERO_CHANGE = {
+        balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+        nonBalanceAffecting: { count: 0, rows: [] }
+      }
+      const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
+
+      const submittedWithClosedAdjustment = () => ({
+        status: summaryLogStatuses.submitted,
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: {
+            added: ZERO_CHANGE,
+            adjusted: {
+              balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+              nonBalanceAffecting: { count: 0, rows: [] }
+            }
+          }
+        }
+      })
+
+      const getMain = async (server) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+        const { body } = new JSDOM(result).window.document
+        return getByRole(body, 'main')
+      }
+
+      afterEach(() => {
+        config.reset(CLOSED_PERIOD_FLAG)
+      })
+
+      it('shows the section and a "Go to reports" link when the flag is on and a closed period changed', async ({
+        server
+      }) => {
+        config.set(CLOSED_PERIOD_FLAG, true)
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          submittedWithClosedAdjustment()
+        )
+
+        const main = await getMain(server)
+        const reportsButton = queryByRole(main, 'button', {
+          name: 'Go to reports'
+        })
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).not.toBeNull()
+        expect(reportsButton).not.toBeNull()
+        expect(reportsButton?.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      })
+
+      it('hides the section when no closed period changed', async ({
+        server
+      }) => {
+        config.set(CLOSED_PERIOD_FLAG, true)
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          loadsByReportingPeriod: {
+            openPeriodLoads: {
+              added: {
+                balanceAffecting: { count: 1, tonnageDelta: 2, rows: [] },
+                nonBalanceAffecting: { count: 0, rows: [] }
+              },
+              adjusted: ZERO_CHANGE
+            },
+            closedPeriodLoads: emptyPeriod()
+          }
+        })
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).toBeNull()
+        expect(
+          queryByRole(main, 'button', { name: 'Go to reports' })
+        ).toBeNull()
+      })
+
+      it('hides the section when the closed-period flag is off', async ({
+        server
+      }) => {
+        config.set(CLOSED_PERIOD_FLAG, false)
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          submittedWithClosedAdjustment()
+        )
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).toBeNull()
+      })
+    })
+
     it('status: submitted with freshData from POST - should use freshData and not call backend', async ({
       server
     }) => {
@@ -4741,5 +4844,83 @@ describe('enhanced summary log check view', () => {
     expect(
       getByRole(main, 'heading', { name: /Check before confirming upload/ })
     ).toBeDefined()
+  })
+
+  describe('closed-period adjustments "Important" banner', () => {
+    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+
+    const BANNER_BODY =
+      "If you upload this summary log, you'll need to create a new report " +
+      'for any relevant period and an approved person from your business ' +
+      'will need to resubmit it to your regulator.'
+
+    const periodWithClosedAdjustment = () => ({
+      openPeriodLoads: emptyPeriod(),
+      closedPeriodLoads: {
+        added: ZERO_CHANGE,
+        adjusted: {
+          balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+          nonBalanceAffecting: { count: 0, rows: [] }
+        }
+      }
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
+    })
+
+    it('shows the Important banner when the flag is on and the summary log touches a closed period', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: periodWithClosedAdjustment()
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).not.toBeNull()
+    })
+
+    it('hides the Important banner when no closed period is touched', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 1, tonnageDelta: 2, rows: [] },
+              nonBalanceAffecting: { count: 0, rows: [] }
+            },
+            adjusted: ZERO_CHANGE
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).toBeNull()
+    })
+
+    it('hides the Important banner when the closed-period flag is off', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, false)
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: periodWithClosedAdjustment()
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).toBeNull()
+    })
   })
 })
