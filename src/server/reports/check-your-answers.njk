@@ -24,7 +24,7 @@
         rows: [
           {
             key: { text: localise("reports:periodColumn") },
-            value: { text: cadenceLabel }
+            value: { text: periodLabel }
           },
           {
             key: { text: localise("reports:accreditationLabel") if isAccredited else localise("reports:registrationLabel") },
@@ -251,9 +251,8 @@
         ]
       }) }}
 
-      {{ govukInsetText({
-        text: localise("reports:checkSummaryLogWarning")
-      }) }}
+      <h2 class="govuk-heading-l">{{ localise("reports:checkPleaseBeAwareHeading") }}</h2>
+      <p class="govuk-body">{{ localise("reports:checkPleaseBeAwareText") }}</p>
 
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
@@ -264,9 +263,11 @@
           preventDoubleClick: true
         }) }}
 
-        <p class="govuk-body">
-          <a href="{{ deleteUrl }}" class="govuk-link">{{ localise("reports:deleteAndStartAgainLink") }}</a>
-        </p>
+        {{ govukButton({
+          text: localise("reports:deleteAndStartAgainLink"),
+          href: deleteUrl,
+          classes: "govuk-button--warning"
+        }) }}
       </form>
 
     </div>

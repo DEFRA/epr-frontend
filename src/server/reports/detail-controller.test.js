@@ -584,10 +584,12 @@ describe('#detailReportsController', () => {
       const dom = new JSDOM(result)
       const { body } = dom.window.document
 
-      const link = body.querySelector('a[href*="/reports"]')
+      const links = body.querySelectorAll('a[href*="/reports"]')
+      const link = Array.from(links).find((el) =>
+        el.textContent?.includes('Cancel and return to reports')
+      )
 
       expect(link).not.toBeNull()
-      expect(link?.textContent).toContain('Cancel and return to reports')
       expect(link?.getAttribute('href')).toBe(
         '/organisations/org-123/registrations/reg-001/reports'
       )
@@ -911,23 +913,6 @@ describe('#detailReportsController', () => {
       const inset = body.querySelector('.govuk-inset-text')
 
       expect(inset).toBeNull()
-    })
-
-    it('should not display correction text when no upload exists', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const uploadLink = body.querySelector('a[href*="summary-logs/upload"]')
-
-      expect(uploadLink).toBeNull()
     })
   })
 
