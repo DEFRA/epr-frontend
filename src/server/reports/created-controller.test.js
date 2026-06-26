@@ -99,7 +99,9 @@ describe('#createdController', () => {
       const panel = body.querySelector('.govuk-panel--confirmation')
 
       expect(panel).not.toBeNull()
-      expect(panel.textContent).toContain('Quarter 1, 2026 report created')
+      expect(panel.textContent).toContain(
+        'Quarter 1, 2026 draft report created'
+      )
     })
 
     it('should display status in confirmation panel', async ({ server }) => {
@@ -192,7 +194,7 @@ describe('#createdController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain(
-        'submit the report to your regulator by 20 April 2026'
+        'submit the report to your regulator as soon as possible'
       )
     })
 
@@ -207,7 +209,7 @@ describe('#createdController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain(
-        'you can submit it yourself through your reports page'
+        'you can submit the report yourself through the reports page'
       )
     })
 

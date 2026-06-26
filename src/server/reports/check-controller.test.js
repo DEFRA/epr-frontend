@@ -278,7 +278,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         const heading = getByRole(body, 'heading', {
-          name: /Check your answers before creating draft report/,
+          name: /Check your answers before you create this draft report/,
           level: 1
         })
 
@@ -298,7 +298,7 @@ describe('#checkController', () => {
         const caption = body.querySelector('.govuk-caption-xl')
 
         expect(caption).not.toBeNull()
-        expect(caption?.textContent).toContain('Create report')
+        expect(caption?.textContent).toContain('Create draft report')
       })
 
       it('should display summary list with period, registration, and material', async ({
@@ -318,7 +318,7 @@ describe('#checkController', () => {
 
         expect(headerSummaryList).not.toBeNull()
         expect(headerSummaryList?.textContent).toContain('Period')
-        expect(headerSummaryList?.textContent).toContain('Quarterly')
+        expect(headerSummaryList?.textContent).toContain('Quarter 1, 2026')
         expect(headerSummaryList?.textContent).toContain('REG001234')
         expect(headerSummaryList?.textContent).toContain('Plastic')
       })
@@ -827,7 +827,7 @@ describe('#checkController', () => {
         const button = body.querySelector('.govuk-button')
 
         expect(button).not.toBeNull()
-        expect(button?.textContent?.trim()).toContain('Create report')
+        expect(button?.textContent?.trim()).toContain('Create draft report')
         expect(button?.getAttribute('data-prevent-double-click')).toBe('true')
       })
 
@@ -850,7 +850,7 @@ describe('#checkController', () => {
         expect(versionInput?.getAttribute('value')).toBe('1')
       })
 
-      it('should display delete and start again link', async ({ server }) => {
+      it('should display delete and start again button', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -860,16 +860,20 @@ describe('#checkController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
-        const deleteLink = body.querySelector('a[href*="/delete"]')
+        const deleteButton = body.querySelector(
+          'a.govuk-button--warning[href*="/delete"]'
+        )
 
-        expect(deleteLink).not.toBeNull()
-        expect(deleteLink?.textContent).toContain('Delete and start again')
-        expect(deleteLink?.getAttribute('href')).toBe(
+        expect(deleteButton).not.toBeNull()
+        expect(deleteButton?.textContent?.trim()).toContain(
+          'Delete and start again'
+        )
+        expect(deleteButton?.getAttribute('href')).toBe(
           `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1/delete`
         )
       })
 
-      it('should display summary log warning', async ({ server }) => {
+      it('should display please be aware section', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -880,9 +884,12 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
+          getByRole(body, 'heading', { name: /Please be aware/, level: 2 })
+        ).toBeDefined()
+        expect(
           getByText(
             body,
-            /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
+            /If future changes to your summary log affect the data you submit/
           )
         ).toBeDefined()
       })
@@ -1141,7 +1148,7 @@ describe('#checkController', () => {
         expect(headerSummaryList?.textContent).toContain('North Road')
       })
 
-      it('should display summary log warning for reprocessor', async ({
+      it('should display please be aware section for reprocessor', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -1154,9 +1161,12 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
+          getByRole(body, 'heading', { name: /Please be aware/, level: 2 })
+        ).toBeDefined()
+        expect(
           getByText(
             body,
-            /Once this report is created, any future summary log uploads that cover activity in this period will not be counted in this report/
+            /If future changes to your summary log affect the data you submit/
           )
         ).toBeDefined()
       })

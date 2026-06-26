@@ -334,6 +334,12 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'FEATURE_FLAG_ENHANCED_SUMMARY_LOG_CHECK_PAGES'
+    },
+    closedPeriodAdjustments: {
+      doc: 'Feature Flag: Closed-period adjustment messaging on the summary log check and confirmation pages',
+      format: Boolean,
+      default: false,
+      env: 'FEATURE_FLAG_CLOSED_PERIOD_ADJUSTMENTS'
     }
   }
 })
@@ -347,3 +353,6 @@ export const isLocalEnvironment = () => config.get('cdpEnvironment') === 'local'
 
 export const isEnhancedSummaryLogCheckPagesEnabled = () =>
   config.get('featureFlags.enhancedSummaryLogCheckPages')
+
+export const isClosedPeriodAdjustmentsEnabled = () =>
+  config.get('featureFlags.closedPeriodAdjustments')
