@@ -73,7 +73,7 @@
     "blankie": "5.0.0",
     "convict": "6.2.5",
     "cssnano": "8.0.2",
-    "cssnano-preset-default": "7.0.11",
+    "cssnano-preset-default": "8.0.2",
     "date-fns": "4.4.0",
     "decimal.js": "10.6.0",
     "global-agent": "3.0.0",
