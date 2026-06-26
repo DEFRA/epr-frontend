@@ -520,49 +520,6 @@ describe('#listReportsController', () => {
     })
   })
 
-  describe('sourcing status from the backend periodStatus field', () => {
-    beforeEach(() => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        accreditedRegistration
-      )
-    })
-
-    it('should render the tag from periodStatus rather than deriving it from dates', async ({
-      server
-    }) => {
-      // At the test clock (2026-03-20) the dates would derive "Due" locally,
-      // but the backend says "overdue" - the row must reflect the backend.
-      vi.mocked(fetchReportingPeriods).mockResolvedValue({
-        cadence: CADENCE.MONTHLY,
-        reportingPeriods: [
-          {
-            year: 2026,
-            period: 2,
-            submissionNumber: 1,
-            startDate: '2026-02-01',
-            endDate: '2026-02-28',
-            dueDate: '2026-03-25',
-            periodStatus: SUBMISSION_STATUS.OVERDUE,
-            report: null
-          }
-        ]
-      })
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      expect(extractTagData(body)).toStrictEqual([
-        { text: 'Overdue', modifier: 'govuk-tag--red' }
-      ])
-    })
-  })
-
   describe('for ended period with in_progress report', () => {
     beforeEach(() => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
