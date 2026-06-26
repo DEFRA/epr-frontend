@@ -2,7 +2,6 @@ import Boom from '@hapi/boom'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
-import { formatDate } from '#server/common/helpers/format-date.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
@@ -58,7 +57,6 @@ export const createdController = {
 
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-    const formattedDueDate = formatDate(reportDetail.dueDate)
 
     const homeUrl = `/organisations/${organisationId}`
     const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`
@@ -77,9 +75,7 @@ export const createdController = {
       materialLabel: localise('reports:createdMaterialLabel'),
       material,
       nextStepsHeading: localise('reports:createdNextStepsHeading'),
-      nextStepsGuidance: localise('reports:createdNextStepsGuidance', {
-        dueDate: formattedDueDate
-      }),
+      nextStepsGuidance: localise('reports:createdNextStepsGuidance'),
       selfSubmitGuidance: localise('reports:createdSelfSubmitGuidance'),
       goToReportsButton: {
         text: localise('reports:createdGoToReports'),

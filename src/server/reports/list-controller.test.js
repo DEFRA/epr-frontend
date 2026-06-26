@@ -4,7 +4,7 @@ import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, queryByRole } from '@testing-library/dom'
+import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -196,6 +196,40 @@ const monthlyWithReadyToSubmitResponse = {
   ]
 }
 
+const monthlyWithTwoReadyToSubmitResponse = {
+  cadence: CADENCE.MONTHLY,
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      submissionNumber: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      dueDate: '2026-02-20',
+      report: {
+        id: 'report-003',
+        status: SUBMISSION_STATUS.READY_TO_SUBMIT,
+        submittedAt: null,
+        submittedBy: null
+      }
+    },
+    {
+      year: 2026,
+      period: 2,
+      submissionNumber: 1,
+      startDate: '2026-02-01',
+      endDate: '2026-02-28',
+      dueDate: '2026-03-20',
+      report: {
+        id: 'report-004',
+        status: SUBMISSION_STATUS.READY_TO_SUBMIT,
+        submittedAt: null,
+        submittedBy: null
+      }
+    }
+  ]
+}
+
 const monthlyWithSubmittedResponse = {
   cadence: CADENCE.MONTHLY,
   reportingPeriods: [
@@ -375,24 +409,6 @@ describe('#listReportsController', () => {
       )
     })
 
-    it('should display Monthly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const heading = getByRole(body, 'heading', {
-        name: 'Monthly',
-        level: 2
-      })
-
-      expect(heading).toBeDefined()
-    })
-
     it('should render monthly periods in a table', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -432,24 +448,6 @@ describe('#listReportsController', () => {
       expect(selectLinks[0]?.textContent).toContain('Create draft')
     })
 
-    it('should not display Quarterly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      expect(
-        queryByRole(body, 'heading', {
-          name: 'Quarterly',
-          level: 2
-        })
-      ).toBeNull()
-    })
-
     it('should display column headers in order', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -464,7 +462,7 @@ describe('#listReportsController', () => {
         body.querySelectorAll('.govuk-table thead th')
       ).map((th) => th.textContent?.trim())
 
-      expect(headerTexts).toStrictEqual(['Period', 'Status', 'Date due', ''])
+      expect(headerTexts).toStrictEqual(['Period', 'Status', 'Due date', ''])
     })
 
     it('should display formatted due date per row', async ({ server }) => {
@@ -482,9 +480,9 @@ describe('#listReportsController', () => {
       ).map((tr) => tr.querySelectorAll('td')[2]?.textContent?.trim())
 
       expect(dueDateCells).toStrictEqual([
-        '20 February 2026',
-        '20 March 2026',
-        '20 April 2026'
+        '20 Feb 2026',
+        '20 Mar 2026',
+        '20 Apr 2026'
       ])
     })
 
@@ -663,6 +661,55 @@ describe('#listReportsController', () => {
         '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/submit'
       )
     })
+
+    it('should display approved person banner with singular count', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const banner = body.querySelector('.govuk-warning-text__text')
+
+      expect(banner?.textContent?.trim()).toContain(
+        'Your approved person needs to review and submit 1 report.'
+      )
+    })
+  })
+
+  describe('for multiple ready_to_submit reports', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithTwoReadyToSubmitResponse
+      )
+    })
+
+    it('should display approved person banner with plural count', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const banner = body.querySelector('.govuk-warning-text__text')
+
+      expect(banner?.textContent?.trim()).toContain(
+        'Your approved person needs to review and submit 2 reports.'
+      )
+    })
   })
 
   describe('for ended period with submitted report', () => {
@@ -752,7 +799,7 @@ describe('#listReportsController', () => {
         'Submitted',
         '',
         '',
-        'View January 2026'
+        'View report January 2026'
       ])
     })
   })
@@ -799,15 +846,15 @@ describe('#listReportsController', () => {
       const actionRequiredTable = findSection(body, 'Action required')
 
       expect(readTable(actionRequiredTable)).toStrictEqual({
-        headers: ['Period', 'Status', 'Date due', ''],
+        headers: ['Period', 'Status', 'Due date', ''],
         rows: [
           [
             'February 2026',
             'In progress',
-            '20 March 2026',
+            '20 Mar 2026',
             'Continue February 2026'
           ],
-          ['March 2026', '', '20 April 2026', 'Create draft March 2026']
+          ['March 2026', '', '20 Apr 2026', 'Create draft March 2026']
         ]
       })
     })
@@ -830,9 +877,9 @@ describe('#listReportsController', () => {
           [
             'January 2026',
             'Submitted',
-            '5 February 2026, 6:22pm',
+            '5 Feb 2026, 6:22pm',
             'Matt Davis',
-            'View January 2026'
+            'View report January 2026'
           ]
         ]
       })
@@ -887,6 +934,21 @@ describe('#listReportsController', () => {
         className: 'govuk-body app-colour-secondary',
         text: 'You do not currently have any submitted reports.'
       })
+    })
+
+    it('should not display approved person banner when no Ready to submit reports', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(body.querySelector('.govuk-warning-text')).toBeNull()
     })
   })
 
@@ -959,24 +1021,6 @@ describe('#listReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('should display Quarterly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const heading = getByRole(body, 'heading', {
-        name: 'Quarterly',
-        level: 2
-      })
-
-      expect(heading).toBeDefined()
     })
 
     it('should render quarterly periods in a table', async ({ server }) => {
@@ -1099,24 +1143,6 @@ describe('#listReportsController', () => {
       )
     })
 
-    it('should not display Monthly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      expect(
-        queryByRole(body, 'heading', {
-          name: 'Monthly',
-          level: 2
-        })
-      ).toBeNull()
-    })
-
     it('should not display Due tag for current quarter', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -1174,9 +1200,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchReportingPeriods).mockResolvedValue(emptyResponse)
     })
 
-    it('should display cadence heading and both section headings', async ({
-      server
-    }) => {
+    it('should display both section headings', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -1186,15 +1210,10 @@ describe('#listReportsController', () => {
       const dom = new JSDOM(result)
       const { body } = dom.window.document
 
-      const cadenceHeading = getByRole(body, 'heading', {
-        name: 'Monthly',
-        level: 2
-      })
       const sectionHeadings = Array.from(
         body.querySelectorAll('h3.govuk-heading-m')
       ).map((h) => h.textContent?.trim())
 
-      expect(cadenceHeading).toBeDefined()
       expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
     })
 
