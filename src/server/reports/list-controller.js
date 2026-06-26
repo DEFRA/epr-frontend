@@ -84,7 +84,7 @@ const getActionPath = (status, registration, accreditation, cadence) => {
  *   localiseUrl: (url: string) => string,
  *   periodPath: string,
  *   registration: Pick<Registration, 'wasteProcessingType'>,
- *   status: SubmissionStatusValue | null
+ *   status: SubmissionStatusValue
  * }} options
  * @returns {TableCell}
  */
@@ -98,18 +98,8 @@ const buildActionCell = ({
   registration,
   status
 }) => {
-  const { actionPath, actionLabel } =
-    status === null
-      ? { actionPath: '', actionLabel: localise('reports:actionCreateDraft') }
-      : {
-          actionPath: getActionPath(
-            status,
-            registration,
-            accreditation,
-            cadence
-          ),
-          actionLabel: getActionLabel(status, localise)
-        }
+  const actionPath = getActionPath(status, registration, accreditation, cadence)
+  const actionLabel = getActionLabel(status, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
 
@@ -164,8 +154,7 @@ function buildRows({
       label
     })
 
-    const statusTagHtml =
-      status === null ? '' : buildStatusTagHtml(status, localise)
+    const statusTagHtml = buildStatusTagHtml(status, localise)
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([

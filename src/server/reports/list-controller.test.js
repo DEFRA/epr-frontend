@@ -128,7 +128,7 @@ const monthlyResponse = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
       dueDate: '2026-03-20',
-      periodStatus: SUBMISSION_STATUS.DUE,
+      periodStatus: SUBMISSION_STATUS.OVERDUE,
       report: null
     },
     {
@@ -138,7 +138,7 @@ const monthlyResponse = {
       startDate: '2026-03-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
-      periodStatus: null,
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -154,7 +154,7 @@ const quarterlyResponse = {
       startDate: '2026-01-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
-      periodStatus: null,
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -271,7 +271,7 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-03-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
-      periodStatus: null,
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -498,7 +498,7 @@ describe('#listReportsController', () => {
       ])
     })
 
-    it('should display Overdue and Due tags for ended periods', async ({
+    it('should render a status tag per period from periodStatus', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -514,25 +514,9 @@ describe('#listReportsController', () => {
 
       expect(tagData).toStrictEqual([
         { text: 'Overdue', modifier: 'govuk-tag--red' },
+        { text: 'Overdue', modifier: 'govuk-tag--red' },
         { text: 'Due', modifier: 'govuk-tag--orange' }
       ])
-    })
-
-    it('should not display Due tag for current period', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const rows = body.querySelectorAll('.govuk-table tbody tr')
-      const marchRow = rows[2]
-      const tag = marchRow?.querySelector('.govuk-tag')
-
-      expect(tag).toBeNull()
     })
   })
 
@@ -861,7 +845,7 @@ describe('#listReportsController', () => {
             '20 March 2026',
             'Continue February 2026'
           ],
-          ['March 2026', '', '20 April 2026', 'Create draft March 2026']
+          ['March 2026', 'Due', '20 April 2026', 'Create draft March 2026']
         ]
       })
     })
@@ -1171,21 +1155,6 @@ describe('#listReportsController', () => {
           level: 2
         })
       ).toBeNull()
-    })
-
-    it('should not display Due tag for current quarter', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tags = body.querySelectorAll('.govuk-table .govuk-tag')
-
-      expect(tags).toHaveLength(0)
     })
   })
 
