@@ -17,26 +17,32 @@ const loads = (closed) => ({
   closedPeriodLoads: closed
 })
 
-describe('hasClosedPeriodChanges', () => {
+describe(hasClosedPeriodChanges, () => {
   it('returns false when loadsByReportingPeriod is undefined', () => {
     expect(hasClosedPeriodChanges(undefined)).toBe(false)
   })
 
   it('returns false when the closed period has no added or adjusted loads', () => {
     expect(
-      hasClosedPeriodChanges(loads({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE }))
+      hasClosedPeriodChanges(
+        loads({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
+      )
     ).toBe(false)
   })
 
   it('returns true when the closed period has new (added) loads', () => {
     expect(
-      hasClosedPeriodChanges(loads({ added: change(1, 0), adjusted: ZERO_CHANGE }))
+      hasClosedPeriodChanges(
+        loads({ added: change(1, 0), adjusted: ZERO_CHANGE })
+      )
     ).toBe(true)
   })
 
   it('returns true when the closed period has only non-balance-affecting adjusted loads', () => {
     expect(
-      hasClosedPeriodChanges(loads({ added: ZERO_CHANGE, adjusted: change(0, 2) }))
+      hasClosedPeriodChanges(
+        loads({ added: ZERO_CHANGE, adjusted: change(0, 2) })
+      )
     ).toBe(true)
   })
 })
