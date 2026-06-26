@@ -4283,6 +4283,56 @@ describe('enhanced summary log check view', () => {
     })
   })
 
+  // A load that keeps all its required data but is corrected downward nets a
+  // negative with-data delta, so the with-data sub-group reads "reduced". The
+  // sibling test above only exercises the positive (added) direction, so this
+  // pins the adjustedWithDataReduced copy that no other test asserts.
+  it('reads the adjusted with-data sub-group as reduced when its delta is negative', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: {
+              count: 1,
+              tonnageDelta: -6,
+              rows: [
+                {
+                  rowId: '1',
+                  wasteRecordType: 'exported',
+                  exclusionReasons: [],
+                  tonnageDelta: -6
+                }
+              ]
+            },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      withDataHeading: hasText(
+        'This load has all the required summary log data and has reduced your waste balance'
+      ),
+      addedHeadingAbsent: hasText(
+        'This load has all the required summary log data and has added to your waste balance'
+      )
+    }).toStrictEqual({
+      withDataHeading: true,
+      addedHeadingAbsent: false
+    })
+  })
+
   it('lists adjusted not-relevant loads in an accordion with worksheet and row ID only', async ({
     server
   }) => {
