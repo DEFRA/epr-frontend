@@ -41,6 +41,7 @@ export async function fetchReportingPeriods(
  *   startDate: string,
  *   endDate: string,
  *   dueDate: string,
+ *   periodStatus: SubmissionStatusValue | null,
  *   report: ReportListItem | null
  * }} ReportingPeriod
  */

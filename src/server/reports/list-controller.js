@@ -5,7 +5,6 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from './constants.js'
-import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
@@ -152,7 +151,7 @@ function buildRows({
 
     const label = formatPeriodLabel(period, cadence, localise)
 
-    const status = deriveSubmissionStatus(period)
+    const status = period.periodStatus
 
     const actionCell = buildActionCell({
       status,
