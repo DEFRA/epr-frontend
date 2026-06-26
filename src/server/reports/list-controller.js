@@ -152,7 +152,7 @@ function buildRows({
 
     const label = formatPeriodLabel(period, cadence, localise)
 
-    const status = deriveSubmissionStatus(period.endDate, period.report)
+    const status = deriveSubmissionStatus(period)
 
     const actionCell = buildActionCell({
       status,

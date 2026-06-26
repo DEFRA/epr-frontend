@@ -21,6 +21,7 @@ describe('#format-submission-status', () => {
     it.each(
       /** @type {Array<{ status: SubmissionStatusValue, expected: string }>} */ ([
         { status: 'due', expected: 'govuk-tag--orange' },
+        { status: 'overdue', expected: 'govuk-tag--red' },
         { status: 'in_progress', expected: 'govuk-tag--yellow' },
         { status: 'ready_to_submit', expected: '' },
         { status: 'submitted', expected: 'govuk-tag--green' }
@@ -36,6 +37,10 @@ describe('#format-submission-status', () => {
   describe('#getStatusLabel', () => {
     it('returns localised label for "due" status', () => {
       expect(getStatusLabel('due', localise)).toBe('reports:statusDue')
+    })
+
+    it('returns localised label for "overdue" status', () => {
+      expect(getStatusLabel('overdue', localise)).toBe('reports:statusOverdue')
     })
 
     it('returns localised label for "in_progress" status', () => {
@@ -66,6 +71,12 @@ describe('#format-submission-status', () => {
 
     it('returns "Create draft" action for "due" status', () => {
       expect(getActionLabel('due', localise)).toBe('reports:actionCreateDraft')
+    })
+
+    it('returns "Create draft" action for "overdue" status', () => {
+      expect(getActionLabel('overdue', localise)).toBe(
+        'reports:actionCreateDraft'
+      )
     })
 
     it('returns "Review and submit" action for "ready_to_submit" status', () => {
