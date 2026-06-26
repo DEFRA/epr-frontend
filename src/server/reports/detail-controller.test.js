@@ -489,7 +489,7 @@ describe('#detailReportsController', () => {
       expect(heading).toBeDefined()
     })
 
-    it('should display material as caption', async ({ server }) => {
+    it('should display Create draft report as caption', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: detailUrl,
@@ -501,7 +501,7 @@ describe('#detailReportsController', () => {
 
       const caption = body.querySelector('.govuk-caption-xl')
 
-      expect(caption?.textContent).toContain('Plastic')
+      expect(caption?.textContent).toContain('Create draft report')
     })
 
     it('should display back link to reports list', async ({ server }) => {
@@ -1710,7 +1710,7 @@ describe('#detailReportsController', () => {
       )
     })
 
-    it('should display section 4 and 5 intro text for waste sent on', async ({
+    it('should display section 4 intro text for waste sent on', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -1723,7 +1723,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain(
-        'This data comes from section 4 and 5 of your summary log'
+        'This data comes from section 4 of your summary log'
       )
     })
   })

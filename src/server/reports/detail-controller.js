@@ -64,11 +64,7 @@ function buildSectionIntros(
         ? 'reports:wasteSentOnIntroAccreditedReprocessor'
         : 'reports:wasteSentOnIntroReprocessor'
     ),
-    wasteSentOnIntroExporter: localise(
-      isAccreditedExporter
-        ? 'reports:wasteSentOnIntroAccreditedExporter'
-        : 'reports:wasteSentOnIntroExporter'
-    ),
+    wasteSentOnIntroExporter: localise('reports:wasteSentOnIntroExporter'),
     wasteReceivedIntroReprocessor: localise(
       isAccreditedReprocessor
         ? 'reports:wasteReceivedIntroAccreditedReprocessor'

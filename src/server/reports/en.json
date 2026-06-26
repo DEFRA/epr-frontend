@@ -104,7 +104,7 @@
   "orsHelpLine2": "If this does not fix the problem, please contact your regulator before you create your report.",
   "osrIdColumn": "Overseas reprocessor ID",
   "overseasSitesHeading": "Overseas reprocessing sites",
-  "overviewIntro": "The following is an overview of your summary log data for {{ periodLabel }}. Only the data that will appear in your report is shown here.",
+  "overviewIntro": "The following is an overview of your summary log data for this reporting period. Only data that will appear in your report is shown.",
   "pageTitle": "Reports: {{ material }}",
   "periodColumn": "Period",
   "phoneColumn": "Phone",
@@ -272,7 +272,6 @@
   "wasteReceivedIntroAccreditedReprocessor": "This data comes from sections 1 and 2 of your summary log.",
   "wasteReceivedIntroReprocessorRegOnly": "This data comes from section 1 of your summary log.",
   "wasteSentOnHeading": "Packaging waste sent on",
-  "wasteSentOnIntroAccreditedExporter": "This data comes from section 4 and 5 of your summary log",
   "wasteSentOnIntroAccreditedReprocessor": "This data comes from sections 5 and 6 of your summary log.",
   "wasteSentOnIntroExporter": "This data comes from section 4 of your summary log",
   "wasteSentOnIntroReprocessor": "This data comes from section 2 of your summary log"
