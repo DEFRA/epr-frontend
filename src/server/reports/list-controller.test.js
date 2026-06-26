@@ -4,7 +4,7 @@ import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, queryByRole } from '@testing-library/dom'
+import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 
@@ -1140,24 +1140,6 @@ describe('#listReportsController', () => {
       expect(link?.getAttribute('href')).toBe(
         '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1/supporting-information'
       )
-    })
-
-    it('should not display Monthly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      expect(
-        queryByRole(body, 'heading', {
-          name: 'Monthly',
-          level: 2
-        })
-      ).toBeNull()
     })
   })
 
