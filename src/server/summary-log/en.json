@@ -50,6 +50,15 @@
   "checkWarningOr": "or",
   "checkWarningStart": "This data will not be saved until you confirm upload. If something looks wrong, you can",
   "checkWarningUploadLink": "upload an updated summary log",
+  "closedPeriodAdjustments": {
+    "importantTitle": "Important",
+    "importantBody": "If you upload this summary log, you'll need to create a new report for any relevant period and an approved person from your business will need to resubmit it to your regulator.",
+    "furtherActionHeading": "Further action needed",
+    "furtherActionPara1": "Data from a period that you had already reported on has been changed, so you'll need to create a new report.",
+    "furtherActionPara2": "Once the new report has been created, an approved person from your business will need to submit it to your regulator.",
+    "furtherActionPara3": "Reports that need to be resubmitted to your regulator show the status 'Requires resubmission' on the reports page.",
+    "goToReports": "Go to reports"
+  },
   "columnHeader": {
     "ADD_PRODUCT_WEIGHT": "Add product weight",
     "BAILING_WIRE_PROTOCOL": "Bailing wire protocol",

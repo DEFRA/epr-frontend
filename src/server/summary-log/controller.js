@@ -1,4 +1,7 @@
-import { isEnhancedSummaryLogCheckPagesEnabled } from '#config/config.js'
+import {
+  isClosedPeriodAdjustmentsEnabled,
+  isEnhancedSummaryLogCheckPagesEnabled
+} from '#config/config.js'
 import {
   isRegisteredOnlyProcessingType,
   PROCESSING_TYPES
@@ -10,6 +13,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { hasClosedPeriodChanges } from './closed-period-changes.js'
 import { renderEnhancedCheckView } from './enhanced-check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
 
@@ -376,11 +380,19 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * @param {RenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
-const renderSuccessView = (h, localise, { organisationId, wasteBalance }) => {
+const renderSuccessView = (
+  h,
+  localise,
+  { organisationId, registrationId, wasteBalance, loadsByReportingPeriod }
+) => {
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: localise('summary-log:successPageTitle'),
     organisationId,
-    wasteBalance
+    registrationId,
+    wasteBalance,
+    showFurtherAction:
+      isClosedPeriodAdjustmentsEnabled() &&
+      hasClosedPeriodChanges(loadsByReportingPeriod)
   })
 }
 

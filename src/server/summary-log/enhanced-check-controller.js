@@ -1,3 +1,4 @@
+import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { CLASSIFICATION_REASON } from '#domain/summary-logs/classification-reason.js'
 import { MAX_ROWS_PER_BUCKET } from '#domain/summary-logs/loads-schema.js'
@@ -6,6 +7,7 @@ import {
   isRegisteredOnlyProcessingType
 } from '#domain/summary-logs/meta-fields.js'
 import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
+import { hasClosedPeriodChanges } from './closed-period-changes.js'
 
 /**
  * @import { ResponseObject, ResponseToolkit } from '@hapi/hapi'
@@ -330,6 +332,9 @@ export const renderEnhancedCheckView = (
     maxRowsPerBucket: MAX_ROWS_PER_BUCKET,
     periodSections: { open, closed },
     isEmpty: open === null && closed === null,
+    showClosedPeriodImportant:
+      isClosedPeriodAdjustmentsEnabled() &&
+      hasClosedPeriodChanges(loadsByReportingPeriod),
     wasteBalanceProjection: buildWasteBalanceProjection(
       isAccredited,
       wasteBalance,

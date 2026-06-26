@@ -1,5 +1,7 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
 {# Section banding follows the design: the heading plus any inset and tonnage
    caption form an un-ruled intro, then a rule precedes every content block and a
    trailing rule closes the section. No rule sits above the first heading. #}
@@ -213,6 +215,13 @@
       <p class="govuk-body">{{ localise('summary-log:enhanced.projectionPrefix') }} <strong>{{ wasteBalanceProjection.projected }}</strong> {{ localise('summary-log:enhanced.projectionSuffix', { current: wasteBalanceProjection.current }) }}</p>
       {% endif %}
     </div>
+    {% endif %}
+
+    {% if showClosedPeriodImportant %}
+      {{ govukNotificationBanner({
+        titleText: localise('summary-log:closedPeriodAdjustments.importantTitle'),
+        text: localise('summary-log:closedPeriodAdjustments.importantBody')
+      }) }}
     {% endif %}
 
     <form class="govuk-!-margin-top-6" method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
