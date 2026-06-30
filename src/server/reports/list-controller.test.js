@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
@@ -6,7 +7,15 @@ import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  vi
+} from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
@@ -1265,6 +1274,85 @@ describe('#listReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('requires resubmission', () => {
+    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+
+    const monthlyWithResubmissionResponse = {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: [
+        {
+          year: 2026,
+          period: 1,
+          submissionNumber: 1,
+          startDate: '2026-01-01',
+          endDate: '2026-01-31',
+          dueDate: '2026-02-20',
+          periodStatus: SUBMISSION_STATUS.SUBMITTED,
+          report: {
+            id: 'report-001',
+            status: SUBMISSION_STATUS.SUBMITTED,
+            submittedAt: '2026-02-05T18:22:00.000Z',
+            submittedBy: {
+              id: 'user-1',
+              name: 'Matt Davis',
+              position: 'Approved person'
+            }
+          }
+        },
+        {
+          year: 2026,
+          period: 1,
+          submissionNumber: 2,
+          startDate: '2026-01-01',
+          endDate: '2026-01-31',
+          dueDate: '2026-02-20',
+          periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
+          report: null
+        }
+      ]
+    }
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithResubmissionResponse
+      )
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
+    })
+
+    it('renders a Requires resubmission entry with a purple tag and create-draft CTA, keeping the original submitted report', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTag?.classList.contains('govuk-tag--purple')).toBe(true)
+
+      const resubLink = Array.from(body.querySelectorAll('a.govuk-link')).find(
+        (anchor) => anchor.textContent?.includes('Review and create draft')
+      )
+      expect(resubLink?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2'
+      )
+
+      expect(body.textContent).toContain('Matt Davis')
     })
   })
 })

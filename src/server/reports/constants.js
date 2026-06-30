@@ -14,5 +14,6 @@ export const SUBMISSION_STATUS = Object.freeze({
   OVERDUE: 'overdue',
   IN_PROGRESS: 'in_progress',
   READY_TO_SUBMIT: 'ready_to_submit',
-  SUBMITTED: 'submitted'
+  SUBMITTED: 'submitted',
+  REQUIRES_RESUBMISSION: 'requires_resubmission'
 })
