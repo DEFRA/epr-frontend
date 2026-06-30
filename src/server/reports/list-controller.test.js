@@ -1374,5 +1374,56 @@ describe('#listReportsController', () => {
 
       expect(body.textContent).toContain('Matt Davis')
     })
+
+    it('renders a requires resubmission entry for each affected period', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      const affectedPeriod = (period) => [
+        {
+          year: 2026,
+          period,
+          submissionNumber: 1,
+          startDate: `2026-0${period}-01`,
+          endDate: `2026-0${period}-28`,
+          dueDate: `2026-0${period + 1}-20`,
+          periodStatus: SUBMISSION_STATUS.SUBMITTED,
+          report: {
+            id: `report-00${period}`,
+            status: SUBMISSION_STATUS.SUBMITTED,
+            submittedAt: '2026-02-05T18:22:00.000Z',
+            submittedBy: { id: 'user-1', name: 'Matt Davis', position: 'AP' }
+          }
+        },
+        {
+          year: 2026,
+          period,
+          submissionNumber: 2,
+          startDate: `2026-0${period}-01`,
+          endDate: `2026-0${period}-28`,
+          dueDate: `2026-0${period + 1}-20`,
+          periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
+          report: null
+        }
+      ]
+
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [...affectedPeriod(1), ...affectedPeriod(2)]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTags = Array.from(body.querySelectorAll('.govuk-tag')).filter(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTags).toHaveLength(2)
+    })
   })
 })
