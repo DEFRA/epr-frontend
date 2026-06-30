@@ -8,6 +8,18 @@ updates:
 
     # Group packages into shared PR
     groups:
+      # Babel packages are versioned in lockstep — group them (incl. majors)
+      # so a 7->8 style bump lands as one PR, not separate conflicting ones
+      babel:
+        applies-to: 'version-updates'
+        update-types:
+          - 'major'
+          - 'minor'
+          - 'patch'
+        patterns:
+          - '@babel/*'
+          - 'babel-loader'
+
       dev:
         applies-to: 'version-updates'
         dependency-type: 'development'
