@@ -5,7 +5,6 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { SUBMISSION_STATUS } from './constants.js'
-import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
@@ -85,7 +84,7 @@ const getActionPath = (status, registration, accreditation, cadence) => {
  *   localiseUrl: (url: string) => string,
  *   periodPath: string,
  *   registration: Pick<Registration, 'wasteProcessingType'>,
- *   status: SubmissionStatusValue | null
+ *   status: SubmissionStatusValue
  * }} options
  * @returns {TableCell}
  */
@@ -99,18 +98,8 @@ const buildActionCell = ({
   registration,
   status
 }) => {
-  const { actionPath, actionLabel } =
-    status === null
-      ? { actionPath: '', actionLabel: localise('reports:actionCreateDraft') }
-      : {
-          actionPath: getActionPath(
-            status,
-            registration,
-            accreditation,
-            cadence
-          ),
-          actionLabel: getActionLabel(status, localise)
-        }
+  const actionPath = getActionPath(status, registration, accreditation, cadence)
+  const actionLabel = getActionLabel(status, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
 
@@ -152,7 +141,7 @@ function buildRows({
 
     const label = formatPeriodLabel(period, cadence, localise)
 
-    const status = deriveSubmissionStatus(period)
+    const status = period.periodStatus
 
     const actionCell = buildActionCell({
       status,
@@ -165,8 +154,7 @@ function buildRows({
       label
     })
 
-    const statusTagHtml =
-      status === null ? '' : buildStatusTagHtml(status, localise)
+    const statusTagHtml = buildStatusTagHtml(status, localise)
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([
@@ -229,7 +217,7 @@ const buildHeaders = (localise) => ({
  */
 const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   const count = reportingPeriods.filter(
-    (p) => deriveSubmissionStatus(p) === SUBMISSION_STATUS.READY_TO_SUBMIT
+    (p) => p.periodStatus === SUBMISSION_STATUS.READY_TO_SUBMIT
   ).length
 
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null

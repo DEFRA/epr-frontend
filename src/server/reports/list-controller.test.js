@@ -118,6 +118,7 @@ const monthlyResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.OVERDUE,
       report: null
     },
     {
@@ -127,6 +128,7 @@ const monthlyResponse = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
       dueDate: '2026-03-20',
+      periodStatus: SUBMISSION_STATUS.OVERDUE,
       report: null
     },
     {
@@ -136,6 +138,7 @@ const monthlyResponse = {
       startDate: '2026-03-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -151,6 +154,7 @@ const quarterlyResponse = {
       startDate: '2026-01-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -166,6 +170,7 @@ const monthlyWithReportResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
       report: {
         id: 'report-001',
         status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -186,6 +191,7 @@ const monthlyWithReadyToSubmitResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.READY_TO_SUBMIT,
       report: {
         id: 'report-002',
         status: SUBMISSION_STATUS.READY_TO_SUBMIT,
@@ -206,6 +212,7 @@ const monthlyWithTwoReadyToSubmitResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.READY_TO_SUBMIT,
       report: {
         id: 'report-003',
         status: SUBMISSION_STATUS.READY_TO_SUBMIT,
@@ -220,6 +227,7 @@ const monthlyWithTwoReadyToSubmitResponse = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
       dueDate: '2026-03-20',
+      periodStatus: SUBMISSION_STATUS.READY_TO_SUBMIT,
       report: {
         id: 'report-004',
         status: SUBMISSION_STATUS.READY_TO_SUBMIT,
@@ -240,6 +248,7 @@ const monthlyWithSubmittedResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.SUBMITTED,
       report: {
         id: 'report-002',
         status: SUBMISSION_STATUS.SUBMITTED,
@@ -264,6 +273,7 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.SUBMITTED,
       report: {
         id: 'report-001',
         status: SUBMISSION_STATUS.SUBMITTED,
@@ -282,6 +292,7 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
       dueDate: '2026-03-20',
+      periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
       report: {
         id: 'report-002',
         status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -296,6 +307,7 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-03-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -486,7 +498,7 @@ describe('#listReportsController', () => {
       ])
     })
 
-    it('should display Overdue and Due tags for ended periods', async ({
+    it('should render a status tag per period from periodStatus', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -502,25 +514,9 @@ describe('#listReportsController', () => {
 
       expect(tagData).toStrictEqual([
         { text: 'Overdue', modifier: 'govuk-tag--red' },
+        { text: 'Overdue', modifier: 'govuk-tag--red' },
         { text: 'Due', modifier: 'govuk-tag--orange' }
       ])
-    })
-
-    it('should not display Due tag for current period', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const rows = body.querySelectorAll('.govuk-table tbody tr')
-      const marchRow = rows[2]
-      const tag = marchRow?.querySelector('.govuk-tag')
-
-      expect(tag).toBeNull()
     })
   })
 
@@ -771,6 +767,7 @@ describe('#listReportsController', () => {
             startDate: '2026-01-01',
             endDate: '2026-01-31',
             dueDate: '2026-02-20',
+            periodStatus: SUBMISSION_STATUS.SUBMITTED,
             report: {
               id: 'report-002',
               status: SUBMISSION_STATUS.SUBMITTED,
@@ -854,7 +851,7 @@ describe('#listReportsController', () => {
             '20 Mar 2026',
             'Continue February 2026'
           ],
-          ['March 2026', '', '20 Apr 2026', 'Create draft March 2026']
+          ['March 2026', 'Due', '20 Apr 2026', 'Create draft March 2026']
         ]
       })
     })
@@ -1071,6 +1068,7 @@ describe('#listReportsController', () => {
             startDate: '2026-01-01',
             endDate: '2026-03-31',
             dueDate: '2026-04-20',
+            periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
             report: {
               id: 'report-003',
               status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -1117,6 +1115,7 @@ describe('#listReportsController', () => {
             startDate: '2026-01-01',
             endDate: '2026-03-31',
             dueDate: '2026-04-20',
+            periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
             report: {
               id: 'report-004',
               status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -1141,21 +1140,6 @@ describe('#listReportsController', () => {
       expect(link?.getAttribute('href')).toBe(
         '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1/supporting-information'
       )
-    })
-
-    it('should not display Due tag for current quarter', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tags = body.querySelectorAll('.govuk-table .govuk-tag')
-
-      expect(tags).toHaveLength(0)
     })
   })
 
