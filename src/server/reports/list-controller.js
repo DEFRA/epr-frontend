@@ -1,3 +1,4 @@
+import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
@@ -242,6 +243,15 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
+    // The resubmission entries are part of the closed-period-adjustments feature;
+    // hide them until it is released.
+    const visiblePeriods = isClosedPeriodAdjustmentsEnabled()
+      ? reportingPeriods
+      : reportingPeriods.filter(
+          (period) =>
+            period.periodStatus !== SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+        )
+
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 
     const { activeRows, submittedRows } = buildRows({
@@ -251,11 +261,11 @@ export const listController = {
       localiseUrl: (url) => request.localiseUrl(url),
       organisationId,
       registration,
-      reportingPeriods
+      reportingPeriods: visiblePeriods
     })
 
     const approvedPersonBanner = buildApprovedPersonBanner(
-      reportingPeriods,
+      visiblePeriods,
       localise
     )
 

@@ -1354,5 +1354,25 @@ describe('#listReportsController', () => {
 
       expect(body.textContent).toContain('Matt Davis')
     })
+
+    it('hides the requires resubmission entry when the feature flag is off, keeping the original submitted report', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, false)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTag).toBeUndefined()
+
+      expect(body.textContent).toContain('Matt Davis')
+    })
   })
 })
