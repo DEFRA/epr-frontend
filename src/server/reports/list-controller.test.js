@@ -1280,39 +1280,43 @@ describe('#listReportsController', () => {
   describe('requires resubmission', () => {
     const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
 
+    // One submitted report plus its requires_resubmission skeleton (the
+    // submission-grained pair the backend emits for a restated closed period).
+    const resubmissionPeriodPair = (period) => [
+      {
+        year: 2026,
+        period,
+        submissionNumber: 1,
+        startDate: `2026-0${period}-01`,
+        endDate: `2026-0${period}-28`,
+        dueDate: `2026-0${period + 1}-20`,
+        periodStatus: SUBMISSION_STATUS.SUBMITTED,
+        report: {
+          id: `report-00${period}`,
+          status: SUBMISSION_STATUS.SUBMITTED,
+          submittedAt: '2026-02-05T18:22:00.000Z',
+          submittedBy: {
+            id: 'user-1',
+            name: 'Matt Davis',
+            position: 'Approved person'
+          }
+        }
+      },
+      {
+        year: 2026,
+        period,
+        submissionNumber: 2,
+        startDate: `2026-0${period}-01`,
+        endDate: `2026-0${period}-28`,
+        dueDate: `2026-0${period + 1}-20`,
+        periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
+        report: null
+      }
+    ]
+
     const monthlyWithResubmissionResponse = {
       cadence: CADENCE.MONTHLY,
-      reportingPeriods: [
-        {
-          year: 2026,
-          period: 1,
-          submissionNumber: 1,
-          startDate: '2026-01-01',
-          endDate: '2026-01-31',
-          dueDate: '2026-02-20',
-          periodStatus: SUBMISSION_STATUS.SUBMITTED,
-          report: {
-            id: 'report-001',
-            status: SUBMISSION_STATUS.SUBMITTED,
-            submittedAt: '2026-02-05T18:22:00.000Z',
-            submittedBy: {
-              id: 'user-1',
-              name: 'Matt Davis',
-              position: 'Approved person'
-            }
-          }
-        },
-        {
-          year: 2026,
-          period: 1,
-          submissionNumber: 2,
-          startDate: '2026-01-01',
-          endDate: '2026-01-31',
-          dueDate: '2026-02-20',
-          periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
-          report: null
-        }
-      ]
+      reportingPeriods: resubmissionPeriodPair(1)
     }
 
     beforeEach(() => {
@@ -1380,37 +1384,12 @@ describe('#listReportsController', () => {
     }) => {
       config.set(CLOSED_PERIOD_FLAG, true)
 
-      const affectedPeriod = (period) => [
-        {
-          year: 2026,
-          period,
-          submissionNumber: 1,
-          startDate: `2026-0${period}-01`,
-          endDate: `2026-0${period}-28`,
-          dueDate: `2026-0${period + 1}-20`,
-          periodStatus: SUBMISSION_STATUS.SUBMITTED,
-          report: {
-            id: `report-00${period}`,
-            status: SUBMISSION_STATUS.SUBMITTED,
-            submittedAt: '2026-02-05T18:22:00.000Z',
-            submittedBy: { id: 'user-1', name: 'Matt Davis', position: 'AP' }
-          }
-        },
-        {
-          year: 2026,
-          period,
-          submissionNumber: 2,
-          startDate: `2026-0${period}-01`,
-          endDate: `2026-0${period}-28`,
-          dueDate: `2026-0${period + 1}-20`,
-          periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
-          report: null
-        }
-      ]
-
       vi.mocked(fetchReportingPeriods).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
-        reportingPeriods: [...affectedPeriod(1), ...affectedPeriod(2)]
+        reportingPeriods: [
+          ...resubmissionPeriodPair(1),
+          ...resubmissionPeriodPair(2)
+        ]
       })
 
       const { result } = await server.inject({
