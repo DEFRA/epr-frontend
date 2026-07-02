@@ -1359,6 +1359,33 @@ describe('#listReportsController', () => {
       expect(body.textContent).toContain('Matt Davis')
     })
 
+    it('shows Overdue in the Due date column for a resubmission row', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const actionRequired = findSection(body, 'Action required')
+
+      expect(readTable(actionRequired)).toStrictEqual({
+        headers: ['Period', 'Status', 'Due date', ''],
+        rows: [
+          [
+            'January 2026',
+            'Requires resubmission',
+            'Overdue',
+            'Review and create draft January 2026'
+          ]
+        ]
+      })
+    })
+
     it('hides the requires resubmission entry when the feature flag is off, keeping the original submitted report', async ({
       server
     }) => {

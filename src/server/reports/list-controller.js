@@ -169,10 +169,15 @@ function buildRows({
         actionCell
       ])
     } else {
+      const dueDateText =
+        status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+          ? localise('reports:statusOverdue')
+          : formatDateShort(period.dueDate)
+
       activeRows.push([
         { text: label },
         { html: statusTagHtml },
-        { text: formatDateShort(period.dueDate) },
+        { text: dueDateText },
         actionCell
       ])
     }
