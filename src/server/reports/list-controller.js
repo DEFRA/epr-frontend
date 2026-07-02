@@ -5,7 +5,10 @@ import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { SUBMISSION_STATUS } from './constants.js'
+import {
+  IS_CLOSED_PERIOD_ADJUSTMENT_STATUS,
+  SUBMISSION_STATUS
+} from './constants.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
@@ -243,13 +246,11 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
-    // The resubmission entries are part of the closed-period-adjustments feature;
-    // hide them until it is released.
+    // Closed-period-adjustments statuses are hidden until the flag is released.
     const visiblePeriods = isClosedPeriodAdjustmentsEnabled()
       ? reportingPeriods
       : reportingPeriods.filter(
-          (period) =>
-            period.periodStatus !== SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+          (period) => !IS_CLOSED_PERIOD_ADJUSTMENT_STATUS[period.periodStatus]
         )
 
     const { activeHeader, submittedHeader } = buildHeaders(localise)
