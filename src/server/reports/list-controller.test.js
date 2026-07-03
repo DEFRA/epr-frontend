@@ -1386,13 +1386,15 @@ describe('#listReportsController', () => {
       })
     })
 
-    it('shows the real due date for a resubmission row whose due date has not passed', async ({
+    it('shows the real due date on the due date itself, before it counts as overdue', async ({
       server
     }) => {
       config.set(CLOSED_PERIOD_FLAG, true)
 
-      // February's due date (20 March) is "today" under the fake clock, so
-      // the period is not yet overdue.
+      // February's due date (20 March) is exactly "today" under the fake clock.
+      // A period is overdue only from the day after its due date, so on the due
+      // date itself the real date shows. This pins the off-by-one boundary: a
+      // regression that made the comparison overdue-on-the-due-date would fail.
       vi.mocked(fetchReportingPeriods).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: resubmissionPeriodPair(2)
@@ -1415,6 +1417,86 @@ describe('#listReportsController', () => {
             'Requires resubmission',
             '20 Mar 2026',
             'Review and create draft February 2026'
+          ]
+        ]
+      })
+    })
+
+    it('shows the real due date when the due date is still in the future', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      // March's due date (20 April) is weeks after the fake clock (20 March),
+      // so the period is comfortably not overdue.
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: resubmissionPeriodPair(3)
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const actionRequired = findSection(body, 'Action required')
+
+      expect(readTable(actionRequired)).toStrictEqual({
+        headers: ['Period', 'Status', 'Due date', ''],
+        rows: [
+          [
+            'March 2026',
+            'Requires resubmission',
+            '20 Apr 2026',
+            'Review and create draft March 2026'
+          ]
+        ]
+      })
+    })
+
+    it('shows Overdue for a resubmission whose due date passed months ago', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      // A correction to last November, whose 20 December deadline is three
+      // months behind the fake clock (20 March): genuinely overdue, as the
+      // designs assume for corrections to long-closed periods.
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [
+          {
+            year: 2025,
+            period: 11,
+            submissionNumber: 2,
+            startDate: '2025-11-01',
+            endDate: '2025-11-30',
+            dueDate: '2025-12-20',
+            periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
+            report: null
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const actionRequired = findSection(body, 'Action required')
+
+      expect(readTable(actionRequired)).toStrictEqual({
+        headers: ['Period', 'Status', 'Due date', ''],
+        rows: [
+          [
+            'November 2025',
+            'Requires resubmission',
+            'Overdue',
+            'Review and create draft November 2025'
           ]
         ]
       })

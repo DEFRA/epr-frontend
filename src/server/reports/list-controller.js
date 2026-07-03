@@ -58,9 +58,12 @@ const formatSubmittedDateTime = (isoString) => {
 
 /**
  * Whether a due date has passed. Mirrors the backend's derive-period-status
- * comparison: ISO date strings sort chronologically, and a period is overdue
- * from the day after its due date, i.e. from the 21st when due on the 20th.
- * @param {string} dueDate
+ * comparison verbatim: both sides are date-only (YYYY-MM-DD) ISO strings, which
+ * sort chronologically, so a period is overdue from the day after its due date,
+ * i.e. from the 21st when due on the 20th. The backend returns dueDate as a
+ * date-only string, so it is compared as-is (no slicing) to stay identical to
+ * derive-period-status.js and never drift from it.
+ * @param {string} dueDate a date-only YYYY-MM-DD ISO string
  * @returns {boolean}
  */
 const isPastDueDate = (dueDate) =>
