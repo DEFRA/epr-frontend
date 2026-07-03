@@ -1359,7 +1359,7 @@ describe('#listReportsController', () => {
       expect(body.textContent).toContain('Matt Davis')
     })
 
-    it('shows Overdue in the Due date column for a resubmission row', async ({
+    it('shows Overdue in the Due date column for a resubmission row whose due date has passed', async ({
       server
     }) => {
       config.set(CLOSED_PERIOD_FLAG, true)
@@ -1381,6 +1381,40 @@ describe('#listReportsController', () => {
             'Requires resubmission',
             'Overdue',
             'Review and create draft January 2026'
+          ]
+        ]
+      })
+    })
+
+    it('shows the real due date for a resubmission row whose due date has not passed', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      // February's due date (20 March) is "today" under the fake clock, so
+      // the period is not yet overdue.
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: resubmissionPeriodPair(2)
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const actionRequired = findSection(body, 'Action required')
+
+      expect(readTable(actionRequired)).toStrictEqual({
+        headers: ['Period', 'Status', 'Due date', ''],
+        rows: [
+          [
+            'February 2026',
+            'Requires resubmission',
+            '20 Mar 2026',
+            'Review and create draft February 2026'
           ]
         ]
       })

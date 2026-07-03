@@ -56,6 +56,16 @@ const formatSubmittedDateTime = (isoString) => {
   return `${formatDateShort(isoString)}, ${formatTime(isoString)}`
 }
 
+/**
+ * Whether a due date has passed. Mirrors the backend's derive-period-status
+ * comparison: ISO date strings sort chronologically, and a period is overdue
+ * from the day after its due date, i.e. from the 21st when due on the 20th.
+ * @param {string} dueDate
+ * @returns {boolean}
+ */
+const isPastDueDate = (dueDate) =>
+  new Date().toISOString().split('T')[0].localeCompare(dueDate) > 0
+
 /** @type {Partial<Record<SubmissionStatusValue, string>>} */
 const fixedActionPaths = {
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
@@ -170,7 +180,8 @@ function buildRows({
       ])
     } else {
       const dueDateText =
-        status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+        status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION &&
+        isPastDueDate(period.dueDate)
           ? localise('reports:statusOverdue')
           : formatDateShort(period.dueDate)
 
