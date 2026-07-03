@@ -6,6 +6,7 @@ export const cssClasses = {
     blue: '', // govuk-tag--blue is the default
     green: 'govuk-tag--green',
     orange: 'govuk-tag--orange',
+    purple: 'govuk-tag--purple',
     red: 'govuk-tag--red',
     yellow: 'govuk-tag--yellow'
   },

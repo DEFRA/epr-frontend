@@ -24,7 +24,8 @@ describe('#format-submission-status', () => {
         { status: 'overdue', expected: 'govuk-tag--red' },
         { status: 'in_progress', expected: 'govuk-tag--yellow' },
         { status: 'ready_to_submit', expected: '' },
-        { status: 'submitted', expected: 'govuk-tag--green' }
+        { status: 'submitted', expected: 'govuk-tag--green' },
+        { status: 'requires_resubmission', expected: 'govuk-tag--purple' }
       ])
     )(
       'returns "$expected" modifier class for "$status" status',
@@ -60,6 +61,12 @@ describe('#format-submission-status', () => {
         'reports:statusSubmitted'
       )
     })
+
+    it('returns localised label for "requires_resubmission" status', () => {
+      expect(getStatusLabel('requires_resubmission', localise)).toBe(
+        'reports:statusRequiresResubmission'
+      )
+    })
   })
 
   describe('#getActionLabel', () => {
@@ -82,6 +89,12 @@ describe('#format-submission-status', () => {
     it('returns "Review and submit" action for "ready_to_submit" status', () => {
       expect(getActionLabel('ready_to_submit', localise)).toBe(
         'reports:actionReviewAndSubmit'
+      )
+    })
+
+    it('returns "Review and create draft" action for "requires_resubmission" status', () => {
+      expect(getActionLabel('requires_resubmission', localise)).toBe(
+        'reports:actionReviewAndCreateDraft'
       )
     })
   })

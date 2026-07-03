@@ -11,7 +11,8 @@ const tagClasses = {
   [SUBMISSION_STATUS.OVERDUE]: cssClasses.tag.red,
   [SUBMISSION_STATUS.IN_PROGRESS]: cssClasses.tag.yellow,
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: cssClasses.tag.blue,
-  [SUBMISSION_STATUS.SUBMITTED]: cssClasses.tag.green
+  [SUBMISSION_STATUS.SUBMITTED]: cssClasses.tag.green,
+  [SUBMISSION_STATUS.REQUIRES_RESUBMISSION]: cssClasses.tag.purple
 }
 
 /** @type {Record<SubmissionStatusValue, string>} */
@@ -20,7 +21,9 @@ const statusLabelKeys = {
   [SUBMISSION_STATUS.OVERDUE]: 'reports:statusOverdue',
   [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:statusInProgress',
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:statusReadyToSubmit',
-  [SUBMISSION_STATUS.SUBMITTED]: 'reports:statusSubmitted'
+  [SUBMISSION_STATUS.SUBMITTED]: 'reports:statusSubmitted',
+  [SUBMISSION_STATUS.REQUIRES_RESUBMISSION]:
+    'reports:statusRequiresResubmission'
 }
 
 /** @type {Record<SubmissionStatusValue, string>} */
@@ -29,7 +32,9 @@ const actionLabelKeys = {
   [SUBMISSION_STATUS.OVERDUE]: 'reports:actionCreateDraft',
   [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:actionContinue',
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:actionReviewAndSubmit',
-  [SUBMISSION_STATUS.SUBMITTED]: 'reports:actionView'
+  [SUBMISSION_STATUS.SUBMITTED]: 'reports:actionView',
+  [SUBMISSION_STATUS.REQUIRES_RESUBMISSION]:
+    'reports:actionReviewAndCreateDraft'
 }
 
 /**
