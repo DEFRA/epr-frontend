@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -11,53 +12,59 @@ vi.mock(
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
-  }
-}
+/**
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
 
-const mockRegistration = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
-}
+const mockAuth = buildMockAuth()
 
-const mockReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
-  cadence: 'quarterly',
-  year: 2026,
-  period: 1,
-  startDate: '2026-01-01',
-  endDate: '2026-03-31',
-  dueDate: '2026-04-20',
-  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: { material: 'plastic' },
-  id: 'report-001',
-  version: 1,
-  status: { currentStatus: 'ready_to_submit' },
-  supportingInformation: null,
-  recyclingActivity: {
-    totalTonnageReceived: 80.25,
-    suppliers: [],
-    tonnageRecycled: null,
-    tonnageNotRecycled: null
-  },
-  exportActivity: null,
-  wasteSent: {
-    tonnageSentToReprocessor: 0,
-    tonnageSentToExporter: 0,
-    tonnageSentToAnotherSite: 0,
-    finalDestinations: []
-  }
-}
+const mockRegistration = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'exporter',
+      registrationNumber: 'REG001234'
+    },
+    accreditation: undefined
+  })
+)
+
+const mockReportDetail = /** @type {ReportDetailResponse} */ (
+  /** @type {unknown} */ ({
+    operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+    cadence: 'quarterly',
+    year: 2026,
+    period: 1,
+    startDate: '2026-01-01',
+    endDate: '2026-03-31',
+    dueDate: '2026-04-20',
+    source: {
+      summaryLogId: 'sl-1',
+      lastUploadedAt: '2026-02-15T15:09:00.000Z'
+    },
+    details: { material: 'plastic' },
+    id: 'report-001',
+    version: 1,
+    status: { currentStatus: 'ready_to_submit' },
+    supportingInformation: null,
+    recyclingActivity: {
+      totalTonnageReceived: 80.25,
+      suppliers: [],
+      tonnageRecycled: null,
+      tonnageNotRecycled: null
+    },
+    exportActivity: null,
+    wasteSent: {
+      tonnageSentToReprocessor: 0,
+      tonnageSentToExporter: 0,
+      tonnageSentToAnotherSite: 0,
+      finalDestinations: []
+    }
+  })
+)
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -301,11 +308,34 @@ describe('#createdController', () => {
     })
   })
 
+  describe('resubmission variant (submissionNumber > 1)', () => {
+    const resubmissionCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/created`
+
+    it('should show Requires resubmission status in the confirmation panel', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: resubmissionCreatedUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const panel = body.querySelector('.govuk-panel--confirmation')
+
+      expect(panel.textContent).toContain('Status:')
+      expect(panel.textContent).toContain('Requires resubmission')
+      expect(panel.textContent).not.toContain('Ready to submit')
+    })
+  })
+
   describe('status guard', () => {
     it('should return 404 when status is in_progress', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: { currentStatus: 'in_progress' }
+        status: /** @type {ReportDetailResponse['status']} */ (
+          /** @type {unknown} */ ({ currentStatus: 'in_progress' })
+        )
       })
 
       const { statusCode } = await server.inject({
@@ -320,7 +350,9 @@ describe('#createdController', () => {
     it('should return 404 when status is submitted', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: { currentStatus: 'submitted' }
+        status: /** @type {ReportDetailResponse['status']} */ (
+          /** @type {unknown} */ ({ currentStatus: 'submitted' })
+        )
       })
 
       const { statusCode } = await server.inject({
@@ -335,7 +367,9 @@ describe('#createdController', () => {
     it('should return 404 when status is due', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: { currentStatus: 'due' }
+        status: /** @type {ReportDetailResponse['status']} */ (
+          /** @type {unknown} */ ({ currentStatus: 'due' })
+        )
       })
 
       const { statusCode } = await server.inject({

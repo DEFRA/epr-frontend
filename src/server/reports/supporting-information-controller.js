@@ -2,6 +2,7 @@ import Joi from 'joi'
 
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -9,19 +10,87 @@ import { updateReport } from './helpers/update-report.js'
 import { buildValidationErrors } from './helpers/validation.js'
 
 const MAX_SUPPORTING_INFO_LENGTH = 2000
+const RESUBMISSION_MAX_SUPPORTING_INFO_LENGTH = 1000
+const FIRST_SUBMISSION = 1
 
+// A resubmission (submissionNumber > 1) caps supporting information at 1,000
+// characters; the standard first-time flow allows 2,000. `submissionNumber` is
+// validated before the payload, so it is available on the Joi context here.
 const payloadSchema = Joi.object({
   supportingInformation: Joi.string()
-    .max(MAX_SUPPORTING_INFO_LENGTH)
     .allow('')
     .optional()
     .default('')
-    .messages({
-      'string.max': 'reports:supportingInformationError'
+    .when(Joi.ref('$params.submissionNumber'), {
+      is: Joi.number().greater(FIRST_SUBMISSION),
+      then: Joi.string()
+        .max(RESUBMISSION_MAX_SUPPORTING_INFO_LENGTH)
+        .allow('')
+        .messages({
+          'string.max': 'reports:supportingInformationResubmissionError'
+        }),
+      otherwise: Joi.string()
+        .max(MAX_SUPPORTING_INFO_LENGTH)
+        .allow('')
+        .messages({
+          'string.max': 'reports:supportingInformationError'
+        })
     }),
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
 })
+
+/**
+ * Resolves the copy and character limit for the supporting-information screen.
+ * The resubmission variant (submissionNumber > 1) swaps the caption, heading,
+ * field label and hint, adds an inset with common reasons, and caps at 1,000.
+ * @param {boolean} isResubmission
+ * @param {Registration} registration
+ * @param {(key: string, params?: object) => string} localise
+ * @returns {{
+ *   caption: string,
+ *   heading: string,
+ *   fieldLabel: string,
+ *   hint: string,
+ *   inset: { intro: string, examplesLead: string, examples: string[] } | null,
+ *   maxLength: number
+ * }}
+ */
+function buildSupportingInfoCopy(isResubmission, registration, localise) {
+  if (!isResubmission) {
+    return {
+      caption: localise('reports:supportingInformationCaption'),
+      heading: localise('reports:supportingInformationHeading'),
+      fieldLabel: localise('reports:supportingInformationFieldLabel'),
+      hint: localise('reports:supportingInformationHint'),
+      inset: null,
+      maxLength: MAX_SUPPORTING_INFO_LENGTH
+    }
+  }
+
+  const { noteType } = getNoteTypeDisplayNames(registration)
+
+  return {
+    caption: localise('reports:supportingInformationResubmissionCaption'),
+    heading: localise('reports:supportingInformationResubmissionHeading'),
+    fieldLabel: localise('reports:supportingInformationResubmissionFieldLabel'),
+    hint: localise('reports:supportingInformationResubmissionHint'),
+    inset: {
+      intro: localise('reports:supportingInformationResubmissionInsetIntro'),
+      examplesLead: localise(
+        'reports:supportingInformationResubmissionInsetExamplesLead'
+      ),
+      examples: [
+        localise('reports:supportingInformationResubmissionInsetExample1'),
+        localise('reports:supportingInformationResubmissionInsetExample2'),
+        localise('reports:supportingInformationResubmissionInsetExample3', {
+          noteType
+        })
+      ]
+    },
+    maxLength: RESUBMISSION_MAX_SUPPORTING_INFO_LENGTH
+  }
+}
 
 /**
  * Supporting-information form payload after Joi validation. `failAction`
@@ -103,18 +172,24 @@ async function buildViewData(request, options = {}) {
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
+  const isResubmission = submissionNumber > FIRST_SUBMISSION
+  const copy = buildSupportingInfoCopy(isResubmission, registration, localise)
+
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {
       material,
       periodLabel
     }),
-    caption: localise('reports:supportingInformationCaption'),
-    heading: localise('reports:supportingInformationHeading'),
+    caption: copy.caption,
+    heading: copy.heading,
+    fieldLabel: copy.fieldLabel,
+    hint: copy.hint,
+    inset: copy.inset,
     backUrl: request.localiseUrl(backPage),
     deleteUrl: request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
     ),
-    maxLength: MAX_SUPPORTING_INFO_LENGTH,
+    maxLength: copy.maxLength,
     value: options.value ?? reportDetail.supportingInformation ?? '',
     errors: options.errors ?? null,
     errorSummary: options.errorSummary ?? null

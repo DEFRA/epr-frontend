@@ -95,6 +95,8 @@ const fixedActionPaths = {
   [SUBMISSION_STATUS.SUBMITTED]: '/view'
 }
 
+const RESUBMISSION_EXPLAINER_PATH = '/resubmission-explainer'
+
 /**
  * Resolves the path the action link on a report row should target.
  * For in-progress reports the destination varies by registration type
@@ -113,15 +115,56 @@ const getActionPath = (status, registration, accreditation, cadence) => {
 }
 
 /**
+ * The submission status that drives a period's action link (its label and
+ * path). A requires_resubmission period defers to the draft it carries: with
+ * no draft it stays requires_resubmission ("Review and create draft"); with an
+ * in-progress or ready-to-submit draft it behaves like that draft ("Continue"
+ * or "Review and submit"). The purple Requires resubmission tag, taken from
+ * periodStatus, is unaffected.
+ * @param {ReportingPeriod} period
+ * @returns {SubmissionStatusValue}
+ */
+const getActionStatus = (period) => {
+  if (period.periodStatus !== SUBMISSION_STATUS.REQUIRES_RESUBMISSION) {
+    return period.periodStatus
+  }
+  return period.report?.status ?? SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+}
+
+/**
+ * Resolves the action link path for a period, sending a resubmission that has
+ * no draft yet to the resubmission explainer.
+ * @param {ReportingPeriod} period
+ * @param {Pick<Registration, 'wasteProcessingType'>} registration
+ * @param {Accreditation | undefined} accreditation
+ * @param {CadenceValue} cadence
+ * @returns {string}
+ */
+const getPeriodActionPath = (period, registration, accreditation, cadence) => {
+  if (
+    period.periodStatus === SUBMISSION_STATUS.REQUIRES_RESUBMISSION &&
+    !period.report
+  ) {
+    return RESUBMISSION_EXPLAINER_PATH
+  }
+  return getActionPath(
+    getActionStatus(period),
+    registration,
+    accreditation,
+    cadence
+  )
+}
+
+/**
  * @param {{
  *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
  *   label: string,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
+ *   period: ReportingPeriod,
  *   periodPath: string,
- *   registration: Pick<Registration, 'wasteProcessingType'>,
- *   status: SubmissionStatusValue
+ *   registration: Pick<Registration, 'wasteProcessingType'>
  * }} options
  * @returns {TableCell}
  */
@@ -131,12 +174,17 @@ const buildActionCell = ({
   label,
   localise,
   localiseUrl,
+  period,
   periodPath,
-  registration,
-  status
+  registration
 }) => {
-  const actionPath = getActionPath(status, registration, accreditation, cadence)
-  const actionLabel = getActionLabel(status, localise)
+  const actionPath = getPeriodActionPath(
+    period,
+    registration,
+    accreditation,
+    cadence
+  )
+  const actionLabel = getActionLabel(getActionStatus(period), localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
 
@@ -181,7 +229,7 @@ function buildRows({
     const status = period.periodStatus
 
     const actionCell = buildActionCell({
-      status,
+      period,
       registration,
       accreditation,
       cadence,
@@ -270,7 +318,7 @@ const buildHeaders = (localise) => ({
  */
 const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   const count = reportingPeriods.filter(
-    (p) => p.periodStatus === SUBMISSION_STATUS.READY_TO_SUBMIT
+    (p) => getActionStatus(p) === SUBMISSION_STATUS.READY_TO_SUBMIT
   ).length
 
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null

@@ -6,6 +6,7 @@ import {
   deletePostController
 } from './delete-controller.js'
 import { detailController } from './detail-controller.js'
+import { resubmissionExplainerController } from './resubmission-explainer-controller.js'
 import {
   exporterFreePernGetController,
   exporterFreePernPostController
@@ -70,6 +71,11 @@ export const reports = {
           ...detailController,
           method: 'GET',
           path: periodPath
+        },
+        {
+          ...resubmissionExplainerController,
+          method: 'GET',
+          path: `${periodPath}/resubmission-explainer`
         },
         {
           ...createController,

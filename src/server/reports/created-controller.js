@@ -7,6 +7,8 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 
+const FIRST_SUBMISSION = 1
+
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
   options: {
@@ -58,6 +60,14 @@ export const createdController = {
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
+    // A resubmission draft (submissionNumber > 1) keeps the period in its
+    // Requires resubmission state, so the panel shows that rather than the
+    // draft report's own Ready to submit status.
+    const statusValue =
+      submissionNumber > FIRST_SUBMISSION
+        ? localise('reports:createdStatusValueResubmission')
+        : localise('reports:createdStatusValue')
+
     const homeUrl = `/organisations/${organisationId}`
     const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`
 
@@ -68,7 +78,7 @@ export const createdController = {
       }),
       heading: localise('reports:createdHeading', { periodLabel }),
       statusLabel: localise('reports:createdStatusLabel'),
-      statusValue: localise('reports:createdStatusValue'),
+      statusValue,
       detailsHeading: localise('reports:detailsHeading'),
       registrationLabel: localise('reports:createdRegistrationLabel'),
       registrationNumber: registration.registrationNumber,

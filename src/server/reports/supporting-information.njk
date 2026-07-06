@@ -3,6 +3,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -25,6 +26,19 @@
       <span class="govuk-caption-xl">{{ caption }}</span>
       <h1 class="govuk-heading-xl">{{ heading }}</h1>
 
+      {% if inset %}
+        {% set insetHtml %}
+          <p class="govuk-body">{{ inset.intro }}</p>
+          <p class="govuk-body">{{ inset.examplesLead }}</p>
+          <ul class="govuk-list govuk-list--bullet">
+            {% for example in inset.examples %}
+              <li>{{ example }}</li>
+            {% endfor %}
+          </ul>
+        {% endset %}
+        {{ govukInsetText({ html: insetHtml }) }}
+      {% endif %}
+
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -33,11 +47,11 @@
           id: "supportingInformation",
           maxlength: maxLength,
           label: {
-            text: localise("reports:supportingInformationFieldLabel"),
+            text: fieldLabel,
             classes: "govuk-label--m"
           },
           hint: {
-            text: localise("reports:supportingInformationHint")
+            text: hint
           },
           value: value,
           errorMessage: errors.supportingInformation if errors else null
