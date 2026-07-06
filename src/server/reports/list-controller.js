@@ -91,11 +91,15 @@ const buildDueDateText = (status, dueDate, localise) =>
 
 /** @type {Partial<Record<SubmissionStatusValue, string>>} */
 const fixedActionPaths = {
+  // getActionStatus stays requires_resubmission only when there is no draft yet,
+  // so this is the no-draft entry point: the explainer, then the data-preview
+  // page (detailController), which re-fetches the report and redirects back to
+  // the list if a draft already exists. A stale "no draft" reading therefore
+  // degrades to a redirect, not a dead end.
+  [SUBMISSION_STATUS.REQUIRES_RESUBMISSION]: '/resubmission-explainer',
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
   [SUBMISSION_STATUS.SUBMITTED]: '/view'
 }
-
-const RESUBMISSION_EXPLAINER_PATH = '/resubmission-explainer'
 
 /**
  * Resolves the path the action link on a report row should target.
@@ -132,35 +136,6 @@ const getActionStatus = (period) => {
 }
 
 /**
- * Resolves the action link path for a period, sending a resubmission that has
- * no draft yet to the resubmission explainer.
- * @param {ReportingPeriod} period
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
- * @param {Accreditation | undefined} accreditation
- * @param {CadenceValue} cadence
- * @returns {string}
- */
-const getPeriodActionPath = (period, registration, accreditation, cadence) => {
-  if (
-    period.periodStatus === SUBMISSION_STATUS.REQUIRES_RESUBMISSION &&
-    !period.report
-  ) {
-    // Explainer, then the data-preview page (detailController). That page
-    // re-fetches the report and redirects back to the list if a draft already
-    // exists, so a stale "no draft" reading here degrades to a redirect rather
-    // than a dead end. period.report and the fetched report share one backend
-    // source, so they align in practice.
-    return RESUBMISSION_EXPLAINER_PATH
-  }
-  return getActionPath(
-    getActionStatus(period),
-    registration,
-    accreditation,
-    cadence
-  )
-}
-
-/**
  * @param {{
  *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
@@ -183,13 +158,9 @@ const buildActionCell = ({
   periodPath,
   registration
 }) => {
-  const actionPath = getPeriodActionPath(
-    period,
-    registration,
-    accreditation,
-    cadence
-  )
-  const actionLabel = getActionLabel(getActionStatus(period), localise)
+  const status = getActionStatus(period)
+  const actionPath = getActionPath(status, registration, accreditation, cadence)
+  const actionLabel = getActionLabel(status, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
 
