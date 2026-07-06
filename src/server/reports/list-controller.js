@@ -145,6 +145,11 @@ const getPeriodActionPath = (period, registration, accreditation, cadence) => {
     period.periodStatus === SUBMISSION_STATUS.REQUIRES_RESUBMISSION &&
     !period.report
   ) {
+    // Explainer, then the data-preview page (detailController). That page
+    // re-fetches the report and redirects back to the list if a draft already
+    // exists, so a stale "no draft" reading here degrades to a redirect rather
+    // than a dead end. period.report and the fetched report share one backend
+    // source, so they align in practice.
     return RESUBMISSION_EXPLAINER_PATH
   }
   return getActionPath(
