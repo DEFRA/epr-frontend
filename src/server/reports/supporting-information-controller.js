@@ -1,5 +1,6 @@
 import Joi from 'joi'
 
+import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
@@ -10,40 +11,26 @@ import { updateReport } from './helpers/update-report.js'
 import { buildValidationErrors } from './helpers/validation.js'
 
 const MAX_SUPPORTING_INFO_LENGTH = 2000
-const RESUBMISSION_MAX_SUPPORTING_INFO_LENGTH = 1000
 const FIRST_SUBMISSION = 1
 
-// A resubmission (submissionNumber > 1) caps supporting information at 1,000
-// characters; the standard first-time flow allows 2,000. `submissionNumber` is
-// validated before the payload, so it is available on the Joi context here.
 const payloadSchema = Joi.object({
   supportingInformation: Joi.string()
+    .max(MAX_SUPPORTING_INFO_LENGTH)
     .allow('')
     .optional()
     .default('')
-    .when(Joi.ref('$params.submissionNumber'), {
-      is: Joi.number().greater(FIRST_SUBMISSION),
-      then: Joi.string()
-        .max(RESUBMISSION_MAX_SUPPORTING_INFO_LENGTH)
-        .allow('')
-        .messages({
-          'string.max': 'reports:supportingInformationResubmissionError'
-        }),
-      otherwise: Joi.string()
-        .max(MAX_SUPPORTING_INFO_LENGTH)
-        .allow('')
-        .messages({
-          'string.max': 'reports:supportingInformationError'
-        })
+    .messages({
+      'string.max': 'reports:supportingInformationError'
     }),
   action: Joi.string().valid('continue', 'save').required(),
   crumb: Joi.string()
 })
 
 /**
- * Resolves the copy and character limit for the supporting-information screen.
- * The resubmission variant (submissionNumber > 1) swaps the caption, heading,
- * field label and hint, adds an inset with common reasons, and caps at 1,000.
+ * Resolves the copy for the supporting-information screen. The resubmission
+ * variant (submissionNumber > 1, flag on) swaps the caption, heading, field
+ * label and hint, and adds an inset listing common reasons. Both variants share
+ * the same character limit.
  * @param {boolean} isResubmission
  * @param {Registration} registration
  * @param {(key: string, params?: object) => string} localise
@@ -52,8 +39,7 @@ const payloadSchema = Joi.object({
  *   heading: string,
  *   fieldLabel: string,
  *   hint: string,
- *   inset: { intro: string, examplesLead: string, examples: string[] } | null,
- *   maxLength: number
+ *   inset: { intro: string, examplesLead: string, examples: string[] } | null
  * }}
  */
 function buildSupportingInfoCopy(isResubmission, registration, localise) {
@@ -63,8 +49,7 @@ function buildSupportingInfoCopy(isResubmission, registration, localise) {
       heading: localise('reports:supportingInformationHeading'),
       fieldLabel: localise('reports:supportingInformationFieldLabel'),
       hint: localise('reports:supportingInformationHint'),
-      inset: null,
-      maxLength: MAX_SUPPORTING_INFO_LENGTH
+      inset: null
     }
   }
 
@@ -87,8 +72,7 @@ function buildSupportingInfoCopy(isResubmission, registration, localise) {
           noteType
         })
       ]
-    },
-    maxLength: RESUBMISSION_MAX_SUPPORTING_INFO_LENGTH
+    }
   }
 }
 
@@ -172,7 +156,8 @@ async function buildViewData(request, options = {}) {
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
-  const isResubmission = submissionNumber > FIRST_SUBMISSION
+  const isResubmission =
+    submissionNumber > FIRST_SUBMISSION && isClosedPeriodAdjustmentsEnabled()
   const copy = buildSupportingInfoCopy(isResubmission, registration, localise)
 
   return {
@@ -189,7 +174,7 @@ async function buildViewData(request, options = {}) {
     deleteUrl: request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/delete`
     ),
-    maxLength: copy.maxLength,
+    maxLength: MAX_SUPPORTING_INFO_LENGTH,
     value: options.value ?? reportDetail.supportingInformation ?? '',
     errors: options.errors ?? null,
     errorSummary: options.errorSummary ?? null

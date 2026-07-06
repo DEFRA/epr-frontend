@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -5,7 +6,9 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+
+const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -311,6 +314,14 @@ describe('#createdController', () => {
   describe('resubmission variant (submissionNumber > 1)', () => {
     const resubmissionCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/created`
 
+    beforeEach(() => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
+    })
+
     it('should show Requires resubmission status in the confirmation panel', async ({
       server
     }) => {
@@ -326,6 +337,24 @@ describe('#createdController', () => {
       expect(panel.textContent).toContain('Status:')
       expect(panel.textContent).toContain('Requires resubmission')
       expect(panel.textContent).not.toContain('Ready to submit')
+    })
+
+    it('should show the standard status when the flag is off', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, false)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: resubmissionCreatedUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const panel = body.querySelector('.govuk-panel--confirmation')
+
+      expect(panel.textContent).toContain('Ready to submit')
+      expect(panel.textContent).not.toContain('Requires resubmission')
     })
   })
 

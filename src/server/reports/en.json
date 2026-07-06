@@ -187,7 +187,6 @@
   "supportingInformationNone": "None provided",
   "supportingInformationPageTitle": "Supporting information: {{ material }}: {{ periodLabel }}",
   "supportingInformationResubmissionCaption": "Create draft report",
-  "supportingInformationResubmissionError": "Supporting information must be 1,000 characters or fewer",
   "supportingInformationResubmissionFieldLabel": "Enter information (optional)",
   "supportingInformationResubmissionHeading": "Add supporting information to help your regulator",
   "supportingInformationResubmissionHint": "Include anything you think your regulator will find useful.",

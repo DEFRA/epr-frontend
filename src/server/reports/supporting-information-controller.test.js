@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -6,7 +7,9 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+
+const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -711,6 +714,7 @@ describe('#supportingInformationController', () => {
     const resubmissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/2/submissions/2/supporting-information`
 
     beforeEach(() => {
+      config.set(CLOSED_PERIOD_FLAG, true)
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
@@ -718,6 +722,10 @@ describe('#supportingInformationController', () => {
         reportDetailWithoutSupportingInfo
       )
       vi.mocked(updateReport).mockResolvedValue({ ok: true })
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
     })
 
     describe('GET', () => {
@@ -825,7 +833,7 @@ describe('#supportingInformationController', () => {
         )
       })
 
-      it('should cap the character count at 1,000 characters', async ({
+      it('should keep the standard 2,000-character limit', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -837,63 +845,30 @@ describe('#supportingInformationController', () => {
         const { body } = new JSDOM(result).window.document
         const characterCount = body.querySelector('.govuk-character-count')
 
-        expect(characterCount?.getAttribute('data-maxlength')).toBe('1000')
+        expect(characterCount?.getAttribute('data-maxlength')).toBe('2000')
       })
-    })
 
-    describe('POST', () => {
-      it('should re-render with a 1,000-character error when text exceeds 1000', async ({
+      it('should render the standard variant when the flag is off', async ({
         server
       }) => {
-        const { cookie, crumb } = await getCsrfToken(server, resubmissionUrl, {
+        config.set(CLOSED_PERIOD_FLAG, false)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
           auth: mockAuth
         })
-
-        const { result, statusCode } = await server.inject({
-          method: 'POST',
-          url: resubmissionUrl,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: {
-            supportingInformation: 'a'.repeat(1001),
-            action: 'continue',
-            crumb
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
 
         const { body } = new JSDOM(result).window.document
-        const errorSummary = body.querySelector('.govuk-error-summary')
 
-        expect(errorSummary).not.toBeNull()
-        expect(errorSummary?.textContent).toContain('1,000 characters or fewer')
-        expect(updateReport).not.toHaveBeenCalled()
-      })
+        expect(body.querySelector('.govuk-inset-text')).toBeNull()
 
-      it('should accept exactly 1000 characters and redirect to check page', async ({
-        server
-      }) => {
-        const { cookie, crumb } = await getCsrfToken(server, resubmissionUrl, {
-          auth: mockAuth
+        const heading = getByRole(body, 'heading', {
+          name: /Add supporting information for your regulator/,
+          level: 1
         })
 
-        const { statusCode, headers } = await server.inject({
-          method: 'POST',
-          url: resubmissionUrl,
-          auth: mockAuth,
-          headers: { cookie },
-          payload: {
-            supportingInformation: 'a'.repeat(1000),
-            action: 'continue',
-            crumb
-          }
-        })
-
-        expect(statusCode).toBe(statusCodes.found)
-        expect(headers.location).toBe(
-          `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/2/submissions/2/check-your-answers`
-        )
+        expect(heading).toBeDefined()
       })
     })
   })

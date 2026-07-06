@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
@@ -62,9 +63,10 @@ export const createdController = {
 
     // A resubmission draft (submissionNumber > 1) keeps the period in its
     // Requires resubmission state, so the panel shows that rather than the
-    // draft report's own Ready to submit status.
+    // draft report's own Ready to submit status. Gated on the flag so the
+    // page behaves as the standard flow until closed-period adjustments ship.
     const statusValue =
-      submissionNumber > FIRST_SUBMISSION
+      submissionNumber > FIRST_SUBMISSION && isClosedPeriodAdjustmentsEnabled()
         ? localise('reports:createdStatusValueResubmission')
         : localise('reports:createdStatusValue')
 
