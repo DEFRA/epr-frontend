@@ -5,6 +5,7 @@ export const cssClasses = {
   tag: {
     blue: '', // govuk-tag--blue is the default
     green: 'govuk-tag--green',
+    noMaxWidth: 'epr-tag--no-max-width',
     orange: 'govuk-tag--orange',
     purple: 'govuk-tag--purple',
     red: 'govuk-tag--red',
@@ -12,8 +13,5 @@ export const cssClasses = {
   },
   textAlign: {
     right: 'govuk-!-text-align-right'
-  },
-  width: {
-    oneQuarter: 'govuk-!-width-one-quarter'
   }
 }

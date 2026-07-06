@@ -42,7 +42,7 @@ const buildStatusTagHtml = (status, localise) => {
   const statusLabel = getStatusLabel(status, localise)
   const statusTagClass = getStatusTagClass(status)
 
-  return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
+  return `<strong class="govuk-tag ${statusTagClass} ${cssClasses.tag.noMaxWidth}">${escapeHtml(statusLabel)}</strong>`
 }
 
 /**
@@ -192,8 +192,7 @@ function buildRows({
  * @returns {TableCell}
  */
 const headerCol = (localise, textKey) => ({
-  text: localise(textKey),
-  classes: cssClasses.width.oneQuarter
+  text: localise(textKey)
 })
 
 /** @type {TableCell} */

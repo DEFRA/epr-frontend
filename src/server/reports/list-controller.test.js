@@ -486,6 +486,29 @@ describe('#listReportsController', () => {
       expect(headerTexts).toStrictEqual(['Period', 'Status', 'Due date', ''])
     })
 
+    it('should let the first columns hug their content rather than forcing quarter-widths', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const headerClasses = Array.from(
+        body.querySelectorAll('.govuk-table thead th')
+      ).map((th) => Array.from(th.classList))
+
+      expect(
+        headerClasses.some((classes) =>
+          classes.includes('govuk-!-width-one-quarter')
+        )
+      ).toBe(false)
+    })
+
     it('should display formatted due date per row', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -1348,6 +1371,7 @@ describe('#listReportsController', () => {
         (tag) => tag.textContent?.trim() === 'Requires resubmission'
       )
       expect(resubTag?.classList.contains('govuk-tag--purple')).toBe(true)
+      expect(resubTag?.classList.contains('epr-tag--no-max-width')).toBe(true)
 
       const resubLink = Array.from(body.querySelectorAll('a.govuk-link')).find(
         (anchor) => anchor.textContent?.includes('Review and create draft')
