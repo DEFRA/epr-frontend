@@ -194,11 +194,13 @@ function buildRows({
 }
 
 /**
+ * Submitted-table columns keep fixed quarter-widths, in contrast to the
+ * action-required columns which hug their content.
  * @param {TFunction} localise
  * @param {string} textKey
  * @returns {TableCell}
  */
-const headerCol = (localise, textKey) => ({
+const submittedHeaderCol = (localise, textKey) => ({
   text: localise(textKey),
   classes: cssClasses.width.oneQuarter
 })
@@ -230,9 +232,9 @@ const buildHeaders = (localise) => ({
     actionHeaderCol
   ],
   submittedHeader: [
-    headerCol(localise, 'reports:periodColumn'),
-    headerCol(localise, 'reports:statusColumn'),
-    headerCol(localise, 'reports:dateAndTimeColumn'),
+    submittedHeaderCol(localise, 'reports:periodColumn'),
+    submittedHeaderCol(localise, 'reports:statusColumn'),
+    submittedHeaderCol(localise, 'reports:dateAndTimeColumn'),
     { text: localise('reports:submittedByColumn') },
     actionHeaderCol
   ]
