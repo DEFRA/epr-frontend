@@ -42,7 +42,14 @@ const buildStatusTagHtml = (status, localise) => {
   const statusLabel = getStatusLabel(status, localise)
   const statusTagClass = getStatusTagClass(status)
 
-  return `<strong class="govuk-tag ${statusTagClass} ${cssClasses.tag.noMaxWidth}">${escapeHtml(statusLabel)}</strong>`
+  // 'Requires resubmission' is wider than the 160px govuk-tag cap and would
+  // otherwise wrap to two lines, so lift the cap to keep it on one line.
+  const noWrapClass =
+    status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+      ? ` ${cssClasses.tag.noMaxWidth}`
+      : ''
+
+  return `<strong class="govuk-tag ${statusTagClass}${noWrapClass}">${escapeHtml(statusLabel)}</strong>`
 }
 
 /**
@@ -192,6 +199,19 @@ function buildRows({
  * @returns {TableCell}
  */
 const headerCol = (localise, textKey) => ({
+  text: localise(textKey),
+  classes: cssClasses.width.oneQuarter
+})
+
+/**
+ * Action-required columns hug their content so the trailing right-aligned
+ * action link sits hard right, matching the design. The submitted table keeps
+ * its fixed column widths.
+ * @param {TFunction} localise
+ * @param {string} textKey
+ * @returns {TableCell}
+ */
+const activeHeaderCol = (localise, textKey) => ({
   text: localise(textKey)
 })
 
@@ -204,9 +224,9 @@ const actionHeaderCol = { text: '', classes: cssClasses.textAlign.right }
  */
 const buildHeaders = (localise) => ({
   activeHeader: [
-    headerCol(localise, 'reports:periodColumn'),
-    headerCol(localise, 'reports:statusColumn'),
-    headerCol(localise, 'reports:dateDueColumn'),
+    activeHeaderCol(localise, 'reports:periodColumn'),
+    activeHeaderCol(localise, 'reports:statusColumn'),
+    activeHeaderCol(localise, 'reports:dateDueColumn'),
     actionHeaderCol
   ],
   submittedHeader: [

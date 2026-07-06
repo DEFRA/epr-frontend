@@ -13,5 +13,8 @@ export const cssClasses = {
   },
   textAlign: {
     right: 'govuk-!-text-align-right'
+  },
+  width: {
+    oneQuarter: 'govuk-!-width-one-quarter'
   }
 }

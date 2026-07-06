@@ -486,7 +486,7 @@ describe('#listReportsController', () => {
       expect(headerTexts).toStrictEqual(['Period', 'Status', 'Due date', ''])
     })
 
-    it('should let the first columns hug their content rather than forcing quarter-widths', async ({
+    it('should let the action-required columns hug their content rather than forcing quarter-widths', async ({
       server
     }) => {
       const { result } = await server.inject({
