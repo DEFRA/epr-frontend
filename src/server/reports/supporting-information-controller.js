@@ -27,22 +27,37 @@ const payloadSchema = Joi.object({
 })
 
 /**
- * Resolves the copy for the supporting-information screen. The resubmission
- * variant (submissionNumber > 1, flag on) swaps the caption, heading, field
- * label and hint, and adds an inset listing common reasons. Both variants share
- * the same character limit.
- * @param {boolean} isResubmission
- * @param {Registration} registration
- * @param {(key: string, params?: object) => string} localise
- * @returns {{
+ * @typedef {{
+ *   intro: string,
+ *   examplesLead: string,
+ *   examples: string[]
+ * }} SupportingInfoInset
+ */
+
+/**
+ * @typedef {{
  *   caption: string,
  *   heading: string,
  *   fieldLabel: string,
  *   hint: string,
- *   inset: { intro: string, examplesLead: string, examples: string[] } | null
- * }}
+ *   inset: SupportingInfoInset | null
+ * }} SupportingInfoCopy
  */
-function buildSupportingInfoCopy(isResubmission, registration, localise) {
+
+/**
+ * Resolves the copy for the supporting-information screen. The resubmission
+ * variant (submissionNumber > 1, flag on) swaps the caption, heading, field
+ * label and hint, and adds an inset listing common reasons. Both variants share
+ * the same character limit.
+ * @param {number} submissionNumber
+ * @param {Registration} registration
+ * @param {(key: string, params?: object) => string} localise
+ * @returns {SupportingInfoCopy}
+ */
+function buildSupportingInfoCopy(submissionNumber, registration, localise) {
+  const isResubmission =
+    submissionNumber > FIRST_SUBMISSION && isClosedPeriodAdjustmentsEnabled()
+
   if (!isResubmission) {
     return {
       caption: localise('reports:supportingInformationCaption'),
@@ -114,11 +129,24 @@ function getBackPage(basePath, registration, accreditation) {
 }
 
 /**
+ * @typedef {SupportingInfoCopy & {
+ *   pageTitle: string,
+ *   backUrl: string,
+ *   deleteUrl: string,
+ *   maxLength: number,
+ *   value: string,
+ *   errors: object | null,
+ *   errorSummary: object | null
+ * }} SupportingInfoViewData
+ */
+
+/**
  * @param {HapiRequest & { params: PeriodParams }} request
  * @param {object} [options]
  * @param {string} [options.value] - Pre-fill value for textarea
  * @param {object} [options.errors] - Validation errors
  * @param {object} [options.errorSummary] - Error summary for govukErrorSummary
+ * @returns {Promise<SupportingInfoViewData>}
  */
 async function buildViewData(request, options = {}) {
   const {
@@ -156,9 +184,7 @@ async function buildViewData(request, options = {}) {
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
-  const isResubmission =
-    submissionNumber > FIRST_SUBMISSION && isClosedPeriodAdjustmentsEnabled()
-  const copy = buildSupportingInfoCopy(isResubmission, registration, localise)
+  const copy = buildSupportingInfoCopy(submissionNumber, registration, localise)
 
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {

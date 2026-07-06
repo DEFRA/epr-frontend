@@ -69,6 +69,21 @@ const mockReportDetail = /** @type {ReportDetailResponse} */ (
   })
 )
 
+/**
+ * Builds a full report status with the given currentStatus. The created-page
+ * guard only reads currentStatus; the sibling fields satisfy the type.
+ * @param {string} currentStatus
+ * @returns {ReportDetailResponse['status']}
+ */
+const buildStatus = (currentStatus) => ({
+  currentStatus,
+  currentStatusAt: '2026-04-01T09:00:00.000Z',
+  created: {
+    at: '2026-04-01T09:00:00.000Z',
+    by: { id: 'user-123', name: 'Test User', position: 'Director' }
+  }
+})
+
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
 const basePeriodPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/1`
@@ -362,9 +377,7 @@ describe('#createdController', () => {
     it('should return 404 when status is in_progress', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: /** @type {ReportDetailResponse['status']} */ (
-          /** @type {unknown} */ ({ currentStatus: 'in_progress' })
-        )
+        status: buildStatus('in_progress')
       })
 
       const { statusCode } = await server.inject({
@@ -379,9 +392,7 @@ describe('#createdController', () => {
     it('should return 404 when status is submitted', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: /** @type {ReportDetailResponse['status']} */ (
-          /** @type {unknown} */ ({ currentStatus: 'submitted' })
-        )
+        status: buildStatus('submitted')
       })
 
       const { statusCode } = await server.inject({
@@ -396,9 +407,7 @@ describe('#createdController', () => {
     it('should return 404 when status is due', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: /** @type {ReportDetailResponse['status']} */ (
-          /** @type {unknown} */ ({ currentStatus: 'due' })
-        )
+        status: buildStatus('due')
       })
 
       const { statusCode } = await server.inject({
