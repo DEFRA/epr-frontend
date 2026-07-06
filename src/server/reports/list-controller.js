@@ -69,6 +69,19 @@ const formatSubmittedDateTime = (isoString) => {
 const isPastDueDate = (dueDate) =>
   new Date().toISOString().split('T')[0].localeCompare(dueDate) > 0
 
+/**
+ * The text shown in the due-date column for an active row: the overdue label
+ * when a resubmission's due date has passed, otherwise the formatted due date.
+ * @param {SubmissionStatusValue} status
+ * @param {string} dueDate a date-only YYYY-MM-DD ISO string
+ * @param {TFunction} localise
+ * @returns {string}
+ */
+const buildDueDateText = (status, dueDate, localise) =>
+  status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION && isPastDueDate(dueDate)
+    ? localise('reports:statusOverdue')
+    : formatDateShort(dueDate)
+
 /** @type {Partial<Record<SubmissionStatusValue, string>>} */
 const fixedActionPaths = {
   [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
@@ -182,11 +195,7 @@ function buildRows({
         actionCell
       ])
     } else {
-      const dueDateText =
-        status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION &&
-        isPastDueDate(period.dueDate)
-          ? localise('reports:statusOverdue')
-          : formatDateShort(period.dueDate)
+      const dueDateText = buildDueDateText(status, period.dueDate, localise)
 
       activeRows.push([
         { text: label },
