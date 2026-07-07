@@ -1680,6 +1680,13 @@ describe('#listReportsController', () => {
         (t) => t.textContent?.trim() === 'Resubmitted'
       )
       expect(tag?.classList.contains('govuk-tag--green')).toBe(true)
+
+      // View report must open the resubmission (submissionNumber 2), the report
+      // that replaced the original, not the superseded submissionNumber 1.
+      const viewLink = submittedTable?.querySelector('a.govuk-link')
+      expect(viewLink?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/view'
+      )
     })
 
     it('renders the period as Submitted when the feature flag is off', async ({
