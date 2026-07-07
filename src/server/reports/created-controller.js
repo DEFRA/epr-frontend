@@ -6,6 +6,7 @@ import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { isResubmission } from './helpers/resubmission.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
@@ -58,6 +59,14 @@ export const createdController = {
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
+    // A resubmission draft keeps the period in its Requires resubmission state,
+    // so the panel shows that rather than the draft report's own Ready to submit
+    // status. isResubmission bundles the flag, so the page behaves as the
+    // standard flow until closed-period adjustments ship.
+    const statusValue = isResubmission(submissionNumber)
+      ? localise('reports:createdStatusValueResubmission')
+      : localise('reports:createdStatusValue')
+
     const homeUrl = `/organisations/${organisationId}`
     const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`
 
@@ -68,7 +77,7 @@ export const createdController = {
       }),
       heading: localise('reports:createdHeading', { periodLabel }),
       statusLabel: localise('reports:createdStatusLabel'),
-      statusValue: localise('reports:createdStatusValue'),
+      statusValue,
       detailsHeading: localise('reports:detailsHeading'),
       registrationLabel: localise('reports:createdRegistrationLabel'),
       registrationNumber: registration.registrationNumber,

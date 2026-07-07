@@ -1377,7 +1377,7 @@ describe('#listReportsController', () => {
         (anchor) => anchor.textContent?.includes('Review and create draft')
       )
       expect(resubLink?.getAttribute('href')).toBe(
-        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2'
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/resubmission-explainer'
       )
 
       expect(body.textContent).toContain('Matt Davis')
@@ -1516,6 +1516,92 @@ describe('#listReportsController', () => {
         (tag) => tag.textContent?.trim() === 'Requires resubmission'
       )
       expect(resubTags).toHaveLength(2)
+    })
+
+    it('links a resubmission carrying an in-progress draft to Continue, keeping the purple tag', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      const [submitted, skeleton] = resubmissionPeriodPair(1)
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [
+          submitted,
+          {
+            ...skeleton,
+            report: {
+              id: 'draft-2',
+              status: SUBMISSION_STATUS.IN_PROGRESS,
+              submittedAt: null,
+              submittedBy: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTag?.classList.contains('govuk-tag--purple')).toBe(true)
+
+      const link = Array.from(body.querySelectorAll('a.govuk-link')).find(
+        (anchor) => anchor.textContent?.includes('Continue')
+      )
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/tonnes-recycled'
+      )
+    })
+
+    it('links a resubmission carrying a ready-to-submit draft to Review and submit and counts it in the banner', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      const [submitted, skeleton] = resubmissionPeriodPair(1)
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [
+          submitted,
+          {
+            ...skeleton,
+            report: {
+              id: 'draft-2',
+              status: SUBMISSION_STATUS.READY_TO_SUBMIT,
+              submittedAt: null,
+              submittedBy: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTag?.classList.contains('govuk-tag--purple')).toBe(true)
+
+      const link = Array.from(body.querySelectorAll('a.govuk-link')).find(
+        (anchor) => anchor.textContent?.includes('Review and submit')
+      )
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/submit'
+      )
+
+      expect(body.textContent).toContain('review and submit 1 report')
     })
   })
 })

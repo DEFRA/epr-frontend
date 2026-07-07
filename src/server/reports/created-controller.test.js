@@ -1,63 +1,88 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+
+const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
-  }
-}
+/**
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
 
-const mockRegistration = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
-}
+const mockAuth = buildMockAuth()
 
-const mockReportDetail = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
-  cadence: 'quarterly',
-  year: 2026,
-  period: 1,
-  startDate: '2026-01-01',
-  endDate: '2026-03-31',
-  dueDate: '2026-04-20',
-  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: { material: 'plastic' },
-  id: 'report-001',
-  version: 1,
-  status: { currentStatus: 'ready_to_submit' },
-  supportingInformation: null,
-  recyclingActivity: {
-    totalTonnageReceived: 80.25,
-    suppliers: [],
-    tonnageRecycled: null,
-    tonnageNotRecycled: null
-  },
-  exportActivity: null,
-  wasteSent: {
-    tonnageSentToReprocessor: 0,
-    tonnageSentToExporter: 0,
-    tonnageSentToAnotherSite: 0,
-    finalDestinations: []
+const mockRegistration = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'exporter',
+      registrationNumber: 'REG001234'
+    },
+    accreditation: undefined
+  })
+)
+
+const mockReportDetail = /** @type {ReportDetailResponse} */ (
+  /** @type {unknown} */ ({
+    operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+    cadence: 'quarterly',
+    year: 2026,
+    period: 1,
+    startDate: '2026-01-01',
+    endDate: '2026-03-31',
+    dueDate: '2026-04-20',
+    source: {
+      summaryLogId: 'sl-1',
+      lastUploadedAt: '2026-02-15T15:09:00.000Z'
+    },
+    details: { material: 'plastic' },
+    id: 'report-001',
+    version: 1,
+    status: { currentStatus: 'ready_to_submit' },
+    supportingInformation: null,
+    recyclingActivity: {
+      totalTonnageReceived: 80.25,
+      suppliers: [],
+      tonnageRecycled: null,
+      tonnageNotRecycled: null
+    },
+    exportActivity: null,
+    wasteSent: {
+      tonnageSentToReprocessor: 0,
+      tonnageSentToExporter: 0,
+      tonnageSentToAnotherSite: 0,
+      finalDestinations: []
+    }
+  })
+)
+
+/**
+ * Builds a full report status with the given currentStatus. The created-page
+ * guard only reads currentStatus; the sibling fields satisfy the type.
+ * @param {string} currentStatus
+ * @returns {ReportDetailResponse['status']}
+ */
+const buildStatus = (currentStatus) => ({
+  currentStatus,
+  currentStatusAt: '2026-04-01T09:00:00.000Z',
+  created: {
+    at: '2026-04-01T09:00:00.000Z',
+    by: { id: 'user-123', name: 'Test User', position: 'Director' }
   }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -301,11 +326,58 @@ describe('#createdController', () => {
     })
   })
 
+  describe('resubmission variant (submissionNumber > 1)', () => {
+    const resubmissionCreatedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/created`
+
+    beforeEach(() => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
+    })
+
+    it('should show Requires resubmission status in the confirmation panel', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: resubmissionCreatedUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const panel = body.querySelector('.govuk-panel--confirmation')
+
+      expect(panel.textContent).toContain('Status:')
+      expect(panel.textContent).toContain('Requires resubmission')
+      expect(panel.textContent).not.toContain('Ready to submit')
+    })
+
+    it('should show the standard status when the flag is off', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, false)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: resubmissionCreatedUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const panel = body.querySelector('.govuk-panel--confirmation')
+
+      expect(panel.textContent).toContain('Ready to submit')
+      expect(panel.textContent).not.toContain('Requires resubmission')
+    })
+  })
+
   describe('status guard', () => {
     it('should return 404 when status is in_progress', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: { currentStatus: 'in_progress' }
+        status: buildStatus('in_progress')
       })
 
       const { statusCode } = await server.inject({
@@ -320,7 +392,7 @@ describe('#createdController', () => {
     it('should return 404 when status is submitted', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: { currentStatus: 'submitted' }
+        status: buildStatus('submitted')
       })
 
       const { statusCode } = await server.inject({
@@ -335,7 +407,7 @@ describe('#createdController', () => {
     it('should return 404 when status is due', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue({
         ...mockReportDetail,
-        status: { currentStatus: 'due' }
+        status: buildStatus('due')
       })
 
       const { statusCode } = await server.inject({

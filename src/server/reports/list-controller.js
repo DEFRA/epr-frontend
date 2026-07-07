@@ -12,11 +12,16 @@ import {
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
-  getActionLabel,
+  buildDueDateText,
   getStatusLabel,
   getStatusTagClass
 } from './helpers/format-submission-status.js'
-import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
+import {
+  getActionLabel,
+  getActionPath,
+  getRowAction,
+  REPORT_ACTION
+} from './helpers/report-action.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -42,14 +47,7 @@ const buildStatusTagHtml = (status, localise) => {
   const statusLabel = getStatusLabel(status, localise)
   const statusTagClass = getStatusTagClass(status)
 
-  // 'Requires resubmission' is wider than the 160px govuk-tag cap and would
-  // otherwise wrap to two lines, so lift the cap to keep it on one line.
-  const noWrapClass =
-    status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION
-      ? ` ${cssClasses.tag.noMaxWidth}`
-      : ''
-
-  return `<strong class="govuk-tag ${statusTagClass}${noWrapClass}">${escapeHtml(statusLabel)}</strong>`
+  return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
 }
 
 /**
@@ -64,64 +62,15 @@ const formatSubmittedDateTime = (isoString) => {
 }
 
 /**
- * Whether a due date has passed. Mirrors the backend's derive-period-status
- * comparison verbatim: both sides are date-only (YYYY-MM-DD) ISO strings, which
- * sort chronologically, so a period is overdue from the day after its due date,
- * i.e. from the 21st when due on the 20th. The backend returns dueDate as a
- * date-only string, so it is compared as-is (no slicing) to stay identical to
- * derive-period-status.js and never drift from it.
- * @param {string} dueDate a date-only YYYY-MM-DD ISO string
- * @returns {boolean}
- */
-const isPastDueDate = (dueDate) =>
-  new Date().toISOString().split('T')[0].localeCompare(dueDate) > 0
-
-/**
- * The text shown in the due-date column for an active row: the overdue label
- * when a resubmission's due date has passed, otherwise the formatted due date.
- * @param {SubmissionStatusValue} status
- * @param {string} dueDate a date-only YYYY-MM-DD ISO string
- * @param {TFunction} localise
- * @returns {string}
- */
-const buildDueDateText = (status, dueDate, localise) =>
-  status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION && isPastDueDate(dueDate)
-    ? localise('reports:statusOverdue')
-    : formatDateShort(dueDate)
-
-/** @type {Partial<Record<SubmissionStatusValue, string>>} */
-const fixedActionPaths = {
-  [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
-  [SUBMISSION_STATUS.SUBMITTED]: '/view'
-}
-
-/**
- * Resolves the path the action link on a report row should target.
- * For in-progress reports the destination varies by registration type
- * and cadence; other statuses map to a fixed page in the report flow.
- * @param {SubmissionStatusValue} status
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
- * @param {Accreditation | undefined} accreditation
- * @param {CadenceValue} cadence
- * @returns {string}
- */
-const getActionPath = (status, registration, accreditation, cadence) => {
-  if (status !== SUBMISSION_STATUS.IN_PROGRESS) {
-    return fixedActionPaths[status] ?? ''
-  }
-  return getInProgressActionPath(registration, accreditation, cadence)
-}
-
-/**
  * @param {{
  *   accreditation: Accreditation | undefined,
  *   cadence: CadenceValue,
  *   label: string,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
+ *   period: ReportingPeriod,
  *   periodPath: string,
- *   registration: Pick<Registration, 'wasteProcessingType'>,
- *   status: SubmissionStatusValue
+ *   registration: Pick<Registration, 'wasteProcessingType'>
  * }} options
  * @returns {TableCell}
  */
@@ -131,12 +80,13 @@ const buildActionCell = ({
   label,
   localise,
   localiseUrl,
+  period,
   periodPath,
-  registration,
-  status
+  registration
 }) => {
-  const actionPath = getActionPath(status, registration, accreditation, cadence)
-  const actionLabel = getActionLabel(status, localise)
+  const action = getRowAction(period)
+  const actionPath = getActionPath(action, registration, accreditation, cadence)
+  const actionLabel = getActionLabel(action, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
 
@@ -181,7 +131,7 @@ function buildRows({
     const status = period.periodStatus
 
     const actionCell = buildActionCell({
-      status,
+      period,
       registration,
       accreditation,
       cadence,
@@ -270,7 +220,7 @@ const buildHeaders = (localise) => ({
  */
 const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   const count = reportingPeriods.filter(
-    (p) => p.periodStatus === SUBMISSION_STATUS.READY_TO_SUBMIT
+    (p) => getRowAction(p) === REPORT_ACTION.REVIEW_AND_SUBMIT
   ).length
 
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null
