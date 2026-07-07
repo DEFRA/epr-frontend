@@ -25,7 +25,10 @@ describe('#format-submission-status', () => {
         { status: 'in_progress', expected: 'govuk-tag--yellow' },
         { status: 'ready_to_submit', expected: '' },
         { status: 'submitted', expected: 'govuk-tag--green' },
-        { status: 'requires_resubmission', expected: 'govuk-tag--purple' }
+        {
+          status: 'requires_resubmission',
+          expected: 'govuk-tag--purple epr-tag--no-max-width'
+        }
       ])
     )(
       'returns "$expected" modifier class for "$status" status',
