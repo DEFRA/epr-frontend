@@ -1,7 +1,6 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { SUBMISSION_STATUS } from '../constants.js'
-import { FIRST_SUBMISSION, isResubmission } from './resubmission.js'
 
 /**
  * @import { TFunction } from 'i18next'
@@ -43,23 +42,13 @@ const statusLabelKeys = {
 export const getStatusTagClass = (status) => tagClasses[status]
 
 /**
- * Get the localised display label for a submission status. A submitted period
- * whose submissionNumber marks it as a resubmission shows "Resubmitted" rather
- * than "Submitted": the backend never emits a distinct status, so the label is
- * derived here from the submission number, flag-gated by isResubmission.
+ * Get the localised display label for a submission status.
  * @param {SubmissionStatusValue} status
  * @param {(key: string) => string} localise
- * @param {number} [submissionNumber]
  * @returns {string}
  */
-export const getStatusLabel = (
-  status,
-  localise,
-  submissionNumber = FIRST_SUBMISSION
-) =>
-  status === SUBMISSION_STATUS.SUBMITTED && isResubmission(submissionNumber)
-    ? localise('reports:statusResubmitted')
-    : localise(statusLabelKeys[status])
+export const getStatusLabel = (status, localise) =>
+  localise(statusLabelKeys[status])
 
 /**
  * Whether a due date has passed. Mirrors the backend's derive-period-status

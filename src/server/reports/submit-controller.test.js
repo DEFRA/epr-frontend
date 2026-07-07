@@ -1624,12 +1624,10 @@ describe('#submitController', () => {
         })
         const body = new JSDOM(result).window.document.body
 
-        expect(
-          getByRole(body, 'heading', {
-            name: /Resubmit report for Quarter 1, 2026/,
-            level: 1
-          })
-        ).toBeDefined()
+        getByRole(body, 'heading', {
+          name: /Resubmit report for Quarter 1, 2026/,
+          level: 1
+        })
       })
 
       it('should display the status tag as Requires resubmission with a purple no-max-width tag', async ({
@@ -1658,12 +1656,8 @@ describe('#submitController', () => {
         })
         const body = new JSDOM(result).window.document.body
 
-        expect(
-          getByRole(body, 'heading', { name: /Declaration/, level: 2 })
-        ).toBeDefined()
-        expect(
-          getByRole(body, 'button', { name: 'Confirm and submit' })
-        ).toBeDefined()
+        getByRole(body, 'heading', { name: /Declaration/, level: 2 })
+        getByRole(body, 'button', { name: 'Confirm and submit' })
       })
 
       it('should render the standard submit variant when the flag is off', async ({
@@ -1679,13 +1673,72 @@ describe('#submitController', () => {
         const body = new JSDOM(result).window.document.body
         const tag = body.querySelector('.govuk-tag')
 
-        expect(
-          getByRole(body, 'heading', {
-            name: /Submit report for Quarter 1, 2026/,
-            level: 1
-          })
-        ).toBeDefined()
+        getByRole(body, 'heading', {
+          name: /Submit report for Quarter 1, 2026/,
+          level: 1
+        })
         expect(tag?.textContent?.trim()).toBe('Ready to submit')
+      })
+
+      it('should return 404 when the resubmission draft is not ready to submit', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          status: {
+            .../** @type {NonNullable<typeof exporterReportDetail.status>} */ (
+              exporterReportDetail.status
+            ),
+            currentStatus: 'in_progress'
+          }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
+    describe('POST', () => {
+      const resubmittedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/submitted`
+
+      it('should submit the resubmission with submissionNumber 2 and redirect to submitted', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, resubmitUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: resubmitUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: 'Test User' }
+        })
+
+        expect(updateReportStatus).toHaveBeenCalledWith(
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'quarterly',
+            period: 1,
+            submissionNumber: 2
+          },
+          {
+            status: 'submitted',
+            version: 1,
+            submissionDeclaredBy: 'Test User'
+          },
+          'mock-id-token'
+        )
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(resubmittedUrl)
       })
     })
 
@@ -1708,12 +1761,10 @@ describe('#submitController', () => {
         const tag = body.querySelector('.govuk-tag')
 
         expect(statusCode).toBe(statusCodes.ok)
-        expect(
-          getByRole(body, 'heading', {
-            name: /Resubmit report for Quarter 1, 2026/,
-            level: 1
-          })
-        ).toBeDefined()
+        getByRole(body, 'heading', {
+          name: /Resubmit report for Quarter 1, 2026/,
+          level: 1
+        })
         expect(tag?.textContent?.trim()).toBe('Requires resubmission')
         expect(body.textContent).toContain(
           'You must enter your full name as it appears on this account'

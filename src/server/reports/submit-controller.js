@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -401,6 +403,16 @@ export const submitGetController = {
           `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
         )
       )
+    }
+
+    // The review page can only submit a ready-to-submit draft. Any other state
+    // (for example an in-progress draft reached by a hand-edited URL) is illegal
+    // here, so refuse it rather than render a submittable page for it. This also
+    // upholds the resubmission variant's precondition: a report reaching the
+    // render below is ready to submit, so a submissionNumber above the first is
+    // genuinely a resubmission awaiting submission.
+    if (status.currentStatus !== SUBMISSION_STATUS.READY_TO_SUBMIT) {
+      throw Boom.notFound()
     }
 
     const viewData = await buildViewData(request)
