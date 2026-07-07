@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  getActionLabel,
   getStatusLabel,
   getStatusTagClass
 } from './format-submission-status.js'
@@ -25,7 +24,10 @@ describe('#format-submission-status', () => {
         { status: 'in_progress', expected: 'govuk-tag--yellow' },
         { status: 'ready_to_submit', expected: '' },
         { status: 'submitted', expected: 'govuk-tag--green' },
-        { status: 'requires_resubmission', expected: 'govuk-tag--purple' }
+        {
+          status: 'requires_resubmission',
+          expected: 'govuk-tag--purple epr-tag--no-max-width'
+        }
       ])
     )(
       'returns "$expected" modifier class for "$status" status',
@@ -65,36 +67,6 @@ describe('#format-submission-status', () => {
     it('returns localised label for "requires_resubmission" status', () => {
       expect(getStatusLabel('requires_resubmission', localise)).toBe(
         'reports:statusRequiresResubmission'
-      )
-    })
-  })
-
-  describe('#getActionLabel', () => {
-    it('returns "Continue" action for "in_progress" status', () => {
-      expect(getActionLabel('in_progress', localise)).toBe(
-        'reports:actionContinue'
-      )
-    })
-
-    it('returns "Create draft" action for "due" status', () => {
-      expect(getActionLabel('due', localise)).toBe('reports:actionCreateDraft')
-    })
-
-    it('returns "Create draft" action for "overdue" status', () => {
-      expect(getActionLabel('overdue', localise)).toBe(
-        'reports:actionCreateDraft'
-      )
-    })
-
-    it('returns "Review and submit" action for "ready_to_submit" status', () => {
-      expect(getActionLabel('ready_to_submit', localise)).toBe(
-        'reports:actionReviewAndSubmit'
-      )
-    })
-
-    it('returns "Review and create draft" action for "requires_resubmission" status', () => {
-      expect(getActionLabel('requires_resubmission', localise)).toBe(
-        'reports:actionReviewAndCreateDraft'
       )
     })
   })

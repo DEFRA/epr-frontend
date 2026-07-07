@@ -1,11 +1,15 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+
+const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -15,77 +19,82 @@ vi.mock(import('./helpers/update-report.js'))
 
 const { updateReport } = await import('./helpers/update-report.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+/**
+ * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
+const mockAuth = buildMockAuth()
 
-const registeredOnlyExporter = {
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
-  },
-  accreditation: undefined
-}
+const registeredOnlyExporter = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType: 'exporter',
+      registrationNumber: 'REG001234'
+    },
+    accreditation: undefined
+  })
+)
 
-const accreditedExporter = {
-  ...registeredOnlyExporter,
-  accreditation: {
-    id: 'acc-001',
-    accreditationNumber: 'ER992415095748M'
-  }
-}
+const accreditedExporter = /** @type {RegistrationWithAccreditation} */ (
+  /** @type {unknown} */ ({
+    ...registeredOnlyExporter,
+    accreditation: {
+      id: 'acc-001',
+      accreditationNumber: 'ER992415095748M'
+    }
+  })
+)
 
-const reportDetailWithoutSupportingInfo = {
-  operatorCategory: 'EXPORTER_REGISTERED_ONLY',
-  cadence: 'quarterly',
-  year: 2026,
-  period: 1,
-  startDate: '2026-01-01',
-  endDate: '2026-03-31',
-  source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
-  details: { material: 'plastic' },
-  id: 'report-001',
-  version: 1,
-  status: 'in_progress',
-  supportingInformation: null,
-  recyclingActivity: {
-    totalTonnageReceived: 80.25,
-    suppliers: [],
-    tonnageRecycled: null,
-    tonnageNotRecycled: null
-  },
-  exportActivity: {
-    totalTonnageExported: 50,
-    overseasSites: [],
-    tonnageReceivedNotExported: null,
-    tonnageRefusedAtRecepientDestination: null,
-    tonnageStoppedDuringExport: null,
-    tonnageRepatriated: null
-  },
-  wasteSent: {
-    tonnageSentToReprocessor: 5,
-    tonnageSentToExporter: 3,
-    tonnageSentToAnotherSite: 2,
-    finalDestinations: []
-  }
-}
+const reportDetailWithoutSupportingInfo = /** @type {ReportDetailResponse} */ (
+  /** @type {unknown} */ ({
+    operatorCategory: 'EXPORTER_REGISTERED_ONLY',
+    cadence: 'quarterly',
+    year: 2026,
+    period: 1,
+    startDate: '2026-01-01',
+    endDate: '2026-03-31',
+    source: {
+      summaryLogId: 'sl-1',
+      lastUploadedAt: '2026-02-15T15:09:00.000Z'
+    },
+    details: { material: 'plastic' },
+    id: 'report-001',
+    version: 1,
+    status: 'in_progress',
+    supportingInformation: null,
+    recyclingActivity: {
+      totalTonnageReceived: 80.25,
+      suppliers: [],
+      tonnageRecycled: null,
+      tonnageNotRecycled: null
+    },
+    exportActivity: {
+      totalTonnageExported: 50,
+      overseasSites: [],
+      tonnageReceivedNotExported: null,
+      tonnageRefusedAtRecepientDestination: null,
+      tonnageStoppedDuringExport: null,
+      tonnageRepatriated: null
+    },
+    wasteSent: {
+      tonnageSentToReprocessor: 5,
+      tonnageSentToExporter: 3,
+      tonnageSentToAnotherSite: 2,
+      finalDestinations: []
+    }
+  })
+)
 
-const reportDetailWithSupportingInfo = {
-  ...reportDetailWithoutSupportingInfo,
-  supportingInformation: 'Supply chain disruption in February'
-}
+const reportDetailWithSupportingInfo = /** @type {ReportDetailResponse} */ (
+  /** @type {unknown} */ ({
+    ...reportDetailWithoutSupportingInfo,
+    supportingInformation: 'Supply chain disruption in February'
+  })
+)
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -697,6 +706,169 @@ describe('#supportingInformationController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.found)
+      })
+    })
+  })
+
+  describe('resubmission variant (submissionNumber > 1)', () => {
+    const resubmissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/2/submissions/2/supporting-information`
+
+    beforeEach(() => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        registeredOnlyExporter
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        reportDetailWithoutSupportingInfo
+      )
+      vi.mocked(updateReport).mockResolvedValue({ ok: true })
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
+    })
+
+    describe('GET', () => {
+      it('should display the Create draft report caption', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const caption = body.querySelector('.govuk-caption-xl')
+
+        expect(caption?.textContent).toContain('Create draft report')
+      })
+
+      it('should display the help-not-for heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const heading = getByRole(body, 'heading', {
+          name: 'Add supporting information to help your regulator',
+          level: 1
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('should display the inset intro and examples lead', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const inset = body.querySelector('.govuk-inset-text')
+
+        expect(inset).not.toBeNull()
+        expect(inset?.textContent).toContain(
+          'Your regulator would like to know why you need to change your previously submitted data.'
+        )
+        expect(inset?.textContent).toContain('Common examples include:')
+      })
+
+      it('should list the common resubmission examples, with the note type', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const inset = new JSDOM(result).window.document.querySelector(
+          '.govuk-inset-text'
+        )
+
+        expect(inset?.textContent).toContain(
+          "you missed some waste that you should've recorded"
+        )
+        expect(inset?.textContent).toContain(
+          'you made a mistake in the figures you recorded'
+        )
+        expect(inset?.textContent).toContain(
+          'a previously issued PERN was cancelled and you need to change your reported revenue'
+        )
+      })
+
+      it('should display the Enter information (optional) field label', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const label = body.querySelector('.govuk-label--m')
+
+        expect(label?.textContent).toContain('Enter information (optional)')
+      })
+
+      it('should display the resubmission hint text', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const hint = body.querySelector('.govuk-hint')
+
+        expect(hint?.textContent).toContain(
+          'Include anything you think your regulator will find useful.'
+        )
+      })
+
+      it('should keep the standard 2,000-character limit', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+        const characterCount = body.querySelector('.govuk-character-count')
+
+        expect(characterCount?.getAttribute('data-maxlength')).toBe('2000')
+      })
+
+      it('should render the standard variant when the flag is off', async ({
+        server
+      }) => {
+        config.set(CLOSED_PERIOD_FLAG, false)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(body.querySelector('.govuk-inset-text')).toBeNull()
+
+        const heading = getByRole(body, 'heading', {
+          name: /Add supporting information for your regulator/,
+          level: 1
+        })
+
+        expect(heading).toBeDefined()
       })
     })
   })
