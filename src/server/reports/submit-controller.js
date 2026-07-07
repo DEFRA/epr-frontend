@@ -12,14 +12,11 @@ import {
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
-  buildDestinationDetailRows,
-  buildOverseasSiteRows,
-  buildSupplierDetailRows,
-  buildUnapprovedOverseasSiteRows,
-  getTotalTonnageSentOn
-} from './helpers/build-table-rows.js'
+  buildWasteExportedViewData,
+  buildWasteReceivedViewData,
+  buildWasteSentOnViewData
+} from './helpers/build-report-view-data.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatExportTonnages } from './helpers/format-export-tonnages.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
   getStatusLabel,
@@ -57,64 +54,6 @@ function getCreationDetails(statusCreated, localise) {
   }
 }
 
-const defaultExportActivity = {
-  totalTonnageExported: 0,
-  overseasSites: [],
-  tonnageReceivedNotExported: null,
-  tonnageRefusedAtDestination: null,
-  tonnageStoppedDuringExport: null,
-  totalTonnageRefusedOrStopped: null,
-  tonnageRepatriated: null
-}
-
-/**
- * @param {object|null|undefined} exportActivity
- * @param {boolean} isExporter
- * @param {boolean} isAccreditedExporter
- * @returns {object|null}
- */
-function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
-  if (!isExporter) {
-    return null
-  }
-
-  const activity = exportActivity ?? defaultExportActivity
-  return {
-    totalTonnage: formatTonnage(activity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(activity.overseasSites, {
-      showApprovalColumn: isAccreditedExporter
-    }),
-    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
-      activity.unapprovedOverseasSites ?? []
-    ),
-    ...formatExportTonnages(activity)
-  }
-}
-
-/**
- * @typedef {{
- *   destinationDetailRows: Array<Array<{text: string | null}>>,
- *   toExporters: string,
- *   toOtherSites: string,
- *   toReprocessors: string,
- *   totalTonnage: string
- * }} WasteSentOnViewData
- */
-
-/**
- * @param {ReportDetailResponse['wasteSent']} wasteSent
- * @returns {WasteSentOnViewData}
- */
-const buildWasteSentOnViewData = (wasteSent) => ({
-  destinationDetailRows: buildDestinationDetailRows(
-    wasteSent.finalDestinations
-  ),
-  toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-  toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-  toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-  totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
-})
-
 /**
  * @param {{ localise: import('./helpers/format-period-label.js').Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, resubmission: boolean }} params
  * @returns {object}
@@ -150,15 +89,6 @@ function buildPageLabels({
     avgPriceLabel: localise('reports:submitAvgPrice', { noteTypePlural })
   }
 }
-
-/**
- * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
- * @returns {{ totalTonnage: string, supplierDetailRows: Array<Array<{text: string | null}>> }}
- */
-const buildWasteReceivedViewData = (recyclingActivity) => ({
-  totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-  supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-})
 
 /**
  * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
@@ -289,11 +219,11 @@ function buildViewModel({
     material,
     site: reportDetail.details.site,
     wasteReceived: buildWasteReceivedViewData(recyclingActivity),
-    wasteExported: buildWasteExported(
-      exportActivity,
-      isExporter,
-      isAccreditedExporter
-    ),
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(exportActivity, {
+          showApprovalColumn: isAccreditedExporter
+        })
+      : null,
     wasteSentOn: buildWasteSentOnViewData(wasteSent),
     prn: buildPrnViewData(reportDetail.prn),
     recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),

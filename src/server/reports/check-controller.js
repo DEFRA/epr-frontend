@@ -1,4 +1,3 @@
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
@@ -8,14 +7,11 @@ import {
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
-  buildDestinationDetailRows,
-  buildOverseasSiteRows,
-  buildSupplierDetailRows,
-  buildUnapprovedOverseasSiteRows,
-  getTotalTonnageSentOn
-} from './helpers/build-table-rows.js'
+  buildWasteExportedViewData,
+  buildWasteReceivedViewData,
+  buildWasteSentOnViewData
+} from './helpers/build-report-view-data.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatExportTonnages } from './helpers/format-export-tonnages.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
@@ -31,60 +27,6 @@ function getSupportingInformation(reportDetail, localise) {
     return reportDetail.supportingInformation
   }
   return localise('reports:supportingInformationNone')
-}
-
-/**
- * @param {object|undefined} exportActivity
- * @param {boolean} isExporter
- * @param {boolean} isAccreditedExporter
- * @returns {object|null}
- */
-function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
-  if (!isExporter) {
-    return null
-  }
-
-  if (!exportActivity) {
-    return {
-      totalTonnage: formatTonnage(0),
-      overseasSiteRows: [],
-      unapprovedOverseasSiteRows: [],
-      ...formatExportTonnages({
-        tonnageReceivedNotExported: null,
-        tonnageRefusedAtDestination: null,
-        tonnageStoppedDuringExport: null,
-        totalTonnageRefusedOrStopped: null,
-        tonnageRepatriated: null
-      })
-    }
-  }
-
-  return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
-      showApprovalColumn: isAccreditedExporter
-    }),
-    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
-      exportActivity.unapprovedOverseasSites
-    ),
-    ...formatExportTonnages(exportActivity)
-  }
-}
-
-/**
- * @param {object} wasteSent
- * @returns {object}
- */
-function buildWasteSentOn(wasteSent) {
-  return {
-    totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-    toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-    toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-    toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-    destinationDetailRows: buildDestinationDetailRows(
-      wasteSent.finalDestinations
-    )
-  }
 }
 
 /**
@@ -156,16 +98,13 @@ function buildCheckViewData({
     version: reportDetail.version,
     changeText: localise('reports:supportingInformationChange'),
     deleteUrl: localiseUrl(`${basePath}/delete`),
-    wasteReceived: {
-      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-    },
-    wasteExported: buildWasteExported(
-      exportActivity,
-      isExporter,
-      isAccreditedExporter
-    ),
-    wasteSentOn: buildWasteSentOn(wasteSent),
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(exportActivity, {
+          showApprovalColumn: isAccreditedExporter
+        })
+      : null,
+    wasteSentOn: buildWasteSentOnViewData(wasteSent),
     recyclingActivity: reportDetail.recyclingActivity,
     tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
     tonnageNotRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-not-recycled`),

@@ -5,11 +5,12 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
-  buildDestinationDetailRows,
+  buildWasteReceivedViewData,
+  buildWasteSentOnViewData
+} from './helpers/build-report-view-data.js'
+import {
   buildOverseasSiteRows,
-  buildSupplierDetailRows,
-  buildUnapprovedOverseasSiteRows,
-  getTotalTonnageSentOn
+  buildUnapprovedOverseasSiteRows
 } from './helpers/build-table-rows.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
@@ -131,10 +132,7 @@ function buildViewData({
     periodLabel,
     site: registration.site?.address?.line1,
 
-    wasteReceived: {
-      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-    },
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
 
     packagingWasteRecycling: {
       tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
@@ -150,7 +148,7 @@ function buildViewData({
 
     prn: buildPrn(reportDetail.prn),
 
-    wasteSentOn: buildWasteSentOn(wasteSent),
+    wasteSentOn: buildWasteSentOnViewData(wasteSent),
 
     supportingInformation:
       reportDetail.supportingInformation ||
@@ -165,22 +163,6 @@ function buildViewData({
   }
 
   return viewData
-}
-
-/**
- * @param {object} wasteSent
- * @returns {object}
- */
-function buildWasteSentOn(wasteSent) {
-  return {
-    totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-    toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-    toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-    toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-    destinationDetailRows: buildDestinationDetailRows(
-      wasteSent.finalDestinations
-    )
-  }
 }
 
 /**
