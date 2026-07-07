@@ -41,10 +41,11 @@ const buildActionLinkHtml = (actionLabel, url, label) =>
 /**
  * @param {SubmissionStatusValue} status
  * @param {TFunction} localise
+ * @param {number} submissionNumber
  * @returns {string}
  */
-const buildStatusTagHtml = (status, localise) => {
-  const statusLabel = getStatusLabel(status, localise)
+const buildStatusTagHtml = (status, localise, submissionNumber) => {
+  const statusLabel = getStatusLabel(status, localise, submissionNumber)
   const statusTagClass = getStatusTagClass(status)
 
   return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
@@ -141,7 +142,11 @@ function buildRows({
       label
     })
 
-    const statusTagHtml = buildStatusTagHtml(status, localise)
+    const statusTagHtml = buildStatusTagHtml(
+      status,
+      localise,
+      period.submissionNumber
+    )
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([

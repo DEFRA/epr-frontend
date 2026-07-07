@@ -1604,4 +1604,100 @@ describe('#listReportsController', () => {
       expect(body.textContent).toContain('review and submit 1 report')
     })
   })
+
+  describe('resubmitted (submitted period with submissionNumber > 1)', () => {
+    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+
+    // Once a resubmission is itself submitted the backend collapses the period
+    // to a single submitted item carrying submissionNumber 2.
+    const resubmittedResponse = {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: [
+        {
+          year: 2026,
+          period: 1,
+          submissionNumber: 2,
+          startDate: '2026-01-01',
+          endDate: '2026-01-31',
+          dueDate: '2026-02-20',
+          periodStatus: SUBMISSION_STATUS.SUBMITTED,
+          report: {
+            id: 'report-001',
+            status: SUBMISSION_STATUS.SUBMITTED,
+            submittedAt: '2026-02-05T18:22:00.000Z',
+            submittedBy: {
+              id: 'user-1',
+              name: 'Matt Davis',
+              position: 'Approved person'
+            }
+          }
+        }
+      ]
+    }
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(resubmittedResponse)
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
+    })
+
+    it('renders the period as Resubmitted with a green tag and View report in the Submitted table', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(findSection(body, 'Action required')?.textContent).not.toContain(
+        'January 2026'
+      )
+
+      const submittedTable = findSection(body, 'Submitted')
+      expect(readTable(submittedTable)).toStrictEqual({
+        headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
+        rows: [
+          [
+            'January 2026',
+            'Resubmitted',
+            '5 Feb 2026, 6:22pm',
+            'Matt Davis',
+            'View report January 2026'
+          ]
+        ]
+      })
+
+      const tag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (t) => t.textContent?.trim() === 'Resubmitted'
+      )
+      expect(tag?.classList.contains('govuk-tag--green')).toBe(true)
+    })
+
+    it('renders the period as Submitted when the feature flag is off', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, false)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const tagData = extractTagData(body)
+      expect(tagData).toStrictEqual([
+        { text: 'Submitted', modifier: 'govuk-tag--green' }
+      ])
+    })
+  })
 })

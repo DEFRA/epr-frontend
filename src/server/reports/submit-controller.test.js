@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -6,7 +7,7 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { Organisation, User } from '#domain/organisations/model.js'
@@ -1594,6 +1595,130 @@ describe('#submitController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('resubmission variant (submissionNumber > 1)', () => {
+    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+    const resubmitUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/submit`
+
+    beforeEach(() => {
+      config.set(CLOSED_PERIOD_FLAG, true)
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
+      vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
+    })
+
+    afterEach(() => {
+      config.reset(CLOSED_PERIOD_FLAG)
+    })
+
+    describe('GET', () => {
+      it('should display the resubmit heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Resubmit report for Quarter 1, 2026/,
+            level: 1
+          })
+        ).toBeDefined()
+      })
+
+      it('should display the status tag as Requires resubmission with a purple no-max-width tag', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+        const body = new JSDOM(result).window.document.body
+        const tag = body.querySelector('.govuk-tag')
+
+        expect(tag?.textContent?.trim()).toBe('Requires resubmission')
+        expect(tag?.classList.contains('govuk-tag--purple')).toBe(true)
+        expect(tag?.classList.contains('epr-tag--no-max-width')).toBe(true)
+      })
+
+      it('should keep the declaration and Confirm and submit button', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(
+          getByRole(body, 'heading', { name: /Declaration/, level: 2 })
+        ).toBeDefined()
+        expect(
+          getByRole(body, 'button', { name: 'Confirm and submit' })
+        ).toBeDefined()
+      })
+
+      it('should render the standard submit variant when the flag is off', async ({
+        server
+      }) => {
+        config.set(CLOSED_PERIOD_FLAG, false)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+        const body = new JSDOM(result).window.document.body
+        const tag = body.querySelector('.govuk-tag')
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Submit report for Quarter 1, 2026/,
+            level: 1
+          })
+        ).toBeDefined()
+        expect(tag?.textContent?.trim()).toBe('Ready to submit')
+      })
+    })
+
+    describe('POST failAction', () => {
+      it('should re-render the resubmission variant with an error when the name is blank', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, resubmitUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: resubmitUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: '' }
+        })
+        const body = new JSDOM(result).window.document.body
+        const tag = body.querySelector('.govuk-tag')
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(
+          getByRole(body, 'heading', {
+            name: /Resubmit report for Quarter 1, 2026/,
+            level: 1
+          })
+        ).toBeDefined()
+        expect(tag?.textContent?.trim()).toBe('Requires resubmission')
+        expect(body.textContent).toContain(
+          'You must enter your full name as it appears on this account'
+        )
+      })
     })
   })
 })
