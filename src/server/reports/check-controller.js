@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
@@ -45,7 +46,7 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
 
   if (!exportActivity) {
     return {
-      totalTonnage: 0,
+      totalTonnage: formatTonnage(0),
       overseasSiteRows: [],
       unapprovedOverseasSiteRows: [],
       ...formatExportTonnages({
@@ -59,7 +60,7 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
   }
 
   return {
-    totalTonnage: exportActivity.totalTonnageExported,
+    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
     overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
       showApprovalColumn: isAccreditedExporter
     }),
@@ -76,10 +77,10 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
  */
 function buildWasteSentOn(wasteSent) {
   return {
-    totalTonnage: getTotalTonnageSentOn(wasteSent),
-    toReprocessors: wasteSent.tonnageSentToReprocessor,
-    toExporters: wasteSent.tonnageSentToExporter,
-    toOtherSites: wasteSent.tonnageSentToAnotherSite,
+    totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
+    toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+    toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
+    toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
     destinationDetailRows: buildDestinationDetailRows(
       wasteSent.finalDestinations
     )
@@ -156,7 +157,7 @@ function buildCheckViewData({
     changeText: localise('reports:supportingInformationChange'),
     deleteUrl: localiseUrl(`${basePath}/delete`),
     wasteReceived: {
-      totalTonnage: recyclingActivity.totalTonnageReceived,
+      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
       supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
     },
     wasteExported: buildWasteExported(
