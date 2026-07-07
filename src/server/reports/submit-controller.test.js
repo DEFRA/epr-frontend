@@ -1624,10 +1624,12 @@ describe('#submitController', () => {
         })
         const body = new JSDOM(result).window.document.body
 
-        getByRole(body, 'heading', {
-          name: /Resubmit report for Quarter 1, 2026/,
-          level: 1
-        })
+        expect(
+          getByRole(body, 'heading', {
+            name: /Resubmit report for Quarter 1, 2026/,
+            level: 1
+          })
+        ).toBeDefined()
       })
 
       it('should display the status tag as Requires resubmission with a purple no-max-width tag', async ({
@@ -1656,8 +1658,12 @@ describe('#submitController', () => {
         })
         const body = new JSDOM(result).window.document.body
 
-        getByRole(body, 'heading', { name: /Declaration/, level: 2 })
-        getByRole(body, 'button', { name: 'Confirm and submit' })
+        expect(
+          getByRole(body, 'heading', { name: /Declaration/, level: 2 })
+        ).toBeDefined()
+        expect(
+          getByRole(body, 'button', { name: 'Confirm and submit' })
+        ).toBeDefined()
       })
 
       it('should render the standard submit variant when the flag is off', async ({
