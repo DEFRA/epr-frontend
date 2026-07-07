@@ -16,6 +16,7 @@ import {
   getStatusLabel,
   getStatusTagClass
 } from './helpers/format-submission-status.js'
+import { isResubmission } from './helpers/resubmission.js'
 import {
   getActionLabel,
   getActionPath,
@@ -39,12 +40,20 @@ const buildActionLinkHtml = (actionLabel, url, label) =>
   `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
 
 /**
+ * A submitted period that is a resubmission (a later submission for the period,
+ * flag-gated) reads "Resubmitted" rather than "Submitted". The backend emits no
+ * distinct status for this, so the label is derived from the submission number
+ * at this call site; the tag colour stays green, as submitted.
  * @param {SubmissionStatusValue} status
  * @param {TFunction} localise
+ * @param {number} submissionNumber
  * @returns {string}
  */
-const buildStatusTagHtml = (status, localise) => {
-  const statusLabel = getStatusLabel(status, localise)
+const buildStatusTagHtml = (status, localise, submissionNumber) => {
+  const statusLabel =
+    status === SUBMISSION_STATUS.SUBMITTED && isResubmission(submissionNumber)
+      ? localise('reports:statusResubmitted')
+      : getStatusLabel(status, localise)
   const statusTagClass = getStatusTagClass(status)
 
   return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
@@ -141,7 +150,11 @@ function buildRows({
       label
     })
 
-    const statusTagHtml = buildStatusTagHtml(status, localise)
+    const statusTagHtml = buildStatusTagHtml(
+      status,
+      localise,
+      period.submissionNumber
+    )
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([

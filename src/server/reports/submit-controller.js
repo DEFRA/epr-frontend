@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -19,7 +21,12 @@ import {
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatExportTonnages } from './helpers/format-export-tonnages.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
+import {
+  getStatusLabel,
+  getStatusTagClass
+} from './helpers/format-submission-status.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { isResubmission } from './helpers/resubmission.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { buildValidationErrors } from './helpers/validation.js'
 import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
@@ -109,7 +116,7 @@ const buildWasteSentOnViewData = (wasteSent) => ({
 })
 
 /**
- * @param {{ localise: import('./helpers/format-period-label.js').Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
+ * @param {{ localise: import('./helpers/format-period-label.js').Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, resubmission: boolean }} params
  * @returns {object}
  */
 function buildPageLabels({
@@ -117,11 +124,18 @@ function buildPageLabels({
   material,
   periodLabel,
   noteTypePlural,
-  wasteActionGerund
+  wasteActionGerund,
+  resubmission
 }) {
   return {
-    pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
-    heading: localise('reports:submitHeading', { periodLabel }),
+    pageTitle: localise(
+      resubmission ? 'reports:resubmitPageTitle' : 'reports:submitPageTitle',
+      { material, periodLabel }
+    ),
+    heading: localise(
+      resubmission ? 'reports:resubmitHeading' : 'reports:submitHeading',
+      { periodLabel }
+    ),
     wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
       wasteActionGerund
     }),
@@ -195,6 +209,29 @@ const buildDeclarationItems = (localise, organisationName) => [
 ]
 
 /**
+ * The Details-block status for the review page. A resubmission draft keeps its
+ * period's Requires resubmission status (purple) in place of the standard Ready
+ * to submit tag, and drives the "Resubmit report for …" heading. isResubmission
+ * bundles the flag, so the page renders as the standard submit flow until
+ * closed-period adjustments ship.
+ * @param {number} submissionNumber
+ * @param {import('./helpers/format-period-label.js').Localise} localise
+ * @returns {{ resubmission: boolean, statusTag: string, statusTagClass: string }}
+ */
+function buildSubmitStatus(submissionNumber, localise) {
+  const resubmission = isResubmission(submissionNumber)
+  const status = resubmission
+    ? SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+    : SUBMISSION_STATUS.READY_TO_SUBMIT
+
+  return {
+    resubmission,
+    statusTag: getStatusLabel(status, localise),
+    statusTagClass: getStatusTagClass(status)
+  }
+}
+
+/**
  * @param {BuildViewModelParams} params
  * @returns {object}
  */
@@ -224,6 +261,7 @@ function buildViewModel({
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
   const { createdBy, createdOn } = getCreationDetails(status.created, localise)
+  const submitStatus = buildSubmitStatus(submissionNumber, localise)
 
   return {
     ...buildPageLabels({
@@ -231,7 +269,8 @@ function buildViewModel({
       material,
       periodLabel,
       noteTypePlural,
-      wasteActionGerund
+      wasteActionGerund,
+      resubmission: submitStatus.resubmission
     }),
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
@@ -240,7 +279,8 @@ function buildViewModel({
     showApprovalColumn: isAccreditedExporter,
     backUrl: reportsUrl,
     insetText: localise('reports:submitInsetText'),
-    statusTag: localise('reports:statusReadyToSubmit'),
+    statusTag: submitStatus.statusTag,
+    statusTagClass: submitStatus.statusTagClass,
     createdByLabel: localise('reports:submitCreatedByLabel'),
     createdBy,
     createdOnLabel: localise('reports:submitCreatedOnLabel'),
@@ -363,6 +403,16 @@ export const submitGetController = {
           `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}/submitted`
         )
       )
+    }
+
+    // The review page can only submit a ready-to-submit draft. Any other state
+    // (for example an in-progress draft reached by a hand-edited URL) is illegal
+    // here, so refuse it rather than render a submittable page for it. This also
+    // upholds the resubmission variant's precondition: a report reaching the
+    // render below is ready to submit, so a submissionNumber above the first is
+    // genuinely a resubmission awaiting submission.
+    if (status.currentStatus !== SUBMISSION_STATUS.READY_TO_SUBMIT) {
+      throw Boom.notFound()
     }
 
     const viewData = await buildViewData(request)
