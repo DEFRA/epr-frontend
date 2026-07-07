@@ -1,14 +1,12 @@
 import Boom from '@hapi/boom'
 
-import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-
-const FIRST_SUBMISSION = 1
+import { isResubmission } from './helpers/resubmission.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const createdController = {
@@ -61,14 +59,13 @@ export const createdController = {
     const material = getDisplayMaterial(registration)
     const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
 
-    // A resubmission draft (submissionNumber > 1) keeps the period in its
-    // Requires resubmission state, so the panel shows that rather than the
-    // draft report's own Ready to submit status. Gated on the flag so the
-    // page behaves as the standard flow until closed-period adjustments ship.
-    const statusValue =
-      submissionNumber > FIRST_SUBMISSION && isClosedPeriodAdjustmentsEnabled()
-        ? localise('reports:createdStatusValueResubmission')
-        : localise('reports:createdStatusValue')
+    // A resubmission draft keeps the period in its Requires resubmission state,
+    // so the panel shows that rather than the draft report's own Ready to submit
+    // status. isResubmission bundles the flag, so the page behaves as the
+    // standard flow until closed-period adjustments ship.
+    const statusValue = isResubmission(submissionNumber)
+      ? localise('reports:createdStatusValueResubmission')
+      : localise('reports:createdStatusValue')
 
     const homeUrl = `/organisations/${organisationId}`
     const viewDraftUrl = `${reportsUrl}/${year}/${cadence}/${period}/submissions/${submissionNumber}/view`

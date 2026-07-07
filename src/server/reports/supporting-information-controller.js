@@ -1,17 +1,16 @@
 import Joi from 'joi'
 
-import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { isResubmission } from './helpers/resubmission.js'
 import { updateReport } from './helpers/update-report.js'
 import { buildValidationErrors } from './helpers/validation.js'
 
 const MAX_SUPPORTING_INFO_LENGTH = 2000
-const FIRST_SUBMISSION = 1
 
 const payloadSchema = Joi.object({
   supportingInformation: Joi.string()
@@ -55,10 +54,7 @@ const payloadSchema = Joi.object({
  * @returns {SupportingInfoCopy}
  */
 function buildSupportingInfoCopy(submissionNumber, registration, localise) {
-  const isResubmission =
-    submissionNumber > FIRST_SUBMISSION && isClosedPeriodAdjustmentsEnabled()
-
-  if (!isResubmission) {
+  if (!isResubmission(submissionNumber)) {
     return {
       caption: localise('reports:supportingInformationCaption'),
       heading: localise('reports:supportingInformationHeading'),

@@ -1,10 +1,8 @@
 import Boom from '@hapi/boom'
 
-import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
-
-const FIRST_SUBMISSION = 1
+import { isResubmission } from './helpers/resubmission.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const resubmissionExplainerController = {
@@ -28,10 +26,7 @@ export const resubmissionExplainerController = {
     } = request.params
     const { t: localise } = request
 
-    if (
-      !isClosedPeriodAdjustmentsEnabled() ||
-      submissionNumber <= FIRST_SUBMISSION
-    ) {
+    if (!isResubmission(submissionNumber)) {
       throw Boom.notFound()
     }
 
