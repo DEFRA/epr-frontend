@@ -34,17 +34,6 @@ const statusLabelKeys = {
     'reports:statusRequiresResubmission'
 }
 
-/** @type {Record<SubmissionStatusValue, string>} */
-const actionLabelKeys = {
-  [SUBMISSION_STATUS.DUE]: 'reports:actionCreateDraft',
-  [SUBMISSION_STATUS.OVERDUE]: 'reports:actionCreateDraft',
-  [SUBMISSION_STATUS.IN_PROGRESS]: 'reports:actionContinue',
-  [SUBMISSION_STATUS.READY_TO_SUBMIT]: 'reports:actionReviewAndSubmit',
-  [SUBMISSION_STATUS.SUBMITTED]: 'reports:actionView',
-  [SUBMISSION_STATUS.REQUIRES_RESUBMISSION]:
-    'reports:actionReviewAndCreateDraft'
-}
-
 /**
  * Get the GOV.UK tag modifier class for a submission status.
  * @param {SubmissionStatusValue} status
@@ -60,15 +49,6 @@ export const getStatusTagClass = (status) => tagClasses[status]
  */
 export const getStatusLabel = (status, localise) =>
   localise(statusLabelKeys[status])
-
-/**
- * Get the localised action link text for a submission status.
- * @param {SubmissionStatusValue} status
- * @param {(key: string) => string} localise
- * @returns {string}
- */
-export const getActionLabel = (status, localise) =>
-  localise(actionLabelKeys[status])
 
 /**
  * Whether a due date has passed. Mirrors the backend's derive-period-status

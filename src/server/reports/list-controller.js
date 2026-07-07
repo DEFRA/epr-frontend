@@ -13,11 +13,15 @@ import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
   buildDueDateText,
-  getActionLabel,
   getStatusLabel,
   getStatusTagClass
 } from './helpers/format-submission-status.js'
-import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
+import {
+  getActionLabel,
+  getActionPath,
+  getRowAction,
+  REPORT_ACTION
+} from './helpers/report-action.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -57,52 +61,6 @@ const formatSubmittedDateTime = (isoString) => {
   return `${formatDateShort(isoString)}, ${formatTime(isoString)}`
 }
 
-/** @type {Partial<Record<SubmissionStatusValue, string>>} */
-const fixedActionPaths = {
-  // getActionStatus stays requires_resubmission only when there is no draft yet,
-  // so this is the no-draft entry point: the explainer, then the data-preview
-  // page (detailController), which re-fetches the report and redirects back to
-  // the list if a draft already exists. A stale "no draft" reading therefore
-  // degrades to a redirect, not a dead end.
-  [SUBMISSION_STATUS.REQUIRES_RESUBMISSION]: '/resubmission-explainer',
-  [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
-  [SUBMISSION_STATUS.SUBMITTED]: '/view'
-}
-
-/**
- * Resolves the path the action link on a report row should target.
- * For in-progress reports the destination varies by registration type
- * and cadence; other statuses map to a fixed page in the report flow.
- * @param {SubmissionStatusValue} status
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
- * @param {Accreditation | undefined} accreditation
- * @param {CadenceValue} cadence
- * @returns {string}
- */
-const getActionPath = (status, registration, accreditation, cadence) => {
-  if (status !== SUBMISSION_STATUS.IN_PROGRESS) {
-    return fixedActionPaths[status] ?? ''
-  }
-  return getInProgressActionPath(registration, accreditation, cadence)
-}
-
-/**
- * The submission status that drives a period's action link (its label and
- * path). A requires_resubmission period defers to the draft it carries: with
- * no draft it stays requires_resubmission ("Review and create draft"); with an
- * in-progress or ready-to-submit draft it behaves like that draft ("Continue"
- * or "Review and submit"). The purple Requires resubmission tag, taken from
- * periodStatus, is unaffected.
- * @param {ReportingPeriod} period
- * @returns {SubmissionStatusValue}
- */
-const getActionStatus = (period) => {
-  if (period.periodStatus !== SUBMISSION_STATUS.REQUIRES_RESUBMISSION) {
-    return period.periodStatus
-  }
-  return period.report?.status ?? SUBMISSION_STATUS.REQUIRES_RESUBMISSION
-}
-
 /**
  * @param {{
  *   accreditation: Accreditation | undefined,
@@ -126,9 +84,9 @@ const buildActionCell = ({
   periodPath,
   registration
 }) => {
-  const status = getActionStatus(period)
-  const actionPath = getActionPath(status, registration, accreditation, cadence)
-  const actionLabel = getActionLabel(status, localise)
+  const action = getRowAction(period)
+  const actionPath = getActionPath(action, registration, accreditation, cadence)
+  const actionLabel = getActionLabel(action, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
 
@@ -262,7 +220,7 @@ const buildHeaders = (localise) => ({
  */
 const buildApprovedPersonBanner = (reportingPeriods, localise) => {
   const count = reportingPeriods.filter(
-    (p) => getActionStatus(p) === SUBMISSION_STATUS.READY_TO_SUBMIT
+    (p) => getRowAction(p) === REPORT_ACTION.REVIEW_AND_SUBMIT
   ).length
 
   return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null
