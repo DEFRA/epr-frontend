@@ -7,6 +7,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 import { getAllByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 
+/**
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -123,11 +127,11 @@ describe('#viewController', () => {
   })
 
   describe('for a report that cannot be viewed', () => {
-    const reportDetail = {
+    const reportDetail = /** @type {ReportDetailResponse} */ ({
       status: {
         currentStatus: 'in_progress'
       }
-    }
+    })
 
     beforeAll(() => {
       vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
@@ -144,7 +148,7 @@ describe('#viewController', () => {
   })
 
   describe('for a draft report', () => {
-    const reportDetail = {
+    const reportDetail = /** @type {ReportDetailResponse} */ ({
       status: {
         currentStatus: 'ready_to_submit',
         created: {
@@ -163,11 +167,12 @@ describe('#viewController', () => {
             facilityType: 'Reprocessor',
             supplierAddress: '1 Green Lane, Leeds, LS1 1AA',
             supplierPhone: '0113 000 0000',
-            supplierEmail: 'contact@acme.example.com'
+            supplierEmail: 'contact@acme.example.com',
+            tonnageReceived: 12.5
           }
         ]
       },
-      exportActivity: null,
+      exportActivity: undefined,
       wasteSent: {
         tonnageSentToReprocessor: 5.0,
         tonnageSentToExporter: 3.0,
@@ -187,8 +192,8 @@ describe('#viewController', () => {
         totalRevenue: 2500,
         averagePricePerTonne: 50
       },
-      supportingInformation: null
-    }
+      supportingInformation: undefined
+    })
 
     beforeAll(() => {
       vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
@@ -304,14 +309,31 @@ describe('#viewController', () => {
   })
 
   describe('for a submitted report', () => {
-    const reportDetail = {
+    const reportDetail = /** @type {ReportDetailResponse} */ ({
+      operatorCategory: 'REPROCESSOR',
+      cadence: 'monthly',
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      source: {
+        summaryLogId: 'sl-1',
+        lastUploadedAt: '2026-02-15T15:09:00.000Z'
+      },
+      details: { material: 'plastic' },
       status: {
         currentStatus: 'submitted',
+        currentStatusAt: '2026-03-15T14:30:00.000Z',
+        created: {
+          at: '2026-02-15T15:09:00.000Z',
+          by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
+        },
         submitted: {
           at: '2026-03-15T14:30:00.000Z',
           by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
         }
       },
+      dueDate: '2026-05-31',
       recyclingActivity: {
         totalTonnageReceived: 12.5,
         tonnageRecycled: 10.25,
@@ -322,7 +344,8 @@ describe('#viewController', () => {
             facilityType: 'Reprocessor',
             supplierAddress: '1 Green Lane, Leeds, LS1 1AA',
             supplierPhone: '0113 000 0000',
-            supplierEmail: 'contact@acme.example.com'
+            supplierEmail: 'contact@acme.example.com',
+            tonnageReceived: 12.5
           }
         ]
       },
@@ -371,7 +394,7 @@ describe('#viewController', () => {
         averagePricePerTonne: 50
       },
       supportingInformation: 'Test supporting information note'
-    }
+    })
 
     beforeAll(() => {
       vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
@@ -942,7 +965,9 @@ describe('#viewController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...reportDetail,
             exportActivity: {
-              ...reportDetail.exportActivity,
+              .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+                reportDetail.exportActivity
+              ),
               unapprovedOverseasSites: [
                 { orsId: 'ORS-999', tonnageExported: 3.25 },
                 { orsId: 'ORS-888', tonnageExported: 1.75 }
@@ -1054,7 +1079,9 @@ describe('#viewController', () => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...reportDetail,
             exportActivity: {
-              ...reportDetail.exportActivity,
+              .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+                reportDetail.exportActivity
+              ),
               overseasSites: [],
               unapprovedOverseasSites: [
                 { orsId: 'ORS-777', tonnageExported: 8 }
@@ -1639,7 +1666,7 @@ describe('#viewController', () => {
         beforeAll(() => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...reportDetail,
-            supportingInformation: null
+            supportingInformation: undefined
           })
         })
 
