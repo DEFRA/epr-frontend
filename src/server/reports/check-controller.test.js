@@ -1403,7 +1403,7 @@ describe('#checkController', () => {
 
         const value = recycledRow?.querySelector('.govuk-summary-list__value')
 
-        expect(value?.textContent?.trim()).toBe('—')
+        expect(value?.textContent?.trim()).toBe('-')
       })
 
       it('should display dash for null tonnage not recycled', async ({
@@ -1429,7 +1429,7 @@ describe('#checkController', () => {
           '.govuk-summary-list__value'
         )
 
-        expect(value?.textContent?.trim()).toBe('—')
+        expect(value?.textContent?.trim()).toBe('-')
       })
     })
 

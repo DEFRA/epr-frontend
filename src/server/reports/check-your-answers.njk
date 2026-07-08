@@ -138,7 +138,7 @@
           rows: [
             {
               key: { text: localise("reports:checkTonnageRecycledLabel") },
-              value: { text: recyclingActivity.tonnageRecycled if recyclingActivity.tonnageRecycled !== null else "—" },
+              value: { text: recyclingActivity.tonnageRecycled },
               actions: {
                 items: [{
                   href: tonnageRecycledChangeUrl,
@@ -149,7 +149,7 @@
             },
             {
               key: { text: localise("reports:checkTonnageNotRecycledLabel") },
-              value: { text: recyclingActivity.tonnageNotRecycled if recyclingActivity.tonnageNotRecycled !== null else "—" },
+              value: { text: recyclingActivity.tonnageNotRecycled },
               actions: {
                 items: [{
                   href: tonnageNotRecycledChangeUrl,
