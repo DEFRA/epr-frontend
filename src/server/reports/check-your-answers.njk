@@ -7,6 +7,7 @@
 {% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
 {% from "tonnage-breakdown/macro.njk" import tonnageBreakdown %}
 {% from "report-section/macro.njk" import reportSubSection %}
+{% from "supporting-info-summary/macro.njk" import supportingInfoSummary %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -224,23 +225,11 @@
 
       <h2 class="govuk-heading-l">{{ localise("reports:checkSupportingInformationHeading") }}</h2>
 
-      {{ govukSummaryList({
-        classes: "epr-summary-list--wide-key",
-        rows: [
-          {
-            key: { text: supportingInformationLabel },
-            value: { text: supportingInformation },
-            actions: {
-              items: [
-                {
-                  href: changeUrl,
-                  text: changeText,
-                  visuallyHiddenText: supportingInformationLabel
-                }
-              ]
-            }
-          }
-        ]
+      {{ supportingInfoSummary({
+        label: supportingInformationLabel,
+        value: supportingInformation,
+        changeUrl: changeUrl,
+        changeText: changeText
       }) }}
 
       <h2 class="govuk-heading-l">{{ localise("reports:checkPleaseBeAwareHeading") }}</h2>

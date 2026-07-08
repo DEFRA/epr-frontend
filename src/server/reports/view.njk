@@ -5,6 +5,7 @@
 {% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
 {% from "tonnage-breakdown/macro.njk" import tonnageBreakdown %}
 {% from "read-only-prn-summary/macro.njk" import readOnlyPrnSummary %}
+{% from "supporting-info-summary/macro.njk" import supportingInfoSummary %}
 {% from "report-section/macro.njk" import reportSection %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
@@ -217,14 +218,9 @@
       <div id="supporting-information">
         <h2 class="govuk-heading-l">{{ localise("reports:view:supportingInformationHeading") }}</h2>
 
-        {{ govukSummaryList({
-          classes: "epr-summary-list--wide-key",
-          rows: [
-            {
-              key: { text: localise("reports:supportingInformationLabel") },
-              value: { text: supportingInformation }
-            }
-          ]
+        {{ supportingInfoSummary({
+          label: localise("reports:supportingInformationLabel"),
+          value: supportingInformation
         }) }}
       </div>
     </div>
