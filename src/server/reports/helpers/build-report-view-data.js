@@ -6,7 +6,7 @@ import {
   buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './build-table-rows.js'
-import { dashCurrency, dashWholeTonnes } from './dash-formatters.js'
+import { currencyOrDash, wholeTonnageOrDash } from './dash-formatters.js'
 import { formatExportTonnages } from './format-export-tonnages.js'
 
 /**
@@ -107,8 +107,8 @@ export const buildWasteExportedViewData = (
  * }}
  */
 export const buildPrnSummaryViewData = (prn) => ({
-  averagePricePerTonne: dashCurrency(prn?.averagePricePerTonne),
-  freeTonnage: dashWholeTonnes(prn?.freeTonnage),
-  issuedTonnage: dashWholeTonnes(prn?.issuedTonnage),
-  totalRevenue: dashCurrency(prn?.totalRevenue)
+  averagePricePerTonne: currencyOrDash(prn?.averagePricePerTonne),
+  freeTonnage: wholeTonnageOrDash(prn?.freeTonnage),
+  issuedTonnage: wholeTonnageOrDash(prn?.issuedTonnage),
+  totalRevenue: currencyOrDash(prn?.totalRevenue)
 })

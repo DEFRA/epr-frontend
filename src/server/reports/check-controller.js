@@ -12,7 +12,7 @@ import {
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
-import { dashTonnes } from './helpers/dash-formatters.js'
+import { tonnageOrDash } from './helpers/dash-formatters.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -116,8 +116,8 @@ function buildCheckViewData({
     prn: reportDetail.prn && buildPrnSummaryViewData(reportDetail.prn),
     prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
     recyclingActivity: {
-      tonnageRecycled: dashTonnes(recyclingActivity.tonnageRecycled),
-      tonnageNotRecycled: dashTonnes(recyclingActivity.tonnageNotRecycled)
+      tonnageRecycled: tonnageOrDash(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: tonnageOrDash(recyclingActivity.tonnageNotRecycled)
     },
     registrationNumber: registration.registrationNumber,
     showApprovalColumn: isAccreditedExporter,

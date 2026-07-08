@@ -1,4 +1,4 @@
-import { dashTonnes } from './dash-formatters.js'
+import { tonnageOrDash } from './dash-formatters.js'
 
 /**
  * Extracts and formats the exporter tonnage breakdown fields from export activity.
@@ -8,14 +8,14 @@ import { dashTonnes } from './dash-formatters.js'
  */
 export function formatExportTonnages(exportActivity) {
   return {
-    tonnageReceivedNotExported: dashTonnes(
+    tonnageReceivedNotExported: tonnageOrDash(
       exportActivity.tonnageReceivedNotExported
     ),
-    tonnageRefused: dashTonnes(exportActivity.tonnageRefusedAtDestination),
-    tonnageStopped: dashTonnes(exportActivity.tonnageStoppedDuringExport),
-    tonnageRefusedOrStopped: dashTonnes(
+    tonnageRefused: tonnageOrDash(exportActivity.tonnageRefusedAtDestination),
+    tonnageStopped: tonnageOrDash(exportActivity.tonnageStoppedDuringExport),
+    tonnageRefusedOrStopped: tonnageOrDash(
       exportActivity.totalTonnageRefusedOrStopped
     ),
-    tonnageRepatriated: dashTonnes(exportActivity.tonnageRepatriated)
+    tonnageRepatriated: tonnageOrDash(exportActivity.tonnageRepatriated)
   }
 }
