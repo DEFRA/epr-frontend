@@ -12,8 +12,11 @@
       width: 60%;
     }
 
+    // "Change" is a single unbreakable word, so a small percentage overflows it
+    // at narrow widths (table-layout is fixed). A fixed width keeps the column
+    // snug and consistent at every breakpoint instead of scaling with the table.
     .govuk-summary-list__actions {
-      width: 15%;
+      width: 4.5rem;
     }
   }
 }
