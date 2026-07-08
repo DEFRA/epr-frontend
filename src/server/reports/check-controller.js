@@ -87,8 +87,8 @@ function buildCheckViewData({
     totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
       noteTypePlural
     }),
-    revenueLabel: localise('reports:checkRevenueLabel', { noteTypePlural }),
-    freeLabel: localise('reports:checkFreeLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
+    freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
     freeNote: localise('reports:freeTonnageNote'),
     backUrl: localiseUrl(`${basePath}/supporting-information`),
     changeUrl: localiseUrl(`${basePath}/supporting-information`),

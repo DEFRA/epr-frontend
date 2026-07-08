@@ -1510,9 +1510,7 @@ describe('#viewController', () => {
           })
           const summaryList = section.querySelector('dl.govuk-summary-list')
 
-          expect(summaryList.textContent).toContain(
-            'Average price per tonne of PRNs'
-          )
+          expect(summaryList.textContent).toContain('Average price per tonne')
           expect(summaryList.textContent).toContain('£50.00')
         })
       })
@@ -1571,9 +1569,7 @@ describe('#viewController', () => {
           })
           const summaryList = section.querySelector('dl.govuk-summary-list')
 
-          expect(summaryList.textContent).toContain(
-            'Average price per tonne of PERNs'
-          )
+          expect(summaryList.textContent).toContain('Average price per tonne')
           expect(summaryList.textContent).toContain('£50.00')
         })
       })

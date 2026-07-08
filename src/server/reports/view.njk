@@ -204,16 +204,21 @@
         <div id="prns">
           {{ reportSection(noteTypeSectionHeading, totalIssuedTonnageLabel, prn.issuedTonnage | formatWholeNumberTonnage) }}
 
+          {% set freeKeyHtml %}
+            {{ freeLabel }}
+            <span class="govuk-body-s govuk-!-font-weight-regular govuk-!-display-block govuk-!-margin-top-1">{{ localise("reports:freeTonnageNote") }}</span>
+          {% endset %}
+
           {{ govukSummaryList({
             classes: "epr-summary-list--wide-key",
             rows: [
               {
-                key: { text: freeLabel },
-                value: { text: prn.freeTonnage | formatWholeNumberTonnage }
-              },
-              {
                 key: { text: revenueLabel },
                 value: { text: prn.totalRevenue | formatCurrency }
+              },
+              {
+                key: { html: freeKeyHtml },
+                value: { text: prn.freeTonnage | formatWholeNumberTonnage }
               },
               {
                 key: { text: avgPriceLabel },

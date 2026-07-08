@@ -59,9 +59,9 @@ function buildPageLabels({
     totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
       noteTypePlural
     }),
-    freeLabel: localise('reports:view:freeLabel', { noteTypePlural }),
-    revenueLabel: localise('reports:view:totalRevenue', { noteTypePlural }),
-    avgPriceLabel: localise('reports:view:avgPrice', { noteTypePlural })
+    freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
+    avgPriceLabel: localise('reports:avgPriceLabel', { noteTypePlural })
   }
 }
 
