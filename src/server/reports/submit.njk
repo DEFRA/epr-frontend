@@ -164,9 +164,10 @@
       {% if isAccredited %}
         {{ reportSection(noteTypeSectionHeading, totalIssuedTonnageLabel, prn.issuedTonnage | formatWholeNumberTonnage) }}
 
-        {% set freeTonnageKey = freeLabel + '<br><span class="govuk-!-font-weight-regular">' + localise("reports:submitFreeTonnageNote") + '</span>' %}
+        {% set freeTonnageKey = freeLabel + '<br><span class="govuk-!-font-weight-regular">' + localise("reports:freeTonnageNote") + '</span>' %}
 
         {{ govukSummaryList({
+          classes: "epr-summary-list--wide-key",
           rows: [
             {
               key: { html: freeTonnageKey },

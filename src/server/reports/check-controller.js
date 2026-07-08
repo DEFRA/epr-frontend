@@ -89,7 +89,7 @@ function buildCheckViewData({
     }),
     revenueLabel: localise('reports:checkRevenueLabel', { noteTypePlural }),
     freeLabel: localise('reports:checkFreeLabel', { noteTypePlural }),
-    freeNote: localise('reports:checkFreeNote'),
+    freeNote: localise('reports:freeTonnageNote'),
     backUrl: localiseUrl(`${basePath}/supporting-information`),
     changeUrl: localiseUrl(`${basePath}/supporting-information`),
     createButtonText: localise('reports:checkCreateReport'),

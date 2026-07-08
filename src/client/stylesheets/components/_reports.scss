@@ -1,0 +1,19 @@
+@use "govuk-frontend" as *;
+
+// Widen the key column and trim the fixed-width actions column on report
+// summary lists, so long labels (e.g. "Total tonnage of PERNs issued for
+// free") stay on one line while the value and Change link keep enough room.
+// GDS only offers 50% (label wraps) or 66% (value overflows) key widths, so
+// this sits between. Scoped to tablet+ to match govuk-frontend, which stacks
+// the list on smaller screens.
+.epr-summary-list--wide-key {
+  @include govuk-media-query($from: tablet) {
+    .govuk-summary-list__key {
+      width: 60%;
+    }
+
+    .govuk-summary-list__actions {
+      width: 15%;
+    }
+  }
+}

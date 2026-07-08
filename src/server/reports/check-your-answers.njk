@@ -162,18 +162,22 @@
 
       {% if prn and (isExporter or (isReprocessor and isAccredited)) %}
 
-        <h3 class="govuk-heading-m">{{ noteTypeSectionHeading }}</h3>
+        <h2 class="govuk-heading-l">{{ noteTypeSectionHeading }}</h2>
 
         {% set prnRows = [
           {
-            key: { text: totalIssuedTonnageLabel },
+            key: {
+              text: totalIssuedTonnageLabel
+            },
             value: { text: prn.issuedTonnage | formatWholeNumberTonnage }
           }
         ] %}
 
         {% if prn.totalRevenue is defined and prn.totalRevenue !== null %}
           {% set prnRows = prnRows.concat([{
-            key: { text: revenueLabel },
+            key: {
+              text: revenueLabel
+            },
             value: { text: prn.totalRevenue | formatCurrency },
             actions: {
               items: [{
@@ -186,14 +190,16 @@
         {% endif %}
 
         {% if prn.freeTonnage is defined and prn.freeTonnage !== null %}
-          {% set freeTonnageHtml %}
-            {{ prn.freeTonnage }}
-            <p class="govuk-body-s govuk-!-margin-top-1 govuk-!-margin-bottom-0">{{ freeNote }}</p>
+          {% set freeKeyHtml %}
+            {{ freeLabel }}
+            <span class="govuk-body-s govuk-!-font-weight-regular govuk-!-display-block govuk-!-margin-top-1">{{ freeNote }}</span>
           {% endset %}
           {% set freeTonnageChangeUrl = freePrnsChangeUrl if isReprocessor else freePernChangeUrl %}
           {% set prnRows = prnRows.concat([{
-            key: { text: freeLabel },
-            value: { html: freeTonnageHtml },
+            key: {
+              html: freeKeyHtml
+            },
+            value: { text: prn.freeTonnage },
             actions: {
               items: [{
                 href: freeTonnageChangeUrl,
@@ -206,12 +212,14 @@
 
         {% if prn.averagePricePerTonne is defined and prn.averagePricePerTonne !== null %}
           {% set prnRows = prnRows.concat([{
-            key: { text: localise("reports:checkAvgPriceLabel") },
+            key: {
+              text: localise("reports:checkAvgPriceLabel")
+            },
             value: { text: prn.averagePricePerTonne | formatCurrency }
           }]) %}
         {% endif %}
 
-        {{ govukSummaryList({ rows: prnRows }) }}
+        {{ govukSummaryList({ rows: prnRows, classes: "epr-summary-list--wide-key" }) }}
       {% endif %}
 
       <h2 class="govuk-heading-l">{{ localise("reports:checkSupportingInformationHeading") }}</h2>

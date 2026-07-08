@@ -934,7 +934,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'heading', { name: /PERNs/, level: 3 })
+          queryByRole(body, 'heading', { name: /PERNs/, level: 2 })
         ).toBeNull()
       })
     })
@@ -1127,7 +1127,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          queryByRole(body, 'heading', { name: /PRNs/, level: 2 })
         ).toBeNull()
       })
 
@@ -1331,7 +1331,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          queryByRole(body, 'heading', { name: /PRNs/, level: 2 })
         ).toBeNull()
       })
     })
@@ -1435,7 +1435,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          getByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          getByRole(body, 'heading', { name: /PRNs/, level: 2 })
         ).toBeDefined()
         expect(body.textContent).toContain('Total tonnage of PRNs issued')
         expect(body.textContent).toContain('75')
@@ -1557,7 +1557,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          getByRole(body, 'heading', { name: /PERNs/, level: 3 })
+          getByRole(body, 'heading', { name: /PERNs/, level: 2 })
         ).toBeDefined()
         expect(body.textContent).toContain('Total tonnage of PERNs issued')
         expect(body.textContent).toContain('75')
