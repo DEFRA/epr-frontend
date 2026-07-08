@@ -7,6 +7,7 @@
 {% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
 {% from "tonnage-breakdown/macro.njk" import tonnageBreakdown %}
 {% from "report-section/macro.njk" import reportSubSection %}
+{% from "prn-summary/macro.njk" import prnSummary %}
 {% from "supporting-info-summary/macro.njk" import supportingInfoSummary %}
 
 {% block beforeContent %}
@@ -163,64 +164,19 @@
 
       {% if prn and (isExporter or (isReprocessor and isAccredited)) %}
 
-        <h2 class="govuk-heading-l">{{ noteTypeSectionHeading }}</h2>
-
-        {% set prnRows = [
-          {
-            key: {
-              text: totalIssuedTonnageLabel
-            },
-            value: { text: prn.issuedTonnage | formatWholeNumberTonnage }
-          }
-        ] %}
-
-        {% if prn.totalRevenue is defined and prn.totalRevenue !== null %}
-          {% set prnRows = prnRows.concat([{
-            key: {
-              text: revenueLabel
-            },
-            value: { text: prn.totalRevenue | formatCurrency },
-            actions: {
-              items: [{
-                href: prnRevenueChangeUrl,
-                text: changeText,
-                visuallyHiddenText: revenueLabel
-              }]
-            }
-          }]) %}
-        {% endif %}
-
-        {% if prn.freeTonnage is defined and prn.freeTonnage !== null %}
-          {% set freeKeyHtml %}
-            {{ freeLabel }}
-            <span class="govuk-body-s govuk-!-font-weight-regular govuk-!-display-block govuk-!-margin-top-1">{{ freeNote }}</span>
-          {% endset %}
-          {% set freeTonnageChangeUrl = freePrnsChangeUrl if isReprocessor else freePernChangeUrl %}
-          {% set prnRows = prnRows.concat([{
-            key: {
-              html: freeKeyHtml
-            },
-            value: { text: prn.freeTonnage | formatWholeNumberTonnage },
-            actions: {
-              items: [{
-                href: freeTonnageChangeUrl,
-                text: changeText,
-                visuallyHiddenText: freeLabel
-              }]
-            }
-          }]) %}
-        {% endif %}
-
-        {% if prn.averagePricePerTonne is defined and prn.averagePricePerTonne !== null %}
-          {% set prnRows = prnRows.concat([{
-            key: {
-              text: localise("reports:avgPriceLabel")
-            },
-            value: { text: prn.averagePricePerTonne | formatCurrency }
-          }]) %}
-        {% endif %}
-
-        {{ govukSummaryList({ rows: prnRows, classes: "epr-summary-list--wide-key" }) }}
+        {{ prnSummary(prn, {
+          section: noteTypeSectionHeading,
+          issued: totalIssuedTonnageLabel,
+          revenue: revenueLabel,
+          free: freeLabel,
+          freeNote: freeNote,
+          avg: localise("reports:avgPriceLabel")
+        }, {
+          editable: true,
+          revenueChangeUrl: prnRevenueChangeUrl,
+          freeChangeUrl: freePrnsChangeUrl if isReprocessor else freePernChangeUrl,
+          changeText: changeText
+        }) }}
       {% endif %}
 
       <h2 class="govuk-heading-l">{{ localise("reports:checkSupportingInformationHeading") }}</h2>

@@ -9,7 +9,7 @@
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 {% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
 {% from "tonnage-breakdown/macro.njk" import tonnageBreakdown %}
-{% from "read-only-prn-summary/macro.njk" import readOnlyPrnSummary %}
+{% from "prn-summary/macro.njk" import prnSummary %}
 {% from "supporting-info-summary/macro.njk" import supportingInfoSummary %}
 {% from "report-section/macro.njk" import reportSection %}
 
@@ -164,14 +164,14 @@
       {% endif %}
 
       {% if isAccredited %}
-        {{ readOnlyPrnSummary(prn, {
+        {{ prnSummary(prn, {
           section: noteTypeSectionHeading,
           issued: totalIssuedTonnageLabel,
           revenue: revenueLabel,
           free: freeLabel,
           freeNote: localise("reports:freeTonnageNote"),
           avg: avgPriceLabel
-        }) }}
+        }, {}) }}
       {% endif %}
 
       <h2 class="govuk-heading-l">{{ localise("reports:submitSupportingInformationHeading") }}</h2>
