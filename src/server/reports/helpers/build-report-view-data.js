@@ -1,4 +1,4 @@
-import { formatCurrency } from '#config/nunjucks/filters/format-currency.js'
+import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import {
   formatTonnage,
   formatWholeNumberTonnage
