@@ -6,6 +6,7 @@
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
 {% from "tonnage-breakdown/macro.njk" import tonnageBreakdown %}
+{% from "tonnage-total/macro.njk" import tonnageTotal %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -48,8 +49,7 @@
 
       <h3 class="govuk-heading-l">{{ wasteReceivedHeading }}</h3>
 
-      <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageReceived") }}</p>
-      <p class="govuk-heading-l">{{ wasteReceived.totalTonnage }}</p>
+      {{ tonnageTotal(localise("reports:totalTonnageReceived"), wasteReceived.totalTonnage) }}
 
       {% if wasteReceived.supplierDetailRows | length > 0 %}
         {{ govukTable({
@@ -67,8 +67,7 @@
       {% if isExporter %}
         <h3 class="govuk-heading-l">{{ localise("reports:wasteExportedHeading") }}</h3>
 
-        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageExported") }}</p>
-        <p class="govuk-heading-l">{{ wasteExported.totalTonnage }}</p>
+        {{ tonnageTotal(localise("reports:totalTonnageExported"), wasteExported.totalTonnage) }}
 
         {% set overseasSiteHead = [
             { text: localise("reports:siteNameColumn") },
@@ -91,14 +90,12 @@
         {% if isAccredited %}
           <h3 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h3>
 
-          <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageReceivedNotExportedLabel") }}</p>
-          <p class="govuk-heading-l">{{ wasteExported.tonnageReceivedNotExported }}</p>
+          {{ tonnageTotal(localise("reports:tonnageReceivedNotExportedLabel"), wasteExported.tonnageReceivedNotExported) }}
         {% endif %}
 
         <h3 class="govuk-heading-l">{{ localise("reports:tonnageRefusedOrStoppedHeading") }}</h3>
 
-        <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageRefusedOrStoppedLabel") }}</p>
-        <p class="govuk-heading-l">{{ wasteExported.tonnageRefusedOrStopped }}</p>
+        {{ tonnageTotal(localise("reports:tonnageRefusedOrStoppedLabel"), wasteExported.tonnageRefusedOrStopped) }}
 
         {{ tonnageBreakdown([
           { key: "reports:tonnageRefusedLabel", value: wasteExported.tonnageRefused },
@@ -109,8 +106,7 @@
 
       <h3 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h3>
 
-      <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
-      <p class="govuk-heading-l">{{ wasteSentOn.totalTonnage }}</p>
+      {{ tonnageTotal(localise("reports:totalTonnageSentOn"), wasteSentOn.totalTonnage) }}
 
       {{ tonnageBreakdown([
         { key: "reports:tonnageSentOnToReprocessors", value: wasteSentOn.toReprocessors },
