@@ -12,6 +12,7 @@ import {
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
+  buildPrnSummaryViewData,
   buildWasteExportedViewData,
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
@@ -86,7 +87,7 @@ function buildPageLabels({
     }),
     freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
     revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
-    avgPriceLabel: localise('reports:avgPriceLabel', { noteTypePlural })
+    avgPriceLabel: localise('reports:avgPriceLabel')
   }
 }
 
@@ -115,17 +116,6 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
  *   errorSummary?: object | null
  * }} BuildViewModelParams
  */
-
-/**
- * @param {ReportDetailResponse['prn']} prn
- * @returns {object}
- */
-const buildPrnViewData = (prn) => ({
-  averagePricePerTonne: prn?.averagePricePerTonne,
-  freeTonnage: prn?.freeTonnage,
-  issuedTonnage: prn?.issuedTonnage,
-  totalRevenue: prn?.totalRevenue
-})
 
 /**
  * @param {import('./helpers/format-period-label.js').Localise} localise
@@ -225,7 +215,7 @@ function buildViewModel({
         })
       : null,
     wasteSentOn: buildWasteSentOnViewData(wasteSent),
-    prn: buildPrnViewData(reportDetail.prn),
+    prn: buildPrnSummaryViewData(reportDetail.prn),
     recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),
     supportingInformation:
       reportDetail.supportingInformation ||

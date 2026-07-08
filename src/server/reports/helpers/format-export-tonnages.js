@@ -1,4 +1,5 @@
-import { formatTonnageOrDash } from './format-tonnage-or-dash.js'
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import { orDash } from './format-or-dash.js'
 
 /**
  * Extracts and formats the exporter tonnage breakdown fields from export activity.
@@ -8,18 +9,22 @@ import { formatTonnageOrDash } from './format-tonnage-or-dash.js'
  */
 export function formatExportTonnages(exportActivity) {
   return {
-    tonnageReceivedNotExported: formatTonnageOrDash(
-      exportActivity.tonnageReceivedNotExported
+    tonnageReceivedNotExported: orDash(
+      exportActivity.tonnageReceivedNotExported,
+      formatTonnage
     ),
-    tonnageRefused: formatTonnageOrDash(
-      exportActivity.tonnageRefusedAtDestination
+    tonnageRefused: orDash(
+      exportActivity.tonnageRefusedAtDestination,
+      formatTonnage
     ),
-    tonnageStopped: formatTonnageOrDash(
-      exportActivity.tonnageStoppedDuringExport
+    tonnageStopped: orDash(
+      exportActivity.tonnageStoppedDuringExport,
+      formatTonnage
     ),
-    tonnageRefusedOrStopped: formatTonnageOrDash(
-      exportActivity.totalTonnageRefusedOrStopped
+    tonnageRefusedOrStopped: orDash(
+      exportActivity.totalTonnageRefusedOrStopped,
+      formatTonnage
     ),
-    tonnageRepatriated: formatTonnageOrDash(exportActivity.tonnageRepatriated)
+    tonnageRepatriated: orDash(exportActivity.tonnageRepatriated, formatTonnage)
   }
 }

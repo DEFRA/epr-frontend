@@ -1568,9 +1568,9 @@ describe('#checkController', () => {
             freeTonnage: valueForKey('Total tonnage of PRNs issued for free'),
             averagePrice: valueForKey('Average price per tonne')
           }).toStrictEqual({
-            revenue: '—',
-            freeTonnage: '—',
-            averagePrice: '—'
+            revenue: '-',
+            freeTonnage: '-',
+            averagePrice: '-'
           })
         })
       })

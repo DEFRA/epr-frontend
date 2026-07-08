@@ -7,6 +7,7 @@ import {
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
+  buildPrnSummaryViewData,
   buildWasteExportedViewData,
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
@@ -108,7 +109,7 @@ function buildCheckViewData({
     recyclingActivity: reportDetail.recyclingActivity,
     tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
     tonnageNotRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-not-recycled`),
-    prn: reportDetail.prn,
+    prn: reportDetail.prn && buildPrnSummaryViewData(reportDetail.prn),
     prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
     freePernChangeUrl: localiseUrl(`${basePath}/free-perns`),
     freePrnsChangeUrl: localiseUrl(`${basePath}/free-prns`)

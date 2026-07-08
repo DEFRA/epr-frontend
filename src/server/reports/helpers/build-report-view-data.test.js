@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildPrnSummaryViewData,
   buildWasteExportedViewData,
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
@@ -122,6 +123,49 @@ describe('build-report-view-data', () => {
         tonnageStopped: '-',
         tonnageRefusedOrStopped: '-',
         tonnageRepatriated: '-'
+      })
+    })
+  })
+
+  describe(buildPrnSummaryViewData, () => {
+    it('should format each populated value', () => {
+      expect(
+        buildPrnSummaryViewData({
+          issuedTonnage: 75,
+          totalRevenue: 1576.12,
+          freeTonnage: 5,
+          averagePricePerTonne: 21.01
+        })
+      ).toStrictEqual({
+        issuedTonnage: '75',
+        totalRevenue: '£1,576.12',
+        freeTonnage: '5',
+        averagePricePerTonne: '£21.01'
+      })
+    })
+
+    it('should dash absent values while formatting the rest', () => {
+      expect(
+        buildPrnSummaryViewData({
+          issuedTonnage: 75,
+          totalRevenue: null,
+          freeTonnage: null,
+          averagePricePerTonne: null
+        })
+      ).toStrictEqual({
+        issuedTonnage: '75',
+        totalRevenue: '-',
+        freeTonnage: '-',
+        averagePricePerTonne: '-'
+      })
+    })
+
+    it('should dash every value when the prn is absent', () => {
+      expect(buildPrnSummaryViewData(undefined)).toStrictEqual({
+        issuedTonnage: '-',
+        totalRevenue: '-',
+        freeTonnage: '-',
+        averagePricePerTonne: '-'
       })
     })
   })

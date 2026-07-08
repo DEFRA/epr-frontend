@@ -1,4 +1,8 @@
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import { formatCurrency } from '#config/nunjucks/filters/format-currency.js'
+import {
+  formatTonnage,
+  formatWholeNumberTonnage
+} from '#config/nunjucks/filters/format-tonnage.js'
 import {
   buildDestinationDetailRows,
   buildOverseasSiteRows,
@@ -7,6 +11,7 @@ import {
   getTotalTonnageSentOn
 } from './build-table-rows.js'
 import { formatExportTonnages } from './format-export-tonnages.js'
+import { orDash } from './format-or-dash.js'
 
 /**
  * @import { ReportDetailResponse } from './fetch-report-detail.js'
@@ -92,3 +97,22 @@ export const buildWasteExportedViewData = (
     ...formatExportTonnages(activity)
   }
 }
+
+/**
+ * Canonical PRN/PERN summary values shared by the check, submit and view pages.
+ * A report can still be incomplete on the editable check page, so an absent
+ * value formats as a dash rather than a number.
+ * @param {ReportDetailResponse['prn']} prn
+ * @returns {{
+ *   averagePricePerTonne: string,
+ *   freeTonnage: string,
+ *   issuedTonnage: string,
+ *   totalRevenue: string
+ * }}
+ */
+export const buildPrnSummaryViewData = (prn) => ({
+  averagePricePerTonne: orDash(prn?.averagePricePerTonne, formatCurrency),
+  freeTonnage: orDash(prn?.freeTonnage, formatWholeNumberTonnage),
+  issuedTonnage: orDash(prn?.issuedTonnage, formatWholeNumberTonnage),
+  totalRevenue: orDash(prn?.totalRevenue, formatCurrency)
+})

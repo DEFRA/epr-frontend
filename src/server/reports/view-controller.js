@@ -5,6 +5,7 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
+  buildPrnSummaryViewData,
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
@@ -61,7 +62,7 @@ function buildPageLabels({
     }),
     freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
     revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
-    avgPriceLabel: localise('reports:avgPriceLabel', { noteTypePlural })
+    avgPriceLabel: localise('reports:avgPriceLabel')
   }
 }
 
@@ -146,7 +147,7 @@ function buildViewData({
     isReprocessor,
     isRegisteredOnlyExporter,
 
-    prn: buildPrn(reportDetail.prn),
+    prn: buildPrnSummaryViewData(reportDetail.prn),
 
     wasteSentOn: buildWasteSentOnViewData(wasteSent),
 
@@ -163,19 +164,6 @@ function buildViewData({
   }
 
   return viewData
-}
-
-/**
- * @param {object|undefined} prn
- * @returns {object}
- */
-function buildPrn(prn) {
-  return {
-    issuedTonnage: prn?.issuedTonnage,
-    freeTonnage: prn?.freeTonnage,
-    totalRevenue: prn?.totalRevenue,
-    averagePricePerTonne: prn?.averagePricePerTonne
-  }
 }
 
 function buildWasteExported(exportActivity, isExporter, isAccredited) {
