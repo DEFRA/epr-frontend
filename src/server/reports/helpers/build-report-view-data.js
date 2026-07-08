@@ -28,11 +28,11 @@ const emptyExportActivity = {
  * Canonical waste-received view data shared by the check, submit and view
  * pages: the formatted total plus the 5-column supplier contact table.
  * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
- * @returns {{ totalTonnage: string, supplierDetailRows: Array<Array<{text: string | null}>> }}
+ * @returns {{ supplierDetailRows: Array<Array<{text: string | null}>>, totalTonnage: string }}
  */
 export const buildWasteReceivedViewData = (recyclingActivity) => ({
-  totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-  supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
+  supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers),
+  totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived)
 })
 
 /**
@@ -40,19 +40,21 @@ export const buildWasteReceivedViewData = (recyclingActivity) => ({
  * pages: the formatted total and breakdown plus the 4-column destination table.
  * @param {ReportDetailResponse['wasteSent']} wasteSent
  * @returns {{
- *   totalTonnage: string,
- *   toReprocessors: string,
+ *   destinationDetailRows: Array<Array<{text: string | null}>>,
  *   toExporters: string,
  *   toOtherSites: string,
- *   destinationDetailRows: Array<Array<{text: string | null}>>
+ *   toReprocessors: string,
+ *   totalTonnage: string
  * }}
  */
 export const buildWasteSentOnViewData = (wasteSent) => ({
-  totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-  toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+  destinationDetailRows: buildDestinationDetailRows(
+    wasteSent.finalDestinations
+  ),
   toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
   toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-  destinationDetailRows: buildDestinationDetailRows(wasteSent.finalDestinations)
+  toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+  totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
 })
 
 /**
@@ -62,7 +64,16 @@ export const buildWasteSentOnViewData = (wasteSent) => ({
  * as a zeroed total with dashed breakdown values.
  * @param {ReportDetailResponse['exportActivity'] | undefined} exportActivity
  * @param {{ showApprovalColumn: boolean }} options
- * @returns {object}
+ * @returns {{
+ *   overseasSiteRows: Array<Array<{ text: string | null }>>,
+ *   tonnageReceivedNotExported: string,
+ *   tonnageRefused: string,
+ *   tonnageRefusedOrStopped: string,
+ *   tonnageRepatriated: string,
+ *   tonnageStopped: string,
+ *   totalTonnage: string,
+ *   unapprovedOverseasSiteRows: Array<Array<{ text: string }>>
+ * }}
  */
 export const buildWasteExportedViewData = (
   exportActivity,
@@ -71,10 +82,10 @@ export const buildWasteExportedViewData = (
   const activity = exportActivity ?? emptyExportActivity
 
   return {
-    totalTonnage: formatTonnage(activity.totalTonnageExported),
     overseasSiteRows: buildOverseasSiteRows(activity.overseasSites, {
       showApprovalColumn
     }),
+    totalTonnage: formatTonnage(activity.totalTonnageExported),
     unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
       activity.unapprovedOverseasSites
     ),
