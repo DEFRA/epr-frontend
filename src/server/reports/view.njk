@@ -3,6 +3,7 @@
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
+{% from "waste-sent-on-breakdown/macro.njk" import wasteSentOnBreakdown %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
 
 {% block beforeContent %}
@@ -187,22 +188,7 @@
         <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
         <p class="govuk-heading-l">{{ wasteSentOn.totalTonnage }}</p>
 
-        {{ govukSummaryList({
-          rows: [
-            {
-              key: { text: localise("reports:tonnageSentOnToReprocessors") },
-              value: { text: wasteSentOn.toReprocessors }
-            },
-            {
-              key: { text: localise("reports:tonnageSentOnToExporters") },
-              value: { text: wasteSentOn.toExporters }
-            },
-            {
-              key: { text: localise("reports:tonnageSentOnToOtherSites") },
-              value: { text: wasteSentOn.toOtherSites }
-            }
-          ]
-        }) }}
+        {{ wasteSentOnBreakdown(wasteSentOn, localise) }}
 
         {% if wasteSentOn.destinationDetailRows | length > 0 %}
           {{ govukTable({

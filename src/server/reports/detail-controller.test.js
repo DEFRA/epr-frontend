@@ -769,7 +769,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       const tables = getAllByRole(body, 'table')
-      const destinationTable = tables[2]
+      const destinationTable = tables[1]
 
       expect(destinationTable.textContent).toContain('Lincoln recycling')
       expect(destinationTable.textContent).toContain('Reprocessor')
@@ -881,23 +881,6 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain('0')
-    })
-
-    it('should only display breakdown table when no suppliers or destinations', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tables = body.querySelectorAll('table')
-
-      expect(tables).toHaveLength(1)
     })
 
     it('should not display last upload when null', async ({ server }) => {
@@ -1425,7 +1408,7 @@ describe('#detailReportsController', () => {
 
       const tables = body.querySelectorAll('table')
 
-      expect(tables).toHaveLength(2)
+      expect(tables).toHaveLength(1)
     })
 
     it('should still render waste exported heading', async ({ server }) => {

@@ -1,0 +1,29 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% macro wasteSentOnBreakdown(wasteSentOn, localise) %}
+  {{ govukSummaryList({
+    rows: [
+      {
+        key: {
+          text: localise("reports:tonnageSentOnToReprocessors"),
+          classes: "govuk-!-width-two-thirds"
+        },
+        value: { text: wasteSentOn.toReprocessors }
+      },
+      {
+        key: {
+          text: localise("reports:tonnageSentOnToExporters"),
+          classes: "govuk-!-width-two-thirds"
+        },
+        value: { text: wasteSentOn.toExporters }
+      },
+      {
+        key: {
+          text: localise("reports:tonnageSentOnToOtherSites"),
+          classes: "govuk-!-width-two-thirds"
+        },
+        value: { text: wasteSentOn.toOtherSites }
+      }
+    ]
+  }) }}
+{% endmacro %}
