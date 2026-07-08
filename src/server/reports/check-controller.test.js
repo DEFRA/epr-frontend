@@ -238,6 +238,17 @@ const accreditedReprocessorReportDetail = {
 }
 
 /** @type {ReportDetailResponse} */
+const incompletePrnReprocessorReportDetail = {
+  ...reprocessorReportDetail,
+  prn: {
+    issuedTonnage: 75,
+    totalRevenue: null,
+    freeTonnage: null,
+    averagePricePerTonne: null
+  }
+}
+
+/** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   exportActivity: {
@@ -1509,6 +1520,59 @@ describe('#checkController', () => {
         })
 
         expect(changeLink).toBeDefined()
+      })
+
+      describe('with unpopulated PRN values', () => {
+        beforeEach(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            incompletePrnReprocessorReportDetail
+          )
+        })
+
+        it('should return 200', async ({ server }) => {
+          const { statusCode } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          expect(statusCode).toBe(statusCodes.ok)
+        })
+
+        it('should display a dash for each unpopulated PRN value', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const summaryRows = Array.from(
+            body.querySelectorAll('.govuk-summary-list__row')
+          )
+          const valueForKey = (label) =>
+            summaryRows
+              .find((row) =>
+                row
+                  .querySelector('.govuk-summary-list__key')
+                  ?.textContent?.includes(label)
+              )
+              ?.querySelector('.govuk-summary-list__value')
+              ?.textContent?.trim()
+
+          expect({
+            revenue: valueForKey('Total revenue of PRNs'),
+            freeTonnage: valueForKey('Total tonnage of PRNs issued for free'),
+            averagePrice: valueForKey('Average price per tonne')
+          }).toStrictEqual({
+            revenue: '—',
+            freeTonnage: '—',
+            averagePrice: '—'
+          })
+        })
       })
     })
 

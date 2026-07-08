@@ -8,16 +8,22 @@
     carry Change links (pass revenueChangeUrl / freeChangeUrl / changeText).
   - read-only (submit, view): issued tonnage is a section headline, no Change.
 
-  Every value is captured on its own mandatory step before a report reaches
-  these pages, so all rows are always shown.
+  On the editable page a report can still be incomplete, so any value may be
+  null and renders as a dash. On the read-only pages every value has already
+  been captured on its own mandatory step, so they are always shown.
 #}
 {% macro prnSummary(prn, labels, options) %}
   {% set editable = options.editable %}
 
+  {% set issuedValue = (prn.issuedTonnage | formatWholeNumberTonnage) if prn.issuedTonnage is defined and prn.issuedTonnage !== null else "—" %}
+  {% set revenueValue = (prn.totalRevenue | formatCurrency) if prn.totalRevenue is defined and prn.totalRevenue !== null else "—" %}
+  {% set freeValue = (prn.freeTonnage | formatWholeNumberTonnage) if prn.freeTonnage is defined and prn.freeTonnage !== null else "—" %}
+  {% set avgValue = (prn.averagePricePerTonne | formatCurrency) if prn.averagePricePerTonne is defined and prn.averagePricePerTonne !== null else "—" %}
+
   {% if editable %}
     <h2 class="govuk-heading-l">{{ labels.section }}</h2>
   {% else %}
-    {{ reportSection(labels.section, labels.issued, prn.issuedTonnage | formatWholeNumberTonnage) }}
+    {{ reportSection(labels.section, labels.issued, issuedValue) }}
   {% endif %}
 
   {% set freeKeyHtml %}
@@ -30,24 +36,24 @@
   {% if editable %}
     {% set rows = rows.concat([{
       key: { text: labels.issued },
-      value: { text: prn.issuedTonnage | formatWholeNumberTonnage }
+      value: { text: issuedValue }
     }]) %}
   {% endif %}
 
   {% set rows = rows.concat([
     {
       key: { text: labels.revenue },
-      value: { text: prn.totalRevenue | formatCurrency },
+      value: { text: revenueValue },
       actions: { items: [{ href: options.revenueChangeUrl, text: options.changeText, visuallyHiddenText: labels.revenue }] } if editable else none
     },
     {
       key: { html: freeKeyHtml },
-      value: { text: prn.freeTonnage | formatWholeNumberTonnage },
+      value: { text: freeValue },
       actions: { items: [{ href: options.freeChangeUrl, text: options.changeText, visuallyHiddenText: labels.free }] } if editable else none
     },
     {
       key: { text: labels.avg },
-      value: { text: prn.averagePricePerTonne | formatCurrency }
+      value: { text: avgValue }
     }
   ]) %}
 
