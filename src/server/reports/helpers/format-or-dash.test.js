@@ -3,19 +3,22 @@ import { describe, expect, it } from 'vitest'
 import { orDash } from './format-or-dash.js'
 
 describe(orDash, () => {
+  const identity = orDash((value) => `${value}`)
+  const tonnes = orDash((value) => `${value} t`)
+
   it('should return a dash for null', () => {
-    expect(orDash(null, (value) => `${value}`)).toBe('-')
+    expect(identity(null)).toBe('-')
   })
 
   it('should return a dash for undefined', () => {
-    expect(orDash(undefined, (value) => `${value}`)).toBe('-')
+    expect(identity(undefined)).toBe('-')
   })
 
   it('should format a present value', () => {
-    expect(orDash(5, (value) => `${value} t`)).toBe('5 t')
+    expect(tonnes(5)).toBe('5 t')
   })
 
   it('should format zero rather than dashing it', () => {
-    expect(orDash(0, (value) => `${value} t`)).toBe('0 t')
+    expect(tonnes(0)).toBe('0 t')
   })
 })

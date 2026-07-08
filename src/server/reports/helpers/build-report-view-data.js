@@ -1,8 +1,4 @@
-import { formatCurrency } from '#server/common/helpers/format-currency.js'
-import {
-  formatTonnage,
-  formatWholeNumberTonnage
-} from '#config/nunjucks/filters/format-tonnage.js'
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import {
   buildDestinationDetailRows,
   buildOverseasSiteRows,
@@ -10,8 +6,8 @@ import {
   buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './build-table-rows.js'
+import { dashCurrency, dashWholeTonnes } from './dash-formatters.js'
 import { formatExportTonnages } from './format-export-tonnages.js'
-import { orDash } from './format-or-dash.js'
 
 /**
  * @import { ReportDetailResponse } from './fetch-report-detail.js'
@@ -111,8 +107,8 @@ export const buildWasteExportedViewData = (
  * }}
  */
 export const buildPrnSummaryViewData = (prn) => ({
-  averagePricePerTonne: orDash(prn?.averagePricePerTonne, formatCurrency),
-  freeTonnage: orDash(prn?.freeTonnage, formatWholeNumberTonnage),
-  issuedTonnage: orDash(prn?.issuedTonnage, formatWholeNumberTonnage),
-  totalRevenue: orDash(prn?.totalRevenue, formatCurrency)
+  averagePricePerTonne: dashCurrency(prn?.averagePricePerTonne),
+  freeTonnage: dashWholeTonnes(prn?.freeTonnage),
+  issuedTonnage: dashWholeTonnes(prn?.issuedTonnage),
+  totalRevenue: dashCurrency(prn?.totalRevenue)
 })

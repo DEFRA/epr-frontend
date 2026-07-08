@@ -1,10 +1,11 @@
 import { isNil } from '#server/common/helpers/is-nil.js'
 
 /**
- * Formats a value with the given formatter, or returns a dash when the value is
- * absent (null/undefined). Keeps "not yet provided" out of the formatter.
- * @param {number | null | undefined} value
+ * Builds a formatter that returns a dash when the value is absent
+ * (null/undefined), otherwise formats it. Keeps "not yet provided" out of the
+ * formatter. Partially apply with a formatter, then call with values.
  * @param {(value: number) => string} format
- * @returns {string}
+ * @returns {(value: number | null | undefined) => string}
  */
-export const orDash = (value, format) => (isNil(value) ? '-' : format(value))
+export const orDash = (format) => (value) =>
+  isNil(value) ? '-' : format(value)

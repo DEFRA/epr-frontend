@@ -1,4 +1,3 @@
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
@@ -13,8 +12,8 @@ import {
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
+import { dashTonnes } from './helpers/dash-formatters.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { orDash } from './helpers/format-or-dash.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
@@ -117,11 +116,8 @@ function buildCheckViewData({
     prn: reportDetail.prn && buildPrnSummaryViewData(reportDetail.prn),
     prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
     recyclingActivity: {
-      tonnageRecycled: orDash(recyclingActivity.tonnageRecycled, formatTonnage),
-      tonnageNotRecycled: orDash(
-        recyclingActivity.tonnageNotRecycled,
-        formatTonnage
-      )
+      tonnageRecycled: dashTonnes(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: dashTonnes(recyclingActivity.tonnageNotRecycled)
     },
     registrationNumber: registration.registrationNumber,
     showApprovalColumn: isAccreditedExporter,
