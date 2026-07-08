@@ -5,7 +5,7 @@
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "overseas-sites-tables/macro.njk" import overseasSitesTables %}
-{% from "waste-sent-on-breakdown/macro.njk" import wasteSentOnBreakdown %}
+{% from "tonnage-breakdown/macro.njk" import tonnageBreakdown %}
 
 {% block beforeContent %}
   {{ govukBackLink({
@@ -100,13 +100,11 @@
         <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:tonnageRefusedOrStoppedLabel") }}</p>
         <p class="govuk-heading-l">{{ wasteExported.tonnageRefusedOrStopped }}</p>
 
-        {{ govukTable({
-          rows: [
-            [{ html: "<strong>" ~ localise("reports:tonnageRefusedLabel") ~ "</strong>" }, { text: wasteExported.tonnageRefused }],
-            [{ html: "<strong>" ~ localise("reports:tonnageStoppedLabel") ~ "</strong>" }, { text: wasteExported.tonnageStopped }],
-            [{ html: "<strong>" ~ localise("reports:tonnageRepatriatedLabel") ~ "</strong>" }, { text: wasteExported.tonnageRepatriated }]
-          ]
-        }) }}
+        {{ tonnageBreakdown([
+          { key: "reports:tonnageRefusedLabel", value: wasteExported.tonnageRefused },
+          { key: "reports:tonnageStoppedLabel", value: wasteExported.tonnageStopped },
+          { key: "reports:tonnageRepatriatedLabel", value: wasteExported.tonnageRepatriated }
+        ], localise) }}
       {% endif %}
 
       <h3 class="govuk-heading-l">{{ localise("reports:wasteSentOnHeading") }}</h3>
@@ -114,7 +112,11 @@
       <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ localise("reports:totalTonnageSentOn") }}</p>
       <p class="govuk-heading-l">{{ wasteSentOn.totalTonnage }}</p>
 
-      {{ wasteSentOnBreakdown(wasteSentOn, localise) }}
+      {{ tonnageBreakdown([
+        { key: "reports:tonnageSentOnToReprocessors", value: wasteSentOn.toReprocessors },
+        { key: "reports:tonnageSentOnToExporters", value: wasteSentOn.toExporters },
+        { key: "reports:tonnageSentOnToOtherSites", value: wasteSentOn.toOtherSites }
+      ], localise) }}
 
       {% if wasteSentOn.destinationDetailRows | length > 0 %}
           {{ govukTable({

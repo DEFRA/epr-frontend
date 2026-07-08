@@ -1408,7 +1408,7 @@ describe('#detailReportsController', () => {
 
       const tables = body.querySelectorAll('table')
 
-      expect(tables).toHaveLength(1)
+      expect(tables).toHaveLength(0)
     })
 
     it('should still render waste exported heading', async ({ server }) => {
