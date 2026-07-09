@@ -113,7 +113,7 @@ function buildCheckViewData({
     material,
     pageTitle: localise('reports:checkPageTitle', { material, periodLabel }),
     periodLabel,
-    prn: reportDetail.prn && buildPrnSummaryViewData(reportDetail.prn),
+    prn: buildPrnSummaryViewData(reportDetail.prn),
     prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
     recyclingActivity: {
       tonnageRecycled: tonnageOrDash(recyclingActivity.tonnageRecycled),
