@@ -25,7 +25,7 @@ describe(updateReport, () => {
   })
 
   it('calls fetchJsonFromBackend with correct path and options for supporting information', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReport(
       {
@@ -55,7 +55,7 @@ describe(updateReport, () => {
   })
 
   it('calls fetchJsonFromBackend with correct path and options for status update', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReport(
       {
@@ -83,7 +83,7 @@ describe(updateReport, () => {
   })
 
   it('sends empty string for supporting information when blank', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReport(
       {
@@ -107,7 +107,7 @@ describe(updateReport, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReport(
       {
@@ -129,7 +129,7 @@ describe(updateReport, () => {
   })
 
   it('returns the response from fetchJsonFromBackend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updateReport(
       {
@@ -149,7 +149,7 @@ describe(updateReport, () => {
 
   it('propagates errors from fetchJsonFromBackend', async () => {
     const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
       updateReport(

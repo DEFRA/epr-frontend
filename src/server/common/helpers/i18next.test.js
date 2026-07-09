@@ -6,6 +6,10 @@ import { load } from 'cheerio'
 import { describe, expect, it as vitestIt } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
 
+/**
+ * @import { TFunction, i18n } from 'i18next'
+ */
+
 describe('#i18nPlugin - integration', () => {
   describe('language detection and html lang attribute', () => {
     it.for([
@@ -103,8 +107,9 @@ describe('#i18nPlugin - integration', () => {
           path,
           options: { auth: false },
           handler: async (request, h) => {
-            request.i18n = { language: 'en' }
-            request.t = () => 'translated'
+            const typedRequest = asHapiRequest(request)
+            typedRequest.i18n = /** @type {i18n} */ ({ language: 'en' })
+            typedRequest.t = /** @type {TFunction} */ (() => 'translated')
 
             const bufferContent = Buffer.from(content)
             const response = h
@@ -112,9 +117,13 @@ describe('#i18nPlugin - integration', () => {
               .type(contentType)
               .header('content-type', `${contentType}; charset=utf-8`)
 
-            response.variety = variety
-            response.source = bufferContent
-            response.source.context = {
+            const writableResponse =
+              /** @type {{ variety: string, source: Buffer & { context?: object } }} */ (
+                response
+              )
+            writableResponse.variety = variety
+            writableResponse.source = bufferContent
+            writableResponse.source.context = {
               pageTitle: 'Test Page'
             }
 
@@ -128,10 +137,14 @@ describe('#i18nPlugin - integration', () => {
         })
 
         expect(response.statusCode).toBe(200)
-        expect(response.request.response.variety).toBe(variety)
-        expect(response.request.response.source.context).toMatchObject(
-          expectedContext
-        )
+        expect(
+          /** @type {{ variety: string }} */ (response.request.response).variety
+        ).toBe(variety)
+        expect(
+          /** @type {{ source: { context?: object } }} */ (
+            response.request.response
+          ).source.context
+        ).toMatchObject(expectedContext)
       }
     )
   })

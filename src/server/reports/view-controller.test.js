@@ -1669,10 +1669,12 @@ describe('#viewController', () => {
 
       describe('when no supporting information is provided', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            supportingInformation: null
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse({
+              ...reportDetail,
+              supportingInformation: null
+            })
+          )
         })
 
         afterAll(() => {

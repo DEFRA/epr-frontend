@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
+/**
+ * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ */
+
 const createMockRequest = () =>
   asHapiRequest({
     t: vi.fn((key, params = {}) => {
@@ -35,18 +39,20 @@ const stubRecipients = [
   { value: 'org-3', text: 'Green Waste Solutions' }
 ]
 
-const reprocessorRegistration = {
-  id: 'reg-001',
-  wasteProcessingType: 'reprocessor-input', // PRN
-  material: 'glass',
-  glassRecyclingProcess: ['glass_re_melt']
-}
+const reprocessorRegistration =
+  /** @type {{ wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} */ ({
+    id: 'reg-001',
+    wasteProcessingType: 'reprocessor-input', // PRN
+    material: 'glass',
+    glassRecyclingProcess: ['glass_re_melt']
+  })
 
-const exporterRegistration = {
-  id: 'reg-002',
-  wasteProcessingType: 'exporter', // PERN
-  material: 'plastic'
-}
+const exporterRegistration =
+  /** @type {{ wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} */ ({
+    id: 'reg-002',
+    wasteProcessingType: 'exporter', // PERN
+    material: 'plastic'
+  })
 
 describe('#buildCreatePrnViewData', () => {
   describe('for reprocessor (PRN)', () => {

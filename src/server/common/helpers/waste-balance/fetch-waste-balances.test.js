@@ -68,7 +68,9 @@ describe(fetchWasteBalances, () => {
   })
 
   test('includes Authorization and tracing headers', async ({ msw }) => {
-    let capturedRequest
+    let capturedRequest = /** @type {Request} */ (
+      /** @type {unknown} */ (undefined)
+    )
     msw.use(
       http.get(
         `${backendUrl}/v1/organisations/org-123/waste-balances`,

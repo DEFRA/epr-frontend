@@ -3,6 +3,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
@@ -54,7 +55,7 @@ const reprocessorRegistration = asRegistrationWithAccreditation({
 })
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const exporterReportDetail = {
+const exporterReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -120,10 +121,10 @@ const exporterReportDetail = {
       }
     ]
   }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const reprocessorReportDetail = {
+const reprocessorReportDetail = asReportDetailResponse({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -173,7 +174,7 @@ const reprocessorReportDetail = {
       }
     ]
   }
-}
+})
 
 const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
@@ -214,7 +215,7 @@ const accreditedReprocessorReportDetail = {
 }
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const accreditedExporterReportDetail = {
+const accreditedExporterReportDetail = asReportDetailResponse({
   ...exporterReportDetail,
   exportActivity: {
     ...exporterReportDetail.exportActivity,
@@ -233,7 +234,7 @@ const accreditedExporterReportDetail = {
     freeTonnage: 0,
     averagePricePerTonne: 21.01
   }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -648,16 +649,18 @@ describe('#checkController', () => {
       it('should display dash when refused and stopped values are null', async ({
         server
       }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...exporterReportDetail,
-          exportActivity: {
-            ...exporterReportDetail.exportActivity,
-            totalTonnageRefusedOrStopped: null,
-            tonnageRefusedAtDestination: null,
-            tonnageStoppedDuringExport: null,
-            tonnageRepatriated: null
-          }
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReportDetailResponse({
+            ...exporterReportDetail,
+            exportActivity: {
+              ...exporterReportDetail.exportActivity,
+              totalTonnageRefusedOrStopped: null,
+              tonnageRefusedAtDestination: null,
+              tonnageStoppedDuringExport: null,
+              tonnageRepatriated: null
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -680,15 +683,17 @@ describe('#checkController', () => {
       it('should display combined total when refused is null but stopped is not', async ({
         server
       }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...exporterReportDetail,
-          exportActivity: {
-            ...exporterReportDetail.exportActivity,
-            totalTonnageRefusedOrStopped: 4.0,
-            tonnageRefusedAtDestination: null,
-            tonnageStoppedDuringExport: 4.0
-          }
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReportDetailResponse({
+            ...exporterReportDetail,
+            exportActivity: {
+              ...exporterReportDetail.exportActivity,
+              totalTonnageRefusedOrStopped: 4.0,
+              tonnageRefusedAtDestination: null,
+              tonnageStoppedDuringExport: 4.0
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -711,15 +716,17 @@ describe('#checkController', () => {
       it('should display combined total when stopped is null but refused is not', async ({
         server
       }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...exporterReportDetail,
-          exportActivity: {
-            ...exporterReportDetail.exportActivity,
-            totalTonnageRefusedOrStopped: 2.5,
-            tonnageRefusedAtDestination: 2.5,
-            tonnageStoppedDuringExport: null
-          }
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReportDetailResponse({
+            ...exporterReportDetail,
+            exportActivity: {
+              ...exporterReportDetail.exportActivity,
+              totalTonnageRefusedOrStopped: 2.5,
+              tonnageRefusedAtDestination: 2.5,
+              tonnageStoppedDuringExport: null
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -940,10 +947,12 @@ describe('#checkController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           exporterRegistration
         )
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...exporterReportDetail,
-          exportActivity: null
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReportDetailResponse({
+            ...exporterReportDetail,
+            exportActivity: null
+          })
+        )
       })
 
       it('should still display waste exported heading', async ({ server }) => {
@@ -1635,13 +1644,15 @@ describe('#checkController', () => {
       it('should display £0.00 for average price per tonne when averagePricePerTonne is 0', async ({
         server
       }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...accreditedExporterReportDetail,
-          prn: {
-            ...accreditedExporterReportDetail.prn,
-            averagePricePerTonne: 0
-          }
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReportDetailResponse({
+            ...accreditedExporterReportDetail,
+            prn: {
+              ...accreditedExporterReportDetail.prn,
+              averagePricePerTonne: 0
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1662,10 +1673,12 @@ describe('#checkController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           exporterRegistration
         )
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...exporterReportDetail,
-          status: { currentStatus: 'ready_to_submit' }
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReportDetailResponse({
+            ...exporterReportDetail,
+            status: { currentStatus: 'ready_to_submit' }
+          })
+        )
       })
 
       it('should redirect to reports list', async ({ server }) => {

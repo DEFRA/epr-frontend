@@ -23,7 +23,7 @@ describe(deleteReport, () => {
   })
 
   it('calls fetchJsonFromBackend with correct path and auth header', async () => {
-    fetchJsonFromBackend.mockResolvedValue(undefined)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
 
     await deleteReport(
       organisationId,
@@ -47,7 +47,7 @@ describe(deleteReport, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue(undefined)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(undefined)
 
     await deleteReport(
       'org/123',
@@ -67,7 +67,7 @@ describe(deleteReport, () => {
 
   it('propagates errors from fetchJsonFromBackend', async () => {
     const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
       deleteReport(

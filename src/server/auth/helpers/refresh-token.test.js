@@ -7,6 +7,18 @@ import { describe, expect, vi } from 'vitest'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 
+/**
+ * @import { Result } from '#server/common/helpers/result.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
+ */
+
+/**
+ * @param {unknown} session
+ * @returns {Result<UserSession>}
+ */
+const asSessionResult = (session) =>
+  /** @type {Result<UserSession>} */ (session)
+
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#config/config.js'))
 vi.mock(import('@defra/hapi-tracing'), () => ({
@@ -16,7 +28,9 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 
 describe('refresh token', () => {
   it('should refresh id token with correct parameters', async ({ msw }) => {
-    let capturedRequest
+    let capturedRequest = /** @type {Request} */ (
+      /** @type {unknown} */ (undefined)
+    )
     msw.use(
       http.post('http://defra-id.auth/token', async ({ request }) => {
         capturedRequest = request.clone()
@@ -28,13 +42,15 @@ describe('refresh token', () => {
       })
     )
 
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        refreshToken: 'refresh-token-123',
-        urls: { token: 'http://defra-id.auth/token' }
-      }
-    })
+    vi.mocked(getUserSession).mockResolvedValue(
+      asSessionResult({
+        ok: true,
+        value: {
+          refreshToken: 'refresh-token-123',
+          urls: { token: 'http://defra-id.auth/token' }
+        }
+      })
+    )
 
     vi.spyOn(vi.mocked(config), 'get').mockImplementation((key) => {
       const values = {
@@ -72,13 +88,15 @@ describe('refresh token', () => {
   })
 
   it('should throw error when refresh token is null', async () => {
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        refreshToken: null,
-        urls: { token: 'http://defra-id.auth/token' }
-      }
-    })
+    vi.mocked(getUserSession).mockResolvedValue(
+      asSessionResult({
+        ok: true,
+        value: {
+          refreshToken: null,
+          urls: { token: 'http://defra-id.auth/token' }
+        }
+      })
+    )
 
     await expect(
       refreshIdToken(asHapiRequest({ logger: createMockLogger() }))
@@ -86,10 +104,12 @@ describe('refresh token', () => {
   })
 
   it('should throw error when refresh token is missing', async () => {
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: { urls: { token: 'http://defra-id.auth/token' } }
-    })
+    vi.mocked(getUserSession).mockResolvedValue(
+      asSessionResult({
+        ok: true,
+        value: { urls: { token: 'http://defra-id.auth/token' } }
+      })
+    )
 
     await expect(
       refreshIdToken(asHapiRequest({ logger: createMockLogger() }))

@@ -49,7 +49,7 @@ describe('i18next-dynamic-keys-plugin', () => {
 
     it('should extract keys from simple suffix pattern', () => {
       // Mock en.json content
-      readFileSync.mockReturnValue(
+      vi.mocked(readFileSync).mockReturnValue(
         JSON.stringify({
           failure: {
             CODE_A: 'Error A',
@@ -84,7 +84,7 @@ describe('i18next-dynamic-keys-plugin', () => {
 
     it('should handle nested parent keys', () => {
       // Mock en.json with nested structure
-      readFileSync.mockReturnValue(
+      vi.mocked(readFileSync).mockReturnValue(
         JSON.stringify({
           errors: {
             validation: {
@@ -117,7 +117,7 @@ describe('i18next-dynamic-keys-plugin', () => {
     })
 
     it('should cache JSON files to avoid repeated reads', () => {
-      readFileSync.mockReturnValue(
+      vi.mocked(readFileSync).mockReturnValue(
         JSON.stringify({
           failure: {
             CODE_A: 'Error A'
@@ -143,7 +143,7 @@ describe('i18next-dynamic-keys-plugin', () => {
     })
 
     it('should throw error for missing en.json', () => {
-      readFileSync.mockImplementation(() => {
+      vi.mocked(readFileSync).mockImplementation(() => {
         throw new Error('ENOENT: no such file or directory')
       })
 
@@ -165,7 +165,7 @@ describe('i18next-dynamic-keys-plugin', () => {
     })
 
     it('should throw error for malformed JSON', () => {
-      readFileSync.mockReturnValue('{ invalid json }')
+      vi.mocked(readFileSync).mockReturnValue('{ invalid json }')
 
       const expression = {
         type: 'TemplateLiteral',
@@ -182,7 +182,7 @@ describe('i18next-dynamic-keys-plugin', () => {
     })
 
     it('should handle missing parent object gracefully', () => {
-      readFileSync.mockReturnValue(
+      vi.mocked(readFileSync).mockReturnValue(
         JSON.stringify({
           someOtherKey: 'value'
         })
@@ -207,7 +207,7 @@ describe('i18next-dynamic-keys-plugin', () => {
     })
 
     it('should handle empty parent object', () => {
-      readFileSync.mockReturnValue(
+      vi.mocked(readFileSync).mockReturnValue(
         JSON.stringify({
           failure: {}
         })
@@ -283,7 +283,7 @@ describe('i18next-dynamic-keys-plugin', () => {
 
     it('should work with real-world summary-log example', () => {
       // Simulate actual summary-log/en.json structure
-      readFileSync.mockReturnValue(
+      vi.mocked(readFileSync).mockReturnValue(
         JSON.stringify({
           pageTitle: 'Summary Log',
           failure: {

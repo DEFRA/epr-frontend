@@ -6,6 +6,10 @@ import hapi from '@hapi/hapi'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
 const mockLogger = createMockLogger()
 
 const mockHapiLoggerInfo = vi.fn()
@@ -49,7 +53,7 @@ describe('#startServer', () => {
   })
 
   describe('when server starts', () => {
-    /** @type {import('@hapi/hapi').Server | undefined} */
+    /** @type {HapiServer | undefined} */
     let server
 
     afterAll(async () => {

@@ -257,10 +257,12 @@ describe('#submittedController', () => {
     it('should return 404 when status is ready_to_submit', async ({
       server
     }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...mockReportDetail,
-        status: { currentStatus: 'ready_to_submit' }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...mockReportDetail,
+          status: { currentStatus: 'ready_to_submit' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -272,10 +274,12 @@ describe('#submittedController', () => {
     })
 
     it('should return 404 when status is in_progress', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...mockReportDetail,
-        status: { currentStatus: 'in_progress' }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...mockReportDetail,
+          status: { currentStatus: 'in_progress' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -287,10 +291,12 @@ describe('#submittedController', () => {
     })
 
     it('should return 404 when status is due', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...mockReportDetail,
-        status: { currentStatus: 'due' }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...mockReportDetail,
+          status: { currentStatus: 'due' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',

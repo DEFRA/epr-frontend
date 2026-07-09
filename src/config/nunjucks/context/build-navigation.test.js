@@ -6,7 +6,10 @@ import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
- * @param {Partial<Request>} [options]
+ * @param {{
+ *   auth?: { credentials: Record<string, unknown> | null },
+ *   localiseUrl?: (url: string) => string
+ * }} [options]
  */
 function mockRequest(options) {
   return asHapiRequest({
@@ -127,7 +130,9 @@ describe('#buildNavigation', () => {
       const navigation = buildNavigation(request)
       const signOut = navigation.find((item) => item.text === 'Sign out')
 
-      expect(signOut.href).toBe('/cy/logout')
+      expect(/** @type {NonNullable<typeof signOut>} */ (signOut).href).toBe(
+        '/cy/logout'
+      )
     })
   })
 })

@@ -9,6 +9,10 @@ import {
 
 import { boomErrorLogger } from './boom-error-logger.js'
 
+/**
+ * @import { CdpBoom } from '#server/common/helpers/logging/cdp-boom.js'
+ */
+
 describe('boom-error-logger plugin', () => {
   let server
   let mockLogger
@@ -63,7 +67,9 @@ describe('boom-error-logger plugin', () => {
         method: 'GET',
         path: '/enriched',
         handler: () => {
-          const boom = Boom.badRequest('Something invalid')
+          const boom = /** @type {CdpBoom} */ (
+            Boom.badRequest('Something invalid')
+          )
           boom.code = 'something_invalid'
           boom.event = {
             action: 'create_prn',

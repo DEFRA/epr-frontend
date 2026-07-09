@@ -21,7 +21,9 @@ describe(fetchJson, () => {
   it('should return JSON data when response is successful', async ({ msw }) => {
     const mockData = { status: 'validated', id: '123' }
 
-    let capturedRequest
+    let capturedRequest = /** @type {Request} */ (
+      /** @type {unknown} */ (undefined)
+    )
     msw.use(
       http.get('https://api.example.com/test', ({ request }) => {
         capturedRequest = request
@@ -39,7 +41,9 @@ describe(fetchJson, () => {
   })
 
   it('should merge custom headers with Content-Type', async ({ msw }) => {
-    let capturedRequest
+    let capturedRequest = /** @type {Request} */ (
+      /** @type {unknown} */ (undefined)
+    )
     msw.use(
       http.post('https://api.example.com/test', ({ request }) => {
         capturedRequest = request

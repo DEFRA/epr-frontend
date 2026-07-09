@@ -28,10 +28,10 @@ describe(formatTime, () => {
   })
 
   it('should return empty string for null', () => {
-    expect(formatTime(null)).toBe('')
+    expect(formatTime(/** @type {never} */ (null))).toBe('')
   })
 
   it('should return empty string for undefined', () => {
-    expect(formatTime(undefined)).toBe('')
+    expect(formatTime(/** @type {never} */ (undefined))).toBe('')
   })
 })

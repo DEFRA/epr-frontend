@@ -12,7 +12,9 @@ describe(initiateSummaryLogUpload, () => {
   test('calls backend summary-logs endpoint with redirectUrl', async ({
     msw
   }) => {
-    let capturedRequest
+    let capturedRequest = /** @type {Request} */ (
+      /** @type {unknown} */ (undefined)
+    )
     msw.use(
       http.post(
         `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs`,

@@ -9,10 +9,12 @@ import { createDefraId } from './defra-id.js'
 const mockLogger = createMockLogger()
 
 vi.mock(import('@hapi/bell'), () => ({
-  default: {
-    name: 'bell',
-    register: vi.fn()
-  }
+  default: /** @type {never} */ (
+    /** @type {unknown} */ ({
+      name: 'bell',
+      register: vi.fn()
+    })
+  )
 }))
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({

@@ -47,7 +47,7 @@ const reprocessorRegistration = asRegistrationWithAccreditation({
 })
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const reprocessorReportDetail = {
+const reprocessorReportDetail = asReportDetailResponse({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -94,7 +94,7 @@ const reprocessorReportDetail = {
       }
     ]
   }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const emptyReportDetail = asReportDetailResponse({
@@ -153,7 +153,7 @@ const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
 })
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const accreditedReprocessorReportDetail = {
+const accreditedReprocessorReportDetail = asReportDetailResponse({
   operatorCategory: 'REPROCESSOR',
   cadence: 'monthly',
   year: 2026,
@@ -200,7 +200,7 @@ const accreditedReprocessorReportDetail = {
       }
     ]
   }
-}
+})
 
 const exporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-456' },
@@ -214,7 +214,7 @@ const exporterRegistration = asRegistrationWithAccreditation({
 })
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const exporterReportDetail = {
+const exporterReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -279,7 +279,7 @@ const exporterReportDetail = {
       }
     ]
   }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterWithUnapprovedReportDetail = asReportDetailResponse({
@@ -386,7 +386,7 @@ const accreditedExporterRegistration = asRegistrationWithAccreditation({
 })
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const accreditedExporterReportDetail = {
+const accreditedExporterReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER',
   cadence: 'monthly',
   year: 2026,
@@ -440,7 +440,7 @@ const accreditedExporterReportDetail = {
       }
     ]
   }
-}
+})
 
 const accreditedExporterDetailUrl =
   '/organisations/org-789/registrations/reg-003/reports/2026/monthly/2/submissions/1'

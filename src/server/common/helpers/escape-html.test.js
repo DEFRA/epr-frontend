@@ -24,10 +24,10 @@ describe(escapeHtml, () => {
   })
 
   it('should return empty string for null', () => {
-    expect(escapeHtml(null)).toBe('')
+    expect(escapeHtml(/** @type {never} */ (null))).toBe('')
   })
 
   it('should return empty string for undefined', () => {
-    expect(escapeHtml(undefined)).toBe('')
+    expect(escapeHtml(/** @type {never} */ (undefined))).toBe('')
   })
 })

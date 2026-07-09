@@ -60,11 +60,15 @@ describe('#formatWholeNumberTonnage', () => {
   })
 
   test('throws for null', () => {
-    expect(() => formatWholeNumberTonnage(null)).toThrow(TypeError)
+    expect(() => formatWholeNumberTonnage(/** @type {never} */ (null))).toThrow(
+      TypeError
+    )
   })
 
   test('throws for undefined', () => {
-    expect(() => formatWholeNumberTonnage(undefined)).toThrow(TypeError)
+    expect(() =>
+      formatWholeNumberTonnage(/** @type {never} */ (undefined))
+    ).toThrow(TypeError)
   })
 
   test('throws for negative number', () => {

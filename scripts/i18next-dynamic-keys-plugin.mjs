@@ -2,6 +2,10 @@ import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+/**
+ * @import { Plugin } from 'i18next-cli'
+ */
+
 const currentDir = dirname(fileURLToPath(import.meta.url))
 const projectRoot = join(currentDir, '..')
 
@@ -31,7 +35,7 @@ function getNestedValue(obj, path) {
 export default function dynamicKeysPlugin() {
   const jsonCache = new Map()
 
-  return {
+  return /** @type {Plugin} */ ({
     name: 'dynamic-keys-plugin',
     version: '1.0.0',
 
@@ -83,5 +87,5 @@ export default function dynamicKeysPlugin() {
 
       return keys
     }
-  }
+  })
 }

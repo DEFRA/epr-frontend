@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import { formatPeriodLabel } from './format-period-label.js'
 
+/**
+ * @import { CadenceValue } from '../constants.js'
+ */
+
 const MONTH_NAMES = [
   'January',
   'February',
@@ -86,7 +90,13 @@ describe(formatPeriodLabel, () => {
   ])(
     'should return "$expected" for $cadence period $period.period',
     ({ period, cadence, expected }) => {
-      expect(formatPeriodLabel(period, cadence, localise)).toBe(expected)
+      expect(
+        formatPeriodLabel(
+          period,
+          /** @type {CadenceValue} */ (cadence),
+          localise
+        )
+      ).toBe(expected)
     }
   )
 })

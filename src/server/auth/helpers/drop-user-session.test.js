@@ -5,7 +5,10 @@ import { dropUserSession } from './drop-user-session.js'
 
 describe('#dropUserSession', () => {
   it('should drop user session from cache', async ({ server }) => {
-    await server.app.cache.set('session-123', 'session-value')
+    await server.app.cache.set(
+      'session-123',
+      /** @type {never} */ ('session-value')
+    )
 
     const mockRequest = {
       state: {

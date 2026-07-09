@@ -348,15 +348,17 @@ describe('#viewController', () => {
       it('displays legal name for large producers with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          issuedToOrganisation: {
-            id: 'producer-1',
-            name: 'Legal Name Ltd',
-            tradingName: 'Trading Name Ltd',
-            registrationType: 'LARGE_PRODUCER'
-          }
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: 'Legal Name Ltd',
+              tradingName: 'Trading Name Ltd',
+              registrationType: 'LARGE_PRODUCER'
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -375,15 +377,17 @@ describe('#viewController', () => {
       it('displays tradingName for compliance schemes with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          issuedToOrganisation: {
-            id: 'scheme-1',
-            name: 'Scheme Legal Ltd',
-            tradingName: 'Scheme Trading Name',
-            registrationType: 'COMPLIANCE_SCHEME'
-          }
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            issuedToOrganisation: {
+              id: 'scheme-1',
+              name: 'Scheme Legal Ltd',
+              tradingName: 'Scheme Trading Name',
+              registrationType: 'COMPLIANCE_SCHEME'
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -420,10 +424,12 @@ describe('#viewController', () => {
       it('displays tonnage in words generated from tonnage value', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          tonnageInWords: undefined
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            tonnageInWords: undefined
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -443,10 +449,12 @@ describe('#viewController', () => {
       it('displays tonnage in words from backend when provided', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          tonnageInWords: 'One hundred'
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            tonnageInWords: 'One hundred'
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -979,10 +987,12 @@ describe('#viewController', () => {
       })
 
       it('handles null material gracefully', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          material: null
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            material: null
+          })
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',

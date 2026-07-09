@@ -36,7 +36,11 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(unsortedOrganisations)
+    const result = mapToSelectOptions(
+      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (
+        unsortedOrganisations
+      )
+    )
 
     expect(result).toStrictEqual([
       { value: 'alpha-id', text: 'Alpha Ltd, 1 First St, Bristol, A1 1AA' },
@@ -60,7 +64,9 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(organisations)
+    const result = mapToSelectOptions(
+      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (organisations)
+    )
 
     expect(result[0].text).toBe('Trading As Name, 1 High St, London, W1 1AA')
   })
@@ -80,7 +86,9 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(organisations)
+    const result = mapToSelectOptions(
+      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (organisations)
+    )
 
     expect(result[0].text).toBe('Legal Producer Ltd, 1 High St, London, W1 1AA')
   })
@@ -102,7 +110,11 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(organisations)
+    const result = mapToSelectOptions(
+      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (
+        /** @type {unknown} */ (organisations)
+      )
+    )
 
     expect(result[0].text).toBe('Test Org, 1 High St, London, W1 1AA')
   })

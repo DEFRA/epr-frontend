@@ -3,7 +3,10 @@ import { asRequiredRegistrationWithAccreditation } from '#server/common/test-hel
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
+import {
+  asIssuedToOrganisation,
+  asPackagingRecyclingNote
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -177,12 +180,12 @@ describe('#actionController', () => {
     }) => {
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
         ...mockPrnAwaitingAuth,
-        issuedToOrganisation: {
+        issuedToOrganisation: asIssuedToOrganisation({
           id: 'producer-1',
           name: 'Legal Name Ltd',
           tradingName: 'Trading Name Ltd',
           registrationType: 'LARGE_PRODUCER'
-        }
+        })
       })
 
       const { result } = await server.inject({
@@ -204,12 +207,12 @@ describe('#actionController', () => {
     }) => {
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
         ...mockPrnAwaitingAuth,
-        issuedToOrganisation: {
+        issuedToOrganisation: asIssuedToOrganisation({
           id: 'scheme-1',
           name: 'Scheme Legal Ltd',
           tradingName: 'Scheme Trading Name',
           registrationType: 'COMPLIANCE_SCHEME'
-        }
+        })
       })
 
       const { result } = await server.inject({

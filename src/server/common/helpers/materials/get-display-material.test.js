@@ -14,7 +14,13 @@ describe(getDisplayMaterial, () => {
           glassRecyclingProcess: [glassRecyclingProcess]
         }
 
-        expect(getDisplayMaterial(registration)).toBe(expectedDisplay)
+        expect(
+          getDisplayMaterial(
+            /** @type {Parameters<typeof getDisplayMaterial>[0]} */ (
+              registration
+            )
+          )
+        ).toBe(expectedDisplay)
       }
     )
   })
@@ -30,7 +36,11 @@ describe(getDisplayMaterial, () => {
     ])('should return "%s" as "%s"', (material, expectedDisplay) => {
       const registration = { material }
 
-      expect(getDisplayMaterial(registration)).toBe(expectedDisplay)
+      expect(
+        getDisplayMaterial(
+          /** @type {Parameters<typeof getDisplayMaterial>[0]} */ (registration)
+        )
+      ).toBe(expectedDisplay)
     })
   })
 
@@ -67,9 +77,11 @@ describe(getDisplayMaterial, () => {
         }
       ]
     ])('should throw when %s', (_label, registration, expected) => {
-      expect(() => getDisplayMaterial(registration)).toThrow(
-        expect.objectContaining({ isBoom: true, ...expected })
-      )
+      expect(() =>
+        getDisplayMaterial(
+          /** @type {Parameters<typeof getDisplayMaterial>[0]} */ (registration)
+        )
+      ).toThrow(expect.objectContaining({ isBoom: true, ...expected }))
     })
   })
 })

@@ -1,5 +1,5 @@
 /**
- * @import { Request } from '@hapi/hapi'
+ * @import { Request, ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest } from '#server/common/hapi-types.js'
  */
 
@@ -20,3 +20,12 @@ export const asRequest = (data) => /** @type {Request} */ (data)
  * @returns {HapiRequest}
  */
 export const asHapiRequest = (data) => /** @type {HapiRequest} */ (data)
+
+/**
+ * Casts a partial mock object (e.g. `{ redirect: vi.fn() }`) to the Hapi
+ * `ResponseToolkit`, for handler tests that stub only the toolkit methods the
+ * code path under test calls.
+ * @param {unknown} data
+ * @returns {ResponseToolkit}
+ */
+export const asResponseToolkit = (data) => /** @type {ResponseToolkit} */ (data)
