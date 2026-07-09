@@ -11,13 +11,18 @@
 
 {# Loads grouped by worksheet (tab): a description list where each section's
    name is the term and its Row IDs are the bulleted values. Any exclusion
-   reason is appended to the Row ID; it is omitted where the row carries none. #}
+   reason is appended to the Row ID; it is omitted where the row carries none.
+   A by-design non-contributing section lists no rows: its whole tab never moves
+   the waste balance, so it shows a single explanatory line instead. #}
 {% macro loadSections(sections) %}
   <dl class="epr-load-sections">
     {% for section in sections %}
-    <dt class="epr-load-sections__section">{{ section.sectionName }}</dt>
+    <dt class="epr-load-sections__section">{{ section.sectionName }}{% if section.nonContributing %} {{ localise('summary-log:enhanced.sectionRowCount', { count: section.count }) }}{% endif %}</dt>
     <dd class="epr-load-sections__rows">
       <ul class="govuk-list govuk-list--bullet">
+        {% if section.nonContributing %}
+        <li>{{ localise('summary-log:enhanced.sectionNeverCounts') }}</li>
+        {% else %}
         {% for row in section.rows %}
         <li>
           {% if row.reasonText %}
@@ -27,6 +32,7 @@
           {% endif %}
         </li>
         {% endfor %}
+        {% endif %}
       </ul>
     </dd>
     {% endfor %}

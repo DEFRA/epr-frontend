@@ -69,22 +69,54 @@ const reasonKey = (code, processingType) => {
 }
 
 /**
+ * Code carried by rows whose whole template section never contributes to the
+ * waste balance (e.g. Processed on a reprocessor input). It is a section-level
+ * fact, not a per-row data problem, so it is surfaced once per section rather
+ * than on each row.
+ */
+const NON_CONTRIBUTING_CODE =
+  CLASSIFICATION_REASON.TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE
+
+/**
  * Joins the load's distinct exclusion reasons into one display string, or null
- * when it carries none (an included load). A code we have no translation for
- * falls back to the raw backend const rather than being dropped, so a new
- * backend reason still surfaces something to the operator.
+ * when it carries none (an included load). The by-design non-contributing code
+ * is dropped here: it is a section-level concept surfaced separately, never a
+ * per-row reason. A code we have no translation for falls back to the raw
+ * backend const rather than being dropped, so a new backend reason still
+ * surfaces something to the operator.
  * @param {string[]} exclusionReasons
  * @param {ProcessingType} processingType
  * @param {Localise} localise
  * @returns {string | null}
  */
 const resolveReasonText = (exclusionReasons, processingType, localise) => {
-  const texts = exclusionReasons.map((code) => {
-    const key = reasonKey(code, processingType)
-    return key === null ? code : localise(`summary-log:enhanced.reason.${key}`)
-  })
+  const texts = exclusionReasons
+    .filter((code) => code !== NON_CONTRIBUTING_CODE)
+    .map((code) => {
+      const key = reasonKey(code, processingType)
+      return key === null
+        ? code
+        : localise(`summary-log:enhanced.reason.${key}`)
+    })
   return texts.length > 0 ? texts.join(', ') : null
 }
+
+/**
+ * True when every row in a section is by-design excluded and nothing else: the
+ * non-contributing code is each row's sole reason. The backend emits that code
+ * alone for a by-design sheet (it never also validates fields), so a row that
+ * carries the code alongside a real reason breaks that invariant; we treat it as
+ * a normal row so its data problem still surfaces rather than being hidden by
+ * the section collapse.
+ * @param {LoadRow[]} sectionRows
+ * @returns {boolean}
+ */
+const isNonContributingSection = (sectionRows) =>
+  sectionRows.every(
+    (row) =>
+      row.exclusionReasons.length === 1 &&
+      row.exclusionReasons[0] === NON_CONTRIBUTING_CODE
+  )
 
 /**
  * Projects one backend row into a view row: the row id and (only where the
@@ -129,18 +161,33 @@ const sectionLabel = (wasteRecordType, { processingType, localise }) =>
  * @param {boolean} includeReason
  * @returns {LoadSectionViewModel[]}
  */
-const groupRowsIntoSections = (rows, ctx, includeReason) =>
-  SECTION_ORDER.map((wasteRecordType) => {
+const groupRowsIntoSections = (rows, ctx, includeReason) => {
+  // Only accredited types carry a waste balance, so the "never counts" line is
+  // meaningful only there; registered-only pages just list rows (the code is
+  // already dropped from their per-row text).
+  const isAccredited = !isRegisteredOnlyProcessingType(ctx.processingType)
+  return SECTION_ORDER.map((wasteRecordType) => {
     const sectionRows = (rows ?? []).filter(
       (row) => row.wasteRecordType === wasteRecordType
     )
-    return sectionRows.length === 0
-      ? null
-      : {
-          sectionName: sectionLabel(wasteRecordType, ctx),
-          rows: sectionRows.map((row) => mapLoadRow(row, ctx, includeReason))
-        }
+    if (sectionRows.length === 0) {
+      return null
+    }
+    const sectionName = sectionLabel(wasteRecordType, ctx)
+    if (isAccredited && isNonContributingSection(sectionRows)) {
+      return {
+        sectionName,
+        nonContributing: true,
+        count: sectionRows.length,
+        rows: []
+      }
+    }
+    return {
+      sectionName,
+      rows: sectionRows.map((row) => mapLoadRow(row, ctx, includeReason))
+    }
   }).filter((section) => section !== null)
+}
 
 /**
  * Splits a balance-affecting bucket's rows into the two sub-groups the adjusted

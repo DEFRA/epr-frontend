@@ -189,9 +189,13 @@
 /**
  * A group of load rows sharing one worksheet (tab), rendered as a labelled
  * section in a load list. Sections are emitted in the summary-log flow order
- * and only when they carry rows.
+ * and only when they carry rows. When `nonContributing` is set the whole tab is
+ * by-design excluded from the waste balance: `rows` is empty and the section
+ * renders a single explanatory line instead of a row list.
  * @typedef {{
  *   sectionName: string,
+ *   nonContributing?: boolean,
+ *   count?: number,
  *   rows: LoadRowViewModel[]
  * }} LoadSectionViewModel
  */
