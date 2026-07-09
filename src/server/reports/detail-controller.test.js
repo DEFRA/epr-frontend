@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -96,7 +97,7 @@ const reprocessorReportDetail = {
 }
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const emptyReportDetail = {
+const emptyReportDetail = asReportDetailResponse({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -126,7 +127,7 @@ const emptyReportDetail = {
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-}
+})
 
 const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
@@ -281,7 +282,7 @@ const exporterReportDetail = {
 }
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const exporterWithUnapprovedReportDetail = {
+const exporterWithUnapprovedReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -323,10 +324,10 @@ const exporterWithUnapprovedReportDetail = {
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
-const emptyExporterReportDetail = {
+const emptyExporterReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
@@ -359,7 +360,7 @@ const emptyExporterReportDetail = {
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-}
+})
 
 const detailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1'

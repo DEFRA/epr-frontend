@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
@@ -135,7 +136,9 @@ describe('#viewController', () => {
     }
 
     beforeAll(() => {
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it('should return 404', async ({ server }) => {
@@ -196,7 +199,9 @@ describe('#viewController', () => {
     }
 
     beforeAll(() => {
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it('should return 200', async ({ server }) => {
@@ -379,7 +384,9 @@ describe('#viewController', () => {
     }
 
     beforeAll(() => {
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it('should return 200', async ({ server }) => {
@@ -944,20 +951,24 @@ describe('#viewController', () => {
 
       describe('when unapproved overseas sites are present', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            exportActivity: {
-              ...reportDetail.exportActivity,
-              unapprovedOverseasSites: [
-                { orsId: 'ORS-999', tonnageExported: 3.25 },
-                { orsId: 'ORS-888', tonnageExported: 1.75 }
-              ]
-            }
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse({
+              ...reportDetail,
+              exportActivity: {
+                ...reportDetail.exportActivity,
+                unapprovedOverseasSites: [
+                  { orsId: 'ORS-999', tonnageExported: 3.25 },
+                  { orsId: 'ORS-888', tonnageExported: 1.75 }
+                ]
+              }
+            })
+          )
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse(reportDetail)
+          )
         })
 
         it.for(exporters)(
@@ -992,23 +1003,27 @@ describe('#viewController', () => {
 
       describe('when no waste exported', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            exportActivity: {
-              totalTonnageExported: 0,
-              overseasSites: [],
-              unapprovedOverseasSites: [],
-              tonnageReceivedNotExported: 0,
-              totalTonnageRefusedOrStopped: 0,
-              tonnageRefusedAtDestination: 0,
-              tonnageStoppedDuringExport: 0,
-              tonnageRepatriated: 0
-            }
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse({
+              ...reportDetail,
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
+            })
+          )
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse(reportDetail)
+          )
         })
 
         it.for(exporters)(
@@ -1056,20 +1071,24 @@ describe('#viewController', () => {
 
       describe('when only unapproved overseas sites are present', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            exportActivity: {
-              ...reportDetail.exportActivity,
-              overseasSites: [],
-              unapprovedOverseasSites: [
-                { orsId: 'ORS-777', tonnageExported: 8 }
-              ]
-            }
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse({
+              ...reportDetail,
+              exportActivity: {
+                ...reportDetail.exportActivity,
+                overseasSites: [],
+                unapprovedOverseasSites: [
+                  { orsId: 'ORS-777', tonnageExported: 8 }
+                ]
+              }
+            })
+          )
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse(reportDetail)
+          )
         })
 
         it.for(exporters)(
@@ -1262,23 +1281,27 @@ describe('#viewController', () => {
 
       describe('when no waste exported', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            exportActivity: {
-              totalTonnageExported: 0,
-              overseasSites: [],
-              unapprovedOverseasSites: [],
-              tonnageReceivedNotExported: 0,
-              totalTonnageRefusedOrStopped: 0,
-              tonnageRefusedAtDestination: 0,
-              tonnageStoppedDuringExport: 0,
-              tonnageRepatriated: 0
-            }
-          })
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse({
+              ...reportDetail,
+              exportActivity: {
+                totalTonnageExported: 0,
+                overseasSites: [],
+                unapprovedOverseasSites: [],
+                tonnageReceivedNotExported: 0,
+                totalTonnageRefusedOrStopped: 0,
+                tonnageRefusedAtDestination: 0,
+                tonnageStoppedDuringExport: 0,
+                tonnageRepatriated: 0
+              }
+            })
+          )
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse(reportDetail)
+          )
         })
 
         it.for(exporters)(
@@ -1653,7 +1676,9 @@ describe('#viewController', () => {
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            asReportDetailResponse(reportDetail)
+          )
         })
 
         it.for(reprocessorsAndExporters)(

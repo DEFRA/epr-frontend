@@ -1,5 +1,9 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asCreatePrnResponse,
+  asUpdatePrnStatusResponse
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   extractCookieValues,
@@ -81,35 +85,35 @@ const validPayload = {
   wasteProcessingType: 'reprocessor-input'
 }
 
-const mockPrnCreated = {
+const mockPrnCreated = asCreatePrnResponse({
   id: 'prn-789',
   tonnage: 100,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'reprocessor-input'
-}
+})
 
-const mockPernCreated = {
+const mockPernCreated = asCreatePrnResponse({
   id: 'pern-123',
   tonnage: 50,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'exporter'
-}
+})
 
-const mockPrnStatusUpdated = {
+const mockPrnStatusUpdated = asUpdatePrnStatusResponse({
   id: 'prn-789',
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation'
-}
+})
 
-const mockPernStatusUpdated = {
+const mockPernStatusUpdated = asUpdatePrnStatusResponse({
   id: 'pern-123',
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_authorisation'
-}
+})
 
 /**
  * Helper to go through full PRN creation flow and return session cookies

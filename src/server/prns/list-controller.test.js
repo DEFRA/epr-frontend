@@ -1,6 +1,7 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asPackagingRecyclingNotes } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -50,7 +51,7 @@ const fixtureExporter = asRegistrationWithAccreditation({
 
 const mockWasteBalance = { availableAmount: 150.5 }
 
-const mockPrns = [
+const mockPrns = asPackagingRecyclingNotes([
   {
     id: 'prn-001',
     prnNumber: null,
@@ -81,9 +82,9 @@ const mockPrns = [
     material: 'glass',
     status: 'awaiting_acceptance'
   }
-]
+])
 
-const mockPrnsWithCancellation = [
+const mockPrnsWithCancellation = asPackagingRecyclingNotes([
   ...mockPrns,
   {
     id: 'prn-cancel-001',
@@ -105,9 +106,9 @@ const mockPrnsWithCancellation = [
     material: 'plastic',
     status: 'awaiting_cancellation'
   }
-]
+])
 
-const mockPrnsWithCancelled = [
+const mockPrnsWithCancelled = asPackagingRecyclingNotes([
   ...mockPrns,
   {
     id: 'prn-cancelled-001',
@@ -129,7 +130,7 @@ const mockPrnsWithCancelled = [
     material: 'plastic',
     status: 'cancelled'
   }
-]
+])
 
 const reprocessorListUrl =
   '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes'

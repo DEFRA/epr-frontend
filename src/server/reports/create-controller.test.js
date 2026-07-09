@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { createReport } from '#server/reports/helpers/create-report.js'
@@ -106,7 +107,9 @@ describe('#createReportController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(createReport).mockResolvedValue({
         id: 'report-001',
         status: 'in_progress'
@@ -169,11 +172,13 @@ describe('#createReportController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         accreditedExporterRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        cadence: 'monthly',
-        period: 1
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          cadence: 'monthly',
+          period: 1
+        })
+      )
       vi.mocked(createReport).mockResolvedValue({
         id: 'report-001',
         status: 'in_progress'
@@ -289,11 +294,13 @@ describe('#createReportController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         accreditedReprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        cadence: 'monthly',
-        period: 1
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          cadence: 'monthly',
+          period: 1
+        })
+      )
       vi.mocked(createReport).mockResolvedValue({
         id: 'report-001',
         status: 'in_progress'
@@ -325,7 +332,9 @@ describe('#createReportController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         registeredOnlyExporterRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(createReport).mockResolvedValue({
         id: 'report-001',
         status: 'in_progress'
@@ -361,7 +370,9 @@ describe('#createReportController', () => {
           wasteProcessingType: 'unknown'
         }
       })
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(createReport).mockResolvedValue({
         id: 'report-001',
         status: 'in_progress'
@@ -393,7 +404,9 @@ describe('#createReportController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(createReport).mockRejectedValue(
         Boom.conflict('Report already exists for this period')
       )
@@ -426,7 +439,9 @@ describe('#createReportController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(createReport).mockRejectedValue(
         Boom.internal('Unexpected error')
       )

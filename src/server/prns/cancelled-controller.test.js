@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -64,7 +65,7 @@ const basePath = `/organisations/${organisationId}/registrations/${registrationI
 const listUrl = basePath
 const cancelledUrl = `${basePath}/${prnId}/cancelled`
 
-const mockCancelledPrn = {
+const mockCancelledPrn = asPackagingRecyclingNote({
   id: prnId,
   prnNumber: 'ER2612345A',
   tonnage: 100,
@@ -72,9 +73,9 @@ const mockCancelledPrn = {
   status: 'cancelled',
   issuedToOrganisation: { id: 'producer-1', name: 'Test Producer Ltd' },
   createdAt: '2026-01-15T10:00:00Z'
-}
+})
 
-const mockCancelledPern = {
+const mockCancelledPern = asPackagingRecyclingNote({
   id: 'pern-123',
   prnNumber: 'EX2654321B',
   tonnage: 50,
@@ -82,7 +83,7 @@ const mockCancelledPern = {
   status: 'cancelled',
   issuedToOrganisation: { id: 'exporter-1', name: 'Export Corp' },
   createdAt: '2026-01-20T14:30:00Z'
-}
+})
 
 describe('#cancelledController', () => {
   beforeEach(() => {
@@ -257,10 +258,12 @@ describe('#cancelledController', () => {
     it('redirects to list when PRN is not in cancelled status', async ({
       server
     }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockCancelledPrn,
-        status: 'awaiting_cancellation'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockCancelledPrn,
+          status: 'awaiting_cancellation'
+        })
+      )
 
       const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
         auth: mockAuth
