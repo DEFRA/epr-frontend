@@ -1,5 +1,5 @@
 import {
-  asHapiRequest,
+  mockHapiRequest,
   asResponseToolkit
 } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, it, vi } from 'vitest'
@@ -22,7 +22,7 @@ describe('organisation controller', () => {
     }
 
     await controller.handler(
-      asHapiRequest(mockRequest),
+      mockHapiRequest(mockRequest),
       asResponseToolkit(mockH)
     )
 
@@ -42,7 +42,7 @@ describe('organisation controller', () => {
     }
 
     await controller.handler(
-      asHapiRequest(mockRequest),
+      mockHapiRequest(mockRequest),
       asResponseToolkit(mockH)
     )
 
@@ -62,7 +62,7 @@ describe('organisation controller', () => {
     }
 
     await controller.handler(
-      asHapiRequest(mockRequest),
+      mockHapiRequest(mockRequest),
       asResponseToolkit(mockH)
     )
 

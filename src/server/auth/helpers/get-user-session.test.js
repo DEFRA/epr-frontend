@@ -1,4 +1,4 @@
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, test, vi } from 'vitest'
 import { getUserSession } from './get-user-session.js'
 
@@ -26,7 +26,7 @@ describe('#getUserSession', () => {
         }
       }
 
-      const result = await getUserSession(asHapiRequest(mockRequest))
+      const result = await getUserSession(mockHapiRequest(mockRequest))
 
       expect(mockRequest.server.app.cache.get).toHaveBeenCalledExactlyOnceWith(
         'session-123'
@@ -51,7 +51,7 @@ describe('#getUserSession', () => {
         }
       }
 
-      const result = await getUserSession(asHapiRequest(mockRequest))
+      const result = await getUserSession(mockHapiRequest(mockRequest))
 
       expect(mockRequest.server.app.cache.get).not.toHaveBeenCalled()
       expect(result).toStrictEqual({ ok: false })
@@ -71,7 +71,7 @@ describe('#getUserSession', () => {
         }
       }
 
-      const result = await getUserSession(asHapiRequest(mockRequest))
+      const result = await getUserSession(mockHapiRequest(mockRequest))
 
       expect(mockRequest.server.app.cache.get).not.toHaveBeenCalled()
       expect(result).toStrictEqual({ ok: false })
@@ -88,7 +88,7 @@ describe('#getUserSession', () => {
         }
       }
 
-      const result = await getUserSession(asHapiRequest(mockRequest))
+      const result = await getUserSession(mockHapiRequest(mockRequest))
 
       expect(mockRequest.server.app.cache.get).not.toHaveBeenCalled()
       expect(result).toStrictEqual({ ok: false })

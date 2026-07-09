@@ -2,7 +2,7 @@ import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { languages } from '#server/common/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  * }} [options]
  */
 function mockRequest(options) {
-  return asHapiRequest({
+  return mockHapiRequest({
     auth: { credentials: null },
     t: vi.fn((key) => {
       const translations = {

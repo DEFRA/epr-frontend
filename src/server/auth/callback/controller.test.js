@@ -2,7 +2,7 @@ import { controller } from '#server/auth/callback/controller.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
 import { asUserOrganisations } from '#server/common/test-helpers/auth-helper.js'
 import {
-  asHapiRequest,
+  mockHapiRequest,
   asResponseToolkit
 } from '#server/common/test-helpers/request-fixtures.js'
 import * as metricsModule from '#server/common/helpers/metrics/index.js'
@@ -107,7 +107,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -187,7 +187,7 @@ describe('#authCallbackController', () => {
       const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
 
       await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -287,7 +287,7 @@ describe('#authCallbackController', () => {
         }
 
         const result = await controller.handler(
-          asHapiRequest(mockRequest),
+          mockHapiRequest(mockRequest),
           asResponseToolkit(mockH)
         )
 
@@ -366,7 +366,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -457,7 +457,7 @@ describe('#authCallbackController', () => {
       }
 
       await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -537,7 +537,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -575,7 +575,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -615,7 +615,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -680,7 +680,10 @@ describe('#authCallbackController', () => {
       }
 
       await expect(
-        controller.handler(asHapiRequest(mockRequest), asResponseToolkit(mockH))
+        controller.handler(
+          mockHapiRequest(mockRequest),
+          asResponseToolkit(mockH)
+        )
       ).rejects.toMatchObject({
         isBoom: true,
         output: {
@@ -774,7 +777,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -851,7 +854,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -917,7 +920,7 @@ describe('#authCallbackController', () => {
       }
 
       const result = await controller.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 

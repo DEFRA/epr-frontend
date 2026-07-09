@@ -1,5 +1,5 @@
 import { updateUserSession } from '#server/auth/helpers/user-session.js'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, it, vi } from 'vitest'
 
 /**
@@ -8,7 +8,7 @@ import { describe, expect, it, vi } from 'vitest'
  */
 
 const makeRequest = () =>
-  asHapiRequest({
+  mockHapiRequest({
     state: { userSession: { sessionId: 'sess-123' } },
     server: { app: { cache: { set: vi.fn() } } }
   })

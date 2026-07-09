@@ -2,7 +2,7 @@ import { config } from '#config/config.js'
 import { dropUserSession } from '#server/auth/helpers/drop-user-session.js'
 import { logoutController } from '#server/logout/controller.js'
 import {
-  asHapiRequest,
+  mockHapiRequest,
   asResponseToolkit
 } from '#server/common/test-helpers/request-fixtures.js'
 import { afterEach, describe, expect, test, vi } from 'vitest'
@@ -31,7 +31,7 @@ describe('#logoutController', () => {
       }
 
       const result = await logoutController.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 
@@ -74,7 +74,7 @@ describe('#logoutController', () => {
       }
 
       const result = await logoutController.handler(
-        asHapiRequest(mockRequest),
+        mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
 

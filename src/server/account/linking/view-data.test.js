@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { buildLinkingViewData } from './view-data.js'
 
 describe(buildLinkingViewData, () => {
@@ -18,7 +18,7 @@ describe(buildLinkingViewData, () => {
     }
 
     const result = buildLinkingViewData(
-      asHapiRequest(mockRequest),
+      mockHapiRequest(mockRequest),
       mockOrganisations,
       {
         errors: {
@@ -68,7 +68,7 @@ describe(buildLinkingViewData, () => {
     }
 
     const result = buildLinkingViewData(
-      asHapiRequest(mockRequest),
+      mockHapiRequest(mockRequest),
       mockOrganisations
     )
 

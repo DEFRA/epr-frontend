@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
 /**
@@ -7,7 +7,7 @@ import { buildCreatePrnViewData } from './view-data.js'
  */
 
 const createMockRequest = () =>
-  asHapiRequest({
+  mockHapiRequest({
     t: vi.fn((key, params = {}) => {
       const translations = {
         'prns:create:pageTitle': `Create a ${params.noteType}`,

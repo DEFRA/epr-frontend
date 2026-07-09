@@ -5,7 +5,7 @@ import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 
 /**
  * @import { Result } from '#server/common/helpers/result.js'
@@ -63,7 +63,7 @@ describe('refresh token', () => {
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    await refreshIdToken(asHapiRequest(mockRequest))
+    await refreshIdToken(mockHapiRequest(mockRequest))
 
     expect(getUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
     expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith({
@@ -99,7 +99,7 @@ describe('refresh token', () => {
     )
 
     await expect(
-      refreshIdToken(asHapiRequest({ logger: createMockLogger() }))
+      refreshIdToken(mockHapiRequest({ logger: createMockLogger() }))
     ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
@@ -112,7 +112,7 @@ describe('refresh token', () => {
     )
 
     await expect(
-      refreshIdToken(asHapiRequest({ logger: createMockLogger() }))
+      refreshIdToken(mockHapiRequest({ logger: createMockLogger() }))
     ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
@@ -121,7 +121,7 @@ describe('refresh token', () => {
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    await expect(refreshIdToken(asHapiRequest(mockRequest))).rejects.toThrow(
+    await expect(refreshIdToken(mockHapiRequest(mockRequest))).rejects.toThrow(
       'Cannot refresh token: no user session found'
     )
 
