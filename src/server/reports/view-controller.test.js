@@ -1124,6 +1124,33 @@ describe('#viewController', () => {
         )
       })
 
+      describe('when export activity is absent', () => {
+        beforeAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            exportActivity: undefined
+          })
+        })
+
+        afterAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        })
+
+        it.for(exporters)(
+          '($scenario) still renders the section with zero tonnage exported',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).not.toBeNull()
+            expect(section.textContent).toContain('Total tonnage exported')
+            expect(section.textContent).toContain('0.00')
+          }
+        )
+      })
+
       it.for(reprocessors)(
         '($scenario) does not render the section',
         async ({ registrationAndAccreditation }, { server }) => {

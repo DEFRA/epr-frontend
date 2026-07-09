@@ -6,13 +6,10 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
   buildPrnSummaryViewData,
+  buildWasteExportedViewData,
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
-import {
-  buildOverseasSiteRows,
-  buildUnapprovedOverseasSiteRows
-} from './helpers/build-table-rows.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
@@ -140,7 +137,11 @@ function buildViewData({
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
 
-    wasteExported: buildWasteExported(exportActivity, isExporter, isAccredited),
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(exportActivity, {
+          showApprovalColumn: isAccredited
+        })
+      : null,
 
     isAccredited,
     isExporter,
@@ -164,31 +165,6 @@ function buildViewData({
   }
 
   return viewData
-}
-
-function buildWasteExported(exportActivity, isExporter, isAccredited) {
-  if (!isExporter || !exportActivity) {
-    return null
-  }
-
-  return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
-      showApprovalColumn: isAccredited
-    }),
-    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
-      exportActivity.unapprovedOverseasSites
-    ),
-    tonnageReceivedNotExported: formatTonnage(
-      exportActivity.tonnageReceivedNotExported
-    ),
-    tonnageRefusedOrStopped: formatTonnage(
-      exportActivity.totalTonnageRefusedOrStopped
-    ),
-    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
-    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
-    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
-  }
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
