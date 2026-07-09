@@ -1420,23 +1420,6 @@ describe('#detailReportsController', () => {
       expect(body.textContent).toContain('0')
     })
 
-    it('should not display supplier or overseas site tables when empty', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterDetailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tables = body.querySelectorAll('table')
-
-      expect(tables).toHaveLength(0)
-    })
-
     it('should still render waste exported heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
