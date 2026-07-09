@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getLocaliseUrl } from '#server/common/helpers/i18next.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
+import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { load } from 'cheerio'
 import { describe, expect, it as vitestIt } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
@@ -148,9 +149,9 @@ describe('#i18nPlugin - integration', () => {
       })
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.request.localiseUrl).toBeDefined()
+      expect(asHapiRequest(response.request).localiseUrl).toBeDefined()
       // Should normalize en-GB to en and use English prefix
-      expect(response.request.localiseUrl('/test')).toBe('/test')
+      expect(asHapiRequest(response.request).localiseUrl('/test')).toBe('/test')
     })
 
     it('should handle Welsh with region code', async ({ server }) => {
@@ -163,9 +164,11 @@ describe('#i18nPlugin - integration', () => {
       })
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(response.request.localiseUrl).toBeDefined()
+      expect(asHapiRequest(response.request).localiseUrl).toBeDefined()
       // Should normalize cy-GB to cy and use Welsh prefix
-      expect(response.request.localiseUrl('/test')).toBe('/cy/test')
+      expect(asHapiRequest(response.request).localiseUrl('/test')).toBe(
+        '/cy/test'
+      )
     })
   })
 })

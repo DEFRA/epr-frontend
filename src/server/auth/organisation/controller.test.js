@@ -1,3 +1,4 @@
+import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, it, vi } from 'vitest'
 import { controller } from './controller.js'
 
@@ -17,7 +18,7 @@ describe('organisation controller', () => {
       redirect: vi.fn()
     }
 
-    await controller.handler(mockRequest, mockH)
+    await controller.handler(asHapiRequest(mockRequest), mockH)
 
     expect(mockRequest.yar.flash).toHaveBeenCalledWith('referrer')
     expect(mockH.redirect).toHaveBeenCalledWith('/dashboard')
@@ -34,7 +35,7 @@ describe('organisation controller', () => {
       redirect: vi.fn()
     }
 
-    await controller.handler(mockRequest, mockH)
+    await controller.handler(asHapiRequest(mockRequest), mockH)
 
     expect(mockRequest.yar.flash).toHaveBeenCalledWith('referrer')
     expect(mockH.redirect).toHaveBeenCalledWith('/')
@@ -51,7 +52,7 @@ describe('organisation controller', () => {
       redirect: vi.fn()
     }
 
-    await controller.handler(mockRequest, mockH)
+    await controller.handler(asHapiRequest(mockRequest), mockH)
 
     expect(mockH.redirect).toHaveBeenCalledWith('/')
   })

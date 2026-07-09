@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { buildLinkingViewData } from './view-data.js'
 
 describe(buildLinkingViewData, () => {
@@ -16,16 +17,20 @@ describe(buildLinkingViewData, () => {
       unlinked: []
     }
 
-    const result = buildLinkingViewData(mockRequest, mockOrganisations, {
-      errors: {
-        organisationId: {
-          text: 'Select an organisation'
-        },
-        anotherField: {
-          text: 'Another error'
+    const result = buildLinkingViewData(
+      asHapiRequest(mockRequest),
+      mockOrganisations,
+      {
+        errors: {
+          organisationId: {
+            text: 'Select an organisation'
+          },
+          anotherField: {
+            text: 'Another error'
+          }
         }
       }
-    })
+    )
 
     expect(result.errors).toStrictEqual({
       organisationId: {
@@ -62,7 +67,10 @@ describe(buildLinkingViewData, () => {
       unlinked: []
     }
 
-    const result = buildLinkingViewData(mockRequest, mockOrganisations)
+    const result = buildLinkingViewData(
+      asHapiRequest(mockRequest),
+      mockOrganisations
+    )
 
     expect(result.errors).toBeUndefined()
     expect(result.errorSummary).toBeUndefined()
