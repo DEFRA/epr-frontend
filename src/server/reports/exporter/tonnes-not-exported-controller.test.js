@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
@@ -28,7 +29,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const registeredOnlyExporter = {
+const registeredOnlyExporter = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -37,7 +38,7 @@ const registeredOnlyExporter = {
     registrationNumber: 'EX992415095748P'
   },
   accreditation: undefined
-}
+})
 
 const reportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
@@ -164,10 +165,12 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for accredited exporter', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-        ...registeredOnlyExporter,
-        accreditation: { id: 'acc-001', accreditationNumber: 'ACC123' }
-      })
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        asRegistrationWithAccreditation({
+          ...registeredOnlyExporter,
+          accreditation: { id: 'acc-001', accreditationNumber: 'ACC123' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',

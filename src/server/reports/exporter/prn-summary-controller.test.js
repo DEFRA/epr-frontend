@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -16,7 +17,7 @@ const mockCredentials = {
 
 const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
-const accreditedReprocessor = {
+const accreditedReprocessor = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -28,7 +29,7 @@ const accreditedReprocessor = {
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M'
   }
-}
+})
 
 const reportDetail = {
   operatorCategory: 'REPROCESSOR_ACCREDITED',

@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
@@ -28,7 +29,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const exporterRegistration = {
+const exporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -37,9 +38,9 @@ const exporterRegistration = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
-const reprocessorRegistration = {
+const reprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -55,7 +56,7 @@ const reprocessorRegistration = {
     }
   },
   accreditation: undefined
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
@@ -179,7 +180,7 @@ const reprocessorReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = {
+const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -192,9 +193,9 @@ const accreditedReprocessorRegistration = {
     }
   },
   accreditation: { id: 'acc-001', accreditationNumber: 'ER992415095748M' }
-}
+})
 
-const accreditedExporterRegistration = {
+const accreditedExporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -204,7 +205,7 @@ const accreditedExporterRegistration = {
     accreditationId: 'acc-002'
   },
   accreditation: { id: 'acc-002', accreditationNumber: 'EE992415095748M' }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {

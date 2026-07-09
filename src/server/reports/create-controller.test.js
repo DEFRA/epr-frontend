@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { createReport } from '#server/reports/helpers/create-report.js'
@@ -26,7 +27,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const reprocessorRegistration = {
+const reprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -42,9 +43,9 @@ const reprocessorRegistration = {
     }
   },
   accreditation: undefined
-}
+})
 
-const registeredOnlyExporterRegistration = {
+const registeredOnlyExporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -53,9 +54,9 @@ const registeredOnlyExporterRegistration = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
-const accreditedExporterRegistration = {
+const accreditedExporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -67,7 +68,7 @@ const accreditedExporterRegistration = {
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M'
   }
-}
+})
 
 const reportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
@@ -281,13 +282,13 @@ describe('#createReportController', () => {
     const monthlyDetailUrl =
       '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1'
 
-    const accreditedReprocessorRegistration = {
+    const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
       ...reprocessorRegistration,
       accreditation: {
         id: 'acc-001',
         accreditationNumber: 'ER992415095748M'
       }
-    }
+    })
 
     beforeEach(() => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(

@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -31,7 +32,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const reprocessorRegistration = {
+const reprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -47,7 +48,7 @@ const reprocessorRegistration = {
     }
   },
   accreditation: undefined
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = {
@@ -132,7 +133,7 @@ const emptyReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = {
+const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -153,7 +154,7 @@ const accreditedReprocessorRegistration = {
     accreditationNumber: 'ER992415095748M',
     status: 'approved'
   }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
@@ -205,7 +206,7 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-const exporterRegistration = {
+const exporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-456' },
   registration: {
     id: 'reg-002',
@@ -214,7 +215,7 @@ const exporterRegistration = {
     registrationNumber: 'REG002345'
   },
   accreditation: undefined
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = {
@@ -372,7 +373,7 @@ const exporterDetailUrl =
 const accreditedDetailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/monthly/2/submissions/1'
 
-const accreditedExporterRegistration = {
+const accreditedExporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-789' },
   registration: {
     id: 'reg-003',
@@ -386,7 +387,7 @@ const accreditedExporterRegistration = {
     accreditationNumber: 'EE992415095748M',
     status: 'approved'
   }
-}
+})
 
 /** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = {

@@ -1,3 +1,4 @@
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import Boom from '@hapi/boom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchRegistrationAndAccreditation } from './fetch-registration-and-accreditation.js'
@@ -17,11 +18,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     }
     const accreditation = { id: 'acc-001', status: 'approved' }
 
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: { id: 'org-123' },
-      registration,
-      accreditation
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        organisationData: { id: 'org-123' },
+        registration,
+        accreditation
+      })
+    )
 
     const result = await getRequiredRegistrationWithAccreditation({
       organisationId: 'org-123',
@@ -55,11 +58,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
   })
 
   it('should throw an enriched 404 when accreditation is not found', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: { id: 'org-123' },
-      registration: { id: 'reg-001' },
-      accreditation: undefined
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        organisationData: { id: 'org-123' },
+        registration: { id: 'reg-001' },
+        accreditation: undefined
+      })
+    )
 
     await expect(
       getRequiredRegistrationWithAccreditation({
@@ -83,11 +88,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     const registration = { id: 'reg-001' }
     const accreditation = { id: 'acc-001', status: 'approved' }
 
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: { id: 'org-123' },
-      registration,
-      accreditation
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        organisationData: { id: 'org-123' },
+        registration,
+        accreditation
+      })
+    )
 
     const result = await getRequiredRegistrationWithAccreditation({
       organisationId: 'org-123',
@@ -104,11 +111,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
   })
 
   it('should throw an enriched 404 when accreditationId does not match', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: { id: 'org-123' },
-      registration: { id: 'reg-001' },
-      accreditation: { id: 'acc-001', status: 'approved' }
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        organisationData: { id: 'org-123' },
+        registration: { id: 'reg-001' },
+        accreditation: { id: 'acc-001', status: 'approved' }
+      })
+    )
 
     await expect(
       getRequiredRegistrationWithAccreditation({
@@ -130,11 +139,13 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
   })
 
   it('should pass correct parameters to fetchRegistrationAndAccreditation', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      organisationData: { id: 'org-123' },
-      registration: { id: 'reg-001' },
-      accreditation: { id: 'acc-001' }
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        organisationData: { id: 'org-123' },
+        registration: { id: 'reg-001' },
+        accreditation: { id: 'acc-001' }
+      })
+    )
 
     await getRequiredRegistrationWithAccreditation({
       organisationId: 'org-123',

@@ -1,6 +1,10 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import {
+  asRegistrationWithAccreditation,
+  findRegistrationAndAccreditation
+} from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import {
@@ -21,16 +25,6 @@ vi.mock(
 )
 
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
-
-function findRegistrationAndAccreditation(fixture, registrationId) {
-  const registration = fixture.registrations.find(
-    ({ id }) => id === registrationId
-  )
-  const accreditation = fixture.accreditations?.find(
-    ({ id }) => id === registration?.accreditationId
-  )
-  return { registration, accreditation }
-}
 
 const glassApproved = findRegistrationAndAccreditation(
   fixtureData,
@@ -402,15 +396,17 @@ describe('#accreditationDashboardController', () => {
     it('should display Unknown site when site address is missing', async ({
       server
     }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-        registration: {
-          id: 'reg-no-site',
-          wasteProcessingType: 'reprocessor',
-          material: 'plastic',
-          status: 'approved'
-        },
-        accreditation: undefined
-      })
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        asRegistrationWithAccreditation({
+          registration: {
+            id: 'reg-no-site',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'approved'
+          },
+          accreditation: undefined
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -644,20 +640,22 @@ describe('#accreditationDashboardController', () => {
       it('should not call fetchWasteBalances when registration has no accreditationId', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          registration: {
-            id: 'reg-no-accreditation',
-            wasteProcessingType: 'reprocessor',
-            material: 'plastic',
-            status: 'approved',
-            site: { address: { line1: 'Test Site' } }
-          },
-          accreditation: {
-            id: 'some-acc',
-            accreditationNumber: 'ACC999',
-            status: 'approved'
-          }
-        })
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          asRegistrationWithAccreditation({
+            registration: {
+              id: 'reg-no-accreditation',
+              wasteProcessingType: 'reprocessor',
+              material: 'plastic',
+              status: 'approved',
+              site: { address: { line1: 'Test Site' } }
+            },
+            accreditation: {
+              id: 'some-acc',
+              accreditationNumber: 'ACC999',
+              status: 'approved'
+            }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -757,10 +755,10 @@ describe('#accreditationDashboardController', () => {
   })
 
   describe('registered-only', () => {
-    const registeredOnlyRegistration = {
+    const registeredOnlyRegistration = asRegistrationWithAccreditation({
       registration: glassApproved.registration,
       accreditation: undefined
-    }
+    })
 
     beforeEach(() => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(

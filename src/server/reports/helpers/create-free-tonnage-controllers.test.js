@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -47,7 +48,7 @@ const organisationId = 'org-123'
 const registrationId = 'reg-001'
 
 describe.each(subtrees)('$name free tonnage page', (subtree) => {
-  const accreditedOperator = {
+  const accreditedOperator = asRegistrationWithAccreditation({
     organisationData: { id: organisationId },
     registration: {
       id: registrationId,
@@ -59,12 +60,12 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
       id: 'acc-001',
       accreditationNumber: 'ER992415095748M'
     }
-  }
+  })
 
-  const registeredOnlyOperator = {
+  const registeredOnlyOperator = asRegistrationWithAccreditation({
     ...accreditedOperator,
     accreditation: undefined
-  }
+  })
 
   const reportDetail = {
     operatorCategory: subtree.operatorCategory,

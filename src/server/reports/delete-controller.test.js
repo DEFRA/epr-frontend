@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -26,7 +27,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const registeredOnlyExporter = {
+const registeredOnlyExporter = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -35,7 +36,7 @@ const registeredOnlyExporter = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
