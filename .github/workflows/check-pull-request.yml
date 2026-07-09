@@ -94,17 +94,14 @@ jobs:
         run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Run journey tests on ${{ steps.journey-branch.outputs.ref }}
-        uses: DEFRA/epr-re-ex-service/.github/actions/run-journey-tests@PAE-1305-journey-tests-action
+        uses: DEFRA/epr-frontend-journey-tests/run-journey-tests@main
         with:
-          service: epr-frontend
-          service-repo: DEFRA/epr-frontend
-          journey-tests-repo: DEFRA/epr-frontend-journey-tests
-          image-env: EPR_FRONTEND
-          image-sha: ${{ github.sha }}
+          epr-frontend: ${{github.sha}}
           branch: ${{ steps.journey-branch.outputs.ref }}
-          health-port: '3000'
-          test-command: npm run test:github
-          build-backend: 'true'
-          add-hosts: 127.0.0.1 defra-id-stub
+
+      - name: Write journey test summary
+        if: always()
+        uses: DEFRA/epr-re-ex-service/.github/actions/journey-test-summary@PAE-1305-journey-tests-action
+        with:
           build-start: ${{ steps.build-timer.outputs.start }}
           test-start: ${{ steps.test-timer.outputs.start }}
