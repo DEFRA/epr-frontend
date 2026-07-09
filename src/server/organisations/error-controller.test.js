@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -7,13 +8,7 @@ import { describe, expect } from 'vitest'
 const organisationId = 'org-123'
 const errorUrl = `/organisations/${organisationId}/error`
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
-  }
-}
+const mockAuth = buildMockAuth()
 
 describe('#errorController', () => {
   it('displays Something has gone wrong heading', async ({ server }) => {
