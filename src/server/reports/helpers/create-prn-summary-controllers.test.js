@@ -3,6 +3,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -111,7 +112,9 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         accreditedOperator
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it(`should return 200 for ${subtree.accreditedDescription}`, async ({
@@ -166,7 +169,9 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     })
 
     it('should pre-fill revenue if previously saved', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetailWithRevenue)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetailWithRevenue)
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -184,10 +189,12 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     ])(
       'should pre-fill revenue $revenue as $expected',
       async ({ revenue, expected }, { server }) => {
-        vi.mocked(fetchReportDetail).mockResolvedValue({
-          ...reportDetail,
-          prn: { ...reportDetail.prn, totalRevenue: revenue }
-        })
+        vi.mocked(fetchReportDetail).mockResolvedValue(
+          asReportDetailResponse({
+            ...reportDetail,
+            prn: { ...reportDetail.prn, totalRevenue: revenue }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -235,10 +242,12 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
     })
 
     it('should return 500 when prn data is missing', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        prn: undefined
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          prn: undefined
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -274,7 +283,9 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         accreditedOperator
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(updateReport).mockResolvedValue(undefined)
     })
 

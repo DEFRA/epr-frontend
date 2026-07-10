@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getLocaliseUrl } from '#server/common/helpers/i18next.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { load } from 'cheerio'
 import { describe, expect, it as vitestIt } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
@@ -30,7 +31,7 @@ describe('#i18nPlugin - integration', () => {
 
         expect(response.statusCode).toBe(statusCodes.ok)
 
-        const $ = load(response.result)
+        const $ = load(asHtml(response.result))
 
         expect($('html').attr('lang')).toBe(expectedLang)
         expect($('h1').first().text()).toBe(heading)

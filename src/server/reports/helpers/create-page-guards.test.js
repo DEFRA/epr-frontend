@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 
 vi.mock(
@@ -80,7 +81,9 @@ describe('#fetchGuardedData', () => {
         accreditation
       })
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     const result = await guards.fetchGuardedData(mockRequest)
 
@@ -96,7 +99,9 @@ describe('#fetchGuardedData', () => {
         accreditation: undefined
       })
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     const result = await guards.fetchGuardedData(mockRequest)
 
@@ -111,7 +116,9 @@ describe('#fetchGuardedData', () => {
         accreditation
       })
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     await expect(rejectingGuards.fetchGuardedData(mockRequest)).rejects.toThrow(
       expect.objectContaining({
@@ -165,7 +172,9 @@ describe('#buildViewData', () => {
         accreditation
       })
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
   })
 
   it('merges common fields with callback result', async () => {
@@ -240,10 +249,12 @@ describe('#buildViewData', () => {
   })
 
   it('throws 500 with accreditedOnly when PRN data is missing', async () => {
-    vi.mocked(fetchReportDetail).mockResolvedValue({
-      ...reportDetail,
-      prn: undefined
-    })
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse({
+        ...reportDetail,
+        prn: undefined
+      })
+    )
 
     await expect(
       guards.buildViewData(mockRequest, () => ({}), { accreditedOnly: true })

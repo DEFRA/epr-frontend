@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import {
   asRegistrationWithAccreditation,
   findRegistrationAndAccreditation
@@ -66,7 +67,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('title').text()).toMatch(
         /^Manchester Glass Recycling Facility: Glass/
@@ -86,7 +87,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect(statusCode).toBe(statusCodes.ok)
       expect($('h1').text()).toContain('Glass')
@@ -108,7 +109,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('.govuk-tag--green').length).toBeGreaterThan(0)
       expect(result).toContain('Approved')
@@ -160,7 +161,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       const uploadLink = $('a[href*="summary-logs/upload"]')
 
@@ -181,7 +182,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       const contactLink = $('main a[href*="contact"]')
 
@@ -199,7 +200,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       const backLink = $('.govuk-back-link')
 
@@ -256,7 +257,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       const backLink = $('.govuk-back-link')
 
@@ -324,7 +325,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('title').text()).toMatch(/Glass remelt/)
     })
@@ -342,7 +343,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('h1').text()).toContain('Glass remelt')
     })
@@ -360,7 +361,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('title').text()).toMatch(/Glass other/)
     })
@@ -378,7 +379,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('h1').text()).toContain('Glass other')
     })
@@ -421,7 +422,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('h1').text().trim()).toMatch(/^[A-Z]/)
     })
@@ -439,7 +440,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('.govuk-tag--yellow').length).toBeGreaterThan(0)
       expect(result).toContain('Suspended')
@@ -460,7 +461,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('[data-testid="waste-balance-amount"]').text()).toContain('0.00')
       expect($('[data-testid="waste-balance-amount"]').text()).toContain(
@@ -481,7 +482,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       const banner = $('.govuk-summary-card.epr-waste-balance-banner')
 
@@ -499,7 +500,7 @@ describe('#accreditationDashboardController', () => {
         auth: mockAuth
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       // 4 task cards + 1 waste balance banner = 5 summary cards total
       const summaryCards = $('.govuk-summary-card')
@@ -526,7 +527,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '1,030.45'
@@ -566,7 +567,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('[data-testid="waste-balance-explanation"]').text()).toContain(
           'PERNs'
@@ -594,7 +595,7 @@ describe('#accreditationDashboardController', () => {
 
         expect(statusCode).toBe(statusCodes.ok)
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'
@@ -660,7 +661,7 @@ describe('#accreditationDashboardController', () => {
           fetchWasteBalancesModule.fetchWasteBalances
         ).not.toHaveBeenCalled()
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'
@@ -683,7 +684,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'
@@ -711,7 +712,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '12,345.67'
@@ -734,7 +735,7 @@ describe('#accreditationDashboardController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('[data-testid="waste-balance-amount"]').text()).toContain(
           '0.00'

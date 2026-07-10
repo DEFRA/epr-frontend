@@ -1,5 +1,9 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asPackagingRecyclingNote,
+  asUpdatePrnStatusResponse
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -68,10 +72,10 @@ const mockPrnAwaitingAuth = {
   createdAt: '2026-01-15T10:00:00Z'
 }
 
-const mockPrnIssued = {
+const mockPrnIssued = asPackagingRecyclingNote({
   ...mockPrnAwaitingAuth,
   status: 'awaiting_acceptance'
-}
+})
 
 describe('#deleteController', () => {
   beforeEach(() => {
@@ -80,12 +84,14 @@ describe('#deleteController', () => {
       fixtureReprocessor
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-      mockPrnAwaitingAuth
+      asPackagingRecyclingNote(mockPrnAwaitingAuth)
     )
-    vi.mocked(updatePrnStatus).mockResolvedValue({
-      ...mockPrnAwaitingAuth,
-      status: 'deleted'
-    })
+    vi.mocked(updatePrnStatus).mockResolvedValue(
+      asUpdatePrnStatusResponse({
+        ...mockPrnAwaitingAuth,
+        status: 'deleted'
+      })
+    )
   })
 
   describe('request handling', () => {

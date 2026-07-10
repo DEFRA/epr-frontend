@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 
 vi.mock(
@@ -41,7 +42,9 @@ const mockRequest = {
 describe('exporter shim wires isExporterRegistration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
   })
 
   it('accepts exporter registration', async () => {

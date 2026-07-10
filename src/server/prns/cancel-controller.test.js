@@ -1,5 +1,9 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asPackagingRecyclingNote,
+  asUpdatePrnStatusResponse
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -69,10 +73,10 @@ const mockPrnAwaitingCancellation = {
   createdAt: '2026-01-15T10:00:00Z'
 }
 
-const mockPrnIssued = {
+const mockPrnIssued = asPackagingRecyclingNote({
   ...mockPrnAwaitingCancellation,
   status: 'awaiting_acceptance'
-}
+})
 
 describe('#cancelController', () => {
   beforeEach(() => {
@@ -81,12 +85,14 @@ describe('#cancelController', () => {
       fixtureReprocessor
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-      mockPrnAwaitingCancellation
+      asPackagingRecyclingNote(mockPrnAwaitingCancellation)
     )
-    vi.mocked(updatePrnStatus).mockResolvedValue({
-      ...mockPrnAwaitingCancellation,
-      status: 'cancelled'
-    })
+    vi.mocked(updatePrnStatus).mockResolvedValue(
+      asUpdatePrnStatusResponse({
+        ...mockPrnAwaitingCancellation,
+        status: 'cancelled'
+      })
+    )
   })
 
   describe('request handling', () => {

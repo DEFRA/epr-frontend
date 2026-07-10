@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -56,23 +57,23 @@ const fixtureExporter = asRequiredRegistrationWithAccreditation({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const mockIssuedPrn = {
+const mockIssuedPrn = asPackagingRecyclingNote({
   id: 'prn-789',
   prnNumber: 'ER2612345A',
   issuedToOrganisation: { id: 'producer-1', name: 'ComplyPak Ltd' },
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_acceptance'
-}
+})
 
-const mockIssuedPern = {
+const mockIssuedPern = asPackagingRecyclingNote({
   id: 'pern-123',
   prnNumber: 'EX2654321B',
   issuedToOrganisation: { id: 'exporter-1', name: 'Export Corp' },
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_acceptance'
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -120,13 +121,15 @@ describe('#issuedController', () => {
       it('displays special characters in organisation name without HTML entity encoding', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockIssuedPrn,
-          issuedToOrganisation: {
-            id: 'producer-1',
-            name: "Mackie's Limited"
-          }
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockIssuedPrn,
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: "Mackie's Limited"
+            }
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
@@ -150,14 +153,16 @@ describe('#issuedController', () => {
       it('displays tradingName in heading when organisation has no registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockIssuedPrn,
-          issuedToOrganisation: {
-            id: 'producer-1',
-            name: 'Legal Name Ltd',
-            tradingName: 'Trading Name Ltd'
-          }
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockIssuedPrn,
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: 'Legal Name Ltd',
+              tradingName: 'Trading Name Ltd'
+            }
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth
@@ -386,10 +391,12 @@ describe('#issuedController', () => {
       it('redirects to view page if PRN not in awaiting_acceptance status', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockIssuedPrn,
-          status: 'awaiting_authorisation'
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockIssuedPrn,
+            status: 'awaiting_authorisation'
+          })
+        )
 
         const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
           auth: mockAuth

@@ -4,6 +4,7 @@ import { refreshIdToken } from '#server/auth/helpers/refresh-token.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#config/config.js'))
@@ -78,9 +79,9 @@ describe('refresh token', () => {
       }
     })
 
-    await expect(refreshIdToken({ logger: { info: vi.fn() } })).rejects.toThrow(
-      'Cannot refresh token: no refresh token found'
-    )
+    await expect(
+      refreshIdToken({ logger: createMockLogger() })
+    ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
   it('should throw error when refresh token is missing', async () => {
@@ -89,9 +90,9 @@ describe('refresh token', () => {
       value: { urls: { token: 'http://defra-id.auth/token' } }
     })
 
-    await expect(refreshIdToken({ logger: { info: vi.fn() } })).rejects.toThrow(
-      'Cannot refresh token: no refresh token found'
-    )
+    await expect(
+      refreshIdToken({ logger: createMockLogger() })
+    ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
   it('should throw error when getUserSession returns no session', async () => {

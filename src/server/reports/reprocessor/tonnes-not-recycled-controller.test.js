@@ -3,6 +3,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -79,7 +80,9 @@ describe('#tonnesNotRecycledController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it('should return 200 for reprocessor', async ({ server }) => {
@@ -107,13 +110,15 @@ describe('#tonnesNotRecycledController', () => {
     it('should display heading and pre-fill saved tonnage unchanged', async ({
       server
     }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        recyclingActivity: {
-          ...reportDetail.recyclingActivity,
-          tonnageNotRecycled: 89.3
-        }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          recyclingActivity: {
+            ...reportDetail.recyclingActivity,
+            tonnageNotRecycled: 89.3
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -166,7 +171,9 @@ describe('#tonnesNotRecycledController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(updateReport).mockResolvedValue(undefined)
     })
 

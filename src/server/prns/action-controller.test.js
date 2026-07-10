@@ -3,6 +3,7 @@ import { asRequiredRegistrationWithAccreditation } from '#server/common/test-hel
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -77,7 +78,7 @@ const actionUrl = `${basePath}/${prnId}`
 const pernActionUrl = `${basePath}/${pernId}`
 const viewUrl = `${basePath}/${prnId}/view`
 
-const mockPrnAwaitingAuth = {
+const mockPrnAwaitingAuth = asPackagingRecyclingNote({
   id: 'prn-789',
   issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
   tonnage: 100,
@@ -89,15 +90,15 @@ const mockPrnAwaitingAuth = {
   issuedAt: '2026-01-16T14:30:00.000Z',
   issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
-}
+})
 
-const mockPrnIssued = {
+const mockPrnIssued = asPackagingRecyclingNote({
   ...mockPrnAwaitingAuth,
   status: 'awaiting_acceptance',
   prnNumber: 'ER2625001A'
-}
+})
 
-const mockPernAwaitingAuth = {
+const mockPernAwaitingAuth = asPackagingRecyclingNote({
   id: 'pern-123',
   issuedToOrganisation: { id: 'exporter-1', name: 'Export Solutions Ltd' },
   tonnage: 50,
@@ -109,7 +110,7 @@ const mockPernAwaitingAuth = {
   issuedAt: null,
   issuedBy: null,
   wasteProcessingType: 'exporter'
-}
+})
 
 describe('#actionController', () => {
   beforeEach(() => {
@@ -146,14 +147,16 @@ describe('#actionController', () => {
     it('displays tradingName when organisation has no registrationType', async ({
       server
     }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockPrnAwaitingAuth,
-        issuedToOrganisation: {
-          id: 'producer-1',
-          name: 'Legal Name Ltd',
-          tradingName: 'Trading Name Ltd'
-        }
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockPrnAwaitingAuth,
+          issuedToOrganisation: {
+            id: 'producer-1',
+            name: 'Legal Name Ltd',
+            tradingName: 'Trading Name Ltd'
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -242,10 +245,12 @@ describe('#actionController', () => {
     })
 
     it('displays PRN number when provided', async ({ server }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockPrnAwaitingAuth,
-        prnNumber: 'ER2625001A'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockPrnAwaitingAuth,
+          prnNumber: 'ER2625001A'
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -456,10 +461,12 @@ describe('#actionController', () => {
     })
 
     it('hides status row for draft PRN', async ({ server }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockPrnAwaitingAuth,
-        status: 'draft'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockPrnAwaitingAuth,
+          status: 'draft'
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -599,10 +606,12 @@ describe('#actionController', () => {
     })
 
     it('handles unknown status gracefully', async ({ server }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockPrnAwaitingAuth,
-        status: 'some_unknown_status'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockPrnAwaitingAuth,
+          status: 'some_unknown_status'
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -636,10 +645,12 @@ describe('#actionController', () => {
     it('displays Cancel PRN button when status is awaiting_cancellation', async ({
       server
     }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockPrnAwaitingAuth,
-        status: 'awaiting_cancellation'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockPrnAwaitingAuth,
+          status: 'awaiting_cancellation'
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -666,10 +677,12 @@ describe('#actionController', () => {
     it('does not display Issue or Delete buttons when status is awaiting_cancellation', async ({
       server
     }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockPrnAwaitingAuth,
-        status: 'awaiting_cancellation'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockPrnAwaitingAuth,
+          status: 'awaiting_cancellation'
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -691,10 +704,12 @@ describe('#actionController', () => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
         fixtureExporter
       )
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockPernAwaitingAuth,
-        status: 'awaiting_cancellation'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockPernAwaitingAuth,
+          status: 'awaiting_cancellation'
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',

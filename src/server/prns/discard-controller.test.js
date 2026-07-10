@@ -1,5 +1,9 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asCreatePrnResponse,
+  asUpdatePrnStatusResponse
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import {
@@ -83,13 +87,13 @@ const mockPrnCreated = {
   wasteProcessingType: 'reprocessor-input'
 }
 
-const mockPernCreated = {
+const mockPernCreated = asCreatePrnResponse({
   id: 'pern-123',
   tonnage: 50,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'exporter'
-}
+})
 
 describe('#discardController', () => {
   beforeEach(() => {
@@ -98,11 +102,13 @@ describe('#discardController', () => {
       fixtureReprocessor
     )
     vi.mocked(getWasteBalance).mockResolvedValue(null)
-    vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
-    vi.mocked(updatePrnStatus).mockResolvedValue({
-      ...mockPrnCreated,
-      status: 'discarded'
-    })
+    vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPrnCreated))
+    vi.mocked(updatePrnStatus).mockResolvedValue(
+      asUpdatePrnStatusResponse({
+        ...mockPrnCreated,
+        status: 'discarded'
+      })
+    )
   })
 
   describe('request handling', () => {
