@@ -1,5 +1,6 @@
 import { controller } from '#server/auth/callback/controller.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
+import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import * as metricsModule from '#server/common/helpers/metrics/index.js'
 import Boom from '@hapi/boom'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
@@ -92,7 +93,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       // First call stores initial session, second call adds linkedOrganisationId
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledTimes(2)
@@ -169,7 +170,7 @@ describe('#authCallbackController', () => {
 
       const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
 
-      await controller.handler(mockRequest, mockH)
+      await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith({
         message: 'User has been successfully authenticated',
@@ -266,7 +267,10 @@ describe('#authCallbackController', () => {
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
-        const result = await controller.handler(mockRequest, mockH)
+        const result = await controller.handler(
+          asHapiRequest(mockRequest),
+          mockH
+        )
 
         const expectedRedirect = isWelsh
           ? '/cy/organisations/linked-org-uuid'
@@ -342,7 +346,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockRequest.localiseUrl).toHaveBeenCalledExactlyOnceWith(
         '/organisations/linked-org-uuid'
@@ -430,7 +434,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      await controller.handler(mockRequest, mockH)
+      await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
@@ -507,7 +511,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-to-linking')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-to-linking')
@@ -542,7 +546,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
@@ -579,7 +583,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
@@ -642,7 +646,7 @@ describe('#authCallbackController', () => {
       }
 
       await expect(
-        controller.handler(mockRequest, mockH)
+        controller.handler(asHapiRequest(mockRequest), mockH)
       ).rejects.toMatchObject({
         isBoom: true,
         output: {
@@ -735,7 +739,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/dashboard')
       expect(result).toBe('redirect-response')
@@ -809,7 +813,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-response')
@@ -872,7 +876,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await controller.handler(asHapiRequest(mockRequest), mockH)
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-response')

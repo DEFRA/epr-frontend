@@ -1,4 +1,5 @@
 import { it } from '#vite/fixtures/server.js'
+import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, vi } from 'vitest'
 import { dropUserSession } from './drop-user-session.js'
 
@@ -15,7 +16,7 @@ describe('#dropUserSession', () => {
       server
     }
 
-    await dropUserSession(mockRequest)
+    await dropUserSession(asHapiRequest(mockRequest))
 
     await expect(server.app.cache.get('session-123')).resolves.toBeNull()
   })
@@ -26,7 +27,7 @@ describe('#dropUserSession', () => {
       server
     }
 
-    await dropUserSession(mockRequest)
+    await dropUserSession(asHapiRequest(mockRequest))
 
     expect(vi.spyOn(server.app.cache, 'drop')).not.toHaveBeenCalled()
   })
