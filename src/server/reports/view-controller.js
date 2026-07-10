@@ -5,12 +5,11 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
-  buildDestinationDetailRows,
-  buildOverseasSiteRows,
-  buildSupplierDetailRows,
-  buildUnapprovedOverseasSiteRows,
-  getTotalTonnageSentOn
-} from './helpers/build-table-rows.js'
+  buildPrnSummaryViewData,
+  buildWasteExportedViewData,
+  buildWasteReceivedViewData,
+  buildWasteSentOnViewData
+} from './helpers/build-report-view-data.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
@@ -58,9 +57,9 @@ function buildPageLabels({
     totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
       noteTypePlural
     }),
-    freeLabel: localise('reports:view:freeLabel', { noteTypePlural }),
-    revenueLabel: localise('reports:view:totalRevenue', { noteTypePlural }),
-    avgPriceLabel: localise('reports:view:avgPrice', { noteTypePlural })
+    freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
+    avgPriceLabel: localise('reports:avgPriceLabel')
   }
 }
 
@@ -131,26 +130,27 @@ function buildViewData({
     periodLabel,
     site: registration.site?.address?.line1,
 
-    wasteReceived: {
-      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-    },
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
 
     packagingWasteRecycling: {
       tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
       tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
 
-    wasteExported: buildWasteExported(exportActivity, isExporter, isAccredited),
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(exportActivity, {
+          showApprovalColumn: isAccredited
+        })
+      : null,
 
     isAccredited,
     isExporter,
     isReprocessor,
     isRegisteredOnlyExporter,
 
-    prn: buildPrn(reportDetail.prn),
+    prn: buildPrnSummaryViewData(reportDetail.prn),
 
-    wasteSentOn: buildWasteSentOn(wasteSent),
+    wasteSentOn: buildWasteSentOnViewData(wasteSent),
 
     supportingInformation:
       reportDetail.supportingInformation ||
@@ -165,60 +165,6 @@ function buildViewData({
   }
 
   return viewData
-}
-
-/**
- * @param {object} wasteSent
- * @returns {object}
- */
-function buildWasteSentOn(wasteSent) {
-  return {
-    totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-    toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-    toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-    toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-    destinationDetailRows: buildDestinationDetailRows(
-      wasteSent.finalDestinations
-    )
-  }
-}
-
-/**
- * @param {object|undefined} prn
- * @returns {object}
- */
-function buildPrn(prn) {
-  return {
-    issuedTonnage: prn?.issuedTonnage,
-    freeTonnage: prn?.freeTonnage,
-    totalRevenue: prn?.totalRevenue,
-    averagePricePerTonne: prn?.averagePricePerTonne
-  }
-}
-
-function buildWasteExported(exportActivity, isExporter, isAccredited) {
-  if (!isExporter || !exportActivity) {
-    return null
-  }
-
-  return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
-      showApprovalColumn: isAccredited
-    }),
-    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
-      exportActivity.unapprovedOverseasSites
-    ),
-    tonnageReceivedNotExported: formatTonnage(
-      exportActivity.tonnageReceivedNotExported
-    ),
-    tonnageRefusedOrStopped: formatTonnage(
-      exportActivity.totalTonnageRefusedOrStopped
-    ),
-    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
-    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
-    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
-  }
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */

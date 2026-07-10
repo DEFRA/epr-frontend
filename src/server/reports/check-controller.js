@@ -7,22 +7,21 @@ import {
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
-  buildDestinationDetailRows,
-  buildOverseasSiteRows,
-  buildSupplierDetailRows,
-  buildUnapprovedOverseasSiteRows,
-  getTotalTonnageSentOn
-} from './helpers/build-table-rows.js'
+  buildPrnSummaryViewData,
+  buildWasteExportedViewData,
+  buildWasteReceivedViewData,
+  buildWasteSentOnViewData
+} from './helpers/build-report-view-data.js'
+import { tonnageOrDash } from './helpers/dash-formatters.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatExportTonnages } from './helpers/format-export-tonnages.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
- * @param {object} reportDetail
- * @param {(key: string) => string} localise
+ * @param {ReportDetailResponse} reportDetail
+ * @param {TFunction} localise
  * @returns {string}
  */
 function getSupportingInformation(reportDetail, localise) {
@@ -33,145 +32,110 @@ function getSupportingInformation(reportDetail, localise) {
 }
 
 /**
- * @param {object|undefined} exportActivity
- * @param {boolean} isExporter
- * @param {boolean} isAccreditedExporter
- * @returns {object|null}
+ * @param {Pick<Registration, 'wasteProcessingType'>} registration
+ * @param {TFunction} localise
+ * @returns {{
+ *   freeLabel: string,
+ *   freeNote: string,
+ *   noteTypeSectionHeading: string,
+ *   revenueLabel: string,
+ *   totalIssuedTonnageLabel: string,
+ *   wasteReceivedHeading: string
+ * }}
  */
-function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
-  if (!isExporter) {
-    return null
-  }
-
-  if (!exportActivity) {
-    return {
-      totalTonnage: 0,
-      overseasSiteRows: [],
-      unapprovedOverseasSiteRows: [],
-      ...formatExportTonnages({
-        tonnageReceivedNotExported: null,
-        tonnageRefusedAtDestination: null,
-        tonnageStoppedDuringExport: null,
-        totalTonnageRefusedOrStopped: null,
-        tonnageRepatriated: null
-      })
-    }
-  }
+function buildNoteTypeLabels(registration, localise) {
+  const { noteTypePlural, wasteActionGerund } =
+    getNoteTypeDisplayNames(registration)
 
   return {
-    totalTonnage: exportActivity.totalTonnageExported,
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
-      showApprovalColumn: isAccreditedExporter
+    freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
+    freeNote: localise('reports:freeTonnageNote'),
+    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
+      noteTypePlural
     }),
-    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
-      exportActivity.unapprovedOverseasSites
-    ),
-    ...formatExportTonnages(exportActivity)
-  }
-}
-
-/**
- * @param {object} wasteSent
- * @returns {object}
- */
-function buildWasteSentOn(wasteSent) {
-  return {
-    totalTonnage: getTotalTonnageSentOn(wasteSent),
-    toReprocessors: wasteSent.tonnageSentToReprocessor,
-    toExporters: wasteSent.tonnageSentToExporter,
-    toOtherSites: wasteSent.tonnageSentToAnotherSite,
-    destinationDetailRows: buildDestinationDetailRows(
-      wasteSent.finalDestinations
-    )
+    revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
+    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
+      noteTypePlural
+    }),
+    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
+      wasteActionGerund
+    })
   }
 }
 
 /**
  * @param {{
- *   registration: object,
- *   accreditation: object|undefined,
- *   reportDetail: ReportDetailResponse,
+ *   accreditation: Accreditation | undefined,
  *   basePath: string,
- *   localise: (key: string, params?: object) => string,
+ *   cadenceLabel: string,
+ *   localise: TFunction,
  *   localiseUrl: (path: string) => string,
  *   material: string,
  *   periodLabel: string,
- *   cadenceLabel: string
+ *   registration: Registration,
+ *   reportDetail: ReportDetailResponse
  * }} params
  * @returns {object}
  */
 function buildCheckViewData({
-  registration,
   accreditation,
-  reportDetail,
   basePath,
+  cadenceLabel,
   localise,
   localiseUrl,
   material,
   periodLabel,
-  cadenceLabel
+  registration,
+  reportDetail
 }) {
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isReprocessor = isReprocessorRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
   const isRegisteredOnlyExporter = isExporter && !accreditation
-  const { noteTypePlural, wasteActionGerund } =
-    getNoteTypeDisplayNames(registration)
 
   return {
-    pageTitle: localise('reports:checkPageTitle', { material, periodLabel }),
-    caption: localise('reports:checkCaption'),
-    heading: localise('reports:checkHeading'),
-    material,
-    periodLabel,
-    cadenceLabel,
-    registrationNumber: registration.registrationNumber,
     accreditationNumber: accreditation?.accreditationNumber,
-    site: registration.site,
-    isExporter,
-    isReprocessor,
-    isAccredited: !!accreditation,
-    isRegisteredOnlyExporter,
-    tonnageNotExportedChangeUrl: localiseUrl(`${basePath}/tonnes-not-exported`),
-    showApprovalColumn: isAccreditedExporter,
-    wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
-      wasteActionGerund
-    }),
-    noteTypeSectionHeading: localise('reports:noteTypeSectionHeading', {
-      noteTypePlural
-    }),
-    totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
-      noteTypePlural
-    }),
-    revenueLabel: localise('reports:checkRevenueLabel', { noteTypePlural }),
-    freeLabel: localise('reports:checkFreeLabel', { noteTypePlural }),
-    freeNote: localise('reports:checkFreeNote'),
     backUrl: localiseUrl(`${basePath}/supporting-information`),
+    cadenceLabel,
+    caption: localise('reports:checkCaption'),
+    changeText: localise('reports:supportingInformationChange'),
     changeUrl: localiseUrl(`${basePath}/supporting-information`),
     createButtonText: localise('reports:checkCreateReport'),
+    deleteUrl: localiseUrl(`${basePath}/delete`),
+    freePernChangeUrl: localiseUrl(`${basePath}/free-perns`),
+    freePrnsChangeUrl: localiseUrl(`${basePath}/free-prns`),
+    heading: localise('reports:checkHeading'),
+    isAccredited: !!accreditation,
+    isExporter,
+    isRegisteredOnlyExporter,
+    isReprocessor,
+    material,
+    pageTitle: localise('reports:checkPageTitle', { material, periodLabel }),
+    periodLabel,
+    prn: buildPrnSummaryViewData(reportDetail.prn),
+    prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
+    recyclingActivity: {
+      tonnageRecycled: tonnageOrDash(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: tonnageOrDash(recyclingActivity.tonnageNotRecycled)
+    },
+    registrationNumber: registration.registrationNumber,
+    showApprovalColumn: isAccreditedExporter,
+    site: registration.site,
     supportingInformation: getSupportingInformation(reportDetail, localise),
     supportingInformationLabel: localise('reports:supportingInformationLabel'),
-    version: reportDetail.version,
-    changeText: localise('reports:supportingInformationChange'),
-    deleteUrl: localiseUrl(`${basePath}/delete`),
-    wasteReceived: {
-      totalTonnage: recyclingActivity.totalTonnageReceived,
-      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-    },
-    wasteExported: buildWasteExported(
-      exportActivity,
-      isExporter,
-      isAccreditedExporter
-    ),
-    wasteSentOn: buildWasteSentOn(wasteSent),
-    recyclingActivity: reportDetail.recyclingActivity,
-    tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
+    tonnageNotExportedChangeUrl: localiseUrl(`${basePath}/tonnes-not-exported`),
     tonnageNotRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-not-recycled`),
-    prn: reportDetail.prn,
-    prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
-    freePernChangeUrl: localiseUrl(`${basePath}/free-perns`),
-    freePrnsChangeUrl: localiseUrl(`${basePath}/free-prns`)
+    tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
+    version: reportDetail.version,
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(exportActivity, {
+          showApprovalColumn: isAccreditedExporter
+        })
+      : null,
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
+    wasteSentOn: buildWasteSentOnViewData(wasteSent),
+    ...buildNoteTypeLabels(registration, localise)
   }
 }
 
@@ -295,7 +259,10 @@ export const checkPostController = {
 }
 
 /**
+ * @import { TFunction } from 'i18next'
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  * @import { VersionedPayload } from './helpers/versioned-payload-schema.js'

@@ -1007,7 +1007,7 @@ describe('#submitController', () => {
       }) => {
         const body = await getBody(server)
 
-        expect(body.textContent).toContain('Average price per tonne of PERNs')
+        expect(body.textContent).toContain('Average price per tonne')
         expect(body.textContent).toContain('£200.00')
       })
 
@@ -1240,7 +1240,7 @@ describe('#submitController', () => {
       }) => {
         const body = await getBody(server)
 
-        expect(body.textContent).toContain('Average price per tonne of PRNs')
+        expect(body.textContent).toContain('Average price per tonne')
         expect(body.textContent).toContain('£150.00')
       })
     })

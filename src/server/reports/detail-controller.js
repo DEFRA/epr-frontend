@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -31,7 +32,7 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
   }
 
   return {
-    totalTonnage: exportActivity.totalTonnageExported,
+    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
     overseasSiteDetailRows: buildOverseasSiteDetailRows(
       exportActivity.overseasSites,
       { showApprovalColumn: isAccreditedExporter }
@@ -39,11 +40,15 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
     unapprovedOverseasSiteDetailRows: buildUnapprovedOverseasSiteDetailRows(
       exportActivity.unapprovedOverseasSites
     ),
-    tonnageReceivedNotExported: exportActivity.tonnageReceivedNotExported,
-    tonnageRefusedOrStopped: exportActivity.totalTonnageRefusedOrStopped,
-    tonnageRefused: exportActivity.tonnageRefusedAtDestination,
-    tonnageStopped: exportActivity.tonnageStoppedDuringExport,
-    tonnageRepatriated: exportActivity.tonnageRepatriated
+    tonnageReceivedNotExported: formatTonnage(
+      exportActivity.tonnageReceivedNotExported
+    ),
+    tonnageRefusedOrStopped: formatTonnage(
+      exportActivity.totalTonnageRefusedOrStopped
+    ),
+    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
+    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
+    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
   }
 }
 
@@ -140,7 +145,7 @@ function buildViewData(
     registrationNumber: registration.registrationNumber,
     site: reportDetail.details.site,
     wasteReceived: {
-      totalTonnage: recyclingActivity.totalTonnageReceived,
+      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
       supplierRows: buildSupplierRows(recyclingActivity.suppliers)
     },
     showApprovalColumn: isAccreditedExporter,
@@ -150,10 +155,10 @@ function buildViewData(
       isAccreditedExporter
     ),
     wasteSentOn: {
-      totalTonnage: getTotalTonnageSentOn(wasteSent),
-      toReprocessors: wasteSent.tonnageSentToReprocessor,
-      toExporters: wasteSent.tonnageSentToExporter,
-      toOtherSites: wasteSent.tonnageSentToAnotherSite,
+      totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
+      toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+      toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
+      toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
       destinationRows: buildDestinationRows(wasteSent.finalDestinations)
     },
     ...buildSectionIntros(
