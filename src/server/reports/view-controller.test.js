@@ -1,24 +1,22 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
 import { getAllByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 
+/**
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
-  }
-}
+const mockAuth = buildMockAuth()
 
 async function loadPage({ server, registrationAndAccreditation }) {
   vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
@@ -129,16 +127,14 @@ describe('#viewController', () => {
   })
 
   describe('for a report that cannot be viewed', () => {
-    const reportDetail = {
+    const reportDetail = /** @type {ReportDetailResponse} */ ({
       status: {
         currentStatus: 'in_progress'
       }
-    }
+    })
 
     beforeAll(() => {
-      vi.mocked(fetchReportDetail).mockResolvedValue(
-        asReportDetailResponse(reportDetail)
-      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
     })
 
     it('should return 404', async ({ server }) => {
@@ -152,7 +148,7 @@ describe('#viewController', () => {
   })
 
   describe('for a draft report', () => {
-    const reportDetail = {
+    const reportDetail = /** @type {ReportDetailResponse} */ ({
       status: {
         currentStatus: 'ready_to_submit',
         created: {
@@ -171,11 +167,12 @@ describe('#viewController', () => {
             facilityType: 'Reprocessor',
             supplierAddress: '1 Green Lane, Leeds, LS1 1AA',
             supplierPhone: '0113 000 0000',
-            supplierEmail: 'contact@acme.example.com'
+            supplierEmail: 'contact@acme.example.com',
+            tonnageReceived: 12.5
           }
         ]
       },
-      exportActivity: null,
+      exportActivity: undefined,
       wasteSent: {
         tonnageSentToReprocessor: 5.0,
         tonnageSentToExporter: 3.0,
@@ -195,13 +192,11 @@ describe('#viewController', () => {
         totalRevenue: 2500,
         averagePricePerTonne: 50
       },
-      supportingInformation: null
-    }
+      supportingInformation: undefined
+    })
 
     beforeAll(() => {
-      vi.mocked(fetchReportDetail).mockResolvedValue(
-        asReportDetailResponse(reportDetail)
-      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
     })
 
     it('should return 200', async ({ server }) => {
@@ -314,14 +309,31 @@ describe('#viewController', () => {
   })
 
   describe('for a submitted report', () => {
-    const reportDetail = {
+    const reportDetail = /** @type {ReportDetailResponse} */ ({
+      operatorCategory: 'REPROCESSOR',
+      cadence: 'monthly',
+      year: 2026,
+      period: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      source: {
+        summaryLogId: 'sl-1',
+        lastUploadedAt: '2026-02-15T15:09:00.000Z'
+      },
+      details: { material: 'plastic' },
       status: {
         currentStatus: 'submitted',
+        currentStatusAt: '2026-03-15T14:30:00.000Z',
+        created: {
+          at: '2026-02-15T15:09:00.000Z',
+          by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
+        },
         submitted: {
           at: '2026-03-15T14:30:00.000Z',
           by: { id: 'user-456', name: 'Michael Doran', position: 'Manager' }
         }
       },
+      dueDate: '2026-05-31',
       recyclingActivity: {
         totalTonnageReceived: 12.5,
         tonnageRecycled: 10.25,
@@ -332,7 +344,8 @@ describe('#viewController', () => {
             facilityType: 'Reprocessor',
             supplierAddress: '1 Green Lane, Leeds, LS1 1AA',
             supplierPhone: '0113 000 0000',
-            supplierEmail: 'contact@acme.example.com'
+            supplierEmail: 'contact@acme.example.com',
+            tonnageReceived: 12.5
           }
         ]
       },
@@ -381,12 +394,10 @@ describe('#viewController', () => {
         averagePricePerTonne: 50
       },
       supportingInformation: 'Test supporting information note'
-    }
+    })
 
     beforeAll(() => {
-      vi.mocked(fetchReportDetail).mockResolvedValue(
-        asReportDetailResponse(reportDetail)
-      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
     })
 
     it('should return 200', async ({ server }) => {
@@ -951,24 +962,22 @@ describe('#viewController', () => {
 
       describe('when unapproved overseas sites are present', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse({
-              ...reportDetail,
-              exportActivity: {
-                ...reportDetail.exportActivity,
-                unapprovedOverseasSites: [
-                  { orsId: 'ORS-999', tonnageExported: 3.25 },
-                  { orsId: 'ORS-888', tonnageExported: 1.75 }
-                ]
-              }
-            })
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            exportActivity: {
+              .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+                reportDetail.exportActivity
+              ),
+              unapprovedOverseasSites: [
+                { orsId: 'ORS-999', tonnageExported: 3.25 },
+                { orsId: 'ORS-888', tonnageExported: 1.75 }
+              ]
+            }
+          })
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse(reportDetail)
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         })
 
         it.for(exporters)(
@@ -1003,27 +1012,23 @@ describe('#viewController', () => {
 
       describe('when no waste exported', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse({
-              ...reportDetail,
-              exportActivity: {
-                totalTonnageExported: 0,
-                overseasSites: [],
-                unapprovedOverseasSites: [],
-                tonnageReceivedNotExported: 0,
-                totalTonnageRefusedOrStopped: 0,
-                tonnageRefusedAtDestination: 0,
-                tonnageStoppedDuringExport: 0,
-                tonnageRepatriated: 0
-              }
-            })
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            exportActivity: {
+              totalTonnageExported: 0,
+              overseasSites: [],
+              unapprovedOverseasSites: [],
+              tonnageReceivedNotExported: 0,
+              totalTonnageRefusedOrStopped: 0,
+              tonnageRefusedAtDestination: 0,
+              tonnageStoppedDuringExport: 0,
+              tonnageRepatriated: 0
+            }
+          })
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse(reportDetail)
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         })
 
         it.for(exporters)(
@@ -1071,24 +1076,22 @@ describe('#viewController', () => {
 
       describe('when only unapproved overseas sites are present', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse({
-              ...reportDetail,
-              exportActivity: {
-                ...reportDetail.exportActivity,
-                overseasSites: [],
-                unapprovedOverseasSites: [
-                  { orsId: 'ORS-777', tonnageExported: 8 }
-                ]
-              }
-            })
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            exportActivity: {
+              .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+                reportDetail.exportActivity
+              ),
+              overseasSites: [],
+              unapprovedOverseasSites: [
+                { orsId: 'ORS-777', tonnageExported: 8 }
+              ]
+            }
+          })
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse(reportDetail)
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         })
 
         it.for(exporters)(
@@ -1117,6 +1120,33 @@ describe('#viewController', () => {
               'Overseas reprocessor IDs that have not been logged'
             )
             expect(section.textContent).toContain('ORS-777')
+          }
+        )
+      })
+
+      describe('when export activity is absent', () => {
+        beforeAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            exportActivity: undefined
+          })
+        })
+
+        afterAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        })
+
+        it.for(exporters)(
+          '($scenario) still renders the section with zero tonnage exported',
+          async ({ registrationAndAccreditation }, { server }) => {
+            const section = await loadSection({
+              server,
+              registrationAndAccreditation
+            })
+
+            expect(section).not.toBeNull()
+            expect(section.textContent).toContain('Total tonnage exported')
+            expect(section.textContent).toContain('0.00')
           }
         )
       })
@@ -1281,27 +1311,23 @@ describe('#viewController', () => {
 
       describe('when no waste exported', () => {
         beforeAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse({
-              ...reportDetail,
-              exportActivity: {
-                totalTonnageExported: 0,
-                overseasSites: [],
-                unapprovedOverseasSites: [],
-                tonnageReceivedNotExported: 0,
-                totalTonnageRefusedOrStopped: 0,
-                tonnageRefusedAtDestination: 0,
-                tonnageStoppedDuringExport: 0,
-                tonnageRepatriated: 0
-              }
-            })
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            exportActivity: {
+              totalTonnageExported: 0,
+              overseasSites: [],
+              unapprovedOverseasSites: [],
+              tonnageReceivedNotExported: 0,
+              totalTonnageRefusedOrStopped: 0,
+              tonnageRefusedAtDestination: 0,
+              tonnageStoppedDuringExport: 0,
+              tonnageRepatriated: 0
+            }
+          })
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse(reportDetail)
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         })
 
         it.for(exporters)(
@@ -1533,9 +1559,7 @@ describe('#viewController', () => {
           })
           const summaryList = section.querySelector('dl.govuk-summary-list')
 
-          expect(summaryList.textContent).toContain(
-            'Average price per tonne of PRNs'
-          )
+          expect(summaryList.textContent).toContain('Average price per tonne')
           expect(summaryList.textContent).toContain('£50.00')
         })
       })
@@ -1594,9 +1618,7 @@ describe('#viewController', () => {
           })
           const summaryList = section.querySelector('dl.govuk-summary-list')
 
-          expect(summaryList.textContent).toContain(
-            'Average price per tonne of PERNs'
-          )
+          expect(summaryList.textContent).toContain('Average price per tonne')
           expect(summaryList.textContent).toContain('£50.00')
         })
       })
@@ -1671,14 +1693,12 @@ describe('#viewController', () => {
         beforeAll(() => {
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...reportDetail,
-            supportingInformation: null
+            supportingInformation: undefined
           })
         })
 
         afterAll(() => {
-          vi.mocked(fetchReportDetail).mockResolvedValue(
-            asReportDetailResponse(reportDetail)
-          )
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         })
 
         it.for(reprocessorsAndExporters)(
