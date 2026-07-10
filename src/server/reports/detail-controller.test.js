@@ -46,7 +46,6 @@ const reprocessorRegistration = asRegistrationWithAccreditation({
   accreditation: undefined
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const reprocessorReportDetail = asReportDetailResponse({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -96,7 +95,6 @@ const reprocessorReportDetail = asReportDetailResponse({
   }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const emptyReportDetail = asReportDetailResponse({
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -152,7 +150,6 @@ const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
   }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedReprocessorReportDetail = asReportDetailResponse({
   operatorCategory: 'REPROCESSOR',
   cadence: 'monthly',
@@ -213,7 +210,6 @@ const exporterRegistration = asRegistrationWithAccreditation({
   accreditation: undefined
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -281,7 +277,6 @@ const exporterReportDetail = asReportDetailResponse({
   }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const exporterWithUnapprovedReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -326,7 +321,6 @@ const exporterWithUnapprovedReportDetail = asReportDetailResponse({
   }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const emptyExporterReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -385,7 +379,6 @@ const accreditedExporterRegistration = asRegistrationWithAccreditation({
   }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
 const accreditedExporterReportDetail = asReportDetailResponse({
   operatorCategory: 'EXPORTER',
   cadence: 'monthly',

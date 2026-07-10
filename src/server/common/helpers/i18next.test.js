@@ -1,7 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getLocaliseUrl } from '#server/common/helpers/i18next.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
-import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { asHapiRequest } from '#server/common/hapi-types.js'
 import { load } from 'cheerio'
 import { describe, expect, it as vitestIt } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
@@ -107,7 +107,7 @@ describe('#i18nPlugin - integration', () => {
           path,
           options: { auth: false },
           handler: async (request, h) => {
-            const typedRequest = mockHapiRequest(request)
+            const typedRequest = asHapiRequest(request)
             typedRequest.i18n = /** @type {i18n} */ ({ language: 'en' })
             typedRequest.t = /** @type {TFunction} */ (() => 'translated')
 
@@ -162,11 +162,12 @@ describe('#i18nPlugin - integration', () => {
       })
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(mockHapiRequest(response.request).localiseUrl).toBeDefined()
+
+      const request = asHapiRequest(response.request)
+
+      expect(request.localiseUrl).toBeDefined()
       // Should normalize en-GB to en and use English prefix
-      expect(mockHapiRequest(response.request).localiseUrl('/test')).toBe(
-        '/test'
-      )
+      expect(request.localiseUrl('/test')).toBe('/test')
     })
 
     it('should handle Welsh with region code', async ({ server }) => {
@@ -179,11 +180,12 @@ describe('#i18nPlugin - integration', () => {
       })
 
       expect(response.statusCode).toBe(statusCodes.ok)
-      expect(mockHapiRequest(response.request).localiseUrl).toBeDefined()
+
+      const request = asHapiRequest(response.request)
+
+      expect(request.localiseUrl).toBeDefined()
       // Should normalize cy-GB to cy and use Welsh prefix
-      expect(mockHapiRequest(response.request).localiseUrl('/test')).toBe(
-        '/cy/test'
-      )
+      expect(request.localiseUrl('/test')).toBe('/cy/test')
     })
   })
 })
