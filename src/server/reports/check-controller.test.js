@@ -2,12 +2,18 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
+
+/**
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -17,27 +23,22 @@ vi.mock(import('./helpers/update-report-status.js'))
 
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
-const mockCredentials = buildMockAuth().credentials
+const mockAuth = buildMockAuth()
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
-
-const exporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
+const exporterRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG001234'
-  },
+  }),
   accreditation: undefined
-})
+}
 
-const reprocessorRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
+const reprocessorRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'reprocessor',
@@ -49,11 +50,11 @@ const reprocessorRegistration = asRegistrationWithAccreditation({
         postcode: 'M1 1AA'
       }
     }
-  },
+  }),
   accreditation: undefined
-})
+}
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -61,11 +62,19 @@ const exporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: { material: 'plastic' },
   id: 'report-001',
   version: 1,
-  status: { currentStatus: 'in_progress' },
+  status: {
+    currentStatus: 'in_progress',
+    currentStatusAt: '2026-02-15T15:09:00.000Z',
+    created: {
+      at: '2026-02-15T15:09:00.000Z',
+      by: { id: 'user-123', name: 'Jane Doe', position: 'Manager' }
+    }
+  },
   supportingInformation: 'Supply chain disruption in February',
   recyclingActivity: {
     totalTonnageReceived: 80.25,
@@ -97,6 +106,7 @@ const exporterReportDetail = {
         siteName: 'Brussels Recycling',
         orsId: 'OSR-001',
         country: 'Belgium',
+        tonnageExported: 50,
         approved: false
       }
     ],
@@ -122,7 +132,7 @@ const exporterReportDetail = {
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -130,6 +140,7 @@ const reprocessorReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
@@ -143,8 +154,15 @@ const reprocessorReportDetail = {
   },
   id: 'report-001',
   version: 1,
-  status: { currentStatus: 'in_progress' },
-  supportingInformation: null,
+  status: {
+    currentStatus: 'in_progress',
+    currentStatusAt: '2026-02-15T15:09:00.000Z',
+    created: {
+      at: '2026-02-15T15:09:00.000Z',
+      by: { id: 'user-123', name: 'Jane Doe', position: 'Manager' }
+    }
+  },
+  supportingInformation: undefined,
   recyclingActivity: {
     totalTonnageReceived: 80.25,
     suppliers: [
@@ -175,9 +193,9 @@ const reprocessorReportDetail = {
   }
 }
 
-const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
+const accreditedReprocessorRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'reprocessor',
@@ -186,23 +204,29 @@ const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
     site: {
       address: { line1: 'North Road', town: 'Manchester', postcode: 'M1 1AA' }
     }
-  },
-  accreditation: { id: 'acc-001', accreditationNumber: 'ER992415095748M' }
-})
+  }),
+  accreditation: /** @type {Accreditation} */ ({
+    id: 'acc-001',
+    accreditationNumber: 'ER992415095748M'
+  })
+}
 
-const accreditedExporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
+const accreditedExporterRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG001234',
     accreditationId: 'acc-002'
-  },
-  accreditation: { id: 'acc-002', accreditationNumber: 'EE992415095748M' }
-})
+  }),
+  accreditation: /** @type {Accreditation} */ ({
+    id: 'acc-002',
+    accreditationNumber: 'EE992415095748M'
+  })
+}
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
   prn: {
@@ -213,16 +237,30 @@ const accreditedReprocessorReportDetail = {
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
+const incompletePrnReprocessorReportDetail = {
+  ...reprocessorReportDetail,
+  prn: {
+    issuedTonnage: 75,
+    totalRevenue: null,
+    freeTonnage: null,
+    averagePricePerTonne: null
+  }
+}
+
+/** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   exportActivity: {
-    ...exporterReportDetail.exportActivity,
+    .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+      exporterReportDetail.exportActivity
+    ),
     overseasSites: [
       {
         siteName: 'Brussels Recycling',
         orsId: 'OSR-001',
         country: 'Belgium',
+        tonnageExported: 50,
         approved: true
       }
     ]
@@ -651,7 +689,9 @@ describe('#checkController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
           exportActivity: {
-            ...exporterReportDetail.exportActivity,
+            .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+              exporterReportDetail.exportActivity
+            ),
             totalTonnageRefusedOrStopped: null,
             tonnageRefusedAtDestination: null,
             tonnageStoppedDuringExport: null,
@@ -683,7 +723,9 @@ describe('#checkController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
           exportActivity: {
-            ...exporterReportDetail.exportActivity,
+            .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+              exporterReportDetail.exportActivity
+            ),
             totalTonnageRefusedOrStopped: 4.0,
             tonnageRefusedAtDestination: null,
             tonnageStoppedDuringExport: 4.0
@@ -714,7 +756,9 @@ describe('#checkController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
           exportActivity: {
-            ...exporterReportDetail.exportActivity,
+            .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
+              exporterReportDetail.exportActivity
+            ),
             totalTonnageRefusedOrStopped: 2.5,
             tonnageRefusedAtDestination: 2.5,
             tonnageStoppedDuringExport: null
@@ -930,7 +974,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'heading', { name: /PERNs/, level: 3 })
+          queryByRole(body, 'heading', { name: /PERNs/, level: 2 })
         ).toBeNull()
       })
     })
@@ -942,7 +986,7 @@ describe('#checkController', () => {
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
-          exportActivity: null
+          exportActivity: undefined
         })
       })
 
@@ -1123,7 +1167,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          queryByRole(body, 'heading', { name: /PRNs/, level: 2 })
         ).toBeNull()
       })
 
@@ -1327,7 +1371,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          queryByRole(body, 'heading', { name: /PRNs/, level: 2 })
         ).toBeNull()
       })
     })
@@ -1359,7 +1403,7 @@ describe('#checkController', () => {
 
         const value = recycledRow?.querySelector('.govuk-summary-list__value')
 
-        expect(value?.textContent?.trim()).toBe('—')
+        expect(value?.textContent?.trim()).toBe('-')
       })
 
       it('should display dash for null tonnage not recycled', async ({
@@ -1385,7 +1429,7 @@ describe('#checkController', () => {
           '.govuk-summary-list__value'
         )
 
-        expect(value?.textContent?.trim()).toBe('—')
+        expect(value?.textContent?.trim()).toBe('-')
       })
     })
 
@@ -1431,7 +1475,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          getByRole(body, 'heading', { name: /PRNs/, level: 3 })
+          getByRole(body, 'heading', { name: /PRNs/, level: 2 })
         ).toBeDefined()
         expect(body.textContent).toContain('Total tonnage of PRNs issued')
         expect(body.textContent).toContain('75')
@@ -1476,6 +1520,59 @@ describe('#checkController', () => {
         })
 
         expect(changeLink).toBeDefined()
+      })
+
+      describe('with unpopulated PRN values', () => {
+        beforeEach(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue(
+            incompletePrnReprocessorReportDetail
+          )
+        })
+
+        it('should return 200', async ({ server }) => {
+          const { statusCode } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          expect(statusCode).toBe(statusCodes.ok)
+        })
+
+        it('should display a dash for each unpopulated PRN value', async ({
+          server
+        }) => {
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+
+          const dom = new JSDOM(result)
+          const { body } = dom.window.document
+          const summaryRows = Array.from(
+            body.querySelectorAll('.govuk-summary-list__row')
+          )
+          const valueForKey = (label) =>
+            summaryRows
+              .find((row) =>
+                row
+                  .querySelector('.govuk-summary-list__key')
+                  ?.textContent?.includes(label)
+              )
+              ?.querySelector('.govuk-summary-list__value')
+              ?.textContent?.trim()
+
+          expect({
+            revenue: valueForKey('Total revenue of PRNs'),
+            freeTonnage: valueForKey('Total tonnage of PRNs issued for free'),
+            averagePrice: valueForKey('Average price per tonne')
+          }).toStrictEqual({
+            revenue: '-',
+            freeTonnage: '-',
+            averagePrice: '-'
+          })
+        })
       })
     })
 
@@ -1553,7 +1650,7 @@ describe('#checkController', () => {
         const { body } = dom.window.document
 
         expect(
-          getByRole(body, 'heading', { name: /PERNs/, level: 3 })
+          getByRole(body, 'heading', { name: /PERNs/, level: 2 })
         ).toBeDefined()
         expect(body.textContent).toContain('Total tonnage of PERNs issued')
         expect(body.textContent).toContain('75')
@@ -1638,7 +1735,9 @@ describe('#checkController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...accreditedExporterReportDetail,
           prn: {
-            ...accreditedExporterReportDetail.prn,
+            .../** @type {NonNullable<ReportDetailResponse['prn']>} */ (
+              accreditedExporterReportDetail.prn
+            ),
             averagePricePerTonne: 0
           }
         })
@@ -1664,7 +1763,14 @@ describe('#checkController', () => {
         )
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
-          status: { currentStatus: 'ready_to_submit' }
+          status: {
+            currentStatus: 'ready_to_submit',
+            currentStatusAt: '2026-02-15T15:09:00.000Z',
+            created: {
+              at: '2026-02-15T15:09:00.000Z',
+              by: { id: 'user-123', name: 'Jane Doe', position: 'Manager' }
+            }
+          }
         })
       })
 

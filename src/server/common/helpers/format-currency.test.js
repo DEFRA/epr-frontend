@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { formatCurrency } from '#config/nunjucks/filters/format-currency.js'
+import { formatCurrency } from '#server/common/helpers/format-currency.js'
 
 describe('#formatCurrency', () => {
   describe('with defaults', () => {
