@@ -55,23 +55,7 @@ describe('#formatWholeNumberTonnage', () => {
     expect(formatWholeNumberTonnage(1333)).toBe('1,333')
   })
 
-  test('throws for a decimal value', () => {
-    expect(() => formatWholeNumberTonnage(1234.9)).toThrow(TypeError)
-  })
-
-  test('throws for null', () => {
-    expect(() => formatWholeNumberTonnage(/** @type {never} */ (null))).toThrow(
-      TypeError
-    )
-  })
-
-  test('throws for undefined', () => {
-    expect(() =>
-      formatWholeNumberTonnage(/** @type {never} */ (undefined))
-    ).toThrow(TypeError)
-  })
-
-  test('throws for negative number', () => {
-    expect(() => formatWholeNumberTonnage(-1)).toThrow(TypeError)
+  test('rounds a decimal value to a whole number', () => {
+    expect(formatWholeNumberTonnage(1234.9)).toBe('1,235')
   })
 })

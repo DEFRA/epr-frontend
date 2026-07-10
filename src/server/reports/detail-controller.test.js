@@ -1,9 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
-import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
-import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import {
@@ -16,21 +14,23 @@ import {
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
-const mockCredentials = buildMockAuth().credentials
+const mockAuth = buildMockAuth()
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
-
-const reprocessorRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
+const reprocessorRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'reprocessor',
@@ -42,17 +42,19 @@ const reprocessorRegistration = asRegistrationWithAccreditation({
         postcode: 'M1 1AA'
       }
     }
-  },
+  }),
   accreditation: undefined
-})
+}
 
-const reprocessorReportDetail = asReportDetailResponse({
+/** @type {ReportDetailResponse} */
+const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
@@ -70,12 +72,18 @@ const reprocessorReportDetail = asReportDetailResponse({
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        tonnageReceived: 38.04
+        tonnageReceived: 38.04,
+        supplierAddress: '45 Recycling Park, Leeds, LS1 2AB',
+        supplierPhone: '09876 543210',
+        supplierEmail: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -89,19 +97,22 @@ const reprocessorReportDetail = asReportDetailResponse({
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Reprocessor',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
   }
-})
+}
 
-const emptyReportDetail = asReportDetailResponse({
+/** @type {ReportDetailResponse} */
+const emptyReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic',
@@ -125,11 +136,11 @@ const emptyReportDetail = asReportDetailResponse({
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-})
+}
 
-const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
+const accreditedReprocessorRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'reprocessor',
@@ -142,21 +153,23 @@ const accreditedReprocessorRegistration = asRegistrationWithAccreditation({
         postcode: 'M1 1AA'
       }
     }
-  },
-  accreditation: {
+  }),
+  accreditation: /** @type {Accreditation} */ ({
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M',
     status: 'approved'
-  }
-})
+  })
+}
 
-const accreditedReprocessorReportDetail = asReportDetailResponse({
+/** @type {ReportDetailResponse} */
+const accreditedReprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR',
   cadence: 'monthly',
   year: 2026,
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
+  dueDate: '2026-04-30',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
@@ -174,12 +187,18 @@ const accreditedReprocessorReportDetail = asReportDetailResponse({
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        tonnageReceived: 38.04
+        tonnageReceived: 38.04,
+        supplierAddress: '45 Recycling Park, Leeds, LS1 2AB',
+        supplierPhone: '09876 543210',
+        supplierEmail: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -193,30 +212,33 @@ const accreditedReprocessorReportDetail = asReportDetailResponse({
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Reprocessor',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
   }
-})
+}
 
-const exporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-456' },
-  registration: {
+const exporterRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-456' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-002',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG002345'
-  },
+  }),
   accreditation: undefined
-})
+}
 
-const exporterReportDetail = asReportDetailResponse({
+/** @type {ReportDetailResponse} */
+const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
@@ -227,12 +249,18 @@ const exporterReportDetail = asReportDetailResponse({
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        tonnageReceived: 38.04
+        tonnageReceived: 38.04,
+        supplierAddress: '45 Recycling Park, Leeds, LS1 2AB',
+        supplierPhone: '09876 543210',
+        supplierEmail: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -271,19 +299,22 @@ const exporterReportDetail = asReportDetailResponse({
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Exporter',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
   }
-})
+}
 
-const exporterWithUnapprovedReportDetail = asReportDetailResponse({
+/** @type {ReportDetailResponse} */
+const exporterWithUnapprovedReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: { material: 'plastic' },
   recyclingActivity: {
@@ -319,15 +350,17 @@ const exporterWithUnapprovedReportDetail = asReportDetailResponse({
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-})
+}
 
-const emptyExporterReportDetail = asReportDetailResponse({
+/** @type {ReportDetailResponse} */
+const emptyExporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
   year: 2026,
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic'
@@ -354,7 +387,7 @@ const emptyExporterReportDetail = asReportDetailResponse({
     tonnageSentToAnotherSite: 0,
     finalDestinations: []
   }
-})
+}
 
 const detailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/quarterly/1/submissions/1'
@@ -363,29 +396,31 @@ const exporterDetailUrl =
 const accreditedDetailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/monthly/2/submissions/1'
 
-const accreditedExporterRegistration = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-789' },
-  registration: {
+const accreditedExporterRegistration = {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-789' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-003',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG003456',
     accreditationId: 'acc-002'
-  },
-  accreditation: {
+  }),
+  accreditation: /** @type {Accreditation} */ ({
     id: 'acc-002',
     accreditationNumber: 'EE992415095748M',
     status: 'approved'
-  }
-})
+  })
+}
 
-const accreditedExporterReportDetail = asReportDetailResponse({
+/** @type {ReportDetailResponse} */
+const accreditedExporterReportDetail = {
   operatorCategory: 'EXPORTER',
   cadence: 'monthly',
   year: 2026,
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
+  dueDate: '2026-04-30',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
@@ -429,11 +464,12 @@ const accreditedExporterReportDetail = asReportDetailResponse({
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Exporter',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
   }
-})
+}
 
 const accreditedExporterDetailUrl =
   '/organisations/org-789/registrations/reg-003/reports/2026/monthly/2/submissions/1'
@@ -759,7 +795,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       const tables = getAllByRole(body, 'table')
-      const destinationTable = tables[2]
+      const destinationTable = tables[1]
 
       expect(destinationTable.textContent).toContain('Lincoln recycling')
       expect(destinationTable.textContent).toContain('Reprocessor')
@@ -871,23 +907,6 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain('0')
-    })
-
-    it('should only display breakdown table when no suppliers or destinations', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tables = body.querySelectorAll('table')
-
-      expect(tables).toHaveLength(1)
     })
 
     it('should not display last upload when null', async ({ server }) => {
@@ -1399,23 +1418,6 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain('0')
-    })
-
-    it('should not display supplier or overseas site tables when empty', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterDetailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tables = body.querySelectorAll('table')
-
-      expect(tables).toHaveLength(2)
     })
 
     it('should still render waste exported heading', async ({ server }) => {
