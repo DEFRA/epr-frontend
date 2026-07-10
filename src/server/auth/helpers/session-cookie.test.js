@@ -1,6 +1,9 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { asUserSession } from '#server/common/test-helpers/auth-helper.js'
+import {
+  assertUserSession,
+  asUserSession
+} from '#server/common/test-helpers/auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { Metrics } from '@defra/cdp-metrics'
 import Iron from '@hapi/iron'
@@ -162,7 +165,7 @@ describe('#sessionCookie - integration', () => {
         expect(updatedSession.refreshToken).toBe('new-refresh-token')
       })
 
-      const updatedSession = asUserSession(
+      const updatedSession = assertUserSession(
         await server.app.cache.get(sessionId)
       )
 
@@ -302,7 +305,7 @@ describe('#sessionCookie - integration', () => {
 
       expect(payload.idToken).toBe('valid-id-token')
 
-      const unchangedSession = asUserSession(
+      const unchangedSession = assertUserSession(
         await server.app.cache.get(sessionId)
       )
 
@@ -507,7 +510,7 @@ describe('#sessionCookie - integration', () => {
 
       expect(response.statusCode).toBe(statusCodes.ok)
 
-      const updatedSession = asUserSession(
+      const updatedSession = assertUserSession(
         await server.app.cache.get(sessionId)
       )
 
@@ -644,7 +647,7 @@ describe('#sessionCookie - integration', () => {
       expect(response.statusCode).toBe(statusCodes.ok)
 
       // Session must be unchanged: refresh was skipped because it was already in progress
-      const unchangedSession = asUserSession(
+      const unchangedSession = assertUserSession(
         await server.app.cache.get(sessionId)
       )
 
