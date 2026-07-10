@@ -6,6 +6,10 @@ import { buildCreatePrnViewData } from './view-data.js'
  * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
  */
 
+/**
+ * @typedef {{ wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} ViewDataRegistration
+ */
+
 const createMockRequest = () =>
   mockHapiRequest({
     t: vi.fn((key, params = {}) => {
@@ -39,20 +43,18 @@ const stubRecipients = [
   { value: 'org-3', text: 'Green Waste Solutions' }
 ]
 
-const reprocessorRegistration =
-  /** @type {{ wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} */ ({
-    id: 'reg-001',
-    wasteProcessingType: 'reprocessor-input', // PRN
-    material: 'glass',
-    glassRecyclingProcess: ['glass_re_melt']
-  })
+const reprocessorRegistration = /** @type {ViewDataRegistration} */ ({
+  id: 'reg-001',
+  wasteProcessingType: 'reprocessor-input', // PRN
+  material: 'glass',
+  glassRecyclingProcess: ['glass_re_melt']
+})
 
-const exporterRegistration =
-  /** @type {{ wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} */ ({
-    id: 'reg-002',
-    wasteProcessingType: 'exporter', // PERN
-    material: 'plastic'
-  })
+const exporterRegistration = /** @type {ViewDataRegistration} */ ({
+  id: 'reg-002',
+  wasteProcessingType: 'exporter', // PERN
+  material: 'plastic'
+})
 
 describe('#buildCreatePrnViewData', () => {
   describe('for reprocessor (PRN)', () => {

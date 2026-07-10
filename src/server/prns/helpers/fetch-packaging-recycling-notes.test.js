@@ -84,9 +84,8 @@ describe(fetchPackagingRecyclingNotes, () => {
   })
 
   test('includes Authorization and tracing headers', async ({ msw }) => {
-    let capturedRequest = /** @type {Request} */ (
-      /** @type {unknown} */ (undefined)
-    )
+    /** @type {Request | undefined} */
+    let capturedRequest
     msw.use(
       http.get(
         `${backendUrl}/v1/organisations/org-123/registrations/reg-456/accreditations/acc-789/packaging-recycling-notes`,
@@ -104,11 +103,11 @@ describe(fetchPackagingRecyclingNotes, () => {
       idToken
     )
 
-    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
-    expect(capturedRequest.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
-    expect(capturedRequest.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
+    const request = /** @type {Request} */ (capturedRequest)
+
+    expect(request.headers.get('content-type')).toBe('application/json')
+    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
+    expect(request.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
   test('encodes URL path parameters with special characters', async ({

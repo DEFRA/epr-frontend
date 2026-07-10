@@ -28,9 +28,8 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 
 describe('refresh token', () => {
   it('should refresh id token with correct parameters', async ({ msw }) => {
-    let capturedRequest = /** @type {Request} */ (
-      /** @type {unknown} */ (undefined)
-    )
+    /** @type {Request | undefined} */
+    let capturedRequest
     msw.use(
       http.post('http://defra-id.auth/token', async ({ request }) => {
         capturedRequest = request.clone()
@@ -76,7 +75,8 @@ describe('refresh token', () => {
       http: { response: { status_code: 200 } }
     })
 
-    const params = new URLSearchParams(await capturedRequest.text())
+    const request = /** @type {Request} */ (capturedRequest)
+    const params = new URLSearchParams(await request.text())
     expect(Object.fromEntries(params)).toStrictEqual({
       client_id: 'client-id-123',
       client_secret: 'client-secret-456',

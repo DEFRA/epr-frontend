@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { mapToSelectOptions } from './map-to-select-options.js'
 
+const asOrgsInput = (data) =>
+  /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (data)
+
 describe('#mapToSelectOptions', () => {
   it('should sort options alphabetically by display text', () => {
     const unsortedOrganisations = [
@@ -36,11 +39,7 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(
-      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (
-        unsortedOrganisations
-      )
-    )
+    const result = mapToSelectOptions(asOrgsInput(unsortedOrganisations))
 
     expect(result).toStrictEqual([
       { value: 'alpha-id', text: 'Alpha Ltd, 1 First St, Bristol, A1 1AA' },
@@ -64,9 +63,7 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(
-      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (organisations)
-    )
+    const result = mapToSelectOptions(asOrgsInput(organisations))
 
     expect(result[0].text).toBe('Trading As Name, 1 High St, London, W1 1AA')
   })
@@ -86,9 +83,7 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(
-      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (organisations)
-    )
+    const result = mapToSelectOptions(asOrgsInput(organisations))
 
     expect(result[0].text).toBe('Legal Producer Ltd, 1 High St, London, W1 1AA')
   })
@@ -110,11 +105,7 @@ describe('#mapToSelectOptions', () => {
       }
     ]
 
-    const result = mapToSelectOptions(
-      /** @type {Parameters<typeof mapToSelectOptions>[0]} */ (
-        /** @type {unknown} */ (organisations)
-      )
-    )
+    const result = mapToSelectOptions(asOrgsInput(organisations))
 
     expect(result[0].text).toBe('Test Org, 1 High St, London, W1 1AA')
   })
