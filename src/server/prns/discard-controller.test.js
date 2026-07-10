@@ -79,13 +79,13 @@ const validPayload = {
   wasteProcessingType: 'reprocessor-input'
 }
 
-const mockPrnCreated = {
+const mockPrnCreated = asCreatePrnResponse({
   id: 'prn-789',
   tonnage: 100,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'reprocessor-input'
-}
+})
 
 const mockPernCreated = asCreatePrnResponse({
   id: 'pern-123',
@@ -102,7 +102,7 @@ describe('#discardController', () => {
       fixtureReprocessor
     )
     vi.mocked(getWasteBalance).mockResolvedValue(null)
-    vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPrnCreated))
+    vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(
       asUpdatePrnStatusResponse({
         ...mockPrnCreated,

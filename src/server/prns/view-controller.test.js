@@ -112,7 +112,7 @@ const mockPrnStatusUpdated = asUpdatePrnStatusResponse({
   status: 'awaiting_authorisation'
 })
 
-const mockPrnFromBackend = {
+const mockPrnFromBackend = asPackagingRecyclingNote({
   id: 'prn-789',
   issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
   tonnage: 100,
@@ -124,7 +124,7 @@ const mockPrnFromBackend = {
   issuedAt: '2026-01-16T14:30:00.000Z',
   issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
-}
+})
 
 const mockPernFromBackend = asPackagingRecyclingNote({
   id: 'pern-123',
@@ -146,9 +146,7 @@ describe('#viewController', () => {
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-      asPackagingRecyclingNote(mockPrnFromBackend)
-    )
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
     vi.mocked(fetchWasteBalances).mockResolvedValue({

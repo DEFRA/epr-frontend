@@ -27,6 +27,9 @@ vi.mock(import('hapi-pino'), () => ({
   }
 }))
 
+// start-server is imported statically, so createLogger() runs at import time --
+// before mockLogger is initialised. Forward lazily rather than returning
+// mockLogger directly, which would hit a temporal-dead-zone error.
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({
     info: (...args) => mockLogger.info(...args),
