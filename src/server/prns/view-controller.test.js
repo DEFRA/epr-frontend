@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   extractCookieValues,
   mergeCookies
@@ -32,7 +33,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -46,9 +47,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -62,7 +63,7 @@ const fixtureExporter = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -196,16 +197,18 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on certificate page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-          ...fixtureReprocessor,
-          organisationData: {
-            id: 'org-123',
-            companyDetails: {
-              name: 'Legal Reprocessor Ltd',
-              tradingName: 'Reprocessor Trading'
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          asRequiredRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            organisationData: {
+              id: 'org-123',
+              companyDetails: {
+                name: 'Legal Reprocessor Ltd',
+                tradingName: 'Reprocessor Trading'
+              }
             }
-          }
-        })
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -226,10 +229,12 @@ describe('#viewController', () => {
       it('displays empty issuer when company details are missing on certificate page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-          ...fixtureReprocessor,
-          organisationData: { id: 'org-123', companyDetails: null }
-        })
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          asRequiredRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            organisationData: { id: 'org-123', companyDetails: null }
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -618,7 +623,7 @@ describe('#viewController', () => {
           }
         }
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          reprocessorWithAddress
+          asRequiredRegistrationWithAccreditation(reprocessorWithAddress)
         )
 
         const { result, statusCode } = await server.inject({
@@ -650,7 +655,7 @@ describe('#viewController', () => {
           }
         }
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          reprocessorWithoutAddress
+          asRequiredRegistrationWithAccreditation(reprocessorWithoutAddress)
         )
 
         const { statusCode } = await server.inject({
@@ -1215,16 +1220,18 @@ describe('#viewController', () => {
       it('displays issuer tradingName when present on check page', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-          ...fixtureReprocessor,
-          organisationData: {
-            id: 'org-123',
-            companyDetails: {
-              name: 'Legal Reprocessor Ltd',
-              tradingName: 'Reprocessor Trading'
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          asRequiredRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            organisationData: {
+              id: 'org-123',
+              companyDetails: {
+                name: 'Legal Reprocessor Ltd',
+                tradingName: 'Reprocessor Trading'
+              }
             }
-          }
-        })
+          })
+        )
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,
@@ -1275,10 +1282,12 @@ describe('#viewController', () => {
       it('displays empty issuer when company details are missing', async ({
         server
       }) => {
-        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-          ...fixtureReprocessor,
-          organisationData: { id: 'org-123', companyDetails: null }
-        })
+        vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+          asRequiredRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            organisationData: { id: 'org-123', companyDetails: null }
+          })
+        )
 
         const { cookie: csrfCookie, crumb } = await getCsrfToken(
           server,

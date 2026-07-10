@@ -1,5 +1,6 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -22,7 +23,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-001',
@@ -33,9 +34,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRegistrationWithAccreditation({
   organisationData: { id: 'org-456', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-002',
@@ -45,7 +46,7 @@ const fixtureExporter = {
     accreditationId: 'acc-002'
   },
   accreditation: { id: 'acc-002', status: 'approved' }
-}
+})
 
 const mockWasteBalance = { availableAmount: 150.5 }
 
@@ -988,10 +989,12 @@ describe('#listPrnsController', () => {
       it('should return 404 with mismatched accreditation id', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...fixtureReprocessor,
-          accreditation: { id: 'acc-other', status: 'approved' }
-        })
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          asRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            accreditation: { id: 'acc-other', status: 'approved' }
+          })
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',

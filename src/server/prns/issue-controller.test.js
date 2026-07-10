@@ -5,6 +5,7 @@ import {
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -48,21 +49,23 @@ const mockPrnIssued = {
 describe('#issueController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-      organisationData: {
-        id: organisationId,
-        companyDetails: { name: 'Test Org' }
-      },
-      registration: {
-        id: registrationId,
-        wasteProcessingType: 'reprocessor-input',
-        material: 'plastic',
-        nation: 'england',
-        site: { address: { line1: 'Test Site' } },
-        accreditationId
-      },
-      accreditation: { id: accreditationId, status: 'approved' }
-    })
+    vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+      asRequiredRegistrationWithAccreditation({
+        organisationData: {
+          id: organisationId,
+          companyDetails: { name: 'Test Org' }
+        },
+        registration: {
+          id: registrationId,
+          wasteProcessingType: 'reprocessor-input',
+          material: 'plastic',
+          nation: 'england',
+          site: { address: { line1: 'Test Site' } },
+          accreditationId
+        },
+        accreditation: { id: accreditationId, status: 'approved' }
+      })
+    )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
       id: prnId,
       prnNumber: 'ER2625001A',

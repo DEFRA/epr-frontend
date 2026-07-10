@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import {
   getByLabelText,
@@ -25,7 +26,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-001',
@@ -36,9 +37,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRequiredRegistrationWithAccreditation({
   organisationData: { id: 'org-456', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-002',
@@ -48,7 +49,7 @@ const fixtureExporter = {
     accreditationId: 'acc-002'
   },
   accreditation: { id: 'acc-002', status: 'approved' }
-}
+})
 
 const reprocessorUrl =
   '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/create'

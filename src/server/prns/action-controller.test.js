@@ -1,4 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -20,7 +21,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -44,9 +45,9 @@ const fixtureReprocessor = {
     status: 'approved',
     accreditationNumber: 'ACC-001'
   }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -64,7 +65,7 @@ const fixtureExporter = {
     status: 'approved',
     accreditationNumber: 'ACC-001'
   }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -479,16 +480,18 @@ describe('#actionController', () => {
     it('displays issuer tradingName when present on action page', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-        ...fixtureReprocessor,
-        organisationData: {
-          id: 'org-123',
-          companyDetails: {
-            name: 'Legal Reprocessor Ltd',
-            tradingName: 'Reprocessor Trading'
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        asRequiredRegistrationWithAccreditation({
+          ...fixtureReprocessor,
+          organisationData: {
+            id: 'org-123',
+            companyDetails: {
+              name: 'Legal Reprocessor Ltd',
+              tradingName: 'Reprocessor Trading'
+            }
           }
-        }
-      })
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -519,13 +522,15 @@ describe('#actionController', () => {
     it('should display empty issuer when organisationData.companyDetails is null', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-        ...fixtureReprocessor,
-        organisationData: {
-          ...fixtureReprocessor.organisationData,
-          companyDetails: null
-        }
-      })
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        asRequiredRegistrationWithAccreditation({
+          ...fixtureReprocessor,
+          organisationData: {
+            ...fixtureReprocessor.organisationData,
+            companyDetails: null
+          }
+        })
+      )
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -555,10 +560,12 @@ describe('#actionController', () => {
     it('displays empty accreditation number when accreditation is null', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-        ...fixtureReprocessor,
-        accreditation: null
-      })
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        asRequiredRegistrationWithAccreditation({
+          ...fixtureReprocessor,
+          accreditation: null
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -572,13 +579,15 @@ describe('#actionController', () => {
     it('displays empty reprocessing site address when site is null', async ({
       server
     }) => {
-      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue({
-        ...fixtureReprocessor,
-        registration: {
-          ...fixtureReprocessor.registration,
-          site: null
-        }
-      })
+      vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
+        asRequiredRegistrationWithAccreditation({
+          ...fixtureReprocessor,
+          registration: {
+            ...fixtureReprocessor.registration,
+            site: null
+          }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',

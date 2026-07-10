@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -14,7 +15,7 @@ vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
 const mockAuth = buildMockAuth()
 
-const mockRegistration = {
+const mockRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -23,7 +24,7 @@ const mockRegistration = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
 const mockReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
