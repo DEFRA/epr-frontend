@@ -5,11 +5,19 @@ import fixture from '../../../../../fixtures/waste-organisations/organisations.j
 import { createInMemoryWasteOrganisationsService } from './inmemory-adapter.js'
 import { testWasteOrganisationsServiceContract } from './port.contract.js'
 
+/**
+ * @import { WasteOrganisation } from './types.js'
+ * @import { WasteOrganisationsService } from './port.js'
+ */
+
 const it = base.extend({
-  // eslint-disable-next-line no-empty-pattern
-  wasteOrganisationsService: async ({}, use) => {
+  wasteOrganisationsService: async (
+    // eslint-disable-next-line no-empty-pattern
+    {},
+    /** @type {(service: WasteOrganisationsService) => Promise<void>} */ use
+  ) => {
     const service = createInMemoryWasteOrganisationsService(
-      fixture.organisations
+      /** @type {WasteOrganisation[]} */ (fixture.organisations)
     )
     await use(service)
   }

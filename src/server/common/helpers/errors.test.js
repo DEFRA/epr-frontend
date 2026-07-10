@@ -3,7 +3,10 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 
 import { catchAll } from '#server/common/helpers/errors.js'
-import { asRequest } from '#server/common/test-helpers/request-fixtures.js'
+import {
+  asRequest,
+  asResponseToolkit
+} from '#server/common/test-helpers/request-fixtures.js'
 
 vi.mock(import('#server/auth/helpers/user-session.js'), () => ({
   removeUserSession: vi.fn()
@@ -38,7 +41,7 @@ describe(catchAll, () => {
   it('should skip non-boom responses', async () => {
     const request = { response: {} }
     const h = { continue: Symbol('continue') }
-    const result = await catchAll(asRequest(request), h)
+    const result = await catchAll(asRequest(request), asResponseToolkit(h))
 
     expect(result).toBe(h.continue)
   })
@@ -50,7 +53,7 @@ describe(catchAll, () => {
     [statusCodes.imATeapot, 'error:generic']
   ])('renders expected error page for %i', async (code, expectedKey) => {
     const req = makeRequest(code)
-    await catchAll(asRequest(req), mockToolkit)
+    await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
 
     expect(req.t).toHaveBeenCalledWith(expectedKey)
     expect(mockToolkit.view).toHaveBeenCalledWith('error/index', {
@@ -64,7 +67,7 @@ describe(catchAll, () => {
 
   it('logs user out when session is missing', async () => {
     const req = makeRequest(statusCodes.unauthorized)
-    await catchAll(asRequest(req), mockToolkit)
+    await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
 
     expect(removeUserSession).toHaveBeenCalledWith(req)
     expect(mockRedirect).toHaveBeenCalledWith('/logged-out')
@@ -82,7 +85,7 @@ describe(catchAll, () => {
       // Note: no `t` function provided (as would happen on ignored routes)
     }
 
-    await catchAll(asRequest(request), mockToolkit)
+    await catchAll(asRequest(request), asResponseToolkit(mockToolkit))
 
     expect(mockToolkit.view).toHaveBeenCalledWith('error/index', {
       pageTitle: 'Page not found',

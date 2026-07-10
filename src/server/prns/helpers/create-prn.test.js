@@ -44,7 +44,7 @@ describe(createPrn, () => {
   })
 
   it('calls fetchJsonFromBackend with correct path and options', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await createPrn(
       organisationId,
@@ -67,7 +67,7 @@ describe(createPrn, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await createPrn('org/123', 'reg&456', 'acc#789', payload, idToken)
 
@@ -78,7 +78,7 @@ describe(createPrn, () => {
   })
 
   it('returns the response from fetchJsonFromBackend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await createPrn(
       organisationId,
@@ -93,7 +93,7 @@ describe(createPrn, () => {
 
   it('propagates errors from fetchJsonFromBackend', async () => {
     const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
       createPrn(

@@ -1,8 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
+import {
+  asIssuedToOrganisation,
+  asPackagingRecyclingNote
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -25,7 +28,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
+const fixtureReprocessor = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -41,7 +44,7 @@ const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const fixtureExporter = asRequiredRegistrationWithAccreditation({
+const fixtureExporter = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -188,12 +191,12 @@ describe('#issuedController', () => {
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockIssuedPrn,
-          issuedToOrganisation: {
+          issuedToOrganisation: asIssuedToOrganisation({
             id: 'producer-1',
             name: 'Legal Name Ltd',
             tradingName: 'Trading Name Ltd',
             registrationType: 'LARGE_PRODUCER'
-          }
+          })
         })
 
         const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {
@@ -220,12 +223,12 @@ describe('#issuedController', () => {
       }) => {
         vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
           ...mockIssuedPrn,
-          issuedToOrganisation: {
+          issuedToOrganisation: asIssuedToOrganisation({
             id: 'scheme-1',
             name: 'Scheme Legal Ltd',
             tradingName: 'Scheme Trading Name',
             registrationType: 'COMPLIANCE_SCHEME'
-          }
+          })
         })
 
         const { cookie: csrfCookie } = await getCsrfToken(server, issuedUrl, {

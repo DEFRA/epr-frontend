@@ -3,6 +3,8 @@
  * @import { PackagingRecyclingNote as PackagingRecyclingNoteListItem } from '#server/prns/helpers/fetch-packaging-recycling-notes.js'
  * @import { CreatePrnResponse } from '#server/prns/helpers/create-prn.js'
  * @import { UpdatePrnStatusResponse } from '#server/prns/helpers/update-prn-status.js'
+ * @import { IssuedToOrganisation } from '#server/prns/helpers/fetch-packaging-recycling-note.js'
+ * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */
 
 /**
@@ -40,3 +42,20 @@ export const asCreatePrnResponse = (data) =>
  */
 export const asUpdatePrnStatusResponse = (data) =>
   /** @type {UpdatePrnStatusResponse} */ (data)
+
+/**
+ * Casts a partial mock object to the `IssuedToOrganisation` shape used on PRN
+ * responses, so tests can supply only the fields the code path reads.
+ * @param {unknown} data
+ * @returns {IssuedToOrganisation}
+ */
+export const asIssuedToOrganisation = (data) =>
+  /** @type {IssuedToOrganisation} */ (data)
+
+/**
+ * Casts a partial mock object to the `WasteBalance` shape that `getWasteBalance`
+ * resolves.
+ * @param {unknown} data
+ * @returns {WasteBalance}
+ */
+export const asWasteBalance = (data) => /** @type {WasteBalance} */ (data)

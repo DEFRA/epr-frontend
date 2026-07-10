@@ -2,14 +2,17 @@ import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { languages } from '#server/common/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
- * @param {Partial<Request>} [options]
+ * @param {{
+ *   auth?: { credentials: Record<string, unknown> | null },
+ *   localiseUrl?: (url: string) => string
+ * }} [options]
  */
 function mockRequest(options) {
-  return asHapiRequest({
+  return mockHapiRequest({
     auth: { credentials: null },
     t: vi.fn((key) => {
       const translations = {
@@ -127,7 +130,9 @@ describe('#buildNavigation', () => {
       const navigation = buildNavigation(request)
       const signOut = navigation.find((item) => item.text === 'Sign out')
 
-      expect(signOut.href).toBe('/cy/logout')
+      expect(/** @type {NonNullable<typeof signOut>} */ (signOut).href).toBe(
+        '/cy/logout'
+      )
     })
   })
 })

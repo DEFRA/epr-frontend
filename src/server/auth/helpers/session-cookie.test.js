@@ -1,5 +1,9 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import {
+  assertUserSession,
+  asUserSession
+} from '#server/common/test-helpers/auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { Metrics } from '@defra/cdp-metrics'
 import Iron from '@hapi/iron'
@@ -8,8 +12,14 @@ import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import { VerifyToken } from '#server/auth/types/verify-token.js'
+ */
+
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
-  getVerifyToken: vi.fn(async () => (token) => jose.decodeJwt(token))
+  getVerifyToken: vi.fn(
+    async () => /** @type {VerifyToken} */ ((token) => jose.decodeJwt(token))
+  )
 }))
 
 const loggedOutUrl = '/logged-out'
@@ -148,10 +158,17 @@ describe('#sessionCookie - integration', () => {
       // Background refresh updates the cache with the new tokens
       await vi.waitFor(async () => {
         const updatedSession = await server.app.cache.get(sessionId)
+        if (!updatedSession) {
+          throw new Error('updatedSession missing')
+        }
+
         expect(updatedSession.refreshToken).toBe('new-refresh-token')
       })
 
-      const updatedSession = await server.app.cache.get(sessionId)
+      const updatedSession = assertUserSession(
+        await server.app.cache.get(sessionId)
+      )
+
       const newExpiresAt = new Date(updatedSession.expiresAt)
       expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
 
@@ -265,7 +282,7 @@ describe('#sessionCookie - integration', () => {
         }
       }
 
-      await server.app.cache.set(sessionId, sessionData)
+      await server.app.cache.set(sessionId, asUserSession(sessionData))
 
       const cookiePassword = config.get('session.cookie.password')
       const sealedCookie = await Iron.seal(
@@ -288,7 +305,9 @@ describe('#sessionCookie - integration', () => {
 
       expect(payload.idToken).toBe('valid-id-token')
 
-      const unchangedSession = await server.app.cache.get(sessionId)
+      const unchangedSession = assertUserSession(
+        await server.app.cache.get(sessionId)
+      )
 
       expect(unchangedSession.idToken).toBe('valid-id-token')
       expect(unchangedSession.refreshToken).toBe('valid-refresh-token')
@@ -410,7 +429,7 @@ describe('#sessionCookie - integration', () => {
         }
       }
 
-      await server.app.cache.set(sessionId, sessionData)
+      await server.app.cache.set(sessionId, asUserSession(sessionData))
 
       const cookiePassword = config.get('session.cookie.password')
       const sealedCookie = await Iron.seal(
@@ -491,7 +510,10 @@ describe('#sessionCookie - integration', () => {
 
       expect(response.statusCode).toBe(statusCodes.ok)
 
-      const updatedSession = await server.app.cache.get(sessionId)
+      const updatedSession = assertUserSession(
+        await server.app.cache.get(sessionId)
+      )
+
       expect(updatedSession.refreshToken).toBe('awaited-new-refresh-token')
       const newExpiresAt = new Date(updatedSession.expiresAt)
       expect(newExpiresAt.getTime()).toBeGreaterThan(Date.now())
@@ -605,7 +627,7 @@ describe('#sessionCookie - integration', () => {
         }
       }
 
-      await server.app.cache.set(sessionId, sessionData)
+      await server.app.cache.set(sessionId, asUserSession(sessionData))
 
       const cookiePassword = config.get('session.cookie.password')
       const sealedCookie = await Iron.seal(
@@ -625,7 +647,10 @@ describe('#sessionCookie - integration', () => {
       expect(response.statusCode).toBe(statusCodes.ok)
 
       // Session must be unchanged: refresh was skipped because it was already in progress
-      const unchangedSession = await server.app.cache.get(sessionId)
+      const unchangedSession = assertUserSession(
+        await server.app.cache.get(sessionId)
+      )
+
       expect(unchangedSession.idToken).toBe('old-id-token-in-progress')
       expect(unchangedSession.refreshToken).toBe(
         'old-refresh-token-in-progress'

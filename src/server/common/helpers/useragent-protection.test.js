@@ -132,7 +132,11 @@ describe('user-agent protection', () => {
     expect(capturedUserAgent).toBe(
       originalUserAgent.substring(0, MAX_USER_AGENT_LENGTH)
     )
-    expect(originalUserAgent.startsWith(capturedUserAgent)).toBe(true)
+    expect(
+      originalUserAgent.startsWith(
+        /** @type {string} */ (/** @type {unknown} */ (capturedUserAgent))
+      )
+    ).toBe(true)
   })
 
   it('should not modify User-Agent headers that are already within limit', async ({

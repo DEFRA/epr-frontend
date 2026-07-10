@@ -1,7 +1,11 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
-import { asPackagingRecyclingNotes } from '#server/common/test-helpers/prn-fixtures.js'
+import {
+  asIssuedToOrganisation,
+  asPackagingRecyclingNotes,
+  asWasteBalance
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -49,7 +53,7 @@ const fixtureExporter = asRegistrationWithAccreditation({
   accreditation: { id: 'acc-002', status: 'approved' }
 })
 
-const mockWasteBalance = { availableAmount: 150.5 }
+const mockWasteBalance = asWasteBalance({ availableAmount: 150.5 })
 
 const mockPrns = asPackagingRecyclingNotes([
   {
@@ -323,12 +327,12 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
             ...mockPrns[0],
-            issuedToOrganisation: {
+            issuedToOrganisation: asIssuedToOrganisation({
               id: 'producer-1',
               name: 'Legal Name Ltd',
               tradingName: 'Trading Name Ltd',
               registrationType: 'LARGE_PRODUCER'
-            }
+            })
           }
         ])
 
@@ -352,12 +356,12 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
             ...mockPrns[0],
-            issuedToOrganisation: {
+            issuedToOrganisation: asIssuedToOrganisation({
               id: 'scheme-1',
               name: 'Scheme Legal Ltd',
               tradingName: 'Scheme Trading Name',
               registrationType: 'COMPLIANCE_SCHEME'
-            }
+            })
           }
         ])
 
@@ -555,21 +559,23 @@ describe('#listPrnsController', () => {
       it('should render tabs when only awaiting_cancellation PRNs exist', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-cancel-only',
-            prnNumber: 'ER2699099',
-            issuedToOrganisation: {
-              id: 'producer-x',
-              name: 'Cancel Only Corp'
-            },
-            createdAt: '2025-09-01T00:00:00.000Z',
-            issuedAt: '2025-09-02T00:00:00.000Z',
-            tonnage: 10,
-            material: 'glass',
-            status: 'awaiting_cancellation'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-cancel-only',
+              prnNumber: 'ER2699099',
+              issuedToOrganisation: {
+                id: 'producer-x',
+                name: 'Cancel Only Corp'
+              },
+              createdAt: '2025-09-01T00:00:00.000Z',
+              issuedAt: '2025-09-02T00:00:00.000Z',
+              tonnage: 10,
+              material: 'glass',
+              status: 'awaiting_cancellation'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -900,22 +906,24 @@ describe('#listPrnsController', () => {
       it('should render accepted PRNs in issued tab with green tag', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          ...mockPrns,
-          {
-            id: 'prn-004',
-            prnNumber: 'ER2699999',
-            issuedToOrganisation: {
-              id: 'producer-4',
-              name: 'Accepted Corp'
-            },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            issuedAt: '2026-01-25T10:00:00.000Z',
-            tonnage: 40,
-            material: 'glass',
-            status: 'accepted'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            ...mockPrns,
+            {
+              id: 'prn-004',
+              prnNumber: 'ER2699999',
+              issuedToOrganisation: {
+                id: 'producer-4',
+                name: 'Accepted Corp'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              issuedAt: '2026-01-25T10:00:00.000Z',
+              tonnage: 40,
+              material: 'glass',
+              status: 'accepted'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1186,21 +1194,23 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-003',
-            prnNumber: 'ER2612345',
-            issuedToOrganisation: {
-              id: 'producer-3',
-              name: 'Green Compliance Scheme'
-            },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            issuedAt: '2026-01-22T10:00:00.000Z',
-            tonnage: 75,
-            material: 'glass',
-            status: 'awaiting_acceptance'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-003',
+              prnNumber: 'ER2612345',
+              issuedToOrganisation: {
+                id: 'producer-3',
+                name: 'Green Compliance Scheme'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              issuedAt: '2026-01-22T10:00:00.000Z',
+              tonnage: 75,
+              material: 'glass',
+              status: 'awaiting_acceptance'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1221,16 +1231,21 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-004',
-            issuedToOrganisation: { id: 'producer-4', name: 'Auth Only Corp' },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            tonnage: 30,
-            material: 'glass',
-            status: 'awaiting_authorisation'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-004',
+              issuedToOrganisation: {
+                id: 'producer-4',
+                name: 'Auth Only Corp'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              tonnage: 30,
+              material: 'glass',
+              status: 'awaiting_authorisation'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1251,16 +1266,21 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-draft',
-            issuedToOrganisation: { id: 'producer-draft', name: 'Draft Corp' },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            tonnage: 10,
-            material: 'glass',
-            status: 'draft'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-draft',
+              issuedToOrganisation: {
+                id: 'producer-draft',
+                name: 'Draft Corp'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              tonnage: 10,
+              material: 'glass',
+              status: 'draft'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',

@@ -1,9 +1,12 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
+import {
+  asIssuedToOrganisation,
+  asPackagingRecyclingNote
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -22,7 +25,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
+const fixtureReprocessor = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -48,7 +51,7 @@ const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   }
 })
 
-const fixtureExporter = asRequiredRegistrationWithAccreditation({
+const fixtureExporter = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -177,12 +180,12 @@ describe('#actionController', () => {
     }) => {
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
         ...mockPrnAwaitingAuth,
-        issuedToOrganisation: {
+        issuedToOrganisation: asIssuedToOrganisation({
           id: 'producer-1',
           name: 'Legal Name Ltd',
           tradingName: 'Trading Name Ltd',
           registrationType: 'LARGE_PRODUCER'
-        }
+        })
       })
 
       const { result } = await server.inject({
@@ -204,12 +207,12 @@ describe('#actionController', () => {
     }) => {
       vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
         ...mockPrnAwaitingAuth,
-        issuedToOrganisation: {
+        issuedToOrganisation: asIssuedToOrganisation({
           id: 'scheme-1',
           name: 'Scheme Legal Ltd',
           tradingName: 'Scheme Trading Name',
           registrationType: 'COMPLIANCE_SCHEME'
-        }
+        })
       })
 
       const { result } = await server.inject({
@@ -488,7 +491,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           organisationData: {
             id: 'org-123',
@@ -530,7 +533,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           organisationData: {
             ...fixtureReprocessor.organisationData,
@@ -568,7 +571,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           accreditation: null
         })
@@ -587,7 +590,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           registration: {
             ...fixtureReprocessor.registration,

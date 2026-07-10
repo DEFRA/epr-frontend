@@ -74,11 +74,13 @@ describe('#context', () => {
     })
 
     it('should include i18n properties when i18n is available on request', async () => {
-      const mockI18nRequest = mockRequest({
-        i18n: {
-          language: 'cy'
-        }
-      })
+      const mockI18nRequest = mockRequest(
+        /** @type {Partial<Request>} */ ({
+          i18n: {
+            language: 'cy'
+          }
+        })
+      )
 
       contextResult = await contextImport.context(mockI18nRequest)
 

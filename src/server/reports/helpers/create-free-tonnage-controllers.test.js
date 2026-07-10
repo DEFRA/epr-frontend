@@ -260,10 +260,12 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     it('should return 404 when report is not in progress', async ({
       server
     }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        status: { currentStatus: 'ready_to_submit' }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          status: { currentStatus: 'ready_to_submit' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',

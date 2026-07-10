@@ -1,5 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asCreatePrnResponse,
   asUpdatePrnStatusResponse
@@ -35,7 +35,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
+const fixtureReprocessor = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -51,7 +51,7 @@ const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const fixtureExporter = asRequiredRegistrationWithAccreditation({
+const fixtureExporter = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }

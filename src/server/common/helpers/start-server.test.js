@@ -6,6 +6,10 @@ import hapi from '@hapi/hapi'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
 const mockLogger = createMockLogger()
 
 const mockHapiLoggerInfo = vi.fn()
@@ -23,6 +27,9 @@ vi.mock(import('hapi-pino'), () => ({
   }
 }))
 
+// start-server is imported statically, so createLogger() runs at import time --
+// before mockLogger is initialised. Forward lazily rather than returning
+// mockLogger directly, which would hit a temporal-dead-zone error.
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({
     info: (...args) => mockLogger.info(...args),
@@ -49,7 +56,7 @@ describe('#startServer', () => {
   })
 
   describe('when server starts', () => {
-    /** @type {import('@hapi/hapi').Server | undefined} */
+    /** @type {HapiServer | undefined} */
     let server
 
     afterAll(async () => {

@@ -14,20 +14,28 @@ const eventHandlers = {}
 
 vi.mock(import('ioredis'), async () => ({
   ...(await vi.importActual('ioredis')),
-  Cluster: vi.fn(function () {
-    return {
-      on: (event, cb) => {
-        eventHandlers[event] = cb
-      }
-    }
-  }),
-  Redis: vi.fn(function () {
-    return {
-      on: (event, cb) => {
-        eventHandlers[event] = cb
-      }
-    }
-  })
+  Cluster: /** @type {typeof Cluster} */ (
+    /** @type {unknown} */ (
+      vi.fn(function () {
+        return {
+          on: (event, cb) => {
+            eventHandlers[event] = cb
+          }
+        }
+      })
+    )
+  ),
+  Redis: /** @type {typeof Redis} */ (
+    /** @type {unknown} */ (
+      vi.fn(function () {
+        return {
+          on: (event, cb) => {
+            eventHandlers[event] = cb
+          }
+        }
+      })
+    )
+  )
 }))
 
 describe('#buildRedisClient', () => {

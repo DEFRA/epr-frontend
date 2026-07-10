@@ -1,5 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asCreatePrnResponse,
   asUpdatePrnStatusResponse
@@ -35,7 +35,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
+const fixtureReprocessor = asGetRequiredRegistrationResult({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-456',
@@ -48,7 +48,7 @@ const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const fixtureExporter = asRequiredRegistrationWithAccreditation({
+const fixtureExporter = asGetRequiredRegistrationResult({
   organisationData: { id: 'org-123', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-456',
@@ -79,13 +79,13 @@ const validPayload = {
   wasteProcessingType: 'reprocessor-input'
 }
 
-const mockPrnCreated = {
+const mockPrnCreated = asCreatePrnResponse({
   id: 'prn-789',
   tonnage: 100,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'reprocessor-input'
-}
+})
 
 const mockPernCreated = asCreatePrnResponse({
   id: 'pern-123',
@@ -102,7 +102,7 @@ describe('#discardController', () => {
       fixtureReprocessor
     )
     vi.mocked(getWasteBalance).mockResolvedValue(null)
-    vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPrnCreated))
+    vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(
       asUpdatePrnStatusResponse({
         ...mockPrnCreated,

@@ -230,7 +230,9 @@ describe('#deleteController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
-      vi.mocked(deleteReport).mockResolvedValue({ ok: true })
+      vi.mocked(deleteReport).mockResolvedValue(
+        /** @type {void} */ (/** @type {unknown} */ ({ ok: true }))
+      )
     })
 
     describe('csrf protection', () => {

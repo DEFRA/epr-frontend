@@ -1,11 +1,14 @@
 import { it } from '#vite/fixtures/server.js'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, vi } from 'vitest'
 import { dropUserSession } from './drop-user-session.js'
 
 describe('#dropUserSession', () => {
   it('should drop user session from cache', async ({ server }) => {
-    await server.app.cache.set('session-123', 'session-value')
+    await server.app.cache.set(
+      'session-123',
+      /** @type {never} */ ('session-value')
+    )
 
     const mockRequest = {
       state: {
@@ -16,7 +19,7 @@ describe('#dropUserSession', () => {
       server
     }
 
-    await dropUserSession(asHapiRequest(mockRequest))
+    await dropUserSession(mockHapiRequest(mockRequest))
 
     await expect(server.app.cache.get('session-123')).resolves.toBeNull()
   })
@@ -27,7 +30,7 @@ describe('#dropUserSession', () => {
       server
     }
 
-    await dropUserSession(asHapiRequest(mockRequest))
+    await dropUserSession(mockHapiRequest(mockRequest))
 
     expect(vi.spyOn(server.app.cache, 'drop')).not.toHaveBeenCalled()
   })

@@ -1,6 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asCreatePrnResponse,
   asPackagingRecyclingNote,
@@ -38,7 +38,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
+const fixtureReprocessor = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -54,7 +54,7 @@ const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   accreditation: { id: 'acc-001', status: 'approved' }
 })
 
-const fixtureExporter = asRequiredRegistrationWithAccreditation({
+const fixtureExporter = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -112,7 +112,7 @@ const mockPrnStatusUpdated = asUpdatePrnStatusResponse({
   status: 'awaiting_authorisation'
 })
 
-const mockPrnFromBackend = {
+const mockPrnFromBackend = asPackagingRecyclingNote({
   id: 'prn-789',
   issuedToOrganisation: { id: 'producer-1', name: 'Acme Packaging Ltd' },
   tonnage: 100,
@@ -124,7 +124,7 @@ const mockPrnFromBackend = {
   issuedAt: '2026-01-16T14:30:00.000Z',
   issuedBy: { name: 'John Smith', position: 'Director' },
   wasteProcessingType: 'reprocessor'
-}
+})
 
 const mockPernFromBackend = asPackagingRecyclingNote({
   id: 'pern-123',
@@ -146,9 +146,7 @@ describe('#viewController', () => {
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
       fixtureReprocessor
     )
-    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-      asPackagingRecyclingNote(mockPrnFromBackend)
-    )
+    vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(mockPrnFromBackend)
     vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
     vi.mocked(updatePrnStatus).mockResolvedValue(mockPrnStatusUpdated)
     vi.mocked(fetchWasteBalances).mockResolvedValue({
@@ -205,7 +203,7 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asRequiredRegistrationWithAccreditation({
+          asGetRequiredRegistrationResult({
             ...fixtureReprocessor,
             organisationData: {
               id: 'org-123',
@@ -237,7 +235,7 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asRequiredRegistrationWithAccreditation({
+          asGetRequiredRegistrationResult({
             ...fixtureReprocessor,
             organisationData: { id: 'org-123', companyDetails: null }
           })
@@ -348,15 +346,17 @@ describe('#viewController', () => {
       it('displays legal name for large producers with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          issuedToOrganisation: {
-            id: 'producer-1',
-            name: 'Legal Name Ltd',
-            tradingName: 'Trading Name Ltd',
-            registrationType: 'LARGE_PRODUCER'
-          }
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            issuedToOrganisation: {
+              id: 'producer-1',
+              name: 'Legal Name Ltd',
+              tradingName: 'Trading Name Ltd',
+              registrationType: 'LARGE_PRODUCER'
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -375,15 +375,17 @@ describe('#viewController', () => {
       it('displays tradingName for compliance schemes with registrationType', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          issuedToOrganisation: {
-            id: 'scheme-1',
-            name: 'Scheme Legal Ltd',
-            tradingName: 'Scheme Trading Name',
-            registrationType: 'COMPLIANCE_SCHEME'
-          }
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            issuedToOrganisation: {
+              id: 'scheme-1',
+              name: 'Scheme Legal Ltd',
+              tradingName: 'Scheme Trading Name',
+              registrationType: 'COMPLIANCE_SCHEME'
+            }
+          })
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -420,10 +422,12 @@ describe('#viewController', () => {
       it('displays tonnage in words generated from tonnage value', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          tonnageInWords: undefined
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            tonnageInWords: undefined
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -443,10 +447,12 @@ describe('#viewController', () => {
       it('displays tonnage in words from backend when provided', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          tonnageInWords: 'One hundred'
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            tonnageInWords: 'One hundred'
+          })
+        )
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
@@ -638,7 +644,7 @@ describe('#viewController', () => {
           }
         }
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asRequiredRegistrationWithAccreditation(reprocessorWithAddress)
+          asGetRequiredRegistrationResult(reprocessorWithAddress)
         )
 
         const { result, statusCode } = await server.inject({
@@ -670,7 +676,7 @@ describe('#viewController', () => {
           }
         }
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asRequiredRegistrationWithAccreditation(reprocessorWithoutAddress)
+          asGetRequiredRegistrationResult(reprocessorWithoutAddress)
         )
 
         const { statusCode } = await server.inject({
@@ -979,10 +985,12 @@ describe('#viewController', () => {
       })
 
       it('handles null material gracefully', async ({ server }) => {
-        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-          ...mockPrnFromBackend,
-          material: null
-        })
+        vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+          asPackagingRecyclingNote({
+            ...mockPrnFromBackend,
+            material: null
+          })
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -1260,7 +1268,7 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asRequiredRegistrationWithAccreditation({
+          asGetRequiredRegistrationResult({
             ...fixtureReprocessor,
             organisationData: {
               id: 'org-123',
@@ -1322,7 +1330,7 @@ describe('#viewController', () => {
         server
       }) => {
         vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-          asRequiredRegistrationWithAccreditation({
+          asGetRequiredRegistrationResult({
             ...fixtureReprocessor,
             organisationData: { id: 'org-123', companyDetails: null }
           })

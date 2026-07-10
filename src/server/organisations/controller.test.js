@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getAllByRole, getByRole } from '@testing-library/dom'
@@ -9,7 +10,6 @@ import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import {DOMWindow} from 'jsdom' */
-/** @import {Organisation} from '#domain/organisations/model.js' */
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
@@ -22,12 +22,6 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
-
-/**
- * @param {unknown} data
- * @returns {Organisation}
- */
-const asOrganisation = (data) => /** @type {Organisation} */ (data)
 
 /**
  * @param {InstanceType<DOMWindow['HTMLElement']>} table

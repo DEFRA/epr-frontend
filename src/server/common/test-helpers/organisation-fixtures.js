@@ -3,6 +3,14 @@
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  */
 
+/*
+ * These `as*` helpers each take `unknown` and assert it to a domain type, so
+ * deliberately-partial fixtures compile against the real shape. They do not
+ * structurally validate -- a wrong fixture (e.g. `registration: 42`) still
+ * compiles -- so use them for partial test data, not as a correctness check.
+ * The sibling prn-/report-/request-fixtures helpers follow the same pattern.
+ */
+
 /**
  * Casts loosely-typed JSON fixture data to the `Organisation` domain type, so
  * fixtures can be fed to typed mocks without repeating an inline cast.
@@ -23,12 +31,12 @@ export const asRegistrationWithAccreditation = (data) =>
 
 /**
  * Casts a partial mock object to `Required<RegistrationWithAccreditation>`, the
- * shape `getRequiredRegistrationWithAccreditation` resolves (accreditation
- * guaranteed present).
+ * type `getRequiredRegistrationWithAccreditation` resolves. As above, it does
+ * not enforce that shape, so tests may still inject `accreditation: null` etc.
  * @param {unknown} data
  * @returns {Required<RegistrationWithAccreditation>}
  */
-export const asRequiredRegistrationWithAccreditation = (data) =>
+export const asGetRequiredRegistrationResult = (data) =>
   /** @type {Required<RegistrationWithAccreditation>} */ (data)
 
 /**
@@ -38,6 +46,7 @@ export const asRequiredRegistrationWithAccreditation = (data) =>
  * @param {unknown} fixture
  * @param {string} registrationId
  * @returns {RegistrationWithAccreditation}
+ * @throws {Error} when the fixture has no registration matching `registrationId`
  */
 export const findRegistrationAndAccreditation = (fixture, registrationId) => {
   const organisationData = asOrganisation(fixture)

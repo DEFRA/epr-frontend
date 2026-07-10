@@ -13,6 +13,11 @@ const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()
 const mockCreateLogger = vi.fn()
 
+const emitProcessEvent =
+  /** @type {(event: string, ...args: unknown[]) => boolean} */ (
+    process.emit.bind(process)
+  )
+
 vi.mock(import('./server/common/helpers/start-server.js'), () => ({
   startServer: mockStartServer
 }))
@@ -29,7 +34,7 @@ describe('#index', () => {
       info: mockLoggerInfo,
       error: mockLoggerError
     })
-    mockStartServer.mockResolvedValue()
+    mockStartServer.mockResolvedValue(undefined)
   })
 
   beforeEach(() => {
@@ -56,7 +61,7 @@ describe('#index', () => {
     beforeEach(async () => {
       await import('./index.js')
 
-      process.emit('unhandledRejection', mockError)
+      emitProcessEvent('unhandledRejection', mockError)
     })
 
     test('should create logger', () => {
@@ -83,7 +88,7 @@ describe('#index', () => {
     beforeEach(async () => {
       await import('./index.js')
 
-      process.emit('unhandledRejection', 'plain string rejection')
+      emitProcessEvent('unhandledRejection', 'plain string rejection')
     })
 
     test('should wrap the reason in an Error before logging', () => {

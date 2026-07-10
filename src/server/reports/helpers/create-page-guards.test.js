@@ -5,6 +5,10 @@ import { asRegistrationWithAccreditation } from '#server/common/test-helpers/org
 import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 
+/**
+ * @import { PageFieldsCtx } from './create-page-guards.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
@@ -134,7 +138,9 @@ describe('#fetchGuardedData', () => {
         accreditation
       })
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue({ id: null })
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse({ id: null })
+    )
 
     await expect(guards.fetchGuardedData(mockRequest)).rejects.toThrow(
       expect.objectContaining({
@@ -150,10 +156,12 @@ describe('#fetchGuardedData', () => {
         accreditation
       })
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue({
-      ...reportDetail,
-      status: { currentStatus: 'ready_to_submit' }
-    })
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse({
+        ...reportDetail,
+        status: { currentStatus: 'ready_to_submit' }
+      })
+    )
 
     await expect(guards.fetchGuardedData(mockRequest)).rejects.toThrow(
       expect.objectContaining({
@@ -266,7 +274,9 @@ describe('#buildViewData', () => {
   })
 
   it('passes period in callback context', async () => {
-    let receivedCtx
+    let receivedCtx = /** @type {PageFieldsCtx} */ (
+      /** @type {unknown} */ (undefined)
+    )
     await guards.buildViewData(mockRequest, (ctx) => {
       receivedCtx = ctx
       return {}

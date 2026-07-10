@@ -1,7 +1,10 @@
 import { config } from '#config/config.js'
 import { dropUserSession } from '#server/auth/helpers/drop-user-session.js'
 import { logoutController } from '#server/logout/controller.js'
-import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+import {
+  mockHapiRequest,
+  asResponseToolkit
+} from '#server/common/test-helpers/request-fixtures.js'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
@@ -28,8 +31,8 @@ describe('#logoutController', () => {
       }
 
       const result = await logoutController.handler(
-        asHapiRequest(mockRequest),
-        mockH
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
       )
 
       expect(dropUserSession).not.toHaveBeenCalled()
@@ -71,8 +74,8 @@ describe('#logoutController', () => {
       }
 
       const result = await logoutController.handler(
-        asHapiRequest(mockRequest),
-        mockH
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
       )
 
       expect(dropUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
