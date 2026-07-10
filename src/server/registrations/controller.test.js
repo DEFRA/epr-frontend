@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import {
@@ -49,16 +50,7 @@ const exporterPlasticApproved = findRegistrationAndAccreditation(
   'reg-export-001-plastic-approved'
 )
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
+const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 
 describe('#accreditationDashboardController', () => {
   beforeEach(() => {

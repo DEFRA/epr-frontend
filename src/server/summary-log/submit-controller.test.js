@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -21,16 +22,7 @@ vi.mock(
   })
 )
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
+const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 
 describe('#submitSummaryLogController', () => {
   const organisationId = '123'

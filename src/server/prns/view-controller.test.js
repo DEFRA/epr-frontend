@@ -4,6 +4,7 @@ import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
@@ -24,13 +25,7 @@ const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
