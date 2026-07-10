@@ -1,5 +1,5 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
-import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -25,7 +25,7 @@ const mockAuth = {
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
+const fixtureReprocessor = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -51,7 +51,7 @@ const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   }
 })
 
-const fixtureExporter = asRequiredRegistrationWithAccreditation({
+const fixtureExporter = asGetRequiredRegistrationResult({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -491,7 +491,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           organisationData: {
             id: 'org-123',
@@ -533,7 +533,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           organisationData: {
             ...fixtureReprocessor.organisationData,
@@ -571,7 +571,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           accreditation: null
         })
@@ -590,7 +590,7 @@ describe('#actionController', () => {
       server
     }) => {
       vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-        asRequiredRegistrationWithAccreditation({
+        asGetRequiredRegistrationResult({
           ...fixtureReprocessor,
           registration: {
             ...fixtureReprocessor.registration,

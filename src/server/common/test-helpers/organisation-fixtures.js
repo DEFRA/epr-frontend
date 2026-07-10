@@ -31,12 +31,12 @@ export const asRegistrationWithAccreditation = (data) =>
 
 /**
  * Casts a partial mock object to `Required<RegistrationWithAccreditation>`, the
- * shape `getRequiredRegistrationWithAccreditation` resolves (accreditation
- * guaranteed present).
+ * type `getRequiredRegistrationWithAccreditation` resolves. As above, it does
+ * not enforce that shape, so tests may still inject `accreditation: null` etc.
  * @param {unknown} data
  * @returns {Required<RegistrationWithAccreditation>}
  */
-export const asRequiredRegistrationWithAccreditation = (data) =>
+export const asGetRequiredRegistrationResult = (data) =>
   /** @type {Required<RegistrationWithAccreditation>} */ (data)
 
 /**

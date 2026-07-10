@@ -5,7 +5,7 @@ import {
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
-import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asGetRequiredRegistrationResult } from '#server/common/test-helpers/organisation-fixtures.js'
 import {
   asPackagingRecyclingNote,
   asUpdatePrnStatusResponse
@@ -54,7 +54,7 @@ describe('#issueController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(getRequiredRegistrationWithAccreditation).mockResolvedValue(
-      asRequiredRegistrationWithAccreditation({
+      asGetRequiredRegistrationResult({
         organisationData: {
           id: organisationId,
           companyDetails: { name: 'Test Org' }
