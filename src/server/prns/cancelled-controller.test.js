@@ -1,5 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asPackagingRecyclingNote } from '#server/common/test-helpers/prn-fixtures.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -15,20 +18,14 @@ const { getRequiredRegistrationWithAccreditation } =
 const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -42,9 +39,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -58,7 +55,7 @@ const fixtureExporter = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -68,7 +65,7 @@ const basePath = `/organisations/${organisationId}/registrations/${registrationI
 const listUrl = basePath
 const cancelledUrl = `${basePath}/${prnId}/cancelled`
 
-const mockCancelledPrn = {
+const mockCancelledPrn = asPackagingRecyclingNote({
   id: prnId,
   prnNumber: 'ER2612345A',
   tonnage: 100,
@@ -76,9 +73,9 @@ const mockCancelledPrn = {
   status: 'cancelled',
   issuedToOrganisation: { id: 'producer-1', name: 'Test Producer Ltd' },
   createdAt: '2026-01-15T10:00:00Z'
-}
+})
 
-const mockCancelledPern = {
+const mockCancelledPern = asPackagingRecyclingNote({
   id: 'pern-123',
   prnNumber: 'EX2654321B',
   tonnage: 50,
@@ -86,7 +83,7 @@ const mockCancelledPern = {
   status: 'cancelled',
   issuedToOrganisation: { id: 'exporter-1', name: 'Export Corp' },
   createdAt: '2026-01-20T14:30:00Z'
-}
+})
 
 describe('#cancelledController', () => {
   beforeEach(() => {
@@ -261,10 +258,12 @@ describe('#cancelledController', () => {
     it('redirects to list when PRN is not in cancelled status', async ({
       server
     }) => {
-      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue({
-        ...mockCancelledPrn,
-        status: 'awaiting_cancellation'
-      })
+      vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
+        asPackagingRecyclingNote({
+          ...mockCancelledPrn,
+          status: 'awaiting_cancellation'
+        })
+      )
 
       const { cookie: csrfCookie } = await getCsrfToken(server, cancelledUrl, {
         auth: mockAuth

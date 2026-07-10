@@ -3,9 +3,9 @@ import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '#config/config.js'
 import { getCacheEngine } from '#server/common/helpers/session-cache/cache-engine.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
-const mockLoggerInfo = vi.fn()
-const mockLoggerError = vi.fn()
+const mockLogger = createMockLogger()
 
 vi.mock(import('ioredis'), async () => ({
   ...(await vi.importActual('ioredis')),
@@ -19,10 +19,7 @@ vi.mock(import('ioredis'), async () => ({
 vi.mock(import('@hapi/catbox-redis'))
 vi.mock(import('@hapi/catbox-memory'))
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
-  createLogger: () => ({
-    info: (...args) => mockLoggerInfo(...args),
-    error: (...args) => mockLoggerError(...args)
-  })
+  createLogger: () => mockLogger
 }))
 
 describe('#getCacheEngine', () => {
@@ -36,7 +33,7 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log expected Redis message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+      expect(mockLogger.info).toHaveBeenCalledExactlyOnceWith({
         message: 'Using Redis session cache'
       })
     })
@@ -52,7 +49,7 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log expected CatBox memory message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+      expect(mockLogger.info).toHaveBeenCalledExactlyOnceWith({
         message: 'Using Catbox Memory session cache'
       })
     })
@@ -65,7 +62,7 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log Production warning message', () => {
-      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith({
+      expect(mockLogger.error).toHaveBeenCalledExactlyOnceWith({
         message:
           'Catbox Memory is for local development only, it should not be used in production!'
       })
@@ -76,7 +73,7 @@ describe('#getCacheEngine', () => {
     })
 
     test('should log expected message', () => {
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+      expect(mockLogger.info).toHaveBeenCalledExactlyOnceWith({
         message: 'Using Catbox Memory session cache'
       })
     })

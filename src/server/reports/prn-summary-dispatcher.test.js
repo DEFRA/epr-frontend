@@ -1,6 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -10,15 +13,9 @@ vi.mock(
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 vi.mock(import('./helpers/update-report.js'))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
-  }
-}
+const mockAuth = buildMockAuth()
 
-const exporterRegistration = {
+const exporterRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -30,15 +27,15 @@ const exporterRegistration = {
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M'
   }
-}
+})
 
-const reprocessorRegistration = {
+const reprocessorRegistration = asRegistrationWithAccreditation({
   ...exporterRegistration,
   registration: {
     ...exporterRegistration.registration,
     wasteProcessingType: 'reprocessor'
   }
-}
+})
 
 const reportDetail = {
   id: 'report-001',
@@ -66,7 +63,9 @@ describe('#prnSummaryDispatcher', () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       exporterRegistration
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
@@ -84,7 +83,9 @@ describe('#prnSummaryDispatcher', () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       reprocessorRegistration
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     const { statusCode, result } = await server.inject({
       method: 'GET',

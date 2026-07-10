@@ -1,6 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -36,10 +39,7 @@ const subtrees = [
   }
 ]
 
-const mockCredentials = {
-  profile: { id: 'user-123', email: 'test@example.com' },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
@@ -47,7 +47,7 @@ const organisationId = 'org-123'
 const registrationId = 'reg-001'
 
 describe.each(subtrees)('$name free tonnage page', (subtree) => {
-  const accreditedOperator = {
+  const accreditedOperator = asRegistrationWithAccreditation({
     organisationData: { id: organisationId },
     registration: {
       id: registrationId,
@@ -59,12 +59,12 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
       id: 'acc-001',
       accreditationNumber: 'ER992415095748M'
     }
-  }
+  })
 
-  const registeredOnlyOperator = {
+  const registeredOnlyOperator = asRegistrationWithAccreditation({
     ...accreditedOperator,
     accreditation: undefined
-  }
+  })
 
   const reportDetail = {
     operatorCategory: subtree.operatorCategory,
@@ -112,7 +112,9 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         accreditedOperator
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it(`should return 200 for ${subtree.accreditedDescription}`, async ({
@@ -198,7 +200,7 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
 
     it('should pre-fill tonnage if previously saved', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
-        reportDetailWithFreeTonnage
+        asReportDetailResponse(reportDetailWithFreeTonnage)
       )
 
       const { result } = await server.inject({
@@ -239,10 +241,12 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
     })
 
     it('should return 500 when prn data is missing', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        prn: undefined
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          prn: undefined
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -276,7 +280,9 @@ describe.each(subtrees)('$name free tonnage page', (subtree) => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         accreditedOperator
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(updateReport).mockResolvedValue(undefined)
     })
 

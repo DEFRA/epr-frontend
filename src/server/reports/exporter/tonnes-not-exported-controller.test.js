@@ -1,6 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
@@ -15,20 +18,14 @@ vi.mock(import('../helpers/update-report.js'))
 
 const { updateReport } = await import('../helpers/update-report.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const registeredOnlyExporter = {
+const registeredOnlyExporter = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -37,7 +34,7 @@ const registeredOnlyExporter = {
     registrationNumber: 'EX992415095748P'
   },
   accreditation: undefined
-}
+})
 
 const reportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
@@ -84,7 +81,9 @@ describe('#tonnesNotExportedController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it('should return 200 for registered-only exporter', async ({ server }) => {
@@ -111,13 +110,15 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should pre-fill saved tonnage', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        exportActivity: {
-          ...reportDetail.exportActivity,
-          tonnageReceivedNotExported: 42.5
-        }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          exportActivity: {
+            ...reportDetail.exportActivity,
+            tonnageReceivedNotExported: 42.5
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -164,10 +165,12 @@ describe('#tonnesNotExportedController', () => {
     })
 
     it('should return 404 for accredited exporter', async ({ server }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-        ...registeredOnlyExporter,
-        accreditation: { id: 'acc-001', accreditationNumber: 'ACC123' }
-      })
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        asRegistrationWithAccreditation({
+          ...registeredOnlyExporter,
+          accreditation: { id: 'acc-001', accreditationNumber: 'ACC123' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -202,7 +205,9 @@ describe('#tonnesNotExportedController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(updateReport).mockResolvedValue(undefined)
     })
 

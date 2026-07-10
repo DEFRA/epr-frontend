@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -21,19 +22,13 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
   audit: (...args) => mockCdpAuditing(...args)
 }))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-id',
-      email: 'user@email.com'
-    },
-    urls: {
-      logout: 'http://defra-id.auth/logout'
-    }
+const mockAuth = buildMockAuth({
+  idToken: 'test-id-token',
+  profile: {
+    id: 'user-id',
+    email: 'user@email.com'
   }
-}
+})
 
 describe('#logoutController - integration', () => {
   beforeEach(() => {

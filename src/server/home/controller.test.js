@@ -1,20 +1,13 @@
 import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { describe, expect } from 'vitest'
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'mock-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
+const mockAuth = buildMockAuth()
 
 describe('#homeController', () => {
   describe('redirects', () => {
@@ -59,7 +52,7 @@ describe('#homeController', () => {
           url
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         expect($('title').text().trim()).toStrictEqual(
           expect.stringMatching(new RegExp(`^${title} \\|`))
@@ -73,7 +66,7 @@ describe('#homeController', () => {
           url
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
 
         // Page structure
         expect($('[data-testid="app-page-body"]')).toHaveLength(1)
@@ -128,7 +121,7 @@ describe('#homeController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
         const startButton = $('[data-testid="app-page-body"] .govuk-button')
 
         expect(startButton.attr('href')).toBe(accountLinkingUrl)
@@ -182,7 +175,7 @@ describe('#homeController', () => {
           auth: mockAuth
         })
 
-        const $ = load(result)
+        const $ = load(asHtml(result))
         const startButton = $('[data-testid="app-page-body"] .govuk-button')
 
         expect(startButton.attr('href')).toBe(organisationUrl)
@@ -199,7 +192,7 @@ describe('#homeController', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const pageBody = $('[data-testid="app-page-body"]')
       const summaryLogLink = pageBody.find('a[href*="summary-log"]')
 
@@ -220,7 +213,7 @@ describe('#homeController', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const steps = $('[data-testid="app-page-body"] ol li')
 
       expect(steps).toHaveLength(4)
@@ -240,7 +233,7 @@ describe('#homeController', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const quickLinksHeading = $('.govuk-grid-column-one-third h2')
       const quickLinks = $('.govuk-grid-column-one-third ul li a')
 
@@ -262,7 +255,7 @@ describe('#homeController', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const quickLinks = $('.govuk-grid-column-one-third ul li a')
 
       expect(quickLinks.eq(0).attr('href')).toBe(

@@ -1,5 +1,11 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asPackagingRecyclingNote,
+  asUpdatePrnStatusResponse
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -16,20 +22,14 @@ const { fetchPackagingRecyclingNote } =
   await import('./helpers/fetch-packaging-recycling-note.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-456',
@@ -40,9 +40,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRequiredRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-456',
@@ -53,7 +53,7 @@ const fixtureExporter = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -73,10 +73,10 @@ const mockPrnAwaitingCancellation = {
   createdAt: '2026-01-15T10:00:00Z'
 }
 
-const mockPrnIssued = {
+const mockPrnIssued = asPackagingRecyclingNote({
   ...mockPrnAwaitingCancellation,
   status: 'awaiting_acceptance'
-}
+})
 
 describe('#cancelController', () => {
   beforeEach(() => {
@@ -85,12 +85,14 @@ describe('#cancelController', () => {
       fixtureReprocessor
     )
     vi.mocked(fetchPackagingRecyclingNote).mockResolvedValue(
-      mockPrnAwaitingCancellation
+      asPackagingRecyclingNote(mockPrnAwaitingCancellation)
     )
-    vi.mocked(updatePrnStatus).mockResolvedValue({
-      ...mockPrnAwaitingCancellation,
-      status: 'cancelled'
-    })
+    vi.mocked(updatePrnStatus).mockResolvedValue(
+      asUpdatePrnStatusResponse({
+        ...mockPrnAwaitingCancellation,
+        status: 'cancelled'
+      })
+    )
   })
 
   describe('request handling', () => {

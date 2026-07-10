@@ -3,7 +3,10 @@ import { it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 import { createDefraId } from './defra-id.js'
+
+const mockLogger = createMockLogger()
 
 vi.mock(import('@hapi/bell'), () => ({
   default: {
@@ -13,9 +16,7 @@ vi.mock(import('@hapi/bell'), () => ({
 }))
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
-  createLogger: () => ({
-    error: vi.fn()
-  })
+  createLogger: () => mockLogger
 }))
 
 describe('#defraId', () => {

@@ -2,13 +2,14 @@ import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { languages } from '#server/common/constants/languages.js'
 import { localiseUrl } from '#server/common/helpers/i18n/localiseUrl.js'
+import { asHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * @param {Partial<Request>} [options]
  */
 function mockRequest(options) {
-  return {
+  return asHapiRequest({
     auth: { credentials: null },
     t: vi.fn((key) => {
       const translations = {
@@ -20,7 +21,7 @@ function mockRequest(options) {
     }),
     localiseUrl: vi.fn((path) => path),
     ...options
-  }
+  })
 }
 
 describe('#buildNavigation', () => {

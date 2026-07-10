@@ -1,9 +1,15 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asCreatePrnResponse,
+  asUpdatePrnStatusResponse
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -22,20 +28,14 @@ const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 const { fetchWasteBalances } =
   await import('#server/common/helpers/waste-balance/fetch-waste-balances.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Reprocessor Organisation' }
@@ -49,9 +49,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRequiredRegistrationWithAccreditation({
   organisationData: {
     id: 'org-123',
     companyDetails: { name: 'Exporter Organisation' }
@@ -65,7 +65,7 @@ const fixtureExporter = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -85,35 +85,35 @@ const validPayload = {
   wasteProcessingType: 'reprocessor-input'
 }
 
-const mockPrnCreated = {
+const mockPrnCreated = asCreatePrnResponse({
   id: 'prn-789',
   tonnage: 100,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'reprocessor-input'
-}
+})
 
-const mockPernCreated = {
+const mockPernCreated = asCreatePrnResponse({
   id: 'pern-123',
   tonnage: 50,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'exporter'
-}
+})
 
-const mockPrnStatusUpdated = {
+const mockPrnStatusUpdated = asUpdatePrnStatusResponse({
   id: 'prn-789',
   tonnage: 100,
   material: 'plastic',
   status: 'awaiting_authorisation'
-}
+})
 
-const mockPernStatusUpdated = {
+const mockPernStatusUpdated = asUpdatePrnStatusResponse({
   id: 'pern-123',
   tonnage: 50,
   material: 'plastic',
   status: 'awaiting_authorisation'
-}
+})
 
 /**
  * Helper to go through full PRN creation flow and return session cookies

@@ -1,5 +1,11 @@
 import { getRequiredRegistrationWithAccreditation } from '#server/common/helpers/organisations/get-required-registration-with-accreditation.js'
+import { asRequiredRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asCreatePrnResponse,
+  asUpdatePrnStatusResponse
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import {
   extractCookieValues,
   mergeCookies
@@ -22,20 +28,14 @@ const { getWasteBalance } =
 const { createPrn } = await import('./helpers/create-prn.js')
 const { updatePrnStatus } = await import('./helpers/update-prn-status.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRequiredRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-456',
@@ -46,9 +46,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRequiredRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-456',
@@ -59,7 +59,7 @@ const fixtureExporter = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-456'
@@ -87,13 +87,13 @@ const mockPrnCreated = {
   wasteProcessingType: 'reprocessor-input'
 }
 
-const mockPernCreated = {
+const mockPernCreated = asCreatePrnResponse({
   id: 'pern-123',
   tonnage: 50,
   material: 'plastic',
   status: 'draft',
   wasteProcessingType: 'exporter'
-}
+})
 
 describe('#discardController', () => {
   beforeEach(() => {
@@ -102,11 +102,13 @@ describe('#discardController', () => {
       fixtureReprocessor
     )
     vi.mocked(getWasteBalance).mockResolvedValue(null)
-    vi.mocked(createPrn).mockResolvedValue(mockPrnCreated)
-    vi.mocked(updatePrnStatus).mockResolvedValue({
-      ...mockPrnCreated,
-      status: 'discarded'
-    })
+    vi.mocked(createPrn).mockResolvedValue(asCreatePrnResponse(mockPrnCreated))
+    vi.mocked(updatePrnStatus).mockResolvedValue(
+      asUpdatePrnStatusResponse({
+        ...mockPrnCreated,
+        status: 'discarded'
+      })
+    )
   })
 
   describe('request handling', () => {

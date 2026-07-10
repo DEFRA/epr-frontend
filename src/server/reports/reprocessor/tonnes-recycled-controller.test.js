@@ -1,6 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
@@ -15,20 +18,14 @@ vi.mock(import('../helpers/update-report.js'))
 
 const { updateReport } = await import('../helpers/update-report.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const reprocessorRegistration = {
+const reprocessorRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -40,20 +37,20 @@ const reprocessorRegistration = {
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M'
   }
-}
+})
 
-const registeredOnlyReprocessor = {
+const registeredOnlyReprocessor = asRegistrationWithAccreditation({
   ...reprocessorRegistration,
   accreditation: undefined
-}
+})
 
-const exporterRegistration = {
+const exporterRegistration = asRegistrationWithAccreditation({
   ...reprocessorRegistration,
   registration: {
     ...reprocessorRegistration.registration,
     wasteProcessingType: 'exporter'
   }
-}
+})
 
 const reportDetail = {
   operatorCategory: 'REPROCESSOR_ACCREDITED',
@@ -90,7 +87,9 @@ describe('#tonnesRecycledController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
     })
 
     it('should return 200 for reprocessor with monthly cadence', async ({
@@ -118,13 +117,15 @@ describe('#tonnesRecycledController', () => {
     it('should display heading and pre-fill saved tonnage unchanged', async ({
       server
     }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...reportDetail,
-        recyclingActivity: {
-          ...reportDetail.recyclingActivity,
-          tonnageRecycled: 150.5
-        }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...reportDetail,
+          recyclingActivity: {
+            ...reportDetail.recyclingActivity,
+            tonnageRecycled: 150.5
+          }
+        })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -199,7 +200,9 @@ describe('#tonnesRecycledController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         reprocessorRegistration
       )
-      vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse(reportDetail)
+      )
       vi.mocked(updateReport).mockResolvedValue(undefined)
     })
 

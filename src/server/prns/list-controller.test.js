@@ -1,7 +1,10 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asPackagingRecyclingNotes } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -14,20 +17,14 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-notes.js'))
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-001',
@@ -38,9 +35,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRegistrationWithAccreditation({
   organisationData: { id: 'org-456', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-002',
@@ -50,11 +47,11 @@ const fixtureExporter = {
     accreditationId: 'acc-002'
   },
   accreditation: { id: 'acc-002', status: 'approved' }
-}
+})
 
 const mockWasteBalance = { availableAmount: 150.5 }
 
-const mockPrns = [
+const mockPrns = asPackagingRecyclingNotes([
   {
     id: 'prn-001',
     prnNumber: null,
@@ -85,9 +82,9 @@ const mockPrns = [
     material: 'glass',
     status: 'awaiting_acceptance'
   }
-]
+])
 
-const mockPrnsWithCancellation = [
+const mockPrnsWithCancellation = asPackagingRecyclingNotes([
   ...mockPrns,
   {
     id: 'prn-cancel-001',
@@ -109,9 +106,9 @@ const mockPrnsWithCancellation = [
     material: 'plastic',
     status: 'awaiting_cancellation'
   }
-]
+])
 
-const mockPrnsWithCancelled = [
+const mockPrnsWithCancelled = asPackagingRecyclingNotes([
   ...mockPrns,
   {
     id: 'prn-cancelled-001',
@@ -133,7 +130,7 @@ const mockPrnsWithCancelled = [
     material: 'plastic',
     status: 'cancelled'
   }
-]
+])
 
 const reprocessorListUrl =
   '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes'
@@ -993,10 +990,12 @@ describe('#listPrnsController', () => {
       it('should return 404 with mismatched accreditation id', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...fixtureReprocessor,
-          accreditation: { id: 'acc-other', status: 'approved' }
-        })
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          asRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            accreditation: { id: 'acc-other', status: 'approved' }
+          })
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',

@@ -1,18 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { describe, expect } from 'vitest'
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    },
-    idToken: 'mock-id-token'
-  }
-}
+const mockAuth = buildMockAuth()
 
 describe('#emailNotRecognisedController', () => {
   it('should render email-not-recognised page with correct content', async ({
@@ -24,7 +17,7 @@ describe('#emailNotRecognisedController', () => {
       auth: mockAuth
     })
 
-    const $ = load(result)
+    const $ = load(asHtml(result))
 
     expect($('title').text().trim()).toStrictEqual(
       expect.stringMatching(/^We do not recognise your email address \|/)
@@ -42,7 +35,7 @@ describe('#emailNotRecognisedController', () => {
       auth: mockAuth
     })
 
-    const $ = load(result)
+    const $ = load(asHtml(result))
 
     // Check for main content paragraphs
     const paragraphs = $('p.govuk-body')
@@ -63,7 +56,7 @@ describe('#emailNotRecognisedController', () => {
       auth: mockAuth
     })
 
-    const $ = load(result)
+    const $ = load(asHtml(result))
 
     // Check that list items contain expected text
     const firstItem = $('ul.govuk-list--bullet li').eq(0).text().trim()

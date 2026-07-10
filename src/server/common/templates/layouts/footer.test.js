@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { load } from 'cheerio'
 import { describe, expect } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
@@ -13,7 +14,7 @@ describe('#footer', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const footer = $('footer.govuk-footer')
 
       expect(footer).toHaveLength(1)
@@ -27,7 +28,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const heading = $('.govuk-footer__meta h2.govuk-heading-s')
 
       expect(heading.text()).toBe('Get help')
@@ -41,7 +42,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const emailLink = $(
         '.govuk-footer a[href="mailto:eprcustomerservice@defra.gov.uk"]'
       )
@@ -56,7 +57,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const footerText = $('.govuk-footer__meta').text()
 
       expect(footerText).toContain('0300 060 0002')
@@ -68,7 +69,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const footerText = $('.govuk-footer__meta').text()
 
       expect(footerText).toContain('Monday to Friday, 8am to 4:30pm')
@@ -82,7 +83,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const contactLink = $('.govuk-footer__inline-list a').filter(
         (_, el) => $(el).text().trim() === 'Contact'
       )
@@ -99,7 +100,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const privacyLink = $('.govuk-footer__inline-list a').filter(
         (_, el) => $(el).text().trim() === 'Privacy'
       )
@@ -118,7 +119,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const cookiesLink = $('.govuk-footer__inline-list a').filter(
         (_, el) => $(el).text().trim() === 'Cookies'
       )
@@ -135,7 +136,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const accessibilityLink = $('.govuk-footer__inline-list a').filter(
         (_, el) => $(el).text().trim() === 'Accessibility statement'
       )
@@ -152,7 +153,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const oglLink = $(
         'a[href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"]'
       )
@@ -167,7 +168,7 @@ describe('#footer', () => {
         url: '/start'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const crownCopyrightLink = $(
         'a[href="https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/"]'
       )
