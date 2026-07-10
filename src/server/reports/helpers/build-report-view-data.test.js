@@ -105,24 +105,24 @@ describe('build-report-view-data', () => {
         unapprovedOverseasSiteRows: [[{ text: 'U1' }]],
         tonnageReceivedNotExported: '2.00',
         tonnageRefused: '1.00',
-        tonnageStopped: '-',
+        tonnageStopped: '0.00',
         tonnageRefusedOrStopped: '1.00',
         tonnageRepatriated: '0.00'
       })
     })
 
-    it('should return an empty, dashed shape when export activity is absent', () => {
+    it('should return an empty, zeroed shape when export activity is absent', () => {
       expect(
         buildWasteExportedViewData(undefined, { showApprovalColumn: false })
       ).toStrictEqual({
         totalTonnage: '0.00',
         overseasSiteRows: [],
         unapprovedOverseasSiteRows: [],
-        tonnageReceivedNotExported: '-',
-        tonnageRefused: '-',
-        tonnageStopped: '-',
-        tonnageRefusedOrStopped: '-',
-        tonnageRepatriated: '-'
+        tonnageReceivedNotExported: '0.00',
+        tonnageRefused: '0.00',
+        tonnageStopped: '0.00',
+        tonnageRefusedOrStopped: '0.00',
+        tonnageRepatriated: '0.00'
       })
     })
   })
@@ -144,7 +144,7 @@ describe('build-report-view-data', () => {
       })
     })
 
-    it('should dash absent values while formatting the rest', () => {
+    it('should zero absent values while formatting the rest', () => {
       expect(
         buildPrnSummaryViewData({
           issuedTonnage: 75,
@@ -154,18 +154,18 @@ describe('build-report-view-data', () => {
         })
       ).toStrictEqual({
         issuedTonnage: '75',
-        totalRevenue: '-',
-        freeTonnage: '-',
-        averagePricePerTonne: '-'
+        totalRevenue: '£0.00',
+        freeTonnage: '0',
+        averagePricePerTonne: '£0.00'
       })
     })
 
-    it('should dash every value when the prn is absent', () => {
+    it('should zero every value when the prn is absent', () => {
       expect(buildPrnSummaryViewData(undefined)).toStrictEqual({
-        issuedTonnage: '-',
-        totalRevenue: '-',
-        freeTonnage: '-',
-        averagePricePerTonne: '-'
+        issuedTonnage: '0',
+        totalRevenue: '£0.00',
+        freeTonnage: '0',
+        averagePricePerTonne: '£0.00'
       })
     })
   })

@@ -1,4 +1,8 @@
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import {
+  formatTonnage,
+  formatWholeNumberTonnage
+} from '#config/nunjucks/filters/format-tonnage.js'
+import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import {
   buildDestinationDetailRows,
   buildOverseasSiteRows,
@@ -6,7 +10,6 @@ import {
   buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './build-table-rows.js'
-import { currencyOrDash, wholeTonnageOrDash } from './dash-formatters.js'
 import { formatExportTonnages } from './format-export-tonnages.js'
 
 /**
@@ -61,8 +64,8 @@ export const buildWasteSentOnViewData = (wasteSent) => ({
 /**
  * Canonical waste-exported view data shared by the check and submit pages:
  * approved/unapproved overseas site tables (no tonnage column) plus the
- * dash-defaulting export tonnage breakdown. A missing export activity renders
- * as a zeroed total with dashed breakdown values.
+ * export tonnage breakdown. A missing export activity renders as a zeroed
+ * total with zeroed breakdown values.
  * @param {ReportDetailResponse['exportActivity'] | undefined} exportActivity
  * @param {{ showApprovalColumn: boolean }} options
  * @returns {{
@@ -96,8 +99,7 @@ export const buildWasteExportedViewData = (
 
 /**
  * Canonical PRN/PERN summary values shared by the check, submit and view pages.
- * A report can still be incomplete on the editable check page, so an absent
- * value formats as a dash rather than a number.
+ * A missing value formats as zero, consistent with the rest of the report.
  * @param {ReportDetailResponse['prn']} prn
  * @returns {{
  *   averagePricePerTonne: string,
@@ -107,8 +109,8 @@ export const buildWasteExportedViewData = (
  * }}
  */
 export const buildPrnSummaryViewData = (prn) => ({
-  averagePricePerTonne: currencyOrDash(prn?.averagePricePerTonne),
-  freeTonnage: wholeTonnageOrDash(prn?.freeTonnage),
-  issuedTonnage: wholeTonnageOrDash(prn?.issuedTonnage),
-  totalRevenue: currencyOrDash(prn?.totalRevenue)
+  averagePricePerTonne: formatCurrency(prn?.averagePricePerTonne),
+  freeTonnage: formatWholeNumberTonnage(prn?.freeTonnage),
+  issuedTonnage: formatWholeNumberTonnage(prn?.issuedTonnage),
+  totalRevenue: formatCurrency(prn?.totalRevenue)
 })
