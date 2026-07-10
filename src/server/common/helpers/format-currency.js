@@ -1,6 +1,6 @@
 /**
- * Formats a value as currency. A missing value formats as zero, consistent
- * with the tonnage formatters.
+ * Formats a value as currency. A null or undefined value formats as zero,
+ * consistent with the tonnage formatters.
  * @param {Parameters<Intl.NumberFormat['format']>[0] | null | undefined} value
  * @param {Intl.LocalesArgument} locale
  * @param {string} currency
