@@ -1,5 +1,8 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { formatDateShort } from '#server/common/helpers/format-date.js'
+import {
+  formatDateShort,
+  toCalendarDate
+} from '#server/common/helpers/format-date.js'
 import { SUBMISSION_STATUS } from '../constants.js'
 
 /**
@@ -61,7 +64,7 @@ export const getStatusLabel = (status, localise) =>
  * @returns {boolean}
  */
 const isPastDueDate = (dueDate) =>
-  new Date().toISOString().split('T')[0].localeCompare(dueDate) > 0
+  toCalendarDate(new Date()).localeCompare(dueDate) > 0
 
 /**
  * The text shown in the due-date column for an active row. A requires

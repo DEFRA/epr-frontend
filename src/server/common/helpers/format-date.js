@@ -34,3 +34,10 @@ export function formatDate(
 export function formatDateShort(isoString, options = {}) {
   return formatDate(isoString, { ...options, monthStyle: 'short' })
 }
+
+/**
+ * The YYYY-MM-DD calendar date for a Date, in UTC.
+ * @param {Date} date
+ * @returns {string}
+ */
+export const toCalendarDate = (date) => date.toISOString().slice(0, 10)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatDate, formatDateShort } from './format-date.js'
+import { formatDate, formatDateShort, toCalendarDate } from './format-date.js'
 
 describe(formatDate, () => {
   it('should format a date with year by default', () => {
@@ -71,5 +71,19 @@ describe(formatDateShort, () => {
 
   it('should return empty string for invalid date string', () => {
     expect(formatDateShort('not-a-date')).toBe('')
+  })
+})
+
+describe(toCalendarDate, () => {
+  it('should return the UTC calendar date for a start-of-day instant', () => {
+    expect(toCalendarDate(new Date('2025-01-31T00:00:00.000Z'))).toBe(
+      '2025-01-31'
+    )
+  })
+
+  it('should return the UTC calendar date for an end-of-day instant', () => {
+    expect(toCalendarDate(new Date('2025-01-31T23:59:59.999Z'))).toBe(
+      '2025-01-31'
+    )
   })
 })
