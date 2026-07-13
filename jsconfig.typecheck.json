@@ -15,7 +15,10 @@
     "noImplicitAny": false,
     "strictNullChecks": true,
     "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
     "paths": {
       "#client/*": ["./src/client/*"],
       "#config/*": ["./src/config/*"],
