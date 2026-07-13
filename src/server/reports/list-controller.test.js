@@ -1385,33 +1385,22 @@ describe('#listReportsController', () => {
 
     describe.each([
       {
-        name: 'shows Overdue when the resubmission due date has passed',
+        // Its 20 February deadline is a month behind the fake clock (20 March),
+        // so it is past due — yet the real due date shows, never 'Overdue'. The
+        // 'Overdue' wording belongs to the status column alone; the due-date
+        // column always shows the absolute date.
+        name: 'shows the real due date for a resubmission whose due date has passed',
         reportingPeriods: resubmissionPeriodPair(1),
         expectedRow: [
           'January 2026',
           'Requires resubmission',
-          'Overdue',
+          '20 Feb 2026',
           'Review and create draft January 2026'
         ]
       },
       {
-        // February's due date (20 March) is exactly "today" under the fake
-        // clock. A period is overdue only from the day after its due date, so
-        // on the due date itself the real date shows. This pins the off-by-one
-        // boundary: a regression that made the comparison overdue-on-the-due-
-        // date would fail.
-        name: 'shows the real due date on the due date itself, before it counts as overdue',
-        reportingPeriods: resubmissionPeriodPair(2),
-        expectedRow: [
-          'February 2026',
-          'Requires resubmission',
-          '20 Mar 2026',
-          'Review and create draft February 2026'
-        ]
-      },
-      {
         // March's due date (20 April) is weeks after the fake clock (20 March),
-        // so the period is comfortably not overdue.
+        // so the period is comfortably not past due.
         name: 'shows the real due date when the due date is still in the future',
         reportingPeriods: resubmissionPeriodPair(3),
         expectedRow: [
@@ -1423,9 +1412,9 @@ describe('#listReportsController', () => {
       },
       {
         // A correction to last November, whose 20 December deadline is three
-        // months behind the fake clock (20 March): genuinely overdue, as the
-        // designs assume for corrections to long-closed periods.
-        name: 'shows Overdue for a resubmission whose due date passed months ago',
+        // months behind the fake clock (20 March): long past due, yet the
+        // absolute date still shows in the due-date column.
+        name: 'shows the real due date for a resubmission whose due date passed months ago',
         reportingPeriods: [
           {
             year: 2025,
@@ -1441,7 +1430,7 @@ describe('#listReportsController', () => {
         expectedRow: [
           'November 2025',
           'Requires resubmission',
-          'Overdue',
+          '20 Dec 2025',
           'Review and create draft November 2025'
         ]
       }
