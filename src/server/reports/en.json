@@ -86,6 +86,7 @@
     "11": "November",
     "12": "December"
   },
+  "noneProvided": "None provided",
   "noteSummaryCaption": "Create report",
   "noteSummaryContinue": "Continue",
   "noteSummaryErrorDecimalPlaces": "Total revenue should only have 2 digits after the decimal point",
@@ -182,7 +183,6 @@
   "supportingInformationHeading": "Add supporting information for your regulator (optional)",
   "supportingInformationHint": "Include any extra information you think your regulator will find useful.",
   "supportingInformationLabel": "Supporting information for your regulator",
-  "supportingInformationNone": "None provided",
   "supportingInformationPageTitle": "Supporting information: {{ material }}: {{ periodLabel }}",
   "supportingInformationResubmissionCaption": "Create draft report",
   "supportingInformationResubmissionFieldLabel": "Enter information (optional)",

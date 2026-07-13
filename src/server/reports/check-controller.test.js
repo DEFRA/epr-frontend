@@ -479,6 +479,40 @@ describe('#checkController', () => {
         expect(supplierTable?.textContent).toContain('info@granthamwaste.co.uk')
       })
 
+      it('should display None provided for missing supplier contact details', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          recyclingActivity: {
+            ...exporterReportDetail.recyclingActivity,
+            suppliers: [
+              {
+                supplierName: 'Grantham Waste',
+                facilityType: 'Baler',
+                tonnageReceived: 42.21,
+                supplierAddress: null,
+                supplierPhone: null,
+                supplierEmail: null
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const supplierTable = body.querySelectorAll('.govuk-table')[0]
+
+        expect(supplierTable?.textContent).toContain('None provided')
+      })
+
       it('should display waste exported section for exporters', async ({
         server
       }) => {

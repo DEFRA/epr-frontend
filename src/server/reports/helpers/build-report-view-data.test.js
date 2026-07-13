@@ -7,6 +7,8 @@ import {
   buildWasteSentOnViewData
 } from './build-report-view-data.js'
 
+const noneText = 'None provided'
+
 describe('build-report-view-data', () => {
   describe(buildWasteReceivedViewData, () => {
     it('should format the total and build 5-column supplier rows', () => {
@@ -26,7 +28,9 @@ describe('build-report-view-data', () => {
         ]
       }
 
-      expect(buildWasteReceivedViewData(recyclingActivity)).toStrictEqual({
+      expect(
+        buildWasteReceivedViewData(recyclingActivity, noneText)
+      ).toStrictEqual({
         totalTonnage: '100.50',
         supplierDetailRows: [
           [
@@ -57,7 +61,7 @@ describe('build-report-view-data', () => {
         ]
       }
 
-      expect(buildWasteSentOnViewData(wasteSent)).toStrictEqual({
+      expect(buildWasteSentOnViewData(wasteSent, noneText)).toStrictEqual({
         totalTonnage: '60.00',
         toReprocessors: '10.00',
         toExporters: '20.00',
@@ -96,7 +100,11 @@ describe('build-report-view-data', () => {
       }
 
       expect(
-        buildWasteExportedViewData(exportActivity, { showApprovalColumn: true })
+        buildWasteExportedViewData(
+          exportActivity,
+          { showApprovalColumn: true },
+          noneText
+        )
       ).toStrictEqual({
         totalTonnage: '40.00',
         overseasSiteRows: [
@@ -113,7 +121,11 @@ describe('build-report-view-data', () => {
 
     it('should return an empty, zeroed shape when export activity is absent', () => {
       expect(
-        buildWasteExportedViewData(undefined, { showApprovalColumn: false })
+        buildWasteExportedViewData(
+          undefined,
+          { showApprovalColumn: false },
+          noneText
+        )
       ).toStrictEqual({
         totalTonnage: '0.00',
         overseasSiteRows: [],
