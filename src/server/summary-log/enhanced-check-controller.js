@@ -105,9 +105,9 @@ const resolveReasonText = (exclusionReasons, processingType, localise) => {
  * True when every row in a section is by-design excluded and nothing else: the
  * non-contributing code is each row's sole reason. The backend emits that code
  * alone for a by-design sheet (it never also validates fields), so a row that
- * carries the code alongside a real reason breaks that invariant; we treat it as
- * a normal row so its data problem still surfaces rather than being hidden by
- * the section collapse.
+ * carries the code alongside a real reason breaks that invariant; we treat the
+ * worksheet as contributing so its data problem still surfaces under the
+ * cautionary heading rather than the neutral "never counts" one.
  * @param {LoadRow[]} sectionRows
  * @returns {boolean}
  */
@@ -175,11 +175,13 @@ const groupRowsIntoSections = (rows, ctx, includeReason) => {
     }
     const sectionName = sectionLabel(wasteRecordType, ctx)
     if (isAccredited && isNonContributingSection(sectionRows)) {
+      // A by-design worksheet lists its rows by id under the neutral
+      // "never counts" heading; the by-design code is dropped from per-row text,
+      // so each row shows as a plain id with no reason.
       return {
         sectionName,
         nonContributing: true,
-        count: sectionRows.length,
-        rows: []
+        rows: sectionRows.map((row) => mapLoadRow(row, ctx, includeReason))
       }
     }
     return {

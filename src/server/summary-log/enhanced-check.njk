@@ -12,17 +12,21 @@
 {# Loads grouped by worksheet (tab): a description list where each section's
    name is the term and its Row IDs are the bulleted values. Any exclusion
    reason is appended to the Row ID; it is omitted where the row carries none.
-   A by-design non-contributing section lists no rows: its whole tab never moves
-   the waste balance, so it shows a single explanatory line instead. #}
-{% macro loadSections(sections) %}
+   Two optional per-worksheet body lines sit above the rows: `cautionary` shows
+   the "could be missing required data" line above a contributing worksheet,
+   `neverCounts` shows the neutral "never count" line above a wholly by-design
+   worksheet. A by-design worksheet still lists each of its Row IDs. #}
+{% macro loadSections(sections, cautionary=false, neverCounts=false) %}
   <dl class="epr-load-sections">
     {% for section in sections %}
-    <dt class="epr-load-sections__section">{{ section.sectionName }}{% if section.nonContributing %} {{ localise('summary-log:enhanced.sectionRowCount', { count: section.count }) }}{% endif %}</dt>
+    <dt class="epr-load-sections__section">{{ section.sectionName }}</dt>
     <dd class="epr-load-sections__rows">
+      {% if section.nonContributing and neverCounts %}
+      <p class="govuk-body">{{ localise('summary-log:enhanced.sectionNeverCounts') }}</p>
+      {% elif not section.nonContributing and cautionary %}
+      <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsNotAddedBody') }}</p>
+      {% endif %}
       <ul class="govuk-list govuk-list--bullet">
-        {% if section.nonContributing %}
-        <li>{{ localise('summary-log:enhanced.sectionNeverCounts') }}</li>
-        {% else %}
         {% for row in section.rows %}
         <li>
           {% if row.reasonText %}
@@ -32,7 +36,6 @@
           {% endif %}
         </li>
         {% endfor %}
-        {% endif %}
       </ul>
     </dd>
     {% endfor %}
@@ -42,7 +45,7 @@
 {# "Show [x] load[s]" disclosure wrapping the bullet list of rows. Over the cap
    (more than 99 loads) the list is suppressed for the too-many message, matching
    the row-id-list convention. #}
-{% macro loadsAccordion(count, sections, tooManyMessage) %}
+{% macro loadsAccordion(count, sections, tooManyMessage, cautionary=false, neverCounts=false) %}
   {% if count >= maxRowsPerBucket %}
   <p class="govuk-body">{{ tooManyMessage }}</p>
   {% else %}
@@ -51,7 +54,7 @@
       <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: count }) }}</span>
     </summary>
     <div class="govuk-details__text">
-      {{ loadSections(sections) }}
+      {{ loadSections(sections, cautionary, neverCounts) }}
     </div>
   </details>
   {% endif %}
@@ -101,8 +104,7 @@
     {% if change.nonBalanceAffecting.count > 0 %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsNotAddedHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
-    <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsNotAddedBody') }}</p>
-    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:enhanced.tooManyLoads')) }}
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:enhanced.tooManyLoads'), true, true) }}
     {% endif %}
   {% else %}
     {{ sectionRule() }}
@@ -134,7 +136,7 @@
     {% if change.nonBalanceAffecting.count > 0 %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustmentsNotRelevantHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
-    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:tooManyAdjustedLoadsToList')) }}
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:tooManyAdjustedLoadsToList'), false, true) }}
     {% endif %}
   {% else %}
     {{ sectionRule() }}

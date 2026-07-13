@@ -4145,16 +4145,19 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
-      notAddedBody: hasText(
+      // The cautionary body is repeated per contributing worksheet (Exported and
+      // Sent on), not shown once at bucket level.
+      notAddedBodyPerWorksheet: queryAllByText(
+        main,
         'These loads could be missing required summary log data that stops them from adding to your waste balance.'
-      ),
+      ).length,
       disclosure: hasText('Show 2 loads'),
       exportedSection: hasText('Exported'),
       exportedRow: hasText('Row ID: 5. Required summary log data is missing'),
       sentOnSection: hasText('Sent on'),
       sentOnRow: hasText('Row ID: 8. Product weight is missing')
     }).toStrictEqual({
-      notAddedBody: true,
+      notAddedBodyPerWorksheet: 2,
       disclosure: true,
       exportedSection: true,
       exportedRow: true,
@@ -4163,12 +4166,12 @@ describe('enhanced summary log check view', () => {
     })
   })
 
-  it('collapses a fully by-design section to a single non-contributing line with no per-row detail', async ({
+  it('lists a fully by-design section under a neutral never-counts heading with each row id', async ({
     server
   }) => {
     // Every row in the Reprocessed section carries the by-design exclusion code,
-    // so the section is by-design non-contributing: it renders one explanatory
-    // line and lists neither the row ids nor the raw code.
+    // so the section is by-design non-contributing: it renders the neutral
+    // "never count" heading and lists each row id (never the raw code).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'REPROCESSOR_INPUT',
@@ -4209,35 +4212,38 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
-      // The bucket total and the section count reconcile: 2 by-design rows make
-      // up the whole "2 new loads ... will NOT add" bucket.
       bucketHeading: hasText(
         '2 new loads will be recorded (but will NOT add to your waste balance)'
       ),
-      // The heading carries the section's row count (plural form here).
-      section: hasText('Reprocessed (2 rows)'),
-      nonContributingLine: hasText(
-        'Rows loaded from this section never count towards your waste balance'
+      // The worksheet is labelled with no row-count suffix.
+      section: hasText('Reprocessed'),
+      countedHeading: hasText('Reprocessed (2 rows)'),
+      neverCountsLine: hasText(
+        'These loads never count towards your waste balance'
       ),
       rawCodeShown: hasText(
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
       ),
-      rowIdShown: hasText('Row ID: 4001')
+      // Each by-design row is now listed by id, without a per-row reason.
+      firstRowIdShown: hasText('Row ID: 4001'),
+      secondRowIdShown: hasText('Row ID: 4002')
     }).toStrictEqual({
       bucketHeading: true,
       section: true,
-      nonContributingLine: true,
+      countedHeading: false,
+      neverCountsLine: true,
       rawCodeShown: false,
-      rowIdShown: false
+      firstRowIdShown: true,
+      secondRowIdShown: true
     })
   })
 
-  it('keeps per-row reasons on a real-reason section while collapsing a by-design section in the same bucket', async ({
+  it('renders the cautionary and never-counts headings per worksheet in a mixed bucket', async ({
     server
   }) => {
     // A mixed non-balance-affecting bucket: the Received section carries a real
-    // data problem (per-row reason retained) alongside the by-design Reprocessed
-    // section (collapsed to its non-contributing line).
+    // data problem (cautionary heading + per-row reason) alongside the by-design
+    // Reprocessed section (never-counts heading + its row id listed).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'REPROCESSOR_INPUT',
@@ -4276,26 +4282,32 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
-      // The bucket total reconciles: 1 listed Received row plus the collapsed
-      // Reprocessed (1 row) sum to the "2 new loads ... will NOT add" bucket.
       bucketHeading: hasText(
         '2 new loads will be recorded (but will NOT add to your waste balance)'
+      ),
+      // The Received worksheet gets the cautionary heading and its per-row reason.
+      cautionaryLine: hasText(
+        'These loads could be missing required summary log data that stops them from adding to your waste balance.'
       ),
       receivedRowWithReason: hasText(
         'Row ID: 1001. Required summary log data is missing'
       ),
-      // Singular row-count form on the collapsed heading.
-      reprocessedSection: hasText('Reprocessed (1 row)'),
-      nonContributingLine: hasText(
-        'Rows loaded from this section never count towards your waste balance'
+      // The Reprocessed worksheet gets the neutral never-counts heading and lists
+      // its row id (no count suffix, no raw code).
+      reprocessedSection: hasText('Reprocessed'),
+      countedHeading: hasText('Reprocessed (1 row)'),
+      neverCountsLine: hasText(
+        'These loads never count towards your waste balance'
       ),
       byDesignRowIdShown: hasText('Row ID: 4001')
     }).toStrictEqual({
       bucketHeading: true,
+      cautionaryLine: true,
       receivedRowWithReason: true,
       reprocessedSection: true,
-      nonContributingLine: true,
-      byDesignRowIdShown: false
+      countedHeading: false,
+      neverCountsLine: true,
+      byDesignRowIdShown: true
     })
   })
 
@@ -4303,10 +4315,9 @@ describe('enhanced summary log check view', () => {
     server
   }) => {
     // Same worksheet (processed), one by-design row and one with a genuine data
-    // problem. The section is not wholly by-design, so it stays expanded: the
-    // real-reason row shows its reason, the by-design row lists as a plain id
-    // (its code is dropped), and neither the collapse line nor the (N rows)
-    // count appears.
+    // problem. The worksheet is not wholly by-design, so it gets the cautionary
+    // heading: the real-reason row shows its reason, the by-design row lists as a
+    // plain id (its code is dropped), and the never-counts heading does not appear.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'REPROCESSOR_INPUT',
@@ -4345,24 +4356,28 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
+      cautionaryLine: hasText(
+        'These loads could be missing required summary log data that stops them from adding to your waste balance.'
+      ),
       realReasonRow: hasText(
         'Row ID: 4002. Required summary log data is missing'
       ),
       byDesignRowPlain: hasText('Row ID: 4001'),
       sectionPlain: hasText('Reprocessed'),
       countedHeading: hasText('Reprocessed (2 rows)'),
-      nonContributingLine: hasText(
-        'Rows loaded from this section never count towards your waste balance'
+      neverCountsLine: hasText(
+        'These loads never count towards your waste balance'
       ),
       rawCodeShown: hasText(
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
       )
     }).toStrictEqual({
+      cautionaryLine: true,
       realReasonRow: true,
       byDesignRowPlain: true,
       sectionPlain: true,
       countedHeading: false,
-      nonContributingLine: false,
+      neverCountsLine: false,
       rawCodeShown: false
     })
   })
@@ -4413,13 +4428,13 @@ describe('enhanced summary log check view', () => {
       rawCodeShown: hasText(
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
       ),
-      nonContributingLineShown: hasText(
-        'Rows loaded from this section never count towards your waste balance'
+      neverCountsLineShown: hasText(
+        'These loads never count towards your waste balance'
       )
     }).toStrictEqual({
       rowWithRealReason: true,
       rawCodeShown: false,
-      nonContributingLineShown: false
+      neverCountsLineShown: false
     })
   })
 
@@ -4465,13 +4480,75 @@ describe('enhanced summary log check view', () => {
       rawCodeShown: hasText(
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
       ),
-      nonContributingLineShown: hasText(
-        'Rows loaded from this section never count towards your waste balance'
+      neverCountsLineShown: hasText(
+        'These loads never count towards your waste balance'
       )
     }).toStrictEqual({
       receivedRow: true,
       rawCodeShown: false,
-      nonContributingLineShown: false
+      neverCountsLineShown: false
+    })
+  })
+
+  it('lists a by-design worksheet under the never-counts heading in the adjusted bucket', async ({
+    server
+  }) => {
+    // The never-counts treatment applies to the adjusted "not relevant" bucket
+    // too, not just new loads: a wholly by-design worksheet there lists its row
+    // ids under the neutral never-counts heading rather than the raw code.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 2,
+              rows: [
+                {
+                  rowId: '4001',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '4002',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      neverCountsLine: hasText(
+        'These loads never count towards your waste balance'
+      ),
+      firstRowIdShown: hasText('Row ID: 4001'),
+      secondRowIdShown: hasText('Row ID: 4002'),
+      rawCodeShown: hasText(
+        'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+      )
+    }).toStrictEqual({
+      neverCountsLine: true,
+      firstRowIdShown: true,
+      secondRowIdShown: true,
+      rawCodeShown: false
     })
   })
 
