@@ -359,6 +359,14 @@ describe('#submitController', () => {
         ).toBeDefined()
       })
 
+      it('renders content in a full-width column', async ({ server }) => {
+        const body = await getBody(server)
+
+        const contentColumn = body.querySelector('.govuk-grid-row > div')
+
+        expect(contentColumn?.className).toContain('govuk-grid-column-full')
+      })
+
       it('should display inset text with correction guidance', async ({
         server
       }) => {

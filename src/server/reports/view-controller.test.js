@@ -234,6 +234,17 @@ describe('#viewController', () => {
       expect(backLink).toBeNull()
     })
 
+    it('renders content in a full-width column', async ({ server }) => {
+      const body = await loadPageBody({
+        server,
+        registrationAndAccreditation: mockAccreditedReprocessor
+      })
+
+      const contentColumn = body.querySelector('.govuk-grid-row > div')
+
+      expect(contentColumn?.className).toContain('govuk-grid-column-full')
+    })
+
     it('renders the intro text with due date', async ({ server }) => {
       const body = await loadPageBody({
         server,
