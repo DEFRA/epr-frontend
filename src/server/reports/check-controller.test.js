@@ -319,6 +319,21 @@ describe('#checkController', () => {
         expect(heading).toBeDefined()
       })
 
+      it('renders content in a full-width column', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const contentColumn = body.querySelector('.govuk-grid-row > div')
+
+        expect(contentColumn?.className).toContain('govuk-grid-column-full')
+      })
+
       it('should display the Create report caption', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
