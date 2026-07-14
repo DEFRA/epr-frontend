@@ -1,9 +1,7 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
-import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { SUBMISSION_STATUS } from '../constants.js'
 
 /**
- * @import { TFunction } from 'i18next'
  * @import { SubmissionStatusValue } from '../constants.js'
  */
 
@@ -49,31 +47,3 @@ export const getStatusTagClass = (status) => tagClasses[status]
  */
 export const getStatusLabel = (status, localise) =>
   localise(statusLabelKeys[status])
-
-/**
- * Whether a due date has passed. Mirrors the backend's derive-period-status
- * comparison verbatim: both sides are date-only (YYYY-MM-DD) ISO strings, which
- * sort chronologically, so a period is overdue from the day after its due date,
- * i.e. from the 21st when due on the 20th. The backend returns dueDate as a
- * date-only string, so it is compared as-is (no slicing) to stay identical to
- * derive-period-status.js and never drift from it.
- * @param {string} dueDate a date-only YYYY-MM-DD ISO string
- * @returns {boolean}
- */
-const isPastDueDate = (dueDate) =>
-  new Date().toISOString().split('T')[0].localeCompare(dueDate) > 0
-
-/**
- * The text shown in the due-date column for an active row. A requires
- * resubmission period keeps that status rather than flipping to overdue, so it
- * shows the overdue label here once its due date has passed; every other status
- * shows the formatted due date.
- * @param {SubmissionStatusValue} status
- * @param {string} dueDate a date-only YYYY-MM-DD ISO string
- * @param {TFunction} localise
- * @returns {string}
- */
-export const buildDueDateText = (status, dueDate, localise) =>
-  status === SUBMISSION_STATUS.REQUIRES_RESUBMISSION && isPastDueDate(dueDate)
-    ? getStatusLabel(SUBMISSION_STATUS.OVERDUE, localise)
-    : formatDateShort(dueDate)

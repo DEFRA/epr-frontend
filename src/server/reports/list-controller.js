@@ -12,7 +12,6 @@ import {
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import {
-  buildDueDateText,
   getStatusLabel,
   getStatusTagClass
 } from './helpers/format-submission-status.js'
@@ -165,7 +164,7 @@ function buildRows({
         actionCell
       ])
     } else {
-      const dueDateText = buildDueDateText(status, period.dueDate, localise)
+      const dueDateText = formatDateShort(period.dueDate)
 
       activeRows.push([
         { text: label },

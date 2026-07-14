@@ -24,9 +24,15 @@ import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
  * @param {object|undefined} exportActivity
  * @param {boolean} isExporter
  * @param {boolean} isAccreditedExporter
+ * @param {string} noneText
  * @returns {object|null}
  */
-function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
+function buildWasteExported(
+  exportActivity,
+  isExporter,
+  isAccreditedExporter,
+  noneText
+) {
   if (!isExporter || !exportActivity) {
     return null
   }
@@ -35,7 +41,8 @@ function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
     totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
     overseasSiteDetailRows: buildOverseasSiteDetailRows(
       exportActivity.overseasSites,
-      { showApprovalColumn: isAccreditedExporter }
+      { showApprovalColumn: isAccreditedExporter },
+      noneText
     ),
     unapprovedOverseasSiteDetailRows: buildUnapprovedOverseasSiteDetailRows(
       exportActivity.unapprovedOverseasSites
@@ -118,6 +125,7 @@ function buildViewData(
   const isAccreditedReprocessor =
     isReprocessorRegistration(registration) && !!accreditation
   const { wasteActionGerund } = getNoteTypeDisplayNames(registration)
+  const noneText = localise('reports:noneProvided')
 
   return {
     pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
@@ -152,14 +160,18 @@ function buildViewData(
     wasteExported: buildWasteExported(
       exportActivity,
       isExporter,
-      isAccreditedExporter
+      isAccreditedExporter,
+      noneText
     ),
     wasteSentOn: {
       totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
       toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
       toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
       toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-      destinationRows: buildDestinationRows(wasteSent.finalDestinations)
+      destinationRows: buildDestinationRows(
+        wasteSent.finalDestinations,
+        noneText
+      )
     },
     ...buildSectionIntros(
       isAccreditedExporter,

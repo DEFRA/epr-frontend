@@ -1,6 +1,15 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 
 /**
+ * Builds a table cell for a qualitative value, falling back to the "none
+ * provided" text when the value is missing (null, undefined or empty).
+ * @param {string | null | undefined} value
+ * @param {string} noneText
+ * @returns {{ text: string }}
+ */
+const qualitativeCell = (value, noneText) => ({ text: value || noneText })
+
+/**
  * Calculate total tonnage sent on from the waste sent breakdown.
  * @param {{ tonnageSentToReprocessor: number, tonnageSentToExporter: number, tonnageSentToAnotherSite: number }} wasteSent
  * @returns {number}
@@ -28,59 +37,67 @@ export function buildSupplierRows(suppliers) {
 
 /**
  * Build govukTable rows for supplier details with contact information.
- * Used on review/submit pages where contact details replace tonnage.
+ * Used on review/submit pages where contact details replace tonnage. A missing
+ * contact value renders as the "none provided" text.
  * @param {Array<{supplierName: string, facilityType: string, supplierAddress: string | null, supplierPhone: string | null, supplierEmail: string | null}>} suppliers
- * @returns {Array<Array<{text: string | null}>>}
+ * @param {string} noneText
+ * @returns {Array<Array<{text: string}>>}
  */
-export function buildSupplierDetailRows(suppliers) {
+export function buildSupplierDetailRows(suppliers, noneText) {
   return suppliers.map((supplier) => [
     { text: supplier.supplierName },
     { text: supplier.facilityType },
-    { text: supplier.supplierAddress },
-    { text: supplier.supplierPhone },
-    { text: supplier.supplierEmail }
+    qualitativeCell(supplier.supplierAddress, noneText),
+    qualitativeCell(supplier.supplierPhone, noneText),
+    qualitativeCell(supplier.supplierEmail, noneText)
   ])
 }
 
 /**
- * Build govukTable rows for destination details.
+ * Build govukTable rows for destination details. A missing recipient or
+ * facility type renders as the "none provided" text.
  * @param {Array<{recipientName: string | null, facilityType: string | null, tonnageSentOn: number}>} finalDestinations
- * @returns {Array<Array<{text: string | null}>>}
+ * @param {string} noneText
+ * @returns {Array<Array<{text: string}>>}
  */
-export function buildDestinationRows(finalDestinations) {
+export function buildDestinationRows(finalDestinations, noneText) {
   return finalDestinations.map((finalDestination) => [
-    { text: finalDestination.recipientName },
-    { text: finalDestination.facilityType },
+    qualitativeCell(finalDestination.recipientName, noneText),
+    qualitativeCell(finalDestination.facilityType, noneText),
     { text: formatTonnage(finalDestination.tonnageSentOn) }
   ])
 }
 
 /**
- * Build govukTable rows for destinations with address.
+ * Build govukTable rows for destinations with address. A missing recipient,
+ * facility type or address renders as the "none provided" text.
  * @param {Array<{recipientName: string | null, facilityType: string | null, address: string | null, tonnageSentOn: number}>} finalDestinations
- * @returns {Array<Array<{text: string | null}>>}
+ * @param {string} noneText
+ * @returns {Array<Array<{text: string}>>}
  */
-export function buildDestinationDetailRows(finalDestinations) {
+export function buildDestinationDetailRows(finalDestinations, noneText) {
   return finalDestinations.map((destination) => [
-    { text: destination.recipientName },
-    { text: destination.facilityType },
-    { text: destination.address },
+    qualitativeCell(destination.recipientName, noneText),
+    qualitativeCell(destination.facilityType, noneText),
+    qualitativeCell(destination.address, noneText),
     { text: formatTonnage(destination.tonnageSentOn) }
   ])
 }
 
 /**
- * Build govukTable rows for overseas reprocessing sites.
+ * Build govukTable rows for overseas reprocessing sites. A missing country
+ * renders as the "none provided" text.
  * @param {Array<{siteName: string, orsId: string, country: string|null, approved: boolean}>} overseasSites
- * @param {{ showApprovalColumn?: boolean }} [options]
- * @returns {Array<Array<{text: string | null}>>}
+ * @param {{ showApprovalColumn?: boolean }} options
+ * @param {string} noneText
+ * @returns {Array<Array<{text: string}>>}
  */
-export function buildOverseasSiteRows(overseasSites, options) {
+export function buildOverseasSiteRows(overseasSites, options, noneText) {
   return overseasSites.map((overseasSite) => {
     const row = [
       { text: overseasSite.siteName },
       { text: overseasSite.orsId },
-      { text: overseasSite.country }
+      qualitativeCell(overseasSite.country, noneText)
     ]
 
     if (options?.showApprovalColumn) {
@@ -93,17 +110,19 @@ export function buildOverseasSiteRows(overseasSites, options) {
 
 /**
  * Build govukTable rows for overseas sites with tonnage exported and country.
+ * A missing country renders as the "none provided" text.
  * @param {Array<{siteName: string, tonnageExported: number, orsId: string, country: string|null, approved: boolean}>} overseasSites
- * @param {{ showApprovalColumn?: boolean }} [options]
- * @returns {Array<Array<{text: string | null}>>}
+ * @param {{ showApprovalColumn?: boolean }} options
+ * @param {string} noneText
+ * @returns {Array<Array<{text: string}>>}
  */
-export function buildOverseasSiteDetailRows(overseasSites, options) {
+export function buildOverseasSiteDetailRows(overseasSites, options, noneText) {
   return overseasSites.map((overseasSite) => {
     const row = [
       { text: overseasSite.siteName },
       { text: formatTonnage(overseasSite.tonnageExported) },
       { text: overseasSite.orsId },
-      { text: overseasSite.country }
+      qualitativeCell(overseasSite.country, noneText)
     ]
 
     if (options?.showApprovalColumn) {

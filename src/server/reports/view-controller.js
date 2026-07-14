@@ -113,6 +113,7 @@ function buildViewData({
   const isRegisteredOnlyExporter = isExporter && !isAccredited
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
+  const noneText = localise('reports:noneProvided')
 
   const viewData = {
     ...buildPageLabels({
@@ -130,7 +131,7 @@ function buildViewData({
     periodLabel,
     site: registration.site?.address?.line1,
 
-    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, noneText),
 
     packagingWasteRecycling: {
       tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
@@ -138,9 +139,11 @@ function buildViewData({
     },
 
     wasteExported: isExporter
-      ? buildWasteExportedViewData(exportActivity, {
-          showApprovalColumn: isAccredited
-        })
+      ? buildWasteExportedViewData(
+          exportActivity,
+          { showApprovalColumn: isAccredited },
+          noneText
+        )
       : null,
 
     isAccredited,
@@ -150,11 +153,9 @@ function buildViewData({
 
     prn: buildPrnSummaryViewData(reportDetail.prn),
 
-    wasteSentOn: buildWasteSentOnViewData(wasteSent),
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, noneText),
 
-    supportingInformation:
-      reportDetail.supportingInformation ||
-      localise('reports:supportingInformationNone')
+    supportingInformation: reportDetail.supportingInformation || noneText
   }
 
   if (isDraft) {

@@ -1,4 +1,8 @@
-import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
+import {
+  formatTonnage,
+  formatWholeNumberTonnage
+} from '#config/nunjucks/filters/format-tonnage.js'
+import { formatCurrency } from '#server/common/helpers/format-currency.js'
 import {
   buildDestinationDetailRows,
   buildOverseasSiteRows,
@@ -6,7 +10,6 @@ import {
   buildUnapprovedOverseasSiteRows,
   getTotalTonnageSentOn
 } from './build-table-rows.js'
-import { currencyOrDash, wholeTonnageOrDash } from './dash-formatters.js'
 import { formatExportTonnages } from './format-export-tonnages.js'
 
 /**
@@ -29,10 +32,14 @@ const emptyExportActivity = {
  * Canonical waste-received view data shared by the check, submit and view
  * pages: the formatted total plus the 5-column supplier contact table.
  * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
- * @returns {{ supplierDetailRows: Array<Array<{text: string | null}>>, totalTonnage: string }}
+ * @param {string} noneText
+ * @returns {{ supplierDetailRows: Array<Array<{text: string}>>, totalTonnage: string }}
  */
-export const buildWasteReceivedViewData = (recyclingActivity) => ({
-  supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers),
+export const buildWasteReceivedViewData = (recyclingActivity, noneText) => ({
+  supplierDetailRows: buildSupplierDetailRows(
+    recyclingActivity.suppliers,
+    noneText
+  ),
   totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived)
 })
 
@@ -40,17 +47,19 @@ export const buildWasteReceivedViewData = (recyclingActivity) => ({
  * Canonical waste-sent-on view data shared by the check, submit and view
  * pages: the formatted total and breakdown plus the 4-column destination table.
  * @param {ReportDetailResponse['wasteSent']} wasteSent
+ * @param {string} noneText
  * @returns {{
- *   destinationDetailRows: Array<Array<{text: string | null}>>,
+ *   destinationDetailRows: Array<Array<{text: string}>>,
  *   toExporters: string,
  *   toOtherSites: string,
  *   toReprocessors: string,
  *   totalTonnage: string
  * }}
  */
-export const buildWasteSentOnViewData = (wasteSent) => ({
+export const buildWasteSentOnViewData = (wasteSent, noneText) => ({
   destinationDetailRows: buildDestinationDetailRows(
-    wasteSent.finalDestinations
+    wasteSent.finalDestinations,
+    noneText
   ),
   toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
   toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
@@ -61,12 +70,13 @@ export const buildWasteSentOnViewData = (wasteSent) => ({
 /**
  * Canonical waste-exported view data shared by the check and submit pages:
  * approved/unapproved overseas site tables (no tonnage column) plus the
- * dash-defaulting export tonnage breakdown. A missing export activity renders
- * as a zeroed total with dashed breakdown values.
+ * export tonnage breakdown. A missing export activity renders as a zeroed
+ * total with zeroed breakdown values.
  * @param {ReportDetailResponse['exportActivity'] | undefined} exportActivity
  * @param {{ showApprovalColumn: boolean }} options
+ * @param {string} noneText
  * @returns {{
- *   overseasSiteRows: Array<Array<{ text: string | null }>>,
+ *   overseasSiteRows: Array<Array<{ text: string }>>,
  *   tonnageReceivedNotExported: string,
  *   tonnageRefused: string,
  *   tonnageRefusedOrStopped: string,
@@ -78,14 +88,17 @@ export const buildWasteSentOnViewData = (wasteSent) => ({
  */
 export const buildWasteExportedViewData = (
   exportActivity,
-  { showApprovalColumn }
+  { showApprovalColumn },
+  noneText
 ) => {
   const activity = exportActivity ?? emptyExportActivity
 
   return {
-    overseasSiteRows: buildOverseasSiteRows(activity.overseasSites, {
-      showApprovalColumn
-    }),
+    overseasSiteRows: buildOverseasSiteRows(
+      activity.overseasSites,
+      { showApprovalColumn },
+      noneText
+    ),
     totalTonnage: formatTonnage(activity.totalTonnageExported),
     unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
       activity.unapprovedOverseasSites
@@ -96,8 +109,7 @@ export const buildWasteExportedViewData = (
 
 /**
  * Canonical PRN/PERN summary values shared by the check, submit and view pages.
- * A report can still be incomplete on the editable check page, so an absent
- * value formats as a dash rather than a number.
+ * A missing value formats as zero, consistent with the rest of the report.
  * @param {ReportDetailResponse['prn']} prn
  * @returns {{
  *   averagePricePerTonne: string,
@@ -107,8 +119,8 @@ export const buildWasteExportedViewData = (
  * }}
  */
 export const buildPrnSummaryViewData = (prn) => ({
-  averagePricePerTonne: currencyOrDash(prn?.averagePricePerTonne),
-  freeTonnage: wholeTonnageOrDash(prn?.freeTonnage),
-  issuedTonnage: wholeTonnageOrDash(prn?.issuedTonnage),
-  totalRevenue: currencyOrDash(prn?.totalRevenue)
+  averagePricePerTonne: formatCurrency(prn?.averagePricePerTonne),
+  freeTonnage: formatWholeNumberTonnage(prn?.freeTonnage),
+  issuedTonnage: formatWholeNumberTonnage(prn?.issuedTonnage),
+  totalRevenue: formatCurrency(prn?.totalRevenue)
 })

@@ -13,4 +13,14 @@ describe('#formatCurrency', () => {
       expect(formatCurrency('5500000', 'en-US', 'USD')).toBe('$5,500,000.00')
     })
   })
+
+  describe('with missing values', () => {
+    test('returns zero currency for null value', () => {
+      expect(formatCurrency(null)).toBe('£0.00')
+    })
+
+    test('returns zero currency for undefined value', () => {
+      expect(formatCurrency(undefined)).toBe('£0.00')
+    })
+  })
 })
