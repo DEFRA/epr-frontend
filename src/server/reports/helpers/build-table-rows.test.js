@@ -12,7 +12,7 @@ import {
   buildUnapprovedOverseasSiteRows
 } from './build-table-rows.js'
 
-const noneText = 'None provided'
+const fallbackText = 'None provided'
 
 describe(getTotalTonnageSentOn, () => {
   it('sums all three tonnage fields', () => {
@@ -36,7 +36,7 @@ describe(buildSupplierRows, () => {
       }
     ]
 
-    const rows = buildSupplierRows(suppliers, noneText)
+    const rows = buildSupplierRows(suppliers, fallbackText)
 
     expect(rows).toStrictEqual([
       [{ text: 'Acme Waste' }, { text: 'Baler' }, { text: '1,234.50' }]
@@ -52,7 +52,7 @@ describe(buildSupplierRows, () => {
       }
     ]
 
-    const rows = buildSupplierRows(suppliers, noneText)
+    const rows = buildSupplierRows(suppliers, fallbackText)
 
     expect(rows).toStrictEqual([
       [
@@ -76,7 +76,7 @@ describe(buildSupplierDetailRows, () => {
       }
     ]
 
-    const rows = buildSupplierDetailRows(suppliers, noneText)
+    const rows = buildSupplierDetailRows(suppliers, fallbackText)
 
     expect(rows).toStrictEqual([
       [
@@ -100,7 +100,7 @@ describe(buildSupplierDetailRows, () => {
       }
     ]
 
-    const rows = buildSupplierDetailRows(suppliers, noneText)
+    const rows = buildSupplierDetailRows(suppliers, fallbackText)
 
     expect(rows).toStrictEqual([
       [
@@ -124,7 +124,7 @@ describe(buildDestinationRows, () => {
       }
     ]
 
-    const rows = buildDestinationRows(destinations, noneText)
+    const rows = buildDestinationRows(destinations, fallbackText)
 
     expect(rows).toStrictEqual([
       [{ text: 'Green Recyclers' }, { text: 'Reprocessor' }, { text: '500.10' }]
@@ -140,7 +140,7 @@ describe(buildDestinationRows, () => {
       }
     ]
 
-    const rows = buildDestinationRows(destinations, noneText)
+    const rows = buildDestinationRows(destinations, fallbackText)
 
     expect(rows).toStrictEqual([
       [{ text: 'None provided' }, { text: 'None provided' }, { text: '500.10' }]
@@ -159,7 +159,7 @@ describe(buildDestinationDetailRows, () => {
       }
     ]
 
-    const rows = buildDestinationDetailRows(destinations, noneText)
+    const rows = buildDestinationDetailRows(destinations, fallbackText)
 
     expect(rows).toStrictEqual([
       [
@@ -181,7 +181,7 @@ describe(buildDestinationDetailRows, () => {
       }
     ]
 
-    const rows = buildDestinationDetailRows(destinations, noneText)
+    const rows = buildDestinationDetailRows(destinations, fallbackText)
 
     expect(rows).toStrictEqual([
       [
@@ -211,7 +211,7 @@ describe(buildOverseasSiteRows, () => {
   ]
 
   it('builds rows with site name, ORS ID, and country', () => {
-    const rows = buildOverseasSiteRows(overseasSites, {}, noneText)
+    const rows = buildOverseasSiteRows(overseasSites, {}, fallbackText)
 
     expect(rows).toStrictEqual([
       [{ text: 'Hamburg Plant' }, { text: 'ORS-001' }, { text: 'Germany' }],
@@ -230,7 +230,7 @@ describe(buildOverseasSiteRows, () => {
         }
       ],
       {},
-      noneText
+      fallbackText
     )
 
     expect(rows).toStrictEqual([
@@ -244,7 +244,7 @@ describe(buildOverseasSiteRows, () => {
       {
         showApprovalColumn: true
       },
-      noneText
+      fallbackText
     )
 
     expect(rows).toStrictEqual([
@@ -269,7 +269,7 @@ describe(buildOverseasSiteRows, () => {
       {
         showApprovalColumn: false
       },
-      noneText
+      fallbackText
     )
 
     expect(rows).toStrictEqual([
@@ -298,7 +298,7 @@ describe(buildOverseasSiteDetailRows, () => {
   ]
 
   it('builds rows without approval column by default', () => {
-    const rows = buildOverseasSiteDetailRows(overseasSites, {}, noneText)
+    const rows = buildOverseasSiteDetailRows(overseasSites, {}, fallbackText)
 
     expect(rows).toStrictEqual([
       [
@@ -328,7 +328,7 @@ describe(buildOverseasSiteDetailRows, () => {
         }
       ],
       {},
-      noneText
+      fallbackText
     )
 
     expect(rows).toStrictEqual([
@@ -347,7 +347,7 @@ describe(buildOverseasSiteDetailRows, () => {
       {
         showApprovalColumn: true
       },
-      noneText
+      fallbackText
     )
 
     expect(rows).toStrictEqual([
@@ -374,7 +374,7 @@ describe(buildOverseasSiteDetailRows, () => {
       {
         showApprovalColumn: false
       },
-      noneText
+      fallbackText
     )
 
     expect(rows).toStrictEqual([

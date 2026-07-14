@@ -93,7 +93,7 @@ function buildCheckViewData({
   const isReprocessor = isReprocessorRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
   const isRegisteredOnlyExporter = isExporter && !accreditation
-  const noneText = localise('reports:noneProvided')
+  const fallbackText = localise('reports:noneProvided')
 
   return {
     accreditationNumber: accreditation?.accreditationNumber,
@@ -133,11 +133,11 @@ function buildCheckViewData({
       ? buildWasteExportedViewData(
           exportActivity,
           { showApprovalColumn: isAccreditedExporter },
-          noneText
+          fallbackText
         )
       : null,
-    wasteReceived: buildWasteReceivedViewData(recyclingActivity, noneText),
-    wasteSentOn: buildWasteSentOnViewData(wasteSent, noneText),
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
     ...buildNoteTypeLabels(registration, localise)
   }
 }

@@ -24,14 +24,14 @@ import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
  * @param {object|undefined} exportActivity
  * @param {boolean} isExporter
  * @param {boolean} isAccreditedExporter
- * @param {string} noneText
+ * @param {string} fallbackText
  * @returns {object|null}
  */
 function buildWasteExported(
   exportActivity,
   isExporter,
   isAccreditedExporter,
-  noneText
+  fallbackText
 ) {
   if (!isExporter || !exportActivity) {
     return null
@@ -42,7 +42,7 @@ function buildWasteExported(
     overseasSiteDetailRows: buildOverseasSiteDetailRows(
       exportActivity.overseasSites,
       { showApprovalColumn: isAccreditedExporter },
-      noneText
+      fallbackText
     ),
     unapprovedOverseasSiteDetailRows: buildUnapprovedOverseasSiteDetailRows(
       exportActivity.unapprovedOverseasSites
@@ -125,7 +125,7 @@ function buildViewData(
   const isAccreditedReprocessor =
     isReprocessorRegistration(registration) && !!accreditation
   const { wasteActionGerund } = getNoteTypeDisplayNames(registration)
-  const noneText = localise('reports:noneProvided')
+  const fallbackText = localise('reports:noneProvided')
 
   return {
     pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
@@ -154,14 +154,14 @@ function buildViewData(
     site: reportDetail.details.site,
     wasteReceived: {
       totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierRows: buildSupplierRows(recyclingActivity.suppliers, noneText)
+      supplierRows: buildSupplierRows(recyclingActivity.suppliers, fallbackText)
     },
     showApprovalColumn: isAccreditedExporter,
     wasteExported: buildWasteExported(
       exportActivity,
       isExporter,
       isAccreditedExporter,
-      noneText
+      fallbackText
     ),
     wasteSentOn: {
       totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
@@ -170,7 +170,7 @@ function buildViewData(
       toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
       destinationRows: buildDestinationRows(
         wasteSent.finalDestinations,
-        noneText
+        fallbackText
       )
     },
     ...buildSectionIntros(
