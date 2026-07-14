@@ -55,8 +55,36 @@ jobs:
         run: npm run check:i18n
         continue-on-error: true #FIXME: 🚨 Make this a blocking step after translations are available
 
+  type-check-prod:
+    name: Lint Types - Prod
+    runs-on: ubuntu-latest
+    needs: pr-prep
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: DEFRA/epr-re-ex-service/.github/actions/lint-types@main
+        with:
+          npm-script: lint:types
+          tsconfig: jsconfig.typecheck.json
+          label: Prod
+          comment-header: lint-types-prod
+          fail-on: all
+
   type-check-tests:
     name: Lint Types - Tests
+    runs-on: ubuntu-latest
+    needs: pr-prep
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: DEFRA/epr-re-ex-service/.github/actions/lint-types@main
+        with:
+          fail-on: all
+
+  typecheck-burndown:
+    name: Typecheck strictness burndown
     runs-on: ubuntu-latest
     needs: pr-prep
     continue-on-error: true
@@ -64,7 +92,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: DEFRA/epr-re-ex-service/.github/actions/lint-types-tests@main
+      - uses: DEFRA/epr-re-ex-service/.github/actions/typecheck-burndown@main
 
   test-journey:
     name: Run Journey Tests
