@@ -23,14 +23,16 @@ export function getTotalTonnageSentOn(wasteSent) {
 }
 
 /**
- * Build govukTable rows for supplier details.
- * @param {Array<{supplierName: string, facilityType: string, tonnageReceived: number}>} suppliers
+ * Build govukTable rows for supplier details. A missing name or facility type
+ * renders as the "none provided" text.
+ * @param {Array<{supplierName: string | null, facilityType: string | null, tonnageReceived: number}>} suppliers
+ * @param {string} noneText
  * @returns {Array<Array<{text: string | number}>>}
  */
-export function buildSupplierRows(suppliers) {
+export function buildSupplierRows(suppliers, noneText) {
   return suppliers.map((supplier) => [
-    { text: supplier.supplierName },
-    { text: supplier.facilityType },
+    qualitativeCell(supplier.supplierName, noneText),
+    qualitativeCell(supplier.facilityType, noneText),
     { text: formatTonnage(supplier.tonnageReceived) }
   ])
 }
@@ -39,14 +41,14 @@ export function buildSupplierRows(suppliers) {
  * Build govukTable rows for supplier details with contact information.
  * Used on review/submit pages where contact details replace tonnage. A missing
  * contact value renders as the "none provided" text.
- * @param {Array<{supplierName: string, facilityType: string, supplierAddress: string | null, supplierPhone: string | null, supplierEmail: string | null}>} suppliers
+ * @param {Array<{supplierName: string | null, facilityType: string | null, supplierAddress: string | null, supplierPhone: string | null, supplierEmail: string | null}>} suppliers
  * @param {string} noneText
  * @returns {Array<Array<{text: string}>>}
  */
 export function buildSupplierDetailRows(suppliers, noneText) {
   return suppliers.map((supplier) => [
-    { text: supplier.supplierName },
-    { text: supplier.facilityType },
+    qualitativeCell(supplier.supplierName, noneText),
+    qualitativeCell(supplier.facilityType, noneText),
     qualitativeCell(supplier.supplierAddress, noneText),
     qualitativeCell(supplier.supplierPhone, noneText),
     qualitativeCell(supplier.supplierEmail, noneText)

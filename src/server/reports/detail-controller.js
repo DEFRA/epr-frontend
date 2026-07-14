@@ -154,7 +154,7 @@ function buildViewData(
     site: reportDetail.details.site,
     wasteReceived: {
       totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierRows: buildSupplierRows(recyclingActivity.suppliers)
+      supplierRows: buildSupplierRows(recyclingActivity.suppliers, noneText)
     },
     showApprovalColumn: isAccreditedExporter,
     wasteExported: buildWasteExported(

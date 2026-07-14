@@ -36,10 +36,30 @@ describe(buildSupplierRows, () => {
       }
     ]
 
-    const rows = buildSupplierRows(suppliers)
+    const rows = buildSupplierRows(suppliers, noneText)
 
     expect(rows).toStrictEqual([
       [{ text: 'Acme Waste' }, { text: 'Baler' }, { text: '1,234.50' }]
+    ])
+  })
+
+  it('falls back to none text for missing name and facility type', () => {
+    const suppliers = [
+      {
+        supplierName: null,
+        facilityType: null,
+        tonnageReceived: 1234.5
+      }
+    ]
+
+    const rows = buildSupplierRows(suppliers, noneText)
+
+    expect(rows).toStrictEqual([
+      [
+        { text: 'None provided' },
+        { text: 'None provided' },
+        { text: '1,234.50' }
+      ]
     ])
   })
 })
@@ -51,7 +71,7 @@ describe(buildSupplierDetailRows, () => {
         supplierName: 'Acme Waste',
         facilityType: 'Baler',
         supplierAddress: '1 High St',
-        supplierPhone: '01onal',
+        supplierPhone: '01234 567890',
         supplierEmail: 'a@b.com'
       }
     ]
@@ -63,17 +83,17 @@ describe(buildSupplierDetailRows, () => {
         { text: 'Acme Waste' },
         { text: 'Baler' },
         { text: '1 High St' },
-        { text: '01onal' },
+        { text: '01234 567890' },
         { text: 'a@b.com' }
       ]
     ])
   })
 
-  it('falls back to none text for missing address, phone and email', () => {
+  it('falls back to none text for missing name, facility type, address, phone and email', () => {
     const suppliers = [
       {
-        supplierName: 'Acme Waste',
-        facilityType: 'Baler',
+        supplierName: null,
+        facilityType: null,
         supplierAddress: null,
         supplierPhone: null,
         supplierEmail: ''
@@ -84,8 +104,8 @@ describe(buildSupplierDetailRows, () => {
 
     expect(rows).toStrictEqual([
       [
-        { text: 'Acme Waste' },
-        { text: 'Baler' },
+        { text: 'None provided' },
+        { text: 'None provided' },
         { text: 'None provided' },
         { text: 'None provided' },
         { text: 'None provided' }
