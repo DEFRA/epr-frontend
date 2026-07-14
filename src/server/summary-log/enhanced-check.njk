@@ -19,7 +19,7 @@
 {% macro loadSections(sections) %}
   <dl class="epr-load-sections">
     {% for section in sections %}
-    <dt class="epr-load-sections__section govuk-heading-s">{{ section.sectionName }}</dt>
+    <dt class="epr-load-sections__section">{{ section.sectionName }}</dt>
     <dd class="epr-load-sections__rows">
       {% if section.nonContributing %}
       <p class="govuk-body">{{ localise('summary-log:enhanced.sectionNeverCounts') }}</p>
