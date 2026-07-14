@@ -71,7 +71,7 @@ describe(buildSupplierDetailRows, () => {
         supplierName: 'Acme Waste',
         facilityType: 'Baler',
         supplierAddress: '1 High St',
-        supplierPhone: '01onal',
+        supplierPhone: '01234 567890',
         supplierEmail: 'a@b.com'
       }
     ]
@@ -83,7 +83,7 @@ describe(buildSupplierDetailRows, () => {
         { text: 'Acme Waste' },
         { text: 'Baler' },
         { text: '1 High St' },
-        { text: '01onal' },
+        { text: '01234 567890' },
         { text: 'a@b.com' }
       ]
     ])
