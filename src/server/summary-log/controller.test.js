@@ -4145,9 +4145,9 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
-      // The cautionary body is repeated per contributing worksheet (Exported and
-      // Sent on), not shown once at bucket level.
-      notAddedBodyPerWorksheet: queryAllByText(
+      // Contributing worksheets carry no cautionary sub-heading: each row's own
+      // reason already explains why it was excluded, so the heading is redundant.
+      cautionaryLineCount: queryAllByText(
         main,
         'These loads could be missing required summary log data that stops them from adding to your waste balance.'
       ).length,
@@ -4157,7 +4157,7 @@ describe('enhanced summary log check view', () => {
       sentOnSection: hasText('Sent on'),
       sentOnRow: hasText('Row ID: 8. Product weight is missing')
     }).toStrictEqual({
-      notAddedBodyPerWorksheet: 2,
+      cautionaryLineCount: 0,
       disclosure: true,
       exportedSection: true,
       exportedRow: true,
@@ -4238,12 +4238,12 @@ describe('enhanced summary log check view', () => {
     })
   })
 
-  it('renders the cautionary and never-counts headings per worksheet in a mixed bucket', async ({
+  it('renders the never-counts heading only for the by-design worksheet in a mixed bucket', async ({
     server
   }) => {
     // A mixed non-balance-affecting bucket: the Received section carries a real
-    // data problem (cautionary heading + per-row reason) alongside the by-design
-    // Reprocessed section (never-counts heading + its row id listed).
+    // data problem (no sub-heading, just its per-row reason) alongside the
+    // by-design Reprocessed section (never-counts heading + its row id listed).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'REPROCESSOR_INPUT',
@@ -4285,7 +4285,7 @@ describe('enhanced summary log check view', () => {
       bucketHeading: hasText(
         '2 new loads will be recorded (but will NOT add to your waste balance)'
       ),
-      // The Received worksheet gets the cautionary heading and its per-row reason.
+      // The Received worksheet gets no sub-heading, only its per-row reason.
       cautionaryLine: hasText(
         'These loads could be missing required summary log data that stops them from adding to your waste balance.'
       ),
@@ -4302,7 +4302,7 @@ describe('enhanced summary log check view', () => {
       byDesignRowIdShown: hasText('Row ID: 4001')
     }).toStrictEqual({
       bucketHeading: true,
-      cautionaryLine: true,
+      cautionaryLine: false,
       receivedRowWithReason: true,
       reprocessedSection: true,
       countedHeading: false,
@@ -4315,9 +4315,9 @@ describe('enhanced summary log check view', () => {
     server
   }) => {
     // Same worksheet (processed), one by-design row and one with a genuine data
-    // problem. The worksheet is not wholly by-design, so it gets the cautionary
-    // heading: the real-reason row shows its reason, the by-design row lists as a
-    // plain id (its code is dropped), and the never-counts heading does not appear.
+    // problem. The worksheet is not wholly by-design, so it gets no sub-heading:
+    // the real-reason row shows its reason, the by-design row lists as a plain id
+    // (its code is dropped), and the never-counts heading does not appear.
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'REPROCESSOR_INPUT',
@@ -4372,7 +4372,7 @@ describe('enhanced summary log check view', () => {
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
       )
     }).toStrictEqual({
-      cautionaryLine: true,
+      cautionaryLine: false,
       realReasonRow: true,
       byDesignRowPlain: true,
       sectionPlain: true,
@@ -4852,16 +4852,19 @@ describe('enhanced summary log check view', () => {
           'As there are 100 or more loads, we are not able to list them all here.'
         )
       ),
-      // Over the cap the per-worksheet lines cannot render (rows are truncated),
-      // so the cautionary explanation falls back to the bucket level rather than
-      // disappearing entirely.
+      // Over the cap only the too-many message shows: there is no cautionary
+      // line anywhere on the check page in v2.
       cautionaryBody: Boolean(
         queryByText(
           main,
           'These loads could be missing required summary log data that stops them from adding to your waste balance.'
         )
       )
-    }).toStrictEqual({ disclosure: false, tooMany: true, cautionaryBody: true })
+    }).toStrictEqual({
+      disclosure: false,
+      tooMany: true,
+      cautionaryBody: false
+    })
   })
 
   it('suppresses the adjusted balance-affecting accordion over the cap', async ({

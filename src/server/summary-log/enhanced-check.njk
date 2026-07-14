@@ -13,18 +13,16 @@
    name is the term and its Row IDs are the bulleted values. Any exclusion
    reason is appended to the Row ID; it is omitted where the row carries none.
    A by-design worksheet (set by the controller, accredited pages only) always
-   shows the neutral "never count" line above its Row IDs. `cautionary` shows
-   the "could be missing required data" line above a contributing worksheet; it
-   is on only for the new-loads bucket, where per-row reasons are surfaced. #}
-{% macro loadSections(sections, cautionary=false) %}
+   shows the neutral "never count" line above its Row IDs. A contributing
+   worksheet has no sub-heading: each row's own reason already explains why it
+   was excluded. #}
+{% macro loadSections(sections) %}
   <dl class="epr-load-sections">
     {% for section in sections %}
     <dt class="epr-load-sections__section">{{ section.sectionName }}</dt>
     <dd class="epr-load-sections__rows">
       {% if section.nonContributing %}
       <p class="govuk-body">{{ localise('summary-log:enhanced.sectionNeverCounts') }}</p>
-      {% elif cautionary %}
-      <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsNotAddedBody') }}</p>
       {% endif %}
       <ul class="govuk-list govuk-list--bullet">
         {% for row in section.rows %}
@@ -45,7 +43,7 @@
 {# "Show [x] load[s]" disclosure wrapping the bullet list of rows. Over the cap
    (more than 99 loads) the list is suppressed for the too-many message, matching
    the row-id-list convention. #}
-{% macro loadsAccordion(count, sections, tooManyMessage, cautionary=false) %}
+{% macro loadsAccordion(count, sections, tooManyMessage) %}
   {% if count >= maxRowsPerBucket %}
   <p class="govuk-body">{{ tooManyMessage }}</p>
   {% else %}
@@ -54,7 +52,7 @@
       <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: count }) }}</span>
     </summary>
     <div class="govuk-details__text">
-      {{ loadSections(sections, cautionary) }}
+      {{ loadSections(sections) }}
     </div>
   </details>
   {% endif %}
@@ -104,14 +102,7 @@
     {% if change.nonBalanceAffecting.count > 0 %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsNotAddedHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
-    {# Over the cap the rows are truncated, so the per-worksheet lines cannot
-       render. The cautionary explanation falls back to the bucket level so it is
-       not lost. By-design worksheets cannot be distinguished from a truncated
-       list, so this mirrors the pre-per-worksheet behaviour above the cap. #}
-    {% if change.nonBalanceAffecting.count >= maxRowsPerBucket %}
-    <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsNotAddedBody') }}</p>
-    {% endif %}
-    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:enhanced.tooManyLoads'), true) }}
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:enhanced.tooManyLoads')) }}
     {% endif %}
   {% else %}
     {{ sectionRule() }}
