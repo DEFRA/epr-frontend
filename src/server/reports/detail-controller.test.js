@@ -747,6 +747,40 @@ describe('#detailReportsController', () => {
       expect(supplierTable.textContent).toContain('38.04')
     })
 
+    it('should display None provided for missing supplier name and activity', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...reprocessorReportDetail,
+        recyclingActivity: {
+          ...reprocessorReportDetail.recyclingActivity,
+          suppliers: [
+            {
+              supplierName: null,
+              facilityType: null,
+              tonnageReceived: 42.21,
+              supplierAddress: null,
+              supplierPhone: null,
+              supplierEmail: null
+            }
+          ]
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: detailUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const supplierTable = getAllByRole(body, 'table')[0]
+
+      expect(supplierTable.textContent).toContain('None provided')
+    })
+
     it('should display waste sent on heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',

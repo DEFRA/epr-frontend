@@ -182,7 +182,7 @@ function buildViewModel({
     getNoteTypeDisplayNames(registration)
   const { createdBy, createdOn } = getCreationDetails(status.created, localise)
   const submitStatus = buildSubmitStatus(submissionNumber, localise)
-  const noneText = localise('reports:noneProvided')
+  const fallbackText = localise('reports:noneProvided')
 
   return {
     ...buildPageLabels({
@@ -209,18 +209,18 @@ function buildViewModel({
     periodLabel,
     material,
     site: reportDetail.details.site,
-    wasteReceived: buildWasteReceivedViewData(recyclingActivity, noneText),
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
     wasteExported: isExporter
       ? buildWasteExportedViewData(
           exportActivity,
           { showApprovalColumn: isAccreditedExporter },
-          noneText
+          fallbackText
         )
       : null,
-    wasteSentOn: buildWasteSentOnViewData(wasteSent, noneText),
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
     prn: buildPrnSummaryViewData(reportDetail.prn),
     recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),
-    supportingInformation: reportDetail.supportingInformation || noneText,
+    supportingInformation: reportDetail.supportingInformation || fallbackText,
     declarationItems: buildDeclarationItems(localise, registration.orgName),
     version: reportDetail.version,
     submissionDeclaredBy: submissionDeclaredBy ?? null,
