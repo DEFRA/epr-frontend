@@ -40,8 +40,8 @@ export async function fetchReportDetail(
 
 /**
  * @typedef {{
- *   supplierName: string,
- *   facilityType: string,
+ *   supplierName: string | null,
+ *   facilityType: string | null,
  *   tonnageReceived: number,
  *   supplierAddress: string | null,
  *   supplierPhone: string | null,
