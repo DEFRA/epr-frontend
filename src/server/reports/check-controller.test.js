@@ -479,6 +479,40 @@ describe('#checkController', () => {
         expect(supplierTable?.textContent).toContain('info@granthamwaste.co.uk')
       })
 
+      it('should display None provided for missing supplier contact details', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          recyclingActivity: {
+            ...exporterReportDetail.recyclingActivity,
+            suppliers: [
+              {
+                supplierName: 'Grantham Waste',
+                facilityType: 'Baler',
+                tonnageReceived: 42.21,
+                supplierAddress: null,
+                supplierPhone: null,
+                supplierEmail: null
+              }
+            ]
+          }
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const supplierTable = body.querySelectorAll('.govuk-table')[0]
+
+        expect(supplierTable?.textContent).toContain('None provided')
+      })
+
       it('should display waste exported section for exporters', async ({
         server
       }) => {
@@ -698,7 +732,7 @@ describe('#checkController', () => {
         expect(body.textContent).toContain('Total tonnage repatriated')
       })
 
-      it('should display dash when refused and stopped values are null', async ({
+      it('should display zero when refused and stopped values are null', async ({
         server
       }) => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -729,7 +763,7 @@ describe('#checkController', () => {
         )
         const combinedTotal = refusedOrStoppedLabel?.nextElementSibling
 
-        expect(combinedTotal?.textContent?.trim()).toBe('-')
+        expect(combinedTotal?.textContent?.trim()).toBe('0.00')
       })
 
       it('should display combined total when refused is null but stopped is not', async ({
@@ -1399,7 +1433,7 @@ describe('#checkController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue(reprocessorReportDetail)
       })
 
-      it('should display dash for null tonnage recycled', async ({
+      it('should display zero for null tonnage recycled', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -1418,10 +1452,10 @@ describe('#checkController', () => {
 
         const value = recycledRow?.querySelector('.govuk-summary-list__value')
 
-        expect(value?.textContent?.trim()).toBe('-')
+        expect(value?.textContent?.trim()).toBe('0.00')
       })
 
-      it('should display dash for null tonnage not recycled', async ({
+      it('should display zero for null tonnage not recycled', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -1444,7 +1478,7 @@ describe('#checkController', () => {
           '.govuk-summary-list__value'
         )
 
-        expect(value?.textContent?.trim()).toBe('-')
+        expect(value?.textContent?.trim()).toBe('0.00')
       })
     })
 
@@ -1554,7 +1588,7 @@ describe('#checkController', () => {
           expect(statusCode).toBe(statusCodes.ok)
         })
 
-        it('should display a dash for each unpopulated PRN value', async ({
+        it('should display zero for each unpopulated PRN value', async ({
           server
         }) => {
           const { result } = await server.inject({
@@ -1583,9 +1617,9 @@ describe('#checkController', () => {
             freeTonnage: valueForKey('Total tonnage of PRNs issued for free'),
             averagePrice: valueForKey('Average price per tonne')
           }).toStrictEqual({
-            revenue: '-',
-            freeTonnage: '-',
-            averagePrice: '-'
+            revenue: '£0.00',
+            freeTonnage: '0',
+            averagePrice: '£0.00'
           })
         })
       })

@@ -58,4 +58,12 @@ describe('#formatWholeNumberTonnage', () => {
   test('rounds a decimal value to a whole number', () => {
     expect(formatWholeNumberTonnage(1234.9)).toBe('1,235')
   })
+
+  test('returns 0 for null value', () => {
+    expect(formatWholeNumberTonnage(null)).toBe('0')
+  })
+
+  test('returns 0 for undefined value', () => {
+    expect(formatWholeNumberTonnage(undefined)).toBe('0')
+  })
 })

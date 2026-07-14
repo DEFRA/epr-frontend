@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
@@ -12,7 +13,6 @@ import {
   buildWasteReceivedViewData,
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
-import { tonnageOrDash } from './helpers/dash-formatters.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabel } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
@@ -28,7 +28,7 @@ function getSupportingInformation(reportDetail, localise) {
   if (reportDetail.supportingInformation) {
     return reportDetail.supportingInformation
   }
-  return localise('reports:supportingInformationNone')
+  return localise('reports:noneProvided')
 }
 
 /**
@@ -93,6 +93,7 @@ function buildCheckViewData({
   const isReprocessor = isReprocessorRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
   const isRegisteredOnlyExporter = isExporter && !accreditation
+  const noneText = localise('reports:noneProvided')
 
   return {
     accreditationNumber: accreditation?.accreditationNumber,
@@ -116,8 +117,8 @@ function buildCheckViewData({
     prn: buildPrnSummaryViewData(reportDetail.prn),
     prnRevenueChangeUrl: localiseUrl(`${basePath}/prn-summary`),
     recyclingActivity: {
-      tonnageRecycled: tonnageOrDash(recyclingActivity.tonnageRecycled),
-      tonnageNotRecycled: tonnageOrDash(recyclingActivity.tonnageNotRecycled)
+      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
     },
     registrationNumber: registration.registrationNumber,
     showApprovalColumn: isAccreditedExporter,
@@ -129,12 +130,14 @@ function buildCheckViewData({
     tonnageRecycledChangeUrl: localiseUrl(`${basePath}/tonnes-recycled`),
     version: reportDetail.version,
     wasteExported: isExporter
-      ? buildWasteExportedViewData(exportActivity, {
-          showApprovalColumn: isAccreditedExporter
-        })
+      ? buildWasteExportedViewData(
+          exportActivity,
+          { showApprovalColumn: isAccreditedExporter },
+          noneText
+        )
       : null,
-    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
-    wasteSentOn: buildWasteSentOnViewData(wasteSent),
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, noneText),
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, noneText),
     ...buildNoteTypeLabels(registration, localise)
   }
 }

@@ -817,6 +817,38 @@ describe('#detailReportsController', () => {
       expect(destinationTable.textContent).toContain('1')
     })
 
+    it('should display None provided for missing destination details', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...reprocessorReportDetail,
+        wasteSent: {
+          ...reprocessorReportDetail.wasteSent,
+          finalDestinations: [
+            {
+              recipientName: null,
+              facilityType: null,
+              address: null,
+              tonnageSentOn: 1.0
+            }
+          ]
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: detailUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const destinationTable = getAllByRole(body, 'table')[1]
+
+      expect(destinationTable.textContent).toContain('None provided')
+    })
+
     it('should display Use this data button', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',

@@ -638,7 +638,7 @@ describe('#submitController', () => {
         expect(body.textContent).toContain('Total tonnage repatriated')
       })
 
-      it('should display dash when refused, stopped and repatriated values are null', async ({
+      it('should display zero when refused, stopped and repatriated values are null', async ({
         server
       }) => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
@@ -662,7 +662,7 @@ describe('#submitController', () => {
         )
         const combinedTotal = refusedOrStoppedLabel.nextElementSibling
 
-        expect(combinedTotal.textContent.trim()).toBe('-')
+        expect(combinedTotal.textContent.trim()).toBe('0.00')
       })
 
       // Waste sent on section
