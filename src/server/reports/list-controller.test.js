@@ -7,15 +7,7 @@ import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  vi
-} from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
@@ -361,19 +353,8 @@ const readTable = (table) => ({
 })
 
 describe('#listReportsController', () => {
-  beforeAll(() => {
-    vi.useFakeTimers({
-      now: new Date('2026-03-20T12:00:00Z'),
-      toFake: ['Date']
-    })
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  afterAll(() => {
-    vi.useRealTimers()
   })
 
   describe('for accredited operator (monthly periods)', () => {
