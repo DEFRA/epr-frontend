@@ -1383,13 +1383,13 @@ describe('#listReportsController', () => {
       expect(body.textContent).toContain('Matt Davis')
     })
 
+    // The due-date column renders the absolute due date verbatim, whether or
+    // not it has passed: the 'Overdue' wording belongs to the status column
+    // alone. Both a past-due and a future due date are covered to pin that the
+    // rendering does not vary by whether the date is behind or ahead of today.
     describe.each([
       {
-        // Its 20 February deadline is a month behind the fake clock (20 March),
-        // so it is past due — yet the real due date shows, never 'Overdue'. The
-        // 'Overdue' wording belongs to the status column alone; the due-date
-        // column always shows the absolute date.
-        name: 'shows the real due date for a resubmission whose due date has passed',
+        name: 'renders a past due date verbatim, never as Overdue',
         reportingPeriods: resubmissionPeriodPair(1),
         expectedRow: [
           'January 2026',
@@ -1399,39 +1399,13 @@ describe('#listReportsController', () => {
         ]
       },
       {
-        // March's due date (20 April) is weeks after the fake clock (20 March),
-        // so the period is comfortably not past due.
-        name: 'shows the real due date when the due date is still in the future',
+        name: 'renders a future due date verbatim',
         reportingPeriods: resubmissionPeriodPair(3),
         expectedRow: [
           'March 2026',
           'Requires resubmission',
           '20 Apr 2026',
           'Review and create draft March 2026'
-        ]
-      },
-      {
-        // A correction to last November, whose 20 December deadline is three
-        // months behind the fake clock (20 March): long past due, yet the
-        // absolute date still shows in the due-date column.
-        name: 'shows the real due date for a resubmission whose due date passed months ago',
-        reportingPeriods: [
-          {
-            year: 2025,
-            period: 11,
-            submissionNumber: 2,
-            startDate: '2025-11-01',
-            endDate: '2025-11-30',
-            dueDate: '2025-12-20',
-            periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
-            report: null
-          }
-        ],
-        expectedRow: [
-          'November 2025',
-          'Requires resubmission',
-          '20 Dec 2025',
-          'Review and create draft November 2025'
         ]
       }
     ])('due date column: $name', ({ reportingPeriods, expectedRow }) => {
