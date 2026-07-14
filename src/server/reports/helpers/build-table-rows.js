@@ -1,13 +1,15 @@
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 
 /**
- * Builds a table cell for a free-text value, falling back to the "none
+ * Builds a table cell for an optional text value, falling back to the "none
  * provided" text when the value is missing (null, undefined or empty).
  * @param {string | null | undefined} value
  * @param {string} fallbackText
  * @returns {{ text: string }}
  */
-const freeTextCell = (value, fallbackText) => ({ text: value || fallbackText })
+const optionalTextCell = (value, fallbackText) => ({
+  text: value || fallbackText
+})
 
 /**
  * Calculate total tonnage sent on from the waste sent breakdown.
@@ -31,8 +33,8 @@ export function getTotalTonnageSentOn(wasteSent) {
  */
 export function buildSupplierRows(suppliers, fallbackText) {
   return suppliers.map((supplier) => [
-    freeTextCell(supplier.supplierName, fallbackText),
-    freeTextCell(supplier.facilityType, fallbackText),
+    optionalTextCell(supplier.supplierName, fallbackText),
+    optionalTextCell(supplier.facilityType, fallbackText),
     { text: formatTonnage(supplier.tonnageReceived) }
   ])
 }
@@ -47,11 +49,11 @@ export function buildSupplierRows(suppliers, fallbackText) {
  */
 export function buildSupplierDetailRows(suppliers, fallbackText) {
   return suppliers.map((supplier) => [
-    freeTextCell(supplier.supplierName, fallbackText),
-    freeTextCell(supplier.facilityType, fallbackText),
-    freeTextCell(supplier.supplierAddress, fallbackText),
-    freeTextCell(supplier.supplierPhone, fallbackText),
-    freeTextCell(supplier.supplierEmail, fallbackText)
+    optionalTextCell(supplier.supplierName, fallbackText),
+    optionalTextCell(supplier.facilityType, fallbackText),
+    optionalTextCell(supplier.supplierAddress, fallbackText),
+    optionalTextCell(supplier.supplierPhone, fallbackText),
+    optionalTextCell(supplier.supplierEmail, fallbackText)
   ])
 }
 
@@ -64,8 +66,8 @@ export function buildSupplierDetailRows(suppliers, fallbackText) {
  */
 export function buildDestinationRows(finalDestinations, fallbackText) {
   return finalDestinations.map((finalDestination) => [
-    freeTextCell(finalDestination.recipientName, fallbackText),
-    freeTextCell(finalDestination.facilityType, fallbackText),
+    optionalTextCell(finalDestination.recipientName, fallbackText),
+    optionalTextCell(finalDestination.facilityType, fallbackText),
     { text: formatTonnage(finalDestination.tonnageSentOn) }
   ])
 }
@@ -79,9 +81,9 @@ export function buildDestinationRows(finalDestinations, fallbackText) {
  */
 export function buildDestinationDetailRows(finalDestinations, fallbackText) {
   return finalDestinations.map((destination) => [
-    freeTextCell(destination.recipientName, fallbackText),
-    freeTextCell(destination.facilityType, fallbackText),
-    freeTextCell(destination.address, fallbackText),
+    optionalTextCell(destination.recipientName, fallbackText),
+    optionalTextCell(destination.facilityType, fallbackText),
+    optionalTextCell(destination.address, fallbackText),
     { text: formatTonnage(destination.tonnageSentOn) }
   ])
 }
@@ -99,7 +101,7 @@ export function buildOverseasSiteRows(overseasSites, options, fallbackText) {
     const row = [
       { text: overseasSite.siteName },
       { text: overseasSite.orsId },
-      freeTextCell(overseasSite.country, fallbackText)
+      optionalTextCell(overseasSite.country, fallbackText)
     ]
 
     if (options?.showApprovalColumn) {
@@ -128,7 +130,7 @@ export function buildOverseasSiteDetailRows(
       { text: overseasSite.siteName },
       { text: formatTonnage(overseasSite.tonnageExported) },
       { text: overseasSite.orsId },
-      freeTextCell(overseasSite.country, fallbackText)
+      optionalTextCell(overseasSite.country, fallbackText)
     ]
 
     if (options?.showApprovalColumn) {
