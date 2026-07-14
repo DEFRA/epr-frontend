@@ -246,4 +246,24 @@ describe(fetchReportDetail, () => {
       STALE_REASON.PRN_CANCELLED
     ])
   })
+
+  it('returns the report normally when stale is present but carries no recognised reason', async () => {
+    const staleResponse = {
+      ...mockResponse,
+      stale: { uploadedAt: '2026-06-01T00:00:00.000Z', summaryLogId: 'sl-1' }
+    }
+    fetchJsonFromBackend.mockResolvedValue(staleResponse)
+
+    const result = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber,
+      idToken
+    )
+
+    expect(result).toStrictEqual(staleResponse)
+  })
 })

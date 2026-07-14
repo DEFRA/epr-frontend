@@ -23,11 +23,15 @@ export class ReportStaleError extends Error {
 /**
  * Derives which stale reasons apply from the named fields present on a
  * report's `stale` object. Mirrors the backend's own `staleReasons()` in
- * `reports/domain/stale.js`.
- * @param {{ summaryLogChanged?: object, prnCancelled?: object }} stale
+ * `reports/domain/stale.js`, including tolerating a missing/unrecognised
+ * `stale` shape (e.g. a deploy-skew old-backend response) by returning [].
+ * @param {{ summaryLogChanged?: object, prnCancelled?: object } | undefined} stale
  * @returns {string[]}
  */
 export const staleReasons = (stale) => {
+  if (!stale) {
+    return []
+  }
   const reasons = []
   if (stale.summaryLogChanged) {
     reasons.push(STALE_REASON.SUMMARY_LOG_CHANGED)

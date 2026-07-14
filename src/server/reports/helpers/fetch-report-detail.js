@@ -31,8 +31,9 @@ export async function fetchReportDetail(
     headers: { Authorization: `Bearer ${idToken}` }
   })
 
-  if (report.stale) {
-    throw new ReportStaleError(staleReasons(report.stale))
+  const reasons = staleReasons(report.stale)
+  if (reasons.length > 0) {
+    throw new ReportStaleError(reasons)
   }
 
   return report

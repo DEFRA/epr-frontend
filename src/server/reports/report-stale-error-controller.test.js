@@ -51,7 +51,7 @@ describe('#reportStaleErrorController', () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       /** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */ (
         /** @type {unknown} */ ({
-          registration: { registrationType: 'reprocessor' },
+          registration: { wasteProcessingType: 'reprocessor' },
           accreditation: undefined
         })
       )
@@ -213,6 +213,52 @@ describe('#reportStaleErrorController', () => {
         const dom = new JSDOM(result)
         const heading = getByRole(dom.window.document.body, 'heading', {
           name: /has been cancelled/,
+          level: 1
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('names the note type as PRN for a reprocessor', async ({ server }) => {
+        const cookie = await triggerStalenessRedirect(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie }
+        })
+
+        const dom = new JSDOM(result)
+        const heading = getByRole(dom.window.document.body, 'heading', {
+          name: /A PRN has been cancelled/,
+          level: 1
+        })
+
+        expect(heading).toBeDefined()
+      })
+
+      it('names the note type as PERN for an exporter', async ({ server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          /** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */ (
+            /** @type {unknown} */ ({
+              registration: { wasteProcessingType: 'exporter' },
+              accreditation: undefined
+            })
+          )
+        )
+        const cookie = await triggerStalenessRedirect(server)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth,
+          headers: { cookie }
+        })
+
+        const dom = new JSDOM(result)
+        const heading = getByRole(dom.window.document.body, 'heading', {
+          name: /A PERN has been cancelled/,
           level: 1
         })
 

@@ -1,6 +1,8 @@
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { deleteReport } from './helpers/delete-report.js'
 import { STALE_REASON } from './helpers/stale.js'
+import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 
 /**
  * Resolves the translation-key prefix for the given stale reasons. Both
@@ -46,6 +48,7 @@ export const reportStaleErrorGetController = {
       period,
       submissionNumber
     } = request.params
+    const session = request.auth.credentials
 
     const reportsUrl = request.localiseUrl(
       `/organisations/${organisationId}/registrations/${registrationId}/reports`
@@ -65,11 +68,18 @@ export const reportStaleErrorGetController = {
 
     const prefix = translationKeyPrefixFor(context.reasons)
 
+    const { registration } = await fetchRegistrationAndAccreditation(
+      organisationId,
+      registrationId,
+      session.idToken
+    )
+    const { noteType } = getNoteTypeDisplayNames(registration)
+
     return h.view('reports/report-stale-error', {
-      pageTitle: localise(`reports:${prefix}PageTitle`),
-      heading: localise(`reports:${prefix}Heading`),
-      bodyLine1: localise(`reports:${prefix}BodyLine1`),
-      bodyLine2: localise(`reports:${prefix}BodyLine2`),
+      pageTitle: localise(`reports:${prefix}PageTitle`, { noteType }),
+      heading: localise(`reports:${prefix}Heading`, { noteType }),
+      bodyLine1: localise(`reports:${prefix}BodyLine1`, { noteType }),
+      bodyLine2: localise(`reports:${prefix}BodyLine2`, { noteType }),
       returnToReportsUrl: reportsUrl
     })
   }
