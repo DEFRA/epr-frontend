@@ -1,32 +1,5 @@
 {
-  "compilerOptions": {
-    "target": "es2024",
-    "lib": ["ES2024"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "paths": {
-      "#client/*": ["./src/client/*"],
-      "#config/*": ["./src/config/*"],
-      "#server/*": ["./src/server/*"],
-      "#utils/*": ["./src/utils/*"],
-      "#vite/*": ["./.vite/*"]
-    }
-  },
+  "extends": "./jsconfig.typecheck.base.json",
   "include": ["src/**/*.js"],
   "exclude": [
     "node_modules",
