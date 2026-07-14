@@ -7,7 +7,7 @@ import {
   buildWasteSentOnViewData
 } from './build-report-view-data.js'
 
-const noneText = 'None provided'
+const fallbackText = 'None provided'
 
 describe('build-report-view-data', () => {
   describe(buildWasteReceivedViewData, () => {
@@ -29,7 +29,7 @@ describe('build-report-view-data', () => {
       }
 
       expect(
-        buildWasteReceivedViewData(recyclingActivity, noneText)
+        buildWasteReceivedViewData(recyclingActivity, fallbackText)
       ).toStrictEqual({
         totalTonnage: '100.50',
         supplierDetailRows: [
@@ -61,7 +61,7 @@ describe('build-report-view-data', () => {
         ]
       }
 
-      expect(buildWasteSentOnViewData(wasteSent, noneText)).toStrictEqual({
+      expect(buildWasteSentOnViewData(wasteSent, fallbackText)).toStrictEqual({
         totalTonnage: '60.00',
         toReprocessors: '10.00',
         toExporters: '20.00',
@@ -103,7 +103,7 @@ describe('build-report-view-data', () => {
         buildWasteExportedViewData(
           exportActivity,
           { showApprovalColumn: true },
-          noneText
+          fallbackText
         )
       ).toStrictEqual({
         totalTonnage: '40.00',
@@ -124,7 +124,7 @@ describe('build-report-view-data', () => {
         buildWasteExportedViewData(
           undefined,
           { showApprovalColumn: false },
-          noneText
+          fallbackText
         )
       ).toStrictEqual({
         totalTonnage: '0.00',

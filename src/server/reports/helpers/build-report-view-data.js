@@ -32,13 +32,16 @@ const emptyExportActivity = {
  * Canonical waste-received view data shared by the check, submit and view
  * pages: the formatted total plus the 5-column supplier contact table.
  * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
- * @param {string} noneText
+ * @param {string} fallbackText
  * @returns {{ supplierDetailRows: Array<Array<{text: string}>>, totalTonnage: string }}
  */
-export const buildWasteReceivedViewData = (recyclingActivity, noneText) => ({
+export const buildWasteReceivedViewData = (
+  recyclingActivity,
+  fallbackText
+) => ({
   supplierDetailRows: buildSupplierDetailRows(
     recyclingActivity.suppliers,
-    noneText
+    fallbackText
   ),
   totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived)
 })
@@ -47,7 +50,7 @@ export const buildWasteReceivedViewData = (recyclingActivity, noneText) => ({
  * Canonical waste-sent-on view data shared by the check, submit and view
  * pages: the formatted total and breakdown plus the 4-column destination table.
  * @param {ReportDetailResponse['wasteSent']} wasteSent
- * @param {string} noneText
+ * @param {string} fallbackText
  * @returns {{
  *   destinationDetailRows: Array<Array<{text: string}>>,
  *   toExporters: string,
@@ -56,10 +59,10 @@ export const buildWasteReceivedViewData = (recyclingActivity, noneText) => ({
  *   totalTonnage: string
  * }}
  */
-export const buildWasteSentOnViewData = (wasteSent, noneText) => ({
+export const buildWasteSentOnViewData = (wasteSent, fallbackText) => ({
   destinationDetailRows: buildDestinationDetailRows(
     wasteSent.finalDestinations,
-    noneText
+    fallbackText
   ),
   toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
   toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
@@ -74,7 +77,7 @@ export const buildWasteSentOnViewData = (wasteSent, noneText) => ({
  * total with zeroed breakdown values.
  * @param {ReportDetailResponse['exportActivity'] | undefined} exportActivity
  * @param {{ showApprovalColumn: boolean }} options
- * @param {string} noneText
+ * @param {string} fallbackText
  * @returns {{
  *   overseasSiteRows: Array<Array<{ text: string }>>,
  *   tonnageReceivedNotExported: string,
@@ -89,7 +92,7 @@ export const buildWasteSentOnViewData = (wasteSent, noneText) => ({
 export const buildWasteExportedViewData = (
   exportActivity,
   { showApprovalColumn },
-  noneText
+  fallbackText
 ) => {
   const activity = exportActivity ?? emptyExportActivity
 
@@ -97,7 +100,7 @@ export const buildWasteExportedViewData = (
     overseasSiteRows: buildOverseasSiteRows(
       activity.overseasSites,
       { showApprovalColumn },
-      noneText
+      fallbackText
     ),
     totalTonnage: formatTonnage(activity.totalTonnageExported),
     unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
