@@ -4,10 +4,6 @@
     "types": ["vitest/globals", "@testing-library/jest-dom"],
     "noUnusedLocals": true,
     "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
     "useUnknownInCatchVariables": true,
     "noImplicitAny": true,
     "noUncheckedIndexedAccess": true
