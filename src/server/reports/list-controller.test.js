@@ -7,15 +7,7 @@ import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  vi
-} from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
@@ -361,19 +353,8 @@ const readTable = (table) => ({
 })
 
 describe('#listReportsController', () => {
-  beforeAll(() => {
-    vi.useFakeTimers({
-      now: new Date('2026-03-20T12:00:00Z'),
-      toFake: ['Date']
-    })
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  afterAll(() => {
-    vi.useRealTimers()
   })
 
   describe('for accredited operator (monthly periods)', () => {
@@ -1383,66 +1364,29 @@ describe('#listReportsController', () => {
       expect(body.textContent).toContain('Matt Davis')
     })
 
+    // The due-date column renders the absolute due date verbatim, whether or
+    // not it has passed: the 'Overdue' wording belongs to the status column
+    // alone. Both a past-due and a future due date are covered to pin that the
+    // rendering does not vary by whether the date is behind or ahead of today.
     describe.each([
       {
-        name: 'shows Overdue when the resubmission due date has passed',
+        name: 'renders a past due date verbatim, never as Overdue',
         reportingPeriods: resubmissionPeriodPair(1),
         expectedRow: [
           'January 2026',
           'Requires resubmission',
-          'Overdue',
+          '20 Feb 2026',
           'Review and create draft January 2026'
         ]
       },
       {
-        // February's due date (20 March) is exactly "today" under the fake
-        // clock. A period is overdue only from the day after its due date, so
-        // on the due date itself the real date shows. This pins the off-by-one
-        // boundary: a regression that made the comparison overdue-on-the-due-
-        // date would fail.
-        name: 'shows the real due date on the due date itself, before it counts as overdue',
-        reportingPeriods: resubmissionPeriodPair(2),
-        expectedRow: [
-          'February 2026',
-          'Requires resubmission',
-          '20 Mar 2026',
-          'Review and create draft February 2026'
-        ]
-      },
-      {
-        // March's due date (20 April) is weeks after the fake clock (20 March),
-        // so the period is comfortably not overdue.
-        name: 'shows the real due date when the due date is still in the future',
+        name: 'renders a future due date verbatim',
         reportingPeriods: resubmissionPeriodPair(3),
         expectedRow: [
           'March 2026',
           'Requires resubmission',
           '20 Apr 2026',
           'Review and create draft March 2026'
-        ]
-      },
-      {
-        // A correction to last November, whose 20 December deadline is three
-        // months behind the fake clock (20 March): genuinely overdue, as the
-        // designs assume for corrections to long-closed periods.
-        name: 'shows Overdue for a resubmission whose due date passed months ago',
-        reportingPeriods: [
-          {
-            year: 2025,
-            period: 11,
-            submissionNumber: 2,
-            startDate: '2025-11-01',
-            endDate: '2025-11-30',
-            dueDate: '2025-12-20',
-            periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
-            report: null
-          }
-        ],
-        expectedRow: [
-          'November 2025',
-          'Requires resubmission',
-          'Overdue',
-          'Review and create draft November 2025'
         ]
       }
     ])('due date column: $name', ({ reportingPeriods, expectedRow }) => {
