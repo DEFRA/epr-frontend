@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { fetchReportDetail } from './fetch-report-detail.js'
-import { SummaryLogChangedError } from './summary-log-changed.js'
+import { ReportStaleError, STALE_REASON } from './stale.js'
 
 vi.mock(import('#server/common/helpers/fetch-json-from-backend.js'), () => ({
   fetchJsonFromBackend: vi.fn()
@@ -144,12 +144,14 @@ describe(fetchReportDetail, () => {
     ).rejects.toThrow('Network error')
   })
 
-  it('throws SummaryLogChangedError when the report is stale', async () => {
+  it('throws ReportStaleError when the report is stale', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       ...mockResponse,
       stale: {
-        uploadedAt: '2026-06-01T00:00:00.000Z',
-        reason: 'summary_log_changed'
+        summaryLogChanged: {
+          uploadedAt: '2026-06-01T00:00:00.000Z',
+          summaryLogId: 'sl-1'
+        }
       }
     })
 
@@ -163,15 +165,17 @@ describe(fetchReportDetail, () => {
         submissionNumber,
         idToken
       )
-    ).rejects.toBeInstanceOf(SummaryLogChangedError)
+    ).rejects.toBeInstanceOf(ReportStaleError)
   })
 
-  it('sets the reason on the thrown SummaryLogChangedError for a stale report', async () => {
+  it('sets reasons on the thrown ReportStaleError for a summary-log-changed report', async () => {
     fetchJsonFromBackend.mockResolvedValue({
       ...mockResponse,
       stale: {
-        uploadedAt: '2026-06-01T00:00:00.000Z',
-        reason: 'summary_log_changed'
+        summaryLogChanged: {
+          uploadedAt: '2026-06-01T00:00:00.000Z',
+          summaryLogId: 'sl-1'
+        }
       }
     })
 
@@ -185,6 +189,61 @@ describe(fetchReportDetail, () => {
       idToken
     ).catch((e) => e)
 
-    expect(err.reason).toBe('summary_log_changed')
+    expect(err.reasons).toStrictEqual([STALE_REASON.SUMMARY_LOG_CHANGED])
+  })
+
+  it('sets reasons on the thrown ReportStaleError for a PRN-cancelled report', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      ...mockResponse,
+      stale: {
+        prnCancelled: {
+          occurredAt: '2026-06-01T00:00:00.000Z',
+          prnId: 'prn-1'
+        }
+      }
+    })
+
+    const err = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber,
+      idToken
+    ).catch((e) => e)
+
+    expect(err.reasons).toStrictEqual([STALE_REASON.PRN_CANCELLED])
+  })
+
+  it('sets both reasons on the thrown ReportStaleError when both apply', async () => {
+    fetchJsonFromBackend.mockResolvedValue({
+      ...mockResponse,
+      stale: {
+        summaryLogChanged: {
+          uploadedAt: '2026-06-01T00:00:00.000Z',
+          summaryLogId: 'sl-1'
+        },
+        prnCancelled: {
+          occurredAt: '2026-06-01T00:00:00.000Z',
+          prnId: 'prn-1'
+        }
+      }
+    })
+
+    const err = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber,
+      idToken
+    ).catch((e) => e)
+
+    expect(err.reasons).toStrictEqual([
+      STALE_REASON.SUMMARY_LOG_CHANGED,
+      STALE_REASON.PRN_CANCELLED
+    ])
   })
 })
