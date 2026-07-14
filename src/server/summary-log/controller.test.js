@@ -4851,8 +4851,17 @@ describe('enhanced summary log check view', () => {
           main,
           'As there are 100 or more loads, we are not able to list them all here.'
         )
+      ),
+      // Over the cap the per-worksheet lines cannot render (rows are truncated),
+      // so the cautionary explanation falls back to the bucket level rather than
+      // disappearing entirely.
+      cautionaryBody: Boolean(
+        queryByText(
+          main,
+          'These loads could be missing required summary log data that stops them from adding to your waste balance.'
+        )
       )
-    }).toStrictEqual({ disclosure: false, tooMany: true })
+    }).toStrictEqual({ disclosure: false, tooMany: true, cautionaryBody: true })
   })
 
   it('suppresses the adjusted balance-affecting accordion over the cap', async ({

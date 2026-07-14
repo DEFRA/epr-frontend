@@ -12,18 +12,18 @@
 {# Loads grouped by worksheet (tab): a description list where each section's
    name is the term and its Row IDs are the bulleted values. Any exclusion
    reason is appended to the Row ID; it is omitted where the row carries none.
-   Two optional per-worksheet body lines sit above the rows: `cautionary` shows
-   the "could be missing required data" line above a contributing worksheet,
-   `neverCounts` shows the neutral "never count" line above a wholly by-design
-   worksheet. A by-design worksheet still lists each of its Row IDs. #}
-{% macro loadSections(sections, cautionary=false, neverCounts=false) %}
+   A by-design worksheet (set by the controller, accredited pages only) always
+   shows the neutral "never count" line above its Row IDs. `cautionary` shows
+   the "could be missing required data" line above a contributing worksheet; it
+   is on only for the new-loads bucket, where per-row reasons are surfaced. #}
+{% macro loadSections(sections, cautionary=false) %}
   <dl class="epr-load-sections">
     {% for section in sections %}
     <dt class="epr-load-sections__section">{{ section.sectionName }}</dt>
     <dd class="epr-load-sections__rows">
-      {% if section.nonContributing and neverCounts %}
+      {% if section.nonContributing %}
       <p class="govuk-body">{{ localise('summary-log:enhanced.sectionNeverCounts') }}</p>
-      {% elif not section.nonContributing and cautionary %}
+      {% elif cautionary %}
       <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsNotAddedBody') }}</p>
       {% endif %}
       <ul class="govuk-list govuk-list--bullet">
@@ -45,7 +45,7 @@
 {# "Show [x] load[s]" disclosure wrapping the bullet list of rows. Over the cap
    (more than 99 loads) the list is suppressed for the too-many message, matching
    the row-id-list convention. #}
-{% macro loadsAccordion(count, sections, tooManyMessage, cautionary=false, neverCounts=false) %}
+{% macro loadsAccordion(count, sections, tooManyMessage, cautionary=false) %}
   {% if count >= maxRowsPerBucket %}
   <p class="govuk-body">{{ tooManyMessage }}</p>
   {% else %}
@@ -54,7 +54,7 @@
       <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: count }) }}</span>
     </summary>
     <div class="govuk-details__text">
-      {{ loadSections(sections, cautionary, neverCounts) }}
+      {{ loadSections(sections, cautionary) }}
     </div>
   </details>
   {% endif %}
@@ -104,7 +104,14 @@
     {% if change.nonBalanceAffecting.count > 0 %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.newLoadsNotAddedHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
-    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:enhanced.tooManyLoads'), true, true) }}
+    {# Over the cap the rows are truncated, so the per-worksheet lines cannot
+       render. The cautionary explanation falls back to the bucket level so it is
+       not lost. By-design worksheets cannot be distinguished from a truncated
+       list, so this mirrors the pre-per-worksheet behaviour above the cap. #}
+    {% if change.nonBalanceAffecting.count >= maxRowsPerBucket %}
+    <p class="govuk-body">{{ localise('summary-log:enhanced.newLoadsNotAddedBody') }}</p>
+    {% endif %}
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:enhanced.tooManyLoads'), true) }}
     {% endif %}
   {% else %}
     {{ sectionRule() }}
@@ -136,7 +143,7 @@
     {% if change.nonBalanceAffecting.count > 0 %}
     {{ sectionRule() }}
     <h3 class="govuk-heading-m">{{ localise('summary-log:enhanced.adjustmentsNotRelevantHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
-    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:tooManyAdjustedLoadsToList'), false, true) }}
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:tooManyAdjustedLoadsToList')) }}
     {% endif %}
   {% else %}
     {{ sectionRule() }}
