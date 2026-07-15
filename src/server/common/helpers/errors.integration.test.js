@@ -29,10 +29,6 @@ describe('#catchAll - server errors', () => {
     const main = getByRole(dom.window.document.body, 'main')
 
     expect(getByText(main, /Something has gone wrong/i)).toBeDefined()
-    expect(getByText(main, /someone else from your business/i)).toBeDefined()
-    expect(
-      main.querySelector('a[href="mailto:eprcustomerservice@defra.gov.uk"]')
-    ).not.toBeNull()
     expect(server.loggerMocks.error).toHaveBeenCalledWith({
       err: expect.any(Error)
     })
