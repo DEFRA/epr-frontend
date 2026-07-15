@@ -145,7 +145,7 @@
     "projectionUnchangedPrefix": "If you upload this summary log to create a new report, your waste balance will still be",
     "loadRow": "Row ID: {{rowId}}",
     "loadRowWithReason": "Row ID: {{rowId}}. {{reason}}",
-    "sectionNeverCounts": "These loads never count towards your waste balance",
+    "sectionNeverCounts": "These loads would never count towards your waste balance.",
     "tooManyLoads": "As there are 100 or more loads, we are not able to list them all here.",
     "adjustedWithDataAdded": "",
     "adjustedWithDataAdded_one": "This load has all the required summary log data and has added to your waste balance",
