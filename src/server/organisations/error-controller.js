@@ -10,7 +10,7 @@ export const errorController = {
     const { organisationId } = request.params
     const { t: localise } = request
 
-    const homeUrl = `/organisations/${organisationId}`
+    const homeUrl = request.localiseUrl(`/organisations/${organisationId}`)
 
     return h.view('error/generic', genericErrorViewModel(localise, homeUrl))
   }
