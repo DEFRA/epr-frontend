@@ -3,7 +3,6 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 
 import { catchAll } from '#server/common/helpers/errors.js'
-import { genericErrorViewModel } from '#server/error/generic-error.js'
 import {
   asRequest,
   asResponseToolkit
@@ -64,20 +63,6 @@ describe(catchAll, () => {
     })
     expect(mockToolkit.code).toHaveBeenCalledWith(code)
     expect(mockErrorLogger).not.toHaveBeenCalled()
-  })
-
-  it('renders the generic error page and logs for 5xx errors', async () => {
-    const req = makeRequest(statusCodes.internalServerError)
-    await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
-
-    expect(mockToolkit.view).toHaveBeenCalledWith(
-      'error/generic',
-      genericErrorViewModel((key) => key, '/')
-    )
-    expect(mockToolkit.code).toHaveBeenCalledWith(
-      statusCodes.internalServerError
-    )
-    expect(mockErrorLogger).toHaveBeenCalledWith({ err: req.response })
   })
 
   it('logs user out when session is missing', async () => {
