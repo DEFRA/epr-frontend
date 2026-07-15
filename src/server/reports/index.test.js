@@ -2,7 +2,10 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
-import { SummaryLogChangedError } from '#server/reports/helpers/summary-log-changed.js'
+import {
+  ReportStaleError,
+  STALE_REASON
+} from '#server/reports/helpers/stale.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -48,11 +51,11 @@ describe('reports plugin onPreResponse lifecycle', () => {
     )
   })
 
-  it('redirects to summary-log-changed-error when SummaryLogChangedError is thrown', async ({
+  it('redirects to report-stale-error when ReportStaleError is thrown with a summary-log reason', async ({
     server
   }) => {
     vi.mocked(fetchReportDetail).mockRejectedValue(
-      new SummaryLogChangedError('summary_log_changed')
+      new ReportStaleError([STALE_REASON.SUMMARY_LOG_CHANGED])
     )
 
     const { statusCode, headers } = await server.inject({
@@ -62,7 +65,44 @@ describe('reports plugin onPreResponse lifecycle', () => {
     })
 
     expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(`${periodBase}/summary-log-changed-error`)
+    expect(headers.location).toBe(`${periodBase}/report-stale-error`)
+  })
+
+  it('redirects to report-stale-error when ReportStaleError is thrown with a PRN-cancelled reason', async ({
+    server
+  }) => {
+    vi.mocked(fetchReportDetail).mockRejectedValue(
+      new ReportStaleError([STALE_REASON.PRN_CANCELLED])
+    )
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: detailUrl,
+      auth: mockAuth
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`${periodBase}/report-stale-error`)
+  })
+
+  it('redirects to report-stale-error when ReportStaleError is thrown with both reasons', async ({
+    server
+  }) => {
+    vi.mocked(fetchReportDetail).mockRejectedValue(
+      new ReportStaleError([
+        STALE_REASON.SUMMARY_LOG_CHANGED,
+        STALE_REASON.PRN_CANCELLED
+      ])
+    )
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: detailUrl,
+      auth: mockAuth
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(`${periodBase}/report-stale-error`)
   })
 
   it('does not redirect for unrelated errors', async ({ server }) => {
@@ -82,12 +122,10 @@ describe('reports plugin onPreResponse lifecycle', () => {
     expect(statusCode).toBe(statusCodes.internalServerError)
   })
 
-  it('does not redirect when the reason is not in INVALIDATION_ERROR_ROUTES', async ({
+  it('does not redirect when ReportStaleError carries no reasons', async ({
     server
   }) => {
-    vi.mocked(fetchReportDetail).mockRejectedValue(
-      new SummaryLogChangedError('unknown_reason')
-    )
+    vi.mocked(fetchReportDetail).mockRejectedValue(new ReportStaleError([]))
 
     const { statusCode } = await server.inject({
       method: 'GET',

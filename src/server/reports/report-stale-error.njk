@@ -12,14 +12,14 @@
 
       <div class="govuk-button-group">
         {{ govukButton({
-          text: localise('reports:summaryLogChangedDeleteAndStartAgain'),
+          text: localise('reports:reportStaleDeleteAndStartAgain'),
           classes: "govuk-button--warning",
           preventDoubleClick: true,
           attributes: { form: "delete-report-form" }
         }) }}
 
         {{ govukButton({
-          text: localise('reports:summaryLogChangedReturnToReports'),
+          text: localise('reports:reportStaleReturnToReports'),
           href: returnToReportsUrl,
           classes: "govuk-button--secondary"
         }) }}
