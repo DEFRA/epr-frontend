@@ -1,6 +1,7 @@
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHapiRequest } from '#server/common/hapi-types.js'
+import { genericErrorViewModel } from '#server/error/generic-error.js'
 
 const statusCodeErrors = {
   [statusCodes.notFound]: {
@@ -54,6 +55,19 @@ export async function catchAll(r, h) {
     await removeUserSession(request)
 
     return h.redirect(request.localiseUrl('/logged-out')).takeover()
+  }
+
+  if (statusCode >= statusCodes.internalServerError) {
+    request.logger.error({ err: response })
+
+    if (request.t) {
+      return h
+        .view(
+          'error/generic',
+          genericErrorViewModel(request.t, request.localiseUrl('/'))
+        )
+        .code(statusCode)
+    }
   }
 
   const errorMessage = statusCodeMessage(statusCode, request.t)
