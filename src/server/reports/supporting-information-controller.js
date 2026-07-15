@@ -56,7 +56,7 @@ const payloadSchema = Joi.object({
 function buildSupportingInfoCopy(submissionNumber, registration, localise) {
   if (!isResubmission(submissionNumber)) {
     return {
-      caption: localise('reports:supportingInformationCaption'),
+      caption: localise('reports:createDraftReportCaption'),
       heading: localise('reports:supportingInformationHeading'),
       fieldLabel: localise('reports:supportingInformationFieldLabel'),
       hint: localise('reports:supportingInformationHint'),
@@ -67,7 +67,7 @@ function buildSupportingInfoCopy(submissionNumber, registration, localise) {
   const { noteType } = getNoteTypeDisplayNames(registration)
 
   return {
-    caption: localise('reports:supportingInformationResubmissionCaption'),
+    caption: localise('reports:createDraftReportCaption'),
     heading: localise('reports:supportingInformationResubmissionHeading'),
     fieldLabel: localise('reports:supportingInformationResubmissionFieldLabel'),
     hint: localise('reports:supportingInformationResubmissionHint'),
