@@ -33,8 +33,9 @@
   margin-bottom: 0;
 
   &__section {
-    @include govuk-font($size: 19);
+    @include govuk-font($size: 19, $weight: bold);
     margin-top: govuk-spacing(3);
+    margin-bottom: 0;
   }
 
   &__rows {
