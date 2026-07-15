@@ -1,9 +1,15 @@
 {
   "extends": "./jsconfig.typecheck.base.json",
   "compilerOptions": {
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "strictFunctionTypes": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "useUnknownInCatchVariables": true
   },
   "include": [
+    "src/**/*.js",
     "**/*.test.js",
     "**/*.contract.js",
     "**/test-helpers/**/*.js",
