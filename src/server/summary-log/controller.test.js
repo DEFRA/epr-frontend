@@ -4655,10 +4655,6 @@ describe('enhanced summary log check view', () => {
       reducedSection: hasText('Sent on'),
       reducedRowWithReason: hasText(
         'Row ID: 2. Required summary log data is missing'
-      ),
-      // Missing data is a per-row reason now, not its own heading.
-      missingDataHeadingAbsent: hasText(
-        'This load does NOT have all the required summary log data and has reduced your waste balance'
       )
     }).toStrictEqual({
       disclosure: true,
@@ -4667,8 +4663,7 @@ describe('enhanced summary log check view', () => {
       addedRow: true,
       reducedHeading: true,
       reducedSection: true,
-      reducedRowWithReason: true,
-      missingDataHeadingAbsent: false
+      reducedRowWithReason: true
     })
   })
 
@@ -4711,16 +4706,11 @@ describe('enhanced summary log check view', () => {
     expect({
       reducedHeading: hasText('This load has reduced your waste balance'),
       reducedRowBare: hasText('Row ID: 1'),
-      addedHeadingAbsent: hasText('This load has added to your waste balance'),
-      // The old data-completeness framing is gone entirely.
-      oldWithDataCopyAbsent: hasText(
-        'This load has all the required summary log data and has reduced your waste balance'
-      )
+      addedHeadingAbsent: hasText('This load has added to your waste balance')
     }).toStrictEqual({
       reducedHeading: true,
       reducedRowBare: true,
-      addedHeadingAbsent: false,
-      oldWithDataCopyAbsent: false
+      addedHeadingAbsent: false
     })
   })
 
@@ -4765,14 +4755,10 @@ describe('enhanced summary log check view', () => {
       reducedHeading: hasText('This load has reduced your waste balance'),
       prnRowWithReason: hasText(
         'Row ID: 1046. A PRN was already issued for this load'
-      ),
-      missingDataHeadingAbsent: hasText(
-        'This load does NOT have all the required summary log data and has reduced your waste balance'
       )
     }).toStrictEqual({
       reducedHeading: true,
-      prnRowWithReason: true,
-      missingDataHeadingAbsent: false
+      prnRowWithReason: true
     })
   })
 
