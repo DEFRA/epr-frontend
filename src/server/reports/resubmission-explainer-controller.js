@@ -39,7 +39,7 @@ export const resubmissionExplainerController = {
       pageTitle: localise('reports:resubmissionExplainerPageTitle', {
         periodLabel
       }),
-      caption: localise('reports:resubmissionExplainerCaption'),
+      caption: localise('reports:createDraftReportCaption'),
       heading: localise('reports:resubmissionExplainerHeading', {
         periodLabel
       }),

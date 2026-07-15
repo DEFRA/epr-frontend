@@ -23,7 +23,7 @@ const pageFields = ({
 
   return (localise) => ({
     backUrl: `${periodPath}/prn-summary`,
-    caption: localise('reports:freeCaption'),
+    caption: localise('reports:createDraftReportCaption'),
     continueText: localise('reports:freeContinue'),
     defaultValue: prn.freeTonnage,
     fieldName: 'freeTonnage',
