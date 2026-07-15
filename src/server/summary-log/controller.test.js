@@ -4602,12 +4602,12 @@ describe('enhanced summary log check view', () => {
     expect(sectionLabels).toStrictEqual(['Received', 'Reprocessed', 'Sent on'])
   })
 
-  // The with-data row is positive (+6) and the missing-data row negative (-1),
-  // mirroring the backend invariant that a missing-data row only reaches a
-  // balance-affecting bucket by reversing its earlier contribution. So the
-  // with-data heading reads "added" (its own delta) and the missing-data
-  // heading reads "reduced" (hardcoded copy that the invariant guarantees).
-  it('splits adjusted balance-affecting loads into data sub-groups with direction and no per-row reason', async ({
+  // The adjusted balance-affecting bucket is split by direction: the +6 row
+  // added to the balance (listed by id — an added row never carries a reason,
+  // as an included row has no exclusions), and the -1 MISSING_REQUIRED_FIELD row
+  // reduced it (listed with its reason). Missing data is now just a per-row
+  // reason, not a separate "does NOT have all the required data" heading.
+  it('splits adjusted balance-affecting loads into added and reduced sub-groups, each showing per-row reasons', async ({
     server
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -4648,35 +4648,34 @@ describe('enhanced summary log check view', () => {
 
     expect({
       disclosure: hasText('Show 2 loads'),
-      withDataHeading: hasText(
-        'This load has all the required summary log data and has added to your waste balance'
+      addedHeading: hasText('This load has added to your waste balance'),
+      addedSection: hasText('Exported'),
+      addedRow: hasText('Row ID: 1'),
+      reducedHeading: hasText('This load has reduced your waste balance'),
+      reducedSection: hasText('Sent on'),
+      reducedRowWithReason: hasText(
+        'Row ID: 2. Required summary log data is missing'
       ),
-      withDataSection: hasText('Exported'),
-      withDataRow: hasText('Row ID: 1'),
-      withoutDataHeading: hasText(
+      // Missing data is a per-row reason now, not its own heading.
+      missingDataHeadingAbsent: hasText(
         'This load does NOT have all the required summary log data and has reduced your waste balance'
-      ),
-      withoutDataSection: hasText('Sent on'),
-      // The reason is suppressed for adjusted rows: an exact-text match against
-      // the bare row would miss if "Required summary log data is missing" were
-      // appended.
-      withoutDataRow: hasText('Row ID: 2')
+      )
     }).toStrictEqual({
       disclosure: true,
-      withDataHeading: true,
-      withDataSection: true,
-      withDataRow: true,
-      withoutDataHeading: true,
-      withoutDataSection: true,
-      withoutDataRow: true
+      addedHeading: true,
+      addedSection: true,
+      addedRow: true,
+      reducedHeading: true,
+      reducedSection: true,
+      reducedRowWithReason: true,
+      missingDataHeadingAbsent: false
     })
   })
 
-  // A load that keeps all its required data but is corrected downward nets a
-  // negative with-data delta, so the with-data sub-group reads "reduced". The
-  // sibling test above only exercises the positive (added) direction, so this
-  // pins the adjustedWithDataReduced copy that no other test asserts.
-  it('reads the adjusted with-data sub-group as reduced when its delta is negative', async ({
+  // A still-included load corrected downward reduces the balance but carries no
+  // exclusion reason, so it lists bare under the reduced heading — the reason
+  // slot is filled only for rows that were excluded.
+  it('lists an adjusted downward-corrected load bare under the reduced heading', async ({
     server
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -4710,15 +4709,118 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
-      withDataHeading: hasText(
+      reducedHeading: hasText('This load has reduced your waste balance'),
+      reducedRowBare: hasText('Row ID: 1'),
+      addedHeadingAbsent: hasText('This load has added to your waste balance'),
+      // The old data-completeness framing is gone entirely.
+      oldWithDataCopyAbsent: hasText(
         'This load has all the required summary log data and has reduced your waste balance'
-      ),
-      addedHeadingAbsent: hasText(
-        'This load has all the required summary log data and has added to your waste balance'
       )
     }).toStrictEqual({
-      withDataHeading: true,
-      addedHeadingAbsent: false
+      reducedHeading: true,
+      reducedRowBare: true,
+      addedHeadingAbsent: false,
+      oldWithDataCopyAbsent: false
+    })
+  })
+
+  // The reported defect: a data-intact exclusion (a PRN was issued) keeps all
+  // its data and only reduces the balance by reversing its earlier contribution.
+  // It belongs under the reduced heading carrying its own reason, never under a
+  // "missing data" heading with the reason hidden.
+  it('shows the reason for an adjusted data-intact exclusion under the reduced heading', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: {
+              count: 1,
+              tonnageDelta: -2,
+              rows: [
+                {
+                  rowId: '1046',
+                  wasteRecordType: 'received',
+                  exclusionReasons: ['PRN_ISSUED'],
+                  tonnageDelta: -2
+                }
+              ]
+            },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      reducedHeading: hasText('This load has reduced your waste balance'),
+      prnRowWithReason: hasText(
+        'Row ID: 1046. A PRN was already issued for this load'
+      ),
+      missingDataHeadingAbsent: hasText(
+        'This load does NOT have all the required summary log data and has reduced your waste balance'
+      )
+    }).toStrictEqual({
+      reducedHeading: true,
+      prnRowWithReason: true,
+      missingDataHeadingAbsent: false
+    })
+  })
+
+  // Defensive: the added sub-group never renders a per-row reason, even for a
+  // row that arrives carrying an exclusion code. The backend zeroes an excluded
+  // row's amount, so a reason-carrying row can only ever reduce the balance and
+  // never reach the added group; the frontend does not rely on that and simply
+  // suppresses reasons in the added group, so a stray reason can never masquerade
+  // as an "added to your waste balance" explanation.
+  it('suppresses any reason on an adjusted added load', async ({ server }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: {
+              count: 1,
+              tonnageDelta: 4,
+              rows: [
+                {
+                  rowId: '1',
+                  wasteRecordType: 'received',
+                  exclusionReasons: ['PRN_ISSUED'],
+                  tonnageDelta: 4
+                }
+              ]
+            },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      addedHeading: hasText('This load has added to your waste balance'),
+      bareRow: hasText('Row ID: 1'),
+      reasonAbsent: hasText('Row ID: 1. A PRN was already issued for this load')
+    }).toStrictEqual({
+      addedHeading: true,
+      bareRow: true,
+      reasonAbsent: false
     })
   })
 
@@ -4993,13 +5095,13 @@ describe('enhanced summary log check view', () => {
     ).not.toBeNull()
   })
 
-  // The single source of truth for where an exclusion reason surfaces: only on
-  // NEW loads that will NOT add to the balance. The other three bucket
-  // positions list worksheet and Row ID alone (added.balanceAffecting is
-  // count-only with no accordion; both adjusted buckets list rows without a
-  // reason). The richer per-position tests above prove the surrounding
-  // behaviour (the data sub-group split, the direction wording, the headings);
-  // this table states the reason-visibility rule on its own.
+  // The single source of truth for where an exclusion reason surfaces: on NEW
+  // loads that will NOT add to the balance, and on ADJUSTED balance-affecting
+  // loads (the added/reduced split lists every row with its reason). The other
+  // two positions list Row ID alone: added.balanceAffecting is count-only with
+  // no accordion, and the adjusted "not relevant" bucket lists rows plainly. The
+  // richer per-position tests above prove the surrounding behaviour (the
+  // direction split, the headings); this table states the visibility rule.
   const REASON_CODE = 'MISSING_REQUIRED_FIELD'
   const REASON_TEXT = 'Required summary log data is missing'
 
@@ -5056,12 +5158,12 @@ describe('enhanced summary log check view', () => {
   const reasonVisibilityCases = [
     { change: 'added', bucket: 'nonBalanceAffecting', showsReason: true },
     { change: 'added', bucket: 'balanceAffecting', showsReason: false },
-    { change: 'adjusted', bucket: 'balanceAffecting', showsReason: false },
+    { change: 'adjusted', bucket: 'balanceAffecting', showsReason: true },
     { change: 'adjusted', bucket: 'nonBalanceAffecting', showsReason: false }
   ]
 
   it.for(reasonVisibilityCases)(
-    'shows the exclusion reason only on new non-balance-affecting loads ($change / $bucket)',
+    'surfaces the exclusion reason at the expected bucket position ($change / $bucket)',
     async ({ change, bucket, showsReason }, { server }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce(
         responseWithReasonAt(change, bucket)
