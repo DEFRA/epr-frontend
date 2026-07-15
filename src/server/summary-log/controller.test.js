@@ -4219,7 +4219,7 @@ describe('enhanced summary log check view', () => {
       section: hasText('Reprocessed'),
       countedHeading: hasText('Reprocessed (2 rows)'),
       neverCountsLine: hasText(
-        'These loads never count towards your waste balance'
+        'These loads would never count towards your waste balance.'
       ),
       rawCodeShown: hasText(
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
@@ -4297,7 +4297,7 @@ describe('enhanced summary log check view', () => {
       reprocessedSection: hasText('Reprocessed'),
       countedHeading: hasText('Reprocessed (1 row)'),
       neverCountsLine: hasText(
-        'These loads never count towards your waste balance'
+        'These loads would never count towards your waste balance.'
       ),
       byDesignRowIdShown: hasText('Row ID: 4001')
     }).toStrictEqual({
@@ -4366,7 +4366,7 @@ describe('enhanced summary log check view', () => {
       sectionPlain: hasText('Reprocessed'),
       countedHeading: hasText('Reprocessed (2 rows)'),
       neverCountsLine: hasText(
-        'These loads never count towards your waste balance'
+        'These loads would never count towards your waste balance.'
       ),
       rawCodeShown: hasText(
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
@@ -4429,7 +4429,7 @@ describe('enhanced summary log check view', () => {
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
       ),
       neverCountsLineShown: hasText(
-        'These loads never count towards your waste balance'
+        'These loads would never count towards your waste balance.'
       )
     }).toStrictEqual({
       rowWithRealReason: true,
@@ -4481,7 +4481,7 @@ describe('enhanced summary log check view', () => {
         'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
       ),
       neverCountsLineShown: hasText(
-        'These loads never count towards your waste balance'
+        'These loads would never count towards your waste balance.'
       )
     }).toStrictEqual({
       receivedRow: true,
@@ -4537,7 +4537,7 @@ describe('enhanced summary log check view', () => {
 
     expect({
       neverCountsLine: hasText(
-        'These loads never count towards your waste balance'
+        'These loads would never count towards your waste balance.'
       ),
       firstRowIdShown: hasText('Row ID: 4001'),
       secondRowIdShown: hasText('Row ID: 4002'),
