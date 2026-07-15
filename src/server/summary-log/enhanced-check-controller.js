@@ -193,34 +193,35 @@ const groupRowsIntoSections = (rows, ctx, includeReason) => {
 
 /**
  * Splits a balance-affecting bucket's rows into the two sub-groups the adjusted
- * accordion renders: loads with all required data (whose heading reflects
- * whether the group added to or reduced the balance) and loads still missing
- * data. Neither sub-group shows a per-row reason.
+ * accordion renders, by the direction each row moved the balance: loads that
+ * added to it and loads that reduced it. Only the reduced sub-group shows a
+ * per-row reason (an exclusion such as a PRN being issued or data going missing,
+ * or nothing when the row is simply a downward correction). A reason is
+ * suppressed in the added group: an excluded row is zeroed by the backend, so a
+ * reason-carrying row's leg is -oldAmount and can only reduce, never add (see
+ * period-status.js in epr-backend), but we suppress rather than trust that, so a
+ * stray reason can never be shown under an "added to your balance" heading.
+ * The backend rounds each leg to 2dp and sends every zero-delta leg to
+ * nonBalanceAffecting, so a row reaching here has a non-zero delta; the >= 0
+ * boundary folds any unexpected zero into "added" rather than dropping it.
  * @param {import('./types.js').BalanceAffectingBucket} bucket
  * @param {{ processingType: ProcessingType, localise: Localise }} ctx
  * @returns {import('./types.js').BalanceAffectingViewModel}
  */
 const splitBalanceAffecting = (bucket, ctx) => {
   const rows = bucket.rows ?? []
-  const withData = rows.filter((row) => row.exclusionReasons.length === 0)
-  const withoutData = rows.filter((row) => row.exclusionReasons.length > 0)
-  const withDataDelta = withData.reduce((sum, row) => sum + row.tonnageDelta, 0)
+  const added = rows.filter((row) => row.tonnageDelta >= 0)
+  const reduced = rows.filter((row) => row.tonnageDelta < 0)
 
-  // The withData heading direction is computed from its own delta. The
-  // withoutData heading hardcodes "reduced" in copy, which holds because a
-  // missing-data row only reaches a balance-affecting bucket by reversing its
-  // earlier contribution: the backend zeroes an excluded row's amount, so the
-  // adjusted leg is -oldAmount (negative). See period-status.js in epr-backend.
   return {
     count: bucket.count,
-    withData: {
-      addsToBalance: withDataDelta >= 0,
-      count: withData.length,
-      sections: groupRowsIntoSections(withData, ctx, false)
+    added: {
+      count: added.length,
+      sections: groupRowsIntoSections(added, ctx, false)
     },
-    withoutData: {
-      count: withoutData.length,
-      sections: groupRowsIntoSections(withoutData, ctx, false)
+    reduced: {
+      count: reduced.length,
+      sections: groupRowsIntoSections(reduced, ctx, true)
     }
   }
 }

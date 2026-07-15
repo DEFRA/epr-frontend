@@ -211,18 +211,14 @@
 
 /**
  * View model for a balance-affecting bucket. The adjusted accordion splits its
- * rows into loads with all required data (the heading reflects the group's
- * direction) and loads still missing data. The missing-data heading hardcodes
- * "reduced": such a row only becomes balance-affecting by reversing its earlier
- * contribution, so its delta is always negative (see splitBalanceAffecting).
+ * rows by the direction each moved the balance: loads that added to it and loads
+ * that reduced it. Only the reduced sub-group carries per-row reasons (its
+ * exclusion reason, or bare for a plain downward correction); the added group
+ * lists rows by id, reasons suppressed (see splitBalanceAffecting).
  * @typedef {{
  *   count: number,
- *   withData: {
- *     addsToBalance: boolean,
- *     count: number,
- *     sections: LoadSectionViewModel[]
- *   },
- *   withoutData: { count: number, sections: LoadSectionViewModel[] }
+ *   added: { count: number, sections: LoadSectionViewModel[] },
+ *   reduced: { count: number, sections: LoadSectionViewModel[] }
  * }} BalanceAffectingViewModel
  */
 
