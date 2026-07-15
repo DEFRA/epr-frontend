@@ -7,29 +7,30 @@
 
     <p class="govuk-body">{{ introText }}</p>
 
-    <p class="govuk-body">{{ causesIntro }}:</p>
+    <p class="govuk-body">{{ causes.intro }}:</p>
     <ul class="govuk-list govuk-list--bullet">
-      <li>{{ causesConcurrentUse }}</li>
-      <li>{{ causesTechnicalProblem }}</li>
+      {% for item in causes.items %}
+      <li>{{ item }}</li>
+      {% endfor %}
     </ul>
 
     <h2 class="govuk-heading-m">{{ whatNextHeading }}</h2>
 
     <p class="govuk-body">
-      {{ homePageText.prefix }} <a href="{{ homePageText.link.href }}" class="govuk-link">{{ homePageText.link.text }}</a>.
+      {{ homePageLink.prefix }} <a href="{{ homePageLink.href }}" class="govuk-link">{{ homePageLink.text }}</a>.
     </p>
 
     <p class="govuk-body">{{ reportText }}</p>
 
     <p class="govuk-body">
-      {{ emailLabel }} <a href="mailto:{{ email }}" class="govuk-link">{{ email }}</a>
+      {{ getHelp.email.label }} <a href="mailto:{{ getHelp.email.value }}" class="govuk-link">{{ getHelp.email.value }}</a>
     </p>
 
     <p class="govuk-body">
-      {{ phoneLabel }} {{ phone }}
+      {{ getHelp.phone.label }} {{ getHelp.phone.value }}
     </p>
 
-    <p class="govuk-body">{{ hours }}</p>
+    <p class="govuk-body">{{ getHelp.hours }}</p>
   </div>
 </div>
 {% endblock %}
