@@ -26,7 +26,7 @@ import { hasClosedPeriodChanges } from './closed-period-changes.js'
  * } from './types.js'
  */
 
-const ENHANCED_CHECK_VIEW_NAME = 'summary-log/enhanced-check'
+const CHECK_VIEW_NAME = 'summary-log/check'
 
 const ZERO_TONNAGE = formatTonnage(0)
 
@@ -54,7 +54,7 @@ const FIXED_REASON_CODES = new Set([
 ])
 
 /**
- * Locale key under enhanced.reason for one exclusion code, or null when the
+ * Locale key under check.reason for one exclusion code, or null when the
  * code has no mapping (the caller then falls back to the raw code rather than
  * a translation).
  * @param {string} code
@@ -94,9 +94,7 @@ const resolveReasonText = (exclusionReasons, processingType, localise) => {
     .filter((code) => code !== NON_CONTRIBUTING_CODE)
     .map((code) => {
       const key = reasonKey(code, processingType)
-      return key === null
-        ? code
-        : localise(`summary-log:enhanced.reason.${key}`)
+      return key === null ? code : localise(`summary-log:check.reason.${key}`)
     })
   return texts.length > 0 ? texts.join(', ') : null
 }
@@ -147,9 +145,7 @@ const mapLoadRow = (
  * @returns {string}
  */
 const sectionLabel = (wasteRecordType, { processingType, localise }) =>
-  localise(
-    `summary-log:enhanced.worksheet.${processingType}.${wasteRecordType}`
-  )
+  localise(`summary-log:check.worksheet.${processingType}.${wasteRecordType}`)
 
 /**
  * Groups a bucket's rows into sections by waste record type, in the canonical
@@ -329,14 +325,13 @@ const buildPeriodViewModel = (period, ctx) => {
 }
 
 /**
- * Renders the enhanced (CMA-aware) summary log check page, gated behind the
- * enhancedSummaryLogCheckPages feature flag. Accredited processing types show
+ * Renders the summary log check page. Accredited processing types show
  * waste balance language; registered-only types show totals only. When every
  * bucket is empty the template renders the four-section empty state.
  *
  * A validated summary log is always paired with loadsByReportingPeriod by the
  * backend; if that invariant breaks we throw rather than rendering a misleading
- * empty page (mirrors the loadsByWasteRecordType guard in renderCheckView).
+ * empty page.
  * @param {ResponseToolkit} h - Hapi response toolkit
  * @param {(key: string, params?: object) => string} localise - i18n localisation function
  * @param {{
@@ -349,7 +344,7 @@ const buildPeriodViewModel = (period, ctx) => {
  * }} context - View context
  * @returns {ResponseObject} Hapi view response
  */
-export const renderEnhancedCheckView = (
+export const renderCheckView = (
   h,
   localise,
   {
@@ -374,7 +369,7 @@ export const renderEnhancedCheckView = (
     ctx
   )
 
-  return h.view(ENHANCED_CHECK_VIEW_NAME, {
+  return h.view(CHECK_VIEW_NAME, {
     pageTitle: localise('summary-log:checkPageTitle'),
     organisationId,
     registrationId,
