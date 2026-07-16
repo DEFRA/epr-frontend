@@ -107,6 +107,20 @@ describe('#tonnesNotRecycledController', () => {
       )
     })
 
+    it('should display the Create draft report caption', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: monthlyUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const caption = body.querySelector('.govuk-caption-xl')
+
+      expect(caption).not.toBeNull()
+      expect(caption?.textContent?.trim()).toBe('Create draft report')
+    })
+
     it('should display heading and pre-fill saved tonnage unchanged', async ({
       server
     }) => {

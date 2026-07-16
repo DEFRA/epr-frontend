@@ -334,7 +334,9 @@ describe('#checkController', () => {
         expect(contentColumn?.className).toContain('govuk-grid-column-full')
       })
 
-      it('should display the Create report caption', async ({ server }) => {
+      it('should display the Create draft report caption', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -903,7 +905,7 @@ describe('#checkController', () => {
         )
       })
 
-      it('should display Create report button', async ({ server }) => {
+      it('should display Create draft report button', async ({ server }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -1860,7 +1862,7 @@ describe('#checkController', () => {
       })
     })
 
-    describe('when Create report is clicked', () => {
+    describe('when Create draft report is clicked', () => {
       it('should advance status and redirect to created page', async ({
         server
       }) => {
