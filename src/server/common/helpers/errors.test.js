@@ -93,4 +93,25 @@ describe(catchAll, () => {
       message: 'Page not found'
     })
   })
+
+  it('falls back to the simple view for a 5xx without a localise function', async () => {
+    const request = {
+      response: {
+        isBoom: true,
+        stack: 'mock-stack',
+        output: { statusCode: statusCodes.internalServerError }
+      },
+      logger: { error: mockErrorLogger }
+      // Note: no `t` function provided (as would happen on ignored routes)
+    }
+
+    await catchAll(asRequest(request), asResponseToolkit(mockToolkit))
+
+    expect(mockErrorLogger).toHaveBeenCalledWith({ err: request.response })
+    expect(mockToolkit.view).toHaveBeenCalledWith('error/index', {
+      pageTitle: 'Something went wrong',
+      heading: statusCodes.internalServerError,
+      message: 'Something went wrong'
+    })
+  })
 })

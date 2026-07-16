@@ -1,0 +1,33 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters">
+    <h1 class="govuk-heading-xl">{{ heading }}</h1>
+
+    <p class="govuk-body">{{ introText }}</p>
+
+    <p class="govuk-body">{{ causes.intro }}:</p>
+    <ul class="govuk-list govuk-list--bullet">
+      {% for item in causes.items %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="govuk-heading-m">{{ whatNextHeading }}</h2>
+
+    <p class="govuk-body">
+      {{ homePageLink.prefix }} <a href="{{ homePageLink.href }}" class="govuk-link">{{ homePageLink.text }}</a>.
+    </p>
+
+    <p class="govuk-body">{{ reportText }}</p>
+
+    <p class="govuk-body">
+      {{ getHelp.email.label }} <a href="mailto:{{ getHelp.email.value }}" class="govuk-link">{{ getHelp.email.value }}</a><br>
+      {{ getHelp.phone.label }} {{ getHelp.phone.value }}
+    </p>
+
+    <p class="govuk-body">{{ getHelp.hours }}</p>
+  </div>
+</div>
+{% endblock %}
