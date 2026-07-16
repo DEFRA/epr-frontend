@@ -16,12 +16,19 @@
     <h2 class="govuk-heading-m">{{ detailsHeading }}</h2>
 
     <p class="govuk-body">
-      <strong>{{ registrationLabel }}</strong> {{ registrationNumber }}
+      <strong>{{ (accreditationLabel + ":") if isAccredited else registrationLabel }}</strong>
+      {{ accreditationNumber if isAccredited else registrationNumber }}
     </p>
 
     <p class="govuk-body">
       <strong>{{ materialLabel }}</strong> {{ material }}
     </p>
+
+    {% if site %}
+    <p class="govuk-body">
+      <strong>{{ siteLabel }}:</strong> {{ site.address.line1 }}
+    </p>
+    {% endif %}
 
     <h2 class="govuk-heading-m">{{ nextStepsHeading }}</h2>
 

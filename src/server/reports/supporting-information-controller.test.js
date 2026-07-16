@@ -165,7 +165,9 @@ describe('#supportingInformationController', () => {
         expect(caption?.textContent).toContain('Create draft report')
       })
 
-      it('should display Enter a comment field label', async ({ server }) => {
+      it('should display Enter information (optional) field label', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -178,7 +180,7 @@ describe('#supportingInformationController', () => {
         const label = body.querySelector('.govuk-label--m')
 
         expect(label).not.toBeNull()
-        expect(label?.textContent).toContain('Enter a comment')
+        expect(label?.textContent).toContain('Enter information (optional)')
       })
 
       it('should display hint text', async ({ server }) => {
@@ -195,7 +197,7 @@ describe('#supportingInformationController', () => {
 
         expect(hint).not.toBeNull()
         expect(hint?.textContent).toContain(
-          'Include any extra information you think your regulator will find useful'
+          'Include anything you think your regulator will find useful'
         )
       })
 
@@ -584,14 +586,14 @@ describe('#supportingInformationController', () => {
     })
 
     describe('validation', () => {
-      it('should re-render with error when text exceeds 2000 characters', async ({
+      it('should re-render with error when text exceeds 1000 characters', async ({
         server
       }) => {
         const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
           auth: mockAuth
         })
 
-        const longText = 'a'.repeat(2001)
+        const longText = 'a'.repeat(1001)
 
         const { result, statusCode } = await server.inject({
           method: 'POST',
@@ -621,7 +623,7 @@ describe('#supportingInformationController', () => {
           auth: mockAuth
         })
 
-        const longText = 'a'.repeat(2001)
+        const longText = 'a'.repeat(1001)
 
         const { result } = await server.inject({
           method: 'POST',
@@ -655,7 +657,7 @@ describe('#supportingInformationController', () => {
           auth: mockAuth,
           headers: { cookie },
           payload: {
-            supportingInformation: 'a'.repeat(2001),
+            supportingInformation: 'a'.repeat(1001),
             action: 'continue',
             crumb
           }
@@ -681,7 +683,7 @@ describe('#supportingInformationController', () => {
           auth: mockAuth,
           headers: { cookie },
           payload: {
-            supportingInformation: 'a'.repeat(2001),
+            supportingInformation: 'a'.repeat(1001),
             action: 'continue',
             crumb
           }
@@ -690,7 +692,7 @@ describe('#supportingInformationController', () => {
         expect(updateReport).not.toHaveBeenCalled()
       })
 
-      it('should accept exactly 2000 characters', async ({ server }) => {
+      it('should accept exactly 1000 characters', async ({ server }) => {
         const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
           auth: mockAuth
         })
@@ -701,7 +703,7 @@ describe('#supportingInformationController', () => {
           auth: mockAuth,
           headers: { cookie },
           payload: {
-            supportingInformation: 'a'.repeat(2000),
+            supportingInformation: 'a'.repeat(1000),
             action: 'continue',
             crumb
           }
@@ -835,7 +837,7 @@ describe('#supportingInformationController', () => {
         )
       })
 
-      it('should keep the standard 2,000-character limit', async ({
+      it('should keep the standard 1,000-character limit', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -847,7 +849,7 @@ describe('#supportingInformationController', () => {
         const { body } = new JSDOM(result).window.document
         const characterCount = body.querySelector('.govuk-character-count')
 
-        expect(characterCount?.getAttribute('data-maxlength')).toBe('2000')
+        expect(characterCount?.getAttribute('data-maxlength')).toBe('1000')
       })
 
       it('should render the standard variant when the flag is off', async ({

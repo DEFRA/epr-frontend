@@ -59,10 +59,9 @@
       {% if isExporter %}
         {{ reportSection(localise("reports:wasteExportedHeading"), localise("reports:totalTonnageExported"), wasteExported.totalTonnage, wasteExportedIntro) }}
 
-        <div class="govuk-inset-text">
-          <p class="govuk-body">{{ localise("reports:orsHelpLine1") }}</p>
-          <p class="govuk-body">{{ localise("reports:orsHelpLine2") }}</p>
-        </div>
+        {{ govukInsetText({
+          html: localise("reports:orsHelpLine1") + " " + localise("reports:orsHelpLine2")
+        }) }}
 
         {% set overseasSiteHead = [
             { text: localise("reports:siteNameColumn") },
