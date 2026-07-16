@@ -109,6 +109,20 @@ describe('#tonnesNotExportedController', () => {
       )
     })
 
+    it('should display the Create draft report caption', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: quarterlyUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+      const caption = body.querySelector('.govuk-caption-xl')
+
+      expect(caption).not.toBeNull()
+      expect(caption?.textContent?.trim()).toBe('Create draft report')
+    })
+
     it('should pre-fill saved tonnage', async ({ server }) => {
       vi.mocked(fetchReportDetail).mockResolvedValue(
         asReportDetailResponse({

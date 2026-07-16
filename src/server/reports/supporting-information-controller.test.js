@@ -147,7 +147,9 @@ describe('#supportingInformationController', () => {
         expect(heading).toBeDefined()
       })
 
-      it('should display the Create report caption', async ({ server }) => {
+      it('should display the Create draft report caption', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
