@@ -20,7 +20,7 @@ const createPageFields = (getBackUrl) => (ctx) => {
 
   return (localise) => ({
     backUrl: getBackUrl(ctx),
-    caption: localise('reports:noteSummaryCaption'),
+    caption: localise('reports:createDraftReportCaption'),
     continueText: localise('reports:noteSummaryContinue'),
     defaultValue: padToTwoDecimalPlaces(prn.totalRevenue),
     heading: localise('reports:noteSummaryHeading', {

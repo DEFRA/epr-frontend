@@ -59,8 +59,9 @@
 {% endmacro %}
 
 {# Adjusted balance-affecting disclosure: one "Show [x] load[s]" toggle holding
-   the with-data sub-group (its heading reflects the group's direction) and the
-   missing-data sub-group (which always reduces the balance). #}
+   the added sub-group (loads that added to the balance, listed by id) and the
+   reduced sub-group (loads that reduced it, each carrying its own reason where
+   it has one). #}
 {% macro adjustedBalanceAccordion(balanceAffecting, tooManyMessage) %}
   {% if balanceAffecting.count >= maxRowsPerBucket %}
   <p class="govuk-body">{{ tooManyMessage }}</p>
@@ -70,17 +71,13 @@
       <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: balanceAffecting.count }) }}</span>
     </summary>
     <div class="govuk-details__text">
-      {% if balanceAffecting.withData.count > 0 %}
-        {% if balanceAffecting.withData.addsToBalance %}
-        <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithDataAdded', { count: balanceAffecting.withData.count }) }}</p>
-        {% else %}
-        <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithDataReduced', { count: balanceAffecting.withData.count }) }}</p>
-        {% endif %}
-        {{ loadSections(balanceAffecting.withData.sections) }}
+      {% if balanceAffecting.added.count > 0 %}
+      <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedAdded', { count: balanceAffecting.added.count }) }}</p>
+      {{ loadSections(balanceAffecting.added.sections) }}
       {% endif %}
-      {% if balanceAffecting.withoutData.count > 0 %}
-      <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedWithoutData', { count: balanceAffecting.withoutData.count }) }}</p>
-      {{ loadSections(balanceAffecting.withoutData.sections) }}
+      {% if balanceAffecting.reduced.count > 0 %}
+      <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:enhanced.adjustedReduced', { count: balanceAffecting.reduced.count }) }}</p>
+      {{ loadSections(balanceAffecting.reduced.sections) }}
       {% endif %}
     </div>
   </details>

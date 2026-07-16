@@ -147,7 +147,9 @@ describe('#supportingInformationController', () => {
         expect(heading).toBeDefined()
       })
 
-      it('should display the Create report caption', async ({ server }) => {
+      it('should display the Create draft report caption', async ({
+        server
+      }) => {
         const { result } = await server.inject({
           method: 'GET',
           url: baseUrl,
@@ -160,7 +162,7 @@ describe('#supportingInformationController', () => {
         const caption = body.querySelector('.govuk-caption-xl')
 
         expect(caption).not.toBeNull()
-        expect(caption?.textContent).toContain('Create report')
+        expect(caption?.textContent).toContain('Create draft report')
       })
 
       it('should display Enter a comment field label', async ({ server }) => {

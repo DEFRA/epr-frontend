@@ -43,14 +43,10 @@ import {
 } from './supporting-information-controller.js'
 import { viewGetController } from './view-controller.js'
 import {
-  summaryLogChangedErrorGetController,
-  summaryLogChangedErrorPostController
-} from './summary-log-changed-error-controller.js'
-import { SummaryLogChangedError } from './helpers/summary-log-changed.js'
-
-const INVALIDATION_ERROR_ROUTES = Object.freeze({
-  summary_log_changed: 'summary-log-changed-error'
-})
+  reportStaleErrorGetController,
+  reportStaleErrorPostController
+} from './report-stale-error-controller.js'
+import { ReportStaleError } from './helpers/stale.js'
 
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/reports'
@@ -198,25 +194,25 @@ export const reports = {
           path: `${periodPath}/view`
         },
         {
-          ...summaryLogChangedErrorGetController,
+          ...reportStaleErrorGetController,
           method: 'GET',
-          path: `${periodPath}/summary-log-changed-error`
+          path: `${periodPath}/report-stale-error`
         },
         {
-          ...summaryLogChangedErrorPostController,
+          ...reportStaleErrorPostController,
           method: 'POST',
-          path: `${periodPath}/summary-log-changed-error`
+          path: `${periodPath}/report-stale-error`
         }
       ])
 
       server.ext({
         type: 'onPreResponse',
         method(request, h) {
-          if (!(request.response instanceof SummaryLogChangedError)) {
+          if (!(request.response instanceof ReportStaleError)) {
             return h.continue
           }
-          const errorRoute = INVALIDATION_ERROR_ROUTES[request.response.reason]
-          if (!errorRoute) {
+          const { reasons } = request.response
+          if (reasons.length === 0) {
             return h.continue
           }
           const {
@@ -227,9 +223,14 @@ export const reports = {
             period,
             submissionNumber
           } = request.params
-          const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
-          request.yar.set('summaryLogChangedError', base)
-          return h.redirect(request.localiseUrl(`${base}/${errorRoute}`))
+          const reportPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+          request.yar.set('reportStaleErrorContext', {
+            periodPath: reportPath,
+            reasons
+          })
+          return h.redirect(
+            request.localiseUrl(`${reportPath}/report-stale-error`)
+          )
         },
         options: { before: '@hapi/yar' }
       })

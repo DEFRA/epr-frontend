@@ -122,6 +122,7 @@
         <h2 class="govuk-heading-l">{{ localise("reports:tonnageReceivedNotExportedHeading") }}</h2>
 
         {{ govukSummaryList({
+          classes: "epr-summary-list--wide-key",
           rows: [{
             key: { text: localise("reports:tonnageReceivedNotExportedRegOnlyLabel") },
             value: { text: wasteExported.tonnageReceivedNotExported },
@@ -135,6 +136,7 @@
         <h2 class="govuk-heading-l">{{ localise("reports:checkRecyclingActivityHeading") }}</h2>
 
         {{ govukSummaryList({
+          classes: "epr-summary-list--wide-key",
           rows: [
             {
               key: { text: localise("reports:checkTonnageRecycledLabel") },

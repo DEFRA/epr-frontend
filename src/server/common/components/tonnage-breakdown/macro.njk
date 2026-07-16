@@ -4,12 +4,9 @@
   {% set summaryRows = [] %}
   {% for row in rows %}
     {% set summaryRows = summaryRows.concat([{
-      key: {
-        text: localise(row.key),
-        classes: "govuk-!-width-two-thirds"
-      },
+      key: { text: localise(row.key) },
       value: { text: row.value }
     }]) %}
   {% endfor %}
-  {{ govukSummaryList({ rows: summaryRows }) }}
+  {{ govukSummaryList({ classes: "epr-summary-list--wide-key", rows: summaryRows }) }}
 {% endmacro %}
