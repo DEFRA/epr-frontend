@@ -3,6 +3,9 @@
 {% macro overseasSitesTables(params) %}
   {% if params.approvedRows | length > 0 %}
     <h3 class="govuk-heading-m">{{ params.approvedHeading }}</h3>
+    {% if params.approvedIntro %}
+      <div class="govuk-inset-text">{{ params.approvedIntro | safe }}</div>
+    {% endif %}
     {{ govukTable({
       head: params.approvedHead,
       rows: params.approvedRows
