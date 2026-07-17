@@ -99,7 +99,7 @@ describe('#submittedController', () => {
 
       expect(panel).not.toBeNull()
       expect(panel.textContent).toContain(
-        'Quarter 1, 2026 report submitted to regulator'
+        'Quarter 1 2026 report submitted to regulator'
       )
     })
 

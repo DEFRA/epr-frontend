@@ -76,7 +76,7 @@ describe('#resubmissionExplainerController', () => {
       const { body } = new JSDOM(result).window.document
 
       expect(body.querySelector('h1').textContent).toContain(
-        'Why your Quarter 1, 2026 report needs to be resubmitted'
+        'Why your Quarter 1 2026 report needs to be resubmitted'
       )
     })
 

@@ -18,7 +18,7 @@ import {
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import {
   getStatusLabel,
   getStatusTagClass
@@ -177,7 +177,11 @@ function buildViewModel({
     reportDetail.status
   )
   const material = getDisplayMaterial(registration)
-  const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const periodLabel = formatPeriodLabelWithComma(
+    { year, period },
+    cadence,
+    localise
+  )
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation

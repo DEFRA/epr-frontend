@@ -10,7 +10,7 @@ import {
   SUBMISSION_STATUS
 } from './constants.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import {
   getStatusLabel,
   getStatusTagClass
@@ -134,7 +134,7 @@ function buildRows({
   for (const period of reportingPeriods) {
     const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
 
-    const label = formatPeriodLabel(period, cadence, localise)
+    const label = formatPeriodLabelWithComma(period, cadence, localise)
 
     const status = period.periodStatus
 
