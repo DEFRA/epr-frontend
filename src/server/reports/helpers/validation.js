@@ -2,6 +2,7 @@ import { Decimal } from 'decimal.js'
 import Joi from 'joi'
 
 import { isNil } from '#server/common/helpers/is-nil.js'
+
 /** @import { CustomHelpers, ErrorReport, ValidationError } from 'joi' */
 
 const TWO_DECIMAL_PLACES = 2

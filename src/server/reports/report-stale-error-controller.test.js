@@ -5,6 +5,7 @@ import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
+
 /** @import { HapiServer } from '#server/common/hapi-types.js' */
 /** @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js' */
 

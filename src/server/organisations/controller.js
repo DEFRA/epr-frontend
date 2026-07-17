@@ -7,6 +7,7 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
 import { isExporterRegistration } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from './helpers/status-helpers.js'
+
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
 /**

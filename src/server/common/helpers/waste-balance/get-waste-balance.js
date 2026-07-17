@@ -1,4 +1,5 @@
 import { fetchWasteBalances } from './fetch-waste-balances.js'
+
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
 /**

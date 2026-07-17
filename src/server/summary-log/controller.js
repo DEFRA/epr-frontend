@@ -8,6 +8,7 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 import { hasClosedPeriodChanges } from './closed-period-changes.js'
 import { renderCheckView } from './check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
+
 /** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
 /**

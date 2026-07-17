@@ -8,6 +8,7 @@ import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+
 /** @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js' */
 
 /**
