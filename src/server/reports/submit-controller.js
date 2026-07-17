@@ -29,6 +29,10 @@ import { updateReportStatus } from './helpers/update-report-status.js'
 import { buildValidationErrors } from './helpers/validation.js'
 import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
+/** @import { Localise } from './helpers/format-period-label.js' */
+/** @import { Registration } from '#domain/organisations/registration.js' */
+/** @import { ValidationError } from 'joi' */
+
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { CadenceValue } from './constants.js'
@@ -40,7 +44,7 @@ import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
  * @param {{ at: string, by: { name: string } }} statusCreated
- * @param {import('./helpers/format-period-label.js').Localise} localise
+ * @param {Localise} localise
  * @returns {{ createdBy: string, createdOn: string }}
  */
 function getCreationDetails(statusCreated, localise) {
@@ -56,7 +60,7 @@ function getCreationDetails(statusCreated, localise) {
 }
 
 /**
- * @param {{ localise: import('./helpers/format-period-label.js').Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, resubmission: boolean }} params
+ * @param {{ localise: Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, resubmission: boolean }} params
  * @returns {object}
  */
 function buildPageLabels({
@@ -102,11 +106,11 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 
 /**
  * @typedef {{
- *   registration: import('#domain/organisations/registration.js').Registration,
+ *   registration: Registration,
  *   accreditation: object | null,
  *   reportDetail: ReportDetailResponse,
  *   reportsUrl: string,
- *   localise: import('./helpers/format-period-label.js').Localise,
+ *   localise: Localise,
  *   year: number,
  *   cadence: CadenceValue,
  *   period: number,
@@ -118,7 +122,7 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
  */
 
 /**
- * @param {import('./helpers/format-period-label.js').Localise} localise
+ * @param {Localise} localise
  * @param {string} organisationName
  * @returns {string[]}
  */
@@ -135,7 +139,7 @@ const buildDeclarationItems = (localise, organisationName) => [
  * bundles the flag, so the page renders as the standard submit flow until
  * closed-period adjustments ship.
  * @param {number} submissionNumber
- * @param {import('./helpers/format-period-label.js').Localise} localise
+ * @param {Localise} localise
  * @returns {{ resubmission: boolean, statusTag: string, statusTagClass: string }}
  */
 function buildSubmitStatus(submissionNumber, localise) {
@@ -356,7 +360,7 @@ export const submitPostController = {
       async failAction(request, h, error) {
         const { errors, errorSummary } = buildValidationErrors(
           request,
-          /** @type {import('joi').ValidationError} */ (error)
+          /** @type {ValidationError} */ (error)
         )
 
         const viewData = await buildViewData(request, {

@@ -9,6 +9,8 @@ import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
+/** @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js' */
+
 /**
  * @import { Organisation, User } from '#domain/organisations/model.js'
  * @import { Registration, RegistrationApproved } from '#domain/organisations/registration.js'
@@ -108,7 +110,7 @@ const reprocessorRegistration = buildRegistration({
   }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -201,7 +203,7 @@ const accreditedReprocessorRegistration = buildRegistration({
   accreditation: { id: 'acc-001' }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -262,7 +264,7 @@ const reprocessorReportDetail = {
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
   operatorCategory: 'REPROCESSOR_ACCREDITED',
@@ -282,12 +284,12 @@ const accreditedExporterRegistration = buildRegistration({
   accreditation: { id: 'acc-002' }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   operatorCategory: 'EXPORTER_ACCREDITED',
   exportActivity: {
-    .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+    .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
       exporterReportDetail.exportActivity
     ),
     overseasSites: [
@@ -644,7 +646,7 @@ describe('#submitController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
           exportActivity: {
-            .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+            .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
               exporterReportDetail.exportActivity
             ),
             totalTonnageRefusedOrStopped: null,
@@ -1310,7 +1312,7 @@ describe('#submitController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
           status: {
-            .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['status']>} */ (
+            .../** @type {NonNullable<ReportDetailResponse['status']>} */ (
               exporterReportDetail.status
             ),
             currentStatus: 'submitted'

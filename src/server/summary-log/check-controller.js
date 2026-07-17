@@ -14,12 +14,14 @@ import { hasClosedPeriodChanges } from './closed-period-changes.js'
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
+ *   BalanceAffectingBucket,
+ *   BalanceAffectingViewModel,
  *   ChangeViewModel,
  *   LoadRow,
  *   LoadRowViewModel,
  *   LoadSectionViewModel,
- *   Localise,
  *   LoadsByReportingPeriod,
+ *   Localise,
  *   PeriodStatus,
  *   PeriodStatusByChange,
  *   PeriodViewModel
@@ -200,9 +202,9 @@ const groupRowsIntoSections = (rows, ctx, includeReason) => {
  * The backend rounds each leg to 2dp and sends every zero-delta leg to
  * nonBalanceAffecting, so a row reaching here has a non-zero delta; the >= 0
  * boundary folds any unexpected zero into "added" rather than dropping it.
- * @param {import('./types.js').BalanceAffectingBucket} bucket
+ * @param {BalanceAffectingBucket} bucket
  * @param {{ processingType: ProcessingType, localise: Localise }} ctx
- * @returns {import('./types.js').BalanceAffectingViewModel}
+ * @returns {BalanceAffectingViewModel}
  */
 const splitBalanceAffecting = (bucket, ctx) => {
   const rows = bucket.rows ?? []

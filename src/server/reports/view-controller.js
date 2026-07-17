@@ -20,6 +20,8 @@ import {
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
+/** @import { SubmissionStatusValue } from './constants.js' */
+
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
@@ -27,7 +29,7 @@ import { SUBMISSION_STATUS } from './constants.js'
  */
 
 /**
- * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: import('./constants.js').SubmissionStatusValue }} params
+ * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: SubmissionStatusValue }} params
  * @returns {object}
  */
 function buildPageLabels({
@@ -65,7 +67,7 @@ function buildPageLabels({
 
 /**
  * @param {object} reportDetail
- * @param {import('./constants.js').SubmissionStatusValue} status
+ * @param {SubmissionStatusValue} status
  * @param {(key: string, params?: Record<string, string>) => string} localise
  * @returns {{ statusTag: string, statusTagClass: string, authorLabel: string, authorValue: string, dateLabel: string, dateValue: string }}
  */

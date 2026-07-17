@@ -6,6 +6,9 @@ import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
+/** @import { HapiServer } from '#server/common/hapi-types.js' */
+/** @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js' */
+
 vi.mock(import('./helpers/delete-report.js'))
 vi.mock(import('./helpers/fetch-report-detail.js'))
 vi.mock(
@@ -28,7 +31,7 @@ const periodUrl = `/organisations/${organisationId}/registrations/${registration
 /**
  * Trigger the onPreResponse redirect to the error page, returning the
  * session cookie that carries the yar context set by the hook.
- * @param {import('#server/common/hapi-types.js').HapiServer} server
+ * @param {HapiServer} server
  * @returns {Promise<string>}
  */
 async function triggerStalenessRedirect(server) {
@@ -49,7 +52,7 @@ describe('#reportStaleErrorController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-      /** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */ (
+      /** @type {RegistrationWithAccreditation} */ (
         /** @type {unknown} */ ({
           registration: { wasteProcessingType: 'reprocessor' },
           accreditation: undefined
@@ -240,7 +243,7 @@ describe('#reportStaleErrorController', () => {
 
       it('names the note type as PERN for an exporter', async ({ server }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-          /** @type {import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js').RegistrationWithAccreditation} */ (
+          /** @type {RegistrationWithAccreditation} */ (
             /** @type {unknown} */ ({
               registration: { wasteProcessingType: 'exporter' },
               accreditation: undefined

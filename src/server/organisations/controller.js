@@ -8,6 +8,8 @@ import { isExporterRegistration } from '#server/common/helpers/prns/registration
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
 import { getStatusClass } from './helpers/status-helpers.js'
 
+/** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
+
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
@@ -281,7 +283,7 @@ function getDisplayableRegistrations(organisationData) {
  * @param {string} organisationId - Organisation ID
  * @param {Array<{registration: object}>} displayableRegistrations - Filtered registrations
  * @param {string} idToken - JWT token
- * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Request logger
+ * @param {TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
  */
 async function getWasteBalanceMap(

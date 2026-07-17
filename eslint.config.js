@@ -60,6 +60,14 @@ export default [
       // JSDoc blocks are optional by default
       'jsdoc/require-jsdoc': 'off',
 
+      // Prefer `@import { X } from '...'` over inline `import('...').X` in types.
+      // named-import avoids the fixer's mangled namespace output; do not rely on
+      // --fix (wrong placement, no block merge) - hoist by hand when flagged.
+      'jsdoc/prefer-import-tag': [
+        'error',
+        { outputType: 'named-import', exemptTypedefs: false }
+      ],
+
       // JSDoc @param types are mandatory for JavaScript
       'jsdoc/require-param-description': 'off',
       'jsdoc/require-param-type': 'error',
