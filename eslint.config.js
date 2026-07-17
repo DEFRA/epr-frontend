@@ -35,6 +35,7 @@ export default [
       }
     },
     rules: {
+      curly: ['error', 'all'],
       '@typescript-eslint/no-floating-promises': ['error'],
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
       eqeqeq: ['error', 'always'],
