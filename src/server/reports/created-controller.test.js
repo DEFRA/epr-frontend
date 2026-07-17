@@ -35,6 +35,24 @@ const mockRegistration = /** @type {RegistrationWithAccreditation} */ (
   })
 )
 
+const accreditedReprocessorWithSite =
+  /** @type {RegistrationWithAccreditation} */ (
+    /** @type {unknown} */ ({
+      organisationData: { id: 'org-123' },
+      registration: {
+        id: 'reg-001',
+        material: 'plastic',
+        wasteProcessingType: 'reprocessor',
+        registrationNumber: 'REG001234',
+        site: { address: { line1: 'North Road' } }
+      },
+      accreditation: {
+        id: 'acc-001',
+        accreditationNumber: 'ER992415095748M'
+      }
+    })
+  )
+
 const mockReportDetail = /** @type {ReportDetailResponse} */ (
   /** @type {unknown} */ ({
     operatorCategory: 'EXPORTER_REGISTERED_ONLY',
@@ -190,6 +208,21 @@ describe('#createdController', () => {
       expect(body.textContent).toContain('Plastic')
     })
 
+    it('should not display a Site row when the registration has no site', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: createdUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(body.textContent).not.toContain('Site:')
+    })
+
     it('should display What happens next heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -323,6 +356,45 @@ describe('#createdController', () => {
 
       expect(first.statusCode).toBe(statusCodes.ok)
       expect(second.statusCode).toBe(statusCodes.ok)
+    })
+  })
+
+  describe('accredited reprocessor with a site', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedReprocessorWithSite
+      )
+    })
+
+    it('should display Accreditation label and number instead of Registration', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: createdUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(body.textContent).toContain('Accreditation:')
+      expect(body.textContent).toContain('ER992415095748M')
+      expect(body.textContent).not.toContain('Registration:')
+    })
+
+    it('should display the Site row', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: createdUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(body.textContent).toContain('Site:')
+      expect(body.textContent).toContain('North Road')
     })
   })
 

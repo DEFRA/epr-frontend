@@ -33,7 +33,7 @@ export const createdController = {
 
     const reportsUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports`
 
-    const [{ registration }, reportDetail] = await Promise.all([
+    const [{ registration, accreditation }, reportDetail] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -79,10 +79,15 @@ export const createdController = {
       statusLabel: localise('reports:createdStatusLabel'),
       statusValue,
       detailsHeading: localise('reports:detailsHeading'),
+      isAccredited: !!accreditation,
+      accreditationLabel: localise('reports:accreditationLabel'),
+      accreditationNumber: accreditation?.accreditationNumber,
       registrationLabel: localise('reports:createdRegistrationLabel'),
       registrationNumber: registration.registrationNumber,
       materialLabel: localise('reports:createdMaterialLabel'),
       material,
+      siteLabel: localise('reports:siteLabel'),
+      site: registration.site,
       nextStepsHeading: localise('reports:createdNextStepsHeading'),
       nextStepsGuidance: localise('reports:createdNextStepsGuidance'),
       selfSubmitGuidance: localise('reports:createdSelfSubmitGuidance'),

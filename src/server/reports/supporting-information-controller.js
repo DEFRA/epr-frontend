@@ -10,7 +10,7 @@ import { isResubmission } from './helpers/resubmission.js'
 import { updateReport } from './helpers/update-report.js'
 import { buildValidationErrors } from './helpers/validation.js'
 
-const MAX_SUPPORTING_INFO_LENGTH = 2000
+const MAX_SUPPORTING_INFO_LENGTH = 1000
 
 const payloadSchema = Joi.object({
   supportingInformation: Joi.string()
