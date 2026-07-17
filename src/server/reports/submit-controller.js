@@ -105,6 +105,31 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 })
 
 /**
+ * @param {{ recyclingActivity: object, exportActivity: object | undefined, wasteSent: object }} activity
+ * @param {{ isExporter: boolean, isAccreditedExporter: boolean }} flags
+ * @param {string} fallbackText
+ * @returns {{ wasteReceived: object, wasteExported: object | null, wasteSentOn: object, recyclingActivity: { tonnageRecycled: string, tonnageNotRecycled: string } }}
+ */
+function buildActivityViewData(
+  { recyclingActivity, exportActivity, wasteSent },
+  { isExporter, isAccreditedExporter },
+  fallbackText
+) {
+  return {
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(
+          exportActivity,
+          { showApprovalColumn: isAccreditedExporter },
+          fallbackText
+        )
+      : null,
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
+    recyclingActivity: buildRecyclingActivityViewData(recyclingActivity)
+  }
+}
+
+/**
  * @typedef {{
  *   registration: Registration,
  *   accreditation: object | null,
@@ -156,6 +181,31 @@ function buildSubmitStatus(submissionNumber, localise) {
 }
 
 /**
+ * @param {Pick<BuildViewModelParams, 'registration' | 'reportDetail' | 'year' | 'cadence' | 'period' | 'localise'>} params
+ * @returns {{ status: NonNullable<ReportDetailResponse['status']>, material: string, periodLabel: string }}
+ */
+function getReportSummaryFields({
+  registration,
+  reportDetail,
+  year,
+  cadence,
+  period,
+  localise
+}) {
+  const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
+    reportDetail.status
+  )
+  const material = getDisplayMaterial(registration)
+  const periodLabel = formatPeriodLabelWithComma(
+    { year, period },
+    cadence,
+    localise
+  )
+
+  return { status, material, periodLabel }
+}
+
+/**
  * @param {BuildViewModelParams} params
  * @returns {object}
  */
@@ -173,15 +223,14 @@ function buildViewModel({
   errors,
   errorSummary
 }) {
-  const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
-    reportDetail.status
-  )
-  const material = getDisplayMaterial(registration)
-  const periodLabel = formatPeriodLabelWithComma(
-    { year, period },
+  const { status, material, periodLabel } = getReportSummaryFields({
+    registration,
+    reportDetail,
+    year,
     cadence,
+    period,
     localise
-  )
+  })
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
@@ -191,6 +240,11 @@ function buildViewModel({
   const { createdBy, createdOn } = getCreationDetails(status.created, localise)
   const submitStatus = buildSubmitStatus(submissionNumber, localise)
   const fallbackText = localise('reports:noneProvided')
+  const activityViewData = buildActivityViewData(
+    { recyclingActivity, exportActivity, wasteSent },
+    { isExporter, isAccreditedExporter },
+    fallbackText
+  )
 
   return {
     ...buildPageLabels({
@@ -217,17 +271,8 @@ function buildViewModel({
     periodLabel,
     material,
     site: reportDetail.details.site,
-    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
-    wasteExported: isExporter
-      ? buildWasteExportedViewData(
-          exportActivity,
-          { showApprovalColumn: isAccreditedExporter },
-          fallbackText
-        )
-      : null,
-    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
+    ...activityViewData,
     prn: buildPrnSummaryViewData(reportDetail.prn),
-    recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),
     supportingInformation: reportDetail.supportingInformation || fallbackText,
     declarationItems: buildDeclarationItems(localise, registration.orgName),
     version: reportDetail.version,
