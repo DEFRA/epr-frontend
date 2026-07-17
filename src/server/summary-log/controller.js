@@ -8,10 +8,12 @@ import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-w
 import { hasClosedPeriodChanges } from './closed-period-changes.js'
 import { renderCheckView } from './check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
+/** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import {
+ *   LoadsByReportingPeriod,
  *   SummaryLogParams,
  *   SummaryLogStatusResponse,
  *   SummaryLogsSession,
@@ -27,7 +29,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   status: string,
  *   validation?: ValidationResponse,
  *   accreditationNumber?: string,
- *   loadsByReportingPeriod?: import('./types.js').LoadsByReportingPeriod,
+ *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType,
  *   organisationId: string,
  *   registrationId: string,
@@ -352,7 +354,7 @@ const needsWasteBalance = (status) =>
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} idToken - JWT ID token for authorization
- * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Request logger
+ * @param {TypedLogger} logger - Request logger
  * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
  */
 const getWasteBalanceData = async (

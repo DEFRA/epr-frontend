@@ -1,3 +1,4 @@
+/** @import { UserProfile } from './session.js' */
 /**
  * Bell credentials from standard OAuth2 provider (e.g., Defra ID stub)
  * @typedef {{
@@ -86,7 +87,7 @@
  * it into a `UserSession` by attaching the session-specific fields declared
  * here as optional so each assignment is type-checked.
  * @typedef {(OAuthBellCredentials | AzureB2CBellCredentials) & {
- *   profile?: import('./session.js').UserProfile
+ *   profile?: UserProfile
  *   expiresAt?: string
  *   idToken?: string
  *   urls?: { token: string, logout: string }

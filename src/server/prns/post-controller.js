@@ -12,6 +12,7 @@ import { NOTES_MAX_LENGTH } from './constants.js'
 import { createPrn } from './helpers/create-prn.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
+/** @import { ValidationErrorItem } from 'joi' */
 
 const MIN_TONNAGE = 1
 
@@ -60,7 +61,7 @@ const payloadSchema = Joi.object({
  */
 
 /**
- * @param {import('joi').ValidationErrorItem} detail
+ * @param {ValidationErrorItem} detail
  * @returns {string}
  */
 function getErrorMessageKey(detail) {

@@ -4,6 +4,7 @@ import { periodParamsSchema } from './period-params-schema.js'
 import { getRedirectUrl } from './redirect.js'
 import { updateReport } from './update-report.js'
 import { buildValidationErrors } from './validation.js'
+/** @import { Schema, ValidationError } from 'joi' */
 
 /**
  * @param {GuardFn} guardFn
@@ -38,7 +39,7 @@ function buildViewData(guardFn, pageFields, guardOptions, request, options) {
  * @param {{
  *   viewPath: string,
  *   fieldName: string,
- *   payloadSchema: import('joi').Schema,
+ *   payloadSchema: Schema,
  *   pageFields: PageFieldsBuilder,
  *   guardFn: GuardFn,
  *   guardOptions?: GuardOptions,
@@ -105,7 +106,7 @@ export function createDataPageControllers({
 
           const { errors, errorSummary } = buildValidationErrors(
             request,
-            /** @type {import('joi').ValidationError} */ (error),
+            /** @type {ValidationError} */ (error),
             { noteTypePlural: viewData.noteTypePlural }
           )
 
@@ -333,7 +334,7 @@ function createTonnagePostHandler(
 
 /**
  * @typedef {{
- *   options: { validate: { params: import('joi').Schema } },
+ *   options: { validate: { params: Schema } },
  *   handler: (
  *     request: HapiRequest & { params: PeriodParams },
  *     h: ResponseToolkit
@@ -345,8 +346,8 @@ function createTonnagePostHandler(
  * @typedef {{
  *   options: {
  *     validate: {
- *       params: import('joi').Schema,
- *       payload: import('joi').Schema,
+ *       params: Schema,
+ *       payload: Schema,
  *       failAction: (
  *         request: DataPagePostRequest,
  *         h: ResponseToolkit,
