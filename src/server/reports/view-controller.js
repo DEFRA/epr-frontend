@@ -103,6 +103,7 @@ function buildViewData({
   status,
   backUrl,
   reportsUrl,
+  makeChangesUrl,
   localise
 }) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
@@ -171,6 +172,10 @@ function buildViewData({
     viewData.reportsUrl = reportsUrl
   }
 
+  if (reportDetail.canRequestResubmission) {
+    viewData.makeChangesUrl = makeChangesUrl
+  }
+
   return viewData
 }
 
@@ -225,6 +230,8 @@ export const viewGetController = {
     const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
     const backUrl = request.localiseUrl(reportsPath)
     const reportsUrl = request.localiseUrl(reportsPath)
+    const periodPath = `${reportsPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+    const makeChangesUrl = request.localiseUrl(`${periodPath}/make-changes`)
 
     return h.view(
       'reports/view',
@@ -238,6 +245,7 @@ export const viewGetController = {
         status: currentStatus,
         backUrl,
         reportsUrl,
+        makeChangesUrl,
         localise
       })
     )

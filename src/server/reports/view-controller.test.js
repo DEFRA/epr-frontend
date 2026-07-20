@@ -1728,5 +1728,61 @@ describe('#viewController', () => {
         )
       })
     })
+
+    describe('make changes button', () => {
+      describe('when canRequestResubmission is true', () => {
+        beforeAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            canRequestResubmission: true
+          })
+        })
+
+        afterAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        })
+
+        it('renders the "Make changes to this report" button', async ({
+          server
+        }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+
+          const button = getAllByRole(body, 'button', {
+            name: 'Make changes to this report'
+          })
+
+          expect(button).toHaveLength(1)
+          expect(button[0].getAttribute('href')).toBe(
+            `/organisations/${mockAccreditedReprocessor.organisationData.id}/registrations/${mockAccreditedReprocessor.registration.id}/reports/2026/monthly/1/submissions/1/make-changes`
+          )
+        })
+      })
+
+      describe('when canRequestResubmission is false', () => {
+        beforeAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue({
+            ...reportDetail,
+            canRequestResubmission: false
+          })
+        })
+
+        afterAll(() => {
+          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+        })
+
+        it('does not render the button', async ({ server }) => {
+          const body = await loadPageBody({
+            server,
+            registrationAndAccreditation: mockAccreditedReprocessor
+          })
+
+          expect(getByText(body, 'Report for January 2026')).toBeDefined()
+          expect(body.textContent).not.toContain('Make changes to this report')
+        })
+      })
+    })
   })
 })

@@ -103,6 +103,7 @@ export async function fetchReportDetail(
  *     summaryLogChanged?: { uploadedAt: string, summaryLogId: string },
  *     prnCancelled?: { occurredAt: string, prnId: string }
  *   },
+ *   canRequestResubmission?: boolean,
  *   supportingInformation?: string,
  *   prn?: {
  *     issuedTonnage: number,
