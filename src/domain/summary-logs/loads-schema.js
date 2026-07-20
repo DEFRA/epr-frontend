@@ -25,29 +25,11 @@ export const loadValiditySchema = Joi.object({
   excluded: loadCategorySchema.required()
 })
 
-export const loadValidOnlySchema = Joi.object({
-  valid: loadCategorySchema.required()
-})
-
 export const loadsSchema = Joi.object({
   added: loadValiditySchema.required(),
   unchanged: loadValiditySchema.required(),
   adjusted: loadValiditySchema.required()
 })
-
-export const loadsByWasteRecordTypeSchema = Joi.array()
-  .items(
-    Joi.object({
-      wasteRecordType: Joi.string()
-        .valid(...Object.values(WASTE_RECORD_TYPE))
-        .required(),
-      sheetName: Joi.string().required(),
-      added: loadValidOnlySchema.required(),
-      unchanged: loadValidOnlySchema.required(),
-      adjusted: loadValidOnlySchema.required()
-    })
-  )
-  .unique('wasteRecordType')
 
 // One listed load within a bucket, mirroring the backend's rowDetailSchema.
 // Kept optional on the buckets so validation never strips the row identity the
@@ -120,7 +102,6 @@ export const summaryLogStatusResponseSchema = Joi.object({
     }).required()
   }).optional(),
   loads: loadsSchema.optional(),
-  loadsByWasteRecordType: loadsByWasteRecordTypeSchema.optional(),
   loadsByReportingPeriod: loadsByReportingPeriodSchema.optional(),
   processingType: Joi.string().optional(),
   material: Joi.string().optional(),
