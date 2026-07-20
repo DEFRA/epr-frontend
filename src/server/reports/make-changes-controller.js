@@ -2,10 +2,11 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 import { StatusCodes } from 'http-status-codes'
 
+import { isOperatorInitiatedResubmissionEnabled } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { requestResubmission } from './helpers/request-resubmission.js'
 import { SUBMISSION_STATUS } from './constants.js'
@@ -53,6 +54,10 @@ export const makeChangesGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
+    if (!isOperatorInitiatedResubmissionEnabled()) {
+      throw Boom.notFound()
+    }
+
     const {
       organisationId,
       registrationId,
@@ -88,7 +93,11 @@ export const makeChangesGetController = {
       throw Boom.notFound()
     }
 
-    const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+    const periodLabel = formatPeriodLabelWithComma(
+      { year, period },
+      cadence,
+      localise
+    )
     const { noteTypePlural } = getNoteTypeDisplayNames(registration)
     const { viewPath } = buildPaths(request)
 
@@ -117,6 +126,10 @@ export const makeChangesPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
+    if (!isOperatorInitiatedResubmissionEnabled()) {
+      throw Boom.notFound()
+    }
+
     const {
       organisationId,
       registrationId,

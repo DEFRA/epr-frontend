@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -7,7 +8,10 @@ import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+
+const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+const OPERATOR_RESUBMISSION_FLAG = 'featureFlags.operatorInitiatedResubmission'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -58,9 +62,16 @@ const submittedEligibleReportDetail = buildReportDetail(
 describe('#makeChangesController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    config.set(CLOSED_PERIOD_FLAG, true)
+    config.set(OPERATOR_RESUBMISSION_FLAG, true)
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       registeredOnlyExporter
     )
+  })
+
+  afterEach(() => {
+    config.reset(CLOSED_PERIOD_FLAG)
+    config.reset(OPERATOR_RESUBMISSION_FLAG)
   })
 
   describe('GET', () => {
@@ -309,6 +320,61 @@ describe('#makeChangesController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('guards', () => {
+    beforeEach(() => {
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        submittedEligibleReportDetail
+      )
+    })
+
+    it('GET should return 404 when the operator-initiated-resubmission flag is off', async ({
+      server
+    }) => {
+      config.set(OPERATOR_RESUBMISSION_FLAG, false)
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('GET should return 404 when the closed-period-adjustments flag is off', async ({
+      server
+    }) => {
+      config.set(CLOSED_PERIOD_FLAG, false)
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    it('POST should return 404 when the operator-initiated-resubmission flag is off', async ({
+      server
+    }) => {
+      const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
+        auth: mockAuth
+      })
+      config.set(OPERATOR_RESUBMISSION_FLAG, false)
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: baseUrl,
+        auth: mockAuth,
+        headers: { cookie },
+        payload: { crumb }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
     })
   })
 })

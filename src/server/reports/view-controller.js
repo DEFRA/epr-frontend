@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { isOperatorInitiatedResubmissionEnabled } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -172,7 +173,10 @@ function buildViewData({
     viewData.reportsUrl = reportsUrl
   }
 
-  if (reportDetail.canRequestResubmission) {
+  if (
+    isOperatorInitiatedResubmissionEnabled() &&
+    reportDetail.canRequestResubmission
+  ) {
     viewData.makeChangesUrl = makeChangesUrl
   }
 
