@@ -1037,7 +1037,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       const heading = getByRole(body, 'heading', {
-        name: /February 2026/,
+        name: /February, 2026/,
         level: 1
       })
 
@@ -1588,7 +1588,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       const heading = getByRole(body, 'heading', {
-        name: /February 2026/,
+        name: /February, 2026/,
         level: 1
       })
 

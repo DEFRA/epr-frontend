@@ -142,9 +142,7 @@ describe('#createdController', () => {
       const panel = body.querySelector('.govuk-panel--confirmation')
 
       expect(panel).not.toBeNull()
-      expect(panel.textContent).toContain(
-        'Quarter 1, 2026 draft report created'
-      )
+      expect(panel.textContent).toContain('Quarter 1 2026 draft report created')
     })
 
     it('should display status in confirmation panel', async ({ server }) => {

@@ -147,6 +147,20 @@ describe('#supportingInformationController', () => {
         expect(heading).toBeDefined()
       })
 
+      it('should display the quarterly period label in the page title', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+
+        expect(dom.window.document.title).toContain('Quarter 1 2026')
+      })
+
       it('should display the Create draft report caption', async ({
         server
       }) => {
