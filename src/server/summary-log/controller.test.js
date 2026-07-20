@@ -2355,7 +2355,7 @@ describe('#summaryLogUploadProgressController', () => {
   })
 })
 
-describe('enhanced summary log check view', () => {
+describe('summary log check view', () => {
   const organisationId = '123'
   const registrationId = '456'
   const summaryLogId = '789'
