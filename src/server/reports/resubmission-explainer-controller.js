@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { isResubmission } from './helpers/resubmission.js'
 
@@ -30,7 +30,11 @@ export const resubmissionExplainerController = {
       throw Boom.notFound()
     }
 
-    const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+    const periodLabel = formatPeriodLabelWithComma(
+      { year, period },
+      cadence,
+      localise
+    )
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
     const periodPath = `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`

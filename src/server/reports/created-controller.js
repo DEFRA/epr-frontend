@@ -4,7 +4,7 @@ import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organi
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { isResubmission } from './helpers/resubmission.js'
 
@@ -57,7 +57,11 @@ export const createdController = {
     }
 
     const material = getDisplayMaterial(registration)
-    const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+    const periodLabel = formatPeriodLabelWithComma(
+      { year, period },
+      cadence,
+      localise
+    )
 
     // A resubmission draft keeps the period in its Requires resubmission state,
     // so the panel shows that rather than the draft report's own Ready to submit
