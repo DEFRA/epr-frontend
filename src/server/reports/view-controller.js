@@ -94,6 +94,92 @@ function buildStatusDetails(reportDetail, status, localise) {
   }
 }
 
+/**
+ * @param {object} registration
+ * @param {object} accreditation
+ * @returns {{ isAccredited: boolean, isExporter: boolean, isReprocessor: boolean, isRegisteredOnlyExporter: boolean }}
+ */
+function buildRegistrationFlags(registration, accreditation) {
+  const isAccredited = !!accreditation
+  const isExporter = isExporterRegistration(registration)
+  const isReprocessor = isReprocessorRegistration(registration)
+  const isRegisteredOnlyExporter = isExporter && !isAccredited
+
+  return { isAccredited, isExporter, isReprocessor, isRegisteredOnlyExporter }
+}
+
+/**
+ * @param {object} params
+ * @param {object} params.reportDetail
+ * @param {boolean} params.isExporter
+ * @param {boolean} params.isAccredited
+ * @param {string} params.fallbackText
+ * @returns {object}
+ */
+function buildActivityViewData({
+  reportDetail,
+  isExporter,
+  isAccredited,
+  fallbackText
+}) {
+  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
+
+  return {
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
+
+    packagingWasteRecycling: {
+      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
+    },
+
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(
+          exportActivity,
+          { showApprovalColumn: isAccredited },
+          fallbackText
+        )
+      : null,
+
+    prn: buildPrnSummaryViewData(reportDetail.prn),
+
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
+
+    supportingInformation: reportDetail.supportingInformation || fallbackText
+  }
+}
+
+/**
+ * @param {object} params
+ * @param {object} params.viewData
+ * @param {boolean} params.isDraft
+ * @param {object} params.reportDetail
+ * @param {string} params.reportsUrl
+ * @param {string} params.makeChangesUrl
+ * @param {(key: string, params?: Record<string, string>) => string} params.localise
+ */
+function applyDraftAndResubmissionExtras({
+  viewData,
+  isDraft,
+  reportDetail,
+  reportsUrl,
+  makeChangesUrl,
+  localise
+}) {
+  if (isDraft) {
+    viewData.introText = localise('reports:view:draftIntroText', {
+      dueDate: formatDate(reportDetail.dueDate)
+    })
+    viewData.reportsUrl = reportsUrl
+  }
+
+  if (
+    isOperatorInitiatedResubmissionEnabled() &&
+    reportDetail.canRequestResubmission
+  ) {
+    viewData.makeChangesUrl = makeChangesUrl
+  }
+}
+
 function buildViewData({
   registration,
   accreditation,
@@ -114,11 +200,8 @@ function buildViewData({
     cadence,
     localise
   )
-  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
-  const isAccredited = !!accreditation
-  const isExporter = isExporterRegistration(registration)
-  const isReprocessor = isReprocessorRegistration(registration)
-  const isRegisteredOnlyExporter = isExporter && !isAccredited
+  const { isAccredited, isExporter, isReprocessor, isRegisteredOnlyExporter } =
+    buildRegistrationFlags(registration, accreditation)
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
   const fallbackText = localise('reports:noneProvided')
@@ -139,46 +222,27 @@ function buildViewData({
     periodLabel,
     site: registration.site?.address?.line1,
 
-    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
-
-    packagingWasteRecycling: {
-      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
-      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
-    },
-
-    wasteExported: isExporter
-      ? buildWasteExportedViewData(
-          exportActivity,
-          { showApprovalColumn: isAccredited },
-          fallbackText
-        )
-      : null,
+    ...buildActivityViewData({
+      reportDetail,
+      isExporter,
+      isAccredited,
+      fallbackText
+    }),
 
     isAccredited,
     isExporter,
     isReprocessor,
-    isRegisteredOnlyExporter,
-
-    prn: buildPrnSummaryViewData(reportDetail.prn),
-
-    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
-
-    supportingInformation: reportDetail.supportingInformation || fallbackText
+    isRegisteredOnlyExporter
   }
 
-  if (isDraft) {
-    viewData.introText = localise('reports:view:draftIntroText', {
-      dueDate: formatDate(reportDetail.dueDate)
-    })
-    viewData.reportsUrl = reportsUrl
-  }
-
-  if (
-    isOperatorInitiatedResubmissionEnabled() &&
-    reportDetail.canRequestResubmission
-  ) {
-    viewData.makeChangesUrl = makeChangesUrl
-  }
+  applyDraftAndResubmissionExtras({
+    viewData,
+    isDraft,
+    reportDetail,
+    reportsUrl,
+    makeChangesUrl,
+    localise
+  })
 
   return viewData
 }
