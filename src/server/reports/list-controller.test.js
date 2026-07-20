@@ -424,9 +424,9 @@ describe('#listReportsController', () => {
       const table = body.querySelector('.govuk-table')
 
       expect(table).not.toBeNull()
-      expect(table?.textContent).toContain('January 2026')
-      expect(table?.textContent).toContain('February 2026')
-      expect(table?.textContent).toContain('March 2026')
+      expect(table?.textContent).toContain('January, 2026')
+      expect(table?.textContent).toContain('February, 2026')
+      expect(table?.textContent).toContain('March, 2026')
     })
 
     it('should display Create draft links for accredited reprocessor periods', async ({
@@ -805,11 +805,11 @@ describe('#listReportsController', () => {
       ).map((td) => td.textContent?.trim())
 
       expect(cells).toStrictEqual([
-        'January 2026',
+        'January, 2026',
         'Submitted',
         '',
         '',
-        'View report January 2026'
+        'View report January, 2026'
       ])
     })
   })
@@ -859,12 +859,12 @@ describe('#listReportsController', () => {
         headers: ['Period', 'Status', 'Due date', ''],
         rows: [
           [
-            'February 2026',
+            'February, 2026',
             'In progress',
             '20 Mar 2026',
-            'Continue February 2026'
+            'Continue February, 2026'
           ],
-          ['March 2026', 'Due', '20 Apr 2026', 'Create draft March 2026']
+          ['March, 2026', 'Due', '20 Apr 2026', 'Create draft March, 2026']
         ]
       })
     })
@@ -885,11 +885,11 @@ describe('#listReportsController', () => {
         headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
         rows: [
           [
-            'January 2026',
+            'January, 2026',
             'Submitted',
             '5 Feb 2026, 6:22pm',
             'Matt Davis',
-            'View report January 2026'
+            'View report January, 2026'
           ]
         ]
       })
@@ -1373,20 +1373,20 @@ describe('#listReportsController', () => {
         name: 'renders a past due date verbatim, never as Overdue',
         reportingPeriods: resubmissionPeriodPair(1),
         expectedRow: [
-          'January 2026',
+          'January, 2026',
           'Requires resubmission',
           '20 Feb 2026',
-          'Review and create draft January 2026'
+          'Review and create draft January, 2026'
         ]
       },
       {
         name: 'renders a future due date verbatim',
         reportingPeriods: resubmissionPeriodPair(3),
         expectedRow: [
-          'March 2026',
+          'March, 2026',
           'Requires resubmission',
           '20 Apr 2026',
-          'Review and create draft March 2026'
+          'Review and create draft March, 2026'
         ]
       }
     ])('due date column: $name', ({ reportingPeriods, expectedRow }) => {
@@ -1603,7 +1603,7 @@ describe('#listReportsController', () => {
       const { body } = new JSDOM(result).window.document
 
       expect(findSection(body, 'Action required')?.textContent).not.toContain(
-        'January 2026'
+        'January, 2026'
       )
 
       const submittedTable = findSection(body, 'Submitted')
@@ -1611,11 +1611,11 @@ describe('#listReportsController', () => {
         headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
         rows: [
           [
-            'January 2026',
+            'January, 2026',
             'Resubmitted',
             '5 Feb 2026, 6:22pm',
             'Matt Davis',
-            'View report January 2026'
+            'View report January, 2026'
           ]
         ]
       })

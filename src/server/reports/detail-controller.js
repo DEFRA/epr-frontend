@@ -16,7 +16,7 @@ import {
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
@@ -114,7 +114,7 @@ function buildViewData(
   localiseUrl
 ) {
   const material = getDisplayMaterial(registration)
-  const periodLabel = formatPeriodLabel(
+  const periodLabel = formatPeriodLabelWithComma(
     { year: reportDetail.year, period: reportDetail.period },
     reportDetail.cadence,
     localise

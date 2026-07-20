@@ -108,6 +108,7 @@
   "prnCancelledHeading": "A {{ noteType }} has been cancelled (or is awaiting cancellation)",
   "prnCancelledPageTitle": "A {{ noteType }} has been cancelled (or is awaiting cancellation)",
   "quarterlyPeriod": "Quarter {{number}}, {{year}}",
+  "quarterlyPeriodNoComma": "Quarter {{number}} {{year}}",
   "quarterlyPeriodShort": "Quarter {{number}}",
   "recipientColumn": "Recipient",
   "registrationLabel": "Registration",

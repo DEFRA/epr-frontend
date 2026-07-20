@@ -221,7 +221,9 @@ describe('#viewController', () => {
       )
 
       const heading = dom.window.document.body.querySelector('h1')
-      expect(heading?.textContent?.trim()).toBe('Draft report for January 2026')
+      expect(heading?.textContent?.trim()).toBe(
+        'Draft report for January, 2026'
+      )
     })
 
     it('does not render a back link', async ({ server }) => {
@@ -435,7 +437,7 @@ describe('#viewController', () => {
       )
 
       const heading = dom.window.document.body.querySelector('h1')
-      expect(heading?.textContent?.trim()).toBe('Report for January 2026')
+      expect(heading?.textContent?.trim()).toBe('Report for January, 2026')
     })
 
     it('renders a back link to the report landing page', async ({ server }) => {
@@ -525,7 +527,7 @@ describe('#viewController', () => {
           expect(reportPeriodSection).not.toBeNull()
 
           expect(reportPeriodSection.textContent).toContain('Period')
-          expect(reportPeriodSection.textContent).toContain('January 2026')
+          expect(reportPeriodSection.textContent).toContain('January, 2026')
         }
       )
 

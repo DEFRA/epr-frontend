@@ -14,7 +14,7 @@ import {
   buildWasteSentOnViewData
 } from './helpers/build-report-view-data.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { versionedPayloadSchema } from './helpers/versioned-payload-schema.js'
@@ -192,7 +192,11 @@ export const checkGetController = {
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
     const material = getDisplayMaterial(registration)
-    const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+    const periodLabel = formatPeriodLabelWithComma(
+      { year, period },
+      cadence,
+      localise
+    )
     const cadenceLabel = localise(`reports:${cadence}Heading`)
 
     const viewData = buildCheckViewData({

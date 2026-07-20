@@ -273,6 +273,29 @@ describe('#buildViewData', () => {
     )
   })
 
+  it('builds a quarterly periodLabel without a comma', async () => {
+    const quarterlyRequest = {
+      ...mockRequest,
+      params: { ...mockRequest.params, cadence: 'quarterly' },
+      t: (key, params) => {
+        if (key === 'reports:quarterlyPeriodNoComma') {
+          return `Quarter ${params.number} ${params.year}`
+        }
+        return key
+      }
+    }
+
+    let receivedCtx = /** @type {PageFieldsCtx} */ (
+      /** @type {unknown} */ (undefined)
+    )
+    await guards.buildViewData(quarterlyRequest, (ctx) => {
+      receivedCtx = ctx
+      return {}
+    })
+
+    expect(receivedCtx.periodLabel).toBe('Quarter 1 2026')
+  })
+
   it('passes period in callback context', async () => {
     let receivedCtx = /** @type {PageFieldsCtx} */ (
       /** @type {unknown} */ (undefined)

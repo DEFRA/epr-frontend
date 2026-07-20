@@ -60,7 +60,7 @@ describe('#resubmissionExplainerController', () => {
       const { body } = new JSDOM(result).window.document
 
       expect(body.querySelector('h1').textContent).toContain(
-        'Why your February 2026 report needs to be resubmitted'
+        'Why your February, 2026 report needs to be resubmitted'
       )
     })
 
@@ -96,7 +96,7 @@ describe('#resubmissionExplainerController', () => {
         'You need to create a new draft report that an approved person will need to submit in order to remain compliant with the regulations.'
       )
       expect(body.textContent).toContain(
-        'Your old February 2026 report can still be viewed from the reports page until the new report replaces it after submission.'
+        'Your old February, 2026 report can still be viewed from the reports page until the new report replaces it after submission.'
       )
     })
 
