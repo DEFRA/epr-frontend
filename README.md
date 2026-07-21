@@ -214,7 +214,7 @@ npm test
 
 ### Journey tests
 
-Journey tests live in [DEFRA/epr-frontend-journey-tests](https://github.com/DEFRA/epr-frontend-journey-tests).
+Journey tests live in [DEFRA/epr-re-ex-journey-tests](https://github.com/DEFRA/epr-re-ex-journey-tests).
 
 To develop journey tests alongside your work, create a branch in that repo matching your frontend branch name.
 The CI picks up the matching branch automatically, and uses `main` where no match is found.
