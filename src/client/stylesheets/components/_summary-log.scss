@@ -1,6 +1,6 @@
 @use "govuk-frontend" as *;
 
-// Projected waste balance callout on the enhanced summary log check page. A
+// Projected waste balance callout on the summary log check page. A
 // full light-grey panel with centred text, matching the CMA design (not the
 // inset-text left-border style).
 .epr-summary-log-projection {
@@ -26,7 +26,7 @@
 }
 
 // Loads grouped by worksheet (tab) inside a "Show [x] loads" disclosure on the
-// enhanced check page. The section name is a bold term; its Row IDs sit in a
+// check page. The section name is a bold term; its Row IDs sit in a
 // bulleted list below, with the browser's default <dd> indent removed so the
 // bullets align under the section name.
 .epr-load-sections {
@@ -43,7 +43,7 @@
   }
 }
 
-// Leading gap before each period group (open, closed) on the enhanced check
+// Leading gap before each period group (open, closed) on the check
 // page, separating the two groups. The GOV.UK spacing scale caps at point 9
 // (60px on tablet+), which the design wants exceeded, so the gap is composed
 // from scale units here rather than via a govuk-!-margin-top-* utility. Mobile
