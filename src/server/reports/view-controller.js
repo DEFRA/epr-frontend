@@ -25,13 +25,30 @@ import { SUBMISSION_STATUS } from './constants.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
+ * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
  */
 
 /**
- * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: SubmissionStatusValue }} params
- * @returns {object}
+ * @typedef {{
+ *   pageTitle: string,
+ *   heading: string,
+ *   wasteReceivedHeading: string,
+ *   noteTypeSectionHeading: string,
+ *   totalIssuedTonnageLabel: string,
+ *   freeLabel: string,
+ *   revenueLabel: string,
+ *   avgPriceLabel: string
+ * }} PageLabels
+ */
+
+/**
+ * @param {{ localise: Localise, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: SubmissionStatusValue }} params
+ * @returns {PageLabels}
  */
 function buildPageLabels({
   localise,
@@ -67,16 +84,27 @@ function buildPageLabels({
 }
 
 /**
- * @param {object} reportDetail
+ * @typedef {{
+ *   statusTag: string,
+ *   statusTagClass: string,
+ *   authorLabel: string,
+ *   authorValue: string,
+ *   dateLabel: string,
+ *   dateValue: string
+ * }} StatusDetails
+ */
+
+/**
+ * @param {ReportDetailResponse} reportDetail
  * @param {SubmissionStatusValue} status
  * @param {(key: string, params?: Record<string, string>) => string} localise
- * @returns {{ statusTag: string, statusTagClass: string, authorLabel: string, authorValue: string, dateLabel: string, dateValue: string }}
+ * @returns {StatusDetails}
  */
 function buildStatusDetails(reportDetail, status, localise) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
-  const statusEntry = isDraft
-    ? reportDetail.status.created
-    : reportDetail.status.submitted
+  const statusEntry =
+    /** @type {NonNullable<ReportDetailResponse['status']>['created']} */
+    (isDraft ? reportDetail.status?.created : reportDetail.status?.submitted)
   const labelPrefix = isDraft ? 'created' : 'submitted'
 
   return {
@@ -95,9 +123,18 @@ function buildStatusDetails(reportDetail, status, localise) {
 }
 
 /**
- * @param {object} registration
- * @param {object} accreditation
- * @returns {{ isAccredited: boolean, isExporter: boolean, isReprocessor: boolean, isRegisteredOnlyExporter: boolean }}
+ * @typedef {{
+ *   isAccredited: boolean,
+ *   isExporter: boolean,
+ *   isReprocessor: boolean,
+ *   isRegisteredOnlyExporter: boolean
+ * }} RegistrationFlags
+ */
+
+/**
+ * @param {Registration} registration
+ * @param {Accreditation | undefined} accreditation
+ * @returns {RegistrationFlags}
  */
 function buildRegistrationFlags(registration, accreditation) {
   const isAccredited = !!accreditation
@@ -109,12 +146,23 @@ function buildRegistrationFlags(registration, accreditation) {
 }
 
 /**
+ * @typedef {{
+ *   wasteReceived: ReturnType<typeof buildWasteReceivedViewData>,
+ *   packagingWasteRecycling: { tonnageRecycled: string, tonnageNotRecycled: string },
+ *   wasteExported: ReturnType<typeof buildWasteExportedViewData> | null,
+ *   prn: ReturnType<typeof buildPrnSummaryViewData>,
+ *   wasteSentOn: ReturnType<typeof buildWasteSentOnViewData>,
+ *   supportingInformation: string
+ * }} ActivityViewData
+ */
+
+/**
  * @param {object} params
- * @param {object} params.reportDetail
+ * @param {ReportDetailResponse} params.reportDetail
  * @param {boolean} params.isExporter
  * @param {boolean} params.isAccredited
  * @param {string} params.fallbackText
- * @returns {object}
+ * @returns {ActivityViewData}
  */
 function buildActivityViewData({
   reportDetail,
@@ -150,9 +198,9 @@ function buildActivityViewData({
 
 /**
  * @param {object} params
- * @param {object} params.viewData
+ * @param {Record<string, unknown> & { introText?: string, reportsUrl?: string, makeChangesUrl?: string }} params.viewData
  * @param {boolean} params.isDraft
- * @param {object} params.reportDetail
+ * @param {ReportDetailResponse} params.reportDetail
  * @param {string} params.reportsUrl
  * @param {string} params.makeChangesUrl
  * @param {(key: string, params?: Record<string, string>) => string} params.localise
