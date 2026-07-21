@@ -401,7 +401,8 @@ describe('#submitController', () => {
 
       it('should display status tag as Ready to submit', async ({ server }) => {
         const body = await getBody(server)
-        const tag = body.querySelector('.govuk-tag')
+        const main = getByRole(body, 'main')
+        const tag = main.querySelector('.govuk-tag')
 
         expect(tag).not.toBeNull()
         expect(tag.textContent.trim()).toBe('Ready to submit')
