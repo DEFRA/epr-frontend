@@ -129,30 +129,10 @@
 
 /**
  * @typedef {{
- *   valid: LoadRows
- * }} RawLoadValidOnly
- */
-
-/**
- * @typedef {{
  *   added: RawLoadCategory,
  *   adjusted: RawLoadCategory
  *   unchanged: RawLoadCategory,
  * }} RawLoads
- */
-
-/**
- * @typedef {{
- *   wasteRecordType: WasteRecordType,
- *   sheetName: string,
- *   added: RawLoadValidOnly,
- *   unchanged: RawLoadValidOnly,
- *   adjusted: RawLoadValidOnly
- * }} RawLoadsByWasteRecordTypeEntry
- */
-
-/**
- * @typedef {RawLoadsByWasteRecordTypeEntry[]} RawLoadsByWasteRecordType
  */
 
 /**
@@ -278,7 +258,6 @@
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
- *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType
  *   status: string,
