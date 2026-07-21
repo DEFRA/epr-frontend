@@ -1,0 +1,47 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      <h1 class="govuk-heading-xl">{{ localise("reports:makeChangesHeading") }}</h1>
+
+      {{ govukInsetText({
+        text: localise("reports:makeChangesInsetText", { periodLabel: periodLabel })
+      }) }}
+
+      <h2 class="govuk-heading-m">{{ localise("reports:makeChangesUpdateNoteTypeOnlyHeading", { noteTypePlural: noteTypePlural }) }}</h2>
+      <p class="govuk-body">{{ localise("reports:makeChangesUpdateNoteTypeOnlyText", { noteTypePlural: noteTypePlural }) }}</p>
+
+      <h2 class="govuk-heading-m">{{ localise("reports:makeChangesUpdateSummaryLogHeading") }}</h2>
+      <p class="govuk-body">{{ localise("reports:makeChangesUpdateSummaryLogText", { noteTypePlural: noteTypePlural }) }}</p>
+
+      <form method="POST" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}" />
+        {{ govukButton({
+          text: localise("reports:makeChangesUseSummaryLog"),
+          preventDoubleClick: true
+        }) }}
+        {{ govukButton({
+          text: localise("reports:uploadNewSummaryLog"),
+          href: uploadUrl,
+          classes: "govuk-button--secondary"
+        }) }}
+      </form>
+      <p class="govuk-body">
+        <a href="{{ backUrl }}" class="govuk-link">{{ localise("reports:makeChangesCancel") }}</a>
+      </p>
+
+    </div>
+  </div>
+{% endblock %}

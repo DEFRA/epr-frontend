@@ -6,6 +6,10 @@ import {
   deletePostController
 } from './delete-controller.js'
 import { detailController } from './detail-controller.js'
+import {
+  makeChangesGetController,
+  makeChangesPostController
+} from './make-changes-controller.js'
 import { resubmissionExplainerController } from './resubmission-explainer-controller.js'
 import {
   exporterFreePernGetController,
@@ -192,6 +196,16 @@ export const reports = {
           ...viewGetController,
           method: 'GET',
           path: `${periodPath}/view`
+        },
+        {
+          ...makeChangesGetController,
+          method: 'GET',
+          path: `${periodPath}/make-changes`
+        },
+        {
+          ...makeChangesPostController,
+          method: 'POST',
+          path: `${periodPath}/make-changes`
         },
         {
           ...reportStaleErrorGetController,
