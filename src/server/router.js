@@ -14,6 +14,7 @@ import { registrations } from '#server/registrations/index.js'
 import { reports } from '#server/reports/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
+import { regulators } from '#server/regulators/index.js'
 import inert from '@hapi/inert'
 
 export const router = {
@@ -38,6 +39,7 @@ export const router = {
         organisations,
         prns,
         registrations,
+        regulators,
         reports,
         summaryLog,
         summaryLogUpload

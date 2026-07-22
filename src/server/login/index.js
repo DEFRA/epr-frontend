@@ -28,6 +28,24 @@ const login = {
           /* v8 ignore next - handler is fallback; defra-id auth strategy handles redirect */
           handler: async (request, h) =>
             h.redirect(request.localiseUrl('/start'))
+        },
+        {
+          options: {
+            ext: {
+              onPreAuth: {
+                method: async (_request, h) => {
+                  await metrics.signInAttempted() // TODO regulator specific metrics?
+                  return h.continue
+                }
+              }
+            },
+            auth: 'entra-id'
+          },
+          method: 'GET',
+          path: '/regulators/login',
+          /* v8 ignore next - handler is fallback; defra-id auth strategy handles redirect */
+          handler: async (request, h) =>
+            h.redirect(request.localiseUrl('/start'))
         }
       ])
     }

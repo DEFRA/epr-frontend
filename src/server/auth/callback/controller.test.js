@@ -1,4 +1,4 @@
-import { controller } from '#server/auth/callback/controller.js'
+import { defraCallbackController } from '#server/auth/callback/controller.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
 import { asUserOrganisations } from '#server/common/test-helpers/auth-helper.js'
 import {
@@ -106,7 +106,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -186,7 +186,7 @@ describe('#authCallbackController', () => {
 
       const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
 
-      await controller.handler(
+      await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -286,7 +286,7 @@ describe('#authCallbackController', () => {
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
-        const result = await controller.handler(
+        const result = await defraCallbackController.handler(
           mockHapiRequest(mockRequest),
           asResponseToolkit(mockH)
         )
@@ -365,7 +365,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -456,7 +456,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      await controller.handler(
+      await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -536,7 +536,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-to-linking')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -574,7 +574,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -614,7 +614,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -680,7 +680,7 @@ describe('#authCallbackController', () => {
       }
 
       await expect(
-        controller.handler(
+        defraCallbackController.handler(
           mockHapiRequest(mockRequest),
           asResponseToolkit(mockH)
         )
@@ -776,7 +776,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -853,7 +853,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
@@ -919,7 +919,7 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(
+      const result = await defraCallbackController.handler(
         mockHapiRequest(mockRequest),
         asResponseToolkit(mockH)
       )
