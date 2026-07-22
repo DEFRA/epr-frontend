@@ -1,0 +1,57 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block beforeContent %}
+  {{ govukBackLink({
+    text: localise("common:back"),
+    href: backUrl
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">{{ localise('regulators:home:heading') }}</h1>
+
+      {# Render a table when organisations data is provided, otherwise show a message #}
+      {% if organisations and organisations.length %}
+
+        {% set tableRows = [] %}
+        {% for org in organisations %}
+          {% set orgId = org.orgId %}
+
+          {# build cells as objects expected by govukTable #}
+          {% set nameCell = { text: org.name } %}
+          {% set orgIdCell = { text: orgId } %}
+          {% set registrationNumberCell = { text: org.registrationNumber } %}
+
+          {% set regulatorCell = { text: org.regulator | upper } %}
+          {% set statusCell = { html: govukTag({
+            text: org.status
+          }) } %}
+          {% set actionsHtml = '<a class="govuk-link govuk-link--no-visited-state" href="/organisations/' ~ org.id ~ '">View</a>' %}
+          {% set actionCell = { html:  actionsHtml } %}
+
+          {% set row = [ nameCell, orgIdCell, registrationNumberCell, regulatorCell, statusCell, actionCell ] %}
+          {% set tableRows = tableRows.concat([row]) %}
+        {% endfor %}
+
+        {{ govukTable({
+          captionClasses: "govuk-table__caption--m",
+          firstCellIsHeader: true,
+          head: [
+            { text: "Name" },
+            { text: "Organisation ID" },
+            { text: "Registration Number" },
+            { text: "Regulator" },
+            { text: "Status" },
+            { text: "Actions" }
+          ],
+          rows: tableRows
+        }) }}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

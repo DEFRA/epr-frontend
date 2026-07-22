@@ -34,7 +34,10 @@ const withWelsh = (path) => [path, `/cy${path}`]
  */
 const controller = {
   options: {
-    auth: { strategy: 'defra-id', mode: 'try' }
+    // auth: { strategy: 'defra-id', mode: 'try' }
+    auth: { strategy: 'entra-id', mode: 'try' }
+    // auth: { strategies: ['entra-id', 'defra-id'], mode: 'try' } - this doesn't work, second auth strategy never attempted
+    // auth: { strategies: ['entra-id', 'defra-id'], mode: 'required' } - this doesn't work, first auth strategy 500s when trying to authenticate with second (because missing bell cookie)
   },
   /**
    * @param {HapiRequest} request
@@ -51,8 +54,8 @@ const controller = {
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
-      auditSignIn(session.profile.id, session.profile.email)
-      await metrics.signInSuccess()
+      auditSignIn(session.profile.id, session.profile.email) // TODO regulator specific auditing?
+      await metrics.signInSuccess() // TODO regulator login specific metrics?
 
       request.cookieAuth.set({ sessionId })
 
@@ -63,6 +66,10 @@ const controller = {
           reference: hashUserId(session.profile.id)
         }
       })
+
+      if (request.auth.credentials.provider === 'entra-id') {
+        return h.redirect(request.localiseUrl(`/regulators/home`))
+      }
 
       const organisations = await fetchUserOrganisations(session.idToken)
 
