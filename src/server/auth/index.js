@@ -1,4 +1,7 @@
-import { controller as callbackController } from '#server/auth/callback/controller.js'
+import {
+  defraCallbackController,
+  entraCallbackController
+} from '#server/auth/callback/controller.js'
 import { controller as organisationController } from '#server/auth/organisation/controller.js'
 import { paths } from '#server/paths.js'
 
@@ -12,9 +15,14 @@ const auth = {
     register: (server) => {
       server.route([
         {
-          ...callbackController,
+          ...defraCallbackController,
           method: 'GET',
           path: paths.auth.callback
+        },
+        {
+          ...entraCallbackController,
+          method: 'GET',
+          path: '/auth/callback/entra'
         },
         {
           handler: (request, h) =>

@@ -32,10 +32,9 @@ const withWelsh = (path) => [path, `/cy${path}`]
  * Creates user session and sets session cookie
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
-const controller = {
+const defraCallbackController = {
   options: {
-    // auth: { strategy: 'defra-id', mode: 'try' }
-    auth: { strategy: 'entra-id', mode: 'try' }
+    auth: { strategy: 'defra-id', mode: 'try' }
     // auth: { strategies: ['entra-id', 'defra-id'], mode: 'try' } - this doesn't work, second auth strategy never attempted
     // auth: { strategies: ['entra-id', 'defra-id'], mode: 'required' } - this doesn't work, first auth strategy 500s when trying to authenticate with second (because missing bell cookie)
   },
@@ -54,8 +53,8 @@ const controller = {
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
-      auditSignIn(session.profile.id, session.profile.email) // TODO regulator specific auditing?
-      await metrics.signInSuccess() // TODO regulator login specific metrics?
+      auditSignIn(session.profile.id, session.profile.email)
+      await metrics.signInSuccess()
 
       request.cookieAuth.set({ sessionId })
 
@@ -66,10 +65,6 @@ const controller = {
           reference: hashUserId(session.profile.id)
         }
       })
-
-      if (request.auth.credentials.provider === 'entra-id') {
-        return h.redirect(request.localiseUrl(`/regulators/home`))
-      }
 
       const organisations = await fetchUserOrganisations(session.idToken)
 
@@ -107,6 +102,15 @@ const controller = {
       )
     }
 
+    if (request.state['bell-entra-id']) {
+      // hack
+      // Entra is configured to callback /auth/callback
+      // but hapi can't support two schemes on the same callback URL...
+      // ...so re-direct to the entra callback _if the callback looks like it was Entra_
+      // The proper fix here is to configure Entra with /auth/callback/entra
+      return h.redirect(`/auth/callback/entra${request.url.search}`)
+    }
+
     const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
 
     const safeRedirect = getSafeRedirect(redirect)
@@ -114,4 +118,53 @@ const controller = {
   }
 }
 
-export { controller }
+/**
+ * Auth callback controller
+ * Handles the OAuth2/OIDC callback from Defra ID
+ * Creates user session and sets session cookie
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const entraCallbackController = {
+  options: {
+    auth: { strategy: 'entra-id', mode: 'try' }
+  },
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
+  handler: async (request, h) => {
+    if (request.auth?.error) {
+      await metrics.signInFailure() // TODO regulator specific metric?
+    }
+
+    if (request.auth.isAuthenticated) {
+      const session = request.auth.credentials
+
+      const sessionId = randomUUID()
+      await request.server.app.cache.set(sessionId, session)
+
+      auditSignIn(session.profile.id, session.profile.email) // TODO regulator specific auditing?
+      await metrics.signInSuccess() // TODO regulator login specific metrics?
+
+      request.cookieAuth.set({ sessionId })
+
+      request.logger.info({
+        message: 'User has been successfully authenticated',
+        event: {
+          action: 'signInSuccess',
+          reference: hashUserId(session.profile.id)
+        }
+      })
+
+      // TODO referrer handling
+      return h.redirect(request.localiseUrl(`/regulators/home`))
+    }
+
+    const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
+
+    const safeRedirect = getSafeRedirect(redirect)
+    return h.redirect(safeRedirect)
+  }
+}
+
+export { defraCallbackController, entraCallbackController }
