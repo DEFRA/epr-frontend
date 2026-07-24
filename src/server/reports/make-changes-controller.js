@@ -42,6 +42,60 @@ function buildPaths(request) {
   }
 }
 
+/**
+ * Resolves the "update your data" copy for the note-type and summary-log
+ * sections. Accredited operators are told about their PRNs/PERNs; registered-
+ * only operators have no note data, so they are pointed at the tonnage figures
+ * they do have (recycled for reprocessors, received for exporters).
+ * @param {{
+ *   isAccredited: boolean,
+ *   isExporter: boolean,
+ *   localise: Localise,
+ *   noteTypePlural: string,
+ *   periodLabel: string,
+ *   wasteDataWord: string
+ * }} params
+ */
+function buildDataUpdateCopy({
+  localise,
+  isAccredited,
+  isExporter,
+  noteTypePlural,
+  wasteDataWord,
+  periodLabel
+}) {
+  if (isAccredited) {
+    return {
+      dataUpdateHeading: localise(
+        'reports:makeChangesUpdateNoteTypeOnlyHeading',
+        { noteTypePlural }
+      ),
+      dataUpdateText: localise('reports:makeChangesUpdateNoteTypeOnlyText', {
+        noteTypePlural
+      }),
+      summaryLogText: localise('reports:makeChangesUpdateSummaryLogText', {
+        noteTypePlural
+      })
+    }
+  }
+
+  return {
+    dataUpdateHeading: localise(
+      'reports:makeChangesUpdateWasteDataOnlyHeading',
+      { wasteDataWord }
+    ),
+    dataUpdateText: localise(
+      isExporter
+        ? 'reports:makeChangesUpdateWasteDataOnlyTextExporter'
+        : 'reports:makeChangesUpdateWasteDataOnlyTextReprocessor',
+      { periodLabel }
+    ),
+    summaryLogText: localise('reports:makeChangesUpdateSummaryLogTextRegOnly', {
+      wasteDataWord
+    })
+  }
+}
+
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const makeChangesGetController = {
   options: {
@@ -69,7 +123,7 @@ export const makeChangesGetController = {
     const session = request.auth.credentials
     const { t: localise } = request
 
-    const [{ registration }, reportDetail] = await Promise.all([
+    const [{ registration, accreditation }, reportDetail] = await Promise.all([
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -98,13 +152,21 @@ export const makeChangesGetController = {
       cadence,
       localise
     )
-    const { noteTypePlural } = getNoteTypeDisplayNames(registration)
+    const { noteTypePlural, isExporter } = getNoteTypeDisplayNames(registration)
     const { viewPath } = buildPaths(request)
+    const dataUpdateCopy = buildDataUpdateCopy({
+      isAccredited: !!accreditation,
+      isExporter,
+      localise,
+      noteTypePlural,
+      periodLabel,
+      wasteDataWord: isExporter ? 'received' : 'recycled'
+    })
 
     return h.view('reports/make-changes', {
       pageTitle: localise('reports:makeChangesPageTitle', { periodLabel }),
       periodLabel,
-      noteTypePlural,
+      ...dataUpdateCopy,
       backUrl: request.localiseUrl(viewPath),
       uploadUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
@@ -173,5 +235,6 @@ export const makeChangesPostController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Boom as BoomError } from '@hapi/boom'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */
