@@ -77,6 +77,10 @@
   "makeChangesUpdateNoteTypeOnlyText": "Select the 'Use this report's summary log' button and then answer the {{ noteTypePlural }} questions",
   "makeChangesUpdateSummaryLogHeading": "To update summary log data",
   "makeChangesUpdateSummaryLogText": "Select the 'Upload new summary log' button. You'll still be able to update {{ noteTypePlural }} data if you need to.",
+  "makeChangesUpdateSummaryLogTextRegOnly": "Select the 'Upload new summary log' button. You'll still be able to update waste {{ wasteDataWord }} data if you need to.",
+  "makeChangesUpdateWasteDataOnlyHeading": "To update waste {{ wasteDataWord }} data only",
+  "makeChangesUpdateWasteDataOnlyTextExporter": "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you received but did not export in {{ periodLabel }}.",
+  "makeChangesUpdateWasteDataOnlyTextReprocessor": "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you recycled and also did not recycle in {{ periodLabel }}.",
   "makeChangesUseSummaryLog": "Use this report's summary log",
   "materialLabel": "Material",
   "months": {

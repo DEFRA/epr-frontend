@@ -20,11 +20,11 @@
         text: localise("reports:makeChangesInsetText", { periodLabel: periodLabel })
       }) }}
 
-      <h2 class="govuk-heading-m">{{ localise("reports:makeChangesUpdateNoteTypeOnlyHeading", { noteTypePlural: noteTypePlural }) }}</h2>
-      <p class="govuk-body">{{ localise("reports:makeChangesUpdateNoteTypeOnlyText", { noteTypePlural: noteTypePlural }) }}</p>
+      <h2 class="govuk-heading-m">{{ dataUpdateHeading }}</h2>
+      <p class="govuk-body">{{ dataUpdateText }}</p>
 
       <h2 class="govuk-heading-m">{{ localise("reports:makeChangesUpdateSummaryLogHeading") }}</h2>
-      <p class="govuk-body">{{ localise("reports:makeChangesUpdateSummaryLogText", { noteTypePlural: noteTypePlural }) }}</p>
+      <p class="govuk-body">{{ summaryLogText }}</p>
 
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />

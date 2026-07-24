@@ -25,16 +25,69 @@ const { requestResubmission } =
 const mockCredentials = buildMockAuth().credentials
 const mockAuth = { strategy: 'session', credentials: mockCredentials }
 
-const registeredOnlyExporter = asRegistrationWithAccreditation({
-  organisationData: { id: 'org-123' },
-  registration: {
-    id: 'reg-001',
-    material: 'plastic',
-    wasteProcessingType: 'exporter',
-    registrationNumber: 'REG001234'
+const registrationWith = (wasteProcessingType, accreditation) =>
+  asRegistrationWithAccreditation({
+    organisationData: { id: 'org-123' },
+    registration: {
+      id: 'reg-001',
+      material: 'plastic',
+      wasteProcessingType,
+      registrationNumber: 'REG001234'
+    },
+    accreditation
+  })
+
+const registeredOnlyExporter = registrationWith('exporter', undefined)
+const registeredOnlyReprocessor = registrationWith('reprocessor', undefined)
+const accreditedExporter = registrationWith('exporter', { id: 'acc-001' })
+const accreditedReprocessor = registrationWith('reprocessor', { id: 'acc-001' })
+
+const accreditedScenarios = [
+  {
+    scenario: 'accredited reprocessor',
+    registration: accreditedReprocessor,
+    heading: 'To update PRNs data only',
+    bodyText:
+      "Select the 'Use this report's summary log' button and then answer the PRNs questions",
+    summaryLogText:
+      "Select the 'Upload new summary log' button. You'll still be able to update PRNs data if you need to."
   },
-  accreditation: undefined
-})
+  {
+    scenario: 'accredited exporter',
+    registration: accreditedExporter,
+    heading: 'To update PERNs data only',
+    bodyText:
+      "Select the 'Use this report's summary log' button and then answer the PERNs questions",
+    summaryLogText:
+      "Select the 'Upload new summary log' button. You'll still be able to update PERNs data if you need to."
+  }
+]
+
+const registeredOnlyScenarios = [
+  {
+    scenario: 'registered-only reprocessor',
+    registration: registeredOnlyReprocessor,
+    heading: 'To update waste recycled data only',
+    bodyText:
+      "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you recycled and also did not recycle in Quarter 1, 2026.",
+    summaryLogText:
+      "Select the 'Upload new summary log' button. You'll still be able to update waste recycled data if you need to."
+  },
+  {
+    scenario: 'registered-only exporter',
+    registration: registeredOnlyExporter,
+    heading: 'To update waste received data only',
+    bodyText:
+      "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you received but did not export in Quarter 1, 2026.",
+    summaryLogText:
+      "Select the 'Upload new summary log' button. You'll still be able to update waste received data if you need to."
+  }
+]
+
+const noteTypeSectionScenarios = [
+  ...accreditedScenarios,
+  ...registeredOnlyScenarios
+]
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -142,6 +195,33 @@ describe('#makeChangesController', () => {
 
       expect(uploadLink.getAttribute('href')).toBe(
         `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/upload`
+      )
+    })
+
+    describe('note-type section', () => {
+      it.for(noteTypeSectionScenarios)(
+        'should show the $scenario copy',
+        async (
+          { registration, heading, bodyText, summaryLogText },
+          { server }
+        ) => {
+          vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+            registration
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: baseUrl,
+            auth: mockAuth
+          })
+          const { body } = new JSDOM(result).window.document
+
+          expect(
+            getByRole(body, 'heading', { level: 2, name: heading })
+          ).toBeDefined()
+          expect(getByText(body, bodyText)).toBeDefined()
+          expect(getByText(body, summaryLogText)).toBeDefined()
+        }
       )
     })
 
