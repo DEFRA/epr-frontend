@@ -50,7 +50,7 @@
 /**
  * @typedef {RegistrationBase & {
  *  registrationNumber: string;
- *  status: 'approved'|'suspended';
+ *  status: 'approved';
  *  validFrom: string;
  *  validTo: string;
  * }} RegistrationApproved

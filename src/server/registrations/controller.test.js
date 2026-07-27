@@ -36,10 +36,6 @@ const glassOtherApproved = findRegistrationAndAccreditation(
   fixtureData,
   'reg-001b-glass-other-approved'
 )
-const plasticSuspended = findRegistrationAndAccreditation(
-  fixtureData,
-  'reg-002-plastic-suspended'
-)
 const exporterPlasticApproved = findRegistrationAndAccreditation(
   fixtureExportingOnly,
   'reg-export-001-plastic-approved'
@@ -425,25 +421,6 @@ describe('#accreditationDashboardController', () => {
       const $ = load(asHtml(result))
 
       expect($('h1').text().trim()).toMatch(/^[A-Z]/)
-    })
-
-    it('should handle suspended status with correct styling', async ({
-      server
-    }) => {
-      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
-        plasticSuspended
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/organisations/6507f1f77bcf86cd79943901/registrations/reg-002-plastic-suspended',
-        auth: mockAuth
-      })
-
-      const $ = load(asHtml(result))
-
-      expect($('.govuk-tag--yellow').length).toBeGreaterThan(0)
-      expect(result).toContain('Suspended')
     })
   })
 
