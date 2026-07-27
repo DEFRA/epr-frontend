@@ -1105,7 +1105,7 @@ describe('#organisationController', () => {
           {
             id: 'reg-2',
             accreditationId: 'acc-suspended',
-            status: 'suspended',
+            status: 'approved',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
             glassRecyclingProcess: ['glass_other'],
