@@ -1,5 +1,5 @@
 import Boom from '@hapi/boom'
-import { isOperatorInitiatedResubmissionEnabled } from '#config/config.js'
+import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -221,7 +221,7 @@ function applyDraftAndResubmissionExtras({
   }
 
   if (
-    isOperatorInitiatedResubmissionEnabled() &&
+    isClosedPeriodAdjustmentsEnabled() &&
     reportDetail.canRequestResubmission
   ) {
     viewData.makeChangesUrl = makeChangesUrl
