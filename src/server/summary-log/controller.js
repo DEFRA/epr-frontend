@@ -1,4 +1,3 @@
-import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -180,9 +179,7 @@ const renderSuccessView = (
     organisationId,
     registrationId,
     wasteBalance,
-    showFurtherAction:
-      isClosedPeriodAdjustmentsEnabled() &&
-      hasClosedPeriodChanges(loadsByReportingPeriod)
+    showFurtherAction: hasClosedPeriodChanges(loadsByReportingPeriod)
   })
 }
 

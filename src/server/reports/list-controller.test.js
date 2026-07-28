@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
@@ -7,7 +6,7 @@ import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
@@ -1282,8 +1281,6 @@ describe('#listReportsController', () => {
   })
 
   describe('requires resubmission', () => {
-    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
-
     // One submitted report plus its requires_resubmission skeleton (the
     // submission-grained pair the backend emits for a restated closed period).
     const resubmissionPeriodPair = (period) => [
@@ -1332,15 +1329,9 @@ describe('#listReportsController', () => {
       )
     })
 
-    afterEach(() => {
-      config.reset(CLOSED_PERIOD_FLAG)
-    })
-
     it('renders a Requires resubmission entry with a purple tag and create-draft CTA, keeping the original submitted report', async ({
       server
     }) => {
-      config.set(CLOSED_PERIOD_FLAG, true)
-
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -1393,8 +1384,6 @@ describe('#listReportsController', () => {
       it('renders the action required row with the expected due date', async ({
         server
       }) => {
-        config.set(CLOSED_PERIOD_FLAG, true)
-
         vi.mocked(fetchReportingPeriods).mockResolvedValue({
           cadence: CADENCE.MONTHLY,
           reportingPeriods
@@ -1416,31 +1405,9 @@ describe('#listReportsController', () => {
       })
     })
 
-    it('hides the requires resubmission entry when the feature flag is off, keeping the original submitted report', async ({
-      server
-    }) => {
-      config.set(CLOSED_PERIOD_FLAG, false)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-      const { body } = new JSDOM(result).window.document
-
-      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
-        (tag) => tag.textContent?.trim() === 'Requires resubmission'
-      )
-      expect(resubTag).toBeUndefined()
-
-      expect(body.textContent).toContain('Matt Davis')
-    })
-
     it('renders a requires resubmission entry for each affected period', async ({
       server
     }) => {
-      config.set(CLOSED_PERIOD_FLAG, true)
-
       vi.mocked(fetchReportingPeriods).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
         reportingPeriods: [
@@ -1465,8 +1432,6 @@ describe('#listReportsController', () => {
     it('links a resubmission carrying an in-progress draft to Continue, keeping the purple tag', async ({
       server
     }) => {
-      config.set(CLOSED_PERIOD_FLAG, true)
-
       const [submitted, skeleton] = resubmissionPeriodPair(1)
       vi.mocked(fetchReportingPeriods).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
@@ -1507,8 +1472,6 @@ describe('#listReportsController', () => {
     it('links a resubmission carrying a ready-to-submit draft to Review and submit and counts it in the banner', async ({
       server
     }) => {
-      config.set(CLOSED_PERIOD_FLAG, true)
-
       const [submitted, skeleton] = resubmissionPeriodPair(1)
       vi.mocked(fetchReportingPeriods).mockResolvedValue({
         cadence: CADENCE.MONTHLY,
@@ -1550,8 +1513,6 @@ describe('#listReportsController', () => {
   })
 
   describe('resubmitted (submitted period with submissionNumber > 1)', () => {
-    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
-
     // Once a resubmission is itself submitted the backend collapses the period
     // to a single submitted item carrying submissionNumber 2.
     const resubmittedResponse = {
@@ -1586,15 +1547,9 @@ describe('#listReportsController', () => {
       vi.mocked(fetchReportingPeriods).mockResolvedValue(resubmittedResponse)
     })
 
-    afterEach(() => {
-      config.reset(CLOSED_PERIOD_FLAG)
-    })
-
     it('renders the period as Resubmitted with a green tag and View report in the Submitted table', async ({
       server
     }) => {
-      config.set(CLOSED_PERIOD_FLAG, true)
-
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -1631,24 +1586,6 @@ describe('#listReportsController', () => {
       expect(viewLink?.getAttribute('href')).toBe(
         '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/view'
       )
-    })
-
-    it('renders the period as Submitted when the feature flag is off', async ({
-      server
-    }) => {
-      config.set(CLOSED_PERIOD_FLAG, false)
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-      const { body } = new JSDOM(result).window.document
-
-      const tagData = extractTagData(body)
-      expect(tagData).toStrictEqual([
-        { text: 'Submitted', modifier: 'govuk-tag--green' }
-      ])
     })
   })
 })

@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -22,7 +21,7 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
 
@@ -497,8 +496,6 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('closed-period adjustments "Further action needed" section', () => {
-      const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
-
       const ZERO_CHANGE = {
         balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
         nonBalanceAffecting: { count: 0, rows: [] }
@@ -529,14 +526,9 @@ describe('#summaryLogUploadProgressController', () => {
         return getByRole(body, 'main')
       }
 
-      afterEach(() => {
-        config.reset(CLOSED_PERIOD_FLAG)
-      })
-
-      it('shows the section and a "Go to reports" link when the flag is on and a closed period changed', async ({
+      it('shows the section and a "Go to reports" link when a closed period changed', async ({
         server
       }) => {
-        config.set(CLOSED_PERIOD_FLAG, true)
         mockFetchSummaryLogStatus.mockResolvedValueOnce(
           submittedWithClosedAdjustment()
         )
@@ -558,7 +550,6 @@ describe('#summaryLogUploadProgressController', () => {
       it('hides the section when no closed period changed', async ({
         server
       }) => {
-        config.set(CLOSED_PERIOD_FLAG, true)
         mockFetchSummaryLogStatus.mockResolvedValueOnce({
           status: summaryLogStatuses.submitted,
           loadsByReportingPeriod: {
@@ -580,21 +571,6 @@ describe('#summaryLogUploadProgressController', () => {
         ).toBeNull()
         expect(
           queryByRole(main, 'button', { name: 'Go to reports' })
-        ).toBeNull()
-      })
-
-      it('hides the section when the closed-period flag is off', async ({
-        server
-      }) => {
-        config.set(CLOSED_PERIOD_FLAG, false)
-        mockFetchSummaryLogStatus.mockResolvedValueOnce(
-          submittedWithClosedAdjustment()
-        )
-
-        const main = await getMain(server)
-
-        expect(
-          queryByRole(main, 'heading', { name: 'Further action needed' })
         ).toBeNull()
       })
     })
@@ -4235,8 +4211,6 @@ describe('summary log check view', () => {
   )
 
   describe('closed-period adjustments "Important" banner', () => {
-    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
-
     const BANNER_BODY =
       "If you upload this summary log, you'll need to create a new report " +
       'for any relevant period and an approved person from your business ' +
@@ -4253,14 +4227,9 @@ describe('summary log check view', () => {
       }
     })
 
-    afterEach(() => {
-      config.reset(CLOSED_PERIOD_FLAG)
-    })
-
-    it('shows the Important banner when the flag is on and the summary log touches a closed period', async ({
+    it('shows the Important banner when the summary log touches a closed period', async ({
       server
     }) => {
-      config.set(CLOSED_PERIOD_FLAG, true)
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
@@ -4275,7 +4244,6 @@ describe('summary log check view', () => {
     it('hides the Important banner when no closed period is touched', async ({
       server
     }) => {
-      config.set(CLOSED_PERIOD_FLAG, true)
       mockFetchSummaryLogStatus.mockResolvedValueOnce({
         status: summaryLogStatuses.validated,
         processingType: 'EXPORTER',
@@ -4289,21 +4257,6 @@ describe('summary log check view', () => {
           },
           closedPeriodLoads: emptyPeriod()
         }
-      })
-
-      const { main } = await renderMain(server)
-
-      expect(queryByText(main, BANNER_BODY)).toBeNull()
-    })
-
-    it('hides the Important banner when the closed-period flag is off', async ({
-      server
-    }) => {
-      config.set(CLOSED_PERIOD_FLAG, false)
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loadsByReportingPeriod: periodWithClosedAdjustment()
       })
 
       const { main } = await renderMain(server)

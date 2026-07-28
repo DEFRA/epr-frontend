@@ -1,4 +1,3 @@
-import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { CLASSIFICATION_REASON } from '#domain/summary-logs/classification-reason.js'
 import { MAX_ROWS_PER_BUCKET } from '#domain/summary-logs/loads-schema.js'
@@ -380,9 +379,7 @@ export const renderCheckView = (
     maxRowsPerBucket: MAX_ROWS_PER_BUCKET,
     periodSections: { open, closed },
     isEmpty: open === null && closed === null,
-    showClosedPeriodImportant:
-      isClosedPeriodAdjustmentsEnabled() &&
-      hasClosedPeriodChanges(loadsByReportingPeriod),
+    showClosedPeriodImportant: hasClosedPeriodChanges(loadsByReportingPeriod),
     wasteBalanceProjection: buildWasteBalanceProjection(
       isAccredited,
       wasteBalance,
