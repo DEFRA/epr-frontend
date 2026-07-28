@@ -78,7 +78,7 @@ const registeredOnlyScenarios = [
     registration: registeredOnlyExporter,
     heading: 'To update waste received data only',
     bodyText:
-      "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you received but did not export in Quarter 1, 2026.",
+      "Select the 'Use this report's summary log' button and then tell us how many tonnes of waste you received, but did not export, in Quarter 1, 2026.",
     summaryLogText:
       "Select the 'Upload new summary log' button. You'll still be able to update waste received data if you need to."
   }
