@@ -4187,6 +4187,20 @@ describe('summary log check view', () => {
       expectedBullet: 'Row ID: 5. A PERN was already issued for this load'
     },
     {
+      code: 'WASTE_REFUSED',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Row ID: 5. The waste was refused by the recipient destination'
+    },
+    {
+      code: 'WASTE_STOPPED',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Row ID: 5. The waste was stopped during the course of export'
+    },
+    {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
