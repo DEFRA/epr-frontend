@@ -102,15 +102,6 @@ const defraCallbackController = {
       )
     }
 
-    if (request.state['bell-entra-id']) {
-      // hack
-      // Entra is configured to callback /auth/callback
-      // but hapi can't support two schemes on the same callback URL...
-      // ...so re-direct to the entra callback _if the callback looks like it was Entra_
-      // The proper fix here is to configure Entra with /auth/callback/entra
-      return h.redirect(`/auth/callback/entra${request.url.search}`)
-    }
-
     const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
 
     const safeRedirect = getSafeRedirect(redirect)

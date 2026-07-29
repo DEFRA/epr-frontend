@@ -91,7 +91,7 @@ function getBellOptions(/** @type {OidcConfig} */ oidcConfig) {
         }
       }
 
-      return `${config.get('appBaseUrl')}/auth/callback`
+      return `${config.get('appBaseUrl')}/auth/callback/entra`
     },
 
     providerParams: function (_request) {
