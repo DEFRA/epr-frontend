@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -7,7 +6,7 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 /** @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js' */
 
@@ -1609,20 +1608,14 @@ describe('#submitController', () => {
   })
 
   describe('resubmission variant (submissionNumber > 1)', () => {
-    const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
     const resubmitUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/submit`
 
     beforeEach(() => {
-      config.set(CLOSED_PERIOD_FLAG, true)
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         exporterRegistration
       )
       vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
       vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
-    })
-
-    afterEach(() => {
-      config.reset(CLOSED_PERIOD_FLAG)
     })
 
     describe('GET', () => {
@@ -1674,26 +1667,6 @@ describe('#submitController', () => {
         expect(
           getByRole(body, 'button', { name: 'Confirm and submit' })
         ).toBeDefined()
-      })
-
-      it('should render the standard submit variant when the flag is off', async ({
-        server
-      }) => {
-        config.set(CLOSED_PERIOD_FLAG, false)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: resubmitUrl,
-          auth: mockAuth
-        })
-        const body = new JSDOM(result).window.document.body
-        const tag = body.querySelector('.govuk-tag')
-
-        getByRole(body, 'heading', {
-          name: /Submit report for Quarter 1, 2026/,
-          level: 1
-        })
-        expect(tag?.textContent?.trim()).toBe('Ready to submit')
       })
 
       it('should return 404 when the resubmission draft is not ready to submit', async ({

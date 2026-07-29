@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -7,9 +6,7 @@ import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.j
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
-
-const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -732,7 +729,6 @@ describe('#supportingInformationController', () => {
     const resubmissionUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/2/submissions/2/supporting-information`
 
     beforeEach(() => {
-      config.set(CLOSED_PERIOD_FLAG, true)
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
@@ -740,10 +736,6 @@ describe('#supportingInformationController', () => {
         reportDetailWithoutSupportingInfo
       )
       vi.mocked(updateReport).mockResolvedValue({ ok: true })
-    })
-
-    afterEach(() => {
-      config.reset(CLOSED_PERIOD_FLAG)
     })
 
     describe('GET', () => {
@@ -886,29 +878,6 @@ describe('#supportingInformationController', () => {
         const characterCount = body.querySelector('.govuk-character-count')
 
         expect(characterCount?.getAttribute('data-maxlength')).toBe('1000')
-      })
-
-      it('should render the standard variant when the flag is off', async ({
-        server
-      }) => {
-        config.set(CLOSED_PERIOD_FLAG, false)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: resubmissionUrl,
-          auth: mockAuth
-        })
-
-        const { body } = new JSDOM(result).window.document
-
-        expect(body.querySelector('.govuk-inset-text')).toBeNull()
-
-        const heading = getByRole(body, 'heading', {
-          name: /Add supporting information for your regulator/,
-          level: 1
-        })
-
-        expect(heading).toBeDefined()
       })
     })
   })

@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -1731,14 +1730,8 @@ describe('#viewController', () => {
     })
 
     describe('make changes button', () => {
-      const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
-      const OPERATOR_RESUBMISSION_FLAG =
-        'featureFlags.operatorInitiatedResubmission'
-
-      describe('when canRequestResubmission is true and both flags are on', () => {
+      describe('when canRequestResubmission is true', () => {
         beforeAll(() => {
-          config.set(CLOSED_PERIOD_FLAG, true)
-          config.set(OPERATOR_RESUBMISSION_FLAG, true)
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...reportDetail,
             canRequestResubmission: true
@@ -1746,8 +1739,6 @@ describe('#viewController', () => {
         })
 
         afterAll(() => {
-          config.reset(CLOSED_PERIOD_FLAG)
-          config.reset(OPERATOR_RESUBMISSION_FLAG)
           vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         })
 
@@ -1772,8 +1763,6 @@ describe('#viewController', () => {
 
       describe('when canRequestResubmission is false', () => {
         beforeAll(() => {
-          config.set(CLOSED_PERIOD_FLAG, true)
-          config.set(OPERATOR_RESUBMISSION_FLAG, true)
           vi.mocked(fetchReportDetail).mockResolvedValue({
             ...reportDetail,
             canRequestResubmission: false
@@ -1781,8 +1770,6 @@ describe('#viewController', () => {
         })
 
         afterAll(() => {
-          config.reset(CLOSED_PERIOD_FLAG)
-          config.reset(OPERATOR_RESUBMISSION_FLAG)
           vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
         })
 
@@ -1793,58 +1780,6 @@ describe('#viewController', () => {
           })
 
           expect(getByText(body, 'Report for January, 2026')).toBeDefined()
-          expect(body.textContent).not.toContain('Make changes to this report')
-        })
-      })
-
-      describe('when canRequestResubmission is true but the operator-initiated-resubmission flag is off', () => {
-        beforeAll(() => {
-          config.set(CLOSED_PERIOD_FLAG, true)
-          config.set(OPERATOR_RESUBMISSION_FLAG, false)
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            canRequestResubmission: true
-          })
-        })
-
-        afterAll(() => {
-          config.reset(CLOSED_PERIOD_FLAG)
-          config.reset(OPERATOR_RESUBMISSION_FLAG)
-          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-        })
-
-        it('does not render the button', async ({ server }) => {
-          const body = await loadPageBody({
-            server,
-            registrationAndAccreditation: mockAccreditedReprocessor
-          })
-
-          expect(body.textContent).not.toContain('Make changes to this report')
-        })
-      })
-
-      describe('when canRequestResubmission is true but the closed-period-adjustments flag is off', () => {
-        beforeAll(() => {
-          config.set(CLOSED_PERIOD_FLAG, false)
-          config.set(OPERATOR_RESUBMISSION_FLAG, true)
-          vi.mocked(fetchReportDetail).mockResolvedValue({
-            ...reportDetail,
-            canRequestResubmission: true
-          })
-        })
-
-        afterAll(() => {
-          config.reset(CLOSED_PERIOD_FLAG)
-          config.reset(OPERATOR_RESUBMISSION_FLAG)
-          vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
-        })
-
-        it('does not render the button', async ({ server }) => {
-          const body = await loadPageBody({
-            server,
-            registrationAndAccreditation: mockAccreditedReprocessor
-          })
-
           expect(body.textContent).not.toContain('Make changes to this report')
         })
       })

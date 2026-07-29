@@ -1,12 +1,9 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterEach, beforeEach, describe, expect } from 'vitest'
-
-const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
+import { describe, expect } from 'vitest'
 
 const mockAuth = buildMockAuth()
 
@@ -17,15 +14,7 @@ const periodPath = `${reportsUrl}/2026/monthly/2/submissions/2`
 const explainerUrl = `${periodPath}/resubmission-explainer`
 
 describe('#resubmissionExplainerController', () => {
-  beforeEach(() => {
-    config.set(CLOSED_PERIOD_FLAG, true)
-  })
-
-  afterEach(() => {
-    config.reset(CLOSED_PERIOD_FLAG)
-  })
-
-  describe('when the flag is on and it is a resubmission', () => {
+  describe('when it is a resubmission', () => {
     it('should return 200', async ({ server }) => {
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -146,20 +135,6 @@ describe('#resubmissionExplainerController', () => {
   })
 
   describe('guards', () => {
-    it('should return 404 when the closed-period flag is off', async ({
-      server
-    }) => {
-      config.set(CLOSED_PERIOD_FLAG, false)
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: explainerUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-
     it('should return 404 for a first submission (not a resubmission)', async ({
       server
     }) => {
