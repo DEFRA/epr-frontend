@@ -11,7 +11,6 @@ import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 const CLOSED_PERIOD_FLAG = 'featureFlags.closedPeriodAdjustments'
-const OPERATOR_RESUBMISSION_FLAG = 'featureFlags.operatorInitiatedResubmission'
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -63,7 +62,6 @@ describe('#makeChangesController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     config.set(CLOSED_PERIOD_FLAG, true)
-    config.set(OPERATOR_RESUBMISSION_FLAG, true)
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       registeredOnlyExporter
     )
@@ -71,7 +69,6 @@ describe('#makeChangesController', () => {
 
   afterEach(() => {
     config.reset(CLOSED_PERIOD_FLAG)
-    config.reset(OPERATOR_RESUBMISSION_FLAG)
   })
 
   describe('GET', () => {
@@ -330,20 +327,6 @@ describe('#makeChangesController', () => {
       )
     })
 
-    it('GET should return 404 when the operator-initiated-resubmission flag is off', async ({
-      server
-    }) => {
-      config.set(OPERATOR_RESUBMISSION_FLAG, false)
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: baseUrl,
-        auth: mockAuth
-      })
-
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
-
     it('GET should return 404 when the closed-period-adjustments flag is off', async ({
       server
     }) => {
@@ -358,13 +341,13 @@ describe('#makeChangesController', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    it('POST should return 404 when the operator-initiated-resubmission flag is off', async ({
+    it('POST should return 404 when the closed-period-adjustments flag is off', async ({
       server
     }) => {
       const { cookie, crumb } = await getCsrfToken(server, baseUrl, {
         auth: mockAuth
       })
-      config.set(OPERATOR_RESUBMISSION_FLAG, false)
+      config.set(CLOSED_PERIOD_FLAG, false)
 
       const { statusCode } = await server.inject({
         method: 'POST',
