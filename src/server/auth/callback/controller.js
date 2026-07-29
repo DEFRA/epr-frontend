@@ -111,7 +111,7 @@ const defraCallbackController = {
 
 /**
  * Auth callback controller
- * Handles the OAuth2/OIDC callback from Defra ID
+ * Handles the OAuth2/OIDC callback from Entra ID
  * Creates user session and sets session cookie
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
