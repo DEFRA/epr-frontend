@@ -327,14 +327,6 @@ export const config = convict({
       default: isProduction,
       env: 'AUDIT_ENABLED'
     }
-  },
-  featureFlags: {
-    closedPeriodAdjustments: {
-      doc: 'Feature Flag: Closed-period adjustment messaging on the summary log check and confirmation pages',
-      format: Boolean,
-      default: false,
-      env: 'FEATURE_FLAG_CLOSED_PERIOD_ADJUSTMENTS'
-    }
   }
 })
 
@@ -344,6 +336,3 @@ export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
 
 export const isLocalEnvironment = () => config.get('cdpEnvironment') === 'local'
-
-export const isClosedPeriodAdjustmentsEnabled = () =>
-  config.get('featureFlags.closedPeriodAdjustments')

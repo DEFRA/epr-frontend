@@ -1,14 +1,10 @@
-import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
 import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import {
-  IS_CLOSED_PERIOD_ADJUSTMENT_STATUS,
-  SUBMISSION_STATUS
-} from './constants.js'
+import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import {
@@ -257,13 +253,6 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
-    // Closed-period-adjustments statuses are hidden until the flag is released.
-    const visiblePeriods = isClosedPeriodAdjustmentsEnabled()
-      ? reportingPeriods
-      : reportingPeriods.filter(
-          (period) => !IS_CLOSED_PERIOD_ADJUSTMENT_STATUS[period.periodStatus]
-        )
-
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 
     const { activeRows, submittedRows } = buildRows({
@@ -273,11 +262,11 @@ export const listController = {
       localiseUrl: (url) => request.localiseUrl(url),
       organisationId,
       registration,
-      reportingPeriods: visiblePeriods
+      reportingPeriods
     })
 
     const approvedPersonBanner = buildApprovedPersonBanner(
-      visiblePeriods,
+      reportingPeriods,
       localise
     )
 

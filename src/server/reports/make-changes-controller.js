@@ -2,7 +2,6 @@ import Boom from '@hapi/boom'
 import Joi from 'joi'
 import { StatusCodes } from 'http-status-codes'
 
-import { isClosedPeriodAdjustmentsEnabled } from '#config/config.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
@@ -54,10 +53,6 @@ export const makeChangesGetController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    if (!isClosedPeriodAdjustmentsEnabled()) {
-      throw Boom.notFound()
-    }
-
     const {
       organisationId,
       registrationId,
@@ -126,10 +121,6 @@ export const makeChangesPostController = {
    * @param {ResponseToolkit} h
    */
   async handler(request, h) {
-    if (!isClosedPeriodAdjustmentsEnabled()) {
-      throw Boom.notFound()
-    }
-
     const {
       organisationId,
       registrationId,
