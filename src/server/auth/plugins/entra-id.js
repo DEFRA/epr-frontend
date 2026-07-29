@@ -18,6 +18,7 @@ import * as jose from 'jose'
  *   name: string
  *   preferred_username: string
  *   exp: number
+ *   roles?: string[]
  * }} EntraIdTokenPayload
  */
 
@@ -31,14 +32,6 @@ export const entraIdAuthPlugin = (/** @type {OidcConfig} */ oidcConfig) => ({
 })
 
 function getBellOptions(/** @type {OidcConfig} */ oidcConfig) {
-  const scopes = [
-    'openid',
-    'profile',
-    'email',
-    'offline_access',
-    `api://${config.get('entraId.clientId')}/.default`
-  ]
-
   return {
     provider: {
       name: 'entra-id',
@@ -46,7 +39,13 @@ function getBellOptions(/** @type {OidcConfig} */ oidcConfig) {
       useParamsAuth: true,
       auth: oidcConfig.authorization_endpoint,
       token: oidcConfig.token_endpoint,
-      scope: scopes,
+      scope: [
+        'openid',
+        'profile',
+        'email',
+        'offline_access',
+        `api://${config.get('entraId.clientId')}/.default`
+      ],
       /**
        * Extract user profile from OIDC ID token and populate credentials.
        * Bell gives us a plain `BellCredentials` object which we mutate
@@ -61,11 +60,12 @@ function getBellOptions(/** @type {OidcConfig} */ oidcConfig) {
           credentials.token || '',
           oidcConfig
         )
-        const { oid: id, preferred_username: email } = tokenPayload
+        const { oid: id, preferred_username: email, roles = [] } = tokenPayload
 
         credentials.profile = {
           id,
-          email
+          email,
+          roles
         }
         credentials.expiresAt = getTokenExpiresAt(tokenPayload)
         credentials.idToken = params.id_token

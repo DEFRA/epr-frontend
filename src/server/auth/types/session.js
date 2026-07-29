@@ -10,9 +10,13 @@
  *
  * `email` is optional because the Defra ID id_token doesn't guarantee its
  * presence (the `email` scope isn't requested — see DefraIdJwtPayload).
+ *
+ * `roles` is optional because only the Entra ID users have roles
+ *
  * @typedef {{
  *   id: string
  *   email?: string
+ *   roles?: string[]
  * }} UserProfile
  */
 

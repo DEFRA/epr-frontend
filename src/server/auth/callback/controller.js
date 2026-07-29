@@ -125,17 +125,22 @@ const entraCallbackController = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
-      await metrics.signInFailure() // TODO regulator specific metric?
+      await metrics.signInFailure() // TODO regulator specific metric - could pass session.provider to diffentiate Defra ID / Entra ID
     }
 
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
 
+      if (!session.profile.roles?.includes('Waste.Regulator.Standard')) {
+        await metrics.signInFailure() // TODO regulator specific metric - could pass session.provider to diffentiate Defra ID / Entra ID
+        return h.view('auth/callback/regulator-not-authorised')
+      }
+
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
-      auditSignIn(session.profile.id, session.profile.email) // TODO regulator specific auditing?
-      await metrics.signInSuccess() // TODO regulator login specific metrics?
+      auditSignIn(session.profile.id, session.profile.email) // TODO regulator specific auditing - could pass session.provider to diffentiate Defra ID / Entra ID
+      await metrics.signInSuccess() // TODO regulator login specific metrics - could pass session.provider to diffentiate Defra ID / Entra ID
 
       request.cookieAuth.set({ sessionId })
 
