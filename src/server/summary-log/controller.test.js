@@ -4136,9 +4136,9 @@ describe('summary log check view', () => {
   // The single source of truth for the exclusion-reason display strings. Every
   // CLASSIFICATION_REASON code the frontend can receive maps to one string;
   // PRN_ISSUED renders as PRN for reprocessors and PERN for exporters, and any
-  // unmapped code degrades to no reason rather than a raw code. Reasons surface
-  // only on new non-balance-affecting rows (see the visibility table above), so
-  // that is where this asserts them.
+  // unmapped code falls back to the raw code so a new backend reason still
+  // surfaces something. Reasons surface only on new non-balance-affecting rows
+  // (see the visibility table above), so that is where this asserts them.
   /**
    * @type {Array<{
    *   code: string,
@@ -4223,6 +4223,29 @@ describe('summary log check view', () => {
       expect(queryByText(main, expectedBullet)).not.toBeNull()
     }
   )
+
+  // Refused and stopped are sibling Yes/No columns on the same row, so unlike
+  // most reason pairs they can plausibly both apply to one load.
+  it('joins the refused and stopped reasons on a row carrying both', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce(
+      responseWithNewNonBalanceRow('EXPORTER', 'exported', [
+        'WASTE_REFUSED',
+        'WASTE_STOPPED'
+      ])
+    )
+
+    const { main } = await renderMain(server)
+
+    expect(
+      queryByText(
+        main,
+        'Row ID: 5. The waste was refused by the recipient destination, ' +
+          'The waste was stopped during the course of export'
+      )
+    ).not.toBeNull()
+  })
 
   describe('closed-period adjustments "Important" banner', () => {
     const BANNER_BODY =
