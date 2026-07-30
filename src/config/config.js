@@ -324,27 +324,27 @@ export const config = convict({
     oidcWellKnownConfigurationUrl: {
       doc: 'Entra ID OIDC .well-known configuration URL',
       format: String,
-      env: 'ENTRA_ID_OIDC_WELL_KNOWN_CONFIGURATION_URL',
+      env: 'ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL',
       default:
         'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
     },
     tenantId: {
       doc: 'Entra ID Tenant ID',
       format: String,
-      env: 'ENTRA_ID_TENANT_ID',
+      env: 'ENTRA_TENANT_ID',
       default: '6f504113-6b64-43f2-ade9-242e05780007'
     },
     clientId: {
       doc: 'Entra ID Client ID',
       format: String,
-      env: 'ENTRA_ID_CLIENT_ID',
+      env: 'ENTRA_CLIENT_ID',
       default: 'bd06da51-53f6-46d0-a9f0-ac562864c887'
     },
     clientSecret: {
       doc: 'Entra ID Client Secret',
       format: String,
       sensitive: true,
-      env: 'ENTRA_ID_CLIENT_SECRET',
+      env: 'ENTRA_CLIENT_SECRET',
       default: 'test'
     }
   },
