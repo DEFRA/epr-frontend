@@ -6,7 +6,7 @@
       <h1 class="govuk-heading-l">{{ localise('logged-out:heading') }}</h1>
       <p class="govuk-body">{{ localise('logged-out:body', { serviceName: localise('common:serviceName') }) }}</p>
       {{ govukButton({
-        href: localiseUrl('/login'),
+        href: signInAgainHref,
         text: localise('logged-out:signInAgain')
       }) }}
     </div>
