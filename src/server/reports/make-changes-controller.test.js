@@ -44,7 +44,7 @@ const accreditedScenarios = [
     registration: accreditedReprocessor,
     heading: 'To update PRNs data only',
     bodyText:
-      "Select the 'Use this report's summary log' button and then answer the PRNs questions",
+      "Select the 'Use this report's summary log' button and then answer the PRNs questions.",
     summaryLogText:
       "Select the 'Upload new summary log' button. You'll still be able to update PRNs data if you need to."
   },
@@ -53,7 +53,7 @@ const accreditedScenarios = [
     registration: accreditedExporter,
     heading: 'To update PERNs data only',
     bodyText:
-      "Select the 'Use this report's summary log' button and then answer the PERNs questions",
+      "Select the 'Use this report's summary log' button and then answer the PERNs questions.",
     summaryLogText:
       "Select the 'Upload new summary log' button. You'll still be able to update PERNs data if you need to."
   }
