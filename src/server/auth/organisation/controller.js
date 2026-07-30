@@ -1,9 +1,10 @@
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 const controller = {
   options: {
-    auth: 'defra-id'
+    auth: OIDC_DEFRA_ID
   },
   /**
    * @param {HapiRequest} request

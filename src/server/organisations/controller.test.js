@@ -8,6 +8,7 @@ import { getAllByRole, getByRole } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 
 /** @import {DOMWindow} from 'jsdom' */
 
@@ -43,7 +44,7 @@ const cellInColumn = (table) => {
 const mockAuth = {
   strategy: 'session',
   credentials: {
-    provider: 'defra-id',
+    provider: OIDC_DEFRA_ID,
     query: {},
     refreshToken: 'mock-refresh-token',
     idToken: 'test-id-token',

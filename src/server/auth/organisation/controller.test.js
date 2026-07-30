@@ -3,11 +3,12 @@ import {
   asResponseToolkit
 } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, it, vi } from 'vitest'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { controller } from './controller.js'
 
 describe('organisation controller', () => {
   it('should require defra-id authentication', () => {
-    expect(controller.options.auth).toBe('defra-id')
+    expect(controller.options.auth).toBe(OIDC_DEFRA_ID)
   })
 
   it('should redirect to safe referrer from flash', async () => {

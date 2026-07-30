@@ -1,3 +1,5 @@
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
  * @import { UserOrganisations } from '#server/auth/types/organisations.js'
@@ -14,7 +16,7 @@
 export const buildMockAuth = (overrides = {}) => ({
   strategy: 'session',
   credentials: {
-    provider: 'defra-id',
+    provider: OIDC_DEFRA_ID,
     query: {},
     refreshToken: 'mock-refresh-token',
     profile: { id: 'user-123', email: 'test@example.com' },

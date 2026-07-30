@@ -1,6 +1,7 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -34,7 +35,7 @@ const withWelsh = (path) => [path, `/cy${path}`]
  */
 const defraIdCallbackController = {
   options: {
-    auth: { strategy: 'defra-id', mode: 'try' }
+    auth: { strategy: OIDC_DEFRA_ID, mode: 'try' }
   },
   /**
    * @param {HapiRequest} request
