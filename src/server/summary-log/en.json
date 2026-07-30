@@ -88,6 +88,8 @@
       "PRODUCT_WEIGHT_NOT_ADDED": "Product weight is missing",
       "ORS_NOT_APPROVED": "The overseas reprocessing site was not approved at the date of export",
       "ORS_NOT_FOUND": "The OSR_ID has no matching overseas site registration",
+      "WASTE_REFUSED": "The waste was refused by the recipient destination",
+      "WASTE_STOPPED": "The waste was stopped during the course of export",
       "PRN_ISSUED": "A PRN was already issued for this load",
       "PERN_ISSUED": "A PERN was already issued for this load"
     },
