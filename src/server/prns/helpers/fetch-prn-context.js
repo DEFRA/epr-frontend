@@ -41,7 +41,7 @@ function buildPrnBasePath({ organisationId, registrationId, accreditationId }) {
 /**
  * Fetches PRN with registration data for GET handlers.
  * Extracts request params and fetches data in parallel.
- * @param {HapiRequest} request
+ * @param {HapiRequest & { params: PrnDetailParams }} request
  */
 async function fetchPrnContext(request) {
   const { organisationId, registrationId, accreditationId, prnId } =
@@ -84,7 +84,7 @@ async function fetchPrnContext(request) {
 /**
  * Fetches PRN data for POST handlers that update status.
  * Extracts request params and fetches the PRN.
- * @param {HapiRequest} request
+ * @param {HapiRequest & { params: PrnDetailParams }} request
  */
 async function fetchPrnForUpdate(request) {
   const { organisationId, registrationId, accreditationId, prnId } =
@@ -125,4 +125,5 @@ export {
 
 /**
  * @import { HapiRequest } from '#server/common/hapi-types.js'
+ * @import { PrnDetailParams } from './session-types.js'
  */
