@@ -46,14 +46,22 @@ const payloadSchema = Joi.object({
 /**
  * Resolves the copy for the supporting-information screen. The resubmission
  * variant (submissionNumber > 1, flag on) swaps the caption, heading, field
- * label and hint, and adds an inset listing common reasons. Both variants share
- * the same character limit.
+ * label and hint, and adds an inset listing common reasons. The note-type
+ * example (a cancelled PRN/PERN) is only relevant to accredited operators;
+ * registered-only operators have no notes, so it is omitted for them. Both
+ * variants share the same character limit.
  * @param {number} submissionNumber
  * @param {Registration} registration
- * @param {(key: string, params?: object) => string} localise
+ * @param {Accreditation | undefined} accreditation
+ * @param {Localise} localise
  * @returns {SupportingInfoCopy}
  */
-function buildSupportingInfoCopy(submissionNumber, registration, localise) {
+function buildSupportingInfoCopy(
+  submissionNumber,
+  registration,
+  accreditation,
+  localise
+) {
   if (!isResubmission(submissionNumber)) {
     return {
       caption: localise('reports:createDraftReportCaption'),
@@ -79,9 +87,14 @@ function buildSupportingInfoCopy(submissionNumber, registration, localise) {
       examples: [
         localise('reports:supportingInformationResubmissionInsetExample1'),
         localise('reports:supportingInformationResubmissionInsetExample2'),
-        localise('reports:supportingInformationResubmissionInsetExample3', {
-          noteType
-        })
+        ...(accreditation
+          ? [
+              localise(
+                'reports:supportingInformationResubmissionInsetExample3',
+                { noteType }
+              )
+            ]
+          : [])
       ]
     }
   }
@@ -180,7 +193,12 @@ async function buildViewData(request, options = {}) {
 
   const backPage = getBackPage(basePath, registration, accreditation)
 
-  const copy = buildSupportingInfoCopy(submissionNumber, registration, localise)
+  const copy = buildSupportingInfoCopy(
+    submissionNumber,
+    registration,
+    accreditation,
+    localise
+  )
 
   return {
     pageTitle: localise('reports:supportingInformationPageTitle', {
@@ -296,5 +314,6 @@ export const supportingInformationPostController = {
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */

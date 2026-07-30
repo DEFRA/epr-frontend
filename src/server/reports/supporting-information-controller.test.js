@@ -789,7 +789,7 @@ describe('#supportingInformationController', () => {
         expect(inset?.textContent).toContain('Common examples include:')
       })
 
-      it('should list the common resubmission examples, with the note type', async ({
+      it('should list the common resubmission examples without the note-type bullet for a registered-only operator', async ({
         server
       }) => {
         const { result } = await server.inject({
@@ -808,6 +808,28 @@ describe('#supportingInformationController', () => {
         expect(inset?.textContent).toContain(
           'you made a mistake in the figures you recorded'
         )
+        expect(inset?.textContent).not.toContain(
+          'was cancelled and you need to change your reported revenue'
+        )
+      })
+
+      it('should include the note-type bullet for an accredited operator', async ({
+        server
+      }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          accreditedExporter
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmissionUrl,
+          auth: mockAuth
+        })
+
+        const inset = new JSDOM(result).window.document.querySelector(
+          '.govuk-inset-text'
+        )
+
         expect(inset?.textContent).toContain(
           'a previously issued PERN was cancelled and you need to change your reported revenue'
         )
