@@ -1,4 +1,4 @@
-import { controller as callbackController } from '#server/auth/callback/controller.js'
+import { defraIdCallbackController as callbackController } from '#server/auth/callback/controller.js'
 import { controller as organisationController } from '#server/auth/organisation/controller.js'
 import { paths } from '#server/paths.js'
 
