@@ -52,13 +52,16 @@ const createDefraId = (verifyToken) => ({
           if (request.info.referrer) {
             const { hash, pathname, search } = new URL(request.info.referrer)
 
-            if (!pathname.startsWith(paths.auth.callback)) {
+            if (!pathname.startsWith(paths.auth.defraId.callback)) {
               const referrer = `${pathname}${search}${hash}`
               request.yar.flash('referrer', referrer)
             }
           }
 
-          return getRedirectUrl(asHapiRequest(request), paths.auth.callback)
+          return getRedirectUrl(
+            asHapiRequest(request),
+            paths.auth.defraId.callback
+          )
         },
         password: config.get('session.cookie.password'),
         provider: {
@@ -92,7 +95,7 @@ const createDefraId = (verifyToken) => ({
         providerParams: function (request) {
           return {
             ...authParams,
-            forceReselection: request.path === paths.auth.organisation,
+            forceReselection: request.path === paths.auth.defraId.organisation,
             serviceId
           }
         }

@@ -16,7 +16,7 @@ const SUMMARY_LOGS_OVERVIEW_URL =
  */
 async function getStartNowHref(request) {
   if (!request.auth.isAuthenticated) {
-    return request.localiseUrl(paths.auth.login)
+    return request.localiseUrl(paths.auth.defraId.login)
   }
 
   const { idToken } = request.auth.credentials

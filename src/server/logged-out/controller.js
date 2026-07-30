@@ -21,7 +21,7 @@ const controller = {
 
     return h.view('logged-out/index', {
       pageTitle: localise('logged-out:pageTitle'),
-      signInAgainHref: request.localiseUrl(paths.auth.login)
+      signInAgainHref: request.localiseUrl(paths.auth.defraId.login)
     })
   }
 }
