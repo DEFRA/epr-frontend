@@ -32,7 +32,7 @@ const withWelsh = (path) => [path, `/cy${path}`]
  * Creates user session and sets session cookie
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
-const controller = {
+const defraIdCallbackController = {
   options: {
     auth: { strategy: 'defra-id', mode: 'try' }
   },
@@ -107,4 +107,4 @@ const controller = {
   }
 }
 
-export { controller }
+export { defraIdCallbackController }
