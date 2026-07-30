@@ -1,6 +1,7 @@
 export const paths = Object.freeze({
   auth: Object.freeze({
     callback: '/auth/callback',
+    login: '/login',
     logout: '/auth/logout',
     organisation: '/auth/organisation'
   }),

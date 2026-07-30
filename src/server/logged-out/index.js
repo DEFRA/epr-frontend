@@ -1,4 +1,5 @@
 import { controller } from './controller.js'
+import { paths } from '#server/paths.js'
 
 /**
  * Sign out confirmation plugin
@@ -12,7 +13,7 @@ const loggedOut = {
         {
           ...controller,
           method: 'GET',
-          path: '/logged-out',
+          path: paths.loggedOut,
           options: {
             auth: { mode: 'try' }
           }

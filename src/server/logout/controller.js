@@ -22,9 +22,8 @@ const logoutController = {
   handler: async (request, h) => {
     const session = request.auth.credentials
 
-    const loggedOutUrl = request.localiseUrl(paths.loggedOut)
-
     if (!session) {
+      const loggedOutUrl = request.localiseUrl(paths.loggedOut)
       return h.redirect(loggedOutUrl)
     }
 
@@ -33,14 +32,14 @@ const logoutController = {
     auditSignOut(session.profile.id, session.profile.email)
     await metrics.signOutSuccess()
 
-    const logoutUrl = new URL(session.urls.logout)
-    logoutUrl.searchParams.append('id_token_hint', session.idToken)
-    logoutUrl.searchParams.append(
+    const oidcProviderLogoutUrl = new URL(session.urls.logout)
+    oidcProviderLogoutUrl.searchParams.append('id_token_hint', session.idToken)
+    oidcProviderLogoutUrl.searchParams.append(
       'post_logout_redirect_uri',
       getRedirectUrl(request, paths.auth.logout)
     )
 
-    return h.redirect(logoutUrl.toString())
+    return h.redirect(oidcProviderLogoutUrl.toString())
   }
 }
 
