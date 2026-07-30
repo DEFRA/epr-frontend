@@ -1,6 +1,7 @@
 import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
+import { paths } from '#server/paths.js'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 
@@ -59,7 +60,7 @@ export function context(request) {
     assetPath: `${assetPath}/assets`,
     breadcrumbs: [],
     navigation: buildNavigation(request),
-    serviceUrl: '/start',
+    serviceUrl: paths.start,
     ...getI18nContext(request),
 
     /**
