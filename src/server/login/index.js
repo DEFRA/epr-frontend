@@ -1,4 +1,5 @@
 import { metrics } from '#server/common/helpers/metrics/index.js'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { paths } from '#server/paths.js'
 
 /**
@@ -22,7 +23,7 @@ const login = {
                 }
               }
             },
-            auth: 'defra-id'
+            auth: OIDC_DEFRA_ID
           },
           method: 'GET',
           path: paths.auth.defraId.login,

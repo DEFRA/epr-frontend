@@ -15,6 +15,8 @@ import { getRedirectUrl } from '../helpers/get-redirect-url.js'
  * @import { VerifyToken } from '../types/verify-token.js'
  */
 
+export const OIDC_DEFRA_ID = 'defra-id'
+
 /**
  * Create Defra ID OIDC authentication plugin
  * Factory function that creates a plugin with verifyToken closure
@@ -23,7 +25,7 @@ import { getRedirectUrl } from '../helpers/get-redirect-url.js'
  */
 const createDefraId = (verifyToken) => ({
   plugin: {
-    name: 'defra-id',
+    name: OIDC_DEFRA_ID,
     register: async (server) => {
       const clientId = config.get('defraId.clientId')
       const clientSecret = config.get('defraId.clientSecret')
@@ -43,7 +45,7 @@ const createDefraId = (verifyToken) => ({
       const authParams = Object.fromEntries(authUrl.searchParams)
 
       // Configure bell authentication strategy
-      server.auth.strategy('defra-id', 'bell', {
+      server.auth.strategy(OIDC_DEFRA_ID, 'bell', {
         clientId,
         clientSecret,
         cookie: 'bell-defra-id',
@@ -65,7 +67,7 @@ const createDefraId = (verifyToken) => ({
         },
         password: config.get('session.cookie.password'),
         provider: {
-          name: 'defra-id',
+          name: OIDC_DEFRA_ID,
           protocol: 'oauth2',
           useParamsAuth: true,
           auth: authBaseUrl,

@@ -4,7 +4,7 @@ import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
-import { createDefraId } from './defra-id.js'
+import { createDefraId, OIDC_DEFRA_ID } from './defra-id.js'
 
 const mockLogger = createMockLogger()
 
@@ -71,7 +71,7 @@ describe('#defraId', () => {
 
   describe('plugin metadata', () => {
     it('should have correct plugin name', () => {
-      expect(defraId.plugin.name).toBe('defra-id')
+      expect(defraId.plugin.name).toBe(OIDC_DEFRA_ID)
     })
   })
 
@@ -122,7 +122,7 @@ describe('#defraId', () => {
       await defraId.plugin.register(mockServer)
 
       expect(mockServer.auth.strategy).toHaveBeenCalledWith(
-        'defra-id',
+        OIDC_DEFRA_ID,
         'bell',
         expect.objectContaining({
           clientId: 'test-client-id',
@@ -150,7 +150,7 @@ describe('#defraId', () => {
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
       const config = strategyCall[2]
 
-      expect(config.provider.name).toBe('defra-id')
+      expect(config.provider.name).toBe(OIDC_DEFRA_ID)
       expect(config.provider.protocol).toBe('oauth2')
       expect(config.provider.useParamsAuth).toBe(true)
       expect(config.provider.scope).toStrictEqual(['openid', 'offline_access'])
