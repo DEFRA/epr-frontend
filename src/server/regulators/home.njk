@@ -1,0 +1,10 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">{{ localise('regulators:home:heading') }}</h1>
+      <p class="govuk-body" data-testid="regulator-username">{{ username }}</p>
+    </div>
+  </div>
+{% endblock %}

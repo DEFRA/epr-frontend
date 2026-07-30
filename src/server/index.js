@@ -4,6 +4,7 @@ import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuratio
 import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
 import { getVerifyToken } from '#server/auth/helpers/verify-token.js'
 import { createDefraId } from '#server/auth/plugins/defra-id.js'
+import { createEntraId } from '#server/auth/plugins/entra-id.js'
 import { contentSecurityPolicy } from '#server/common/helpers/content-security-policy.js'
 import { catchAll } from '#server/common/helpers/errors.js'
 import { requestLogger } from '#server/common/helpers/logging/request-logger.js'
@@ -116,6 +117,10 @@ export async function createServer(options = {}) {
   )
 
   plugins.push(createDefraId(verifyToken), createSessionCookie(verifyToken))
+
+  if (config.get('featureFlags.regulatorAccess')) {
+    plugins.push(createEntraId())
+  }
 
   plugins.push(nunjucksConfig)
 

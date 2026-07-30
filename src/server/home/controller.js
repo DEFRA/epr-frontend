@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { paths } from '#server/paths.js'
@@ -40,10 +41,14 @@ export const controller = {
   handler: async (request, h) => {
     const { t: localise } = request
     const startNowHref = await getStartNowHref(request)
+    const regulatorsLoginHref = config.get('featureFlags.regulatorAccess')
+      ? paths.auth.entraId.login
+      : null
 
     return h.view('home/index', {
       pageTitle: localise('home:pageTitle'),
       startNowHref,
+      regulatorsLoginHref,
       summaryLogGuidanceUrl: SUMMARY_LOG_GUIDANCE_URL,
       applyForRegistrationUrl: APPLY_FOR_REGISTRATION_URL,
       summaryLogsOverviewUrl: SUMMARY_LOGS_OVERVIEW_URL

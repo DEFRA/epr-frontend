@@ -5,6 +5,11 @@ export const paths = Object.freeze({
       login: '/login',
       logout: '/auth/logout',
       organisation: '/auth/organisation'
+    }),
+    entraId: Object.freeze({
+      callback: '/auth/callback/entra',
+      home: '/regulators/home',
+      login: '/regulators/login'
     })
   }),
   loggedOut: '/logged-out',

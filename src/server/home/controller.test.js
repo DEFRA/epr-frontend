@@ -5,7 +5,7 @@ import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
-import { describe, expect } from 'vitest'
+import { afterEach, describe, expect } from 'vitest'
 
 const mockAuth = buildMockAuth()
 
@@ -264,6 +264,40 @@ describe('#homeController', () => {
       expect(quickLinks.eq(1).attr('href')).toBe(
         'https://www.gov.uk/guidance/summary-logs-for-uk-packaging-waste-an-overview'
       )
+    })
+  })
+
+  describe('when the entraId feature flag is enabled', () => {
+    afterEach(() => {
+      config.set('featureFlags.regulatorAccess', false)
+    })
+
+    it('should render a regulators log in button', async ({ server }) => {
+      config.set('featureFlags.regulatorAccess', true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/start'
+      })
+
+      const $ = load(asHtml(result))
+      const regulatorsLoginButton = $('a.govuk-button--secondary')
+
+      expect(regulatorsLoginButton).toHaveLength(1)
+      expect(regulatorsLoginButton.attr('href')).toBe('/regulators/login')
+    })
+  })
+
+  describe('when the entraId feature flag is disabled', () => {
+    it('should not render a regulators log in button', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/start'
+      })
+
+      const $ = load(asHtml(result))
+
+      expect($('a.govuk-button--secondary')).toHaveLength(0)
     })
   })
 })

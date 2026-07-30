@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { account } from '#server/account/index.js'
 import { auth } from '#server/auth/index.js'
 import { serveStaticFiles } from '#server/common/helpers/serve-static-files.js'
@@ -11,6 +12,7 @@ import { logout } from '#server/logout/index.js'
 import { organisations } from '#server/organisations/index.js'
 import { prns } from '#server/prns/index.js'
 import { registrations } from '#server/registrations/index.js'
+import { regulators } from '#server/regulators/index.js'
 import { reports } from '#server/reports/index.js'
 import { summaryLogUpload } from '#server/summary-log-upload/index.js'
 import { summaryLog } from '#server/summary-log/index.js'
@@ -26,7 +28,7 @@ export const router = {
       await server.register([health])
 
       // Application specific routes, add your own routes here
-      await server.register([
+      const applicationPlugins = [
         account,
         auth,
         contact,
@@ -41,7 +43,13 @@ export const router = {
         reports,
         summaryLog,
         summaryLogUpload
-      ])
+      ]
+
+      if (config.get('featureFlags.regulatorAccess')) {
+        applicationPlugins.push(regulators)
+      }
+
+      await server.register(applicationPlugins)
 
       // Static assets
       await server.register([serveStaticFiles])
