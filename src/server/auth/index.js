@@ -1,4 +1,4 @@
-import { defraIdCallbackController as callbackController } from '#server/auth/callback/controller.js'
+import { defraIdCallbackController } from '#server/auth/callback/controller.js'
 import { controller as organisationController } from '#server/auth/organisation/controller.js'
 import { paths } from '#server/paths.js'
 
@@ -12,21 +12,21 @@ const auth = {
     register: (server) => {
       server.route([
         {
-          ...callbackController,
+          ...defraIdCallbackController,
           method: 'GET',
-          path: paths.auth.callback
+          path: paths.auth.defraId.callback
         },
         {
           handler: (request, h) =>
             h.redirect(request.localiseUrl(paths.loggedOut)),
           method: 'GET',
           options: { auth: false },
-          path: paths.auth.logout
+          path: paths.auth.defraId.logout
         },
         {
           ...organisationController,
           method: 'GET',
-          path: paths.auth.organisation
+          path: paths.auth.defraId.organisation
         }
       ])
     }
