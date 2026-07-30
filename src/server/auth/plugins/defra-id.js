@@ -54,10 +54,8 @@ const createDefraId = (verifyToken) => ({
           if (request.info.referrer) {
             const { hash, pathname, search } = new URL(request.info.referrer)
 
-            if (!pathname.startsWith(paths.auth.defraId.callback)) {
-              const referrer = `${pathname}${search}${hash}`
-              request.yar.flash('referrer', referrer)
-            }
+            const referrer = `${pathname}${search}${hash}`
+            request.yar.flash('referrer', referrer)
           }
 
           return getRedirectUrl(

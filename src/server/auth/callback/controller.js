@@ -83,29 +83,39 @@ const defraIdCallbackController = {
       session.linkedOrganisationId = organisations.linked.id
       await request.server.app.cache.set(sessionId, session)
 
-      const referrer = request.yar.flash('referrer')?.at(0)
-      const skipReferrers = [
-        ...withWelsh(paths.start),
-        ...withWelsh(paths.loggedOut)
-      ]
-      const shouldSkipReferrer =
-        referrer !== undefined && skipReferrers.includes(referrer)
-
-      // Don't redirect linked users back to start or logged-out pages - take them to dashboard
-      if (referrer && !shouldSkipReferrer) {
-        return h.redirect(getSafeRedirect(referrer))
-      }
-
-      return h.redirect(
+      const redirectUrl = referrerIfPresentElseDefault(
+        request,
         request.localiseUrl(`/organisations/${organisations.linked.id}`)
       )
+
+      return h.redirect(redirectUrl)
     }
 
-    const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
-
-    const safeRedirect = getSafeRedirect(redirect)
-    return h.redirect(safeRedirect)
+    return h.redirect(referrerIfPresentElseDefault(request, '/'))
   }
+}
+
+/**
+ * @param {HapiRequest} request
+ * @param {string} defaultPath
+ */
+function referrerIfPresentElseDefault(request, defaultPath) {
+  const referrer = request.yar.flash('referrer')?.at(0)
+
+  const skipReferrers = [
+    ...withWelsh(paths.start),
+    ...withWelsh(paths.loggedOut),
+    paths.auth.defraId.callback
+  ]
+
+  const shouldSkipReferrer =
+    referrer !== undefined && skipReferrers.includes(referrer)
+
+  if (referrer && !shouldSkipReferrer) {
+    return getSafeRedirect(referrer)
+  }
+
+  return getSafeRedirect(defaultPath)
 }
 
 export { defraIdCallbackController }
