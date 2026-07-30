@@ -25,7 +25,7 @@ const login = {
             auth: 'defra-id'
           },
           method: 'GET',
-          path: paths.auth.login,
+          path: paths.auth.defraId.login,
           /* v8 ignore next - handler is fallback; defra-id auth strategy handles redirect */
           handler: async (request, h) =>
             h.redirect(request.localiseUrl(paths.start))
