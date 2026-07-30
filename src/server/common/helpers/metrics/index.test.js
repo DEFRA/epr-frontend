@@ -8,6 +8,7 @@ import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
 const mockPutMetric = vi.fn()
 const mockFlush = vi.fn()
+const mockPutDimensions = vi.fn()
 const mockLogger = createMockLogger()
 
 vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
@@ -19,6 +20,7 @@ vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
       /** @type {never} */ (
         /** @type {unknown} */ ({
           putMetric: mockPutMetric,
+          putDimensions: mockPutDimensions,
           flush: mockFlush
         })
       )
@@ -46,7 +48,7 @@ describe('#metrics', () => {
     it.each(metricsNames)('record metric - %s', async (metricName) => {
       config.set('isMetricsEnabled', true)
 
-      await metrics[metricName]()
+      await metrics[metricName]('oidc-provider-name')
 
       expect(mockPutMetric).toHaveBeenCalledWith(
         metricName,
@@ -56,6 +58,19 @@ describe('#metrics', () => {
       )
       expect(mockFlush).toHaveBeenCalledWith()
     })
+
+    it.each(metricsNames)(
+      'attaches provider as a dimension - %s',
+      async (metricName) => {
+        config.set('isMetricsEnabled', true)
+
+        await metrics[metricName]('oidc-provider-name')
+
+        expect(mockPutDimensions).toHaveBeenCalledWith({
+          oidcProvider: 'oidc-provider-name'
+        })
+      }
+    )
   })
 
   describe('when metrics throws', () => {

@@ -9,8 +9,11 @@ import { createLogger } from '#server/common/helpers/logging/logger.js'
 
 /**
  * Aws embedded metrics wrapper
+ * @param {string} metricName
+ * @param {Record<string, string>} dimensions
  */
-async function metricsCounter(metricName, value = 1) {
+async function metricsCounter(metricName, dimensions) {
+  const value = 1
   const isMetricsEnabled = config.get('isMetricsEnabled')
   if (!isMetricsEnabled) {
     return
@@ -18,6 +21,7 @@ async function metricsCounter(metricName, value = 1) {
 
   try {
     const metricsLogger = createMetricsLogger()
+    metricsLogger.putDimensions(dimensions)
     metricsLogger.putMetric(
       metricName,
       value,
@@ -31,19 +35,24 @@ async function metricsCounter(metricName, value = 1) {
 }
 
 export const metrics = {
-  async signInAttempted() {
-    return metricsCounter('signInAttempted')
+  /** @param {string} oidcProvider */
+  async signInAttempted(oidcProvider) {
+    return metricsCounter('signInAttempted', { oidcProvider })
   },
-  async signInSuccess() {
-    return metricsCounter('signInSuccess')
+  /** @param {string} oidcProvider */
+  async signInSuccess(oidcProvider) {
+    return metricsCounter('signInSuccess', { oidcProvider })
   },
-  async signInSuccessNonInitialUser() {
-    return metricsCounter('signInSuccessNonInitialUser')
+  /** @param {string} oidcProvider */
+  async signInSuccessNonInitialUser(oidcProvider) {
+    return metricsCounter('signInSuccessNonInitialUser', { oidcProvider })
   },
-  async signInFailure() {
-    return metricsCounter('signInFailure')
+  /** @param {string} oidcProvider */
+  async signInFailure(oidcProvider) {
+    return metricsCounter('signInFailure', { oidcProvider })
   },
-  async signOutSuccess() {
-    return metricsCounter('signOutSuccess')
+  /** @param {string} oidcProvider */
+  async signOutSuccess(oidcProvider) {
+    return metricsCounter('signOutSuccess', { oidcProvider })
   }
 }

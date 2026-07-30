@@ -43,7 +43,7 @@ const defraIdCallbackController = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
-      await metrics.signInFailure()
+      await metrics.signInFailure(OIDC_DEFRA_ID)
     }
 
     if (request.auth.isAuthenticated) {
@@ -52,8 +52,8 @@ const defraIdCallbackController = {
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
-      auditSignIn(session.profile.id, session.profile.email)
-      await metrics.signInSuccess()
+      auditSignIn(OIDC_DEFRA_ID, session.profile.id, session.profile.email)
+      await metrics.signInSuccess(OIDC_DEFRA_ID)
 
       request.cookieAuth.set({ sessionId })
 
@@ -76,7 +76,7 @@ const defraIdCallbackController = {
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
       if (!isInitialUser) {
-        await metrics.signInSuccessNonInitialUser()
+        await metrics.signInSuccessNonInitialUser(OIDC_DEFRA_ID)
       }
 
       // Store linked organisation ID in session for navigation

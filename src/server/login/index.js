@@ -18,7 +18,7 @@ const login = {
             ext: {
               onPreAuth: {
                 method: async (_request, h) => {
-                  await metrics.signInAttempted()
+                  await metrics.signInAttempted(OIDC_DEFRA_ID)
                   return h.continue
                 }
               }

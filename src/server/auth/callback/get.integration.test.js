@@ -1,5 +1,6 @@
 import * as jose from 'jose'
 import { config } from '#config/config.js'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
@@ -18,10 +19,10 @@ vi.mock(
   async (importOriginal) => ({
     metrics: {
       ...(await importOriginal()).metrics,
-      signInFailure: () => mock.signInFailureMetric(),
-      signInSuccess: () => mock.signInSuccessMetric(),
-      signInSuccessNonInitialUser: () =>
-        mock.signInSuccessNonInitialUserMetric()
+      signInFailure: (oidcProvider) => mock.signInFailureMetric(oidcProvider),
+      signInSuccess: (oidcProvider) => mock.signInSuccessMetric(oidcProvider),
+      signInSuccessNonInitialUser: (oidcProvider) =>
+        mock.signInSuccessNonInitialUserMetric(oidcProvider)
     }
   })
 )
@@ -122,6 +123,7 @@ describe('/auth/callback - GET integration', async () => {
       await performSignInFlow(server, msw, idTokenAndPublicKey)
 
       expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('defra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
@@ -133,7 +135,9 @@ describe('/auth/callback - GET integration', async () => {
           category: 'access',
           action: 'sign-in'
         },
-        context: {},
+        context: {
+          oidcProvider: OIDC_DEFRA_ID
+        },
         user: {
           id: 'user-id',
           email: 'user@email.com'
@@ -206,6 +210,7 @@ describe('/auth/callback - GET integration', async () => {
       await performSignInFlow(server, msw, idTokenAndPublicKey)
 
       expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('defra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
@@ -217,7 +222,9 @@ describe('/auth/callback - GET integration', async () => {
           category: 'access',
           action: 'sign-in'
         },
-        context: {},
+        context: {
+          oidcProvider: OIDC_DEFRA_ID
+        },
         user: {
           id: 'user-id',
           email: 'user@email.com'
@@ -244,6 +251,7 @@ describe('/auth/callback - GET integration', async () => {
 
     it('records sign in failure metric', () => {
       expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
+      expect(mock.signInFailureMetric).toHaveBeenCalledWith('defra-id')
     })
   })
 
@@ -264,6 +272,7 @@ describe('/auth/callback - GET integration', async () => {
 
     it('records sign in failure metric', () => {
       expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
+      expect(mock.signInFailureMetric).toHaveBeenCalledWith('defra-id')
     })
   })
 
@@ -305,6 +314,9 @@ describe('/auth/callback - GET integration', async () => {
       await performSignInFlow(server, msw, invitedUserToken)
 
       expect(mock.signInSuccessNonInitialUserMetric).toHaveBeenCalledTimes(1)
+      expect(mock.signInSuccessNonInitialUserMetric).toHaveBeenCalledWith(
+        'defra-id'
+      )
     })
 
     it('does not record signInSuccessNonInitialUser metric when user is the linkedBy user (initial user)', async ({
