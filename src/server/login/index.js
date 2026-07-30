@@ -1,4 +1,5 @@
 import { metrics } from '#server/common/helpers/metrics/index.js'
+import { paths } from '#server/paths.js'
 
 /**
  * Login plugin
@@ -24,10 +25,10 @@ const login = {
             auth: 'defra-id'
           },
           method: 'GET',
-          path: '/login',
+          path: paths.auth.login,
           /* v8 ignore next - handler is fallback; defra-id auth strategy handles redirect */
           handler: async (request, h) =>
-            h.redirect(request.localiseUrl('/start'))
+            h.redirect(request.localiseUrl(paths.start))
         }
       ])
     }
