@@ -18,7 +18,7 @@ import { afterEach, describe, expect, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
   getVerifyToken: vi.fn(
-    async () => /** @type {VerifyToken} */ ((token) => jose.decodeJwt(token))
+    () => /** @type {VerifyToken} */ ((token) => jose.decodeJwt(token))
   )
 }))
 

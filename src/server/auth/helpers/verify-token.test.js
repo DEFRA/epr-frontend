@@ -22,7 +22,7 @@ describe(getVerifyToken, () => {
     const mockJWKS = {}
     mockJose.createRemoteJWKSet.mockReturnValue(mockJWKS)
 
-    const verifyToken = await getVerifyToken({
+    const verifyToken = getVerifyToken({
       jwks_uri: 'https://test.auth/.well-known/jwks.json'
     })
 
@@ -42,7 +42,7 @@ describe(getVerifyToken, () => {
     mockJose.createRemoteJWKSet.mockReturnValue(mockJWKS)
     mockJose.jwtVerify.mockResolvedValue({ payload })
 
-    const verifyToken = await getVerifyToken({
+    const verifyToken = getVerifyToken({
       jwks_uri: 'https://test.auth/.well-known/jwks.json'
     })
 
@@ -61,7 +61,7 @@ describe(getVerifyToken, () => {
     const payload = { sub: 'user-123', exp: 1735689600 }
     mockJose.jwtVerify.mockResolvedValue({ payload })
 
-    const verifyToken = await getVerifyToken({
+    const verifyToken = getVerifyToken({
       jwks_uri: 'https://test.auth/.well-known/jwks.json'
     })
 
@@ -76,7 +76,7 @@ describe(getVerifyToken, () => {
       payload: { sub: 'user-123', email: 'test@example.com' }
     })
 
-    const verifyToken = await getVerifyToken({
+    const verifyToken = getVerifyToken({
       jwks_uri: 'https://test.auth/.well-known/jwks.json'
     })
 
@@ -90,7 +90,7 @@ describe(getVerifyToken, () => {
     mockJose.createRemoteJWKSet.mockReturnValue({})
     mockJose.jwtVerify.mockRejectedValue(mockError)
 
-    const verifyToken = await getVerifyToken({
+    const verifyToken = getVerifyToken({
       jwks_uri: 'https://test.auth/.well-known/jwks.json'
     })
 
@@ -105,10 +105,10 @@ describe(getVerifyToken, () => {
       throw mockError
     })
 
-    await expect(
+    expect(() =>
       getVerifyToken({
         jwks_uri: 'https://test.auth/.well-known/jwks.json'
       })
-    ).rejects.toThrow('Invalid URL')
+    ).toThrow('Invalid URL')
   })
 })

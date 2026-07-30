@@ -111,7 +111,7 @@ export async function createServer(options = {}) {
     }
   ]
 
-  const verifyToken = await getVerifyToken(
+  const verifyToken = getVerifyToken(
     await getOidcConfiguration(config.get('defraId.oidcConfigurationUrl'))
   )
 
