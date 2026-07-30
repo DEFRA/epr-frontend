@@ -1,3 +1,4 @@
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
@@ -13,7 +14,7 @@ vi.mock(
   async (importOriginal) => ({
     metrics: {
       ...(await importOriginal()).metrics,
-      signOutSuccess: () => mockSignOutSuccessMetric()
+      signOutSuccess: (oidcProvider) => mockSignOutSuccessMetric(oidcProvider)
     }
   })
 )
@@ -71,7 +72,9 @@ describe('#logoutController - integration', () => {
           category: 'access',
           action: 'sign-out'
         },
-        context: {},
+        context: {
+          oidcProvider: OIDC_DEFRA_ID
+        },
         user: {
           id: 'user-id',
           email: 'user@email.com'
@@ -87,6 +90,7 @@ describe('#logoutController - integration', () => {
       })
 
       expect(mockSignOutSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(mockSignOutSuccessMetric).toHaveBeenCalledWith('defra-id')
     })
   })
 

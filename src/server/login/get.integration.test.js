@@ -9,7 +9,7 @@ vi.mock(
   async (importOriginal) => ({
     metrics: {
       ...(await importOriginal()).metrics,
-      signInAttempted: () => mockSignInAttemptedMetric()
+      signInAttempted: (oidcProvider) => mockSignInAttemptedMetric(oidcProvider)
     }
   })
 )
@@ -49,6 +49,7 @@ describe('#loginController - integration', () => {
         })
 
         expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
+        expect(mockSignInAttemptedMetric).toHaveBeenCalledWith('defra-id')
       }
     )
   })
