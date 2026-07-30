@@ -280,30 +280,6 @@ describe('#defraId', () => {
         '/dashboard'
       )
     })
-
-    it('should not store referrer in flash when referrer is callback URL', async () => {
-      await defraId.plugin.register(mockServer)
-
-      const strategyCall = mockServer.auth.strategy.mock.calls[0]
-      const config = strategyCall[2]
-      const locationFn = config.location
-
-      const mockRequest = {
-        info: {
-          referrer: 'http://localhost:3000/auth/callback',
-          host: 'localhost:3000'
-        },
-        headers: {},
-        server: { info: { protocol: 'http' } },
-        yar: {
-          flash: vi.fn()
-        }
-      }
-
-      locationFn(mockRequest)
-
-      expect(mockRequest.yar.flash).not.toHaveBeenCalled()
-    })
   })
 
   describe('profile function', () => {

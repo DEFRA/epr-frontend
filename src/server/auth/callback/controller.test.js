@@ -99,7 +99,8 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue(['/dashboard'])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {
@@ -220,6 +221,11 @@ describe('#authCallbackController', () => {
         referrer: '/cy/logged-out',
         description: 'Welsh logged-out page',
         isWelsh: true
+      },
+      {
+        referrer: '/auth/callback',
+        description: 'auth callback page',
+        isWelsh: false
       }
     ])(
       'should redirect to organisation dashboard when referrer is $referrer (not back to $description)',
@@ -626,6 +632,73 @@ describe('#authCallbackController', () => {
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
       expect(result).toBe('redirect-response')
     })
+
+    it.each([
+      {
+        referrer: '/start',
+        description: 'start page',
+        isWelsh: false
+      },
+      {
+        referrer: '/cy/start',
+        description: 'Welsh start page',
+        isWelsh: true
+      },
+      {
+        referrer: '/logged-out',
+        description: 'logged-out page',
+        isWelsh: false
+      },
+      {
+        referrer: '/cy/logged-out',
+        description: 'Welsh logged-out page',
+        isWelsh: true
+      },
+      {
+        referrer: '/auth/callback',
+        description: 'auth callback page',
+        isWelsh: false
+      }
+    ])(
+      'should redirect to home when referrer is $referrer (not back to $description)',
+      async ({ referrer, isWelsh }) => {
+        const mockRequest = {
+          auth: {
+            isAuthenticated: false
+          },
+          server: {
+            app: {
+              cache: {
+                set: vi.fn()
+              }
+            }
+          },
+          cookieAuth: {
+            set: vi.fn()
+          },
+          logger: {
+            info: vi.fn(),
+            error: vi.fn()
+          },
+          yar: {
+            flash: vi.fn().mockReturnValue([referrer])
+          },
+          localiseUrl: vi.fn((url) => (isWelsh ? `/cy${url}` : url))
+        }
+
+        const mockH = {
+          redirect: vi.fn().mockReturnValue('redirect-response')
+        }
+
+        const result = await defraIdCallbackController.handler(
+          mockHapiRequest(mockRequest),
+          asResponseToolkit(mockH)
+        )
+
+        expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
+        expect(result).toBe('redirect-response')
+      }
+    )
   })
 
   describe('error handling', () => {
@@ -769,7 +842,8 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue(['/dashboard'])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {
