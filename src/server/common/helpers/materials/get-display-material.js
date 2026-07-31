@@ -1,24 +1,14 @@
 import { errorCodes } from '#server/common/enums/error-codes.js'
-import { MATERIAL } from '#domain/organisations/model.js'
+import {
+  MATERIAL,
+  glassProcessToDisplayName,
+  materialToDisplayName
+} from '#domain/materials.js'
 import { internal } from '#server/common/helpers/logging/cdp-boom.js'
 
 /**
- * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ * @import { Material, GlassRecyclingProcess } from '#domain/materials.js'
  */
-
-const MATERIAL_DISPLAY_NAMES = Object.freeze({
-  aluminium: 'Aluminium',
-  fibre: 'Fibre-based composite',
-  paper: 'Paper and board',
-  plastic: 'Plastic',
-  steel: 'Steel',
-  wood: 'Wood'
-})
-
-const GLASS_DISPLAY_NAMES = Object.freeze({
-  glass_re_melt: 'Glass remelt',
-  glass_other: 'Glass other'
-})
 
 /**
  * @template {Record<string, string>} T
@@ -57,7 +47,7 @@ export const getDisplayMaterial = ({ material, glassRecyclingProcess }) => {
     }
 
     return lookupOrThrow(
-      GLASS_DISPLAY_NAMES,
+      glassProcessToDisplayName,
       glassRecyclingProcess[0],
       errorCodes.glassRecyclingProcessUnknown,
       'glassRecyclingProcess'
@@ -65,7 +55,7 @@ export const getDisplayMaterial = ({ material, glassRecyclingProcess }) => {
   }
 
   return lookupOrThrow(
-    MATERIAL_DISPLAY_NAMES,
+    materialToDisplayName,
     material,
     errorCodes.unknownMaterial,
     'material'
