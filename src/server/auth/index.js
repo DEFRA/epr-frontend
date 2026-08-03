@@ -24,13 +24,6 @@ const auth = {
           path: paths.auth.defraId.callback
         },
         {
-          handler: (request, h) =>
-            h.redirect(request.localiseUrl(paths.loggedOut)),
-          method: 'GET',
-          options: { auth: false },
-          path: paths.auth.defraId.logout
-        },
-        {
           ...organisationController,
           method: 'GET',
           path: paths.auth.defraId.organisation

@@ -126,7 +126,7 @@
     "globals": "17.8.0",
     "husky": "9.1.7",
     "i18next-cli": "1.67.3",
-    "jsdom": "29.1.1",
+    "jsdom": "30.0.0",
     "knip": "6.29.0",
     "lint-staged": "17.2.0",
     "msw": "2.15.0",
@@ -156,7 +156,6 @@
     "stylelint-config-gds": {
       "stylelint": "$stylelint"
     },
-    "joi": "18.2.1",
     "uuid": "14.0.0"
   }
 }
