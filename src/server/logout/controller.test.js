@@ -49,7 +49,7 @@ describe('#logoutController', () => {
         email: 'test@example.com'
       },
       urls: {
-        logout: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
+        logout: 'http://oidc-provider/logout?p=a-b2clogin-query-param'
       }
     }
 
@@ -82,7 +82,7 @@ describe('#logoutController', () => {
       expect(mockRequest.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        `http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(authLogoutUrl)}`
+        `http://oidc-provider/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(authLogoutUrl)}`
       )
       expect(result).toBe('redirect-response')
     })
