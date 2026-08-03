@@ -156,7 +156,6 @@
     "stylelint-config-gds": {
       "stylelint": "$stylelint"
     },
-    "joi": "18.2.1",
     "uuid": "14.0.0"
   }
 }
