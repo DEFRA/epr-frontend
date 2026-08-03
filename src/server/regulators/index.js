@@ -1,5 +1,3 @@
-import { paths } from '#server/paths.js'
-
 /**
  * Regulators plugin
  * Registers the post-login landing page for Entra ID authenticated regulators
