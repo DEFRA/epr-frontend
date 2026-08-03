@@ -37,7 +37,7 @@ const logoutController = {
     oidcProviderLogoutUrl.searchParams.append('id_token_hint', session.idToken)
     oidcProviderLogoutUrl.searchParams.append(
       'post_logout_redirect_uri',
-      getRedirectUrl(request, paths.auth.defraId.logout)
+      getRedirectUrl(request, paths.loggedOut)
     )
 
     return h.redirect(oidcProviderLogoutUrl.toString())
