@@ -24,7 +24,7 @@ export const regulators = {
             })
           },
           method: 'GET',
-          path: paths.auth.entraId.home
+          path: '/regulators/home'
         }
       ])
     }

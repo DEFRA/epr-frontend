@@ -8,7 +8,6 @@ export const paths = Object.freeze({
     }),
     entraId: Object.freeze({
       callback: '/auth/callback/entra',
-      home: '/regulators/home',
       login: '/regulators/login'
     })
   }),

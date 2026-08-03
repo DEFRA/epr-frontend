@@ -165,7 +165,7 @@ const entraIdCallbackController = {
         }
       })
 
-      return h.redirect(request.localiseUrl(paths.auth.entraId.home))
+      return h.redirect(request.localiseUrl('/regulators/home'))
     }
 
     return h.redirect(referrerIfPresentElseDefault(request, '/'))
