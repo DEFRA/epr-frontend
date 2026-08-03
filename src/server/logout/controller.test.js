@@ -10,7 +10,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
 const appBaseUrl = 'http://localhost:3000'
-const authLogoutUrl = `${appBaseUrl}/auth/logout`
+const authLogoutUrl = `${appBaseUrl}/logged-out`
 
 describe('#logoutController', () => {
   afterEach(() => {
