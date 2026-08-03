@@ -28,7 +28,7 @@ export const router = {
       await server.register([health])
 
       // Application specific routes, add your own routes here
-      const applicationPlugins = [
+      await server.register([
         account,
         auth,
         contact,
@@ -40,16 +40,11 @@ export const router = {
         organisations,
         prns,
         registrations,
+        ...(config.get('featureFlags.regulatorAccess') ? [regulators] : []),
         reports,
         summaryLog,
         summaryLogUpload
-      ]
-
-      if (config.get('featureFlags.regulatorAccess')) {
-        applicationPlugins.push(regulators)
-      }
-
-      await server.register(applicationPlugins)
+      ])
 
       // Static assets
       await server.register([serveStaticFiles])
