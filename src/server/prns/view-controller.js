@@ -459,12 +459,12 @@ function buildExistingPrnDetailRows({
   recipientDisplayName,
   organisationData
 }) {
-  const rows = [
+  const rows = /** @type {SummaryListRow[]} */ ([
     {
       key: { text: localise('prns:details:numberLabel', { noteType }) },
       value: { text: prn.prnNumber || '' }
     }
-  ]
+  ])
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))
@@ -487,6 +487,7 @@ function buildExistingPrnDetailRows({
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { UserSession } from '#server/auth/types/session.js'
+ * @import { SummaryListRow } from './helpers/build-prn-detail-rows.js'
  * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
  * @import { PrnDetailParams, PrnDraftSession } from './helpers/session-types.js'
  */

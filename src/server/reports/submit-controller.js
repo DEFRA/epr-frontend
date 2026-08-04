@@ -30,6 +30,7 @@ import { buildValidationErrors } from './helpers/validation.js'
 import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /** @import { Localise } from './helpers/format-period-label.js' */
+/** @import { Accreditation } from '#domain/organisations/accreditation.js' */
 /** @import { Registration } from '#domain/organisations/registration.js' */
 /** @import { ValidationError } from 'joi' */
 
@@ -105,7 +106,7 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 })
 
 /**
- * @param {{ recyclingActivity: object, exportActivity: object | undefined, wasteSent: object }} activity
+ * @param {Pick<ReportDetailResponse, 'recyclingActivity' | 'exportActivity' | 'wasteSent'>} activity
  * @param {{ isExporter: boolean, isAccreditedExporter: boolean }} flags
  * @param {string} fallbackText
  * @returns {{ wasteReceived: object, wasteExported: object | null, wasteSentOn: object, recyclingActivity: { tonnageRecycled: string, tonnageNotRecycled: string } }}
@@ -132,7 +133,7 @@ function buildActivityViewData(
 /**
  * @typedef {{
  *   registration: Registration,
- *   accreditation: object | null,
+ *   accreditation: Accreditation | null,
  *   reportDetail: ReportDetailResponse,
  *   reportsUrl: string,
  *   localise: Localise,

@@ -1,10 +1,15 @@
 import { formatAddress } from './format-address.js'
 
 /**
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ */
+
+/**
  * Builds the accreditation details rows for the summary list
  * @param {object} params
- * @param {object} params.registration - Registration data
- * @param {object} params.accreditation - Accreditation data
+ * @param {Registration} params.registration - Registration data
+ * @param {Accreditation} [params.accreditation] - Accreditation data
  * @param {string} params.displayMaterial - Formatted material name
  * @param {(key: string) => string} params.localise - Translation function
  * @param {boolean} params.isExporter - Whether the registration is for an exporter

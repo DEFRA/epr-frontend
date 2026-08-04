@@ -1,6 +1,6 @@
 /**
  * Formats an address object into a single line string
- * @param {object} address - Address object with line1, line2, town, postcode etc
+ * @param {{ line1?: string, line2?: string, town?: string, postcode?: string }} [address]
  * @returns {string} Formatted address string
  */
 function formatAddress(address) {

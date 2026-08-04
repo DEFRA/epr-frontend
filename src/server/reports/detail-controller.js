@@ -21,7 +21,7 @@ import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
 /**
- * @param {object|undefined} exportActivity
+ * @param {ExportActivity | undefined} exportActivity
  * @param {boolean} isExporter
  * @param {boolean} isAccreditedExporter
  * @param {string} fallbackText
@@ -99,9 +99,9 @@ function buildSectionIntros(
 
 /**
  * @param {{ organisationId: string, registrationId: string }} ids
- * @param {object} registration
- * @param {object | undefined} accreditation
- * @param {object} reportDetail
+ * @param {Registration} registration
+ * @param {Accreditation | undefined} accreditation
+ * @param {ReportDetailResponse} reportDetail
  * @param {(key: string, params?: Record<string, unknown>) => string} localise
  * @param {(path: string) => string} localiseUrl
  */
@@ -246,6 +246,9 @@ export const detailController = {
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { ExportActivity, ReportDetailResponse } from './helpers/fetch-report-detail.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
  */
