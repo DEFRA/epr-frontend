@@ -10,9 +10,10 @@ import { ReportStaleError, staleReasonsFromCode } from './stale.js'
  * A 409's `code` isn't necessarily a stale reason (e.g. a version-conflict
  * code) — `staleReasonsFromCode` filters out anything unrecognised, so only a
  * non-empty result confirms this 409 really is report staleness.
+ * @template [T=unknown]
  * @param {string} path
  * @param {RequestInit} [options]
- * @returns {Promise<object | undefined>}
+ * @returns {Promise<T>}
  */
 export const fetchReportBackend = async (path, options) => {
   try {

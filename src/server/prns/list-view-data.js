@@ -5,7 +5,7 @@ import { getStatusConfig } from '#server/prns/helpers/get-status-config.js'
 
 /**
  * @param {{
- *   t: (key: string, params?: object) => string,
+ *   t: (key: string, params?: Record<string, unknown>) => string,
  *   localiseUrl: (url: string) => string
  * }} request
  * @param {{

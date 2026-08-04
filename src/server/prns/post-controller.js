@@ -93,7 +93,7 @@ function getNoteType(wasteProcessingType) {
 /**
  * Build error objects for form display
  * @param {Joi.ValidationError} validationError
- * @param {(key: string, params?: object) => string} localise
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise
  * @param {string} wasteProcessingType
  * @returns {{errors: object, errorSummary: {title: string, list: Array}}}
  */

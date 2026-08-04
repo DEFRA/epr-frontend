@@ -95,7 +95,7 @@
 
 /**
  * i18next translation function (Hapi `request.t`).
- * @typedef {(key: string, params?: object) => string} Localise
+ * @typedef {(key: string, params?: Record<string, unknown>) => string} Localise
  */
 
 /**

@@ -336,7 +336,7 @@ const buildPeriodViewModel = (period, ctx) => {
  * backend; if that invariant breaks we throw rather than rendering a misleading
  * empty page.
  * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string, params?: object) => string} localise - i18n localisation function
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise - i18n localisation function
  * @param {{
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType: ProcessingType,

@@ -102,7 +102,7 @@ function buildSectionIntros(
  * @param {object} registration
  * @param {object | undefined} accreditation
  * @param {object} reportDetail
- * @param {(key: string, params?: object) => string} localise
+ * @param {(key: string, params?: Record<string, unknown>) => string} localise
  * @param {(path: string) => string} localiseUrl
  */
 function buildViewData(
