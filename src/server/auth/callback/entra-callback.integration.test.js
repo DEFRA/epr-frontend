@@ -114,8 +114,8 @@ describe('/auth/callback/entra - GET integration', async () => {
   })
 
   const nonRegulatorToken = await generateAccessToken({
-    ...claims,
-    roles: []
+    ...claims
+    // Entra emits the roles claim when user has no application roles assigned
   })
 
   describe('on successful return from Entra ID - authorised regulator', () => {
@@ -124,6 +124,16 @@ describe('/auth/callback/entra - GET integration', async () => {
 
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toBe('/regulators/home')
+    })
+
+    it('creates a session', async ({ server, msw }) => {
+      const response = await performSignInFlow(server, msw, regulatorToken)
+
+      const setCookieHeaders = []
+        .concat(response.headers['set-cookie'] ?? [])
+        .join(';')
+
+      expect(setCookieHeaders).toContain('userSession=')
     })
 
     it('records sign in success metric', async ({ server, msw }) => {
