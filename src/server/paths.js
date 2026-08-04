@@ -8,5 +8,6 @@ export const paths = Object.freeze({
     })
   }),
   loggedOut: '/logged-out',
+  logout: '/logout',
   start: '/start'
 })
