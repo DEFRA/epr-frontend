@@ -1,6 +1,6 @@
 import * as jose from 'jose'
 import { config } from '#config/config.js'
-import { OIDC_ENTRA_ID, REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
+import { REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -140,7 +140,7 @@ describe('/auth/callback/entra - GET integration', async () => {
       await performSignInFlow(server, msw, regulatorToken)
 
       expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInSuccessMetric).toHaveBeenCalledWith(OIDC_ENTRA_ID)
+      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('entra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
@@ -153,7 +153,7 @@ describe('/auth/callback/entra - GET integration', async () => {
           action: 'sign-in'
         },
         context: {
-          oidcProvider: OIDC_ENTRA_ID
+          oidcProvider: 'entra-id'
         },
         user: {
           id: 'entra-user-id',
@@ -229,7 +229,7 @@ describe('/auth/callback/entra - GET integration', async () => {
       await performSignInFlow(server, msw, nonRegulatorToken)
 
       expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith(OIDC_ENTRA_ID)
+      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
     })
 
     it('does not create a session', async ({ server, msw }) => {
@@ -261,7 +261,7 @@ describe('/auth/callback/entra - GET integration', async () => {
 
     it('records sign in failure metric', () => {
       expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith(OIDC_ENTRA_ID)
+      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
     })
   })
 
@@ -282,7 +282,7 @@ describe('/auth/callback/entra - GET integration', async () => {
 
     it('records sign in failure metric', () => {
       expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith(OIDC_ENTRA_ID)
+      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
     })
   })
 
@@ -303,7 +303,7 @@ describe('/auth/callback/entra - GET integration', async () => {
 
     it('records sign in failure metric', () => {
       expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith(OIDC_ENTRA_ID)
+      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
     })
   })
 

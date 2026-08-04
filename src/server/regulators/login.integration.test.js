@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
@@ -59,7 +58,7 @@ describe('#regulatorsLoginController - integration', () => {
         })
 
         expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
-        expect(mockSignInAttemptedMetric).toHaveBeenCalledWith(OIDC_ENTRA_ID)
+        expect(mockSignInAttemptedMetric).toHaveBeenCalledWith('entra-id')
       }
     )
   })

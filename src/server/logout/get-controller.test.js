@@ -80,7 +80,7 @@ describe('#logoutController - integration', () => {
           action: 'sign-out'
         },
         context: {
-          oidcProvider: OIDC_DEFRA_ID
+          oidcProvider: 'defra-id'
         },
         user: {
           id: 'user-id',
