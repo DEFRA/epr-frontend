@@ -163,6 +163,58 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
   })
 
+  describe('on successful return from Entra ID - authorised regulator, with a referrer recorded', () => {
+    it('redirects back to the referring page', async ({ server, msw }) => {
+      const response = await performSignInFlow(server, msw, {
+        ...regulatorToken,
+        referer: 'http://localhost:3000/some/prior/page'
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/some/prior/page')
+    })
+  })
+
+  describe('on successful return from Entra ID - authorised regulator, with a skipped referrer', () => {
+    it.for([
+      {
+        referrer: '/start',
+        description: 'start page'
+      },
+      {
+        referrer: '/cy/start',
+        description: 'Welsh start page'
+      },
+      {
+        referrer: '/logged-out',
+        description: 'logged-out page'
+      },
+      {
+        referrer: '/cy/logged-out',
+        description: 'Welsh logged-out page'
+      },
+      {
+        referrer: '/auth/callback',
+        description: 'Defra ID auth callback page'
+      },
+      {
+        referrer: '/auth/callback/entra',
+        description: 'Entra ID auth callback page'
+      }
+    ])(
+      'redirects to the regulators home page rather than back to $description',
+      async ({ referrer }, { server, msw }) => {
+        const response = await performSignInFlow(server, msw, {
+          ...regulatorToken,
+          referer: `http://localhost:3000${referrer}`
+        })
+
+        expect(response.statusCode).toBe(statusCodes.found)
+        expect(response.headers['location']).toBe('/regulators/home')
+      }
+    )
+  })
+
   describe('on successful return from Entra ID - user without regulator role', () => {
     it('renders the regulator-not-authorised page', async ({ server, msw }) => {
       const response = await performSignInFlow(server, msw, nonRegulatorToken)

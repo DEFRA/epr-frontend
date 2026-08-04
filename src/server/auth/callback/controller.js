@@ -165,7 +165,12 @@ const entraIdCallbackController = {
         }
       })
 
-      return h.redirect(request.localiseUrl('/regulators/home'))
+      const redirectUrl = referrerIfPresentElseDefault(
+        request,
+        request.localiseUrl('/regulators/home')
+      )
+
+      return h.redirect(redirectUrl)
     }
 
     return h.redirect(referrerIfPresentElseDefault(request, '/'))
