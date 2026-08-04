@@ -28,7 +28,7 @@ const auth = {
             h.redirect(request.localiseUrl(paths.loggedOut)),
           method: 'GET',
           options: { auth: false },
-          path: paths.auth.defraId.logout
+          path: paths.auth.defraId.postLogoutRedirect
         },
         {
           ...organisationController,
