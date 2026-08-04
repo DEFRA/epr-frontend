@@ -3,7 +3,6 @@ import { paths } from '#server/paths.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
 import { auditSignOut } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
-import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -30,8 +29,8 @@ const logoutController = {
 
     await removeUserSession(request)
 
-    auditSignOut(OIDC_DEFRA_ID, session.profile.id, session.profile.email)
-    await metrics.signOutSuccess(OIDC_DEFRA_ID)
+    auditSignOut(session.provider, session.profile.id, session.profile.email)
+    await metrics.signOutSuccess(session.provider)
 
     const oidcProviderLogoutUrl = new URL(session.urls.logout)
     oidcProviderLogoutUrl.searchParams.append('id_token_hint', session.idToken)
