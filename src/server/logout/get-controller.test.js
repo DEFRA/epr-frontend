@@ -1,7 +1,6 @@
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { paths } from '#server/paths.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -43,7 +42,7 @@ describe('#logoutController - integration', () => {
     }) => {
       const response = await server.inject({
         method: 'GET',
-        url: paths.logout,
+        url: '/logout',
         auth: mockAuth
       })
 
@@ -56,14 +55,14 @@ describe('#logoutController - integration', () => {
       expect(redirectUrl.host).toBe('defra-id.auth')
       expect(redirectUrl.pathname).toBe('/logout')
       expect(redirectUrl.searchParams.get('post_logout_redirect_uri')).toBe(
-        'http://localhost:3000/logged-out'
+        'http://localhost:3000/auth/logout'
       )
     })
 
     it('should audit a successful sign out attempt', async ({ server }) => {
       await server.inject({
         method: 'GET',
-        url: paths.logout,
+        url: '/logout',
         auth: mockAuth
       })
 
@@ -86,7 +85,7 @@ describe('#logoutController - integration', () => {
     it('should record sign out success metric', async ({ server }) => {
       await server.inject({
         method: 'GET',
-        url: paths.logout,
+        url: '/logout',
         auth: mockAuth
       })
 
@@ -99,7 +98,7 @@ describe('#logoutController - integration', () => {
     it('should redirect to logged-out page', async ({ server }) => {
       const response = await server.inject({
         method: 'GET',
-        url: paths.logout
+        url: '/logout'
       })
 
       expect(response.statusCode).toBe(statusCodes.found)
@@ -109,7 +108,7 @@ describe('#logoutController - integration', () => {
     it('should not audit a successful sign out attempt', async ({ server }) => {
       await server.inject({
         method: 'GET',
-        url: paths.logout
+        url: '/logout'
       })
 
       expect(mockCdpAuditing).not.toHaveBeenCalled()
@@ -118,7 +117,7 @@ describe('#logoutController - integration', () => {
     it('should not record sign out success metric', async ({ server }) => {
       await server.inject({
         method: 'GET',
-        url: paths.logout
+        url: '/logout'
       })
 
       expect(mockSignOutSuccessMetric).not.toHaveBeenCalled()

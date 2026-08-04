@@ -19,10 +19,7 @@ const existingSession = /** @type {UserSession} */ ({
   idToken: 'old-id-token',
   refreshToken: 'old-refresh-token',
   idTokenRefreshInProgress: true,
-  urls: {
-    token: 'http://oidc-provider/token',
-    logout: 'http://oidc-provider/logout'
-  }
+  urls: { token: 'http://auth/token', logout: 'http://auth/logout' }
 })
 
 const refreshedTokens = {

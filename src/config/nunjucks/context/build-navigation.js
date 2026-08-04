@@ -1,5 +1,4 @@
 import { config } from '#config/config.js'
-import { paths } from '#server/paths.js'
 
 /**
  * Navigation item
@@ -43,7 +42,7 @@ const manageAccount = ({ t: localise }) => {
 const signOut = ({ localiseUrl, t: localise }) => {
   return [
     {
-      href: localiseUrl(paths.logout),
+      href: localiseUrl('/logout'),
       text: localise('common:navigation:signOut')
     }
   ]
