@@ -2,5 +2,10 @@
   "home": {
     "pageTitle": "Regulators home",
     "heading": "Regulators home"
+  },
+  "notAuthorised": {
+    "pageTitle": "Not authorised",
+    "heading": "User not authorised",
+    "body": "This Entra user is not configured as a regulator."
   }
 }

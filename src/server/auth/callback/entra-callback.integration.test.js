@@ -2,9 +2,7 @@ import * as jose from 'jose'
 import { config } from '#config/config.js'
 import { REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
-import { asHtml } from '#server/common/test-helpers/dom.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
 import { createPrivateKey, generateKeyPairSync, randomUUID } from 'node:crypto'
@@ -216,30 +214,47 @@ describe('/auth/callback/entra - GET integration', async () => {
   })
 
   describe('on successful return from Entra ID - user without regulator role', () => {
-    it('renders the regulator-not-authorised page', async ({ server, msw }) => {
+    it('redirects to the regulators home page', async ({ server, msw }) => {
       const response = await performSignInFlow(server, msw, nonRegulatorToken)
 
-      expect(response.statusCode).toBe(statusCodes.ok)
-
-      const $ = load(asHtml(response.result))
-      expect($('h1').text().trim()).toBe('User not authorised')
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/home')
     })
 
-    it('records sign in failure metric', async ({ server, msw }) => {
-      await performSignInFlow(server, msw, nonRegulatorToken)
-
-      expect(mock.signInFailureMetric).toHaveBeenCalledTimes(1)
-      expect(mock.signInFailureMetric).toHaveBeenCalledWith('entra-id')
-    })
-
-    it('does not create a session', async ({ server, msw }) => {
+    it('creates a session', async ({ server, msw }) => {
       const response = await performSignInFlow(server, msw, nonRegulatorToken)
 
       const setCookieHeaders = []
         .concat(response.headers['set-cookie'] ?? [])
         .join(';')
 
-      expect(setCookieHeaders).not.toContain('userSession=')
+      expect(setCookieHeaders).toContain('userSession=')
+    })
+
+    it('records sign in success metric', async ({ server, msw }) => {
+      await performSignInFlow(server, msw, nonRegulatorToken)
+
+      expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
+      expect(mock.signInSuccessMetric).toHaveBeenCalledWith('entra-id')
+    })
+
+    it('audits a successful sign in attempt', async ({ server, msw }) => {
+      await performSignInFlow(server, msw, nonRegulatorToken)
+
+      expect(mock.cdpAuditing).toHaveBeenCalledTimes(1)
+      expect(mock.cdpAuditing).toHaveBeenCalledWith({
+        event: {
+          category: 'access',
+          action: 'sign-in'
+        },
+        context: {
+          oidcProvider: 'entra-id'
+        },
+        user: {
+          id: 'entra-user-id',
+          email: 'jane.doe@example.com'
+        }
+      })
     })
   })
 

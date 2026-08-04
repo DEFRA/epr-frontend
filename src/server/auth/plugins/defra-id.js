@@ -90,6 +90,7 @@ const createDefraId = (verifyToken) => ({
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint
             }
+            credentials.scope = []
           }
         },
         providerParams: function (request) {

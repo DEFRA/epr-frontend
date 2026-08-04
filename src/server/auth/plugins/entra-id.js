@@ -6,6 +6,7 @@ import * as jose from 'jose'
 import { getTokenExpiresAt } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 import { getRedirectUrl } from '../helpers/get-redirect-url.js'
+import { SCOPES } from '../scopes.js'
 
 /**
  * @import { AzureB2CTokenParams, BellProfileTarget, OAuthTokenParams } from '../types/auth.js'
@@ -123,13 +124,16 @@ const createEntraId = () => ({
             const payload = await verifyToken(credentials.token ?? '')
             const { oid: id, preferred_username: email, roles = [] } = payload
 
-            credentials.profile = { id, email, roles }
+            credentials.profile = { id, email }
             credentials.expiresAt = getTokenExpiresAt(payload)
             credentials.idToken = params.id_token
             credentials.urls = {
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint
             }
+            credentials.scope = roles.includes(REGULATOR_ROLE)
+              ? [SCOPES.regulator]
+              : []
           }
         },
         providerParams: () => ({

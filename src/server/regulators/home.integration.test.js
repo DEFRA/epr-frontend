@@ -2,6 +2,7 @@ import { config } from '#config/config.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { OIDC_ENTRA_ID, REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
@@ -11,9 +12,9 @@ const mockAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: {
     id: 'entra-user-1',
-    email: 'jane.doe@example.com',
-    roles: [REGULATOR_ROLE]
-  }
+    email: 'jane.doe@example.com'
+  },
+  scope: [SCOPES.regulator]
 })
 
 describe('/regulators/home - GET integration', () => {
@@ -49,5 +50,24 @@ describe('/regulators/home - GET integration', () => {
     })
 
     expect(response.statusCode).toBe(statusCodes.found)
+  })
+
+  it('redirects authenticated non-regulator users to the not-authorised page', async ({
+    server
+  }) => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/regulators/home',
+      auth: buildMockAuth({
+        provider: OIDC_ENTRA_ID,
+        profile: {
+          id: 'entra-user-2',
+          email: 'no.role@example.com'
+        }
+      })
+    })
+
+    expect(response.statusCode).toBe(statusCodes.found)
+    expect(response.headers['location']).toBe('/regulators/not-authorised')
   })
 })

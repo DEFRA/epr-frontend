@@ -2,7 +2,7 @@ import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
-import { OIDC_ENTRA_ID, REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -142,13 +142,6 @@ const entraIdCallbackController = {
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
 
-      if (!session.profile.roles?.includes(REGULATOR_ROLE)) {
-        await metrics.signInFailure(OIDC_ENTRA_ID)
-        return h.view('auth/callback/regulator-not-authorised', {
-          pageTitle: request.t('auth:regulatorNotAuthorised:pageTitle')
-        })
-      }
-
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
@@ -167,7 +160,7 @@ const entraIdCallbackController = {
 
       const redirectUrl = referrerIfPresentElseDefault(
         request,
-        request.localiseUrl('/regulators/home')
+        request.localiseUrl(paths.regulators.home)
       )
 
       return h.redirect(redirectUrl)
