@@ -53,6 +53,9 @@ export const buildReapplyAccreditation = ({
   text
 }) => {
   if (
+    // No base URL means WS2 is not wired up for this environment yet: hide the
+    // link rather than render a broken same-origin relative href.
+    !baseUrl ||
     !isWithinReapplyWindow(now, window) ||
     registration.status !== REG_ACC_STATUS.APPROVED ||
     !accreditation ||
@@ -63,6 +66,10 @@ export const buildReapplyAccreditation = ({
   }
 
   const year = getYear(parseISO(accreditation.validFrom)) + 1
+  // `registration.material` is sent as the raw lowercase slug, verbatim. For
+  // glass this is the bare `glass` value, not the remelt/other sub-type: WS2
+  // resolves the sub-type from the registration id when it pre-populates the
+  // renewal, so nothing is lost. All material values are safe URL slugs.
   const href = `${baseUrl}/operator-accreditation/${organisationId}/${registration.id}/${registration.material}/${year}`
 
   return { isVisible: true, link: { href, text } }

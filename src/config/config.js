@@ -388,6 +388,34 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
+const MONTH_DAY_PATTERN = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
+
+/**
+ * Fail fast on a misconfigured reapply window. The feature has no flag and is
+ * gated entirely on this config, so a silent bad value is a silent kill switch:
+ * a malformed bound makes the window check return false everywhere (an Invalid
+ * Date is never "within" the interval), and a wrapping window (start after end)
+ * inverts the interval check. Both throw at startup instead.
+ * @param {{ windowStart: string; windowEnd: string }} window
+ */
+export const assertValidReapplyWindow = ({ windowStart, windowEnd }) => {
+  for (const [key, value] of Object.entries({ windowStart, windowEnd })) {
+    if (!MONTH_DAY_PATTERN.test(value)) {
+      throw new Error(
+        `reapplyAccreditation.${key} must be an MM-DD date, got "${value}"`
+      )
+    }
+  }
+
+  if (windowStart > windowEnd) {
+    throw new Error(
+      `reapplyAccreditation.windowStart ("${windowStart}") must not be after windowEnd ("${windowEnd}")`
+    )
+  }
+}
+
+assertValidReapplyWindow(config.get('reapplyAccreditation'))
+
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
 

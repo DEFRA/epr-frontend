@@ -100,6 +100,12 @@ describe('#buildReapplyAccreditation', () => {
     expect(result.isVisible).toBe(true)
   })
 
+  test('is not visible when the base URL is not configured', () => {
+    const result = buildReapplyAccreditation({ ...baseParams, baseUrl: '' })
+
+    expect(result).toStrictEqual({ isVisible: false, link: null })
+  })
+
   test('is not visible when outside the window', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,

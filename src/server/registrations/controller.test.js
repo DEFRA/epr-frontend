@@ -12,6 +12,7 @@ import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import {
   getByRole,
+  getByText,
   queryByRole,
   queryByText,
   within
@@ -904,12 +905,18 @@ describe('#accreditationDashboardController', () => {
         const dom = new JSDOM(result)
         const { body } = dom.window.document
 
+        const link = getByRole(body, 'link', {
+          name: 'Reapply for accreditation'
+        })
+        expect(link.getAttribute('href')).toBe(expectedHref)
+
+        // The link is prepended above the (unchanged) placeholder, not below it.
+        const placeholderNode = getByText(body, placeholder)
+        const { DOCUMENT_POSITION_FOLLOWING } = dom.window.Node
         expect(
-          getByRole(body, 'link', {
-            name: 'Reapply for accreditation'
-          }).getAttribute('href')
-        ).toBe(expectedHref)
-        expect(queryByText(body, placeholder)).not.toBeNull()
+          link.compareDocumentPosition(placeholderNode) &
+            DOCUMENT_POSITION_FOLLOWING
+        ).toBe(DOCUMENT_POSITION_FOLLOWING)
       }
     )
 
