@@ -3,13 +3,13 @@ export const paths = Object.freeze({
     defraId: Object.freeze({
       callback: '/auth/callback',
       login: '/login',
-      postLogoutRedirect: '/auth/logout',
       organisation: '/auth/organisation'
     }),
     entraId: Object.freeze({
       callback: '/auth/callback/entra',
       login: '/regulators/login'
-    })
+    }),
+    postLogoutRedirect: '/auth/logout'
   }),
   loggedOut: '/logged-out',
   logout: '/logout',
