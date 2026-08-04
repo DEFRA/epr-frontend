@@ -363,6 +363,26 @@ export const config = convict({
       default: false,
       env: 'FEATURE_FLAG_REGULATOR_ACCESS'
     }
+  },
+  reapplyAccreditation: {
+    windowStart: {
+      doc: 'Recurring annual start (inclusive, MM-DD) of the reapply-for-accreditation window',
+      format: String,
+      default: '09-01',
+      env: 'REAPPLY_ACCREDITATION_WINDOW_START'
+    },
+    windowEnd: {
+      doc: 'Recurring annual end (inclusive, MM-DD) of the reapply-for-accreditation window',
+      format: String,
+      default: '12-31',
+      env: 'REAPPLY_ACCREDITATION_WINDOW_END'
+    },
+    baseUrl: {
+      doc: 'WS2 register/enrol frontend base URL the reapply link points at',
+      format: String,
+      default: '',
+      env: 'REAPPLY_ACCREDITATION_BASE_URL'
+    }
   }
 })
 

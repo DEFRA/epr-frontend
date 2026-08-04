@@ -1,6 +1,8 @@
+import { config } from '#config/config.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getNoteTypeDisplayNames } from '#server/common/helpers/prns/registration-helpers.js'
+import { buildReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
 import { getStatusClass } from '#server/organisations/helpers/status-helpers.js'
 import { capitalize } from 'lodash-es'
@@ -20,7 +22,7 @@ export const controller = {
 
     const session = request.auth.credentials
 
-    const { registration, accreditation } =
+    const { registration, accreditation, rawAccreditation } =
       await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
@@ -40,6 +42,7 @@ export const controller = {
       request,
       organisationId,
       accreditation,
+      rawAccreditation,
       registration,
       wasteBalance
     })
@@ -79,6 +82,7 @@ export const controller = {
  *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
+ *   reapplyAccreditation: ReapplyAccreditation;
  *   registration: TaggedReference;
  *   reports: { link: Link };
  *   siteName: string | null;
@@ -119,6 +123,7 @@ const buildMaybeTaggedReference = ({ reference, status }) => {
  *   organisationId: string;
  *   registration: Registration;
  *   accreditation: Accreditation | undefined;
+ *   rawAccreditation: Accreditation | undefined;
  *   wasteBalance: WasteBalance | null;
  * }} params
  * @returns {RegistrationViewModel}
@@ -127,6 +132,7 @@ function buildViewModel({
   request,
   organisationId,
   accreditation,
+  rawAccreditation,
   registration,
   wasteBalance
 }) {
@@ -143,6 +149,20 @@ function buildViewModel({
   const uploadSummaryLogUrl = request.localiseUrl(
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
+
+  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
+  const reapplyAccreditation = buildReapplyAccreditation({
+    now: new Date(),
+    window: { windowStart, windowEnd },
+    baseUrl,
+    organisationId,
+    registration,
+    // Deliberately the raw (unfiltered) accreditation, not the live-only
+    // `accreditation` above: the reapply link must also show for a `cancelled`
+    // accreditation, which the filtered view drops to undefined.
+    accreditation: rawAccreditation,
+    text: localise('registrations:reapplyAccreditation')
+  })
 
   /** @type {RegistrationViewModel} */
   const viewModel = {
@@ -165,6 +185,7 @@ function buildViewModel({
       registration.id,
       registration.accreditationId
     ),
+    reapplyAccreditation,
     reports: getReportsViewData(request, organisationId, registration.id),
     registration: buildTaggedReference({
       reference: registration.registrationNumber,
@@ -249,5 +270,6 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { ReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */

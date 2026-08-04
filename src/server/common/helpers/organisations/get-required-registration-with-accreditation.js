@@ -51,5 +51,14 @@ export async function getRequiredRegistrationWithAccreditation({
     )
   }
 
-  return { registration, accreditation, organisationData }
+  return {
+    registration,
+    accreditation,
+    // This path only returns once `accreditation` is confirmed present (and
+    // therefore live), so the raw and filtered records are the same object
+    // here. We echo it into `rawAccreditation` purely to satisfy the
+    // `Required<RegistrationWithAccreditation>` return type.
+    rawAccreditation: accreditation,
+    organisationData
+  }
 }

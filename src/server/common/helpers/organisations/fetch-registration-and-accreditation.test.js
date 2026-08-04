@@ -41,14 +41,17 @@ describe(fetchRegistrationAndAccreditation, () => {
       idToken
     )
 
+    const accreditation = {
+      id: accreditationId,
+      accreditationNumber: 'ACC-2025-001',
+      status: 'approved'
+    }
+
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId, accreditationId },
-      accreditation: {
-        id: accreditationId,
-        accreditationNumber: 'ACC-2025-001',
-        status: 'approved'
-      }
+      accreditation,
+      rawAccreditation: accreditation
     })
   })
 
@@ -82,7 +85,12 @@ describe(fetchRegistrationAndAccreditation, () => {
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId, accreditationId },
-      accreditation: undefined
+      accreditation: undefined,
+      rawAccreditation: {
+        id: accreditationId,
+        accreditationNumber: 'ACC-2025-001',
+        status: 'created'
+      }
     })
   })
 
@@ -130,7 +138,8 @@ describe(fetchRegistrationAndAccreditation, () => {
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId },
-      accreditation: undefined
+      accreditation: undefined,
+      rawAccreditation: undefined
     })
   })
 
@@ -162,7 +171,8 @@ describe(fetchRegistrationAndAccreditation, () => {
     expect(result).toStrictEqual({
       organisationData: mockOrganisationData,
       registration: { id: registrationId, accreditationId: 'non-existent-acc' },
-      accreditation: undefined
+      accreditation: undefined,
+      rawAccreditation: undefined
     })
   })
 
