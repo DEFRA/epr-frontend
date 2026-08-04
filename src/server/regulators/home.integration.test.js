@@ -1,7 +1,7 @@
 import { config } from '#config/config.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
-import { OIDC_ENTRA_ID, REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { it } from '#vite/fixtures/server.js'
