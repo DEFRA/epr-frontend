@@ -135,7 +135,8 @@ const it = /** @type {TestAPI<ServerFixtures>} */ (
       async ({}, use) => {
         const server = setupServer(
           awsEc2MetadataHandler,
-          ...createOidcHandlers('http://defra-id.auth')
+          ...createOidcHandlers('http://defra-id.auth'),
+          ...createOidcHandlers('http://entra-id.auth')
         )
         server.listen({ onUnhandledRequest: 'error' })
 

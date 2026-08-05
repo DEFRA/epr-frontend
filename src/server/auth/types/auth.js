@@ -82,14 +82,15 @@
 
 /**
  * Target shape for the Bell `profile` hook in
- * `src/server/auth/plugins/defra-id.js`. At entry this is a plain
- * `BellCredentials` object supplied by `@hapi/bell`; the hook then mutates
- * it into a `UserSession` by attaching the session-specific fields declared
- * here as optional so each assignment is type-checked.
+ * `src/server/auth/plugins/defra-id.js` and `src/server/auth/plugins/entra-id.js`.
+ * At entry this is a plain `BellCredentials` object supplied by `@hapi/bell`; the
+ * hook then mutates it into a `UserSession` by attaching the session-specific
+ * fields declared here as optional so each assignment is type-checked.
  * @typedef {(OAuthBellCredentials | AzureB2CBellCredentials) & {
  *   profile?: UserProfile
  *   expiresAt?: string
  *   idToken?: string
+ *   scope: string[]
  *   urls?: { token: string, logout: string }
  * }} BellProfileTarget
  */

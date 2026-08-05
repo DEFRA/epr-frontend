@@ -8,6 +8,7 @@ import {
 } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 import { getRedirectUrl } from '../helpers/get-redirect-url.js'
+import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
 
 /**
  * @import { AzureB2CTokenParams, AzureB2CBellCredentials, BellProfileTarget, OAuthBellCredentials, OAuthTokenParams } from '../types/auth.js'
@@ -51,12 +52,7 @@ const createDefraId = (verifyToken) => ({
         cookie: 'bell-defra-id',
         isSecure: config.get('session.cookie.secure'),
         location: (request) => {
-          if (request.info.referrer) {
-            const { hash, pathname, search } = new URL(request.info.referrer)
-
-            const referrer = `${pathname}${search}${hash}`
-            request.yar.flash('referrer', referrer)
-          }
+          recordSignInReferrer(request)
 
           return getRedirectUrl(
             asHapiRequest(request),
@@ -90,6 +86,7 @@ const createDefraId = (verifyToken) => ({
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint
             }
+            credentials.scope = []
           }
         },
         providerParams: function (request) {

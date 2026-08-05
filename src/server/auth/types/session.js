@@ -10,6 +10,8 @@
  *
  * `email` is optional because the Defra ID id_token doesn't guarantee its
  * presence (the `email` scope isn't requested — see DefraIdJwtPayload).
+ *
+ * access to regulator-only areas — see entra-id.js).
  * @typedef {{
  *   id: string
  *   email?: string
@@ -26,6 +28,7 @@
  *   refreshToken: string
  *   urls: { token: string, logout: string }
  *   idTokenRefreshInProgress?: boolean
+ *   scope: string[]
  * }} UserSession
  */
 
