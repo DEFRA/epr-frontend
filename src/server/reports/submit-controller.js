@@ -133,7 +133,7 @@ function buildActivityViewData(
 /**
  * @typedef {{
  *   registration: Registration,
- *   accreditation: Accreditation | null,
+ *   accreditation: Accreditation | undefined,
  *   reportDetail: ReportDetailResponse,
  *   reportsUrl: string,
  *   localise: Localise,

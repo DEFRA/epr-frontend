@@ -13,6 +13,7 @@ import { getStatusClass } from './helpers/status-helpers.js'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Organisation } from '#domain/organisations/model.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { WasteBalanceMap } from '#server/common/helpers/waste-balance/types.js'
@@ -166,7 +167,7 @@ function createTableHeaders(localise) {
 
 /**
  * Gets the site name for a registration
- * @param {object} registration - Registration data
+ * @param {Registration} registration - Registration data
  * @param {(key: string) => string} localise - Translation function
  * @returns {string | null} Site name or null for exporters
  */
@@ -184,7 +185,7 @@ function getSiteName(registration, localise) {
 /**
  * Adds a row to an existing site or creates a new site entry
  * @param {Array} sites - Current sites array
- * @param {object} registration - Registration data
+ * @param {Registration} registration - Registration data
  * @param {Array} row - Row data to add
  * @param {(key: string) => string} localise - Translation function
  * @returns {Array} Updated sites array
@@ -253,8 +254,8 @@ const tabTypes = Object.freeze({
 
 /**
  * Filters registrations that should be displayed and joins with accreditations
- * @param {object} organisationData - Organisation data from backend
- * @returns {Array<{registration: object, accreditation: object | undefined}>}
+ * @param {Organisation} organisationData - Organisation data from backend
+ * @returns {Array<{registration: Registration, accreditation: Accreditation | undefined}>}
  */
 function getDisplayableRegistrations(organisationData) {
   const accreditationById = new Map(
@@ -263,7 +264,9 @@ function getDisplayableRegistrations(organisationData) {
 
   return organisationData.registrations
     .map((registration) => {
-      const accreditation = accreditationById.get(registration.accreditationId)
+      const accreditation = registration.accreditationId
+        ? accreditationById.get(registration.accreditationId)
+        : undefined
       return {
         registration,
         accreditation: isAccreditationActive(accreditation)
@@ -281,7 +284,7 @@ function getDisplayableRegistrations(organisationData) {
 /**
  * Fetches waste balances for displayable registrations
  * @param {string} organisationId - Organisation ID
- * @param {Array<{registration: object}>} displayableRegistrations - Filtered registrations
+ * @param {Array<{registration: Registration}>} displayableRegistrations - Filtered registrations
  * @param {string} idToken - JWT token
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
@@ -298,7 +301,7 @@ async function getWasteBalanceMap(
 
   const accreditationIds = displayableRegistrations
     .map(({ registration }) => registration.accreditationId)
-    .filter(Boolean)
+    .filter((id) => id !== undefined)
 
   try {
     return await fetchWasteBalances(organisationId, accreditationIds, idToken)

@@ -16,6 +16,10 @@ import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/get-required-registration-with-accreditation.js')
 )
@@ -117,7 +121,7 @@ const mockPernStatusUpdated = asUpdatePrnStatusResponse({
 
 /**
  * Helper to go through full PRN creation flow and return session cookies
- * @param {object} server
+ * @param {HapiServer} server
  * @param {object} payload
  * @param {string} viewUrlOverride - Optional URL override for view page
  * @returns {Promise<{cookies: string}>}

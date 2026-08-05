@@ -13,7 +13,13 @@ import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, vi } from 'vitest'
 
 /**
+ * @import { UserProfile, UserSession } from '#server/auth/types/session.js'
  * @import { VerifyToken } from '#server/auth/types/verify-token.js'
+ */
+
+/**
+ * A session whose profile carries the extra JWT claims these tests exercise.
+ * @typedef {UserSession & { profile: UserProfile & Record<string, unknown> }} TestUserSession
  */
 
 vi.mock(import('#server/auth/helpers/verify-token.js'), () => ({
@@ -68,7 +74,7 @@ describe('#sessionCookie - integration', () => {
      * Helper function to create expired session data for refresh tests
      * @param {string} userId - User identifier
      * @param {string} expiresAt - ISO date string for token expiry
-     * @returns {{sessionId: string, sessionData: object}} Session ID and data
+     * @returns {{sessionId: string, sessionData: TestUserSession}} Session ID and data
      */
     const createExpiredRefreshSessionData = (userId, expiresAt) => ({
       sessionId: `test-session-${userId}`,
@@ -77,6 +83,8 @@ describe('#sessionCookie - integration', () => {
           id: userId,
           email: `${userId}@example.com`
         },
+        provider: 'defra-id',
+        query: {},
         expiresAt,
         idToken: `old-id-token-${userId}`,
         refreshToken: `old-refresh-token-${userId}`,
