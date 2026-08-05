@@ -67,7 +67,16 @@ export const buildReapplyAccreditation = ({
     return { isVisible: false, link: null }
   }
 
-  const year = getYear(parseISO(accreditation.validFrom)) + 1
+  // Phase 1 only renews a CURRENT-YEAR accreditation (PAE-1791 AC 5/6). A
+  // prior-year accreditation (the group `cancelled` was added for) would point
+  // the link at a past year, so gate on the accreditation year matching `now`.
+  // Not-accredited-this-year is deferred to Phase 2 / PAE-1801.
+  const accreditationYear = getYear(parseISO(accreditation.validFrom))
+  if (accreditationYear !== getYear(now)) {
+    return { isVisible: false, link: null }
+  }
+
+  const year = accreditationYear + 1
   // `registration.material` is sent as the raw lowercase slug, verbatim. For
   // glass this is the bare `glass` value, not the remelt/other sub-type: WS2
   // resolves the sub-type from the registration id when it pre-populates the

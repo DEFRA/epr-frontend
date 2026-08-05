@@ -46,7 +46,7 @@ describe('#buildReapplyAccreditation', () => {
     })
   })
 
-  test('derives the year from validFrom + 1, not the current year', () => {
+  test('is not visible for a prior-year accreditation', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       accreditation: asAccreditation({
@@ -55,8 +55,21 @@ describe('#buildReapplyAccreditation', () => {
       })
     })
 
+    expect(result).toStrictEqual({ isVisible: false, link: null })
+  })
+
+  test('derives the link year from the current accreditation year + 1', () => {
+    const result = buildReapplyAccreditation({
+      ...baseParams,
+      now: new Date('2027-10-01T12:00:00'),
+      accreditation: asAccreditation({
+        status: 'approved',
+        validFrom: '2027-01-01'
+      })
+    })
+
     expect(result.link?.href).toBe(
-      'https://ws2.example/operator-accreditation/org1/reg1/plastic/2026'
+      'https://ws2.example/operator-accreditation/org1/reg1/plastic/2028'
     )
   })
 

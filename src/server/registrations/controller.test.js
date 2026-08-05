@@ -839,6 +839,11 @@ describe('#accreditationDashboardController', () => {
       '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-plastic-approved'
     const placeholder =
       'Registration and accreditation management is not yet available.'
+    // Phase 1 only shows the link for a current-year accreditation, and the
+    // controller reads the real clock, so derive the fixture year from now
+    // rather than hard-coding it (else these tests rot at the year boundary).
+    const currentYear = new Date().getFullYear()
+    const nextYear = currentYear + 1
     const originalWindowStartMonth = config.get(
       'reapplyAccreditation.windowStartMonth'
     )
@@ -877,8 +882,7 @@ describe('#accreditationDashboardController', () => {
         ...overrides
       })
 
-    const expectedHref =
-      'https://ws2.example/operator-accreditation/6507f1f77bcf86cd79943901/reg-001-plastic-approved/plastic/2027'
+    const expectedHref = `https://ws2.example/operator-accreditation/6507f1f77bcf86cd79943901/reg-001-plastic-approved/plastic/${nextYear}`
 
     it.for([
       {
@@ -898,7 +902,7 @@ describe('#accreditationDashboardController', () => {
       async ({ status }, { server }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           mockRegistration({
-            rawAccreditation: { status, validFrom: '2026-01-01' }
+            rawAccreditation: { status, validFrom: `${currentYear}-01-01` }
           })
         )
 
@@ -912,7 +916,7 @@ describe('#accreditationDashboardController', () => {
         const { body } = dom.window.document
 
         const link = getByRole(body, 'link', {
-          name: 'apply for 2027 accreditation'
+          name: `apply for ${nextYear} accreditation`
         })
         expect(link.getAttribute('href')).toBe(expectedHref)
 
@@ -945,7 +949,10 @@ describe('#accreditationDashboardController', () => {
             status: 'created',
             site: { address: { line1: 'Test Site' } }
           },
-          rawAccreditation: { status: 'approved', validFrom: '2026-01-01' }
+          rawAccreditation: {
+            status: 'approved',
+            validFrom: `${currentYear}-01-01`
+          }
         }
       }
     ])(
@@ -965,7 +972,9 @@ describe('#accreditationDashboardController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'link', { name: 'apply for 2027 accreditation' })
+          queryByRole(body, 'link', {
+            name: `apply for ${nextYear} accreditation`
+          })
         ).toBeNull()
         expect(queryByText(body, placeholder)).not.toBeNull()
       }
@@ -983,7 +992,10 @@ describe('#accreditationDashboardController', () => {
 
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         mockRegistration({
-          rawAccreditation: { status: 'approved', validFrom: '2026-01-01' }
+          rawAccreditation: {
+            status: 'approved',
+            validFrom: `${currentYear}-01-01`
+          }
         })
       )
 
@@ -997,7 +1009,9 @@ describe('#accreditationDashboardController', () => {
       const { body } = dom.window.document
 
       expect(
-        queryByRole(body, 'link', { name: 'apply for 2027 accreditation' })
+        queryByRole(body, 'link', {
+          name: `apply for ${nextYear} accreditation`
+        })
       ).toBeNull()
       expect(queryByText(body, placeholder)).not.toBeNull()
     })
