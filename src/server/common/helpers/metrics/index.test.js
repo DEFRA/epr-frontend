@@ -4,25 +4,31 @@ import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
 import { metrics } from './index.js'
 import { config } from '#config/config.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
 const mockPutMetric = vi.fn()
 const mockFlush = vi.fn()
-const mockLoggerError = vi.fn()
+const mockPutDimensions = vi.fn()
+const mockLogger = createMockLogger()
 
 vi.mock(import('aws-embedded-metrics'), async (importOriginal) => {
   const original = await importOriginal()
 
   return {
     ...original,
-    createMetricsLogger: () => ({
-      putMetric: mockPutMetric,
-      flush: mockFlush
-    })
+    createMetricsLogger: () =>
+      /** @type {never} */ (
+        /** @type {unknown} */ ({
+          putMetric: mockPutMetric,
+          putDimensions: mockPutDimensions,
+          flush: mockFlush
+        })
+      )
   }
 })
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
-  createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
+  createLogger: () => mockLogger
 }))
 
 describe('#metrics', () => {
@@ -42,7 +48,7 @@ describe('#metrics', () => {
     it.each(metricsNames)('record metric - %s', async (metricName) => {
       config.set('isMetricsEnabled', true)
 
-      await metrics[metricName]()
+      await metrics[metricName]('oidc-provider-name')
 
       expect(mockPutMetric).toHaveBeenCalledWith(
         metricName,
@@ -52,6 +58,19 @@ describe('#metrics', () => {
       )
       expect(mockFlush).toHaveBeenCalledWith()
     })
+
+    it.each(metricsNames)(
+      'attaches provider as a dimension - %s',
+      async (metricName) => {
+        config.set('isMetricsEnabled', true)
+
+        await metrics[metricName]('oidc-provider-name')
+
+        expect(mockPutDimensions).toHaveBeenCalledWith({
+          oidcProvider: 'oidc-provider-name'
+        })
+      }
+    )
   })
 
   describe('when metrics throws', () => {
@@ -63,7 +82,7 @@ describe('#metrics', () => {
 
       await metrics[metricName]()
 
-      expect(mockLoggerError).toHaveBeenCalledWith({
+      expect(mockLogger.error).toHaveBeenCalledWith({
         message: mockError,
         err: Error(mockError)
       })

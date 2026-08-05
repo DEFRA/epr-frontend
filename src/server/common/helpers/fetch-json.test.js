@@ -21,6 +21,7 @@ describe(fetchJson, () => {
   it('should return JSON data when response is successful', async ({ msw }) => {
     const mockData = { status: 'validated', id: '123' }
 
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.get('https://api.example.com/test', ({ request }) => {
@@ -34,11 +35,15 @@ describe(fetchJson, () => {
     })
 
     expect(result).toStrictEqual(mockData)
-    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
-    expect(capturedRequest.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
+
+    const request = /** @type {Request} */ (capturedRequest)
+
+    expect(request.headers.get('content-type')).toBe('application/json')
+    expect(request.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
   it('should merge custom headers with Content-Type', async ({ msw }) => {
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.post('https://api.example.com/test', ({ request }) => {
@@ -53,9 +58,11 @@ describe(fetchJson, () => {
       body: JSON.stringify({ data: 'test' })
     })
 
-    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
-    expect(capturedRequest.headers.get('x-custom')).toBe('value')
-    expect(capturedRequest.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
+    const request = /** @type {Request} */ (capturedRequest)
+
+    expect(request.headers.get('content-type')).toBe('application/json')
+    expect(request.headers.get('x-custom')).toBe('value')
+    expect(request.headers.get('x-cdp-request-id')).toBe(MOCK_TRACE_ID)
   })
 
   it('should throw Boom notFound error when response is 404', async ({

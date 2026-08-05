@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { beforeEach, describe, expect, vi } from 'vitest'
@@ -21,16 +22,7 @@ vi.mock(
   })
 )
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
+const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
 
 describe('#submitSummaryLogController', () => {
   const organisationId = '123'
@@ -50,7 +42,7 @@ describe('#submitSummaryLogController', () => {
       accreditationNumber: '493021'
     }
 
-    submitSummaryLog.mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -85,7 +77,7 @@ describe('#submitSummaryLogController', () => {
       accreditationNumber: '493021'
     }
 
-    submitSummaryLog.mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -112,7 +104,7 @@ describe('#submitSummaryLogController', () => {
   it('should render conflict view when backend returns 409', async ({
     server
   }) => {
-    submitSummaryLog.mockRejectedValueOnce(
+    vi.mocked(submitSummaryLog).mockRejectedValueOnce(
       Boom.conflict('Summary log must be validated before submission')
     )
 
@@ -145,7 +137,7 @@ describe('#submitSummaryLogController', () => {
     server
   }) => {
     const error = new Error('Backend error')
-    submitSummaryLog.mockRejectedValueOnce(error)
+    vi.mocked(submitSummaryLog).mockRejectedValueOnce(error)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -172,7 +164,7 @@ describe('#submitSummaryLogController', () => {
       accreditationNumber: '493021'
     }
 
-    submitSummaryLog.mockResolvedValueOnce(mockResponse)
+    vi.mocked(submitSummaryLog).mockResolvedValueOnce(mockResponse)
 
     const getUrl = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
     const { cookie, crumb } = await getCsrfToken(server, getUrl, {
@@ -187,7 +179,9 @@ describe('#submitSummaryLogController', () => {
       payload: { crumb }
     })
 
-    const cookies = [firstResponse.headers['set-cookie']].flat()
+    const cookies = /** @type {string[]} */ (
+      [firstResponse.headers['set-cookie']].flat()
+    )
     const sessionCookie = cookies
       .map((c) => c.split(';')[0])
       .find((c) => c.startsWith('session='))

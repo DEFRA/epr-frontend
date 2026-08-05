@@ -1,33 +1,38 @@
 import { audit } from '@defra/cdp-auditing'
 
 /**
+ * @param {string} oidcProvider
  * @param {string} userId
  * @param {string | undefined} userEmail
  */
-function auditSignIn(userId, userEmail) {
-  auditSSO('sign-in', userId, userEmail)
+function auditSignIn(oidcProvider, userId, userEmail) {
+  auditSSO('sign-in', oidcProvider, userId, userEmail)
 }
 
 /**
+ * @param {string} oidcProvider
  * @param {string} userId
  * @param {string | undefined} userEmail
  */
-function auditSignOut(userId, userEmail) {
-  auditSSO('sign-out', userId, userEmail)
+function auditSignOut(oidcProvider, userId, userEmail) {
+  auditSSO('sign-out', oidcProvider, userId, userEmail)
 }
 
 /**
  * @param {'sign-in' | 'sign-out'} action
+ * @param {string} oidcProvider
  * @param {string} userId
  * @param {string | undefined} userEmail
  */
-function auditSSO(action, userId, userEmail) {
+function auditSSO(action, oidcProvider, userId, userEmail) {
   const payload = {
     event: {
       category: 'access',
       action
     },
-    context: {},
+    context: {
+      oidcProvider
+    },
     user: {
       id: userId,
       email: userEmail

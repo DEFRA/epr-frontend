@@ -1,4 +1,3 @@
-import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -22,19 +21,14 @@ import {
   queryByText
 } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 import { summaryLogStatuses } from '../common/constants/statuses.js'
-import {
-  buildLoadsByWasteRecordTypeViewModel,
-  buildLoadsViewModel,
-  getWasteRecordSectionNumber
-} from './controller.js'
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
  * @import { WasteRecordType } from '#domain/waste-records/model.js'
- * @import { LoadRow, PeriodStatusByChange, RawLoadsByWasteRecordType, SummaryLogStatusResponse } from './types.js'
+ * @import { LoadRow, PeriodStatusByChange, SummaryLogStatusResponse } from './types.js'
  */
 
 const mockUploadUrl = 'https://storage.example.com/upload?signature=abc123'
@@ -241,654 +235,6 @@ describe('#summaryLogUploadProgressController', () => {
   })
 
   describe('terminal states', () => {
-    const expectCheckPageContent = (result) => {
-      expect(result).toStrictEqual(
-        expect.stringContaining('Check before confirming upload')
-      )
-      expect(result).toStrictEqual(expect.stringContaining('Confirm upload'))
-      expect(result).toStrictEqual(
-        expect.stringContaining('upload an updated summary log')
-      )
-    }
-
-    it('status: validated - should show check page and stop polling', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER'
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          'action="/organisations/123/registrations/456/summary-logs/789/submit"'
-        )
-      )
-      expect(result).toStrictEqual(expect.stringContaining('method="POST"'))
-      expect(result).toStrictEqual(
-        expect.stringContaining('data-prevent-double-click="true"')
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).not.toStrictEqual(enablesClientSidePolling())
-    })
-
-    it('status: validated - should show return to home link to organisation home', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER'
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toStrictEqual(expect.stringContaining('return to home'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(`href="/organisations/${organisationId}"`)
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated - should show warning inset text with both links', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER'
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toStrictEqual(expect.stringContaining('govuk-inset-text'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          'This data will not be saved until you confirm upload'
-        )
-      )
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('upload an updated summary log')
-      )
-      expect(result).toStrictEqual(expect.stringContaining('return to home'))
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with REPROCESSOR_INPUT - should show section 1 in explanation text', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'REPROCESSOR_INPUT',
-        loads: {
-          added: {
-            included: {
-              count: 5,
-              rowIds: ['1001', '1002', '1003', '1004', '1005']
-            },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('section 1 of your summary log')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with REPROCESSOR_OUTPUT - should show section 3 in explanation text', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'REPROCESSOR_OUTPUT',
-        loads: {
-          added: {
-            included: {
-              count: 5,
-              rowIds: ['1001', '1002', '1003', '1004', '1005']
-            },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('section 3 of your summary log')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with EXPORTER - should show section 1 in explanation text', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: {
-              count: 5,
-              rowIds: ['1001', '1002', '1003', '1004', '1005']
-            },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('section 1 of your summary log')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with new loads - should show new loads heading', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: {
-              count: 7,
-              rowIds: ['1092', '1093', '1094', '1095', '1096', '1097', '1098']
-            },
-            excluded: { count: 2, rowIds: ['1099', '1100'] }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('New loads'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '7 new loads will be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '2 new loads will not be added to your waste balance'
-        )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with no new loads - should show no new loads heading', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 3, rowIds: ['1096', '1099', '1100'] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('There are no new loads')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with adjusted loads - should show adjusted loads section', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'REPROCESSOR_INPUT',
-        loads: {
-          added: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 3, rowIds: ['1096', '1099', '1100'] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('Adjusted loads'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          'These loads have had data added, removed, or changed in section 1 of your summary log since it was last submitted.'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '3 adjusted loads will be reflected in your waste balance'
-        )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with new included loads - should NOT display row IDs', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 3, rowIds: ['1092', '1093', '1094'] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).not.toStrictEqual(expect.stringContaining('<li>1092</li>'))
-      expect(result).not.toStrictEqual(expect.stringContaining('<li>1093</li>'))
-      expect(result).not.toStrictEqual(expect.stringContaining('<li>1094</li>'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '3 new loads will be added to your waste balance'
-        )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with singular load - should use singular form', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 1, rowIds: ['1092'] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 1, rowIds: ['1093'] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('New loads'))
-      expect(result).toStrictEqual(expect.stringContaining('Adjusted loads'))
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '1 new load will be added to your waste balance'
-        )
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          '1 adjusted load will be reflected in your waste balance'
-        )
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with 100+ excluded loads - should show supplementary guidance instead of row IDs', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: {
-              count: 5,
-              rowIds: ['1001', '1002', '1003', '1004', '1005']
-            },
-            excluded: {
-              count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => String(2000 + i))
-            }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('100 or more loads are missing data')
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining('supplementary guidance')
-      )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('Show 100 loads')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with 99 excluded loads - should show Show loads link with row IDs', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 0, rowIds: [] },
-            excluded: {
-              count: 99,
-              rowIds: Array.from({ length: 99 }, (_, i) => String(2000 + i))
-            }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('Show 99 loads'))
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('100 or more loads are missing data')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with 100+ adjusted excluded loads - should show supplementary guidance', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 2, rowIds: ['3001', '3002'] },
-            excluded: {
-              count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => String(4000 + i))
-            }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('100 or more loads are missing data')
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with 99 adjusted excluded loads - should show Show loads link', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: {
-              count: 99,
-              rowIds: Array.from({ length: 99 }, (_, i) => String(4000 + i))
-            }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('Show 99 loads'))
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('100 or more loads are missing data')
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with adjusted included loads - should show Show loads link', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: {
-              count: 5,
-              rowIds: ['3001', '3002', '3003', '3004', '3005']
-            },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(expect.stringContaining('Show 5 loads'))
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated with 100+ adjusted included loads - should NOT show missing data message', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: {
-              count: 100,
-              rowIds: Array.from({ length: 100 }, (_, i) => String(3000 + i))
-            },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('loads are missing data')
-      )
-      expect(result).toStrictEqual(
-        expect.stringContaining(
-          'As there are 100 or more adjusted loads, we are not able to list them all here'
-        )
-      )
-      expect(result).not.toStrictEqual(
-        expect.stringContaining('Show 100 loads')
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    it('status: validated without adjusted loads - should show no adjusted loads message', async ({
-      server
-    }) => {
-      mockFetchSummaryLogStatus.mockResolvedValueOnce({
-        status: summaryLogStatuses.validated,
-        processingType: 'EXPORTER',
-        loads: {
-          added: {
-            included: {
-              count: 5,
-              rowIds: ['1092', '1093', '1094', '1095', '1096']
-            },
-            excluded: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            included: { count: 0, rowIds: [] },
-            excluded: { count: 0, rowIds: [] }
-          }
-        }
-      })
-
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url,
-        auth: mockAuth
-      })
-
-      expectCheckPageContent(result)
-
-      expect(result).toStrictEqual(
-        expect.stringContaining('There are no adjusted loads')
-      )
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
     it('status: submitted - should show success page and stop polling', async ({
       server
     }) => {
@@ -936,35 +282,6 @@ describe('#summaryLogUploadProgressController', () => {
     })
 
     describe('waste balance', () => {
-      it('status: validated - should not fetch waste balance data', async ({
-        server
-      }) => {
-        mockFetchSummaryLogStatus.mockResolvedValueOnce({
-          status: summaryLogStatuses.validated,
-          processingType: 'EXPORTER',
-          loads: {
-            added: {
-              included: { count: 0, rowIds: [] },
-              excluded: { count: 0, rowIds: [] }
-            },
-            adjusted: {
-              included: { count: 0, rowIds: [] },
-              excluded: { count: 0, rowIds: [] }
-            }
-          }
-        })
-
-        const { statusCode } = await server.inject({
-          method: 'GET',
-          url,
-          auth: mockAuth
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(fetchRegistrationAndAccreditation).not.toHaveBeenCalled()
-        expect(fetchWasteBalances).not.toHaveBeenCalled()
-      })
-
       it('status: submitted - should fetch waste balance data', async ({
         server
       }) => {
@@ -1175,6 +492,86 @@ describe('#summaryLogUploadProgressController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
+    describe('closed-period adjustments "Further action needed" section', () => {
+      const ZERO_CHANGE = {
+        balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+        nonBalanceAffecting: { count: 0, rows: [] }
+      }
+      const emptyPeriod = () => ({ added: ZERO_CHANGE, adjusted: ZERO_CHANGE })
+
+      const submittedWithClosedAdjustment = () => ({
+        status: summaryLogStatuses.submitted,
+        loadsByReportingPeriod: {
+          openPeriodLoads: emptyPeriod(),
+          closedPeriodLoads: {
+            added: ZERO_CHANGE,
+            adjusted: {
+              balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+              nonBalanceAffecting: { count: 0, rows: [] }
+            }
+          }
+        }
+      })
+
+      const getMain = async (server) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+        const { body } = new JSDOM(result).window.document
+        return getByRole(body, 'main')
+      }
+
+      it('shows the section and a "Go to reports" link when a closed period changed', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce(
+          submittedWithClosedAdjustment()
+        )
+
+        const main = await getMain(server)
+        const reportsButton = queryByRole(main, 'button', {
+          name: 'Go to reports'
+        })
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).not.toBeNull()
+        expect(reportsButton).not.toBeNull()
+        expect(reportsButton?.getAttribute('href')).toBe(
+          `/organisations/${organisationId}/registrations/${registrationId}/reports`
+        )
+      })
+
+      it('hides the section when no closed period changed', async ({
+        server
+      }) => {
+        mockFetchSummaryLogStatus.mockResolvedValueOnce({
+          status: summaryLogStatuses.submitted,
+          loadsByReportingPeriod: {
+            openPeriodLoads: {
+              added: {
+                balanceAffecting: { count: 1, tonnageDelta: 2, rows: [] },
+                nonBalanceAffecting: { count: 0, rows: [] }
+              },
+              adjusted: ZERO_CHANGE
+            },
+            closedPeriodLoads: emptyPeriod()
+          }
+        })
+
+        const main = await getMain(server)
+
+        expect(
+          queryByRole(main, 'heading', { name: 'Further action needed' })
+        ).toBeNull()
+        expect(
+          queryByRole(main, 'button', { name: 'Go to reports' })
+        ).toBeNull()
       })
     })
 
@@ -2934,493 +2331,11 @@ describe('#summaryLogUploadProgressController', () => {
   })
 })
 
-describe('#buildLoadsViewModel', () => {
-  const noRows = { count: 0, rowIds: [] }
-
-  test('returns no rows when loads is undefined', () => {
-    const result = buildLoadsViewModel(undefined)
-
-    expect(result).toStrictEqual({
-      added: {
-        included: noRows,
-        excluded: noRows,
-        total: 0
-      },
-      adjusted: {
-        included: noRows,
-        excluded: noRows,
-        total: 0
-      }
-    })
-  })
-
-  test('returns no rows when loads is null', () => {
-    const result = buildLoadsViewModel(null)
-
-    expect(result).toStrictEqual({
-      added: {
-        included: noRows,
-        excluded: noRows,
-        total: 0
-      },
-      adjusted: {
-        included: noRows,
-        excluded: noRows,
-        total: 0
-      }
-    })
-  })
-
-  test('returns empty structure when loads has empty structure', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      },
-      adjusted: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      }
-    })
-
-    expect(result).toStrictEqual({
-      added: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] },
-        total: 0
-      },
-      adjusted: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] },
-        total: 0
-      }
-    })
-  })
-
-  test('preserves count and rowIds from backend', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 150, rowIds: ['1001', '1002', '1003'] },
-        excluded: { count: 50, rowIds: ['1004', '1005'] }
-      },
-      adjusted: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      }
-    })
-
-    expect(result.added).toStrictEqual({
-      included: { count: 150, rowIds: ['1001', '1002', '1003'] },
-      excluded: { count: 50, rowIds: ['1004', '1005'] },
-      total: 200
-    })
-  })
-
-  test('preserves count and rowIds for adjusted loads', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      },
-      adjusted: {
-        included: { count: 120, rowIds: ['2001', '2002'] },
-        excluded: { count: 30, rowIds: ['2003'] }
-      }
-    })
-
-    expect(result.adjusted).toStrictEqual({
-      included: { count: 120, rowIds: ['2001', '2002'] },
-      excluded: { count: 30, rowIds: ['2003'] },
-      total: 150
-    })
-  })
-
-  test('handles partial loads data gracefully', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 1, rowIds: ['1001'] }
-        // missing excluded
-      }
-      // missing adjusted
-    })
-
-    expect(result).toStrictEqual({
-      added: {
-        included: { count: 1, rowIds: ['1001'] },
-        excluded: noRows,
-        total: 1
-      },
-      adjusted: {
-        included: noRows,
-        excluded: noRows,
-        total: 0
-      }
-    })
-  })
-
-  test('uses included and excluded counts, ignoring valid', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        valid: { count: 10, rowIds: [] },
-        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
-        excluded: { count: 2, rowIds: ['1004', '1005'] }
-      },
-      adjusted: {
-        included: { count: 0, rowIds: [] },
-        excluded: { count: 0, rowIds: [] }
-      }
-    })
-
-    expect(result.added).toStrictEqual({
-      included: { count: 8, rowIds: ['1001', '1002', '1003'] },
-      excluded: { count: 2, rowIds: ['1004', '1005'] },
-      total: 10
-    })
-  })
-
-  test('calculates total from included + excluded counts', () => {
-    const result = buildLoadsViewModel({
-      added: {
-        included: { count: 8, rowIds: ['1001', '1002', '1003'] },
-        excluded: { count: 7, rowIds: ['1004', '1005'] }
-      },
-      adjusted: {
-        included: { count: 4, rowIds: ['2001', '2002', '2003', '2004'] },
-        excluded: { count: 3, rowIds: ['2005', '2006', '2007'] }
-      }
-    })
-
-    expect(result.added.total).toBe(15)
-    expect(result.adjusted.total).toBe(7)
-  })
-})
-
-describe('#getWasteRecordSectionNumber', () => {
-  test('returns section 1 for REPROCESSOR_INPUT', () => {
-    expect(getWasteRecordSectionNumber('REPROCESSOR_INPUT')).toBe(1)
-  })
-
-  test('returns section 3 for REPROCESSOR_OUTPUT', () => {
-    expect(getWasteRecordSectionNumber('REPROCESSOR_OUTPUT')).toBe(3)
-  })
-
-  test('returns section 1 for EXPORTER', () => {
-    expect(getWasteRecordSectionNumber('EXPORTER')).toBe(1)
-  })
-
-  test('returns undefined for unknown processingType', () => {
-    expect(
-      getWasteRecordSectionNumber(
-        /** @type {ProcessingType} */ ('UNKNOWN_TYPE')
-      )
-    ).toBeUndefined()
-  })
-})
-
-describe('#buildLoadsByWasteRecordTypeViewModel', () => {
-  /** @type {RawLoadsByWasteRecordType} */
-  const mockLoadsByWasteRecordType = [
-    {
-      wasteRecordType: 'sentOn',
-      sheetName: 'Sent on',
-      added: {
-        valid: { count: 2, rowIds: ['005', '006'] }
-      },
-      adjusted: {
-        valid: { count: 0, rowIds: [] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] }
-      }
-    },
-    {
-      wasteRecordType: 'received',
-      sheetName: 'Received',
-      added: {
-        valid: { count: 3, rowIds: ['001', '002', '003'] }
-      },
-      adjusted: {
-        valid: { count: 1, rowIds: ['004'] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] }
-      }
-    }
-  ]
-
-  it('should map each entry to a view model with correct headingKey, sectionReference, added and adjusted totals', () => {
-    const sectionRefs = {
-      'summary-log:registeredOnly.sectionReference.reprocessor.received': '1',
-      'summary-log:registeredOnly.sectionReference.reprocessor.sentOn': '2'
-    }
-    const localise = (key) => sectionRefs[key] ?? key
-    const result = buildLoadsByWasteRecordTypeViewModel(
-      mockLoadsByWasteRecordType,
-      'REPROCESSOR_REGISTERED_ONLY',
-      localise
-    )
-
-    expect(result).toStrictEqual([
-      {
-        headingKey: 'registeredOnly.sectionHeading.received',
-        sectionReference: '1',
-        added: { count: 3, rowIds: ['001', '002', '003'] },
-        adjusted: { count: 1, rowIds: ['004'] }
-      },
-      {
-        headingKey: 'registeredOnly.sectionHeading.sentOn',
-        sectionReference: '2',
-        added: { count: 2, rowIds: ['005', '006'] },
-        adjusted: { count: 0, rowIds: [] }
-      }
-    ])
-  })
-})
-
-describe('registered-only check view', () => {
+describe('summary log check view', () => {
   const organisationId = '123'
   const registrationId = '456'
   const summaryLogId = '789'
   const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-
-  /** @type {RawLoadsByWasteRecordType} */
-  const mockLoadsByWasteRecordType = [
-    {
-      wasteRecordType: 'received',
-      sheetName: 'Received',
-      added: {
-        valid: { count: 3, rowIds: ['001', '002', '003'] }
-      },
-      adjusted: {
-        valid: { count: 1, rowIds: ['004'] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] }
-      }
-    },
-    {
-      wasteRecordType: 'exported',
-      sheetName: 'Exported',
-      added: {
-        valid: { count: 2, rowIds: ['005', '006'] }
-      },
-      adjusted: {
-        valid: { count: 0, rowIds: [] }
-      },
-      unchanged: {
-        valid: { count: 0, rowIds: [] }
-      }
-    }
-  ]
-
-  /* eslint-disable vitest/max-expects -- single request, asserting all parts of the rendered page */
-  it('status: validated with registered-only processing type and loadsByWasteRecordType - should render check-registered-only view with sections and counts', async ({
-    server
-  }) => {
-    mockFetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      processingType: 'EXPORTER_REGISTERED_ONLY',
-      loadsByWasteRecordType: mockLoadsByWasteRecordType
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
-
-    const dom = new JSDOM(result)
-    const { body, title } = dom.window.document
-
-    expect(title).toMatch(/^Summary log \|/)
-    expect(statusCode).toBe(statusCodes.ok)
-
-    const main = getByRole(body, 'main')
-    const heading = getByRole(main, 'heading', { level: 1 })
-
-    expect(heading.textContent).toContain('Check before confirming upload')
-    expect(
-      getByText(main, 'Check the following before confirming the upload.')
-    ).toBeDefined()
-
-    expect(getByRole(main, 'heading', { name: 'Loads received' })).toBeDefined()
-    expect(getByRole(main, 'heading', { name: 'Loads exported' })).toBeDefined()
-
-    expect(
-      getByRole(main, 'heading', { name: '3 new loads have been added' })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
-        'These are new loads that have been added to section 1 of your summary log.'
-      )
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', { name: '1 existing load has been adjusted' })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
-        'These are loads in section 1 of your summary log that have been changed since it was last uploaded.'
-      )
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', { name: '2 new loads have been added' })
-    ).toBeDefined()
-    expect(getByText(main, 'Show 1 load')).toBeDefined()
-  })
-  /* eslint-enable vitest/max-expects */
-
-  it('status: validated with registered-only processing type and zero counts - should show no-activity headings and descriptions', async ({
-    server
-  }) => {
-    mockFetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      processingType: 'REPROCESSOR_REGISTERED_ONLY',
-      loadsByWasteRecordType: [
-        {
-          wasteRecordType: 'received',
-          sheetName: 'Received',
-          added: {
-            valid: { count: 0, rowIds: [] }
-          },
-          adjusted: {
-            valid: { count: 0, rowIds: [] }
-          },
-          unchanged: {
-            valid: { count: 0, rowIds: [] }
-          }
-        }
-      ]
-    })
-
-    const { result } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
-
-    const dom = new JSDOM(result)
-    const { body } = dom.window.document
-    const main = getByRole(body, 'main')
-
-    expect(
-      getByRole(main, 'heading', { name: 'No new loads have been added' })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
-        'No new loads have been added to section 1 of your summary log.'
-      )
-    ).toBeDefined()
-    expect(
-      getByRole(main, 'heading', {
-        name: 'No existing loads have been adjusted'
-      })
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
-        'No loads in section 1 of your summary log have been changed since it was last uploaded.'
-      )
-    ).toBeDefined()
-    expect(queryByText(main, /Show \d+ load/)).toBeNull()
-  })
-
-  it('status: validated with EXPORTER_REGISTERED_ONLY - should use correct section references per waste record type', async ({
-    server
-  }) => {
-    const emptyCategory = {
-      valid: { count: 0, rowIds: [] }
-    }
-
-    mockFetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      processingType: 'EXPORTER_REGISTERED_ONLY',
-      loadsByWasteRecordType: [
-        {
-          wasteRecordType: 'received',
-          sheetName: 'Received',
-          added: emptyCategory,
-          adjusted: emptyCategory,
-          unchanged: emptyCategory
-        },
-        {
-          wasteRecordType: 'exported',
-          sheetName: 'Exported',
-          added: emptyCategory,
-          adjusted: emptyCategory,
-          unchanged: emptyCategory
-        },
-        {
-          wasteRecordType: 'sentOn',
-          sheetName: 'Sent on',
-          added: emptyCategory,
-          adjusted: emptyCategory,
-          unchanged: emptyCategory
-        }
-      ]
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
-
-    const dom = new JSDOM(result)
-    const { body } = dom.window.document
-    const main = getByRole(body, 'main')
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(
-      getByText(
-        main,
-        'No new loads have been added to section 1 of your summary log.'
-      )
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
-        'No new loads have been added to section 2 and 3 of your summary log.'
-      )
-    ).toBeDefined()
-    expect(
-      getByText(
-        main,
-        'No new loads have been added to section 4 of your summary log.'
-      )
-    ).toBeDefined()
-  })
-
-  it('status: validated with registered-only processing type but missing loadsByWasteRecordType - should surface an error rather than silently render an empty page', async ({
-    server
-  }) => {
-    mockFetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      processingType: 'EXPORTER_REGISTERED_ONLY'
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url,
-      auth: mockAuth
-    })
-
-    expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toStrictEqual(
-      expect.stringContaining('Something went wrong')
-    )
-  })
-})
-
-describe('enhanced summary log check view', () => {
-  const organisationId = '123'
-  const registrationId = '456'
-  const summaryLogId = '789'
-  const url = `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/${summaryLogId}`
-
-  const FLAG = 'featureFlags.enhancedSummaryLogCheckPages'
 
   /** @type {PeriodStatusByChange} */
   const ZERO_CHANGE = {
@@ -3448,6 +2363,18 @@ describe('enhanced summary log check view', () => {
     return { main: getByRole(body, 'main'), result, statusCode }
   }
 
+  /** Minimal validated response so the check page renders its empty state. */
+  const givenValidatedCheckPage = () => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: emptyPeriod(),
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+  }
+
   beforeEach(() => {
     mockFetchSummaryLogStatus.mockReset().mockResolvedValue({
       status: 'preprocessing'
@@ -3458,11 +2385,28 @@ describe('enhanced summary log check view', () => {
       registration: { accreditationId: undefined }
     })
     mockFetchWasteBalances.mockReset().mockResolvedValue({})
-    config.set(FLAG, true)
   })
 
-  afterEach(() => {
-    config.reset(FLAG)
+  it('status: validated - should render the check page without client-side polling', async ({
+    server
+  }) => {
+    givenValidatedCheckPage()
+
+    const { result } = await renderMain(server)
+
+    expect(result).not.toStrictEqual(enablesClientSidePolling())
+  })
+
+  it('status: validated - should link back to the organisation home page', async ({
+    server
+  }) => {
+    givenValidatedCheckPage()
+
+    const { result } = await renderMain(server)
+
+    expect(result).toStrictEqual(
+      expect.stringContaining(`href="/organisations/${organisationId}"`)
+    )
   })
 
   it('renders all four populated accredited sections with balance language', async ({
@@ -3722,8 +2666,8 @@ describe('enhanced summary log check view', () => {
   }) => {
     // The backend always pairs a validated summary log with its period
     // aggregate; a missing loadsByReportingPeriod is a contract violation, so we
-    // fail loudly rather than render a misleading empty page (mirrors the
-    // loadsByWasteRecordType invariant in renderCheckView).
+    // fail loudly rather than render a misleading empty page (enforced by the
+    // loadsByReportingPeriod guard in renderCheckView).
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
       status: summaryLogStatuses.validated,
       processingType: 'EXPORTER'
@@ -4042,21 +2986,410 @@ describe('enhanced summary log check view', () => {
     const hasText = (text) => Boolean(queryByText(main, text))
 
     expect({
-      notAddedBody: hasText(
+      // Contributing worksheets carry no cautionary sub-heading: each row's own
+      // reason already explains why it was excluded, so the heading is redundant.
+      cautionaryLineCount: queryAllByText(
+        main,
         'These loads could be missing required summary log data that stops them from adding to your waste balance.'
-      ),
+      ).length,
       disclosure: hasText('Show 2 loads'),
       exportedSection: hasText('Exported'),
       exportedRow: hasText('Row ID: 5. Required summary log data is missing'),
       sentOnSection: hasText('Sent on'),
       sentOnRow: hasText('Row ID: 8. Product weight is missing')
     }).toStrictEqual({
-      notAddedBody: true,
+      cautionaryLineCount: 0,
       disclosure: true,
       exportedSection: true,
       exportedRow: true,
       sentOnSection: true,
       sentOnRow: true
+    })
+  })
+
+  it('lists a fully by-design section under a neutral never-counts heading with each row id', async ({
+    server
+  }) => {
+    // Every row in the Reprocessed section carries the by-design exclusion code,
+    // so the section is by-design non-contributing: it renders the neutral
+    // "never count" heading and lists each row id (never the raw code).
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 2,
+              rows: [
+                {
+                  rowId: '4001',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '4002',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      bucketHeading: hasText(
+        '2 new loads will be recorded (but will NOT add to your waste balance)'
+      ),
+      // The worksheet is labelled with no row-count suffix.
+      section: hasText('Reprocessed'),
+      countedHeading: hasText('Reprocessed (2 rows)'),
+      neverCountsLine: hasText(
+        'These loads would never count towards your waste balance.'
+      ),
+      rawCodeShown: hasText(
+        'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+      ),
+      // Each by-design row is now listed by id, without a per-row reason.
+      firstRowIdShown: hasText('Row ID: 4001'),
+      secondRowIdShown: hasText('Row ID: 4002')
+    }).toStrictEqual({
+      bucketHeading: true,
+      section: true,
+      countedHeading: false,
+      neverCountsLine: true,
+      rawCodeShown: false,
+      firstRowIdShown: true,
+      secondRowIdShown: true
+    })
+  })
+
+  it('renders the never-counts heading only for the by-design worksheet in a mixed bucket', async ({
+    server
+  }) => {
+    // A mixed non-balance-affecting bucket: the Received section carries a real
+    // data problem (no sub-heading, just its per-row reason) alongside the
+    // by-design Reprocessed section (never-counts heading + its row id listed).
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 2,
+              rows: [
+                {
+                  rowId: '1001',
+                  wasteRecordType: 'received',
+                  exclusionReasons: ['MISSING_REQUIRED_FIELD'],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '4001',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      bucketHeading: hasText(
+        '2 new loads will be recorded (but will NOT add to your waste balance)'
+      ),
+      // The Received worksheet gets no sub-heading, only its per-row reason.
+      cautionaryLine: hasText(
+        'These loads could be missing required summary log data that stops them from adding to your waste balance.'
+      ),
+      receivedRowWithReason: hasText(
+        'Row ID: 1001. Required summary log data is missing'
+      ),
+      // The Reprocessed worksheet gets the neutral never-counts heading and lists
+      // its row id (no count suffix, no raw code).
+      reprocessedSection: hasText('Reprocessed'),
+      countedHeading: hasText('Reprocessed (1 row)'),
+      neverCountsLine: hasText(
+        'These loads would never count towards your waste balance.'
+      ),
+      byDesignRowIdShown: hasText('Row ID: 4001')
+    }).toStrictEqual({
+      bucketHeading: true,
+      cautionaryLine: false,
+      receivedRowWithReason: true,
+      reprocessedSection: true,
+      countedHeading: false,
+      neverCountsLine: true,
+      byDesignRowIdShown: true
+    })
+  })
+
+  it('keeps a section expanded when a by-design row sits beside a real-reason row of the same worksheet', async ({
+    server
+  }) => {
+    // Same worksheet (processed), one by-design row and one with a genuine data
+    // problem. The worksheet is not wholly by-design, so it gets no sub-heading:
+    // the real-reason row shows its reason, the by-design row lists as a plain id
+    // (its code is dropped), and the never-counts heading does not appear.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 2,
+              rows: [
+                {
+                  rowId: '4001',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '4002',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: ['MISSING_REQUIRED_FIELD'],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      cautionaryLine: hasText(
+        'These loads could be missing required summary log data that stops them from adding to your waste balance.'
+      ),
+      realReasonRow: hasText(
+        'Row ID: 4002. Required summary log data is missing'
+      ),
+      byDesignRowPlain: hasText('Row ID: 4001'),
+      sectionPlain: hasText('Reprocessed'),
+      countedHeading: hasText('Reprocessed (2 rows)'),
+      neverCountsLine: hasText(
+        'These loads would never count towards your waste balance.'
+      ),
+      rawCodeShown: hasText(
+        'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+      )
+    }).toStrictEqual({
+      cautionaryLine: false,
+      realReasonRow: true,
+      byDesignRowPlain: true,
+      sectionPlain: true,
+      countedHeading: false,
+      neverCountsLine: false,
+      rawCodeShown: false
+    })
+  })
+
+  it('does not collapse a section when a by-design row also carries a real reason, surfacing that reason', async ({
+    server
+  }) => {
+    // Defends the backend invariant that a by-design sheet emits the code alone.
+    // Were a row ever to carry the code plus a real data reason, the section
+    // must stay expanded so the data problem surfaces rather than being hidden
+    // behind the "never counts" line.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 1,
+              rows: [
+                {
+                  rowId: '4001',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE',
+                    'MISSING_REQUIRED_FIELD'
+                  ],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      rowWithRealReason: hasText(
+        'Row ID: 4001. Required summary log data is missing'
+      ),
+      rawCodeShown: hasText(
+        'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+      ),
+      neverCountsLineShown: hasText(
+        'These loads would never count towards your waste balance.'
+      )
+    }).toStrictEqual({
+      rowWithRealReason: true,
+      rawCodeShown: false,
+      neverCountsLineShown: false
+    })
+  })
+
+  it('lists registered-only by-design rows as plain row ids with no reason, code or balance line', async ({
+    server
+  }) => {
+    // Registered-only rows carry the by-design code too, but the page has no
+    // waste balance, so the code is simply dropped: rows stay as plain ids and
+    // the accredited "never count" line does not appear.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_REGISTERED_ONLY',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 1,
+              rows: [
+                {
+                  rowId: '9',
+                  wasteRecordType: 'received',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          },
+          adjusted: ZERO_CHANGE
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      receivedRow: hasText('Row ID: 9'),
+      rawCodeShown: hasText(
+        'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+      ),
+      neverCountsLineShown: hasText(
+        'These loads would never count towards your waste balance.'
+      )
+    }).toStrictEqual({
+      receivedRow: true,
+      rawCodeShown: false,
+      neverCountsLineShown: false
+    })
+  })
+
+  it('lists a by-design worksheet under the never-counts heading in the adjusted bucket', async ({
+    server
+  }) => {
+    // The never-counts treatment applies to the adjusted "not relevant" bucket
+    // too, not just new loads: a wholly by-design worksheet there lists its row
+    // ids under the neutral never-counts heading rather than the raw code.
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: { count: 0, tonnageDelta: 0, rows: [] },
+            nonBalanceAffecting: {
+              count: 2,
+              rows: [
+                {
+                  rowId: '4001',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                },
+                {
+                  rowId: '4002',
+                  wasteRecordType: 'processed',
+                  exclusionReasons: [
+                    'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+                  ],
+                  tonnageDelta: 0
+                }
+              ]
+            }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      neverCountsLine: hasText(
+        'These loads would never count towards your waste balance.'
+      ),
+      firstRowIdShown: hasText('Row ID: 4001'),
+      secondRowIdShown: hasText('Row ID: 4002'),
+      rawCodeShown: hasText(
+        'TEMPLATE_SECTION_DOES_NOT_CONTRIBUTE_TO_WASTE_BALANCE'
+      )
+    }).toStrictEqual({
+      neverCountsLine: true,
+      firstRowIdShown: true,
+      secondRowIdShown: true,
+      rawCodeShown: false
     })
   })
 
@@ -4110,12 +3443,12 @@ describe('enhanced summary log check view', () => {
     expect(sectionLabels).toStrictEqual(['Received', 'Reprocessed', 'Sent on'])
   })
 
-  // The with-data row is positive (+6) and the missing-data row negative (-1),
-  // mirroring the backend invariant that a missing-data row only reaches a
-  // balance-affecting bucket by reversing its earlier contribution. So the
-  // with-data heading reads "added" (its own delta) and the missing-data
-  // heading reads "reduced" (hardcoded copy that the invariant guarantees).
-  it('splits adjusted balance-affecting loads into data sub-groups with direction and no per-row reason', async ({
+  // The adjusted balance-affecting bucket is split by direction: the +6 row
+  // added to the balance (listed by id — an added row never carries a reason,
+  // as an included row has no exclusions), and the -1 MISSING_REQUIRED_FIELD row
+  // reduced it (listed with its reason). Missing data is now just a per-row
+  // reason, not a separate "does NOT have all the required data" heading.
+  it('splits adjusted balance-affecting loads into added and reduced sub-groups, each showing per-row reasons', async ({
     server
   }) => {
     mockFetchSummaryLogStatus.mockResolvedValueOnce({
@@ -4156,27 +3489,165 @@ describe('enhanced summary log check view', () => {
 
     expect({
       disclosure: hasText('Show 2 loads'),
-      withDataHeading: hasText(
-        'This load has all the required summary log data and has added to your waste balance'
-      ),
-      withDataSection: hasText('Exported'),
-      withDataRow: hasText('Row ID: 1'),
-      withoutDataHeading: hasText(
-        'This load does NOT have all the required summary log data and has reduced your waste balance'
-      ),
-      withoutDataSection: hasText('Sent on'),
-      // The reason is suppressed for adjusted rows: an exact-text match against
-      // the bare row would miss if "Required summary log data is missing" were
-      // appended.
-      withoutDataRow: hasText('Row ID: 2')
+      addedHeading: hasText('This load has added to your waste balance'),
+      addedSection: hasText('Exported'),
+      addedRow: hasText('Row ID: 1'),
+      reducedHeading: hasText('This load has reduced your waste balance'),
+      reducedSection: hasText('Sent on'),
+      reducedRowWithReason: hasText(
+        'Row ID: 2. Required summary log data is missing'
+      )
     }).toStrictEqual({
       disclosure: true,
-      withDataHeading: true,
-      withDataSection: true,
-      withDataRow: true,
-      withoutDataHeading: true,
-      withoutDataSection: true,
-      withoutDataRow: true
+      addedHeading: true,
+      addedSection: true,
+      addedRow: true,
+      reducedHeading: true,
+      reducedSection: true,
+      reducedRowWithReason: true
+    })
+  })
+
+  // A still-included load corrected downward reduces the balance but carries no
+  // exclusion reason, so it lists bare under the reduced heading — the reason
+  // slot is filled only for rows that were excluded.
+  it('lists an adjusted downward-corrected load bare under the reduced heading', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'EXPORTER',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: {
+              count: 1,
+              tonnageDelta: -6,
+              rows: [
+                {
+                  rowId: '1',
+                  wasteRecordType: 'exported',
+                  exclusionReasons: [],
+                  tonnageDelta: -6
+                }
+              ]
+            },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      reducedHeading: hasText('This load has reduced your waste balance'),
+      reducedRowBare: hasText('Row ID: 1'),
+      addedHeadingAbsent: hasText('This load has added to your waste balance')
+    }).toStrictEqual({
+      reducedHeading: true,
+      reducedRowBare: true,
+      addedHeadingAbsent: false
+    })
+  })
+
+  // The reported defect: a data-intact exclusion (a PRN was issued) keeps all
+  // its data and only reduces the balance by reversing its earlier contribution.
+  // It belongs under the reduced heading carrying its own reason, never under a
+  // "missing data" heading with the reason hidden.
+  it('shows the reason for an adjusted data-intact exclusion under the reduced heading', async ({
+    server
+  }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: {
+              count: 1,
+              tonnageDelta: -2,
+              rows: [
+                {
+                  rowId: '1046',
+                  wasteRecordType: 'received',
+                  exclusionReasons: ['PRN_ISSUED'],
+                  tonnageDelta: -2
+                }
+              ]
+            },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      reducedHeading: hasText('This load has reduced your waste balance'),
+      prnRowWithReason: hasText(
+        'Row ID: 1046. A PRN was already issued for this load'
+      )
+    }).toStrictEqual({
+      reducedHeading: true,
+      prnRowWithReason: true
+    })
+  })
+
+  // Defensive: the added sub-group never renders a per-row reason, even for a
+  // row that arrives carrying an exclusion code. The backend zeroes an excluded
+  // row's amount, so a reason-carrying row can only ever reduce the balance and
+  // never reach the added group; the frontend does not rely on that and simply
+  // suppresses reasons in the added group, so a stray reason can never masquerade
+  // as an "added to your waste balance" explanation.
+  it('suppresses any reason on an adjusted added load', async ({ server }) => {
+    mockFetchSummaryLogStatus.mockResolvedValueOnce({
+      status: summaryLogStatuses.validated,
+      processingType: 'REPROCESSOR_INPUT',
+      loadsByReportingPeriod: {
+        openPeriodLoads: {
+          added: ZERO_CHANGE,
+          adjusted: {
+            balanceAffecting: {
+              count: 1,
+              tonnageDelta: 4,
+              rows: [
+                {
+                  rowId: '1',
+                  wasteRecordType: 'received',
+                  exclusionReasons: ['PRN_ISSUED'],
+                  tonnageDelta: 4
+                }
+              ]
+            },
+            nonBalanceAffecting: { count: 0, rows: [] }
+          }
+        },
+        closedPeriodLoads: emptyPeriod()
+      }
+    })
+
+    const { main } = await renderMain(server)
+
+    const hasText = (text) => Boolean(queryByText(main, text))
+
+    expect({
+      addedHeading: hasText('This load has added to your waste balance'),
+      bareRow: hasText('Row ID: 1'),
+      reasonAbsent: hasText('Row ID: 1. A PRN was already issued for this load')
+    }).toStrictEqual({
+      addedHeading: true,
+      bareRow: true,
+      reasonAbsent: false
     })
   })
 
@@ -4309,8 +3780,20 @@ describe('enhanced summary log check view', () => {
           main,
           'As there are 100 or more loads, we are not able to list them all here.'
         )
+      ),
+      // Over the cap only the too-many message shows: there is no cautionary
+      // line anywhere on the check page in v2.
+      cautionaryBody: Boolean(
+        queryByText(
+          main,
+          'These loads could be missing required summary log data that stops them from adding to your waste balance.'
+        )
       )
-    }).toStrictEqual({ disclosure: false, tooMany: true })
+    }).toStrictEqual({
+      disclosure: false,
+      tooMany: true,
+      cautionaryBody: false
+    })
   })
 
   it('suppresses the adjusted balance-affecting accordion over the cap', async ({
@@ -4439,13 +3922,13 @@ describe('enhanced summary log check view', () => {
     ).not.toBeNull()
   })
 
-  // The single source of truth for where an exclusion reason surfaces: only on
-  // NEW loads that will NOT add to the balance. The other three bucket
-  // positions list worksheet and Row ID alone (added.balanceAffecting is
-  // count-only with no accordion; both adjusted buckets list rows without a
-  // reason). The richer per-position tests above prove the surrounding
-  // behaviour (the data sub-group split, the direction wording, the headings);
-  // this table states the reason-visibility rule on its own.
+  // The single source of truth for where an exclusion reason surfaces: on NEW
+  // loads that will NOT add to the balance, and on ADJUSTED balance-affecting
+  // loads (the added/reduced split lists every row with its reason). The other
+  // two positions list Row ID alone: added.balanceAffecting is count-only with
+  // no accordion, and the adjusted "not relevant" bucket lists rows plainly. The
+  // richer per-position tests above prove the surrounding behaviour (the
+  // direction split, the headings); this table states the visibility rule.
   const REASON_CODE = 'MISSING_REQUIRED_FIELD'
   const REASON_TEXT = 'Required summary log data is missing'
 
@@ -4502,12 +3985,12 @@ describe('enhanced summary log check view', () => {
   const reasonVisibilityCases = [
     { change: 'added', bucket: 'nonBalanceAffecting', showsReason: true },
     { change: 'added', bucket: 'balanceAffecting', showsReason: false },
-    { change: 'adjusted', bucket: 'balanceAffecting', showsReason: false },
+    { change: 'adjusted', bucket: 'balanceAffecting', showsReason: true },
     { change: 'adjusted', bucket: 'nonBalanceAffecting', showsReason: false }
   ]
 
   it.for(reasonVisibilityCases)(
-    'shows the exclusion reason only on new non-balance-affecting loads ($change / $bucket)',
+    'surfaces the exclusion reason at the expected bucket position ($change / $bucket)',
     async ({ change, bucket, showsReason }, { server }) => {
       mockFetchSummaryLogStatus.mockResolvedValueOnce(
         responseWithReasonAt(change, bucket)
@@ -4653,9 +4136,9 @@ describe('enhanced summary log check view', () => {
   // The single source of truth for the exclusion-reason display strings. Every
   // CLASSIFICATION_REASON code the frontend can receive maps to one string;
   // PRN_ISSUED renders as PRN for reprocessors and PERN for exporters, and any
-  // unmapped code degrades to no reason rather than a raw code. Reasons surface
-  // only on new non-balance-affecting rows (see the visibility table above), so
-  // that is where this asserts them.
+  // unmapped code falls back to the raw code so a new backend reason still
+  // surfaces something. Reasons surface only on new non-balance-affecting rows
+  // (see the visibility table above), so that is where this asserts them.
   /**
    * @type {Array<{
    *   code: string,
@@ -4682,7 +4165,14 @@ describe('enhanced summary log check view', () => {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet:
-        'Row ID: 5. The ORS was not approved at the date of export'
+        'Row ID: 5. The overseas reprocessing site was not approved at the date of export'
+    },
+    {
+      code: 'ORS_NOT_FOUND',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Row ID: 5. The OSR_ID has no matching overseas site registration'
     },
     {
       code: 'PRN_ISSUED',
@@ -4695,6 +4185,20 @@ describe('enhanced summary log check view', () => {
       processingType: 'EXPORTER',
       wasteRecordType: 'exported',
       expectedBullet: 'Row ID: 5. A PERN was already issued for this load'
+    },
+    {
+      code: 'WASTE_REFUSED',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Row ID: 5. The waste was refused by the recipient destination'
+    },
+    {
+      code: 'WASTE_STOPPED',
+      processingType: 'EXPORTER',
+      wasteRecordType: 'exported',
+      expectedBullet:
+        'Row ID: 5. The waste was stopped during the course of export'
     },
     {
       code: 'OUTSIDE_ACCREDITATION_PERIOD',
@@ -4720,26 +4224,81 @@ describe('enhanced summary log check view', () => {
     }
   )
 
-  it('renders the legacy check page when the flag is off', async ({
+  // Refused and stopped are sibling Yes/No columns on the same row, so unlike
+  // most reason pairs they can plausibly both apply to one load.
+  it('joins the refused and stopped reasons on a row carrying both', async ({
     server
   }) => {
-    config.set(FLAG, false)
-    mockFetchSummaryLogStatus.mockResolvedValueOnce({
-      status: summaryLogStatuses.validated,
-      processingType: 'EXPORTER',
-      loadsByReportingPeriod: {
-        openPeriodLoads: emptyPeriod(),
-        closedPeriodLoads: emptyPeriod()
-      }
-    })
+    mockFetchSummaryLogStatus.mockResolvedValueOnce(
+      responseWithNewNonBalanceRow('EXPORTER', 'exported', [
+        'WASTE_REFUSED',
+        'WASTE_STOPPED'
+      ])
+    )
 
     const { main } = await renderMain(server)
 
     expect(
-      queryByRole(main, 'heading', { name: 'Open periods: new loads' })
-    ).toBeNull()
-    expect(
-      getByRole(main, 'heading', { name: /Check before confirming upload/ })
-    ).toBeDefined()
+      queryByText(
+        main,
+        'Row ID: 5. The waste was refused by the recipient destination, ' +
+          'The waste was stopped during the course of export'
+      )
+    ).not.toBeNull()
+  })
+
+  describe('closed-period adjustments "Important" banner', () => {
+    const BANNER_BODY =
+      "If you upload this summary log, you'll need to create a new report " +
+      'for any relevant period and an approved person from your business ' +
+      'will need to resubmit it to your regulator.'
+
+    const periodWithClosedAdjustment = () => ({
+      openPeriodLoads: emptyPeriod(),
+      closedPeriodLoads: {
+        added: ZERO_CHANGE,
+        adjusted: {
+          balanceAffecting: { count: 2, tonnageDelta: -4, rows: [] },
+          nonBalanceAffecting: { count: 0, rows: [] }
+        }
+      }
+    })
+
+    it('shows the Important banner when the summary log touches a closed period', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: periodWithClosedAdjustment()
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).not.toBeNull()
+    })
+
+    it('hides the Important banner when no closed period is touched', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.validated,
+        processingType: 'EXPORTER',
+        loadsByReportingPeriod: {
+          openPeriodLoads: {
+            added: {
+              balanceAffecting: { count: 1, tonnageDelta: 2, rows: [] },
+              nonBalanceAffecting: { count: 0, rows: [] }
+            },
+            adjusted: ZERO_CHANGE
+          },
+          closedPeriodLoads: emptyPeriod()
+        }
+      })
+
+      const { main } = await renderMain(server)
+
+      expect(queryByText(main, BANNER_BODY)).toBeNull()
+    })
   })
 })

@@ -1,5 +1,6 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -13,27 +14,23 @@ import {
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
+/**
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Organisation } from '#domain/organisations/model.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
+ * @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js'
+ */
+
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
-
-const mockAuth = {
-  strategy: 'session',
-  credentials: mockCredentials
-}
+const mockAuth = buildMockAuth()
 
 const reprocessorRegistration = {
-  organisationData: { id: 'org-123' },
-  registration: {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'reprocessor',
@@ -45,11 +42,11 @@ const reprocessorRegistration = {
         postcode: 'M1 1AA'
       }
     }
-  },
+  }),
   accreditation: undefined
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -57,6 +54,7 @@ const reprocessorReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
@@ -74,12 +72,18 @@ const reprocessorReportDetail = {
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        tonnageReceived: 38.04
+        tonnageReceived: 38.04,
+        supplierAddress: '45 Recycling Park, Leeds, LS1 2AB',
+        supplierPhone: '09876 543210',
+        supplierEmail: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -93,13 +97,14 @@ const reprocessorReportDetail = {
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Reprocessor',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const emptyReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -107,6 +112,7 @@ const emptyReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic',
@@ -133,8 +139,8 @@ const emptyReportDetail = {
 }
 
 const accreditedReprocessorRegistration = {
-  organisationData: { id: 'org-123' },
-  registration: {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-001',
     material: 'plastic',
     wasteProcessingType: 'reprocessor',
@@ -147,15 +153,15 @@ const accreditedReprocessorRegistration = {
         postcode: 'M1 1AA'
       }
     }
-  },
-  accreditation: {
+  }),
+  accreditation: /** @type {Accreditation} */ ({
     id: 'acc-001',
     accreditationNumber: 'ER992415095748M',
     status: 'approved'
-  }
+  })
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR',
   cadence: 'monthly',
@@ -163,6 +169,7 @@ const accreditedReprocessorReportDetail = {
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
+  dueDate: '2026-04-30',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic',
@@ -180,12 +187,18 @@ const accreditedReprocessorReportDetail = {
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        tonnageReceived: 38.04
+        tonnageReceived: 38.04,
+        supplierAddress: '45 Recycling Park, Leeds, LS1 2AB',
+        supplierPhone: '09876 543210',
+        supplierEmail: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -199,6 +212,7 @@ const accreditedReprocessorReportDetail = {
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Reprocessor',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
@@ -206,17 +220,17 @@ const accreditedReprocessorReportDetail = {
 }
 
 const exporterRegistration = {
-  organisationData: { id: 'org-456' },
-  registration: {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-456' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-002',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG002345'
-  },
+  }),
   accreditation: undefined
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -224,6 +238,7 @@ const exporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
@@ -234,12 +249,18 @@ const exporterReportDetail = {
       {
         supplierName: 'Grantham Waste',
         facilityType: 'Baler',
-        tonnageReceived: 42.21
+        tonnageReceived: 42.21,
+        supplierAddress: '12 Industrial Estate, Grantham, NG31 7AA',
+        supplierPhone: '01234 567890',
+        supplierEmail: 'info@granthamwaste.co.uk'
       },
       {
         supplierName: 'SUEZ recycling',
         facilityType: 'Sorter',
-        tonnageReceived: 38.04
+        tonnageReceived: 38.04,
+        supplierAddress: '45 Recycling Park, Leeds, LS1 2AB',
+        supplierPhone: '09876 543210',
+        supplierEmail: 'info@suez.co.uk'
       }
     ],
     tonnageRecycled: null,
@@ -278,13 +299,14 @@ const exporterReportDetail = {
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Exporter',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const exporterWithUnapprovedReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -292,6 +314,7 @@ const exporterWithUnapprovedReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: { material: 'plastic' },
   recyclingActivity: {
@@ -329,7 +352,7 @@ const exporterWithUnapprovedReportDetail = {
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const emptyExporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -337,6 +360,7 @@ const emptyExporterReportDetail = {
   period: 1,
   startDate: '2026-01-01',
   endDate: '2026-03-31',
+  dueDate: '2026-05-31',
   source: { summaryLogId: null, lastUploadedAt: null },
   details: {
     material: 'plastic'
@@ -373,22 +397,22 @@ const accreditedDetailUrl =
   '/organisations/org-123/registrations/reg-001/reports/2026/monthly/2/submissions/1'
 
 const accreditedExporterRegistration = {
-  organisationData: { id: 'org-789' },
-  registration: {
+  organisationData: /** @type {Organisation} */ ({ id: 'org-789' }),
+  registration: /** @type {Registration} */ ({
     id: 'reg-003',
     material: 'plastic',
     wasteProcessingType: 'exporter',
     registrationNumber: 'REG003456',
     accreditationId: 'acc-002'
-  },
-  accreditation: {
+  }),
+  accreditation: /** @type {Accreditation} */ ({
     id: 'acc-002',
     accreditationNumber: 'EE992415095748M',
     status: 'approved'
-  }
+  })
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   operatorCategory: 'EXPORTER',
   cadence: 'monthly',
@@ -396,6 +420,7 @@ const accreditedExporterReportDetail = {
   period: 2,
   startDate: '2026-02-01',
   endDate: '2026-02-28',
+  dueDate: '2026-04-30',
   source: { summaryLogId: 'sl-1', lastUploadedAt: '2026-02-15T15:09:00.000Z' },
   details: {
     material: 'plastic'
@@ -439,6 +464,7 @@ const accreditedExporterReportDetail = {
       {
         recipientName: 'Lincoln recycling',
         facilityType: 'Exporter',
+        address: '7 Waste Lane, Lincoln, LN1 3CD',
         tonnageSentOn: 1.0
       }
     ]
@@ -489,7 +515,22 @@ describe('#detailReportsController', () => {
       expect(heading).toBeDefined()
     })
 
-    it('should display material as caption', async ({ server }) => {
+    it('renders content in a full-width column', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: detailUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const contentColumn = body.querySelector('.govuk-grid-row > div')
+
+      expect(contentColumn?.className).toContain('govuk-grid-column-full')
+    })
+
+    it('should display Create draft report as caption', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: detailUrl,
@@ -501,7 +542,7 @@ describe('#detailReportsController', () => {
 
       const caption = body.querySelector('.govuk-caption-xl')
 
-      expect(caption?.textContent).toContain('Plastic')
+      expect(caption?.textContent).toContain('Create draft report')
     })
 
     it('should display back link to reports list', async ({ server }) => {
@@ -535,7 +576,7 @@ describe('#detailReportsController', () => {
       const inset = body.querySelector('.govuk-inset-text')
 
       expect(inset?.textContent).toContain('3:09pm')
-      expect(inset?.textContent).toContain('15 February')
+      expect(inset?.textContent).toContain('15 February 2026')
     })
 
     it('should display overview text', async ({ server }) => {
@@ -553,9 +594,7 @@ describe('#detailReportsController', () => {
       )
     })
 
-    it('should display correction text with upload link', async ({
-      server
-    }) => {
+    it('should display upload new summary log button', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: detailUrl,
@@ -568,9 +607,32 @@ describe('#detailReportsController', () => {
       const link = body.querySelector('a[href*="summary-logs/upload"]')
 
       expect(link).not.toBeNull()
-      expect(link?.textContent).toContain('upload an updated summary log')
+      expect(link?.textContent).toContain('Upload new summary log')
       expect(link?.getAttribute('href')).toBe(
         '/organisations/org-123/registrations/reg-001/summary-logs/upload'
+      )
+    })
+
+    it('should display cancel and return to reports link', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: detailUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const links = body.querySelectorAll('a[href*="/reports"]')
+      const link = Array.from(links).find((el) =>
+        el.textContent?.includes('Cancel and return to reports')
+      )
+
+      expect(link).not.toBeNull()
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports'
       )
     })
 
@@ -685,6 +747,40 @@ describe('#detailReportsController', () => {
       expect(supplierTable.textContent).toContain('38.04')
     })
 
+    it('should display None provided for missing supplier name and activity', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...reprocessorReportDetail,
+        recyclingActivity: {
+          ...reprocessorReportDetail.recyclingActivity,
+          suppliers: [
+            {
+              supplierName: null,
+              facilityType: null,
+              tonnageReceived: 42.21,
+              supplierAddress: null,
+              supplierPhone: null,
+              supplierEmail: null
+            }
+          ]
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: detailUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const supplierTable = getAllByRole(body, 'table')[0]
+
+      expect(supplierTable.textContent).toContain('None provided')
+    })
+
     it('should display waste sent on heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -748,11 +844,43 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       const tables = getAllByRole(body, 'table')
-      const destinationTable = tables[2]
+      const destinationTable = tables[1]
 
       expect(destinationTable.textContent).toContain('Lincoln recycling')
       expect(destinationTable.textContent).toContain('Reprocessor')
       expect(destinationTable.textContent).toContain('1')
+    })
+
+    it('should display None provided for missing destination details', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue({
+        ...reprocessorReportDetail,
+        wasteSent: {
+          ...reprocessorReportDetail.wasteSent,
+          finalDestinations: [
+            {
+              recipientName: null,
+              facilityType: null,
+              address: null,
+              tonnageSentOn: 1.0
+            }
+          ]
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: detailUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const destinationTable = getAllByRole(body, 'table')[1]
+
+      expect(destinationTable.textContent).toContain('None provided')
     })
 
     it('should display Use this data button', async ({ server }) => {
@@ -862,23 +990,6 @@ describe('#detailReportsController', () => {
       expect(body.textContent).toContain('0')
     })
 
-    it('should only display breakdown table when no suppliers or destinations', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tables = body.querySelectorAll('table')
-
-      expect(tables).toHaveLength(1)
-    })
-
     it('should not display last upload when null', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -892,23 +1003,6 @@ describe('#detailReportsController', () => {
       const inset = body.querySelector('.govuk-inset-text')
 
       expect(inset).toBeNull()
-    })
-
-    it('should not display correction text when no upload exists', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: detailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const uploadLink = body.querySelector('a[href*="summary-logs/upload"]')
-
-      expect(uploadLink).toBeNull()
     })
   })
 
@@ -943,7 +1037,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       const heading = getByRole(body, 'heading', {
-        name: /February 2026/,
+        name: /February, 2026/,
         level: 1
       })
 
@@ -1407,23 +1501,6 @@ describe('#detailReportsController', () => {
       expect(body.textContent).toContain('0')
     })
 
-    it('should not display supplier or overseas site tables when empty', async ({
-      server
-    }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterDetailUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tables = body.querySelectorAll('table')
-
-      expect(tables).toHaveLength(2)
-    })
-
     it('should still render waste exported heading', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -1511,7 +1588,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       const heading = getByRole(body, 'heading', {
-        name: /February 2026/,
+        name: /February, 2026/,
         level: 1
       })
 
@@ -1706,7 +1783,7 @@ describe('#detailReportsController', () => {
       )
     })
 
-    it('should display section 4 and 5 intro text for waste sent on', async ({
+    it('should display section 4 intro text for waste sent on', async ({
       server
     }) => {
       const { result } = await server.inject({
@@ -1719,7 +1796,7 @@ describe('#detailReportsController', () => {
       const { body } = dom.window.document
 
       expect(body.textContent).toContain(
-        'This data comes from section 4 and 5 of your summary log'
+        'This data comes from section 4 of your summary log'
       )
     })
   })

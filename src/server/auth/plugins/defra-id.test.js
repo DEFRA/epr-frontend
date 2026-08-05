@@ -3,19 +3,22 @@ import { it } from '#vite/fixtures/server.js'
 import * as jose from 'jose'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
-import { createDefraId } from './defra-id.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
+import { createDefraId, OIDC_DEFRA_ID } from './defra-id.js'
+
+const mockLogger = createMockLogger()
 
 vi.mock(import('@hapi/bell'), () => ({
-  default: {
-    name: 'bell',
-    register: vi.fn()
-  }
+  default: /** @type {never} */ (
+    /** @type {unknown} */ ({
+      name: 'bell',
+      register: vi.fn()
+    })
+  )
 }))
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
-  createLogger: () => ({
-    error: vi.fn()
-  })
+  createLogger: () => mockLogger
 }))
 
 describe('#defraId', () => {
@@ -68,7 +71,7 @@ describe('#defraId', () => {
 
   describe('plugin metadata', () => {
     it('should have correct plugin name', () => {
-      expect(defraId.plugin.name).toBe('defra-id')
+      expect(defraId.plugin.name).toBe(OIDC_DEFRA_ID)
     })
   })
 
@@ -119,7 +122,7 @@ describe('#defraId', () => {
       await defraId.plugin.register(mockServer)
 
       expect(mockServer.auth.strategy).toHaveBeenCalledWith(
-        'defra-id',
+        OIDC_DEFRA_ID,
         'bell',
         expect.objectContaining({
           clientId: 'test-client-id',
@@ -147,7 +150,7 @@ describe('#defraId', () => {
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
       const config = strategyCall[2]
 
-      expect(config.provider.name).toBe('defra-id')
+      expect(config.provider.name).toBe(OIDC_DEFRA_ID)
       expect(config.provider.protocol).toBe('oauth2')
       expect(config.provider.useParamsAuth).toBe(true)
       expect(config.provider.scope).toStrictEqual(['openid', 'offline_access'])
@@ -243,6 +246,7 @@ describe('#defraId', () => {
       const mockRequest = {
         info: { host: 'localhost:3000' },
         headers: {},
+        query: {},
         server: { info: { protocol: 'http' } }
       }
 
@@ -264,6 +268,7 @@ describe('#defraId', () => {
           host: 'localhost:3000'
         },
         headers: {},
+        query: {},
         server: { info: { protocol: 'http' } },
         yar: {
           flash: vi.fn()
@@ -278,7 +283,7 @@ describe('#defraId', () => {
       )
     })
 
-    it('should not store referrer in flash when referrer is callback URL', async () => {
+    it('should not store a referrer when returning from the identity provider', async () => {
       await defraId.plugin.register(mockServer)
 
       const strategyCall = mockServer.auth.strategy.mock.calls[0]
@@ -287,10 +292,11 @@ describe('#defraId', () => {
 
       const mockRequest = {
         info: {
-          referrer: 'http://localhost:3000/auth/callback',
+          referrer: 'http://defra-id.auth/',
           host: 'localhost:3000'
         },
         headers: {},
+        query: { code: 'an-authorization-code' },
         server: { info: { protocol: 'http' } },
         yar: {
           flash: vi.fn()

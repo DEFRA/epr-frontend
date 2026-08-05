@@ -85,9 +85,9 @@ export function createApiWasteOrganisationsService(logger) {
       const thisYear = getYear(now)
 
       const params = new URLSearchParams({
-        registrations: ['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'],
-        registrationYears: [String(thisYear)],
-        statuses: ['REGISTERED']
+        registrations: ['LARGE_PRODUCER', 'COMPLIANCE_SCHEME'].join(','),
+        registrationYears: String(thisYear),
+        statuses: 'REGISTERED'
       })
 
       const auth = Buffer.from(`${username}:${password}`).toString('base64')

@@ -1,5 +1,6 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import { paths } from '#server/paths.js'
 
 const SUMMARY_LOG_GUIDANCE_URL =
   'https://www.gov.uk/government/publications/summary-log-templates-for-uk-packaging-waste/recording-uk-packaging-waste-in-summary-logs-supplementary-guidance'
@@ -15,7 +16,7 @@ const SUMMARY_LOGS_OVERVIEW_URL =
  */
 async function getStartNowHref(request) {
   if (!request.auth.isAuthenticated) {
-    return request.localiseUrl('/login')
+    return request.localiseUrl(paths.auth.defraId.login)
   }
 
   const { idToken } = request.auth.credentials
@@ -60,7 +61,7 @@ export const redirectToStart = {
    * @param {ResponseToolkit} h
    */
   handler(request, h) {
-    return h.redirect(request.localiseUrl('/start'))
+    return h.redirect(request.localiseUrl(paths.start))
   }
 }
 

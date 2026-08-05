@@ -1,0 +1,29 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{#
+  Supporting-information summary row shared by the report pages. Pass a changeUrl
+  to make it editable (renders a Change link, as on check-your-answers); omit it
+  for the read-only submit and view pages.
+#}
+{% macro supportingInfoSummary(params) %}
+  {% if params.changeUrl %}
+    {% set actions = {
+      items: [{
+        href: params.changeUrl,
+        text: params.changeText,
+        visuallyHiddenText: params.label
+      }]
+    } %}
+  {% endif %}
+
+  {{ govukSummaryList({
+    classes: "epr-summary-list--wide-key",
+    rows: [
+      {
+        key: { text: params.label },
+        value: { text: params.value },
+        actions: actions
+      }
+    ]
+  }) }}
+{% endmacro %}

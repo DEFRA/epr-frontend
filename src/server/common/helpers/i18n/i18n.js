@@ -1,9 +1,9 @@
 import { languages } from '#server/common/constants/languages.js'
-import fs from 'fs'
+import fs from 'node:fs'
 import i18next from 'i18next'
 import Backend from 'i18next-fs-backend'
 import { LanguageDetector } from 'i18next-http-middleware'
-import path from 'path'
+import path from 'node:path'
 
 /**
  * Recursively find namespaces by looking for en.json or cy.json files

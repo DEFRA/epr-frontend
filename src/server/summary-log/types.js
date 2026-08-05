@@ -129,30 +129,10 @@
 
 /**
  * @typedef {{
- *   valid: LoadRows
- * }} RawLoadValidOnly
- */
-
-/**
- * @typedef {{
  *   added: RawLoadCategory,
  *   adjusted: RawLoadCategory
  *   unchanged: RawLoadCategory,
  * }} RawLoads
- */
-
-/**
- * @typedef {{
- *   wasteRecordType: WasteRecordType,
- *   sheetName: string,
- *   added: RawLoadValidOnly,
- *   unchanged: RawLoadValidOnly,
- *   adjusted: RawLoadValidOnly
- * }} RawLoadsByWasteRecordTypeEntry
- */
-
-/**
- * @typedef {RawLoadsByWasteRecordTypeEntry[]} RawLoadsByWasteRecordType
  */
 
 /**
@@ -189,9 +169,12 @@
 /**
  * A group of load rows sharing one worksheet (tab), rendered as a labelled
  * section in a load list. Sections are emitted in the summary-log flow order
- * and only when they carry rows.
+ * and only when they carry rows. When `nonContributing` is set the whole tab is
+ * by-design excluded from the waste balance: its rows list under the neutral
+ * "never count" heading, each shown as a plain id with no reason.
  * @typedef {{
  *   sectionName: string,
+ *   nonContributing?: boolean,
  *   rows: LoadRowViewModel[]
  * }} LoadSectionViewModel
  */
@@ -208,18 +191,14 @@
 
 /**
  * View model for a balance-affecting bucket. The adjusted accordion splits its
- * rows into loads with all required data (the heading reflects the group's
- * direction) and loads still missing data. The missing-data heading hardcodes
- * "reduced": such a row only becomes balance-affecting by reversing its earlier
- * contribution, so its delta is always negative (see splitBalanceAffecting).
+ * rows by the direction each moved the balance: loads that added to it and loads
+ * that reduced it. Only the reduced sub-group carries per-row reasons (its
+ * exclusion reason, or bare for a plain downward correction); the added group
+ * lists rows by id, reasons suppressed (see splitBalanceAffecting).
  * @typedef {{
  *   count: number,
- *   withData: {
- *     addsToBalance: boolean,
- *     count: number,
- *     sections: LoadSectionViewModel[]
- *   },
- *   withoutData: { count: number, sections: LoadSectionViewModel[] }
+ *   added: { count: number, sections: LoadSectionViewModel[] },
+ *   reduced: { count: number, sections: LoadSectionViewModel[] }
  * }} BalanceAffectingViewModel
  */
 
@@ -279,7 +258,6 @@
  * @typedef {{
  *   accreditationNumber?: string,
  *   loads?: RawLoads,
- *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
  *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType
  *   status: string,

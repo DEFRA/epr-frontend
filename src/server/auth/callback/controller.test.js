@@ -1,14 +1,28 @@
-import { controller } from '#server/auth/callback/controller.js'
+import { defraIdCallbackController } from '#server/auth/callback/controller.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
+import { asUserOrganisations } from '#server/common/test-helpers/auth-helper.js'
+import {
+  mockHapiRequest,
+  asResponseToolkit
+} from '#server/common/test-helpers/request-fixtures.js'
 import * as metricsModule from '#server/common/helpers/metrics/index.js'
 import Boom from '@hapi/boom'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
+/**
+ * @import { UUID, Hash } from 'node:crypto'
+ */
+
 vi.mock(import('node:crypto'), () => ({
-  randomUUID: vi.fn(() => 'mock-uuid-1234'),
-  createHash: vi.fn(() => ({
-    update: vi.fn((input) => ({ digest: vi.fn(() => `${input}-hashed`) }))
-  }))
+  randomUUID: vi.fn(() => /** @type {UUID} */ ('mock-uuid-1234')),
+  createHash: vi.fn(
+    () =>
+      /** @type {Hash} */ (
+        /** @type {unknown} */ ({
+          update: vi.fn((input) => ({ digest: vi.fn(() => `${input}-hashed`) }))
+        })
+      )
+  )
 }))
 
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
@@ -53,7 +67,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(mockOrganisations)
+      ).mockResolvedValue(asUserOrganisations(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -85,14 +99,18 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue(['/dashboard'])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       // First call stores initial session, second call adds linkedOrganisationId
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledTimes(2)
@@ -142,7 +160,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(mockOrganisations)
+      ).mockResolvedValue(asUserOrganisations(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -169,7 +187,10 @@ describe('#authCallbackController', () => {
 
       const mockH = { redirect: vi.fn().mockReturnValue('redirect-response') }
 
-      await controller.handler(mockRequest, mockH)
+      await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith({
         message: 'User has been successfully authenticated',
@@ -200,6 +221,11 @@ describe('#authCallbackController', () => {
         referrer: '/cy/logged-out',
         description: 'Welsh logged-out page',
         isWelsh: true
+      },
+      {
+        referrer: '/auth/callback',
+        description: 'auth callback page',
+        isWelsh: false
       }
     ])(
       'should redirect to organisation dashboard when referrer is $referrer (not back to $description)',
@@ -230,7 +256,7 @@ describe('#authCallbackController', () => {
 
         vi.mocked(
           fetchUserOrganisationsModule.fetchUserOrganisations
-        ).mockResolvedValue(mockOrganisations)
+        ).mockResolvedValue(asUserOrganisations(mockOrganisations))
 
         const mockRequest = {
           auth: {
@@ -266,7 +292,10 @@ describe('#authCallbackController', () => {
           redirect: vi.fn().mockReturnValue('redirect-response')
         }
 
-        const result = await controller.handler(mockRequest, mockH)
+        const result = await defraIdCallbackController.handler(
+          mockHapiRequest(mockRequest),
+          asResponseToolkit(mockH)
+        )
 
         const expectedRedirect = isWelsh
           ? '/cy/organisations/linked-org-uuid'
@@ -302,7 +331,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(mockOrganisations)
+      ).mockResolvedValue(asUserOrganisations(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -342,7 +371,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockRequest.localiseUrl).toHaveBeenCalledExactlyOnceWith(
         '/organisations/linked-org-uuid'
@@ -390,7 +422,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(mockOrganisations)
+      ).mockResolvedValue(asUserOrganisations(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -430,7 +462,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      await controller.handler(mockRequest, mockH)
+      await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
@@ -507,7 +542,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-to-linking')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-to-linking')
@@ -542,7 +580,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
@@ -579,7 +620,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockRequest.server.app.cache.set).not.toHaveBeenCalled()
       expect(mockRequest.cookieAuth.set).not.toHaveBeenCalled()
@@ -588,6 +632,73 @@ describe('#authCallbackController', () => {
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
       expect(result).toBe('redirect-response')
     })
+
+    it.each([
+      {
+        referrer: '/start',
+        description: 'start page',
+        isWelsh: false
+      },
+      {
+        referrer: '/cy/start',
+        description: 'Welsh start page',
+        isWelsh: true
+      },
+      {
+        referrer: '/logged-out',
+        description: 'logged-out page',
+        isWelsh: false
+      },
+      {
+        referrer: '/cy/logged-out',
+        description: 'Welsh logged-out page',
+        isWelsh: true
+      },
+      {
+        referrer: '/auth/callback',
+        description: 'auth callback page',
+        isWelsh: false
+      }
+    ])(
+      'should redirect to home when referrer is $referrer (not back to $description)',
+      async ({ referrer, isWelsh }) => {
+        const mockRequest = {
+          auth: {
+            isAuthenticated: false
+          },
+          server: {
+            app: {
+              cache: {
+                set: vi.fn()
+              }
+            }
+          },
+          cookieAuth: {
+            set: vi.fn()
+          },
+          logger: {
+            info: vi.fn(),
+            error: vi.fn()
+          },
+          yar: {
+            flash: vi.fn().mockReturnValue([referrer])
+          },
+          localiseUrl: vi.fn((url) => (isWelsh ? `/cy${url}` : url))
+        }
+
+        const mockH = {
+          redirect: vi.fn().mockReturnValue('redirect-response')
+        }
+
+        const result = await defraIdCallbackController.handler(
+          mockHapiRequest(mockRequest),
+          asResponseToolkit(mockH)
+        )
+
+        expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/')
+        expect(result).toBe('redirect-response')
+      }
+    )
   })
 
   describe('error handling', () => {
@@ -642,7 +753,10 @@ describe('#authCallbackController', () => {
       }
 
       await expect(
-        controller.handler(mockRequest, mockH)
+        defraIdCallbackController.handler(
+          mockHapiRequest(mockRequest),
+          asResponseToolkit(mockH)
+        )
       ).rejects.toMatchObject({
         isBoom: true,
         output: {
@@ -696,7 +810,7 @@ describe('#authCallbackController', () => {
 
       vi.mocked(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).mockResolvedValue(mockOrganisations)
+      ).mockResolvedValue(asUserOrganisations(mockOrganisations))
 
       const mockRequest = {
         auth: {
@@ -728,14 +842,18 @@ describe('#authCallbackController', () => {
         },
         yar: {
           flash: vi.fn().mockReturnValue(['/dashboard'])
-        }
+        },
+        localiseUrl: vi.fn((url) => url)
       }
 
       const mockH = {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/dashboard')
       expect(result).toBe('redirect-response')
@@ -809,7 +927,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-response')
@@ -872,7 +993,10 @@ describe('#authCallbackController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await controller.handler(mockRequest, mockH)
+      const result = await defraIdCallbackController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/account/linking')
       expect(result).toBe('redirect-response')

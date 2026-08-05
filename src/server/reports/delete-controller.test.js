@@ -1,6 +1,8 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -13,20 +15,14 @@ vi.mock(import('./helpers/delete-report.js'))
 
 const { deleteReport } = await import('./helpers/delete-report.js')
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const registeredOnlyExporter = {
+const registeredOnlyExporter = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -35,7 +31,7 @@ const registeredOnlyExporter = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
 const organisationId = 'org-123'
 const registrationId = 'reg-001'
@@ -79,6 +75,20 @@ describe('#deleteController', () => {
       })
 
       expect(heading).toBeDefined()
+    })
+
+    it('should display the quarterly period label in the page title', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+
+      expect(dom.window.document.title).toContain('Quarter 1 2026')
     })
 
     it('should display the warning button', async ({ server }) => {
@@ -234,7 +244,9 @@ describe('#deleteController', () => {
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         registeredOnlyExporter
       )
-      vi.mocked(deleteReport).mockResolvedValue({ ok: true })
+      vi.mocked(deleteReport).mockResolvedValue(
+        /** @type {void} */ (/** @type {unknown} */ ({ ok: true }))
+      )
     })
 
     describe('csrf protection', () => {

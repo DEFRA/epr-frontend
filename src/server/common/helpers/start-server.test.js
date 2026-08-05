@@ -4,9 +4,13 @@ import * as serverIndex from '#server/index.js'
 import { it } from '#vite/fixtures/server.js'
 import hapi from '@hapi/hapi'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
-const mockLoggerInfo = vi.fn()
-const mockLoggerError = vi.fn()
+/**
+ * @import { HapiServer } from '#server/common/hapi-types.js'
+ */
+
+const mockLogger = createMockLogger()
 
 const mockHapiLoggerInfo = vi.fn()
 const mockHapiLoggerError = vi.fn()
@@ -23,10 +27,17 @@ vi.mock(import('hapi-pino'), () => ({
   }
 }))
 
+// start-server is imported statically, so createLogger() runs at import time --
+// before mockLogger is initialised. Forward lazily rather than returning
+// mockLogger directly, which would hit a temporal-dead-zone error.
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
   createLogger: () => ({
-    info: (...args) => mockLoggerInfo(...args),
-    error: (...args) => mockLoggerError(...args)
+    info: (...args) => mockLogger.info(...args),
+    warn: (...args) => mockLogger.warn(...args),
+    error: (...args) => mockLogger.error(...args),
+    debug: (...args) => mockLogger.debug(...args),
+    trace: (...args) => mockLogger.trace(...args),
+    fatal: (...args) => mockLogger.fatal(...args)
   })
 }))
 
@@ -45,7 +56,7 @@ describe('#startServer', () => {
   })
 
   describe('when server starts', () => {
-    /** @type {import('@hapi/hapi').Server | undefined} */
+    /** @type {HapiServer | undefined} */
     let server
 
     afterAll(async () => {
@@ -57,7 +68,7 @@ describe('#startServer', () => {
 
       expect(createServerSpy).toHaveBeenCalledExactlyOnceWith()
       expect(hapiServerSpy).toHaveBeenCalledExactlyOnceWith(expect.any(Object))
-      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith({
+      expect(mockLogger.info).toHaveBeenCalledExactlyOnceWith({
         message: 'Using Catbox Memory session cache'
       })
       expect(mockHapiLoggerInfo).toHaveBeenNthCalledWith(1, {
@@ -81,7 +92,7 @@ describe('#startServer', () => {
     it('should log failed startup message', async () => {
       await startServer()
 
-      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith({
+      expect(mockLogger.error).toHaveBeenCalledExactlyOnceWith({
         message: 'Server failed to start :(',
         err: Error('Server failed to start')
       })

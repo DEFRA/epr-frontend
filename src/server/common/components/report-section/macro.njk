@@ -1,0 +1,16 @@
+{% macro _reportSection(level, size, heading, totalCaption, totalValue, intro) %}
+  <h{{ level }} class="govuk-heading-{{ size }}">{{ heading }}</h{{ level }}>
+  {% if intro %}
+    <p class="govuk-body">{{ intro }}</p>
+  {% endif %}
+  <p class="govuk-caption-l govuk-!-margin-bottom-1">{{ totalCaption }}</p>
+  <p class="govuk-heading-l govuk-!-padding-top-0">{{ totalValue }}</p>
+{% endmacro %}
+
+{% macro reportSection(heading, totalCaption, totalValue, intro) %}
+  {{ _reportSection(2, "l", heading, totalCaption, totalValue, intro) }}
+{% endmacro %}
+
+{% macro reportSubSection(heading, totalCaption, totalValue, intro) %}
+  {{ _reportSection(3, "m", heading, totalCaption, totalValue, intro) }}
+{% endmacro %}

@@ -12,6 +12,7 @@ describe(initiateSummaryLogUpload, () => {
   test('calls backend summary-logs endpoint with redirectUrl', async ({
     msw
   }) => {
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.post(
@@ -35,11 +36,11 @@ describe(initiateSummaryLogUpload, () => {
       idToken: 'test-id-token'
     })
 
-    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
-    expect(capturedRequest.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
-    await expect(capturedRequest.json()).resolves.toStrictEqual({
+    const request = /** @type {Request} */ (capturedRequest)
+
+    expect(request.headers.get('content-type')).toBe('application/json')
+    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
+    await expect(request.json()).resolves.toStrictEqual({
       redirectUrl: '/redirect/path'
     })
   })

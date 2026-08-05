@@ -1,0 +1,53 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "report-section/macro.njk" import reportSection %}
+
+{#
+  The PRN/PERN summary shared by all three report pages. Values arrive
+  pre-formatted from buildPrnSummaryViewData (absent values as a dash).
+
+  - editable (check-your-answers): issued tonnage is a row, revenue and free
+    carry Change links (pass revenueChangeUrl / freeChangeUrl / changeText).
+  - read-only (submit, view): issued tonnage is a section headline, no Change.
+#}
+{% macro prnSummary(prn, labels, options) %}
+  {% set editable = options.editable %}
+
+  {% if editable %}
+    <h2 class="govuk-heading-l">{{ labels.section }}</h2>
+  {% else %}
+    {{ reportSection(labels.section, labels.issued, prn.issuedTonnage) }}
+  {% endif %}
+
+  {% set freeKeyHtml %}
+    {{ labels.free }}
+    <span class="govuk-body-s govuk-!-font-weight-regular govuk-!-display-block govuk-!-margin-top-1">{{ labels.freeNote }}</span>
+  {% endset %}
+
+  {% set rows = [] %}
+
+  {% if editable %}
+    {% set rows = rows.concat([{
+      key: { text: labels.issued },
+      value: { text: prn.issuedTonnage }
+    }]) %}
+  {% endif %}
+
+  {% set rows = rows.concat([
+    {
+      key: { text: labels.revenue },
+      value: { text: prn.totalRevenue },
+      actions: { items: [{ href: options.revenueChangeUrl, text: options.changeText, visuallyHiddenText: labels.revenue }] } if editable else none
+    },
+    {
+      key: { html: freeKeyHtml },
+      value: { text: prn.freeTonnage },
+      actions: { items: [{ href: options.freeChangeUrl, text: options.changeText, visuallyHiddenText: labels.free }] } if editable else none
+    },
+    {
+      key: { text: labels.avg },
+      value: { text: prn.averagePricePerTonne }
+    }
+  ]) %}
+
+  {{ govukSummaryList({ classes: "epr-summary-list--wide-key", rows: rows }) }}
+{% endmacro %}

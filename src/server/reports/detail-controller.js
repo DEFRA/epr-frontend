@@ -1,3 +1,4 @@
+import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -15,7 +16,7 @@ import {
   getTotalTonnageSentOn
 } from './helpers/build-table-rows.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
 
@@ -23,27 +24,38 @@ import { validateCadenceForRegistration } from './helpers/validate-cadence.js'
  * @param {object|undefined} exportActivity
  * @param {boolean} isExporter
  * @param {boolean} isAccreditedExporter
+ * @param {string} fallbackText
  * @returns {object|null}
  */
-function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
+function buildWasteExported(
+  exportActivity,
+  isExporter,
+  isAccreditedExporter,
+  fallbackText
+) {
   if (!isExporter || !exportActivity) {
     return null
   }
 
   return {
-    totalTonnage: exportActivity.totalTonnageExported,
+    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
     overseasSiteDetailRows: buildOverseasSiteDetailRows(
       exportActivity.overseasSites,
-      { showApprovalColumn: isAccreditedExporter }
+      { showApprovalColumn: isAccreditedExporter },
+      fallbackText
     ),
     unapprovedOverseasSiteDetailRows: buildUnapprovedOverseasSiteDetailRows(
       exportActivity.unapprovedOverseasSites
     ),
-    tonnageReceivedNotExported: exportActivity.tonnageReceivedNotExported,
-    tonnageRefusedOrStopped: exportActivity.totalTonnageRefusedOrStopped,
-    tonnageRefused: exportActivity.tonnageRefusedAtDestination,
-    tonnageStopped: exportActivity.tonnageStoppedDuringExport,
-    tonnageRepatriated: exportActivity.tonnageRepatriated
+    tonnageReceivedNotExported: formatTonnage(
+      exportActivity.tonnageReceivedNotExported
+    ),
+    tonnageRefusedOrStopped: formatTonnage(
+      exportActivity.totalTonnageRefusedOrStopped
+    ),
+    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
+    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
+    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
   }
 }
 
@@ -64,11 +76,7 @@ function buildSectionIntros(
         ? 'reports:wasteSentOnIntroAccreditedReprocessor'
         : 'reports:wasteSentOnIntroReprocessor'
     ),
-    wasteSentOnIntroExporter: localise(
-      isAccreditedExporter
-        ? 'reports:wasteSentOnIntroAccreditedExporter'
-        : 'reports:wasteSentOnIntroExporter'
-    ),
+    wasteSentOnIntroExporter: localise('reports:wasteSentOnIntroExporter'),
     wasteReceivedIntroReprocessor: localise(
       isAccreditedReprocessor
         ? 'reports:wasteReceivedIntroAccreditedReprocessor'
@@ -106,7 +114,7 @@ function buildViewData(
   localiseUrl
 ) {
   const material = getDisplayMaterial(registration)
-  const periodLabel = formatPeriodLabel(
+  const periodLabel = formatPeriodLabelWithComma(
     { year: reportDetail.year, period: reportDetail.period },
     reportDetail.cadence,
     localise
@@ -117,6 +125,7 @@ function buildViewData(
   const isAccreditedReprocessor =
     isReprocessorRegistration(registration) && !!accreditation
   const { wasteActionGerund } = getNoteTypeDisplayNames(registration)
+  const fallbackText = localise('reports:noneProvided')
 
   return {
     pageTitle: localise('reports:detailPageTitle', { material, periodLabel }),
@@ -136,9 +145,7 @@ function buildViewData(
     ),
     lastUploadedAt: reportDetail.source?.lastUploadedAt
       ? {
-          date: formatDate(reportDetail.source.lastUploadedAt, {
-            includeYear: false
-          }),
+          date: formatDate(reportDetail.source.lastUploadedAt),
           time: formatTime(reportDetail.source.lastUploadedAt)
         }
       : null,
@@ -146,21 +153,25 @@ function buildViewData(
     registrationNumber: registration.registrationNumber,
     site: reportDetail.details.site,
     wasteReceived: {
-      totalTonnage: recyclingActivity.totalTonnageReceived,
-      supplierRows: buildSupplierRows(recyclingActivity.suppliers)
+      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
+      supplierRows: buildSupplierRows(recyclingActivity.suppliers, fallbackText)
     },
     showApprovalColumn: isAccreditedExporter,
     wasteExported: buildWasteExported(
       exportActivity,
       isExporter,
-      isAccreditedExporter
+      isAccreditedExporter,
+      fallbackText
     ),
     wasteSentOn: {
-      totalTonnage: getTotalTonnageSentOn(wasteSent),
-      toReprocessors: wasteSent.tonnageSentToReprocessor,
-      toExporters: wasteSent.tonnageSentToExporter,
-      toOtherSites: wasteSent.tonnageSentToAnotherSite,
-      destinationRows: buildDestinationRows(wasteSent.finalDestinations)
+      totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
+      toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
+      toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
+      toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
+      destinationRows: buildDestinationRows(
+        wasteSent.finalDestinations,
+        fallbackText
+      )
     },
     ...buildSectionIntros(
       isAccreditedExporter,

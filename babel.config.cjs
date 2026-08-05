@@ -1,5 +1,7 @@
+/** @import { TransformOptions } from '@babel/core' */
+
 /**
- * @type {import('@babel/core').TransformOptions}
+ * @type {TransformOptions}
  */
 module.exports = {
   browserslistEnv: 'node',

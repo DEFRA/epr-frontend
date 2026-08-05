@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { formatTonnage } from '#config/nunjucks/filters/format-tonnage.js'
 import { formatDate } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
@@ -10,19 +12,26 @@ import {
 } from '#server/common/helpers/prns/registration-helpers.js'
 import { SUBMISSION_STATUS } from './constants.js'
 import {
-  buildDestinationDetailRows,
-  buildOverseasSiteRows,
-  buildSupplierDetailRows,
-  buildUnapprovedOverseasSiteRows,
-  getTotalTonnageSentOn
-} from './helpers/build-table-rows.js'
+  buildPrnSummaryViewData,
+  buildWasteExportedViewData,
+  buildWasteReceivedViewData,
+  buildWasteSentOnViewData
+} from './helpers/build-report-view-data.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
-import { formatExportTonnages } from './helpers/format-export-tonnages.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
+import {
+  getStatusLabel,
+  getStatusTagClass
+} from './helpers/format-submission-status.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
+import { isResubmission } from './helpers/resubmission.js'
 import { updateReportStatus } from './helpers/update-report-status.js'
 import { buildValidationErrors } from './helpers/validation.js'
 import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
+
+/** @import { Localise } from './helpers/format-period-label.js' */
+/** @import { Registration } from '#domain/organisations/registration.js' */
+/** @import { ValidationError } from 'joi' */
 
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
@@ -35,7 +44,7 @@ import { submitPayloadSchema } from './helpers/versioned-payload-schema.js'
 
 /**
  * @param {{ at: string, by: { name: string } }} statusCreated
- * @param {import('./helpers/format-period-label.js').Localise} localise
+ * @param {Localise} localise
  * @returns {{ createdBy: string, createdOn: string }}
  */
 function getCreationDetails(statusCreated, localise) {
@@ -50,66 +59,8 @@ function getCreationDetails(statusCreated, localise) {
   }
 }
 
-const defaultExportActivity = {
-  totalTonnageExported: 0,
-  overseasSites: [],
-  tonnageReceivedNotExported: null,
-  tonnageRefusedAtDestination: null,
-  tonnageStoppedDuringExport: null,
-  totalTonnageRefusedOrStopped: null,
-  tonnageRepatriated: null
-}
-
 /**
- * @param {object|null|undefined} exportActivity
- * @param {boolean} isExporter
- * @param {boolean} isAccreditedExporter
- * @returns {object|null}
- */
-function buildWasteExported(exportActivity, isExporter, isAccreditedExporter) {
-  if (!isExporter) {
-    return null
-  }
-
-  const activity = exportActivity ?? defaultExportActivity
-  return {
-    totalTonnage: formatTonnage(activity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(activity.overseasSites, {
-      showApprovalColumn: isAccreditedExporter
-    }),
-    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
-      activity.unapprovedOverseasSites ?? []
-    ),
-    ...formatExportTonnages(activity)
-  }
-}
-
-/**
- * @typedef {{
- *   destinationDetailRows: Array<Array<{text: string | null}>>,
- *   toExporters: string,
- *   toOtherSites: string,
- *   toReprocessors: string,
- *   totalTonnage: string
- * }} WasteSentOnViewData
- */
-
-/**
- * @param {ReportDetailResponse['wasteSent']} wasteSent
- * @returns {WasteSentOnViewData}
- */
-const buildWasteSentOnViewData = (wasteSent) => ({
-  destinationDetailRows: buildDestinationDetailRows(
-    wasteSent.finalDestinations
-  ),
-  toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-  toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-  toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-  totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent))
-})
-
-/**
- * @param {{ localise: import('./helpers/format-period-label.js').Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string }} params
+ * @param {{ localise: Localise, material: string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, resubmission: boolean }} params
  * @returns {object}
  */
 function buildPageLabels({
@@ -117,11 +68,18 @@ function buildPageLabels({
   material,
   periodLabel,
   noteTypePlural,
-  wasteActionGerund
+  wasteActionGerund,
+  resubmission
 }) {
   return {
-    pageTitle: localise('reports:submitPageTitle', { material, periodLabel }),
-    heading: localise('reports:submitHeading', { periodLabel }),
+    pageTitle: localise(
+      resubmission ? 'reports:resubmitPageTitle' : 'reports:submitPageTitle',
+      { material, periodLabel }
+    ),
+    heading: localise(
+      resubmission ? 'reports:resubmitHeading' : 'reports:submitHeading',
+      { periodLabel }
+    ),
     wasteReceivedHeading: localise('reports:wasteReceivedHeading', {
       wasteActionGerund
     }),
@@ -131,20 +89,11 @@ function buildPageLabels({
     totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
       noteTypePlural
     }),
-    freeLabel: localise('reports:submitFreeLabel', { noteTypePlural }),
-    revenueLabel: localise('reports:submitTotalRevenue', { noteTypePlural }),
-    avgPriceLabel: localise('reports:submitAvgPrice', { noteTypePlural })
+    freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
+    avgPriceLabel: localise('reports:avgPriceLabel')
   }
 }
-
-/**
- * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
- * @returns {{ totalTonnage: string, supplierDetailRows: Array<Array<{text: string | null}>> }}
- */
-const buildWasteReceivedViewData = (recyclingActivity) => ({
-  totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-  supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-})
 
 /**
  * @param {ReportDetailResponse['recyclingActivity']} recyclingActivity
@@ -156,12 +105,37 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
 })
 
 /**
+ * @param {{ recyclingActivity: object, exportActivity: object | undefined, wasteSent: object }} activity
+ * @param {{ isExporter: boolean, isAccreditedExporter: boolean }} flags
+ * @param {string} fallbackText
+ * @returns {{ wasteReceived: object, wasteExported: object | null, wasteSentOn: object, recyclingActivity: { tonnageRecycled: string, tonnageNotRecycled: string } }}
+ */
+function buildActivityViewData(
+  { recyclingActivity, exportActivity, wasteSent },
+  { isExporter, isAccreditedExporter },
+  fallbackText
+) {
+  return {
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(
+          exportActivity,
+          { showApprovalColumn: isAccreditedExporter },
+          fallbackText
+        )
+      : null,
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
+    recyclingActivity: buildRecyclingActivityViewData(recyclingActivity)
+  }
+}
+
+/**
  * @typedef {{
- *   registration: import('#domain/organisations/registration.js').Registration,
+ *   registration: Registration,
  *   accreditation: object | null,
  *   reportDetail: ReportDetailResponse,
  *   reportsUrl: string,
- *   localise: import('./helpers/format-period-label.js').Localise,
+ *   localise: Localise,
  *   year: number,
  *   cadence: CadenceValue,
  *   period: number,
@@ -173,18 +147,7 @@ const buildRecyclingActivityViewData = (recyclingActivity) => ({
  */
 
 /**
- * @param {ReportDetailResponse['prn']} prn
- * @returns {object}
- */
-const buildPrnViewData = (prn) => ({
-  averagePricePerTonne: prn?.averagePricePerTonne,
-  freeTonnage: prn?.freeTonnage,
-  issuedTonnage: prn?.issuedTonnage,
-  totalRevenue: prn?.totalRevenue
-})
-
-/**
- * @param {import('./helpers/format-period-label.js').Localise} localise
+ * @param {Localise} localise
  * @param {string} organisationName
  * @returns {string[]}
  */
@@ -193,6 +156,54 @@ const buildDeclarationItems = (localise, organisationName) => [
   localise('reports:submitDeclarationItem2'),
   localise('reports:submitDeclarationItem3')
 ]
+
+/**
+ * The Details-block status for the review page. A resubmission draft keeps its
+ * period's Requires resubmission status (purple) in place of the standard Ready
+ * to submit tag, and drives the "Resubmit report for …" heading. isResubmission
+ * bundles the flag, so the page renders as the standard submit flow until
+ * closed-period adjustments ship.
+ * @param {number} submissionNumber
+ * @param {Localise} localise
+ * @returns {{ resubmission: boolean, statusTag: string, statusTagClass: string }}
+ */
+function buildSubmitStatus(submissionNumber, localise) {
+  const resubmission = isResubmission(submissionNumber)
+  const status = resubmission
+    ? SUBMISSION_STATUS.REQUIRES_RESUBMISSION
+    : SUBMISSION_STATUS.READY_TO_SUBMIT
+
+  return {
+    resubmission,
+    statusTag: getStatusLabel(status, localise),
+    statusTagClass: getStatusTagClass(status)
+  }
+}
+
+/**
+ * @param {Pick<BuildViewModelParams, 'registration' | 'reportDetail' | 'year' | 'cadence' | 'period' | 'localise'>} params
+ * @returns {{ status: NonNullable<ReportDetailResponse['status']>, material: string, periodLabel: string }}
+ */
+function getReportSummaryFields({
+  registration,
+  reportDetail,
+  year,
+  cadence,
+  period,
+  localise
+}) {
+  const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
+    reportDetail.status
+  )
+  const material = getDisplayMaterial(registration)
+  const periodLabel = formatPeriodLabelWithComma(
+    { year, period },
+    cadence,
+    localise
+  )
+
+  return { status, material, periodLabel }
+}
 
 /**
  * @param {BuildViewModelParams} params
@@ -212,11 +223,14 @@ function buildViewModel({
   errors,
   errorSummary
 }) {
-  const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
-    reportDetail.status
-  )
-  const material = getDisplayMaterial(registration)
-  const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
+  const { status, material, periodLabel } = getReportSummaryFields({
+    registration,
+    reportDetail,
+    year,
+    cadence,
+    period,
+    localise
+  })
   const { recyclingActivity, exportActivity, wasteSent } = reportDetail
   const isExporter = isExporterRegistration(registration)
   const isAccreditedExporter = isExporter && !!accreditation
@@ -224,6 +238,13 @@ function buildViewModel({
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
   const { createdBy, createdOn } = getCreationDetails(status.created, localise)
+  const submitStatus = buildSubmitStatus(submissionNumber, localise)
+  const fallbackText = localise('reports:noneProvided')
+  const activityViewData = buildActivityViewData(
+    { recyclingActivity, exportActivity, wasteSent },
+    { isExporter, isAccreditedExporter },
+    fallbackText
+  )
 
   return {
     ...buildPageLabels({
@@ -231,7 +252,8 @@ function buildViewModel({
       material,
       periodLabel,
       noteTypePlural,
-      wasteActionGerund
+      wasteActionGerund,
+      resubmission: submitStatus.resubmission
     }),
     isAccredited: !!accreditation,
     isReprocessor: isReprocessorRegistration(registration),
@@ -240,7 +262,8 @@ function buildViewModel({
     showApprovalColumn: isAccreditedExporter,
     backUrl: reportsUrl,
     insetText: localise('reports:submitInsetText'),
-    statusTag: localise('reports:statusReadyToSubmit'),
+    statusTag: submitStatus.statusTag,
+    statusTagClass: submitStatus.statusTagClass,
     createdByLabel: localise('reports:submitCreatedByLabel'),
     createdBy,
     createdOnLabel: localise('reports:submitCreatedOnLabel'),
@@ -248,18 +271,9 @@ function buildViewModel({
     periodLabel,
     material,
     site: reportDetail.details.site,
-    wasteReceived: buildWasteReceivedViewData(recyclingActivity),
-    wasteExported: buildWasteExported(
-      exportActivity,
-      isExporter,
-      isAccreditedExporter
-    ),
-    wasteSentOn: buildWasteSentOnViewData(wasteSent),
-    prn: buildPrnViewData(reportDetail.prn),
-    recyclingActivity: buildRecyclingActivityViewData(recyclingActivity),
-    supportingInformation:
-      reportDetail.supportingInformation ||
-      localise('reports:supportingInformationNone'),
+    ...activityViewData,
+    prn: buildPrnSummaryViewData(reportDetail.prn),
+    supportingInformation: reportDetail.supportingInformation || fallbackText,
     declarationItems: buildDeclarationItems(localise, registration.orgName),
     version: reportDetail.version,
     submissionDeclaredBy: submissionDeclaredBy ?? null,
@@ -365,6 +379,16 @@ export const submitGetController = {
       )
     }
 
+    // The review page can only submit a ready-to-submit draft. Any other state
+    // (for example an in-progress draft reached by a hand-edited URL) is illegal
+    // here, so refuse it rather than render a submittable page for it. This also
+    // upholds the resubmission variant's precondition: a report reaching the
+    // render below is ready to submit, so a submissionNumber above the first is
+    // genuinely a resubmission awaiting submission.
+    if (status.currentStatus !== SUBMISSION_STATUS.READY_TO_SUBMIT) {
+      throw Boom.notFound()
+    }
+
     const viewData = await buildViewData(request)
 
     return h.view('reports/submit', viewData)
@@ -385,7 +409,7 @@ export const submitPostController = {
       async failAction(request, h, error) {
         const { errors, errorSummary } = buildValidationErrors(
           request,
-          /** @type {import('joi').ValidationError} */ (error)
+          /** @type {ValidationError} */ (error)
         )
 
         const viewData = await buildViewData(request, {

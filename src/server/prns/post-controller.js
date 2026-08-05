@@ -13,6 +13,8 @@ import { createPrn } from './helpers/create-prn.js'
 import { tonnageToWords } from './helpers/tonnage-to-words.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
+/** @import { ValidationErrorItem } from 'joi' */
+
 const MIN_TONNAGE = 1
 
 const ERROR_KEYS = Object.freeze({
@@ -60,7 +62,7 @@ const payloadSchema = Joi.object({
  */
 
 /**
- * @param {import('joi').ValidationErrorItem} detail
+ * @param {ValidationErrorItem} detail
  * @returns {string}
  */
 function getErrorMessageKey(detail) {

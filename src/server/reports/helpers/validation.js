@@ -3,6 +3,8 @@ import Joi from 'joi'
 
 import { isNil } from '#server/common/helpers/is-nil.js'
 
+/** @import { CustomHelpers, ErrorReport, ValidationError } from 'joi' */
+
 const TWO_DECIMAL_PLACES = 2
 
 /**
@@ -23,8 +25,8 @@ export const padToTwoDecimalPlaces = (value) => {
  * Joi custom validator that rejects numbers with more than two decimal places.
  * Uses Decimal.js to avoid IEEE 754 floating point errors (e.g. 0.07 * 100 !== 7).
  * @param {number} value
- * @param {import('joi').CustomHelpers} helpers
- * @returns {number | import('joi').ErrorReport}
+ * @param {CustomHelpers} helpers
+ * @returns {number | ErrorReport}
  */
 export const maxTwoDecimalPlaces = (value, helpers) => {
   if (new Decimal(value).decimalPlaces() > TWO_DECIMAL_PLACES) {
@@ -171,7 +173,7 @@ export const freeTonnagePayloadSchema = Joi.object({
  * Builds validation error objects from Joi error details, suitable for
  * govukErrorSummary and inline error display.
  * @param {HapiRequest} request
- * @param {import('joi').ValidationError} error
+ * @param {ValidationError} error
  * @param {Record<string, unknown>} [interpolation] - Placeholder values for i18n message keys
  * @returns {{ errors: ValidationErrors, errorSummary: ErrorSummary }}
  */

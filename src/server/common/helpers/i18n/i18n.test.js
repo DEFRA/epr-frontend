@@ -12,7 +12,11 @@ vi.mock(import('i18next-http-middleware'))
 describe(initI18n, function () {
   beforeEach(() => {
     vi.spyOn(i18next, 'use').mockReturnThis()
-    vi.spyOn(i18next, 'init').mockResolvedValue()
+    vi.spyOn(i18next, 'init').mockResolvedValue(
+      /** @type {Awaited<ReturnType<typeof i18next.init>>} */ (
+        /** @type {unknown} */ (undefined)
+      )
+    )
   })
 
   test('initialises i18next with expected configuration', async () => {
@@ -42,13 +46,15 @@ describe(initI18n, function () {
   test('sets correct loadPath for backend', async () => {
     await initI18n()
 
-    const config = i18next.init.mock.calls[0][0]
+    const config = vi.mocked(i18next).init.mock.calls[0][0]
 
-    expect(config.backend.loadPath).toContain('src/server/{{ns}}/{{lng}}.json')
+    expect(
+      /** @type {{ loadPath: string }} */ (config.backend).loadPath
+    ).toContain('src/server/{{ns}}/{{lng}}.json')
   })
 
   test('throws if init rejects', async () => {
-    i18next.init.mockRejectedValueOnce(new Error('init failed'))
+    vi.mocked(i18next.init).mockRejectedValueOnce(new Error('init failed'))
 
     await expect(initI18n()).rejects.toThrow('init failed')
   })

@@ -3,5 +3,21 @@
   "forbidden": "Forbidden",
   "generic": "Something went wrong. Please try again.",
   "notFound": "Page not found",
+  "page": {
+    "pageTitle": "Something has gone wrong",
+    "heading": "Something has gone wrong",
+    "introText": "Something went wrong while you were using the service.",
+    "causes": {
+      "intro": "It could be because",
+      "concurrentUse": "someone else from your business is using the service at the same time as you",
+      "technicalProblem": "there's a technical problem with our service"
+    },
+    "whatNextHeading": "What you can do next",
+    "homePageLink": {
+      "prefix": "You can try to complete your task again by returning to your",
+      "text": "home page"
+    },
+    "reportText": "If you have received this message more than once today, you can report the problem to us."
+  },
   "unauthorized": "Unauthorised"
 }

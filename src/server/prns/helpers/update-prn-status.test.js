@@ -35,7 +35,7 @@ describe(updatePrnStatus, () => {
   })
 
   it('calls fetchJsonFromBackend with correct path and options', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updatePrnStatus(
       organisationId,
@@ -59,7 +59,7 @@ describe(updatePrnStatus, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updatePrnStatus(
       'org/123',
@@ -77,7 +77,7 @@ describe(updatePrnStatus, () => {
   })
 
   it('returns the response from fetchJsonFromBackend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updatePrnStatus(
       organisationId,
@@ -93,7 +93,7 @@ describe(updatePrnStatus, () => {
 
   it('propagates errors from fetchJsonFromBackend', async () => {
     const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
       updatePrnStatus(

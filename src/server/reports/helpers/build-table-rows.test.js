@@ -12,6 +12,8 @@ import {
   buildUnapprovedOverseasSiteRows
 } from './build-table-rows.js'
 
+const fallbackText = 'None provided'
+
 describe(getTotalTonnageSentOn, () => {
   it('sums all three tonnage fields', () => {
     const wasteSent = {
@@ -34,10 +36,30 @@ describe(buildSupplierRows, () => {
       }
     ]
 
-    const rows = buildSupplierRows(suppliers)
+    const rows = buildSupplierRows(suppliers, fallbackText)
 
     expect(rows).toStrictEqual([
       [{ text: 'Acme Waste' }, { text: 'Baler' }, { text: '1,234.50' }]
+    ])
+  })
+
+  it('falls back to none text for missing name and facility type', () => {
+    const suppliers = [
+      {
+        supplierName: null,
+        facilityType: null,
+        tonnageReceived: 1234.5
+      }
+    ]
+
+    const rows = buildSupplierRows(suppliers, fallbackText)
+
+    expect(rows).toStrictEqual([
+      [
+        { text: 'None provided' },
+        { text: 'None provided' },
+        { text: '1,234.50' }
+      ]
     ])
   })
 })
@@ -49,20 +71,44 @@ describe(buildSupplierDetailRows, () => {
         supplierName: 'Acme Waste',
         facilityType: 'Baler',
         supplierAddress: '1 High St',
-        supplierPhone: '01onal',
+        supplierPhone: '01234 567890',
         supplierEmail: 'a@b.com'
       }
     ]
 
-    const rows = buildSupplierDetailRows(suppliers)
+    const rows = buildSupplierDetailRows(suppliers, fallbackText)
 
     expect(rows).toStrictEqual([
       [
         { text: 'Acme Waste' },
         { text: 'Baler' },
         { text: '1 High St' },
-        { text: '01onal' },
+        { text: '01234 567890' },
         { text: 'a@b.com' }
+      ]
+    ])
+  })
+
+  it('falls back to none text for missing name, facility type, address, phone and email', () => {
+    const suppliers = [
+      {
+        supplierName: null,
+        facilityType: null,
+        supplierAddress: null,
+        supplierPhone: null,
+        supplierEmail: ''
+      }
+    ]
+
+    const rows = buildSupplierDetailRows(suppliers, fallbackText)
+
+    expect(rows).toStrictEqual([
+      [
+        { text: 'None provided' },
+        { text: 'None provided' },
+        { text: 'None provided' },
+        { text: 'None provided' },
+        { text: 'None provided' }
       ]
     ])
   })
@@ -78,10 +124,26 @@ describe(buildDestinationRows, () => {
       }
     ]
 
-    const rows = buildDestinationRows(destinations)
+    const rows = buildDestinationRows(destinations, fallbackText)
 
     expect(rows).toStrictEqual([
       [{ text: 'Green Recyclers' }, { text: 'Reprocessor' }, { text: '500.10' }]
+    ])
+  })
+
+  it('falls back to none text for missing recipient and facility type', () => {
+    const destinations = [
+      {
+        recipientName: null,
+        facilityType: null,
+        tonnageSentOn: 500.1
+      }
+    ]
+
+    const rows = buildDestinationRows(destinations, fallbackText)
+
+    expect(rows).toStrictEqual([
+      [{ text: 'None provided' }, { text: 'None provided' }, { text: '500.10' }]
     ])
   })
 })
@@ -97,13 +159,35 @@ describe(buildDestinationDetailRows, () => {
       }
     ]
 
-    const rows = buildDestinationDetailRows(destinations)
+    const rows = buildDestinationDetailRows(destinations, fallbackText)
 
     expect(rows).toStrictEqual([
       [
         { text: 'Green Recyclers' },
         { text: 'Reprocessor' },
         { text: '2 Low St' },
+        { text: '750.00' }
+      ]
+    ])
+  })
+
+  it('falls back to none text for missing recipient, facility type and address', () => {
+    const destinations = [
+      {
+        recipientName: null,
+        facilityType: null,
+        address: null,
+        tonnageSentOn: 750.0
+      }
+    ]
+
+    const rows = buildDestinationDetailRows(destinations, fallbackText)
+
+    expect(rows).toStrictEqual([
+      [
+        { text: 'None provided' },
+        { text: 'None provided' },
+        { text: 'None provided' },
         { text: '750.00' }
       ]
     ])
@@ -127,7 +211,7 @@ describe(buildOverseasSiteRows, () => {
   ]
 
   it('builds rows with site name, ORS ID, and country', () => {
-    const rows = buildOverseasSiteRows(overseasSites)
+    const rows = buildOverseasSiteRows(overseasSites, {}, fallbackText)
 
     expect(rows).toStrictEqual([
       [{ text: 'Hamburg Plant' }, { text: 'ORS-001' }, { text: 'Germany' }],
@@ -135,10 +219,33 @@ describe(buildOverseasSiteRows, () => {
     ])
   })
 
+  it('falls back to none text for a missing country', () => {
+    const rows = buildOverseasSiteRows(
+      [
+        {
+          siteName: 'Oslo Plant',
+          orsId: 'ORS-003',
+          country: null,
+          approved: false
+        }
+      ],
+      {},
+      fallbackText
+    )
+
+    expect(rows).toStrictEqual([
+      [{ text: 'Oslo Plant' }, { text: 'ORS-003' }, { text: 'None provided' }]
+    ])
+  })
+
   it('appends Yes/No for approval when showApprovalColumn is true', () => {
-    const rows = buildOverseasSiteRows(overseasSites, {
-      showApprovalColumn: true
-    })
+    const rows = buildOverseasSiteRows(
+      overseasSites,
+      {
+        showApprovalColumn: true
+      },
+      fallbackText
+    )
 
     expect(rows).toStrictEqual([
       [
@@ -157,9 +264,13 @@ describe(buildOverseasSiteRows, () => {
   })
 
   it('omits approval column when showApprovalColumn is false', () => {
-    const rows = buildOverseasSiteRows(overseasSites, {
-      showApprovalColumn: false
-    })
+    const rows = buildOverseasSiteRows(
+      overseasSites,
+      {
+        showApprovalColumn: false
+      },
+      fallbackText
+    )
 
     expect(rows).toStrictEqual([
       [{ text: 'Hamburg Plant' }, { text: 'ORS-001' }, { text: 'Germany' }],
@@ -187,7 +298,7 @@ describe(buildOverseasSiteDetailRows, () => {
   ]
 
   it('builds rows without approval column by default', () => {
-    const rows = buildOverseasSiteDetailRows(overseasSites)
+    const rows = buildOverseasSiteDetailRows(overseasSites, {}, fallbackText)
 
     expect(rows).toStrictEqual([
       [
@@ -205,10 +316,39 @@ describe(buildOverseasSiteDetailRows, () => {
     ])
   })
 
+  it('falls back to none text for a missing country', () => {
+    const rows = buildOverseasSiteDetailRows(
+      [
+        {
+          siteName: 'Oslo Plant',
+          tonnageExported: 10.0,
+          orsId: 'ORS-003',
+          country: null,
+          approved: false
+        }
+      ],
+      {},
+      fallbackText
+    )
+
+    expect(rows).toStrictEqual([
+      [
+        { text: 'Oslo Plant' },
+        { text: '10.00' },
+        { text: 'ORS-003' },
+        { text: 'None provided' }
+      ]
+    ])
+  })
+
   it('appends Yes/No for approval when showApprovalColumn is true', () => {
-    const rows = buildOverseasSiteDetailRows(overseasSites, {
-      showApprovalColumn: true
-    })
+    const rows = buildOverseasSiteDetailRows(
+      overseasSites,
+      {
+        showApprovalColumn: true
+      },
+      fallbackText
+    )
 
     expect(rows).toStrictEqual([
       [
@@ -229,9 +369,13 @@ describe(buildOverseasSiteDetailRows, () => {
   })
 
   it('omits approval column when showApprovalColumn is false', () => {
-    const rows = buildOverseasSiteDetailRows(overseasSites, {
-      showApprovalColumn: false
-    })
+    const rows = buildOverseasSiteDetailRows(
+      overseasSites,
+      {
+        showApprovalColumn: false
+      },
+      fallbackText
+    )
 
     expect(rows).toStrictEqual([
       [

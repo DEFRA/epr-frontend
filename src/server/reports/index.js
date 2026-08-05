@@ -7,6 +7,11 @@ import {
 } from './delete-controller.js'
 import { detailController } from './detail-controller.js'
 import {
+  makeChangesGetController,
+  makeChangesPostController
+} from './make-changes-controller.js'
+import { resubmissionExplainerController } from './resubmission-explainer-controller.js'
+import {
   exporterFreePernGetController,
   exporterFreePernPostController
 } from './exporter/free-perns-controller.js'
@@ -42,14 +47,10 @@ import {
 } from './supporting-information-controller.js'
 import { viewGetController } from './view-controller.js'
 import {
-  summaryLogChangedErrorGetController,
-  summaryLogChangedErrorPostController
-} from './summary-log-changed-error-controller.js'
-import { SummaryLogChangedError } from './helpers/summary-log-changed.js'
-
-const INVALIDATION_ERROR_ROUTES = Object.freeze({
-  summary_log_changed: 'summary-log-changed-error'
-})
+  reportStaleErrorGetController,
+  reportStaleErrorPostController
+} from './report-stale-error-controller.js'
+import { ReportStaleError } from './helpers/stale.js'
 
 const basePath =
   '/organisations/{organisationId}/registrations/{registrationId}/reports'
@@ -70,6 +71,11 @@ export const reports = {
           ...detailController,
           method: 'GET',
           path: periodPath
+        },
+        {
+          ...resubmissionExplainerController,
+          method: 'GET',
+          path: `${periodPath}/resubmission-explainer`
         },
         {
           ...createController,
@@ -192,25 +198,35 @@ export const reports = {
           path: `${periodPath}/view`
         },
         {
-          ...summaryLogChangedErrorGetController,
+          ...makeChangesGetController,
           method: 'GET',
-          path: `${periodPath}/summary-log-changed-error`
+          path: `${periodPath}/make-changes`
         },
         {
-          ...summaryLogChangedErrorPostController,
+          ...makeChangesPostController,
           method: 'POST',
-          path: `${periodPath}/summary-log-changed-error`
+          path: `${periodPath}/make-changes`
+        },
+        {
+          ...reportStaleErrorGetController,
+          method: 'GET',
+          path: `${periodPath}/report-stale-error`
+        },
+        {
+          ...reportStaleErrorPostController,
+          method: 'POST',
+          path: `${periodPath}/report-stale-error`
         }
       ])
 
       server.ext({
         type: 'onPreResponse',
         method(request, h) {
-          if (!(request.response instanceof SummaryLogChangedError)) {
+          if (!(request.response instanceof ReportStaleError)) {
             return h.continue
           }
-          const errorRoute = INVALIDATION_ERROR_ROUTES[request.response.reason]
-          if (!errorRoute) {
+          const { reasons } = request.response
+          if (reasons.length === 0) {
             return h.continue
           }
           const {
@@ -221,9 +237,14 @@ export const reports = {
             period,
             submissionNumber
           } = request.params
-          const base = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
-          request.yar.set('summaryLogChangedError', base)
-          return h.redirect(request.localiseUrl(`${base}/${errorRoute}`))
+          const reportPath = `/organisations/${organisationId}/registrations/${registrationId}/reports/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+          request.yar.set('reportStaleErrorContext', {
+            periodPath: reportPath,
+            reasons
+          })
+          return h.redirect(
+            request.localiseUrl(`${reportPath}/report-stale-error`)
+          )
         },
         options: { before: '@hapi/yar' }
       })

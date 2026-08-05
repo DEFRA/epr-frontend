@@ -1,6 +1,6 @@
 @use "govuk-frontend" as *;
 
-// Projected waste balance callout on the enhanced summary log check page. A
+// Projected waste balance callout on the summary log check page. A
 // full light-grey panel with centred text, matching the CMA design (not the
 // inset-text left-border style).
 .epr-summary-log-projection {
@@ -13,16 +13,29 @@
   }
 }
 
+// The closed-period "Important" banner sits on a full-width check page. GOV.UK
+// caps the notification banner's content at two-column width for line length,
+// which on a full-width page leaves an empty right-hand third. Lift the cap so
+// the message fills the banner.
+.epr-notification-banner--full-width {
+  // GOV.UK caps each content child (the message paragraph) at two-column
+  // width, not the content box itself, so the override targets the children.
+  .govuk-notification-banner__content > * {
+    max-width: none;
+  }
+}
+
 // Loads grouped by worksheet (tab) inside a "Show [x] loads" disclosure on the
-// enhanced check page. The section name is a bold term; its Row IDs sit in a
+// check page. The section name is a bold term; its Row IDs sit in a
 // bulleted list below, with the browser's default <dd> indent removed so the
 // bullets align under the section name.
 .epr-load-sections {
   margin-bottom: 0;
 
   &__section {
-    @include govuk-font($size: 19);
+    @include govuk-font($size: 19, $weight: bold);
     margin-top: govuk-spacing(3);
+    margin-bottom: 0;
   }
 
   &__rows {
@@ -30,7 +43,7 @@
   }
 }
 
-// Leading gap before each period group (open, closed) on the enhanced check
+// Leading gap before each period group (open, closed) on the check
 // page, separating the two groups. The GOV.UK spacing scale caps at point 9
 // (60px on tablet+), which the design wants exceeded, so the gap is composed
 // from scale units here rather than via a govuk-!-margin-top-* utility. Mobile

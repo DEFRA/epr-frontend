@@ -114,7 +114,7 @@
     },
     {
       "id": "reg-export-003-glass-suspended",
-      "status": "suspended",
+      "status": "approved",
       "statusHistory": [
         {
           "status": "created",
@@ -123,10 +123,6 @@
         {
           "status": "approved",
           "updatedAt": "2025-05-20T10:30:00.000Z"
-        },
-        {
-          "status": "suspended",
-          "updatedAt": "2025-11-15T14:20:00.000Z"
         }
       ],
       "submittedToRegulator": "ea",

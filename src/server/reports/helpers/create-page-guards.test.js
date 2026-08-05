@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
+
+/**
+ * @import { PageFieldsCtx } from './create-page-guards.js'
+ */
 
 vi.mock(
   import('#server/common/helpers/organisations/fetch-registration-and-accreditation.js')
@@ -73,11 +79,15 @@ describe('#fetchGuardedData', () => {
   })
 
   it('returns registration, accreditation, and report data when predicate matches', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation
-    })
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation
+      })
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     const result = await guards.fetchGuardedData(mockRequest)
 
@@ -87,11 +97,15 @@ describe('#fetchGuardedData', () => {
   })
 
   it('returns data when accreditation is absent (registered-only)', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation: undefined
-    })
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation: undefined
+      })
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     const result = await guards.fetchGuardedData(mockRequest)
 
@@ -100,11 +114,15 @@ describe('#fetchGuardedData', () => {
   })
 
   it('throws 404 when predicate rejects the registration', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation
-    })
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation
+      })
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
 
     await expect(rejectingGuards.fetchGuardedData(mockRequest)).rejects.toThrow(
       expect.objectContaining({
@@ -114,11 +132,15 @@ describe('#fetchGuardedData', () => {
   })
 
   it('throws 404 when report does not exist', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation
-    })
-    vi.mocked(fetchReportDetail).mockResolvedValue({ id: null })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation
+      })
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse({ id: null })
+    )
 
     await expect(guards.fetchGuardedData(mockRequest)).rejects.toThrow(
       expect.objectContaining({
@@ -128,14 +150,18 @@ describe('#fetchGuardedData', () => {
   })
 
   it('throws 404 when report is not in_progress', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation
-    })
-    vi.mocked(fetchReportDetail).mockResolvedValue({
-      ...reportDetail,
-      status: { currentStatus: 'ready_to_submit' }
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation
+      })
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse({
+        ...reportDetail,
+        status: { currentStatus: 'ready_to_submit' }
+      })
+    )
 
     await expect(guards.fetchGuardedData(mockRequest)).rejects.toThrow(
       expect.objectContaining({
@@ -148,11 +174,15 @@ describe('#fetchGuardedData', () => {
 describe('#buildViewData', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation
-    })
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation
+      })
+    )
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
   })
 
   it('merges common fields with callback result', async () => {
@@ -193,10 +223,12 @@ describe('#buildViewData', () => {
   })
 
   it('throws 404 with accreditedOnly when accreditation is absent', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation: undefined
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation: undefined
+      })
+    )
 
     await expect(
       guards.buildViewData(mockRequest, () => ({}), { accreditedOnly: true })
@@ -225,10 +257,12 @@ describe('#buildViewData', () => {
   })
 
   it('throws 500 with accreditedOnly when PRN data is missing', async () => {
-    vi.mocked(fetchReportDetail).mockResolvedValue({
-      ...reportDetail,
-      prn: undefined
-    })
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse({
+        ...reportDetail,
+        prn: undefined
+      })
+    )
 
     await expect(
       guards.buildViewData(mockRequest, () => ({}), { accreditedOnly: true })
@@ -239,8 +273,33 @@ describe('#buildViewData', () => {
     )
   })
 
+  it('builds a quarterly periodLabel without a comma', async () => {
+    const quarterlyRequest = {
+      ...mockRequest,
+      params: { ...mockRequest.params, cadence: 'quarterly' },
+      t: (key, params) => {
+        if (key === 'reports:quarterlyPeriodNoComma') {
+          return `Quarter ${params.number} ${params.year}`
+        }
+        return key
+      }
+    }
+
+    let receivedCtx = /** @type {PageFieldsCtx} */ (
+      /** @type {unknown} */ (undefined)
+    )
+    await guards.buildViewData(quarterlyRequest, (ctx) => {
+      receivedCtx = ctx
+      return {}
+    })
+
+    expect(receivedCtx.periodLabel).toBe('Quarter 1 2026')
+  })
+
   it('passes period in callback context', async () => {
-    let receivedCtx
+    let receivedCtx = /** @type {PageFieldsCtx} */ (
+      /** @type {unknown} */ (undefined)
+    )
     await guards.buildViewData(mockRequest, (ctx) => {
       receivedCtx = ctx
       return {}
@@ -260,10 +319,12 @@ describe('#buildViewData', () => {
   })
 
   it('succeeds when registeredOnly is true and no accreditation', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration,
-      accreditation: undefined
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration,
+        accreditation: undefined
+      })
+    )
 
     const result = await guards.buildViewData(
       mockRequest,

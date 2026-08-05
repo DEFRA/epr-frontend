@@ -320,6 +320,34 @@ export const config = convict({
       default: ''
     }
   },
+  entraId: {
+    oidcWellKnownConfigurationUrl: {
+      doc: 'Entra ID OIDC .well-known configuration URL',
+      format: String,
+      env: 'ENTRA_OIDC_WELL_KNOWN_CONFIGURATION_URL',
+      default:
+        'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
+    },
+    tenantId: {
+      doc: 'Entra ID Tenant ID',
+      format: String,
+      env: 'ENTRA_TENANT_ID',
+      default: '6f504113-6b64-43f2-ade9-242e05780007'
+    },
+    clientId: {
+      doc: 'Entra ID Client ID',
+      format: String,
+      env: 'ENTRA_CLIENT_ID',
+      default: 'bd06da51-53f6-46d0-a9f0-ac562864c887'
+    },
+    clientSecret: {
+      doc: 'Entra ID Client Secret',
+      format: String,
+      sensitive: true,
+      env: 'ENTRA_CLIENT_SECRET',
+      default: 'test'
+    }
+  },
   audit: {
     isEnabled: {
       doc: 'Is auditing enabled',
@@ -329,11 +357,11 @@ export const config = convict({
     }
   },
   featureFlags: {
-    enhancedSummaryLogCheckPages: {
-      doc: 'Feature Flag: Enhanced summary log check pages with open/closed period sections',
+    regulatorAccess: {
+      doc: 'Feature Flag: Enable Entra ID login for regulators',
       format: Boolean,
       default: false,
-      env: 'FEATURE_FLAG_ENHANCED_SUMMARY_LOG_CHECK_PAGES'
+      env: 'FEATURE_FLAG_REGULATOR_ACCESS'
     }
   }
 })
@@ -344,6 +372,3 @@ export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
 
 export const isLocalEnvironment = () => config.get('cdpEnvironment') === 'local'
-
-export const isEnhancedSummaryLogCheckPagesEnabled = () =>
-  config.get('featureFlags.enhancedSummaryLogCheckPages')

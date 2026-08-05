@@ -5,13 +5,12 @@ import { formatTime } from '#server/common/helpers/format-time.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import {
-  buildDestinationDetailRows,
-  buildOverseasSiteRows,
-  buildSupplierDetailRows,
-  buildUnapprovedOverseasSiteRows,
-  getTotalTonnageSentOn
-} from './helpers/build-table-rows.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+  buildPrnSummaryViewData,
+  buildWasteExportedViewData,
+  buildWasteReceivedViewData,
+  buildWasteSentOnViewData
+} from './helpers/build-report-view-data.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import {
   getNoteTypeDisplayNames,
@@ -21,15 +20,34 @@ import {
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { SUBMISSION_STATUS } from './constants.js'
 
+/** @import { SubmissionStatusValue } from './constants.js' */
+
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
+ * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { Localise } from './helpers/format-period-label.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
+ * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
  */
 
 /**
- * @param {{ localise: (key: string, params?: Record<string, string>) => string, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: import('./constants.js').SubmissionStatusValue }} params
- * @returns {object}
+ * @typedef {{
+ *   pageTitle: string,
+ *   heading: string,
+ *   wasteReceivedHeading: string,
+ *   noteTypeSectionHeading: string,
+ *   totalIssuedTonnageLabel: string,
+ *   freeLabel: string,
+ *   revenueLabel: string,
+ *   avgPriceLabel: string
+ * }} PageLabels
+ */
+
+/**
+ * @param {{ localise: Localise, periodLabel: string, noteTypePlural: string, wasteActionGerund: string, status: SubmissionStatusValue }} params
+ * @returns {PageLabels}
  */
 function buildPageLabels({
   localise,
@@ -58,23 +76,34 @@ function buildPageLabels({
     totalIssuedTonnageLabel: localise('reports:totalIssuedTonnage', {
       noteTypePlural
     }),
-    freeLabel: localise('reports:view:freeLabel', { noteTypePlural }),
-    revenueLabel: localise('reports:view:totalRevenue', { noteTypePlural }),
-    avgPriceLabel: localise('reports:view:avgPrice', { noteTypePlural })
+    freeLabel: localise('reports:freeTonnageLabel', { noteTypePlural }),
+    revenueLabel: localise('reports:totalRevenueLabel', { noteTypePlural }),
+    avgPriceLabel: localise('reports:avgPriceLabel')
   }
 }
 
 /**
- * @param {object} reportDetail
- * @param {import('./constants.js').SubmissionStatusValue} status
+ * @typedef {{
+ *   statusTag: string,
+ *   statusTagClass: string,
+ *   authorLabel: string,
+ *   authorValue: string,
+ *   dateLabel: string,
+ *   dateValue: string
+ * }} StatusDetails
+ */
+
+/**
+ * @param {ReportDetailResponse} reportDetail
+ * @param {SubmissionStatusValue} status
  * @param {(key: string, params?: Record<string, string>) => string} localise
- * @returns {{ statusTag: string, statusTagClass: string, authorLabel: string, authorValue: string, dateLabel: string, dateValue: string }}
+ * @returns {StatusDetails}
  */
 function buildStatusDetails(reportDetail, status, localise) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
-  const statusEntry = isDraft
-    ? reportDetail.status.created
-    : reportDetail.status.submitted
+  const statusEntry =
+    /** @type {NonNullable<ReportDetailResponse['status']>['created']} */
+    (isDraft ? reportDetail.status?.created : reportDetail.status?.submitted)
   const labelPrefix = isDraft ? 'created' : 'submitted'
 
   return {
@@ -92,6 +121,109 @@ function buildStatusDetails(reportDetail, status, localise) {
   }
 }
 
+/**
+ * @typedef {{
+ *   isAccredited: boolean,
+ *   isExporter: boolean,
+ *   isReprocessor: boolean,
+ *   isRegisteredOnlyExporter: boolean
+ * }} RegistrationFlags
+ */
+
+/**
+ * @param {Registration} registration
+ * @param {Accreditation | undefined} accreditation
+ * @returns {RegistrationFlags}
+ */
+function buildRegistrationFlags(registration, accreditation) {
+  const isAccredited = !!accreditation
+  const isExporter = isExporterRegistration(registration)
+  const isReprocessor = isReprocessorRegistration(registration)
+  const isRegisteredOnlyExporter = isExporter && !isAccredited
+
+  return { isAccredited, isExporter, isReprocessor, isRegisteredOnlyExporter }
+}
+
+/**
+ * @typedef {{
+ *   wasteReceived: ReturnType<typeof buildWasteReceivedViewData>,
+ *   packagingWasteRecycling: { tonnageRecycled: string, tonnageNotRecycled: string },
+ *   wasteExported: ReturnType<typeof buildWasteExportedViewData> | null,
+ *   prn: ReturnType<typeof buildPrnSummaryViewData>,
+ *   wasteSentOn: ReturnType<typeof buildWasteSentOnViewData>,
+ *   supportingInformation: string
+ * }} ActivityViewData
+ */
+
+/**
+ * @param {object} params
+ * @param {ReportDetailResponse} params.reportDetail
+ * @param {boolean} params.isExporter
+ * @param {boolean} params.isAccredited
+ * @param {string} params.fallbackText
+ * @returns {ActivityViewData}
+ */
+function buildActivityViewData({
+  reportDetail,
+  isExporter,
+  isAccredited,
+  fallbackText
+}) {
+  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
+
+  return {
+    wasteReceived: buildWasteReceivedViewData(recyclingActivity, fallbackText),
+
+    packagingWasteRecycling: {
+      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
+      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
+    },
+
+    wasteExported: isExporter
+      ? buildWasteExportedViewData(
+          exportActivity,
+          { showApprovalColumn: isAccredited },
+          fallbackText
+        )
+      : null,
+
+    prn: buildPrnSummaryViewData(reportDetail.prn),
+
+    wasteSentOn: buildWasteSentOnViewData(wasteSent, fallbackText),
+
+    supportingInformation: reportDetail.supportingInformation || fallbackText
+  }
+}
+
+/**
+ * @param {object} params
+ * @param {Record<string, unknown> & { introText?: string, reportsUrl?: string, makeChangesUrl?: string }} params.viewData
+ * @param {boolean} params.isDraft
+ * @param {ReportDetailResponse} params.reportDetail
+ * @param {string} params.reportsUrl
+ * @param {string} params.makeChangesUrl
+ * @param {(key: string, params?: Record<string, string>) => string} params.localise
+ */
+function applyDraftAndResubmissionExtras({
+  viewData,
+  isDraft,
+  reportDetail,
+  reportsUrl,
+  makeChangesUrl,
+  localise
+}) {
+  if (isDraft) {
+    viewData.introText = localise('reports:view:draftIntroText', {
+      dueDate: formatDate(reportDetail.dueDate)
+    })
+    viewData.reportsUrl = reportsUrl
+  }
+
+  if (reportDetail.canRequestResubmission) {
+    viewData.makeChangesUrl = makeChangesUrl
+  }
+}
+
 function buildViewData({
   registration,
   accreditation,
@@ -102,18 +234,21 @@ function buildViewData({
   status,
   backUrl,
   reportsUrl,
+  makeChangesUrl,
   localise
 }) {
   const isDraft = status === SUBMISSION_STATUS.READY_TO_SUBMIT
   const material = getDisplayMaterial(registration)
-  const periodLabel = formatPeriodLabel({ year, period }, cadence, localise)
-  const { recyclingActivity, exportActivity, wasteSent } = reportDetail
-  const isAccredited = !!accreditation
-  const isExporter = isExporterRegistration(registration)
-  const isReprocessor = isReprocessorRegistration(registration)
-  const isRegisteredOnlyExporter = isExporter && !isAccredited
+  const periodLabel = formatPeriodLabelWithComma(
+    { year, period },
+    cadence,
+    localise
+  )
+  const { isAccredited, isExporter, isReprocessor, isRegisteredOnlyExporter } =
+    buildRegistrationFlags(registration, accreditation)
   const { noteTypePlural, wasteActionGerund } =
     getNoteTypeDisplayNames(registration)
+  const fallbackText = localise('reports:noneProvided')
 
   const viewData = {
     ...buildPageLabels({
@@ -131,94 +266,29 @@ function buildViewData({
     periodLabel,
     site: registration.site?.address?.line1,
 
-    wasteReceived: {
-      totalTonnage: formatTonnage(recyclingActivity.totalTonnageReceived),
-      supplierDetailRows: buildSupplierDetailRows(recyclingActivity.suppliers)
-    },
-
-    packagingWasteRecycling: {
-      tonnageRecycled: formatTonnage(recyclingActivity.tonnageRecycled),
-      tonnageNotRecycled: formatTonnage(recyclingActivity.tonnageNotRecycled)
-    },
-
-    wasteExported: buildWasteExported(exportActivity, isExporter, isAccredited),
+    ...buildActivityViewData({
+      reportDetail,
+      isExporter,
+      isAccredited,
+      fallbackText
+    }),
 
     isAccredited,
     isExporter,
     isReprocessor,
-    isRegisteredOnlyExporter,
-
-    prn: buildPrn(reportDetail.prn),
-
-    wasteSentOn: buildWasteSentOn(wasteSent),
-
-    supportingInformation:
-      reportDetail.supportingInformation ||
-      localise('reports:supportingInformationNone')
+    isRegisteredOnlyExporter
   }
 
-  if (isDraft) {
-    viewData.introText = localise('reports:view:draftIntroText', {
-      dueDate: formatDate(reportDetail.dueDate)
-    })
-    viewData.reportsUrl = reportsUrl
-  }
+  applyDraftAndResubmissionExtras({
+    viewData,
+    isDraft,
+    reportDetail,
+    reportsUrl,
+    makeChangesUrl,
+    localise
+  })
 
   return viewData
-}
-
-/**
- * @param {object} wasteSent
- * @returns {object}
- */
-function buildWasteSentOn(wasteSent) {
-  return {
-    totalTonnage: formatTonnage(getTotalTonnageSentOn(wasteSent)),
-    toReprocessors: formatTonnage(wasteSent.tonnageSentToReprocessor),
-    toExporters: formatTonnage(wasteSent.tonnageSentToExporter),
-    toOtherSites: formatTonnage(wasteSent.tonnageSentToAnotherSite),
-    destinationDetailRows: buildDestinationDetailRows(
-      wasteSent.finalDestinations
-    )
-  }
-}
-
-/**
- * @param {object|undefined} prn
- * @returns {object}
- */
-function buildPrn(prn) {
-  return {
-    issuedTonnage: prn?.issuedTonnage,
-    freeTonnage: prn?.freeTonnage,
-    totalRevenue: prn?.totalRevenue,
-    averagePricePerTonne: prn?.averagePricePerTonne
-  }
-}
-
-function buildWasteExported(exportActivity, isExporter, isAccredited) {
-  if (!isExporter || !exportActivity) {
-    return null
-  }
-
-  return {
-    totalTonnage: formatTonnage(exportActivity.totalTonnageExported),
-    overseasSiteRows: buildOverseasSiteRows(exportActivity.overseasSites, {
-      showApprovalColumn: isAccredited
-    }),
-    unapprovedOverseasSiteRows: buildUnapprovedOverseasSiteRows(
-      exportActivity.unapprovedOverseasSites
-    ),
-    tonnageReceivedNotExported: formatTonnage(
-      exportActivity.tonnageReceivedNotExported
-    ),
-    tonnageRefusedOrStopped: formatTonnage(
-      exportActivity.totalTonnageRefusedOrStopped
-    ),
-    tonnageRefused: formatTonnage(exportActivity.tonnageRefusedAtDestination),
-    tonnageStopped: formatTonnage(exportActivity.tonnageStoppedDuringExport),
-    tonnageRepatriated: formatTonnage(exportActivity.tonnageRepatriated)
-  }
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -272,6 +342,8 @@ export const viewGetController = {
     const reportsPath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
     const backUrl = request.localiseUrl(reportsPath)
     const reportsUrl = request.localiseUrl(reportsPath)
+    const periodPath = `${reportsPath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
+    const makeChangesUrl = request.localiseUrl(`${periodPath}/make-changes`)
 
     return h.view(
       'reports/view',
@@ -285,6 +357,7 @@ export const viewGetController = {
         status: currentStatus,
         backUrl,
         reportsUrl,
+        makeChangesUrl,
         localise
       })
     )

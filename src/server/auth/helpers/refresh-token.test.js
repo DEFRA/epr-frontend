@@ -4,6 +4,20 @@ import { refreshIdToken } from '#server/auth/helpers/refresh-token.js'
 import { it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
+
+/**
+ * @import { Result } from '#server/common/helpers/result.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
+ */
+
+/**
+ * @param {unknown} session
+ * @returns {Result<UserSession>}
+ */
+const asSessionResult = (session) =>
+  /** @type {Result<UserSession>} */ (session)
 
 vi.mock(import('#server/auth/helpers/get-user-session.js'))
 vi.mock(import('#config/config.js'))
@@ -14,6 +28,7 @@ vi.mock(import('@defra/hapi-tracing'), () => ({
 
 describe('refresh token', () => {
   it('should refresh id token with correct parameters', async ({ msw }) => {
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.post('http://defra-id.auth/token', async ({ request }) => {
@@ -26,13 +41,15 @@ describe('refresh token', () => {
       })
     )
 
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        refreshToken: 'refresh-token-123',
-        urls: { token: 'http://defra-id.auth/token' }
-      }
-    })
+    vi.mocked(getUserSession).mockResolvedValue(
+      asSessionResult({
+        ok: true,
+        value: {
+          refreshToken: 'refresh-token-123',
+          urls: { token: 'http://defra-id.auth/token' }
+        }
+      })
+    )
 
     vi.spyOn(vi.mocked(config), 'get').mockImplementation((key) => {
       const values = {
@@ -45,7 +62,7 @@ describe('refresh token', () => {
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    await refreshIdToken(mockRequest)
+    await refreshIdToken(mockHapiRequest(mockRequest))
 
     expect(getUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
     expect(mockRequest.logger.info).toHaveBeenCalledExactlyOnceWith({
@@ -58,7 +75,8 @@ describe('refresh token', () => {
       http: { response: { status_code: 200 } }
     })
 
-    const params = new URLSearchParams(await capturedRequest.text())
+    const request = /** @type {Request} */ (capturedRequest)
+    const params = new URLSearchParams(await request.text())
     expect(Object.fromEntries(params)).toStrictEqual({
       client_id: 'client-id-123',
       client_secret: 'client-secret-456',
@@ -70,28 +88,32 @@ describe('refresh token', () => {
   })
 
   it('should throw error when refresh token is null', async () => {
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: {
-        refreshToken: null,
-        urls: { token: 'http://defra-id.auth/token' }
-      }
-    })
-
-    await expect(refreshIdToken({ logger: { info: vi.fn() } })).rejects.toThrow(
-      'Cannot refresh token: no refresh token found'
+    vi.mocked(getUserSession).mockResolvedValue(
+      asSessionResult({
+        ok: true,
+        value: {
+          refreshToken: null,
+          urls: { token: 'http://defra-id.auth/token' }
+        }
+      })
     )
+
+    await expect(
+      refreshIdToken(mockHapiRequest({ logger: createMockLogger() }))
+    ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
   it('should throw error when refresh token is missing', async () => {
-    vi.mocked(getUserSession).mockResolvedValue({
-      ok: true,
-      value: { urls: { token: 'http://defra-id.auth/token' } }
-    })
-
-    await expect(refreshIdToken({ logger: { info: vi.fn() } })).rejects.toThrow(
-      'Cannot refresh token: no refresh token found'
+    vi.mocked(getUserSession).mockResolvedValue(
+      asSessionResult({
+        ok: true,
+        value: { urls: { token: 'http://defra-id.auth/token' } }
+      })
     )
+
+    await expect(
+      refreshIdToken(mockHapiRequest({ logger: createMockLogger() }))
+    ).rejects.toThrow('Cannot refresh token: no refresh token found')
   })
 
   it('should throw error when getUserSession returns no session', async () => {
@@ -99,7 +121,7 @@ describe('refresh token', () => {
 
     const mockRequest = { logger: { info: vi.fn() } }
 
-    await expect(refreshIdToken(mockRequest)).rejects.toThrow(
+    await expect(refreshIdToken(mockHapiRequest(mockRequest))).rejects.toThrow(
       'Cannot refresh token: no user session found'
     )
 

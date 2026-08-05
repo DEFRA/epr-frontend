@@ -29,5 +29,6 @@
     "signOut": "Sign out"
   },
   "serviceName": "Record reprocessed or exported packaging waste",
-  "submit": "Submit"
+  "submit": "Submit",
+  "warning": "Warning"
 }

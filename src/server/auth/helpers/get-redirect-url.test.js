@@ -2,96 +2,80 @@ import { config } from '#config/config.js'
 import { afterEach, describe, expect, it } from 'vitest'
 import { getRedirectUrl } from './get-redirect-url.js'
 
+/** @import { HapiRequest } from '#server/common/hapi-types.js' */
+
 describe(getRedirectUrl, () => {
   afterEach(() => {
     config.reset('appBaseUrl')
   })
 
-  it('should return redirect URL when request origin matches appBaseUrl', () => {
-    config.set('appBaseUrl', 'https://test.example.com')
-
-    const mockRequest = {
-      info: { host: 'test.example.com' },
+  it.each([
+    {
+      scenario: 'return redirect URL when request origin matches appBaseUrl',
+      appBaseUrl: 'https://test.example.com',
+      host: 'test.example.com',
       headers: { 'x-forwarded-proto': 'https' },
-      server: { info: { protocol: 'http' } }
-    }
-
-    const result = getRedirectUrl(mockRequest, '/auth/callback')
-
-    expect(result).toBe('https://test.example.com/auth/callback')
-  })
-
-  it('should return redirect URL when request origin matches production URL', () => {
-    config.set('appBaseUrl', 'https://test.example.com')
-
-    const mockRequest = {
-      info: {
-        host: 'record-reprocessed-exported-packaging-waste.defra.gov.uk'
-      },
+      serverProtocol: 'http',
+      expected: 'https://test.example.com/auth/callback'
+    },
+    {
+      scenario:
+        'return redirect URL when request origin matches production URL',
+      appBaseUrl: 'https://test.example.com',
+      host: 'record-reprocessed-exported-packaging-waste.defra.gov.uk',
       headers: { 'x-forwarded-proto': 'https' },
-      server: { info: { protocol: 'http' } }
-    }
-
-    const result = getRedirectUrl(mockRequest, '/auth/callback')
-
-    expect(result).toBe(
-      'https://record-reprocessed-exported-packaging-waste.defra.gov.uk/auth/callback'
-    )
-  })
-
-  it('should fall back to appBaseUrl when request origin is not in allowed list', () => {
-    config.set('appBaseUrl', 'https://test.example.com')
-
-    const mockRequest = {
-      info: { host: 'malicious-site.com' },
+      serverProtocol: 'http',
+      expected:
+        'https://record-reprocessed-exported-packaging-waste.defra.gov.uk/auth/callback'
+    },
+    {
+      scenario:
+        'fall back to appBaseUrl when request origin is not in allowed list',
+      appBaseUrl: 'https://test.example.com',
+      host: 'malicious-site.com',
       headers: { 'x-forwarded-proto': 'https' },
-      server: { info: { protocol: 'http' } }
-    }
-
-    const result = getRedirectUrl(mockRequest, '/auth/callback')
-
-    expect(result).toBe('https://test.example.com/auth/callback')
-  })
-
-  it('should use x-forwarded-proto header for protocol detection', () => {
-    config.set('appBaseUrl', 'http://localhost:3000')
-
-    const mockRequest = {
-      info: { host: 'localhost:3000' },
+      serverProtocol: 'http',
+      expected: 'https://test.example.com/auth/callback'
+    },
+    {
+      scenario: 'use x-forwarded-proto header for protocol detection',
+      appBaseUrl: 'http://localhost:3000',
+      host: 'localhost:3000',
       headers: { 'x-forwarded-proto': 'http' },
-      server: { info: { protocol: 'https' } }
-    }
-
-    const result = getRedirectUrl(mockRequest, '/auth/callback')
-
-    expect(result).toBe('http://localhost:3000/auth/callback')
-  })
-
-  it('should fall back to server protocol when x-forwarded-proto is not present', () => {
-    config.set('appBaseUrl', 'http://localhost:3000')
-
-    const mockRequest = {
-      info: { host: 'localhost:3000' },
+      serverProtocol: 'https',
+      expected: 'http://localhost:3000/auth/callback'
+    },
+    {
+      scenario:
+        'fall back to server protocol when x-forwarded-proto is not present',
+      appBaseUrl: 'http://localhost:3000',
+      host: 'localhost:3000',
       headers: {},
-      server: { info: { protocol: 'http' } }
-    }
-
-    const result = getRedirectUrl(mockRequest, '/auth/callback')
-
-    expect(result).toBe('http://localhost:3000/auth/callback')
-  })
-
-  it('should ignore invalid x-forwarded-proto values', () => {
-    config.set('appBaseUrl', 'http://localhost:3000')
-
-    const mockRequest = {
-      info: { host: 'localhost:3000' },
+      serverProtocol: 'http',
+      expected: 'http://localhost:3000/auth/callback'
+    },
+    {
+      scenario: 'ignore invalid x-forwarded-proto values',
+      appBaseUrl: 'http://localhost:3000',
+      host: 'localhost:3000',
       headers: { 'x-forwarded-proto': 'javascript' },
-      server: { info: { protocol: 'http' } }
+      serverProtocol: 'http',
+      expected: 'http://localhost:3000/auth/callback'
     }
+  ])(
+    'should $scenario',
+    ({ appBaseUrl, host, headers, serverProtocol, expected }) => {
+      config.set('appBaseUrl', appBaseUrl)
 
-    const result = getRedirectUrl(mockRequest, '/auth/callback')
+      const mockRequest = /** @type {HapiRequest} */ ({
+        info: { host },
+        headers,
+        server: { info: { protocol: serverProtocol } }
+      })
 
-    expect(result).toBe('http://localhost:3000/auth/callback')
-  })
+      const result = getRedirectUrl(mockRequest, '/auth/callback')
+
+      expect(result).toBe(expected)
+    }
+  )
 })

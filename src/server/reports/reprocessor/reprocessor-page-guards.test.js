@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 
 vi.mock(
@@ -41,14 +43,18 @@ const mockRequest = {
 describe('reprocessor shim wires isReprocessorRegistration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(fetchReportDetail).mockResolvedValue(reportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(reportDetail)
+    )
   })
 
   it('accepts reprocessor registration', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration: reprocessorRegistration,
-      accreditation: undefined
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration: reprocessorRegistration,
+        accreditation: undefined
+      })
+    )
 
     const result = await fetchGuardedReprocessorData(mockRequest)
 
@@ -56,10 +62,12 @@ describe('reprocessor shim wires isReprocessorRegistration', () => {
   })
 
   it('rejects exporter registration with 404', async () => {
-    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-      registration: exporterRegistration,
-      accreditation: undefined
-    })
+    vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+      asRegistrationWithAccreditation({
+        registration: exporterRegistration,
+        accreditation: undefined
+      })
+    )
 
     await expect(fetchGuardedReprocessorData(mockRequest)).rejects.toThrow(
       expect.objectContaining({

@@ -1,18 +1,11 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { describe, expect } from 'vitest'
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    idToken: 'test-id-token',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    }
-  }
-}
+const mockAuth = buildMockAuth()
 
 describe('logged out controller', () => {
   describe('when navigating to /logged-out', () => {
@@ -31,7 +24,7 @@ describe('logged out controller', () => {
         url: '/logged-out'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('title').text()).toContain('Signed out')
     })
@@ -42,7 +35,7 @@ describe('logged out controller', () => {
         url: '/logged-out'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('h1').text()).toBe('You have signed out')
     })
@@ -55,7 +48,7 @@ describe('logged out controller', () => {
         url: '/logged-out'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const button = $('.govuk-button')
 
       expect(button.text().trim()).toBe('Sign in again')

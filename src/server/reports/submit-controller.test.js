@@ -8,6 +8,8 @@ import { getByRole, getByText, queryByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
+/** @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js' */
+
 /**
  * @import { Organisation, User } from '#domain/organisations/model.js'
  * @import { Registration, RegistrationApproved } from '#domain/organisations/registration.js'
@@ -107,7 +109,7 @@ const reprocessorRegistration = buildRegistration({
   }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const exporterReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -200,7 +202,7 @@ const accreditedReprocessorRegistration = buildRegistration({
   accreditation: { id: 'acc-001' }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const reprocessorReportDetail = {
   operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
   cadence: 'quarterly',
@@ -261,7 +263,7 @@ const reprocessorReportDetail = {
   }
 }
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const accreditedReprocessorReportDetail = {
   ...reprocessorReportDetail,
   operatorCategory: 'REPROCESSOR_ACCREDITED',
@@ -281,12 +283,12 @@ const accreditedExporterRegistration = buildRegistration({
   accreditation: { id: 'acc-002' }
 })
 
-/** @type {import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse} */
+/** @type {ReportDetailResponse} */
 const accreditedExporterReportDetail = {
   ...exporterReportDetail,
   operatorCategory: 'EXPORTER_ACCREDITED',
   exportActivity: {
-    .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+    .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
       exporterReportDetail.exportActivity
     ),
     overseasSites: [
@@ -356,6 +358,14 @@ describe('#submitController', () => {
             level: 1
           })
         ).toBeDefined()
+      })
+
+      it('renders content in a full-width column', async ({ server }) => {
+        const body = await getBody(server)
+
+        const contentColumn = body.querySelector('.govuk-grid-row > div')
+
+        expect(contentColumn?.className).toContain('govuk-grid-column-full')
       })
 
       it('should display inset text with correction guidance', async ({
@@ -630,13 +640,13 @@ describe('#submitController', () => {
         expect(body.textContent).toContain('Total tonnage repatriated')
       })
 
-      it('should display dash when refused, stopped and repatriated values are null', async ({
+      it('should display zero when refused, stopped and repatriated values are null', async ({
         server
       }) => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
           exportActivity: {
-            .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['exportActivity']>} */ (
+            .../** @type {NonNullable<ReportDetailResponse['exportActivity']>} */ (
               exporterReportDetail.exportActivity
             ),
             totalTonnageRefusedOrStopped: null,
@@ -654,7 +664,7 @@ describe('#submitController', () => {
         )
         const combinedTotal = refusedOrStoppedLabel.nextElementSibling
 
-        expect(combinedTotal.textContent.trim()).toBe('-')
+        expect(combinedTotal.textContent.trim()).toBe('0.00')
       })
 
       // Waste sent on section
@@ -1007,7 +1017,7 @@ describe('#submitController', () => {
       }) => {
         const body = await getBody(server)
 
-        expect(body.textContent).toContain('Average price per tonne of PERNs')
+        expect(body.textContent).toContain('Average price per tonne')
         expect(body.textContent).toContain('£200.00')
       })
 
@@ -1240,7 +1250,7 @@ describe('#submitController', () => {
       }) => {
         const body = await getBody(server)
 
-        expect(body.textContent).toContain('Average price per tonne of PRNs')
+        expect(body.textContent).toContain('Average price per tonne')
         expect(body.textContent).toContain('£150.00')
       })
     })
@@ -1302,7 +1312,7 @@ describe('#submitController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue({
           ...exporterReportDetail,
           status: {
-            .../** @type {NonNullable<import('#server/reports/helpers/fetch-report-detail.js').ReportDetailResponse['status']>} */ (
+            .../** @type {NonNullable<ReportDetailResponse['status']>} */ (
               exporterReportDetail.status
             ),
             currentStatus: 'submitted'
@@ -1595,6 +1605,161 @@ describe('#submitController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('resubmission variant (submissionNumber > 1)', () => {
+    const resubmitUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/submit`
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        exporterRegistration
+      )
+      vi.mocked(fetchReportDetail).mockResolvedValue(exporterReportDetail)
+      vi.mocked(updateReportStatus).mockResolvedValue({ ok: true })
+    })
+
+    describe('GET', () => {
+      it('should display the resubmit heading', async ({ server }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(
+          getByRole(body, 'heading', {
+            name: /Resubmit report for Quarter 1, 2026/,
+            level: 1
+          })
+        ).toBeDefined()
+      })
+
+      it('should display the status tag as Requires resubmission with a purple no-max-width tag', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+        const body = new JSDOM(result).window.document.body
+        const tag = body.querySelector('.govuk-tag')
+
+        expect(tag?.textContent?.trim()).toBe('Requires resubmission')
+        expect(tag?.classList.contains('govuk-tag--purple')).toBe(true)
+        expect(tag?.classList.contains('epr-tag--no-max-width')).toBe(true)
+      })
+
+      it('should keep the declaration and Confirm and submit button', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+        const body = new JSDOM(result).window.document.body
+
+        expect(
+          getByRole(body, 'heading', { name: /Declaration/, level: 2 })
+        ).toBeDefined()
+        expect(
+          getByRole(body, 'button', { name: 'Confirm and submit' })
+        ).toBeDefined()
+      })
+
+      it('should return 404 when the resubmission draft is not ready to submit', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportDetail).mockResolvedValue({
+          ...exporterReportDetail,
+          status: {
+            .../** @type {NonNullable<typeof exporterReportDetail.status>} */ (
+              exporterReportDetail.status
+            ),
+            currentStatus: 'in_progress'
+          }
+        })
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: resubmitUrl,
+          auth: mockAuth
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+    })
+
+    describe('POST', () => {
+      const resubmittedUrl = `/organisations/${organisationId}/registrations/${registrationId}/reports/2026/quarterly/1/submissions/2/submitted`
+
+      it('should submit the resubmission with submissionNumber 2 and redirect to submitted', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, resubmitUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: resubmitUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: 'Test User' }
+        })
+
+        expect(updateReportStatus).toHaveBeenCalledWith(
+          {
+            organisationId,
+            registrationId,
+            year: 2026,
+            cadence: 'quarterly',
+            period: 1,
+            submissionNumber: 2
+          },
+          {
+            status: 'submitted',
+            version: 1,
+            submissionDeclaredBy: 'Test User'
+          },
+          'mock-id-token'
+        )
+        expect(statusCode).toBe(statusCodes.found)
+        expect(headers.location).toBe(resubmittedUrl)
+      })
+    })
+
+    describe('POST failAction', () => {
+      it('should re-render the resubmission variant with an error when the name is blank', async ({
+        server
+      }) => {
+        const { cookie, crumb } = await getCsrfToken(server, resubmitUrl, {
+          auth: mockAuth
+        })
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: resubmitUrl,
+          auth: mockAuth,
+          headers: { cookie },
+          payload: { crumb, version: 1, submissionDeclaredBy: '' }
+        })
+        const body = new JSDOM(result).window.document.body
+        const tag = body.querySelector('.govuk-tag')
+
+        expect(statusCode).toBe(statusCodes.ok)
+        getByRole(body, 'heading', {
+          name: /Resubmit report for Quarter 1, 2026/,
+          level: 1
+        })
+        expect(tag?.textContent?.trim()).toBe('Requires resubmission')
+        expect(body.textContent).toContain(
+          'You must enter your full name as it appears on this account'
+        )
+      })
     })
   })
 })

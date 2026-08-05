@@ -19,6 +19,7 @@ describe(submitSummaryLog, () => {
       accreditationNumber: '493021'
     }
 
+    /** @type {Request | undefined} */
     let capturedRequest
     msw.use(
       http.post(
@@ -37,10 +38,10 @@ describe(submitSummaryLog, () => {
       'test-id-token'
     )
 
-    expect(capturedRequest.headers.get('content-type')).toBe('application/json')
-    expect(capturedRequest.headers.get('authorization')).toBe(
-      'Bearer test-id-token'
-    )
+    const request = /** @type {Request} */ (capturedRequest)
+
+    expect(request.headers.get('content-type')).toBe('application/json')
+    expect(request.headers.get('authorization')).toBe('Bearer test-id-token')
     expect(result).toStrictEqual(mockResponse)
   })
 

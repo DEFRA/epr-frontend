@@ -2,35 +2,40 @@ import { Cluster, Redis } from 'ioredis'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { config } from '#config/config.js'
 import { buildRedisClient } from '#server/common/helpers/redis-client.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
-const mockLoggerError = vi.fn()
-const mockLoggerInfo = vi.fn()
+const mockLogger = createMockLogger()
 
 vi.mock(import('#server/common/helpers/logging/logger.js'), () => ({
-  createLogger: () => ({
-    error: mockLoggerError,
-    info: mockLoggerInfo
-  })
+  createLogger: () => mockLogger
 }))
 
 const eventHandlers = {}
 
 vi.mock(import('ioredis'), async () => ({
   ...(await vi.importActual('ioredis')),
-  Cluster: vi.fn(function () {
-    return {
-      on: (event, cb) => {
-        eventHandlers[event] = cb
-      }
-    }
-  }),
-  Redis: vi.fn(function () {
-    return {
-      on: (event, cb) => {
-        eventHandlers[event] = cb
-      }
-    }
-  })
+  Cluster: /** @type {typeof Cluster} */ (
+    /** @type {unknown} */ (
+      vi.fn(function () {
+        return {
+          on: (event, cb) => {
+            eventHandlers[event] = cb
+          }
+        }
+      })
+    )
+  ),
+  Redis: /** @type {typeof Redis} */ (
+    /** @type {unknown} */ (
+      vi.fn(function () {
+        return {
+          on: (event, cb) => {
+            eventHandlers[event] = cb
+          }
+        }
+      })
+    )
+  )
 }))
 
 describe('#buildRedisClient', () => {
@@ -83,7 +88,7 @@ describe('#buildRedisClient', () => {
       const error = new Error('redis exploded')
       eventHandlers.error(error)
 
-      expect(mockLoggerError).toHaveBeenCalledExactlyOnceWith({
+      expect(mockLogger.error).toHaveBeenCalledExactlyOnceWith({
         message: 'Redis connection error',
         err: error
       })

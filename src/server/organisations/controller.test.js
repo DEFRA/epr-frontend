@@ -1,15 +1,16 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import { getAllByRole, getByRole } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 
 /** @import {DOMWindow} from 'jsdom' */
-/** @import {Organisation} from '#domain/organisations/model.js' */
 
 import fixtureAllExcluded from '../../../fixtures/organisation/all-excluded-statuses.json' with { type: 'json' }
 import fixtureEmpty from '../../../fixtures/organisation/empty-organisation.json' with { type: 'json' }
@@ -22,12 +23,6 @@ vi.mock(
   import('#server/common/helpers/organisations/fetch-organisation-by-id.js')
 )
 vi.mock(import('#server/common/helpers/waste-balance/fetch-waste-balances.js'))
-
-/**
- * @param {unknown} data
- * @returns {Organisation}
- */
-const asOrganisation = (data) => /** @type {Organisation} */ (data)
 
 /**
  * @param {InstanceType<DOMWindow['HTMLElement']>} table
@@ -49,7 +44,7 @@ const cellInColumn = (table) => {
 const mockAuth = {
   strategy: 'session',
   credentials: {
-    provider: 'defra-id',
+    provider: OIDC_DEFRA_ID,
     query: {},
     refreshToken: 'mock-refresh-token',
     idToken: 'test-id-token',
@@ -1111,7 +1106,7 @@ describe('#organisationController', () => {
           {
             id: 'reg-2',
             accreditationId: 'acc-suspended',
-            status: 'suspended',
+            status: 'approved',
             wasteProcessingType: 'reprocessor',
             material: 'glass',
             glassRecyclingProcess: ['glass_other'],

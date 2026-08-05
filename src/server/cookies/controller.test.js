@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { load } from 'cheerio'
 import { describe, expect } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
@@ -22,7 +23,7 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('title').text().trim()).toStrictEqual(
         expect.stringMatching(/^Cookies \|/)
@@ -35,7 +36,7 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('h1').text()).toBe('Cookies')
     })
@@ -48,7 +49,7 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('h2.govuk-heading-m').first().text()).toBe('Essential cookies')
     })
@@ -59,7 +60,7 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const table = $('.govuk-table')
 
       expect(table).toHaveLength(1)
@@ -71,7 +72,7 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const headers = $('.govuk-table__header')
         .map((_, el) => $(el).text())
         .get()
@@ -87,7 +88,7 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const rows = $('.govuk-table__body .govuk-table__row')
 
       expect(rows).toHaveLength(3)
@@ -99,7 +100,7 @@ describe('#cookiesController', () => {
         url: '/cookies'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const cellTexts = $('.govuk-table__cell')
         .map((_, el) => $(el).text())
         .get()

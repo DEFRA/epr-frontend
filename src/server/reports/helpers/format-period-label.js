@@ -12,7 +12,7 @@ import { CADENCE } from '../constants.js'
 
 /**
  * Formats a reporting period into a display label.
- * Monthly: "January 2026", Quarterly: "Quarter 1, 2026"
+ * Monthly: "January 2026", Quarterly: "Quarter 1 2026"
  * @param {PeriodRef} period
  * @param {CadenceValue} cadence
  * @param {Localise} localise
@@ -22,6 +22,27 @@ export function formatPeriodLabel(period, cadence, localise) {
   if (cadence === CADENCE.MONTHLY) {
     const month = localise(`reports:months.${period.period}`)
     return `${month} ${period.year}`
+  }
+
+  return localise('reports:quarterlyPeriodNoComma', {
+    number: period.period,
+    year: period.year
+  })
+}
+
+/**
+ * Formats a reporting period into a display label with a comma between the
+ * month/quarter and the year.
+ * Monthly: "January, 2026", Quarterly: "Quarter 1, 2026"
+ * @param {PeriodRef} period
+ * @param {CadenceValue} cadence
+ * @param {Localise} localise
+ * @returns {string}
+ */
+export function formatPeriodLabelWithComma(period, cadence, localise) {
+  if (cadence === CADENCE.MONTHLY) {
+    const month = localise(`reports:months.${period.period}`)
+    return `${month}, ${period.year}`
   }
 
   return localise('reports:quarterlyPeriod', {

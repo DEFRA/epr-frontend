@@ -1,4 +1,5 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { load } from 'cheerio'
 import { describe, expect } from 'vitest'
 import { it } from '#vite/fixtures/server.js'
@@ -22,7 +23,7 @@ describe('#contactController', () => {
         url: '/contact'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('title').text().trim()).toStrictEqual(
         expect.stringMatching(/^Contact \|/)
@@ -35,7 +36,7 @@ describe('#contactController', () => {
         url: '/contact'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('h1').text()).toBe('Contact')
     })
@@ -46,7 +47,7 @@ describe('#contactController', () => {
         url: '/contact'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
 
       expect($('.govuk-body-l').text()).toBe(
         'For questions about your summary log, registration or accreditation'
@@ -59,7 +60,7 @@ describe('#contactController', () => {
         url: '/contact'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const headings = $('h2.govuk-heading-s')
         .map((_, el) => $(el).text())
         .get()
@@ -79,7 +80,7 @@ describe('#contactController', () => {
         url: '/contact'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const mailtoLinks = $('a[href^="mailto:"]')
         .map((_, el) => $(el).attr('href'))
         .get()
@@ -103,7 +104,7 @@ describe('#contactController', () => {
         url: '/contact'
       })
 
-      const $ = load(result)
+      const $ = load(asHtml(result))
       const callChargesLinks = $('a[href="https://www.gov.uk/call-charges"]')
 
       expect(callChargesLinks).toHaveLength(2)

@@ -1,29 +1,19 @@
-import { isEnhancedSummaryLogCheckPagesEnabled } from '#config/config.js'
-import {
-  isRegisteredOnlyProcessingType,
-  PROCESSING_TYPES
-} from '#domain/summary-logs/meta-fields.js'
-import { WASTE_RECORD_TYPE } from '#domain/waste-records/model.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { fetchSummaryLogStatus } from '#server/common/helpers/upload/fetch-summary-log-status.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { fetchWasteBalances } from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
-import { renderEnhancedCheckView } from './enhanced-check-controller.js'
+import { hasClosedPeriodChanges } from './closed-period-changes.js'
+import { renderCheckView } from './check-controller.js'
 import { buildValidationFailuresViewModel } from './validation-failures-view-model.js'
+
+/** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
 
 /**
  * @import { ProcessingType } from '#domain/summary-logs/meta-fields.js'
- * @import { WasteRecordType } from '#domain/waste-records/model.js'
  * @import {
- *   LoadCategoryViewModel,
- *   LoadRows,
- *   LoadsViewModel,
- *   RawLoadCategory,
- *   RawLoads,
- *   RawLoadsByWasteRecordType,
- *   RegisteredOnlyLoadsSectionViewModel,
+ *   LoadsByReportingPeriod,
  *   SummaryLogParams,
  *   SummaryLogStatusResponse,
  *   SummaryLogsSession,
@@ -39,9 +29,7 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  *   status: string,
  *   validation?: ValidationResponse,
  *   accreditationNumber?: string,
- *   loads?: RawLoads,
- *   loadsByWasteRecordType?: RawLoadsByWasteRecordType,
- *   loadsByReportingPeriod?: import('./types.js').LoadsByReportingPeriod,
+ *   loadsByReportingPeriod?: LoadsByReportingPeriod,
  *   processingType?: ProcessingType,
  *   organisationId: string,
  *   registrationId: string,
@@ -60,44 +48,6 @@ import { buildValidationFailuresViewModel } from './validation-failures-view-mod
  * @typedef {RenderContext & { processingType: ProcessingType }} ValidatedRenderContext
  */
 
-const SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE = Object.freeze({
-  [PROCESSING_TYPES.REPROCESSOR_REGISTERED_ONLY]: Object.freeze({
-    [WASTE_RECORD_TYPE.RECEIVED]:
-      'registeredOnly.sectionReference.reprocessor.received',
-    [WASTE_RECORD_TYPE.SENT_ON]:
-      'registeredOnly.sectionReference.reprocessor.sentOn'
-  }),
-  [PROCESSING_TYPES.EXPORTER_REGISTERED_ONLY]: Object.freeze({
-    [WASTE_RECORD_TYPE.RECEIVED]:
-      'registeredOnly.sectionReference.exporter.received',
-    [WASTE_RECORD_TYPE.EXPORTED]:
-      'registeredOnly.sectionReference.exporter.exported',
-    [WASTE_RECORD_TYPE.SENT_ON]:
-      'registeredOnly.sectionReference.exporter.sentOn'
-  })
-})
-
-const WASTE_RECORD_TYPE_HEADING_KEY = Object.freeze({
-  [WASTE_RECORD_TYPE.RECEIVED]: 'registeredOnly.sectionHeading.received',
-  [WASTE_RECORD_TYPE.EXPORTED]: 'registeredOnly.sectionHeading.exported',
-  [WASTE_RECORD_TYPE.PROCESSED]: 'registeredOnly.sectionHeading.processed',
-  [WASTE_RECORD_TYPE.SENT_ON]: 'registeredOnly.sectionHeading.sentOn'
-})
-
-const WASTE_RECORD_TYPE_ORDER = Object.freeze({
-  [WASTE_RECORD_TYPE.RECEIVED]: 1,
-  [WASTE_RECORD_TYPE.PROCESSED]: 2,
-  [WASTE_RECORD_TYPE.EXPORTED]: 3,
-  [WASTE_RECORD_TYPE.SENT_ON]: 4
-})
-
-/** Waste record section number to display in UI copy, mapped by processing type */
-const WASTE_RECORD_SECTION_BY_PROCESSING_TYPE = {
-  [PROCESSING_TYPES.EXPORTER]: 1,
-  [PROCESSING_TYPES.REPROCESSOR_INPUT]: 1,
-  [PROCESSING_TYPES.REPROCESSOR_OUTPUT]: 3
-}
-
 const PROCESSING_STATES = new Set([
   summaryLogStatuses.preprocessing,
   summaryLogStatuses.validating,
@@ -111,108 +61,12 @@ const REUPLOAD_STATES = new Set([
   summaryLogStatuses.submissionFailed
 ])
 
-/**
- * Gets the waste record section number to display in UI copy based on processing
- * type. Registered-only types are not in the section map and return undefined.
- * @param {ProcessingType} processingType - Processing type from summary log meta
- * @returns {number | undefined} Waste record section number (1 or 3)
- */
-export const getWasteRecordSectionNumber = (processingType) =>
-  WASTE_RECORD_SECTION_BY_PROCESSING_TYPE[processingType]
-
 const VIEW_NAME = 'summary-log/progress'
-const CHECK_VIEW_NAME = 'summary-log/check'
 const SUBMITTING_VIEW_NAME = 'summary-log/submitting'
 const SUCCESS_VIEW_NAME = 'summary-log/success'
 const SUPERSEDED_VIEW_NAME = 'summary-log/superseded'
 const VALIDATION_FAILURES_VIEW_NAME = 'summary-log/validation-failures'
 const PAGE_TITLE_KEY = 'summary-log:pageTitle'
-
-/** @type {LoadRows} */
-const NO_ROWS = { count: 0, rowIds: [] }
-
-/**
- * Builds view model for a single load category (added or adjusted)
- * @param {Partial<RawLoadCategory>} [category] - Category data from backend (e.g. loads.added)
- * @returns {LoadCategoryViewModel}
- */
-const buildCategoryViewModel = (category) => {
-  const included = category?.included ?? NO_ROWS
-  const excluded = category?.excluded ?? NO_ROWS
-
-  return {
-    included,
-    excluded,
-    total: included.count + excluded.count
-  }
-}
-
-/**
- * Transforms raw loads data from backend into a view model
- * Uses count from backend (not array lengths) because rowIds arrays are truncated at 100 items
- * @param {{ added?: Partial<RawLoadCategory>, adjusted?: Partial<RawLoadCategory> } | null} [loads] - Raw loads data from backend API (defensively tolerates partial/missing categories)
- * @returns {LoadsViewModel}
- */
-export const buildLoadsViewModel = (loads) => {
-  return {
-    added: buildCategoryViewModel(loads?.added),
-    adjusted: buildCategoryViewModel(loads?.adjusted)
-  }
-}
-
-/**
- * @param {ProcessingType} processingType
- * @param {WasteRecordType} wasteRecordType
- * @returns {string|undefined}
- */
-const getSectionReferenceKey = (processingType, wasteRecordType) =>
-  SECTION_BY_PROCESSING_TYPE_AND_WASTE_RECORD_TYPE[processingType]?.[
-    wasteRecordType
-  ]
-
-/**
- * @param {ProcessingType} processingType
- * @param {WasteRecordType} wasteRecordType
- * @param {(key: string) => string} localise
- * @returns {string}
- */
-const getSectionReference = (processingType, wasteRecordType, localise) => {
-  const key = getSectionReferenceKey(processingType, wasteRecordType)
-
-  return localise(`summary-log:${key}`)
-}
-
-/**
- * Transforms raw loadsByWasteRecordType into view model sections
- * @param {RawLoadsByWasteRecordType} loadsByWasteRecordType
- * @param {ProcessingType} processingType
- * @param {(key: string) => string} localise
- * @returns {RegisteredOnlyLoadsSectionViewModel[]}
- */
-export const buildLoadsByWasteRecordTypeViewModel = (
-  loadsByWasteRecordType,
-  processingType,
-  localise
-) =>
-  loadsByWasteRecordType
-    .filter(({ wasteRecordType }) =>
-      getSectionReferenceKey(processingType, wasteRecordType)
-    )
-    .toSorted(
-      (a, b) =>
-        WASTE_RECORD_TYPE_ORDER[a.wasteRecordType] -
-        WASTE_RECORD_TYPE_ORDER[b.wasteRecordType]
-    )
-    .map(({ wasteRecordType, added, adjusted }) => ({
-      headingKey: WASTE_RECORD_TYPE_HEADING_KEY[wasteRecordType],
-      sectionReference: getSectionReference(
-        processingType,
-        wasteRecordType,
-        localise
-      ),
-      added: { count: added.valid.count, rowIds: added.valid.rowIds },
-      adjusted: { count: adjusted.valid.count, rowIds: adjusted.valid.rowIds }
-    }))
 
 /**
  * Gets view data for progress page (processing or error states)
@@ -275,8 +129,6 @@ const getStatusData = async (
 
   const {
     accreditationNumber,
-    loads,
-    loadsByWasteRecordType,
     loadsByReportingPeriod,
     processingType,
     status,
@@ -285,70 +137,11 @@ const getStatusData = async (
 
   return {
     accreditationNumber,
-    loads,
-    loadsByWasteRecordType,
     loadsByReportingPeriod,
     processingType,
     status,
     validation
   }
-}
-
-/**
- * Renders the check page for validated summary logs. A registered-only
- * processing type is always paired with loadsByWasteRecordType by the
- * backend; if that invariant breaks we throw rather than silently
- * falling through to the non-registered view, which would render a
- * misleading empty page.
- * @param {ResponseToolkit} h - Hapi response toolkit
- * @param {(key: string) => string} localise - i18n localisation function
- * @param {ValidatedRenderContext} context - View context
- * @returns {ResponseObject} Hapi view response
- */
-const renderCheckView = (h, localise, context) => {
-  if (isEnhancedSummaryLogCheckPagesEnabled()) {
-    return renderEnhancedCheckView(h, localise, context)
-  }
-
-  const {
-    loads,
-    loadsByWasteRecordType,
-    organisationId,
-    registrationId,
-    summaryLogId,
-    processingType
-  } = context
-
-  if (isRegisteredOnlyProcessingType(processingType)) {
-    if (loadsByWasteRecordType === undefined) {
-      throw new Error(
-        `Expected loadsByWasteRecordType for registered-only processing type ${processingType}`
-      )
-    }
-    return h.view('summary-log/check-registered-only', {
-      pageTitle: localise('summary-log:checkPageTitle'),
-      organisationId,
-      registrationId,
-      summaryLogId,
-      sections: buildLoadsByWasteRecordTypeViewModel(
-        loadsByWasteRecordType,
-        processingType,
-        localise
-      )
-    })
-  }
-
-  const loadsViewModel = buildLoadsViewModel(loads)
-  const sectionNumber = getWasteRecordSectionNumber(processingType)
-
-  return h.view(CHECK_VIEW_NAME, {
-    pageTitle: localise('summary-log:checkPageTitle'),
-    organisationId,
-    registrationId,
-    summaryLogId,
-    loads: loadsViewModel,
-    sectionNumber
-  })
 }
 
 /**
@@ -376,11 +169,17 @@ const renderSubmittingView = (h, localise, { pollUrl }) => {
  * @param {RenderContext} context - View context
  * @returns {ResponseObject} Hapi view response
  */
-const renderSuccessView = (h, localise, { organisationId, wasteBalance }) => {
+const renderSuccessView = (
+  h,
+  localise,
+  { organisationId, registrationId, wasteBalance, loadsByReportingPeriod }
+) => {
   return h.view(SUCCESS_VIEW_NAME, {
     pageTitle: localise('summary-log:successPageTitle'),
     organisationId,
-    wasteBalance
+    registrationId,
+    wasteBalance,
+    showFurtherAction: hasClosedPeriodChanges(loadsByReportingPeriod)
   })
 }
 
@@ -537,24 +336,23 @@ const getUploadUrl = async (
 
 /**
  * Determines whether the current waste balance is needed for this render: after
- * submission (success page), or on the enhanced check page where it drives the
+ * submission (success page), or on the check page where it drives the
  * projected balance panel.
  * @param {string} status - Current summary log status
  * @returns {boolean}
  */
 const needsWasteBalance = (status) =>
   status === summaryLogStatuses.submitted ||
-  (status === summaryLogStatuses.validated &&
-    isEnhancedSummaryLogCheckPagesEnabled())
+  status === summaryLogStatuses.validated
 
 /**
- * Gets waste balance data for a submitted summary log, or for the enhanced
- * check page (validated, flag on)
+ * Gets waste balance data for a submitted summary log, or for the check page
+ * where it drives the projected balance panel.
  * @param {string} status - Current summary log status
  * @param {string} organisationId - Organisation ID
  * @param {string} registrationId - Registration ID
  * @param {string} idToken - JWT ID token for authorization
- * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Request logger
+ * @param {TypedLogger} logger - Request logger
  * @returns {Promise<{wasteBalance?: number}>} Waste balance, or empty object if not applicable
  */
 const getWasteBalanceData = async (
@@ -615,8 +413,6 @@ export const summaryLogUploadProgressController = {
 
     const {
       accreditationNumber,
-      loads,
-      loadsByWasteRecordType,
       loadsByReportingPeriod,
       processingType,
       status,
@@ -656,8 +452,6 @@ export const summaryLogUploadProgressController = {
       status,
       validation,
       accreditationNumber,
-      loads,
-      loadsByWasteRecordType,
       loadsByReportingPeriod,
       processingType,
       organisationId,

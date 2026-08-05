@@ -9,9 +9,9 @@ import { validateDefraIdJwtPayload } from './defra-id-jwt-schema.js'
  * Creates a token verification function from OIDC JWKS endpoint
  * @param {object} config - OIDC configuration
  * @param {string} config.jwks_uri - JWKS endpoint URL
- * @returns {Promise<VerifyToken>} Token verification function
+ * @returns {VerifyToken} Token verification function
  */
-export const getVerifyToken = async ({ jwks_uri: url }) => {
+export const getVerifyToken = ({ jwks_uri: url }) => {
   const JWKS = jose.createRemoteJWKSet(new URL(url))
 
   /**

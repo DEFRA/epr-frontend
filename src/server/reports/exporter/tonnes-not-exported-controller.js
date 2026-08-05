@@ -11,7 +11,7 @@ const pageFields =
   ({ material, periodLabel, reportsListPath, period, reportDetail }) =>
   (localise) => ({
     backUrl: reportsListPath,
-    caption: localise('reports:tonnageNotExportedCaption'),
+    caption: localise('reports:createDraftReportCaption'),
     continueText: localise('reports:tonnageNotExportedContinue'),
     defaultValue: reportDetail.exportActivity?.tonnageReceivedNotExported,
     fieldName: 'tonnageNotExported',

@@ -1,6 +1,9 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import { asReportDetailResponse } from '#server/common/test-helpers/report-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
@@ -11,15 +14,9 @@ vi.mock(
 )
 vi.mock(import('#server/reports/helpers/fetch-report-detail.js'))
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    profile: { id: 'user-123', email: 'test@example.com' },
-    idToken: 'mock-id-token'
-  }
-}
+const mockAuth = buildMockAuth()
 
-const mockRegistration = {
+const mockRegistration = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123' },
   registration: {
     id: 'reg-001',
@@ -28,7 +25,7 @@ const mockRegistration = {
     registrationNumber: 'REG001234'
   },
   accreditation: undefined
-}
+})
 
 const mockReportDetail = {
   operatorCategory: 'EXPORTER_REGISTERED_ONLY',
@@ -71,7 +68,9 @@ describe('#submittedController', () => {
     vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
       mockRegistration
     )
-    vi.mocked(fetchReportDetail).mockResolvedValue(mockReportDetail)
+    vi.mocked(fetchReportDetail).mockResolvedValue(
+      asReportDetailResponse(mockReportDetail)
+    )
   })
 
   describe('when report status is submitted', () => {
@@ -100,7 +99,7 @@ describe('#submittedController', () => {
 
       expect(panel).not.toBeNull()
       expect(panel.textContent).toContain(
-        'Quarter 1, 2026 report submitted to regulator'
+        'Quarter 1 2026 report submitted to regulator'
       )
     })
 
@@ -135,7 +134,7 @@ describe('#submittedController', () => {
 
       expect(insetText).not.toBeNull()
       expect(insetText.textContent).toContain(
-        'you may need to submit an updated report for this period'
+        "you'll need to submit a new report for this period"
       )
     })
 
@@ -258,10 +257,12 @@ describe('#submittedController', () => {
     it('should return 404 when status is ready_to_submit', async ({
       server
     }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...mockReportDetail,
-        status: { currentStatus: 'ready_to_submit' }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...mockReportDetail,
+          status: { currentStatus: 'ready_to_submit' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -273,10 +274,12 @@ describe('#submittedController', () => {
     })
 
     it('should return 404 when status is in_progress', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...mockReportDetail,
-        status: { currentStatus: 'in_progress' }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...mockReportDetail,
+          status: { currentStatus: 'in_progress' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -288,10 +291,12 @@ describe('#submittedController', () => {
     })
 
     it('should return 404 when status is due', async ({ server }) => {
-      vi.mocked(fetchReportDetail).mockResolvedValue({
-        ...mockReportDetail,
-        status: { currentStatus: 'due' }
-      })
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        asReportDetailResponse({
+          ...mockReportDetail,
+          status: { currentStatus: 'due' }
+        })
+      )
 
       const { statusCode } = await server.inject({
         method: 'GET',

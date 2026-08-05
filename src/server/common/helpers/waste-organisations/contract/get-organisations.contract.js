@@ -1,12 +1,22 @@
 import { beforeEach, describe, expect } from 'vitest'
 
+/**
+ * @import { WasteOrganisationsService } from '../port.js'
+ */
+
 export const testGetOrganisationsBehaviour = (it) => {
   describe('getOrganisations', () => {
     let service
 
-    beforeEach(async ({ wasteOrganisationsService }) => {
-      service = wasteOrganisationsService
-    })
+    beforeEach(
+      async (
+        /** @type {{ wasteOrganisationsService: WasteOrganisationsService }} */ {
+          wasteOrganisationsService
+        }
+      ) => {
+        service = wasteOrganisationsService
+      }
+    )
 
     it('should return organisations array', async () => {
       const result = await service.getOrganisations()

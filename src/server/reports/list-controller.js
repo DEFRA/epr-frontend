@@ -1,19 +1,23 @@
 import { cssClasses } from '#server/common/constants/css-classes.js'
 import { escapeHtml } from '#server/common/helpers/escape-html.js'
-import { formatDate } from '#server/common/helpers/format-date.js'
+import { formatDateShort } from '#server/common/helpers/format-date.js'
 import { formatTime } from '#server/common/helpers/format-time.js'
 import { getDisplayMaterial } from '#server/common/helpers/materials/get-display-material.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
-import { CADENCE, SUBMISSION_STATUS } from './constants.js'
-import { deriveSubmissionStatus } from './helpers/derive-submission-status.js'
+import { SUBMISSION_STATUS } from './constants.js'
 import { fetchReportingPeriods } from './helpers/fetch-reporting-periods.js'
-import { formatPeriodLabel } from './helpers/format-period-label.js'
+import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import {
-  getActionLabel,
   getStatusLabel,
   getStatusTagClass
 } from './helpers/format-submission-status.js'
-import { getInProgressActionPath } from './helpers/get-in-progress-action-path.js'
+import { isResubmission } from './helpers/resubmission.js'
+import {
+  getActionLabel,
+  getActionPath,
+  getRowAction,
+  REPORT_ACTION
+} from './helpers/report-action.js'
 
 /**
  * @typedef {{ text: string, classes?: string } | { html: string, classes?: string }} TableCell
@@ -31,12 +35,20 @@ const buildActionLinkHtml = (actionLabel, url, label) =>
   `<a href="${url}" class="govuk-link">${escapeHtml(actionLabel)} <span class="govuk-visually-hidden">${escapeHtml(label)}</span></a>`
 
 /**
+ * A submitted period that is a resubmission (a later submission for the period,
+ * flag-gated) reads "Resubmitted" rather than "Submitted". The backend emits no
+ * distinct status for this, so the label is derived from the submission number
+ * at this call site; the tag colour stays green, as submitted.
  * @param {SubmissionStatusValue} status
  * @param {TFunction} localise
+ * @param {number} submissionNumber
  * @returns {string}
  */
-const buildStatusTagHtml = (status, localise) => {
-  const statusLabel = getStatusLabel(status, localise)
+const buildStatusTagHtml = (status, localise, submissionNumber) => {
+  const statusLabel =
+    status === SUBMISSION_STATUS.SUBMITTED && isResubmission(submissionNumber)
+      ? localise('reports:statusResubmitted')
+      : getStatusLabel(status, localise)
   const statusTagClass = getStatusTagClass(status)
 
   return `<strong class="govuk-tag ${statusTagClass}">${escapeHtml(statusLabel)}</strong>`
@@ -50,30 +62,7 @@ const formatSubmittedDateTime = (isoString) => {
   if (!isoString) {
     return ''
   }
-  return `${formatDate(isoString)}, ${formatTime(isoString)}`
-}
-
-/** @type {Partial<Record<SubmissionStatusValue, string>>} */
-const fixedActionPaths = {
-  [SUBMISSION_STATUS.READY_TO_SUBMIT]: '/submit',
-  [SUBMISSION_STATUS.SUBMITTED]: '/view'
-}
-
-/**
- * Resolves the path the action link on a report row should target.
- * For in-progress reports the destination varies by registration type
- * and cadence; other statuses map to a fixed page in the report flow.
- * @param {SubmissionStatusValue} status
- * @param {Pick<Registration, 'wasteProcessingType'>} registration
- * @param {Accreditation | undefined} accreditation
- * @param {CadenceValue} cadence
- * @returns {string}
- */
-const getActionPath = (status, registration, accreditation, cadence) => {
-  if (status !== SUBMISSION_STATUS.IN_PROGRESS) {
-    return fixedActionPaths[status] ?? ''
-  }
-  return getInProgressActionPath(registration, accreditation, cadence)
+  return `${formatDateShort(isoString)}, ${formatTime(isoString)}`
 }
 
 /**
@@ -83,9 +72,9 @@ const getActionPath = (status, registration, accreditation, cadence) => {
  *   label: string,
  *   localise: TFunction,
  *   localiseUrl: (url: string) => string,
+ *   period: ReportingPeriod,
  *   periodPath: string,
- *   registration: Pick<Registration, 'wasteProcessingType'>,
- *   status: SubmissionStatusValue | null
+ *   registration: Pick<Registration, 'wasteProcessingType'>
  * }} options
  * @returns {TableCell}
  */
@@ -95,22 +84,13 @@ const buildActionCell = ({
   label,
   localise,
   localiseUrl,
+  period,
   periodPath,
-  registration,
-  status
+  registration
 }) => {
-  const { actionPath, actionLabel } =
-    status === null
-      ? { actionPath: '', actionLabel: localise('reports:actionCreateDraft') }
-      : {
-          actionPath: getActionPath(
-            status,
-            registration,
-            accreditation,
-            cadence
-          ),
-          actionLabel: getActionLabel(status, localise)
-        }
+  const action = getRowAction(period)
+  const actionPath = getActionPath(action, registration, accreditation, cadence)
+  const actionLabel = getActionLabel(action, localise)
 
   const url = localiseUrl(`${periodPath}${actionPath}`)
 
@@ -150,12 +130,12 @@ function buildRows({
   for (const period of reportingPeriods) {
     const periodPath = `/organisations/${organisationId}/registrations/${registration.id}/reports/${period.year}/${cadence}/${period.period}/submissions/${period.submissionNumber}`
 
-    const label = formatPeriodLabel(period, cadence, localise)
+    const label = formatPeriodLabelWithComma(period, cadence, localise)
 
-    const status = deriveSubmissionStatus(period.endDate, period.report)
+    const status = period.periodStatus
 
     const actionCell = buildActionCell({
-      status,
+      period,
       registration,
       accreditation,
       cadence,
@@ -165,8 +145,11 @@ function buildRows({
       label
     })
 
-    const statusTagHtml =
-      status === null ? '' : buildStatusTagHtml(status, localise)
+    const statusTagHtml = buildStatusTagHtml(
+      status,
+      localise,
+      period.submissionNumber
+    )
 
     if (status === SUBMISSION_STATUS.SUBMITTED) {
       submittedRows.push([
@@ -177,10 +160,12 @@ function buildRows({
         actionCell
       ])
     } else {
+      const dueDateText = formatDateShort(period.dueDate)
+
       activeRows.push([
         { text: label },
         { html: statusTagHtml },
-        { text: formatDate(period.dueDate) },
+        { text: dueDateText },
         actionCell
       ])
     }
@@ -190,13 +175,27 @@ function buildRows({
 }
 
 /**
+ * Submitted-table columns keep fixed quarter-widths, in contrast to the
+ * action-required columns which hug their content.
  * @param {TFunction} localise
  * @param {string} textKey
  * @returns {TableCell}
  */
-const headerCol = (localise, textKey) => ({
+const submittedHeaderCol = (localise, textKey) => ({
   text: localise(textKey),
   classes: cssClasses.width.oneQuarter
+})
+
+/**
+ * Action-required columns hug their content so the trailing right-aligned
+ * action link sits hard right, matching the design. The submitted table keeps
+ * its fixed column widths.
+ * @param {TFunction} localise
+ * @param {string} textKey
+ * @returns {TableCell}
+ */
+const activeHeaderCol = (localise, textKey) => ({
+  text: localise(textKey)
 })
 
 /** @type {TableCell} */
@@ -208,19 +207,32 @@ const actionHeaderCol = { text: '', classes: cssClasses.textAlign.right }
  */
 const buildHeaders = (localise) => ({
   activeHeader: [
-    headerCol(localise, 'reports:periodColumn'),
-    headerCol(localise, 'reports:statusColumn'),
-    headerCol(localise, 'reports:dateDueColumn'),
+    activeHeaderCol(localise, 'reports:periodColumn'),
+    activeHeaderCol(localise, 'reports:statusColumn'),
+    activeHeaderCol(localise, 'reports:dateDueColumn'),
     actionHeaderCol
   ],
   submittedHeader: [
-    headerCol(localise, 'reports:periodColumn'),
-    headerCol(localise, 'reports:statusColumn'),
-    headerCol(localise, 'reports:dateAndTimeColumn'),
+    submittedHeaderCol(localise, 'reports:periodColumn'),
+    submittedHeaderCol(localise, 'reports:statusColumn'),
+    submittedHeaderCol(localise, 'reports:dateAndTimeColumn'),
     { text: localise('reports:submittedByColumn') },
     actionHeaderCol
   ]
 })
+
+/**
+ * @param {ReportingPeriod[]} reportingPeriods
+ * @param {TFunction} localise
+ * @returns {string | null}
+ */
+const buildApprovedPersonBanner = (reportingPeriods, localise) => {
+  const count = reportingPeriods.filter(
+    (p) => getRowAction(p) === REPORT_ACTION.REVIEW_AND_SUBMIT
+  ).length
+
+  return count > 0 ? localise('reports:approvedPersonBanner', { count }) : null
+}
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest & { params: ReportListParams }>>} */
 export const listController = {
@@ -241,12 +253,6 @@ export const listController = {
 
     const material = getDisplayMaterial(registration)
 
-    const cadenceHeading = localise(
-      cadence === CADENCE.MONTHLY
-        ? 'reports:monthlyHeading'
-        : 'reports:quarterlyHeading'
-    )
-
     const { activeHeader, submittedHeader } = buildHeaders(localise)
 
     const { activeRows, submittedRows } = buildRows({
@@ -259,16 +265,21 @@ export const listController = {
       reportingPeriods
     })
 
+    const approvedPersonBanner = buildApprovedPersonBanner(
+      reportingPeriods,
+      localise
+    )
+
     const viewData = {
       active: {
         head: activeHeader,
         rows: activeRows,
         emptyMessage: localise('reports:actionRequiredEmpty')
       },
+      approvedPersonBanner,
       backUrl: request.localiseUrl(
         `/organisations/${organisationId}/registrations/${registrationId}`
       ),
-      cadenceHeading,
       heading: localise('reports:heading'),
       material,
       pageTitle: localise('reports:pageTitle', { material }),

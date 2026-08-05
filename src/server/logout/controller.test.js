@@ -1,12 +1,13 @@
 import { config } from '#config/config.js'
 import { dropUserSession } from '#server/auth/helpers/drop-user-session.js'
 import { logoutController } from '#server/logout/controller.js'
+import {
+  mockHapiRequest,
+  asResponseToolkit
+} from '#server/common/test-helpers/request-fixtures.js'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
-
-const appBaseUrl = 'http://localhost:3000'
-const authLogoutUrl = `${appBaseUrl}/auth/logout`
 
 describe('#logoutController', () => {
   afterEach(() => {
@@ -26,7 +27,10 @@ describe('#logoutController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await logoutController.handler(mockRequest, mockH)
+      const result = await logoutController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(dropUserSession).not.toHaveBeenCalled()
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith('/logged-out')
@@ -42,11 +46,15 @@ describe('#logoutController', () => {
         email: 'test@example.com'
       },
       urls: {
-        logout: 'http://localhost:3200/logout?p=a-b2clogin-query-param'
+        logout: 'http://oidc-provider/logout?p=a-b2clogin-query-param'
       }
     }
 
     test('should drop session and redirect to logout URL', async () => {
+      const appHost = 'localhost:3000'
+      const appBaseUrl = `http://${appHost}`
+      const authLogoutUrl = `${appBaseUrl}/auth/logout`
+
       config.set('appBaseUrl', appBaseUrl)
 
       const mockRequest = {
@@ -57,7 +65,7 @@ describe('#logoutController', () => {
         auth: {
           credentials: mockSession
         },
-        info: { host: 'localhost:3000' },
+        info: { host: appHost },
         headers: {},
         server: { info: { protocol: 'http' } }
       }
@@ -66,13 +74,16 @@ describe('#logoutController', () => {
         redirect: vi.fn().mockReturnValue('redirect-response')
       }
 
-      const result = await logoutController.handler(mockRequest, mockH)
+      const result = await logoutController.handler(
+        mockHapiRequest(mockRequest),
+        asResponseToolkit(mockH)
+      )
 
       expect(dropUserSession).toHaveBeenCalledExactlyOnceWith(mockRequest)
       expect(mockRequest.cookieAuth.clear).toHaveBeenCalledExactlyOnceWith()
 
       expect(mockH.redirect).toHaveBeenCalledExactlyOnceWith(
-        `http://localhost:3200/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(authLogoutUrl)}`
+        `http://oidc-provider/logout?p=a-b2clogin-query-param&id_token_hint=id-token-123&post_logout_redirect_uri=${encodeURIComponent(authLogoutUrl)}`
       )
       expect(result).toBe('redirect-response')
     })

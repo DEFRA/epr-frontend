@@ -1,4 +1,5 @@
 import { logoutController } from '#server/logout/controller.js'
+import { paths } from '#server/paths.js'
 
 /**
  * Logout plugin
@@ -12,7 +13,7 @@ const logout = {
         {
           ...logoutController,
           method: 'GET',
-          path: '/logout',
+          path: paths.logout,
           options: {
             auth: { mode: 'try' }
           }

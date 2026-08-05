@@ -19,6 +19,17 @@
       {{ localise('summary-log:successBodyText') }}
     </p>
 
+    {% if showFurtherAction %}
+    <h2 class="govuk-heading-m">{{ localise('summary-log:closedPeriodAdjustments.furtherActionHeading') }}</h2>
+    <p class="govuk-body">{{ localise('summary-log:closedPeriodAdjustments.furtherActionPara1') }}</p>
+    <p class="govuk-body">{{ localise('summary-log:closedPeriodAdjustments.furtherActionPara2') }}</p>
+    <p class="govuk-body">{{ localise('summary-log:closedPeriodAdjustments.furtherActionPara3') }}</p>
+    {{ govukButton({
+      text: localise('summary-log:closedPeriodAdjustments.goToReports'),
+      href: '/organisations/' + organisationId + '/registrations/' + registrationId + '/reports'
+    }) }}
+    {% endif %}
+
     <p class="govuk-body">
       <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:returnToHome') }}</a>
     </p>

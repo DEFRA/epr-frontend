@@ -1,9 +1,9 @@
 import { fetchReportBackend } from './fetch-report-backend.js'
-import { SummaryLogChangedError } from './summary-log-changed.js'
+import { ReportStaleError, staleReasons } from './stale.js'
 
 /**
  * Fetches aggregated report detail for a specific period from the backend.
- * Throws {@link SummaryLogChangedError} if the report is stale so callers get
+ * Throws {@link ReportStaleError} if the report is stale so callers get
  * a consistent error type regardless of whether staleness came from a GET 200
  * (stale field) or a PATCH/POST 409.
  * @param {string} organisationId
@@ -31,8 +31,9 @@ export async function fetchReportDetail(
     headers: { Authorization: `Bearer ${idToken}` }
   })
 
-  if (report.stale) {
-    throw new SummaryLogChangedError(report.stale.reason)
+  const reasons = staleReasons(report.stale)
+  if (reasons.length > 0) {
+    throw new ReportStaleError(reasons)
   }
 
   return report
@@ -40,8 +41,8 @@ export async function fetchReportDetail(
 
 /**
  * @typedef {{
- *   supplierName: string,
- *   facilityType: string,
+ *   supplierName: string | null,
+ *   facilityType: string | null,
  *   tonnageReceived: number,
  *   supplierAddress: string | null,
  *   supplierPhone: string | null,
@@ -98,7 +99,11 @@ export async function fetchReportDetail(
  *     ready?: { at: string, by: { id: string, name: string, position: string } },
  *     submitted?: { at: string, by: { id: string, name: string, position: string } }
  *   },
- *   stale?: { uploadedAt: string, reason: string },
+ *   stale?: {
+ *     summaryLogChanged?: { uploadedAt: string, summaryLogId: string },
+ *     prnCancelled?: { occurredAt: string, prnId: string }
+ *   },
+ *   canRequestResubmission?: boolean,
  *   supportingInformation?: string,
  *   prn?: {
  *     issuedTonnage: number,

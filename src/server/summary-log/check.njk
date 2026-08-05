@@ -1,114 +1,246 @@
 {% extends 'layouts/page.njk' %}
-{% from "row-id-list/macro.njk" import rowIdList %}
+
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+
+{# Section banding follows the design: the heading plus any inset and tonnage
+   caption form an un-ruled intro, then a rule precedes every content block and a
+   trailing rule closes the section. No rule sits above the first heading. #}
+{% macro sectionRule() %}
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+{% endmacro %}
+
+{# Loads grouped by worksheet (tab): a description list where each section's
+   name is the term and its Row IDs are the bulleted values. Any exclusion
+   reason is appended to the Row ID; it is omitted where the row carries none.
+   A by-design worksheet (set by the controller, accredited pages only) always
+   shows the neutral "never count" line above its Row IDs. A contributing
+   worksheet has no sub-heading: each row's own reason already explains why it
+   was excluded. #}
+{% macro loadSections(sections) %}
+  <dl class="epr-load-sections">
+    {% for section in sections %}
+    <dt class="epr-load-sections__section">{{ section.sectionName }}</dt>
+    <dd class="epr-load-sections__rows">
+      {% if section.nonContributing %}
+      <p class="govuk-body">{{ localise('summary-log:check.sectionNeverCounts') }}</p>
+      {% endif %}
+      <ul class="govuk-list govuk-list--bullet">
+        {% for row in section.rows %}
+        <li>
+          {% if row.reasonText %}
+          {{ localise('summary-log:check.loadRowWithReason', { rowId: row.rowId, reason: row.reasonText }) }}
+          {% else %}
+          {{ localise('summary-log:check.loadRow', { rowId: row.rowId }) }}
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </dd>
+    {% endfor %}
+  </dl>
+{% endmacro %}
+
+{# "Show [x] load[s]" disclosure wrapping the bullet list of rows. Over the cap
+   (more than 99 loads) the list is suppressed for the too-many message, matching
+   the row-id-list convention. #}
+{% macro loadsAccordion(count, sections, tooManyMessage) %}
+  {% if count >= maxRowsPerBucket %}
+  <p class="govuk-body">{{ tooManyMessage }}</p>
+  {% else %}
+  <details class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: count }) }}</span>
+    </summary>
+    <div class="govuk-details__text">
+      {{ loadSections(sections) }}
+    </div>
+  </details>
+  {% endif %}
+{% endmacro %}
+
+{# Adjusted balance-affecting disclosure: one "Show [x] load[s]" toggle holding
+   the added sub-group (loads that added to the balance, listed by id) and the
+   reduced sub-group (loads that reduced it, each carrying its own reason where
+   it has one). #}
+{% macro adjustedBalanceAccordion(balanceAffecting, tooManyMessage) %}
+  {% if balanceAffecting.count >= maxRowsPerBucket %}
+  <p class="govuk-body">{{ tooManyMessage }}</p>
+  {% else %}
+  <details class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">{{ localise('summary-log:showLoads', { count: balanceAffecting.count }) }}</span>
+    </summary>
+    <div class="govuk-details__text">
+      {% if balanceAffecting.added.count > 0 %}
+      <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:check.adjustedAdded', { count: balanceAffecting.added.count }) }}</p>
+      {{ loadSections(balanceAffecting.added.sections) }}
+      {% endif %}
+      {% if balanceAffecting.reduced.count > 0 %}
+      <p class="govuk-body govuk-!-font-weight-bold">{{ localise('summary-log:check.adjustedReduced', { count: balanceAffecting.reduced.count }) }}</p>
+      {{ loadSections(balanceAffecting.reduced.sections) }}
+      {% endif %}
+    </div>
+  </details>
+  {% endif %}
+{% endmacro %}
+
+{% macro newLoadsSection(change, headingKey, isAccredited) %}
+<section class="govuk-!-margin-top-6">
+  <h2 class="govuk-heading-l">{{ localise('summary-log:check.' + headingKey) }}</h2>
+  {% if isAccredited %}
+    {% if change.hasTonnageDelta %}
+    <p class="govuk-caption-l">{{ localise('summary-log:check.newLoadsCaption', { tonnage: change.absoluteTonnage }) }}</p>
+    {% endif %}
+    {% if change.balanceAffecting.count > 0 %}
+    {{ sectionRule() }}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:check.newLoadsAddedHeading', { count: change.balanceAffecting.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:check.loadsIncludeData') }}</p>
+    {% endif %}
+    {% if change.nonBalanceAffecting.count > 0 %}
+    {{ sectionRule() }}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:check.newLoadsNotAddedHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:check.tooManyLoads')) }}
+    {% endif %}
+  {% else %}
+    {{ sectionRule() }}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:check.regOnlyNewLoadsHeading', { count: change.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:check.regOnlyLoadsBody') }}</p>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:check.tooManyLoads')) }}
+  {% endif %}
+  {{ sectionRule() }}
+</section>
+{% endmacro %}
+
+{% macro adjustedLoadsSection(change, headingKey, isAccredited) %}
+<section class="govuk-!-margin-top-6">
+  <h2 class="govuk-heading-l">{{ localise('summary-log:check.' + headingKey) }}</h2>
+  {% if isAccredited %}
+    {% if change.hasTonnageDelta %}
+      {% if change.addsToBalance %}
+      <p class="govuk-caption-l">{{ localise('summary-log:check.adjustedLoadsCaptionAdd', { tonnage: change.absoluteTonnage }) }}</p>
+      {% else %}
+      <p class="govuk-caption-l">{{ localise('summary-log:check.adjustedLoadsCaptionRemove', { tonnage: change.absoluteTonnage }) }}</p>
+      {% endif %}
+    {% endif %}
+    {% if change.balanceAffecting.count > 0 %}
+    {{ sectionRule() }}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:check.adjustedLoadsReflectedHeading', { count: change.balanceAffecting.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:check.adjustedLoadsReflectedBody') }}</p>
+    {{ adjustedBalanceAccordion(change.balanceAffecting, localise('summary-log:tooManyAdjustedLoadsToList')) }}
+    {% endif %}
+    {% if change.nonBalanceAffecting.count > 0 %}
+    {{ sectionRule() }}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:check.adjustmentsNotRelevantHeading', { count: change.nonBalanceAffecting.count }) }}</h3>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:tooManyAdjustedLoadsToList')) }}
+    {% endif %}
+  {% else %}
+    {{ sectionRule() }}
+    <h3 class="govuk-heading-m">{{ localise('summary-log:check.regOnlyAdjustedLoadsHeading', { count: change.count }) }}</h3>
+    <p class="govuk-body">{{ localise('summary-log:check.regOnlyLoadsBody') }}</p>
+    {{ loadsAccordion(change.nonBalanceAffecting.count, change.nonBalanceAffecting.sections, localise('summary-log:tooManyAdjustedLoadsToList')) }}
+  {% endif %}
+  {{ sectionRule() }}
+</section>
+{% endmacro %}
+
+{% macro emptySection(headingKey, emptyKey) %}
+<section class="govuk-!-margin-top-6">
+  <h2 class="govuk-heading-l">{{ localise('summary-log:check.' + headingKey) }}</h2>
+  {{ sectionRule() }}
+  <p class="govuk-body">{{ localise('summary-log:check.' + emptyKey) }}</p>
+  {{ sectionRule() }}
+</section>
+{% endmacro %}
 
 {% block content %}
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds">
+  <div class="govuk-grid-column-full">
     <h1 class="govuk-heading-xl">
-      <span class="govuk-caption-xl">{{ localise('summary-log:checkCaption') }}</span>
-      {{ localise('summary-log:checkHeading') }}
+      <span class="govuk-caption-xl">{{ localise('summary-log:check.pageCaption') }}</span>
+      {{ localise('summary-log:check.pageHeading') }}
     </h1>
 
     <p class="govuk-body">{{ localise('summary-log:checkIntro') }}</p>
-    <p class="govuk-body">{{ localise('summary-log:checkIntro2') }}</p>
 
     <div class="govuk-inset-text">
-      {{ localise('summary-log:checkWarningStart') }}
-      <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:checkWarningUploadLink') }}</a>
-      {{ localise('summary-log:checkWarningOr') }}
-      <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:checkWarningHomeLink') }}</a>.
+      <p class="govuk-body">{{ localise('summary-log:check.insetSaveWarning') }}</p>
+      <p class="govuk-body">
+        <strong>{{ localise('summary-log:check.insetWrongLead') }}</strong>
+        {{ localise('summary-log:check.insetEditAnd') }}
+        <a href="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/upload" class="govuk-link">{{ localise('summary-log:check.insetChooseFileLink') }}</a>
+        {{ localise('summary-log:check.insetBeforeHome') }}
+        <a href="/organisations/{{ organisationId }}" class="govuk-link">{{ localise('summary-log:check.insetHomeLink') }}</a>).
+      </p>
     </div>
 
-    <section class="govuk-!-margin-top-8">
-      <h2 class="govuk-heading-l">{{ localise('summary-log:newLoadsSectionHeading') }}</h2>
-
-      {% if loads.added.total == 0 %}
-      <h3 class="govuk-heading-m">{{ localise('summary-log:noAddedLoadsHeading') }}</h3>
-      {% endif %}
-
-      {% if loads.added.included.count > 0 %}
-      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-      <h3 class="govuk-heading-m">{{ localise('summary-log:loadsAdded', { count: loads.added.included.count }) }}</h3>
-      <p class="govuk-body">{{ localise('summary-log:loadsAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
-      {% endif %}
-
-      {% if loads.added.excluded.count > 0 %}
-      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-      <h3 class="govuk-heading-m">{{ localise('summary-log:loadsNotAdded', { count: loads.added.excluded.count }) }}</h3>
-      <p class="govuk-body">{{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}</p>
-      {{ rowIdList({
-        rows: loads.added.excluded,
-        tooManyMessage: localise('summary-log:tooManyLoadsToList'),
-        showLoadsText: localise('summary-log:showLoads', { count: loads.added.excluded.count }),
-        explanationText: localise('summary-log:rowIdExplanation')
-      }) }}
-      {% endif %}
-
-      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
-
-      <h2 class="govuk-heading-l">{{ localise('summary-log:adjustedLoadsSectionHeading') }}</h2>
-
-      {% if loads.adjusted.total > 0 %}
-      <p class="govuk-body">{{ localise('summary-log:adjustedLoadsIntro', { sectionNumber: sectionNumber }) }}</p>
-
-      <div class="govuk-accordion" data-module="govuk-accordion" id="accordion-adjusted-loads">
-        {% if loads.adjusted.included.count > 0 %}
-        <div class="govuk-accordion__section">
-          <div class="govuk-accordion__section-header">
-            <h3 class="govuk-accordion__section-heading">
-              <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-included">
-                {{ localise('summary-log:adjustmentsReflected', { count: loads.adjusted.included.count }) }}
-              </span>
-            </h3>
-            <div class="govuk-accordion__section-summary govuk-body">
-              {{ localise('summary-log:loadsAdjustedExplanation', { sectionNumber: sectionNumber }) }}
-            </div>
-          </div>
-          <div id="accordion-adjusted-loads-content-included" class="govuk-accordion__section-content">
-            {{ rowIdList({
-              rows: loads.adjusted.included,
-              tooManyMessage: localise('summary-log:tooManyAdjustedLoadsToList'),
-              showLoadsText: localise('summary-log:showLoads', { count: loads.adjusted.included.count }),
-              explanationText: localise('summary-log:rowIdExplanation')
-            }) }}
-          </div>
-        </div>
+    {# Each period group (open, closed) carries a larger leading margin than the
+       sections within it, so the two groups read as distinct blocks. The first
+       section's own margin collapses into the wrapper's, so within-group spacing
+       is unchanged. The gap exceeds the GOV.UK spacing scale's cap (point 9), so
+       it uses a custom class rather than a govuk-!-margin-top-* utility. #}
+    {% if isEmpty %}
+      <div class="epr-period-group">
+        {{ emptySection('openNewLoadsHeading', 'emptyOpenNewLoads') }}
+        {{ emptySection('openAdjustedLoadsHeading', 'emptyOpenAdjustedLoads') }}
+      </div>
+      <div class="epr-period-group">
+        {{ emptySection('closedNewLoadsHeading', 'emptyClosedNewLoads') }}
+        {{ emptySection('closedAdjustedLoadsHeading', 'emptyClosedAdjustedLoads') }}
+      </div>
+    {% else %}
+      {% if periodSections.open %}
+      <div class="epr-period-group">
+        {% if periodSections.open.added %}
+          {{ newLoadsSection(periodSections.open.added, 'openNewLoadsHeading', isAccredited) }}
         {% endif %}
-
-        {% if loads.adjusted.excluded.count > 0 %}
-        <div class="govuk-accordion__section">
-          <div class="govuk-accordion__section-header">
-            <h3 class="govuk-accordion__section-heading">
-              <span class="govuk-accordion__section-button" id="accordion-adjusted-loads-heading-excluded">
-                {{ localise('summary-log:adjustmentsNotReflected', { count: loads.adjusted.excluded.count }) }}
-              </span>
-            </h3>
-            <div class="govuk-accordion__section-summary govuk-body">
-              {{ localise('summary-log:loadsNotAddedExplanation', { sectionNumber: sectionNumber }) }}
-            </div>
-          </div>
-          <div id="accordion-adjusted-loads-content-excluded" class="govuk-accordion__section-content">
-            {{ rowIdList({
-              rows: loads.adjusted.excluded,
-              tooManyMessage: localise('summary-log:tooManyLoadsToList'),
-              showLoadsText: localise('summary-log:showLoads', { count: loads.adjusted.excluded.count }),
-              explanationText: localise('summary-log:rowIdExplanation')
-            }) }}
-          </div>
-        </div>
+        {% if periodSections.open.adjusted %}
+          {{ adjustedLoadsSection(periodSections.open.adjusted, 'openAdjustedLoadsHeading', isAccredited) }}
         {% endif %}
       </div>
-      {% else %}
-      <h3 class="govuk-heading-m">{{ localise('summary-log:noAdjustedLoadsHeading') }}</h3>
       {% endif %}
-    </section>
+      {% if periodSections.closed %}
+      <div class="epr-period-group">
+        {% if periodSections.closed.added %}
+          {{ newLoadsSection(periodSections.closed.added, 'closedNewLoadsHeading', isAccredited) }}
+        {% endif %}
+        {% if periodSections.closed.adjusted %}
+          {{ adjustedLoadsSection(periodSections.closed.adjusted, 'closedAdjustedLoadsHeading', isAccredited) }}
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endif %}
 
-    <form method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
-      <input type="hidden" name="crumb" value="{{ crumb }}" />
-      {{ govukButton({
-        text: localise('summary-log:confirmButton'),
-        preventDoubleClick: true
+    {% if wasteBalanceProjection %}
+    <div class="epr-summary-log-projection govuk-!-margin-top-6">
+      {% if wasteBalanceProjection.unchanged %}
+      <p class="govuk-body">{{ localise('summary-log:check.projectionUnchangedPrefix') }} <strong>{{ wasteBalanceProjection.projected }}</strong></p>
+      {% else %}
+      <p class="govuk-body">{{ localise('summary-log:check.projectionPrefix') }} <strong>{{ wasteBalanceProjection.projected }}</strong> {{ localise('summary-log:check.projectionSuffix', { current: wasteBalanceProjection.current }) }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if showClosedPeriodImportant %}
+      {{ govukNotificationBanner({
+        titleText: localise('summary-log:closedPeriodAdjustments.importantTitle'),
+        text: localise('summary-log:closedPeriodAdjustments.importantBody'),
+        classes: 'govuk-!-margin-top-6 epr-notification-banner--full-width'
       }) }}
+    {% endif %}
+
+    <form class="govuk-!-margin-top-6" method="POST" action="/organisations/{{ organisationId }}/registrations/{{ registrationId }}/summary-logs/{{ summaryLogId }}/submit">
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: localise('summary-log:check.submitButton'),
+          preventDoubleClick: true
+        }) }}
+        {{ govukButton({
+          text: localise('summary-log:check.goBackButton'),
+          href: '/organisations/' + organisationId + '/registrations/' + registrationId + '/summary-logs/upload',
+          classes: 'govuk-button--secondary'
+        }) }}
+      </div>
     </form>
   </div>
 </div>

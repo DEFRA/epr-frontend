@@ -4,9 +4,9 @@ import { CADENCE, SUBMISSION_STATUS } from '#server/reports/constants.js'
 import { fetchReportingPeriods } from '#server/reports/helpers/fetch-reporting-periods.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
-import { getByRole, queryByRole } from '@testing-library/dom'
+import { getByRole } from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
-import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest'
+import { beforeEach, describe, expect, vi } from 'vitest'
 
 /**
  * @import { ServerInjectOptions } from '@hapi/hapi'
@@ -118,6 +118,7 @@ const monthlyResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.OVERDUE,
       report: null
     },
     {
@@ -127,6 +128,7 @@ const monthlyResponse = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
       dueDate: '2026-03-20',
+      periodStatus: SUBMISSION_STATUS.OVERDUE,
       report: null
     },
     {
@@ -136,6 +138,7 @@ const monthlyResponse = {
       startDate: '2026-03-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -151,6 +154,7 @@ const quarterlyResponse = {
       startDate: '2026-01-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -166,6 +170,7 @@ const monthlyWithReportResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
       report: {
         id: 'report-001',
         status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -186,8 +191,45 @@ const monthlyWithReadyToSubmitResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.READY_TO_SUBMIT,
       report: {
         id: 'report-002',
+        status: SUBMISSION_STATUS.READY_TO_SUBMIT,
+        submittedAt: null,
+        submittedBy: null
+      }
+    }
+  ]
+}
+
+const monthlyWithTwoReadyToSubmitResponse = {
+  cadence: CADENCE.MONTHLY,
+  reportingPeriods: [
+    {
+      year: 2026,
+      period: 1,
+      submissionNumber: 1,
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.READY_TO_SUBMIT,
+      report: {
+        id: 'report-003',
+        status: SUBMISSION_STATUS.READY_TO_SUBMIT,
+        submittedAt: null,
+        submittedBy: null
+      }
+    },
+    {
+      year: 2026,
+      period: 2,
+      submissionNumber: 1,
+      startDate: '2026-02-01',
+      endDate: '2026-02-28',
+      dueDate: '2026-03-20',
+      periodStatus: SUBMISSION_STATUS.READY_TO_SUBMIT,
+      report: {
+        id: 'report-004',
         status: SUBMISSION_STATUS.READY_TO_SUBMIT,
         submittedAt: null,
         submittedBy: null
@@ -206,6 +248,7 @@ const monthlyWithSubmittedResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.SUBMITTED,
       report: {
         id: 'report-002',
         status: SUBMISSION_STATUS.SUBMITTED,
@@ -230,6 +273,7 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-01-01',
       endDate: '2026-01-31',
       dueDate: '2026-02-20',
+      periodStatus: SUBMISSION_STATUS.SUBMITTED,
       report: {
         id: 'report-001',
         status: SUBMISSION_STATUS.SUBMITTED,
@@ -248,6 +292,7 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-02-01',
       endDate: '2026-02-28',
       dueDate: '2026-03-20',
+      periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
       report: {
         id: 'report-002',
         status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -262,6 +307,7 @@ const monthlyMixedStatusResponse = {
       startDate: '2026-03-01',
       endDate: '2026-03-31',
       dueDate: '2026-04-20',
+      periodStatus: SUBMISSION_STATUS.DUE,
       report: null
     }
   ]
@@ -306,19 +352,8 @@ const readTable = (table) => ({
 })
 
 describe('#listReportsController', () => {
-  beforeAll(() => {
-    vi.useFakeTimers({
-      now: new Date('2026-03-20T12:00:00Z'),
-      toFake: ['Date']
-    })
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  afterAll(() => {
-    vi.useRealTimers()
   })
 
   describe('for accredited operator (monthly periods)', () => {
@@ -375,24 +410,6 @@ describe('#listReportsController', () => {
       )
     })
 
-    it('should display Monthly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const heading = getByRole(body, 'heading', {
-        name: 'Monthly',
-        level: 2
-      })
-
-      expect(heading).toBeDefined()
-    })
-
     it('should render monthly periods in a table', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -406,9 +423,9 @@ describe('#listReportsController', () => {
       const table = body.querySelector('.govuk-table')
 
       expect(table).not.toBeNull()
-      expect(table?.textContent).toContain('January 2026')
-      expect(table?.textContent).toContain('February 2026')
-      expect(table?.textContent).toContain('March 2026')
+      expect(table?.textContent).toContain('January, 2026')
+      expect(table?.textContent).toContain('February, 2026')
+      expect(table?.textContent).toContain('March, 2026')
     })
 
     it('should display Create draft links for accredited reprocessor periods', async ({
@@ -432,24 +449,6 @@ describe('#listReportsController', () => {
       expect(selectLinks[0]?.textContent).toContain('Create draft')
     })
 
-    it('should not display Quarterly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      expect(
-        queryByRole(body, 'heading', {
-          name: 'Quarterly',
-          level: 2
-        })
-      ).toBeNull()
-    })
-
     it('should display column headers in order', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -464,7 +463,30 @@ describe('#listReportsController', () => {
         body.querySelectorAll('.govuk-table thead th')
       ).map((th) => th.textContent?.trim())
 
-      expect(headerTexts).toStrictEqual(['Period', 'Status', 'Date due', ''])
+      expect(headerTexts).toStrictEqual(['Period', 'Status', 'Due date', ''])
+    })
+
+    it('should let the action-required columns hug their content rather than forcing quarter-widths', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const headerClasses = Array.from(
+        body.querySelectorAll('.govuk-table thead th')
+      ).map((th) => Array.from(th.classList))
+
+      expect(
+        headerClasses.some((classes) =>
+          classes.includes('govuk-!-width-one-quarter')
+        )
+      ).toBe(false)
     })
 
     it('should display formatted due date per row', async ({ server }) => {
@@ -482,13 +504,15 @@ describe('#listReportsController', () => {
       ).map((tr) => tr.querySelectorAll('td')[2]?.textContent?.trim())
 
       expect(dueDateCells).toStrictEqual([
-        '20 February 2026',
-        '20 March 2026',
-        '20 April 2026'
+        '20 Feb 2026',
+        '20 Mar 2026',
+        '20 Apr 2026'
       ])
     })
 
-    it('should display Due tag for ended periods', async ({ server }) => {
+    it('should render a status tag per period from periodStatus', async ({
+      server
+    }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -501,26 +525,10 @@ describe('#listReportsController', () => {
       const tagData = extractTagData(body)
 
       expect(tagData).toStrictEqual([
-        { text: 'Due', modifier: 'govuk-tag--orange' },
+        { text: 'Overdue', modifier: 'govuk-tag--red' },
+        { text: 'Overdue', modifier: 'govuk-tag--red' },
         { text: 'Due', modifier: 'govuk-tag--orange' }
       ])
-    })
-
-    it('should not display Due tag for current period', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: accreditedUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const rows = body.querySelectorAll('.govuk-table tbody tr')
-      const marchRow = rows[2]
-      const tag = marchRow?.querySelector('.govuk-tag')
-
-      expect(tag).toBeNull()
     })
   })
 
@@ -661,6 +669,55 @@ describe('#listReportsController', () => {
         '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/1/submit'
       )
     })
+
+    it('should display approved person banner with singular count', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const banner = body.querySelector('.govuk-warning-text__text')
+
+      expect(banner?.textContent?.trim()).toContain(
+        'Your approved person needs to review and submit 1 report.'
+      )
+    })
+  })
+
+  describe('for multiple ready_to_submit reports', () => {
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithTwoReadyToSubmitResponse
+      )
+    })
+
+    it('should display approved person banner with plural count', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      const banner = body.querySelector('.govuk-warning-text__text')
+
+      expect(banner?.textContent?.trim()).toContain(
+        'Your approved person needs to review and submit 2 reports.'
+      )
+    })
   })
 
   describe('for ended period with submitted report', () => {
@@ -722,6 +779,7 @@ describe('#listReportsController', () => {
             startDate: '2026-01-01',
             endDate: '2026-01-31',
             dueDate: '2026-02-20',
+            periodStatus: SUBMISSION_STATUS.SUBMITTED,
             report: {
               id: 'report-002',
               status: SUBMISSION_STATUS.SUBMITTED,
@@ -746,11 +804,11 @@ describe('#listReportsController', () => {
       ).map((td) => td.textContent?.trim())
 
       expect(cells).toStrictEqual([
-        'January 2026',
+        'January, 2026',
         'Submitted',
         '',
         '',
-        'View January 2026'
+        'View report January, 2026'
       ])
     })
   })
@@ -797,15 +855,15 @@ describe('#listReportsController', () => {
       const actionRequiredTable = findSection(body, 'Action required')
 
       expect(readTable(actionRequiredTable)).toStrictEqual({
-        headers: ['Period', 'Status', 'Date due', ''],
+        headers: ['Period', 'Status', 'Due date', ''],
         rows: [
           [
-            'February 2026',
+            'February, 2026',
             'In progress',
-            '20 March 2026',
-            'Continue February 2026'
+            '20 Mar 2026',
+            'Continue February, 2026'
           ],
-          ['March 2026', '', '20 April 2026', 'Create draft March 2026']
+          ['March, 2026', 'Due', '20 Apr 2026', 'Create draft March, 2026']
         ]
       })
     })
@@ -826,11 +884,11 @@ describe('#listReportsController', () => {
         headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
         rows: [
           [
-            'January 2026',
+            'January, 2026',
             'Submitted',
-            '5 February 2026, 6:22pm',
+            '5 Feb 2026, 6:22pm',
             'Matt Davis',
-            'View January 2026'
+            'View report January, 2026'
           ]
         ]
       })
@@ -885,6 +943,21 @@ describe('#listReportsController', () => {
         className: 'govuk-body app-colour-secondary',
         text: 'You do not currently have any submitted reports.'
       })
+    })
+
+    it('should not display approved person banner when no Ready to submit reports', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(body.querySelector('.govuk-warning-text')).toBeNull()
     })
   })
 
@@ -959,24 +1032,6 @@ describe('#listReportsController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('should display Quarterly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const heading = getByRole(body, 'heading', {
-        name: 'Quarterly',
-        level: 2
-      })
-
-      expect(heading).toBeDefined()
-    })
-
     it('should render quarterly periods in a table', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
@@ -1025,6 +1080,7 @@ describe('#listReportsController', () => {
             startDate: '2026-01-01',
             endDate: '2026-03-31',
             dueDate: '2026-04-20',
+            periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
             report: {
               id: 'report-003',
               status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -1071,6 +1127,7 @@ describe('#listReportsController', () => {
             startDate: '2026-01-01',
             endDate: '2026-03-31',
             dueDate: '2026-04-20',
+            periodStatus: SUBMISSION_STATUS.IN_PROGRESS,
             report: {
               id: 'report-004',
               status: SUBMISSION_STATUS.IN_PROGRESS,
@@ -1095,39 +1152,6 @@ describe('#listReportsController', () => {
       expect(link?.getAttribute('href')).toBe(
         '/organisations/org-456/registrations/reg-002/reports/2026/quarterly/1/submissions/1/supporting-information'
       )
-    })
-
-    it('should not display Monthly subheading', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      expect(
-        queryByRole(body, 'heading', {
-          name: 'Monthly',
-          level: 2
-        })
-      ).toBeNull()
-    })
-
-    it('should not display Due tag for current quarter', async ({ server }) => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        auth: mockAuth
-      })
-
-      const dom = new JSDOM(result)
-      const { body } = dom.window.document
-
-      const tags = body.querySelectorAll('.govuk-table .govuk-tag')
-
-      expect(tags).toHaveLength(0)
     })
   })
 
@@ -1172,9 +1196,7 @@ describe('#listReportsController', () => {
       vi.mocked(fetchReportingPeriods).mockResolvedValue(emptyResponse)
     })
 
-    it('should display cadence heading and both section headings', async ({
-      server
-    }) => {
+    it('should display both section headings', async ({ server }) => {
       const { result } = await server.inject({
         method: 'GET',
         url: accreditedUrl,
@@ -1184,15 +1206,10 @@ describe('#listReportsController', () => {
       const dom = new JSDOM(result)
       const { body } = dom.window.document
 
-      const cadenceHeading = getByRole(body, 'heading', {
-        name: 'Monthly',
-        level: 2
-      })
       const sectionHeadings = Array.from(
         body.querySelectorAll('h3.govuk-heading-m')
       ).map((h) => h.textContent?.trim())
 
-      expect(cadenceHeading).toBeDefined()
       expect(sectionHeadings).toStrictEqual(['Action required', 'Submitted'])
     })
 
@@ -1260,6 +1277,315 @@ describe('#listReportsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('requires resubmission', () => {
+    // One submitted report plus its requires_resubmission skeleton (the
+    // submission-grained pair the backend emits for a restated closed period).
+    const resubmissionPeriodPair = (period) => [
+      {
+        year: 2026,
+        period,
+        submissionNumber: 1,
+        startDate: `2026-0${period}-01`,
+        endDate: `2026-0${period}-28`,
+        dueDate: `2026-0${period + 1}-20`,
+        periodStatus: SUBMISSION_STATUS.SUBMITTED,
+        report: {
+          id: `report-00${period}`,
+          status: SUBMISSION_STATUS.SUBMITTED,
+          submittedAt: '2026-02-05T18:22:00.000Z',
+          submittedBy: {
+            id: 'user-1',
+            name: 'Matt Davis',
+            position: 'Approved person'
+          }
+        }
+      },
+      {
+        year: 2026,
+        period,
+        submissionNumber: 2,
+        startDate: `2026-0${period}-01`,
+        endDate: `2026-0${period}-28`,
+        dueDate: `2026-0${period + 1}-20`,
+        periodStatus: SUBMISSION_STATUS.REQUIRES_RESUBMISSION,
+        report: null
+      }
+    ]
+
+    const monthlyWithResubmissionResponse = {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: resubmissionPeriodPair(1)
+    }
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(
+        monthlyWithResubmissionResponse
+      )
+    })
+
+    it('renders a Requires resubmission entry with a purple tag and create-draft CTA, keeping the original submitted report', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTag?.classList.contains('govuk-tag--purple')).toBe(true)
+      expect(resubTag?.classList.contains('epr-tag--no-max-width')).toBe(true)
+
+      const resubLink = Array.from(body.querySelectorAll('a.govuk-link')).find(
+        (anchor) => anchor.textContent?.includes('Review and create draft')
+      )
+      expect(resubLink?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/resubmission-explainer'
+      )
+
+      expect(body.textContent).toContain('Matt Davis')
+    })
+
+    // The due-date column renders the absolute due date verbatim, whether or
+    // not it has passed: the 'Overdue' wording belongs to the status column
+    // alone. Both a past-due and a future due date are covered to pin that the
+    // rendering does not vary by whether the date is behind or ahead of today.
+    describe.each([
+      {
+        name: 'renders a past due date verbatim, never as Overdue',
+        reportingPeriods: resubmissionPeriodPair(1),
+        expectedRow: [
+          'January, 2026',
+          'Requires resubmission',
+          '20 Feb 2026',
+          'Review and create draft January, 2026'
+        ]
+      },
+      {
+        name: 'renders a future due date verbatim',
+        reportingPeriods: resubmissionPeriodPair(3),
+        expectedRow: [
+          'March, 2026',
+          'Requires resubmission',
+          '20 Apr 2026',
+          'Review and create draft March, 2026'
+        ]
+      }
+    ])('due date column: $name', ({ reportingPeriods, expectedRow }) => {
+      it('renders the action required row with the expected due date', async ({
+        server
+      }) => {
+        vi.mocked(fetchReportingPeriods).mockResolvedValue({
+          cadence: CADENCE.MONTHLY,
+          reportingPeriods
+        })
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: accreditedUrl,
+          auth: mockAuth
+        })
+        const { body } = new JSDOM(result).window.document
+
+        const actionRequired = findSection(body, 'Action required')
+
+        expect(readTable(actionRequired)).toStrictEqual({
+          headers: ['Period', 'Status', 'Due date', ''],
+          rows: [expectedRow]
+        })
+      })
+    })
+
+    it('renders a requires resubmission entry for each affected period', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [
+          ...resubmissionPeriodPair(1),
+          ...resubmissionPeriodPair(2)
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTags = Array.from(body.querySelectorAll('.govuk-tag')).filter(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTags).toHaveLength(2)
+    })
+
+    it('links a resubmission carrying an in-progress draft to Continue, keeping the purple tag', async ({
+      server
+    }) => {
+      const [submitted, skeleton] = resubmissionPeriodPair(1)
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [
+          submitted,
+          {
+            ...skeleton,
+            report: {
+              id: 'draft-2',
+              status: SUBMISSION_STATUS.IN_PROGRESS,
+              submittedAt: null,
+              submittedBy: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTag?.classList.contains('govuk-tag--purple')).toBe(true)
+
+      const link = Array.from(body.querySelectorAll('a.govuk-link')).find(
+        (anchor) => anchor.textContent?.includes('Continue')
+      )
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/tonnes-recycled'
+      )
+    })
+
+    it('links a resubmission carrying a ready-to-submit draft to Review and submit and counts it in the banner', async ({
+      server
+    }) => {
+      const [submitted, skeleton] = resubmissionPeriodPair(1)
+      vi.mocked(fetchReportingPeriods).mockResolvedValue({
+        cadence: CADENCE.MONTHLY,
+        reportingPeriods: [
+          submitted,
+          {
+            ...skeleton,
+            report: {
+              id: 'draft-2',
+              status: SUBMISSION_STATUS.READY_TO_SUBMIT,
+              submittedAt: null,
+              submittedBy: null
+            }
+          }
+        ]
+      })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      const resubTag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (tag) => tag.textContent?.trim() === 'Requires resubmission'
+      )
+      expect(resubTag?.classList.contains('govuk-tag--purple')).toBe(true)
+
+      const link = Array.from(body.querySelectorAll('a.govuk-link')).find(
+        (anchor) => anchor.textContent?.includes('Review and submit')
+      )
+      expect(link?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/submit'
+      )
+
+      expect(body.textContent).toContain('review and submit 1 report')
+    })
+  })
+
+  describe('resubmitted (submitted period with submissionNumber > 1)', () => {
+    // Once a resubmission is itself submitted the backend collapses the period
+    // to a single submitted item carrying submissionNumber 2.
+    const resubmittedResponse = {
+      cadence: CADENCE.MONTHLY,
+      reportingPeriods: [
+        {
+          year: 2026,
+          period: 1,
+          submissionNumber: 2,
+          startDate: '2026-01-01',
+          endDate: '2026-01-31',
+          dueDate: '2026-02-20',
+          periodStatus: SUBMISSION_STATUS.SUBMITTED,
+          report: {
+            id: 'report-001',
+            status: SUBMISSION_STATUS.SUBMITTED,
+            submittedAt: '2026-02-05T18:22:00.000Z',
+            submittedBy: {
+              id: 'user-1',
+              name: 'Matt Davis',
+              position: 'Approved person'
+            }
+          }
+        }
+      ]
+    }
+
+    beforeEach(() => {
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        accreditedRegistration
+      )
+      vi.mocked(fetchReportingPeriods).mockResolvedValue(resubmittedResponse)
+    })
+
+    it('renders the period as Resubmitted with a green tag and View report in the Submitted table', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: accreditedUrl,
+        auth: mockAuth
+      })
+      const { body } = new JSDOM(result).window.document
+
+      expect(findSection(body, 'Action required')?.textContent).not.toContain(
+        'January, 2026'
+      )
+
+      const submittedTable = findSection(body, 'Submitted')
+      expect(readTable(submittedTable)).toStrictEqual({
+        headers: ['Period', 'Status', 'Date and time', 'Submitted by', ''],
+        rows: [
+          [
+            'January, 2026',
+            'Resubmitted',
+            '5 Feb 2026, 6:22pm',
+            'Matt Davis',
+            'View report January, 2026'
+          ]
+        ]
+      })
+
+      const tag = Array.from(body.querySelectorAll('.govuk-tag')).find(
+        (t) => t.textContent?.trim() === 'Resubmitted'
+      )
+      expect(tag?.classList.contains('govuk-tag--green')).toBe(true)
+
+      // View report must open the resubmission (submissionNumber 2), the report
+      // that replaced the original, not the superseded submissionNumber 1.
+      const viewLink = submittedTable?.querySelector('a.govuk-link')
+      expect(viewLink?.getAttribute('href')).toBe(
+        '/organisations/org-123/registrations/reg-001/reports/2026/monthly/1/submissions/2/view'
+      )
     })
   })
 })

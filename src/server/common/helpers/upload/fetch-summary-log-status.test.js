@@ -56,40 +56,6 @@ describe(fetchSummaryLogStatus, () => {
     expect(result).toStrictEqual(mockResponse)
   })
 
-  it('should return loadsByWasteRecordType when present in the response', async ({
-    msw
-  }) => {
-    const loadCategory = { count: 1, rowIds: ['row-1'] }
-    const loadValidity = {
-      valid: loadCategory
-    }
-    const loadsByWasteRecordType = [
-      {
-        wasteRecordType: 'received',
-        sheetName: 'Sheet1',
-        added: loadValidity,
-        unchanged: loadValidity,
-        adjusted: loadValidity
-      }
-    ]
-
-    msw.use(
-      http.get(
-        `${backendUrl}/v1/organisations/org-123/registrations/reg-456/summary-logs/log-789`,
-        () => HttpResponse.json({ status: 'validated', loadsByWasteRecordType })
-      )
-    )
-
-    const result = await fetchSummaryLogStatus(
-      organisationId,
-      registrationId,
-      summaryLogId,
-      { idToken: 'test-id-token' }
-    )
-
-    expect(result.loadsByWasteRecordType).toStrictEqual(loadsByWasteRecordType)
-  })
-
   it('should preserve loadsByReportingPeriod row detail in the response', async ({
     msw
   }) => {

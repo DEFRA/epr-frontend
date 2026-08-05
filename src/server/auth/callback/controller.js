@@ -1,6 +1,8 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
@@ -32,9 +34,9 @@ const withWelsh = (path) => [path, `/cy${path}`]
  * Creates user session and sets session cookie
  * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
  */
-const controller = {
+const defraIdCallbackController = {
   options: {
-    auth: { strategy: 'defra-id', mode: 'try' }
+    auth: { strategy: OIDC_DEFRA_ID, mode: 'try' }
   },
   /**
    * @param {HapiRequest} request
@@ -42,7 +44,7 @@ const controller = {
    */
   handler: async (request, h) => {
     if (request.auth?.error) {
-      await metrics.signInFailure()
+      await metrics.signInFailure(OIDC_DEFRA_ID)
     }
 
     if (request.auth.isAuthenticated) {
@@ -51,8 +53,8 @@ const controller = {
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
-      auditSignIn(session.profile.id, session.profile.email)
-      await metrics.signInSuccess()
+      auditSignIn(OIDC_DEFRA_ID, session.profile.id, session.profile.email)
+      await metrics.signInSuccess(OIDC_DEFRA_ID)
 
       request.cookieAuth.set({ sessionId })
 
@@ -75,36 +77,97 @@ const controller = {
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
       if (!isInitialUser) {
-        await metrics.signInSuccessNonInitialUser()
+        await metrics.signInSuccessNonInitialUser(OIDC_DEFRA_ID)
       }
 
       // Store linked organisation ID in session for navigation
       session.linkedOrganisationId = organisations.linked.id
       await request.server.app.cache.set(sessionId, session)
 
-      const referrer = request.yar.flash('referrer')?.at(0)
-      const skipReferrers = [
-        ...withWelsh(paths.start),
-        ...withWelsh(paths.loggedOut)
-      ]
-      const shouldSkipReferrer =
-        referrer !== undefined && skipReferrers.includes(referrer)
-
-      // Don't redirect linked users back to start or logged-out pages - take them to dashboard
-      if (referrer && !shouldSkipReferrer) {
-        return h.redirect(getSafeRedirect(referrer))
-      }
-
-      return h.redirect(
+      const redirectUrl = referrerIfPresentElseDefault(
+        request,
         request.localiseUrl(`/organisations/${organisations.linked.id}`)
       )
+
+      return h.redirect(redirectUrl)
     }
 
-    const redirect = request.yar.flash('referrer')?.at(0) ?? '/'
-
-    const safeRedirect = getSafeRedirect(redirect)
-    return h.redirect(safeRedirect)
+    return h.redirect(referrerIfPresentElseDefault(request, '/'))
   }
 }
 
-export { controller }
+/**
+ * @param {HapiRequest} request
+ * @param {string} defaultPath
+ */
+function referrerIfPresentElseDefault(request, defaultPath) {
+  const referrer = request.yar.flash('referrer')?.at(0)
+
+  const skipReferrers = [
+    ...withWelsh(paths.start),
+    ...withWelsh(paths.loggedOut),
+    paths.auth.defraId.callback,
+    paths.auth.entraId.callback
+  ]
+
+  const shouldSkipReferrer =
+    referrer !== undefined && skipReferrers.includes(referrer)
+
+  if (referrer && !shouldSkipReferrer) {
+    return getSafeRedirect(referrer)
+  }
+
+  return getSafeRedirect(defaultPath)
+}
+
+/**
+ * Auth callback controller
+ * Handles the OAuth2/OIDC callback from Entra ID
+ * Creates user session and sets session cookie for authenticated regulators
+ * @satisfies {Partial<HapiServerRoute<HapiRequest>>}
+ */
+const entraIdCallbackController = {
+  options: {
+    auth: { strategy: OIDC_ENTRA_ID, mode: 'try' }
+  },
+  /**
+   * @param {HapiRequest} request
+   * @param {ResponseToolkit} h
+   */
+  handler: async (request, h) => {
+    if (request.auth?.error) {
+      await metrics.signInFailure(OIDC_ENTRA_ID)
+    }
+
+    if (request.auth.isAuthenticated) {
+      const session = request.auth.credentials
+
+      const sessionId = randomUUID()
+      await request.server.app.cache.set(sessionId, session)
+
+      auditSignIn(OIDC_ENTRA_ID, session.profile.id, session.profile.email)
+      await metrics.signInSuccess(OIDC_ENTRA_ID)
+
+      request.cookieAuth.set({ sessionId })
+
+      request.logger.info({
+        message: 'User has been successfully authenticated',
+        event: {
+          action: 'signInSuccess',
+          reference: hashUserId(session.profile.id)
+        }
+      })
+
+      const redirectUrl = referrerIfPresentElseDefault(
+        request,
+        request.localiseUrl(paths.regulators.home)
+      )
+
+      return h.redirect(redirectUrl)
+    }
+
+    return h.redirect(referrerIfPresentElseDefault(request, '/'))
+  }
+}
+
+export { defraIdCallbackController, entraIdCallbackController }

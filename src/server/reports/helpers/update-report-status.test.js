@@ -25,7 +25,7 @@ describe(updateReportStatus, () => {
   })
 
   it('calls fetchJsonFromBackend with POST to the status endpoint', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReportStatus(
       {
@@ -53,7 +53,7 @@ describe(updateReportStatus, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await updateReportStatus(
       {
@@ -75,7 +75,7 @@ describe(updateReportStatus, () => {
   })
 
   it('returns the response from fetchJsonFromBackend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await updateReportStatus(
       {
@@ -95,7 +95,7 @@ describe(updateReportStatus, () => {
 
   it('propagates errors from fetchJsonFromBackend', async () => {
     const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
       updateReportStatus(
@@ -107,7 +107,9 @@ describe(updateReportStatus, () => {
           period,
           submissionNumber
         },
-        'ready_to_submit',
+        /** @type {Parameters<typeof updateReportStatus>[1]} */ (
+          /** @type {unknown} */ ('ready_to_submit')
+        ),
         idToken
       )
     ).rejects.toThrow('Network error')

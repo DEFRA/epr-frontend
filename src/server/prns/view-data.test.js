@@ -1,31 +1,41 @@
 import { describe, expect, it, vi } from 'vitest'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { buildCreatePrnViewData } from './view-data.js'
 
-const createMockRequest = () => ({
-  t: vi.fn((key, params = {}) => {
-    const translations = {
-      'prns:create:pageTitle': `Create a ${params.noteType}`,
-      'prns:materialLabel': 'Material',
-      'prns:create:tonnageLabel': `Enter ${params.noteType} tonnage`,
-      'prns:tonnageHint': 'Enter a whole number without decimal places',
-      'prns:tonnageSuffix': 'tonnes',
-      'prns:create:recipientLabel': `Enter who this ${params.noteType} will be issued to`,
-      'prns:recipientHint':
-        'Start typing the name of the packaging producer or compliance scheme',
-      'prns:selectOption': 'Select an option',
-      'prns:help:summary': "Can't find the producer or compliance scheme?",
-      'prns:create:helpIntro': `${params.noteTypePlural} can only be issued to packaging producers and compliance schemes who have registered with regulators.`,
-      'prns:help:listIntro':
-        "If the producer or compliance scheme you're looking for is not appearing, check that:",
-      'prns:help:listItemOne': 'you have spelled the name correctly',
-      'prns:help:listItemTwo': 'they are registered with a regulator',
-      'prns:notesLabel': 'Add issuer notes (optional)',
-      'prns:create:notesHint': `These notes will appear on the ${params.noteType}`,
-      'prns:create:submitButton': 'Continue'
-    }
-    return translations[key] || key
+/**
+ * @import { Material, GlassRecyclingProcess } from '#domain/organisations/model.js'
+ */
+
+/**
+ * @typedef {{ wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[] }} ViewDataRegistration
+ */
+
+const createMockRequest = () =>
+  mockHapiRequest({
+    t: vi.fn((key, params = {}) => {
+      const translations = {
+        'prns:create:pageTitle': `Create a ${params.noteType}`,
+        'prns:materialLabel': 'Material',
+        'prns:create:tonnageLabel': `Enter ${params.noteType} tonnage`,
+        'prns:tonnageHint': 'Enter a whole number without decimal places',
+        'prns:tonnageSuffix': 'tonnes',
+        'prns:create:recipientLabel': `Enter who this ${params.noteType} will be issued to`,
+        'prns:recipientHint':
+          'Start typing the name of the packaging producer or compliance scheme',
+        'prns:selectOption': 'Select an option',
+        'prns:help:summary': "Can't find the producer or compliance scheme?",
+        'prns:create:helpIntro': `${params.noteTypePlural} can only be issued to packaging producers and compliance schemes who have registered with regulators.`,
+        'prns:help:listIntro':
+          "If the producer or compliance scheme you're looking for is not appearing, check that:",
+        'prns:help:listItemOne': 'you have spelled the name correctly',
+        'prns:help:listItemTwo': 'they are registered with a regulator',
+        'prns:notesLabel': 'Add issuer notes (optional)',
+        'prns:create:notesHint': `These notes will appear on the ${params.noteType}`,
+        'prns:create:submitButton': 'Continue'
+      }
+      return translations[key] || key
+    })
   })
-})
 
 const stubRecipients = [
   { value: 'org-1', text: 'Acme Compliance Scheme' },
@@ -33,18 +43,18 @@ const stubRecipients = [
   { value: 'org-3', text: 'Green Waste Solutions' }
 ]
 
-const reprocessorRegistration = {
+const reprocessorRegistration = /** @type {ViewDataRegistration} */ ({
   id: 'reg-001',
   wasteProcessingType: 'reprocessor-input', // PRN
   material: 'glass',
   glassRecyclingProcess: ['glass_re_melt']
-}
+})
 
-const exporterRegistration = {
+const exporterRegistration = /** @type {ViewDataRegistration} */ ({
   id: 'reg-002',
   wasteProcessingType: 'exporter', // PERN
   material: 'plastic'
-}
+})
 
 describe('#buildCreatePrnViewData', () => {
   describe('for reprocessor (PRN)', () => {

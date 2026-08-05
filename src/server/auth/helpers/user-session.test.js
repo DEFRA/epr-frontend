@@ -1,19 +1,29 @@
 import { updateUserSession } from '#server/auth/helpers/user-session.js'
+import { mockHapiRequest } from '#server/common/test-helpers/request-fixtures.js'
 import { describe, expect, it, vi } from 'vitest'
 
-const makeRequest = () => ({
-  state: { userSession: { sessionId: 'sess-123' } },
-  server: { app: { cache: { set: vi.fn() } } }
-})
+/**
+ * @import { Mock } from 'vitest'
+ * @import { UserSession } from '#server/auth/types/session.js'
+ */
 
-const existingSession = {
+const makeRequest = () =>
+  mockHapiRequest({
+    state: { userSession: { sessionId: 'sess-123' } },
+    server: { app: { cache: { set: vi.fn() } } }
+  })
+
+const existingSession = /** @type {UserSession} */ ({
   profile: { id: 'user-123', email: 'test@example.com' },
   expiresAt: new Date().toISOString(),
   idToken: 'old-id-token',
   refreshToken: 'old-refresh-token',
   idTokenRefreshInProgress: true,
-  urls: { token: 'http://auth/token', logout: 'http://auth/logout' }
-}
+  urls: {
+    token: 'http://oidc-provider/token',
+    logout: 'http://oidc-provider/logout'
+  }
+})
 
 const refreshedTokens = {
   id_token: 'new-id-token',
@@ -38,7 +48,8 @@ describe(updateUserSession, () => {
       refreshedTokens
     )
 
-    const savedSession = request.server.app.cache.set.mock.calls[0][1]
+    const savedSession = /** @type {Mock} */ (request.server.app.cache.set).mock
+      .calls[0][1]
 
     // This ensures that id token refresh can run multiple times within the same session if needed
     expect(savedSession.idTokenRefreshInProgress).toBe(false)

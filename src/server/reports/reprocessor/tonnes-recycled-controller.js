@@ -11,7 +11,7 @@ const pageFields =
   ({ material, periodLabel, periodShort, reportsListPath, reportDetail }) =>
   (localise) => ({
     backUrl: reportsListPath,
-    caption: localise('reports:tonnageRecycledCaption'),
+    caption: localise('reports:createDraftReportCaption'),
     continueText: localise('reports:tonnageRecycledContinue'),
     defaultValue: reportDetail.recyclingActivity?.tonnageRecycled,
     fieldName: 'tonnageRecycled',

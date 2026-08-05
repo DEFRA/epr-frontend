@@ -78,12 +78,6 @@ export default {
             [
               '@babel/preset-env',
               {
-                // Apply bug fixes to avoid transforms
-                bugfixes: true,
-
-                // Apply smaller "loose" transforms for browsers
-                loose: true,
-
                 // Skip CommonJS modules transform
                 modules: false
               }

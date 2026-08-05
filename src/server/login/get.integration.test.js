@@ -9,7 +9,7 @@ vi.mock(
   async (importOriginal) => ({
     metrics: {
       ...(await importOriginal()).metrics,
-      signInAttempted: () => mockSignInAttemptedMetric()
+      signInAttempted: (oidcProvider) => mockSignInAttemptedMetric(oidcProvider)
     }
   })
 )
@@ -31,7 +31,9 @@ describe('#loginController - integration', () => {
 
         expect(response.statusCode).toBe(statusCodes.found)
 
-        const redirectUrl = new URL(response.headers.location)
+        const redirectUrl = new URL(
+          /** @type {string} */ (response.headers.location)
+        )
 
         expect(redirectUrl.host).toBe('defra-id.auth')
         expect(redirectUrl.pathname).toBe('/authorize')
@@ -47,6 +49,7 @@ describe('#loginController - integration', () => {
         })
 
         expect(mockSignInAttemptedMetric).toHaveBeenCalledTimes(1)
+        expect(mockSignInAttemptedMetric).toHaveBeenCalledWith('defra-id')
       }
     )
   })

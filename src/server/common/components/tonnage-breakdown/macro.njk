@@ -1,0 +1,12 @@
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% macro tonnageBreakdown(rows, localise) %}
+  {% set summaryRows = [] %}
+  {% for row in rows %}
+    {% set summaryRows = summaryRows.concat([{
+      key: { text: localise(row.key) },
+      value: { text: row.value }
+    }]) %}
+  {% endfor %}
+  {{ govukSummaryList({ classes: "epr-summary-list--wide-key", rows: summaryRows }) }}
+{% endmacro %}

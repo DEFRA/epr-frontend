@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { getDisplayMaterial } from './get-display-material.js'
 
+const asRegistrationInput = (data) =>
+  /** @type {Parameters<typeof getDisplayMaterial>[0]} */ (data)
+
 describe(getDisplayMaterial, () => {
   describe('glass registrations', () => {
     it.each([
@@ -14,7 +17,9 @@ describe(getDisplayMaterial, () => {
           glassRecyclingProcess: [glassRecyclingProcess]
         }
 
-        expect(getDisplayMaterial(registration)).toBe(expectedDisplay)
+        expect(getDisplayMaterial(asRegistrationInput(registration))).toBe(
+          expectedDisplay
+        )
       }
     )
   })
@@ -30,7 +35,9 @@ describe(getDisplayMaterial, () => {
     ])('should return "%s" as "%s"', (material, expectedDisplay) => {
       const registration = { material }
 
-      expect(getDisplayMaterial(registration)).toBe(expectedDisplay)
+      expect(getDisplayMaterial(asRegistrationInput(registration))).toBe(
+        expectedDisplay
+      )
     })
   })
 
@@ -67,9 +74,9 @@ describe(getDisplayMaterial, () => {
         }
       ]
     ])('should throw when %s', (_label, registration, expected) => {
-      expect(() => getDisplayMaterial(registration)).toThrow(
-        expect.objectContaining({ isBoom: true, ...expected })
-      )
+      expect(() =>
+        getDisplayMaterial(asRegistrationInput(registration))
+      ).toThrow(expect.objectContaining({ isBoom: true, ...expected }))
     })
   })
 })

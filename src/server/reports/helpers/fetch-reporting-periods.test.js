@@ -33,7 +33,7 @@ describe(fetchReportingPeriods, () => {
   })
 
   it('calls fetchJsonFromBackend with correct path and options', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await fetchReportingPeriods(organisationId, registrationId, idToken)
 
@@ -49,7 +49,7 @@ describe(fetchReportingPeriods, () => {
   })
 
   it('encodes URL path parameters with special characters', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     await fetchReportingPeriods('org/123', 'reg&456', idToken)
 
@@ -60,7 +60,7 @@ describe(fetchReportingPeriods, () => {
   })
 
   it('returns the response from fetchJsonFromBackend', async () => {
-    fetchJsonFromBackend.mockResolvedValue(mockResponse)
+    vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
     const result = await fetchReportingPeriods(
       organisationId,
@@ -73,7 +73,7 @@ describe(fetchReportingPeriods, () => {
 
   it('propagates errors from fetchJsonFromBackend', async () => {
     const error = new Error('Network error')
-    fetchJsonFromBackend.mockRejectedValue(error)
+    vi.mocked(fetchJsonFromBackend).mockRejectedValue(error)
 
     await expect(
       fetchReportingPeriods(organisationId, registrationId, idToken)

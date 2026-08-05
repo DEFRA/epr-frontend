@@ -1,7 +1,14 @@
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { getWasteBalance } from '#server/common/helpers/waste-balance/get-waste-balance.js'
+import { asRegistrationWithAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
+import {
+  asIssuedToOrganisation,
+  asPackagingRecyclingNotes,
+  asWasteBalance
+} from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import Boom from '@hapi/boom'
@@ -14,20 +21,14 @@ vi.mock(
 vi.mock(import('#server/common/helpers/waste-balance/get-waste-balance.js'))
 vi.mock(import('./helpers/fetch-packaging-recycling-notes.js'))
 
-const mockCredentials = {
-  profile: {
-    id: 'user-123',
-    email: 'test@example.com'
-  },
-  idToken: 'mock-id-token'
-}
+const mockCredentials = buildMockAuth().credentials
 
 const mockAuth = {
   strategy: 'session',
   credentials: mockCredentials
 }
 
-const fixtureReprocessor = {
+const fixtureReprocessor = asRegistrationWithAccreditation({
   organisationData: { id: 'org-123', name: 'Reprocessor Organisation' },
   registration: {
     id: 'reg-001',
@@ -38,9 +39,9 @@ const fixtureReprocessor = {
     accreditationId: 'acc-001'
   },
   accreditation: { id: 'acc-001', status: 'approved' }
-}
+})
 
-const fixtureExporter = {
+const fixtureExporter = asRegistrationWithAccreditation({
   organisationData: { id: 'org-456', name: 'Exporter Organisation' },
   registration: {
     id: 'reg-002',
@@ -50,11 +51,11 @@ const fixtureExporter = {
     accreditationId: 'acc-002'
   },
   accreditation: { id: 'acc-002', status: 'approved' }
-}
+})
 
-const mockWasteBalance = { availableAmount: 150.5 }
+const mockWasteBalance = asWasteBalance({ availableAmount: 150.5 })
 
-const mockPrns = [
+const mockPrns = asPackagingRecyclingNotes([
   {
     id: 'prn-001',
     prnNumber: null,
@@ -85,9 +86,9 @@ const mockPrns = [
     material: 'glass',
     status: 'awaiting_acceptance'
   }
-]
+])
 
-const mockPrnsWithCancellation = [
+const mockPrnsWithCancellation = asPackagingRecyclingNotes([
   ...mockPrns,
   {
     id: 'prn-cancel-001',
@@ -109,9 +110,9 @@ const mockPrnsWithCancellation = [
     material: 'plastic',
     status: 'awaiting_cancellation'
   }
-]
+])
 
-const mockPrnsWithCancelled = [
+const mockPrnsWithCancelled = asPackagingRecyclingNotes([
   ...mockPrns,
   {
     id: 'prn-cancelled-001',
@@ -133,7 +134,7 @@ const mockPrnsWithCancelled = [
     material: 'plastic',
     status: 'cancelled'
   }
-]
+])
 
 const reprocessorListUrl =
   '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes'
@@ -326,12 +327,12 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
             ...mockPrns[0],
-            issuedToOrganisation: {
+            issuedToOrganisation: asIssuedToOrganisation({
               id: 'producer-1',
               name: 'Legal Name Ltd',
               tradingName: 'Trading Name Ltd',
               registrationType: 'LARGE_PRODUCER'
-            }
+            })
           }
         ])
 
@@ -355,12 +356,12 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
           {
             ...mockPrns[0],
-            issuedToOrganisation: {
+            issuedToOrganisation: asIssuedToOrganisation({
               id: 'scheme-1',
               name: 'Scheme Legal Ltd',
               tradingName: 'Scheme Trading Name',
               registrationType: 'COMPLIANCE_SCHEME'
-            }
+            })
           }
         ])
 
@@ -558,21 +559,23 @@ describe('#listPrnsController', () => {
       it('should render tabs when only awaiting_cancellation PRNs exist', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-cancel-only',
-            prnNumber: 'ER2699099',
-            issuedToOrganisation: {
-              id: 'producer-x',
-              name: 'Cancel Only Corp'
-            },
-            createdAt: '2025-09-01T00:00:00.000Z',
-            issuedAt: '2025-09-02T00:00:00.000Z',
-            tonnage: 10,
-            material: 'glass',
-            status: 'awaiting_cancellation'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-cancel-only',
+              prnNumber: 'ER2699099',
+              issuedToOrganisation: {
+                id: 'producer-x',
+                name: 'Cancel Only Corp'
+              },
+              createdAt: '2025-09-01T00:00:00.000Z',
+              issuedAt: '2025-09-02T00:00:00.000Z',
+              tonnage: 10,
+              material: 'glass',
+              status: 'awaiting_cancellation'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -903,22 +906,24 @@ describe('#listPrnsController', () => {
       it('should render accepted PRNs in issued tab with green tag', async ({
         server
       }) => {
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          ...mockPrns,
-          {
-            id: 'prn-004',
-            prnNumber: 'ER2699999',
-            issuedToOrganisation: {
-              id: 'producer-4',
-              name: 'Accepted Corp'
-            },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            issuedAt: '2026-01-25T10:00:00.000Z',
-            tonnage: 40,
-            material: 'glass',
-            status: 'accepted'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            ...mockPrns,
+            {
+              id: 'prn-004',
+              prnNumber: 'ER2699999',
+              issuedToOrganisation: {
+                id: 'producer-4',
+                name: 'Accepted Corp'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              issuedAt: '2026-01-25T10:00:00.000Z',
+              tonnage: 40,
+              material: 'glass',
+              status: 'accepted'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -993,10 +998,12 @@ describe('#listPrnsController', () => {
       it('should return 404 with mismatched accreditation id', async ({
         server
       }) => {
-        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue({
-          ...fixtureReprocessor,
-          accreditation: { id: 'acc-other', status: 'approved' }
-        })
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          asRegistrationWithAccreditation({
+            ...fixtureReprocessor,
+            accreditation: { id: 'acc-other', status: 'approved' }
+          })
+        )
 
         const { statusCode } = await server.inject({
           method: 'GET',
@@ -1187,21 +1194,23 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-003',
-            prnNumber: 'ER2612345',
-            issuedToOrganisation: {
-              id: 'producer-3',
-              name: 'Green Compliance Scheme'
-            },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            issuedAt: '2026-01-22T10:00:00.000Z',
-            tonnage: 75,
-            material: 'glass',
-            status: 'awaiting_acceptance'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-003',
+              prnNumber: 'ER2612345',
+              issuedToOrganisation: {
+                id: 'producer-3',
+                name: 'Green Compliance Scheme'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              issuedAt: '2026-01-22T10:00:00.000Z',
+              tonnage: 75,
+              material: 'glass',
+              status: 'awaiting_acceptance'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1222,16 +1231,21 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-004',
-            issuedToOrganisation: { id: 'producer-4', name: 'Auth Only Corp' },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            tonnage: 30,
-            material: 'glass',
-            status: 'awaiting_authorisation'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-004',
+              issuedToOrganisation: {
+                id: 'producer-4',
+                name: 'Auth Only Corp'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              tonnage: 30,
+              material: 'glass',
+              status: 'awaiting_authorisation'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',
@@ -1252,16 +1266,21 @@ describe('#listPrnsController', () => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           fixtureReprocessor
         )
-        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue([
-          {
-            id: 'prn-draft',
-            issuedToOrganisation: { id: 'producer-draft', name: 'Draft Corp' },
-            createdAt: '2026-01-20T00:00:00.000Z',
-            tonnage: 10,
-            material: 'glass',
-            status: 'draft'
-          }
-        ])
+        vi.mocked(fetchPackagingRecyclingNotes).mockResolvedValue(
+          asPackagingRecyclingNotes([
+            {
+              id: 'prn-draft',
+              issuedToOrganisation: {
+                id: 'producer-draft',
+                name: 'Draft Corp'
+              },
+              createdAt: '2026-01-20T00:00:00.000Z',
+              tonnage: 10,
+              material: 'glass',
+              status: 'draft'
+            }
+          ])
+        )
 
         const { result } = await server.inject({
           method: 'GET',

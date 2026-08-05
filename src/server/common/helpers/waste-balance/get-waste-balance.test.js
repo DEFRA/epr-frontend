@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getWasteBalance } from './get-waste-balance.js'
 import { fetchWasteBalances } from './fetch-waste-balances.js'
+import { createMockLogger } from '#server/common/test-helpers/logger-helper.js'
 
 vi.mock(import('./fetch-waste-balances.js'))
 
-const mockLogger = {
-  error: vi.fn()
-}
+const mockLogger = createMockLogger()
 
 const organisationId = 'org-123'
 const accreditationId = 'acc-456'

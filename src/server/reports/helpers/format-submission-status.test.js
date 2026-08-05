@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  getActionLabel,
   getStatusLabel,
   getStatusTagClass
 } from './format-submission-status.js'
@@ -21,9 +20,14 @@ describe('#format-submission-status', () => {
     it.each(
       /** @type {Array<{ status: SubmissionStatusValue, expected: string }>} */ ([
         { status: 'due', expected: 'govuk-tag--orange' },
+        { status: 'overdue', expected: 'govuk-tag--red' },
         { status: 'in_progress', expected: 'govuk-tag--yellow' },
         { status: 'ready_to_submit', expected: '' },
-        { status: 'submitted', expected: 'govuk-tag--green' }
+        { status: 'submitted', expected: 'govuk-tag--green' },
+        {
+          status: 'requires_resubmission',
+          expected: 'govuk-tag--purple epr-tag--no-max-width'
+        }
       ])
     )(
       'returns "$expected" modifier class for "$status" status',
@@ -36,6 +40,10 @@ describe('#format-submission-status', () => {
   describe('#getStatusLabel', () => {
     it('returns localised label for "due" status', () => {
       expect(getStatusLabel('due', localise)).toBe('reports:statusDue')
+    })
+
+    it('returns localised label for "overdue" status', () => {
+      expect(getStatusLabel('overdue', localise)).toBe('reports:statusOverdue')
     })
 
     it('returns localised label for "in_progress" status', () => {
@@ -55,22 +63,10 @@ describe('#format-submission-status', () => {
         'reports:statusSubmitted'
       )
     })
-  })
 
-  describe('#getActionLabel', () => {
-    it('returns "Continue" action for "in_progress" status', () => {
-      expect(getActionLabel('in_progress', localise)).toBe(
-        'reports:actionContinue'
-      )
-    })
-
-    it('returns "Create draft" action for "due" status', () => {
-      expect(getActionLabel('due', localise)).toBe('reports:actionCreateDraft')
-    })
-
-    it('returns "Review and submit" action for "ready_to_submit" status', () => {
-      expect(getActionLabel('ready_to_submit', localise)).toBe(
-        'reports:actionReviewAndSubmit'
+    it('returns localised label for "requires_resubmission" status', () => {
+      expect(getStatusLabel('requires_resubmission', localise)).toBe(
+        'reports:statusRequiresResubmission'
       )
     })
   })

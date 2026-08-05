@@ -1,11 +1,13 @@
 import { fetchWasteBalances } from './fetch-waste-balances.js'
 
+/** @import { TypedLogger } from '#server/common/helpers/logging/logger.js' */
+
 /**
  * Fetches waste balance for a single accreditation with error handling
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
  * @param {string} idToken - JWT ID token for authorization
- * @param {import('#server/common/helpers/logging/logger.js').TypedLogger} logger - Logger instance for error reporting
+ * @param {TypedLogger} logger - Logger instance for error reporting
  * @returns {Promise<WasteBalance|null>} Balance data or null if unavailable
  */
 async function getWasteBalance(
