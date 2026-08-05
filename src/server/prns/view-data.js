@@ -12,7 +12,6 @@ import { getDisplayMaterial } from '#server/common/helpers/materials/get-display
  * @param {{wasteProcessingType: string, material: Material, nation?: string, glassRecyclingProcess?: GlassRecyclingProcess[]}} options.registration
  * @param {Array<{value: string, text: string}>} options.recipients
  * @param {{availableAmount: number} | null} [options.wasteBalance]
- * @returns {object}
  */
 export function buildCreatePrnViewData(
   request,

@@ -2,6 +2,10 @@ import { fetchReportBackend } from './fetch-report-backend.js'
 import { ReportStaleError, staleReasons } from './stale.js'
 
 /**
+ * @import { CadenceValue } from '../constants.js'
+ */
+
+/**
  * Fetches aggregated report detail for a specific period from the backend.
  * Throws {@link ReportStaleError} if the report is stale so callers get
  * a consistent error type regardless of whether staleness came from a GET 200
@@ -26,6 +30,7 @@ export async function fetchReportDetail(
 ) {
   const path = `/v1/organisations/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/reports/${year}/${encodeURIComponent(cadence)}/${period}/submissions/${submissionNumber}`
 
+  /** @type {ReportDetailResponse} */
   const report = await fetchReportBackend(path, {
     method: 'GET',
     headers: { Authorization: `Bearer ${idToken}` }
@@ -79,7 +84,7 @@ export async function fetchReportDetail(
 /**
  * @typedef {{
  *   operatorCategory: string,
- *   cadence: string,
+ *   cadence: CadenceValue,
  *   year: number,
  *   period: number,
  *   startDate: string,
@@ -111,27 +116,39 @@ export async function fetchReportDetail(
  *     totalRevenue: number | null,
  *     averagePricePerTonne: number | null
  *   },
- *   recyclingActivity: {
- *     suppliers: SupplierEntry[],
- *     totalTonnageReceived: number,
- *     tonnageRecycled: number | null,
- *     tonnageNotRecycled: number | null
- *   },
- *   exportActivity?: {
- *     overseasSites: OverseasSiteEntry[],
- *     unapprovedOverseasSites: UnapprovedOverseasSiteEntry[],
- *     totalTonnageExported: number,
- *     tonnageReceivedNotExported: number|null,
- *     totalTonnageRefusedOrStopped: number | null,
- *     tonnageRefusedAtDestination: number | null,
- *     tonnageStoppedDuringExport: number | null,
- *     tonnageRepatriated: number | null
- *   },
- *   wasteSent: {
- *     tonnageSentToReprocessor: number,
- *     tonnageSentToExporter: number,
- *     tonnageSentToAnotherSite: number,
- *     finalDestinations: FinalDestinationEntry[]
- *   }
+ *   recyclingActivity: RecyclingActivity,
+ *   exportActivity?: ExportActivity,
+ *   wasteSent: WasteSent
  * }} ReportDetailResponse
+ */
+
+/**
+ * @typedef {{
+ *   suppliers: SupplierEntry[],
+ *   totalTonnageReceived: number,
+ *   tonnageRecycled: number | null,
+ *   tonnageNotRecycled: number | null
+ * }} RecyclingActivity
+ */
+
+/**
+ * @typedef {{
+ *   overseasSites: OverseasSiteEntry[],
+ *   unapprovedOverseasSites: UnapprovedOverseasSiteEntry[],
+ *   totalTonnageExported: number,
+ *   tonnageReceivedNotExported: number | null,
+ *   totalTonnageRefusedOrStopped: number | null,
+ *   tonnageRefusedAtDestination: number | null,
+ *   tonnageStoppedDuringExport: number | null,
+ *   tonnageRepatriated: number | null
+ * }} ExportActivity
+ */
+
+/**
+ * @typedef {{
+ *   tonnageSentToReprocessor: number,
+ *   tonnageSentToExporter: number,
+ *   tonnageSentToAnotherSite: number,
+ *   finalDestinations: FinalDestinationEntry[]
+ * }} WasteSent
  */

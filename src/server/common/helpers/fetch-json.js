@@ -8,9 +8,10 @@ import { getTracingHeaderName } from './request-tracing.js'
 /**
  * Fetch from a given url, returning parsed JSON if the response has a JSON
  * content-type, or undefined for responses with no body (e.g. 204 No Content).
+ * @template [T=unknown]
  * @param {string} url
  * @param {RequestInit} [options] - Fetch API options (method, headers, body, etc.)
- * @returns {Promise<object | undefined>} The parsed JSON response, or undefined
+ * @returns {Promise<T>} The parsed JSON response, or undefined
  */
 export const fetchJson = async (url, options) => {
   const completeOptions = {
@@ -40,9 +41,9 @@ export const fetchJson = async (url, options) => {
     }
 
     if (response.headers.get('content-type')?.includes('application/json')) {
-      return /** @type {object} */ (await response.json())
+      return /** @type {T} */ (await response.json())
     }
-    return undefined
+    return /** @type {T} */ (undefined)
   } catch (error) {
     if (error.isBoom) {
       throw error

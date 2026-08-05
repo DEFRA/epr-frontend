@@ -2,6 +2,7 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
+import { asAccreditation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
 import { getByRole, getByText, queryByRole } from '@testing-library/dom'
@@ -11,6 +12,7 @@ import { beforeEach, describe, expect, vi } from 'vitest'
 /** @import { ReportDetailResponse } from '#server/reports/helpers/fetch-report-detail.js' */
 
 /**
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Organisation, User } from '#domain/organisations/model.js'
  * @import { Registration, RegistrationApproved } from '#domain/organisations/registration.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -73,7 +75,7 @@ const baseOrganisation = {
 }
 
 /**
- * @param {{ organisationData?: Partial<Organisation>, registration?: Partial<Registration>, accreditation?: object }} [overrides]
+ * @param {{ organisationData?: Partial<Organisation>, registration?: Partial<Registration>, accreditation?: Accreditation }} [overrides]
  * @returns {RegistrationWithAccreditation}
  */
 function buildRegistration(overrides = {}) {
@@ -199,7 +201,7 @@ const accreditedReprocessorRegistration = buildRegistration({
     ...reprocessorRegistration.registration,
     accreditationId: 'acc-001'
   },
-  accreditation: { id: 'acc-001' }
+  accreditation: asAccreditation({ id: 'acc-001' })
 })
 
 /** @type {ReportDetailResponse} */
@@ -280,7 +282,7 @@ const accreditedExporterRegistration = buildRegistration({
     ...exporterRegistration.registration,
     accreditationId: 'acc-002'
   },
-  accreditation: { id: 'acc-002' }
+  accreditation: asAccreditation({ id: 'acc-002' })
 })
 
 /** @type {ReportDetailResponse} */
@@ -1266,11 +1268,11 @@ describe('#submitController', () => {
         {
           label: 'reprocessor monthly',
           registration: reprocessorRegistration,
-          report: {
+          report: /** @type {ReportDetailResponse} */ ({
             ...reprocessorReportDetail,
             cadence: 'monthly',
             period: 3
-          },
+          }),
           cadence: 'monthly',
           period: 3
         }

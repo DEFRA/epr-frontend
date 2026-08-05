@@ -214,12 +214,12 @@ function buildActionPrnDetailRows({
   recipientDisplayName,
   organisationData
 }) {
-  const rows = [
+  const rows = /** @type {SummaryListRow[]} */ ([
     {
       key: { text: localise('prns:details:numberLabel', { noteType }) },
       value: { text: prn.prnNumber || '' }
     }
-  ]
+  ])
 
   if (isNotDraft) {
     rows.push(buildStatusRow(localise, statusConfig))
@@ -242,6 +242,7 @@ function buildActionPrnDetailRows({
  * @import { TFunction } from 'i18next'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
+ * @import { SummaryListRow } from './helpers/build-prn-detail-rows.js'
  * @import { PackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
  * @import { PrnDetailParams } from './helpers/session-types.js'
  */

@@ -1,4 +1,5 @@
 /**
+ * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
  */
@@ -18,6 +19,14 @@
  * @returns {Organisation}
  */
 export const asOrganisation = (data) => /** @type {Organisation} */ (data)
+
+/**
+ * Casts a partial mock object to the `Accreditation` domain type, so fixtures
+ * can supply only the fields the code path under test reads.
+ * @param {unknown} data
+ * @returns {Accreditation}
+ */
+export const asAccreditation = (data) => /** @type {Accreditation} */ (data)
 
 /**
  * Casts a partial mock object to the `RegistrationWithAccreditation` shape that

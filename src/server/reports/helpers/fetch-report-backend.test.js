@@ -64,9 +64,11 @@ describe('fetchReportBackend', () => {
     }
     mockFetchJson.mockRejectedValue(boom)
 
-    const err = await fetchReportBackend('/v1/reports/1', {
-      method: 'GET'
-    }).catch((e) => e)
+    const err = /** @type {ReportStaleError} */ (
+      await fetchReportBackend('/v1/reports/1', {
+        method: 'GET'
+      }).catch((e) => e)
+    )
 
     expect(err.reasons).toStrictEqual([
       STALE_REASON.SUMMARY_LOG_CHANGED,
@@ -83,9 +85,11 @@ describe('fetchReportBackend', () => {
     }
     mockFetchJson.mockRejectedValue(boom)
 
-    const err = await fetchReportBackend('/v1/reports/1', {
-      method: 'PATCH'
-    }).catch((e) => e)
+    const err = /** @type {ReportStaleError} */ (
+      await fetchReportBackend('/v1/reports/1', {
+        method: 'PATCH'
+      }).catch((e) => e)
+    )
 
     expect(err).toBeInstanceOf(ReportStaleError)
     expect(err.reasons).toStrictEqual([STALE_REASON.SUMMARY_LOG_CHANGED])
