@@ -1,3 +1,4 @@
+import { config } from '#config/config.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
@@ -17,7 +18,7 @@ import {
 } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
-import { beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
 
 import fixtureExportingOnly from '../../../fixtures/organisation/fixture-exporting-only.json' with { type: 'json' }
 import fixtureData from '../../../fixtures/organisation/organisationData.json' with { type: 'json' }
@@ -830,6 +831,189 @@ describe('#accreditationDashboardController', () => {
       expect(
         within(reportsCard).queryByText('Reporting is not yet available.')
       ).toBeNull()
+    })
+  })
+
+  describe('reapply for accreditation link', () => {
+    const url =
+      '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-plastic-approved'
+    const placeholder =
+      'Registration and accreditation management is not yet available.'
+    // Phase 1 only shows the link for a current-year accreditation, and the
+    // controller reads the real clock, so derive the fixture year from now
+    // rather than hard-coding it (else these tests rot at the year boundary).
+    const currentYear = new Date().getFullYear()
+    const nextYear = currentYear + 1
+    const originalWindowStartMonth = config.get(
+      'reapplyAccreditation.windowStartMonth'
+    )
+    const originalWindowEndMonth = config.get(
+      'reapplyAccreditation.windowEndMonth'
+    )
+    const originalBaseUrl = config.get('reapplyAccreditation.baseUrl')
+
+    beforeEach(() => {
+      config.set('reapplyAccreditation.windowStartMonth', 1)
+      config.set('reapplyAccreditation.windowEndMonth', 12)
+      config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
+    })
+
+    afterEach(() => {
+      config.set(
+        'reapplyAccreditation.windowStartMonth',
+        originalWindowStartMonth
+      )
+      config.set('reapplyAccreditation.windowEndMonth', originalWindowEndMonth)
+      config.set('reapplyAccreditation.baseUrl', originalBaseUrl)
+    })
+
+    /** @param {object} overrides */
+    const mockRegistration = (overrides) =>
+      asRegistrationWithAccreditation({
+        organisationData: {},
+        registration: {
+          id: 'reg-001-plastic-approved',
+          wasteProcessingType: 'reprocessor',
+          material: 'plastic',
+          status: 'approved',
+          site: { address: { line1: 'Test Site' } }
+        },
+        accreditation: undefined,
+        ...overrides
+      })
+
+    const expectedHref = `https://ws2.example/operator-accreditation/6507f1f77bcf86cd79943901/reg-001-plastic-approved/plastic/${nextYear}`
+
+    it.for([
+      {
+        name: 'an approved accreditation with a validFrom',
+        status: 'approved'
+      },
+      {
+        name: 'a suspended accreditation with a validFrom',
+        status: 'suspended'
+      },
+      {
+        name: 'a cancelled accreditation with a validFrom',
+        status: 'cancelled'
+      }
+    ])(
+      'shows the "apply for {year}" link (year = validFrom + 1) in place of the placeholder for $name',
+      async ({ status }, { server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          mockRegistration({
+            rawAccreditation: { status, validFrom: `${currentYear}-01-01` }
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        const link = getByRole(body, 'link', {
+          name: `apply for ${nextYear} accreditation`
+        })
+        expect(link.getAttribute('href')).toBe(expectedHref)
+
+        // The link replaces the placeholder, which is no longer rendered.
+        expect(queryByText(body, placeholder)).toBeNull()
+      }
+    )
+
+    it.for([
+      { name: 'there is no accreditation (registered-only)', overrides: {} },
+      {
+        name: 'the accreditation was created but never approved',
+        overrides: { rawAccreditation: { status: 'created' } }
+      },
+      {
+        name: 'the accreditation was rejected',
+        overrides: { rawAccreditation: { status: 'rejected' } }
+      },
+      {
+        name: 'the accreditation is cancelled with no validFrom',
+        overrides: { rawAccreditation: { status: 'cancelled' } }
+      },
+      {
+        name: 'the registration is not approved',
+        overrides: {
+          registration: {
+            id: 'reg-001-plastic-approved',
+            wasteProcessingType: 'reprocessor',
+            material: 'plastic',
+            status: 'created',
+            site: { address: { line1: 'Test Site' } }
+          },
+          rawAccreditation: {
+            status: 'approved',
+            validFrom: `${currentYear}-01-01`
+          }
+        }
+      }
+    ])(
+      'hides the link but keeps the placeholder when $name',
+      async ({ overrides }, { server }) => {
+        vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+          mockRegistration(overrides)
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url,
+          auth: mockAuth
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+
+        expect(
+          queryByRole(body, 'link', {
+            name: `apply for ${nextYear} accreditation`
+          })
+        ).toBeNull()
+        expect(queryByText(body, placeholder)).not.toBeNull()
+      }
+    )
+
+    it('hides the link but keeps the placeholder when today is outside the window', async ({
+      server
+    }) => {
+      // A single-month window on a month other than the current one guarantees
+      // today falls outside it, independent of the real date the test runs on.
+      const thisMonth = new Date().getMonth() + 1
+      const otherMonth = thisMonth === 1 ? 12 : 1
+      config.set('reapplyAccreditation.windowStartMonth', otherMonth)
+      config.set('reapplyAccreditation.windowEndMonth', otherMonth)
+
+      vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
+        mockRegistration({
+          rawAccreditation: {
+            status: 'approved',
+            validFrom: `${currentYear}-01-01`
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url,
+        auth: mockAuth
+      })
+
+      const dom = new JSDOM(result)
+      const { body } = dom.window.document
+
+      expect(
+        queryByRole(body, 'link', {
+          name: `apply for ${nextYear} accreditation`
+        })
+      ).toBeNull()
+      expect(queryByText(body, placeholder)).not.toBeNull()
     })
   })
 

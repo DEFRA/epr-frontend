@@ -36,6 +36,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     expect(result).toStrictEqual({
       registration,
       accreditation,
+      rawAccreditation: accreditation,
       organisationData: { id: 'org-123' }
     })
   })
@@ -106,6 +107,7 @@ describe('#getRequiredRegistrationWithAccreditation', () => {
     expect(result).toStrictEqual({
       registration,
       accreditation,
+      rawAccreditation: accreditation,
       organisationData: { id: 'org-123' }
     })
   })

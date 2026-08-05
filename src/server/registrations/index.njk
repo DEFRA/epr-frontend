@@ -153,9 +153,15 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
+                {% if reapplyAccreditation %}
+                <p class="govuk-body">
+                  {{ localise("registrations:reapplyAccreditationLead") }} <a href="{{ reapplyAccreditation.href }}" class="govuk-link">{{ localise("registrations:reapplyAccreditationLink", { year: reapplyAccreditation.year }) }}</a>.
+                </p>
+                {% else %}
                 <p class="govuk-body">
                   {{ localise("registrations:registrationNotAvailablePart1") }}
                 </p>
+                {% endif %}
                 <p class="govuk-body">
                   {{ localise("registrations:registrationNotAvailablePart2") }}
                   <a href="{{ contactRegulatorUrl }}"

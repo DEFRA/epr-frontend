@@ -1,3 +1,5 @@
+import { isAccreditationActive } from '#server/common/helpers/organisations/accreditation-helpers.js'
+
 /**
  * @import { Organisation } from '#domain/organisations/model.js'
  * @import { RegistrationWithAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -42,7 +44,9 @@ export const asGetRequiredRegistrationResult = (data) =>
 /**
  * Extracts a registration and its linked accreditation from an organisation
  * fixture, returning the full `RegistrationWithAccreditation` shape that
- * `fetchRegistrationAndAccreditation` resolves.
+ * `fetchRegistrationAndAccreditation` resolves. It mirrors that split: the
+ * linked record is returned unfiltered as `rawAccreditation`, and `accreditation`
+ * is the same record filtered to live statuses only (`isAccreditationActive`).
  * @param {unknown} fixture
  * @param {string} registrationId
  * @returns {RegistrationWithAccreditation}
@@ -58,9 +62,16 @@ export const findRegistrationAndAccreditation = (fixture, registrationId) => {
     throw new Error(`fixture has no registration '${registrationId}'`)
   }
 
-  const accreditation = organisationData.accreditations.find(
+  const rawAccreditation = organisationData.accreditations.find(
     ({ id }) => id === registration.accreditationId
   )
 
-  return { organisationData, registration, accreditation }
+  return {
+    organisationData,
+    registration,
+    rawAccreditation,
+    accreditation: isAccreditationActive(rawAccreditation)
+      ? rawAccreditation
+      : undefined
+  }
 }

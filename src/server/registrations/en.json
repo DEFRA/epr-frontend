@@ -11,6 +11,8 @@
     "manage": "Manage {{noteTypePlural}}"
   },
   "pageTitle": "{{ siteName }}: {{ material }}",
+  "reapplyAccreditationLead": "You can now",
+  "reapplyAccreditationLink": "apply for {{ year }} accreditation",
   "registration": "Registration",
   "registrationAndAccreditation": "Registration and accreditation",
   "registrationAndAccreditationDescription": "View and manage your applications.",

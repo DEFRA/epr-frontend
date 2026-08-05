@@ -363,10 +363,91 @@ export const config = convict({
       default: false,
       env: 'FEATURE_FLAG_REGULATOR_ACCESS'
     }
+  },
+  reapplyAccreditation: {
+    windowStartMonth: {
+      doc: 'Recurring annual start month (inclusive, 1-12) of the reapply-for-accreditation window',
+      format: 'nat',
+      default: 9,
+      env: 'REAPPLY_ACCREDITATION_WINDOW_START_MONTH'
+    },
+    windowEndMonth: {
+      doc: 'Recurring annual end month (inclusive, 1-12) of the reapply-for-accreditation window',
+      format: 'nat',
+      default: 12,
+      env: 'REAPPLY_ACCREDITATION_WINDOW_END_MONTH'
+    },
+    baseUrl: {
+      doc: 'WS2 register/enrol frontend base URL the reapply link points at',
+      format: assertValidReapplyBaseUrl,
+      default: '',
+      env: 'REAPPLY_ACCREDITATION_BASE_URL'
+    }
   }
 })
 
 config.validate({ allowed: 'strict' })
+
+/**
+ * Fail fast on a misconfigured reapply window. The feature has no flag and is
+ * gated entirely on this config, so a silent bad value is a silent kill switch.
+ * Modelling the bounds as months (rather than MM-DD strings) makes an invalid
+ * date unrepresentable; this guard covers the two cases the shape still allows:
+ * a month outside 1-12, and a window whose start month is after its end month.
+ * Both throw at startup instead of silently misbehaving.
+ * @param {{ windowStartMonth: number; windowEndMonth: number }} window
+ */
+export const assertValidReapplyWindow = ({
+  windowStartMonth,
+  windowEndMonth
+}) => {
+  for (const [key, value] of Object.entries({
+    windowStartMonth,
+    windowEndMonth
+  })) {
+    if (value < 1 || value > 12) {
+      throw new Error(
+        `reapplyAccreditation.${key} must be a month between 1 and 12, got "${value}"`
+      )
+    }
+  }
+
+  if (windowStartMonth > windowEndMonth) {
+    throw new Error(
+      `reapplyAccreditation.windowStartMonth (${windowStartMonth}) must not be after windowEndMonth (${windowEndMonth})`
+    )
+  }
+}
+
+/**
+ * Convict format for `reapplyAccreditation.baseUrl`. Empty means the feature is
+ * off (no WS2 host wired up yet); any other value must be a valid http(s) URL so
+ * a malformed host fails at startup rather than rendering a broken link at
+ * request time. Declared as a function so it is hoisted for the schema above.
+ * @param {string} value
+ */
+export function assertValidReapplyBaseUrl(value) {
+  if (value === '') {
+    return
+  }
+
+  let url
+  try {
+    url = new URL(value)
+  } catch {
+    throw new Error(
+      `reapplyAccreditation.baseUrl must be empty or a valid URL, got "${value}"`
+    )
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(
+      `reapplyAccreditation.baseUrl must be an http(s) URL, got "${value}"`
+    )
+  }
+}
+
+assertValidReapplyWindow(config.get('reapplyAccreditation'))
 
 export const isProductionEnvironment = () =>
   config.get('cdpEnvironment') === 'prod'
