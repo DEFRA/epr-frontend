@@ -22,16 +22,15 @@ const ACCREDITED_STATUSES = new Set([
 ])
 
 /**
- * @typedef {{
- *   isVisible: boolean;
- *   link: { href: string; year: number } | null;
- * }} ReapplyAccreditation
+ * @typedef {{ href: string; year: number }} ReapplyLink
  */
 
 /**
- * Compute the "Reapply for accreditation" link visibility and target. The link
- * copy is localised in the template from the returned `year`, so this helper
- * stays free of presentation concerns.
+ * Compute the "Reapply for accreditation" link, or `null` when the operator is
+ * not eligible. Returning the link (or nothing) rather than a separate
+ * visibility flag keeps the two in step by construction. The link copy is
+ * localised in the template from the returned `year`, so this helper stays free
+ * of presentation concerns.
  * @param {{
  *   now: Date;
  *   window: { windowStartMonth: number; windowEndMonth: number };
@@ -40,7 +39,7 @@ const ACCREDITED_STATUSES = new Set([
  *   registration: Registration;
  *   accreditation: Accreditation | undefined;
  * }} params
- * @returns {ReapplyAccreditation}
+ * @returns {ReapplyLink | null}
  */
 export const buildReapplyAccreditation = ({
   now,
@@ -64,7 +63,7 @@ export const buildReapplyAccreditation = ({
     // a business eligibility rule.
     !accreditation.validFrom
   ) {
-    return { isVisible: false, link: null }
+    return null
   }
 
   // Phase 1 only renews a CURRENT-YEAR accreditation (PAE-1791 AC 5/6). A
@@ -73,7 +72,7 @@ export const buildReapplyAccreditation = ({
   // Not-accredited-this-year is deferred to Phase 2 / PAE-1801.
   const accreditationYear = getYear(parseISO(accreditation.validFrom))
   if (accreditationYear !== getYear(now)) {
-    return { isVisible: false, link: null }
+    return null
   }
 
   const year = accreditationYear + 1
@@ -83,5 +82,5 @@ export const buildReapplyAccreditation = ({
   // renewal, so nothing is lost. All material values are safe URL slugs.
   const href = `${baseUrl}/operator-accreditation/${organisationId}/${registration.id}/${registration.material}/${year}`
 
-  return { isVisible: true, link: { href, year } }
+  return { href, year }
 }

@@ -38,11 +38,8 @@ describe('#buildReapplyAccreditation', () => {
     const result = buildReapplyAccreditation(baseParams)
 
     expect(result).toStrictEqual({
-      isVisible: true,
-      link: {
-        href: 'https://ws2.example/operator-accreditation/org1/reg1/plastic/2027',
-        year: 2027
-      }
+      href: 'https://ws2.example/operator-accreditation/org1/reg1/plastic/2027',
+      year: 2027
     })
   })
 
@@ -55,7 +52,7 @@ describe('#buildReapplyAccreditation', () => {
       })
     })
 
-    expect(result).toStrictEqual({ isVisible: false, link: null })
+    expect(result).toBeNull()
   })
 
   test('derives the link year from the current accreditation year + 1', () => {
@@ -68,7 +65,7 @@ describe('#buildReapplyAccreditation', () => {
       })
     })
 
-    expect(result.link?.href).toBe(
+    expect(result?.href).toBe(
       'https://ws2.example/operator-accreditation/org1/reg1/plastic/2028'
     )
   })
@@ -83,7 +80,7 @@ describe('#buildReapplyAccreditation', () => {
       })
     })
 
-    expect(result.link?.href).toBe(
+    expect(result?.href).toBe(
       'https://ws2.example/operator-accreditation/org1/reg1/glass/2027'
     )
   })
@@ -97,7 +94,7 @@ describe('#buildReapplyAccreditation', () => {
       })
     })
 
-    expect(result.isVisible).toBe(true)
+    expect(result).not.toBeNull()
   })
 
   test('is visible for a cancelled accreditation', () => {
@@ -109,13 +106,13 @@ describe('#buildReapplyAccreditation', () => {
       })
     })
 
-    expect(result.isVisible).toBe(true)
+    expect(result).not.toBeNull()
   })
 
   test('is not visible when the base URL is not configured', () => {
     const result = buildReapplyAccreditation({ ...baseParams, baseUrl: '' })
 
-    expect(result).toStrictEqual({ isVisible: false, link: null })
+    expect(result).toBeNull()
   })
 
   test('is not visible when outside the window', () => {
@@ -124,7 +121,7 @@ describe('#buildReapplyAccreditation', () => {
       now: new Date('2026-08-31T12:00:00')
     })
 
-    expect(result).toStrictEqual({ isVisible: false, link: null })
+    expect(result).toBeNull()
   })
 
   test('is not visible when the registration is not approved', () => {
@@ -137,7 +134,7 @@ describe('#buildReapplyAccreditation', () => {
       })
     })
 
-    expect(result.isVisible).toBe(false)
+    expect(result).toBeNull()
   })
 
   test('is not visible when there is no accreditation', () => {
@@ -146,7 +143,7 @@ describe('#buildReapplyAccreditation', () => {
       accreditation: undefined
     })
 
-    expect(result.isVisible).toBe(false)
+    expect(result).toBeNull()
   })
 
   test('is not visible for a created (never accredited) accreditation', () => {
@@ -155,7 +152,7 @@ describe('#buildReapplyAccreditation', () => {
       accreditation: asAccreditation({ status: 'created' })
     })
 
-    expect(result.isVisible).toBe(false)
+    expect(result).toBeNull()
   })
 
   test('is not visible when validFrom is missing (cannot derive the link year)', () => {
@@ -164,6 +161,6 @@ describe('#buildReapplyAccreditation', () => {
       accreditation: asAccreditation({ status: 'cancelled' })
     })
 
-    expect(result.isVisible).toBe(false)
+    expect(result).toBeNull()
   })
 })

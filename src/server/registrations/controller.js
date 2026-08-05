@@ -82,7 +82,7 @@ export const controller = {
  *   material: string;
  *   pageTitle: string;
  *   prns: { description: string; link: Link; manageLink: Link; title: string };
- *   reapplyAccreditation: ReapplyAccreditation;
+ *   reapplyAccreditation: ReapplyLink | null;
  *   registration: TaggedReference;
  *   reports: { link: Link };
  *   siteName: string | null;
@@ -271,6 +271,6 @@ function getWasteBalanceViewData(wasteBalance, noteTypePlural) {
  * @import { Accreditation } from '#domain/organisations/accreditation.js'
  * @import { Registration } from '#domain/organisations/registration.js'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
- * @import { ReapplyAccreditation } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
+ * @import { ReapplyLink } from '#server/common/helpers/reapply-accreditation/build-reapply-accreditation.js'
  * @import { WasteBalance } from '#server/common/helpers/waste-balance/types.js'
  */
