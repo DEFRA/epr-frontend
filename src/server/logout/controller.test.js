@@ -9,9 +9,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock(import('#server/auth/helpers/drop-user-session.js'))
 
-const appBaseUrl = 'http://localhost:3000'
-const authLogoutUrl = `${appBaseUrl}/logged-out`
-
 describe('#logoutController', () => {
   afterEach(() => {
     config.reset('appBaseUrl')
@@ -54,6 +51,10 @@ describe('#logoutController', () => {
     }
 
     test('should drop session and redirect to logout URL', async () => {
+      const appHost = 'localhost:3000'
+      const appBaseUrl = `http://${appHost}`
+      const authLogoutUrl = `${appBaseUrl}/auth/logout`
+
       config.set('appBaseUrl', appBaseUrl)
 
       const mockRequest = {
@@ -64,7 +65,7 @@ describe('#logoutController', () => {
         auth: {
           credentials: mockSession
         },
-        info: { host: 'localhost:3000' },
+        info: { host: appHost },
         headers: {},
         server: { info: { protocol: 'http' } }
       }

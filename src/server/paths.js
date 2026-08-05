@@ -3,6 +3,7 @@ export const paths = Object.freeze({
     defraId: Object.freeze({
       callback: '/auth/callback',
       login: '/login',
+      postLogoutRedirect: '/auth/logout',
       organisation: '/auth/organisation'
     })
   }),

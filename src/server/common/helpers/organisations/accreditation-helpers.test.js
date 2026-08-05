@@ -47,7 +47,7 @@ const CREATED = { ...BASE, status: 'created' }
 const REJECTED = { ...BASE, status: 'rejected' }
 
 /** @type {Accreditation} */
-const ARCHIVED = { ...BASE, status: 'archived' }
+const CANCELLED = { ...BASE, status: 'cancelled' }
 
 describe(isAccreditationActive, () => {
   it.each([
@@ -55,7 +55,7 @@ describe(isAccreditationActive, () => {
     { label: 'suspended', accreditation: SUSPENDED, expected: true },
     { label: 'created', accreditation: CREATED, expected: false },
     { label: 'rejected', accreditation: REJECTED, expected: false },
-    { label: 'archived', accreditation: ARCHIVED, expected: false }
+    { label: 'cancelled', accreditation: CANCELLED, expected: false }
   ])(
     'returns $expected for $label accreditation',
     ({ accreditation, expected }) => {
