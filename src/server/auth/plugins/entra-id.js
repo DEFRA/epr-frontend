@@ -6,6 +6,7 @@ import * as jose from 'jose'
 import { getTokenExpiresAt } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 import { getRedirectUrl } from '../helpers/get-redirect-url.js'
+import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
 import { SCOPES } from '../scopes.js'
 
 /**
@@ -83,14 +84,7 @@ const createEntraId = () => ({
         cookie: 'bell-entra-id',
         isSecure: config.get('session.cookie.secure'),
         location: (request) => {
-          if (request.info.referrer) {
-            const { hash, pathname, search } = new URL(request.info.referrer)
-
-            if (!pathname.startsWith('/auth/callback')) {
-              const referrer = `${pathname}${search}${hash}`
-              request.yar.flash('referrer', referrer)
-            }
-          }
+          recordSignInReferrer(request)
 
           return getRedirectUrl(
             asHapiRequest(request),

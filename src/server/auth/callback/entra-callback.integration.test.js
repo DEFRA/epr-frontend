@@ -29,7 +29,7 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
 }))
 
 const performSignInFlow = async (server, mswServer, tokenInfo) => {
-  const { accessToken, publicKey, referer } = tokenInfo
+  const { accessToken, publicKey, referer, callbackReferer } = tokenInfo
   const signInResponse = await server.inject({
     method: 'GET',
     url: '/regulators/login',
@@ -65,7 +65,8 @@ const performSignInFlow = async (server, mswServer, tokenInfo) => {
     method: 'GET',
     url: `/auth/callback/entra?state=${stateParam}&code=${code}&refresh=1`,
     headers: {
-      cookie: setCookieHeaders.join('; ')
+      cookie: setCookieHeaders.join('; '),
+      ...(callbackReferer ? { referer: callbackReferer } : {})
     }
   })
 }
@@ -166,6 +167,50 @@ describe('/auth/callback/entra - GET integration', async () => {
       const response = await performSignInFlow(server, msw, {
         ...regulatorToken,
         referer: 'http://localhost:3000/some/prior/page'
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/some/prior/page')
+    })
+  })
+
+  describe('on successful return from Entra ID - authorised regulator, arriving from another site', () => {
+    it('ignores the external referrer and lands on the regulators home page', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, {
+        ...regulatorToken,
+        referer: 'https://www.gov.uk/some/guidance/page'
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/home')
+    })
+  })
+
+  describe('on successful return from Entra ID - authorised regulator, arriving back from Entra ID', () => {
+    it('ignores the Entra ID referrer on the callback and lands on the regulators home page', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, {
+        ...regulatorToken,
+        callbackReferer: 'http://entra-id.auth/'
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers['location']).toBe('/regulators/home')
+    })
+
+    it('still prefers the page the regulator started from', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, {
+        ...regulatorToken,
+        referer: 'http://localhost:3000/some/prior/page',
+        callbackReferer: 'http://entra-id.auth/'
       })
 
       expect(response.statusCode).toBe(statusCodes.found)
