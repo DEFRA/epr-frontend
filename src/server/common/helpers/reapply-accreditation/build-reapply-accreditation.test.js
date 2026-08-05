@@ -70,6 +70,17 @@ describe('#buildReapplyAccreditation', () => {
     )
   })
 
+  test('normalises a trailing slash on the base URL (no double slash)', () => {
+    const result = buildReapplyAccreditation({
+      ...baseParams,
+      baseUrl: 'https://ws2.example/'
+    })
+
+    expect(result?.href).toBe(
+      'https://ws2.example/operator-accreditation/org1/reg1/plastic/2027'
+    )
+  })
+
   test('sends the material slug verbatim (bare glass, no sub-type)', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,

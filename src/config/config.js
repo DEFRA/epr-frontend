@@ -379,7 +379,7 @@ export const config = convict({
     },
     baseUrl: {
       doc: 'WS2 register/enrol frontend base URL the reapply link points at',
-      format: String,
+      format: assertValidReapplyBaseUrl,
       default: '',
       env: 'REAPPLY_ACCREDITATION_BASE_URL'
     }
@@ -415,6 +415,34 @@ export const assertValidReapplyWindow = ({
   if (windowStartMonth > windowEndMonth) {
     throw new Error(
       `reapplyAccreditation.windowStartMonth (${windowStartMonth}) must not be after windowEndMonth (${windowEndMonth})`
+    )
+  }
+}
+
+/**
+ * Convict format for `reapplyAccreditation.baseUrl`. Empty means the feature is
+ * off (no WS2 host wired up yet); any other value must be a valid http(s) URL so
+ * a malformed host fails at startup rather than rendering a broken link at
+ * request time. Declared as a function so it is hoisted for the schema above.
+ * @param {string} value
+ */
+export function assertValidReapplyBaseUrl(value) {
+  if (value === '') {
+    return
+  }
+
+  let url
+  try {
+    url = new URL(value)
+  } catch {
+    throw new Error(
+      `reapplyAccreditation.baseUrl must be empty or a valid URL, got "${value}"`
+    )
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(
+      `reapplyAccreditation.baseUrl must be an http(s) URL, got "${value}"`
     )
   }
 }

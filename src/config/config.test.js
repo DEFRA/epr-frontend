@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect } from 'vitest'
 import {
+  assertValidReapplyBaseUrl,
   assertValidReapplyWindow,
   config,
   isLocalEnvironment,
@@ -85,6 +86,30 @@ describe('#config', () => {
       expect(() =>
         assertValidReapplyWindow({ windowStartMonth: 12, windowEndMonth: 2 })
       ).toThrow(/must not be after/)
+    })
+  })
+
+  describe(assertValidReapplyBaseUrl, () => {
+    it('should accept an empty value (feature off)', () => {
+      expect(() => assertValidReapplyBaseUrl('')).not.toThrow()
+    })
+
+    it('should accept a valid https URL', () => {
+      expect(() =>
+        assertValidReapplyBaseUrl('https://ws2.example')
+      ).not.toThrow()
+    })
+
+    it('should throw for a value that is not a URL', () => {
+      expect(() => assertValidReapplyBaseUrl('not a url')).toThrow(
+        /must be empty or a valid URL/
+      )
+    })
+
+    it('should throw for a non-http(s) URL', () => {
+      expect(() => assertValidReapplyBaseUrl('ftp://ws2.example')).toThrow(
+        /must be an http\(s\) URL/
+      )
     })
   })
 })

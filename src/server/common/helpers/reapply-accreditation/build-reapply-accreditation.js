@@ -79,8 +79,12 @@ export const buildReapplyAccreditation = ({
   // `registration.material` is sent as the raw lowercase slug, verbatim. For
   // glass this is the bare `glass` value, not the remelt/other sub-type: WS2
   // resolves the sub-type from the registration id when it pre-populates the
-  // renewal, so nothing is lost. All material values are safe URL slugs.
-  const href = `${baseUrl}/operator-accreditation/${organisationId}/${registration.id}/${registration.material}/${year}`
+  // renewal, so nothing is lost. The segments are already safe (24-hex ids, a
+  // slug), but encode them defensively and build with `new URL` so a trailing
+  // slash on `baseUrl` cannot produce a double slash. `baseUrl` is validated as
+  // a URL at config load, so this never throws.
+  const path = `/operator-accreditation/${encodeURIComponent(organisationId)}/${encodeURIComponent(registration.id)}/${encodeURIComponent(registration.material)}/${year}`
+  const href = new URL(path, baseUrl).href
 
   return { href, year }
 }
