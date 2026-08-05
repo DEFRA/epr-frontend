@@ -150,10 +150,12 @@ function buildViewModel({
     `/organisations/${organisationId}/registrations/${registration.id}/summary-logs/upload`
   )
 
-  const { windowStart, windowEnd, baseUrl } = config.get('reapplyAccreditation')
+  const { windowStartMonth, windowEndMonth, baseUrl } = config.get(
+    'reapplyAccreditation'
+  )
   const reapplyAccreditation = buildReapplyAccreditation({
     now: new Date(),
-    window: { windowStart, windowEnd },
+    window: { windowStartMonth, windowEndMonth },
     baseUrl,
     organisationId,
     registration,

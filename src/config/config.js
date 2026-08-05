@@ -365,17 +365,17 @@ export const config = convict({
     }
   },
   reapplyAccreditation: {
-    windowStart: {
-      doc: 'Recurring annual start (inclusive, MM-DD) of the reapply-for-accreditation window',
-      format: String,
-      default: '09-01',
-      env: 'REAPPLY_ACCREDITATION_WINDOW_START'
+    windowStartMonth: {
+      doc: 'Recurring annual start month (inclusive, 1-12) of the reapply-for-accreditation window',
+      format: 'nat',
+      default: 9,
+      env: 'REAPPLY_ACCREDITATION_WINDOW_START_MONTH'
     },
-    windowEnd: {
-      doc: 'Recurring annual end (inclusive, MM-DD) of the reapply-for-accreditation window',
-      format: String,
-      default: '12-31',
-      env: 'REAPPLY_ACCREDITATION_WINDOW_END'
+    windowEndMonth: {
+      doc: 'Recurring annual end month (inclusive, 1-12) of the reapply-for-accreditation window',
+      format: 'nat',
+      default: 12,
+      env: 'REAPPLY_ACCREDITATION_WINDOW_END_MONTH'
     },
     baseUrl: {
       doc: 'WS2 register/enrol frontend base URL the reapply link points at',
@@ -388,28 +388,33 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
-const MONTH_DAY_PATTERN = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
-
 /**
  * Fail fast on a misconfigured reapply window. The feature has no flag and is
- * gated entirely on this config, so a silent bad value is a silent kill switch:
- * a malformed bound makes the window check return false everywhere (an Invalid
- * Date is never "within" the interval), and a wrapping window (start after end)
- * inverts the interval check. Both throw at startup instead.
- * @param {{ windowStart: string; windowEnd: string }} window
+ * gated entirely on this config, so a silent bad value is a silent kill switch.
+ * Modelling the bounds as months (rather than MM-DD strings) makes an invalid
+ * date unrepresentable; this guard covers the two cases the shape still allows:
+ * a month outside 1-12, and a window whose start month is after its end month.
+ * Both throw at startup instead of silently misbehaving.
+ * @param {{ windowStartMonth: number; windowEndMonth: number }} window
  */
-export const assertValidReapplyWindow = ({ windowStart, windowEnd }) => {
-  for (const [key, value] of Object.entries({ windowStart, windowEnd })) {
-    if (!MONTH_DAY_PATTERN.test(value)) {
+export const assertValidReapplyWindow = ({
+  windowStartMonth,
+  windowEndMonth
+}) => {
+  for (const [key, value] of Object.entries({
+    windowStartMonth,
+    windowEndMonth
+  })) {
+    if (value < 1 || value > 12) {
       throw new Error(
-        `reapplyAccreditation.${key} must be an MM-DD date, got "${value}"`
+        `reapplyAccreditation.${key} must be a month between 1 and 12, got "${value}"`
       )
     }
   }
 
-  if (windowStart > windowEnd) {
+  if (windowStartMonth > windowEndMonth) {
     throw new Error(
-      `reapplyAccreditation.windowStart ("${windowStart}") must not be after windowEnd ("${windowEnd}")`
+      `reapplyAccreditation.windowStartMonth (${windowStartMonth}) must not be after windowEndMonth (${windowEndMonth})`
     )
   }
 }

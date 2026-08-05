@@ -1,22 +1,21 @@
-import { endOfDay, isWithinInterval, parse, startOfDay } from 'date-fns'
-
 /**
  * Whether `now` falls within the recurring annual reapply window.
  *
- * The window is expressed as `MM-DD` bounds so it recurs every year; the
- * comparison anchors both bounds to `now`'s calendar year. Both ends are
- * inclusive (the whole of the start day through the whole of the end day).
- * Assumes a non-wrapping window (`windowStart <= windowEnd`); this is enforced
- * at config load by `assertValidReapplyWindow`, so an inverted interval never
- * reaches here.
+ * The window is expressed as inclusive calendar-month bounds so it recurs every
+ * year: the whole of the start month through the whole of the end month. The
+ * AC only ever uses month boundaries (Jan-Aug is months 1-8, Sept-Dec is months
+ * 9-12), so month granularity is exact rather than a simplification. Assumes a
+ * non-wrapping window (`windowStartMonth <= windowEndMonth`), enforced at config
+ * load by `assertValidReapplyWindow`.
  * @param {Date} now
- * @param {{ windowStart: string; windowEnd: string }} window - `MM-DD` bounds
+ * @param {{ windowStartMonth: number; windowEndMonth: number }} window
  * @returns {boolean}
  */
-export const isWithinReapplyWindow = (now, { windowStart, windowEnd }) => {
-  const year = now.getFullYear()
-  const start = startOfDay(parse(`${year}-${windowStart}`, 'yyyy-MM-dd', now))
-  const end = endOfDay(parse(`${year}-${windowEnd}`, 'yyyy-MM-dd', now))
+export const isWithinReapplyWindow = (
+  now,
+  { windowStartMonth, windowEndMonth }
+) => {
+  const month = now.getMonth() + 1
 
-  return isWithinInterval(now, { start, end })
+  return month >= windowStartMonth && month <= windowEndMonth
 }

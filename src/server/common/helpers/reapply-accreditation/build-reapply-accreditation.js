@@ -34,7 +34,7 @@ const ACCREDITED_STATUSES = new Set([
  * stays free of presentation concerns.
  * @param {{
  *   now: Date;
- *   window: { windowStart: string; windowEnd: string };
+ *   window: { windowStartMonth: number; windowEndMonth: number };
  *   baseUrl: string;
  *   organisationId: string;
  *   registration: Registration;

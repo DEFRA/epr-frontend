@@ -839,19 +839,26 @@ describe('#accreditationDashboardController', () => {
       '/organisations/6507f1f77bcf86cd79943901/registrations/reg-001-plastic-approved'
     const placeholder =
       'Registration and accreditation management is not yet available.'
-    const originalWindowStart = config.get('reapplyAccreditation.windowStart')
-    const originalWindowEnd = config.get('reapplyAccreditation.windowEnd')
+    const originalWindowStartMonth = config.get(
+      'reapplyAccreditation.windowStartMonth'
+    )
+    const originalWindowEndMonth = config.get(
+      'reapplyAccreditation.windowEndMonth'
+    )
     const originalBaseUrl = config.get('reapplyAccreditation.baseUrl')
 
     beforeEach(() => {
-      config.set('reapplyAccreditation.windowStart', '01-01')
-      config.set('reapplyAccreditation.windowEnd', '12-31')
+      config.set('reapplyAccreditation.windowStartMonth', 1)
+      config.set('reapplyAccreditation.windowEndMonth', 12)
       config.set('reapplyAccreditation.baseUrl', 'https://ws2.example')
     })
 
     afterEach(() => {
-      config.set('reapplyAccreditation.windowStart', originalWindowStart)
-      config.set('reapplyAccreditation.windowEnd', originalWindowEnd)
+      config.set(
+        'reapplyAccreditation.windowStartMonth',
+        originalWindowStartMonth
+      )
+      config.set('reapplyAccreditation.windowEndMonth', originalWindowEndMonth)
       config.set('reapplyAccreditation.baseUrl', originalBaseUrl)
     })
 
@@ -967,13 +974,12 @@ describe('#accreditationDashboardController', () => {
     it('hides the link but keeps the placeholder when today is outside the window', async ({
       server
     }) => {
-      // A window covering only tomorrow guarantees today falls outside it,
-      // independent of the real date the test runs on.
-      const tomorrow = new Date()
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      const monthDay = `${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
-      config.set('reapplyAccreditation.windowStart', monthDay)
-      config.set('reapplyAccreditation.windowEnd', monthDay)
+      // A single-month window on a month other than the current one guarantees
+      // today falls outside it, independent of the real date the test runs on.
+      const thisMonth = new Date().getMonth() + 1
+      const otherMonth = thisMonth === 1 ? 12 : 1
+      config.set('reapplyAccreditation.windowStartMonth', otherMonth)
+      config.set('reapplyAccreditation.windowEndMonth', otherMonth)
 
       vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
         mockRegistration({

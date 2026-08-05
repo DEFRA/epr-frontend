@@ -62,28 +62,28 @@ describe('#config', () => {
   describe(assertValidReapplyWindow, () => {
     it('should accept a valid non-wrapping window', () => {
       expect(() =>
-        assertValidReapplyWindow({ windowStart: '09-01', windowEnd: '12-31' })
+        assertValidReapplyWindow({ windowStartMonth: 9, windowEndMonth: 12 })
       ).not.toThrow()
     })
 
-    it.each(['13-01', '00-05', '01-32', '1-01', '2026-09-01', 'nonsense'])(
-      'should throw for a malformed windowStart "%s"',
-      (windowStart) => {
+    it.each([0, 13, -1])(
+      'should throw for an out-of-range windowStartMonth "%s"',
+      (windowStartMonth) => {
         expect(() =>
-          assertValidReapplyWindow({ windowStart, windowEnd: '12-31' })
-        ).toThrow(/MM-DD/)
+          assertValidReapplyWindow({ windowStartMonth, windowEndMonth: 12 })
+        ).toThrow(/windowStartMonth must be a month between 1 and 12/)
       }
     )
 
-    it('should throw for a malformed windowEnd', () => {
+    it('should throw for an out-of-range windowEndMonth', () => {
       expect(() =>
-        assertValidReapplyWindow({ windowStart: '09-01', windowEnd: 'bad' })
-      ).toThrow(/windowEnd/)
+        assertValidReapplyWindow({ windowStartMonth: 9, windowEndMonth: 13 })
+      ).toThrow(/windowEndMonth must be a month between 1 and 12/)
     })
 
-    it('should throw when the window wraps the year end', () => {
+    it('should throw when the start month is after the end month', () => {
       expect(() =>
-        assertValidReapplyWindow({ windowStart: '12-01', windowEnd: '02-28' })
+        assertValidReapplyWindow({ windowStartMonth: 12, windowEndMonth: 2 })
       ).toThrow(/must not be after/)
     })
   })
