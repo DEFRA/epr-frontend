@@ -246,6 +246,7 @@ describe('#defraId', () => {
       const mockRequest = {
         info: { host: 'localhost:3000' },
         headers: {},
+        query: {},
         server: { info: { protocol: 'http' } }
       }
 
@@ -267,6 +268,7 @@ describe('#defraId', () => {
           host: 'localhost:3000'
         },
         headers: {},
+        query: {},
         server: { info: { protocol: 'http' } },
         yar: {
           flash: vi.fn()
@@ -279,6 +281,31 @@ describe('#defraId', () => {
         'referrer',
         '/dashboard'
       )
+    })
+
+    it('should not store a referrer when returning from the identity provider', async () => {
+      await defraId.plugin.register(mockServer)
+
+      const strategyCall = mockServer.auth.strategy.mock.calls[0]
+      const config = strategyCall[2]
+      const locationFn = config.location
+
+      const mockRequest = {
+        info: {
+          referrer: 'http://defra-id.auth/',
+          host: 'localhost:3000'
+        },
+        headers: {},
+        query: { code: 'an-authorization-code' },
+        server: { info: { protocol: 'http' } },
+        yar: {
+          flash: vi.fn()
+        }
+      }
+
+      locationFn(mockRequest)
+
+      expect(mockRequest.yar.flash).not.toHaveBeenCalled()
     })
   })
 
