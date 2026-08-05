@@ -10,11 +10,9 @@ import { isWithinReapplyWindow } from '#server/common/helpers/reapply-accreditat
 
 /**
  * Accreditation statuses that count as "accredited this year" for the reapply
- * link. Unlike `isAccreditationActive` this includes `cancelled`: an
- * accreditation that was granted (so carries a `validFrom`) and later cancelled
- * is still a prior accreditation eligible for renewal. A `cancelled`
- * accreditation with no `validFrom` was never granted, so it is excluded by the
- * `validFrom` guard below.
+ * link (PAE-1791 AC 5/6). Unlike `isAccreditationActive` this includes
+ * `cancelled`: a cancelled accreditation is still a prior accreditation
+ * eligible for renewal.
  * @type {Set<string>}
  */
 const ACCREDITED_STATUSES = new Set([
@@ -60,6 +58,10 @@ export const buildReapplyAccreditation = ({
     registration.status !== REG_ACC_STATUS.APPROVED ||
     !accreditation ||
     !ACCREDITED_STATUSES.has(accreditation.status) ||
+    // `validFrom` is typed as optional on non-approved accreditation shapes, so
+    // guard the link-year derivation below: without it we cannot compute a year
+    // and must not render a `.../NaN` link. Defence against the loose type, not
+    // a business eligibility rule.
     !accreditation.validFrom
   ) {
     return { isVisible: false, link: null }

@@ -88,7 +88,7 @@ describe('#buildReapplyAccreditation', () => {
     expect(result.isVisible).toBe(true)
   })
 
-  test('is visible for a cancelled accreditation that has a validFrom', () => {
+  test('is visible for a cancelled accreditation', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       accreditation: asAccreditation({
@@ -146,7 +146,7 @@ describe('#buildReapplyAccreditation', () => {
     expect(result.isVisible).toBe(false)
   })
 
-  test('is not visible for a cancelled accreditation with no validFrom', () => {
+  test('is not visible when validFrom is missing (cannot derive the link year)', () => {
     const result = buildReapplyAccreditation({
       ...baseParams,
       accreditation: asAccreditation({ status: 'cancelled' })
