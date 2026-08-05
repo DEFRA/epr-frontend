@@ -160,8 +160,7 @@ function buildViewModel({
     // Deliberately the raw (unfiltered) accreditation, not the live-only
     // `accreditation` above: the reapply link must also show for a `cancelled`
     // accreditation, which the filtered view drops to undefined.
-    accreditation: rawAccreditation,
-    text: localise('registrations:reapplyAccreditation')
+    accreditation: rawAccreditation
   })
 
   /** @type {RegistrationViewModel} */

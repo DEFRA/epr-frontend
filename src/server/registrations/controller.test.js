@@ -12,7 +12,6 @@ import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
 import {
   getByRole,
-  getByText,
   queryByRole,
   queryByText,
   within
@@ -888,7 +887,7 @@ describe('#accreditationDashboardController', () => {
         status: 'cancelled'
       }
     ])(
-      'shows the link (year = validFrom + 1) above the unchanged placeholder for $name',
+      'shows the "apply for {year}" link (year = validFrom + 1) in place of the placeholder for $name',
       async ({ status }, { server }) => {
         vi.mocked(fetchRegistrationAndAccreditation).mockResolvedValue(
           mockRegistration({
@@ -906,17 +905,12 @@ describe('#accreditationDashboardController', () => {
         const { body } = dom.window.document
 
         const link = getByRole(body, 'link', {
-          name: 'Reapply for accreditation'
+          name: 'apply for 2027 accreditation'
         })
         expect(link.getAttribute('href')).toBe(expectedHref)
 
-        // The link is prepended above the (unchanged) placeholder, not below it.
-        const placeholderNode = getByText(body, placeholder)
-        const { DOCUMENT_POSITION_FOLLOWING } = dom.window.Node
-        expect(
-          link.compareDocumentPosition(placeholderNode) &
-            DOCUMENT_POSITION_FOLLOWING
-        ).toBe(DOCUMENT_POSITION_FOLLOWING)
+        // The link replaces the placeholder, which is no longer rendered.
+        expect(queryByText(body, placeholder)).toBeNull()
       }
     )
 
@@ -964,7 +958,7 @@ describe('#accreditationDashboardController', () => {
         const { body } = dom.window.document
 
         expect(
-          queryByRole(body, 'link', { name: 'Reapply for accreditation' })
+          queryByRole(body, 'link', { name: 'apply for 2027 accreditation' })
         ).toBeNull()
         expect(queryByText(body, placeholder)).not.toBeNull()
       }
@@ -997,7 +991,7 @@ describe('#accreditationDashboardController', () => {
       const { body } = dom.window.document
 
       expect(
-        queryByRole(body, 'link', { name: 'Reapply for accreditation' })
+        queryByRole(body, 'link', { name: 'apply for 2027 accreditation' })
       ).toBeNull()
       expect(queryByText(body, placeholder)).not.toBeNull()
     })

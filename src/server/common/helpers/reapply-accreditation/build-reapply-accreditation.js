@@ -24,12 +24,14 @@ const ACCREDITED_STATUSES = new Set([
 /**
  * @typedef {{
  *   isVisible: boolean;
- *   link: { href: string; text: string } | null;
+ *   link: { href: string; year: number } | null;
  * }} ReapplyAccreditation
  */
 
 /**
- * Compute the "Reapply for accreditation" link visibility and target.
+ * Compute the "Reapply for accreditation" link visibility and target. The link
+ * copy is localised in the template from the returned `year`, so this helper
+ * stays free of presentation concerns.
  * @param {{
  *   now: Date;
  *   window: { windowStart: string; windowEnd: string };
@@ -37,7 +39,6 @@ const ACCREDITED_STATUSES = new Set([
  *   organisationId: string;
  *   registration: Registration;
  *   accreditation: Accreditation | undefined;
- *   text: string;
  * }} params
  * @returns {ReapplyAccreditation}
  */
@@ -47,8 +48,7 @@ export const buildReapplyAccreditation = ({
   baseUrl,
   organisationId,
   registration,
-  accreditation,
-  text
+  accreditation
 }) => {
   if (
     // No base URL means WS2 is not wired up for this environment yet: hide the
@@ -74,5 +74,5 @@ export const buildReapplyAccreditation = ({
   // renewal, so nothing is lost. All material values are safe URL slugs.
   const href = `${baseUrl}/operator-accreditation/${organisationId}/${registration.id}/${registration.material}/${year}`
 
-  return { isVisible: true, link: { href, text } }
+  return { isVisible: true, link: { href, year } }
 }

@@ -30,8 +30,7 @@ const baseParams = {
   accreditation: asAccreditation({
     status: 'approved',
     validFrom: '2026-01-01'
-  }),
-  text: 'Reapply for accreditation'
+  })
 }
 
 describe('#buildReapplyAccreditation', () => {
@@ -42,7 +41,7 @@ describe('#buildReapplyAccreditation', () => {
       isVisible: true,
       link: {
         href: 'https://ws2.example/operator-accreditation/org1/reg1/plastic/2027',
-        text: 'Reapply for accreditation'
+        year: 2027
       }
     })
   })

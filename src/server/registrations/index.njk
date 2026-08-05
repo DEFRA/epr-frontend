@@ -155,12 +155,13 @@
               <div class="govuk-summary-card__content">
                 {% if reapplyAccreditation.isVisible %}
                 <p class="govuk-body">
-                  <a href="{{ reapplyAccreditation.link.href }}" class="govuk-link">{{ reapplyAccreditation.link.text }}</a>
+                  {{ localise("registrations:reapplyAccreditationLead") }} <a href="{{ reapplyAccreditation.link.href }}" class="govuk-link">{{ localise("registrations:reapplyAccreditationLink", { year: reapplyAccreditation.link.year }) }}</a>.
                 </p>
-                {% endif %}
+                {% else %}
                 <p class="govuk-body">
                   {{ localise("registrations:registrationNotAvailablePart1") }}
                 </p>
+                {% endif %}
                 <p class="govuk-body">
                   {{ localise("registrations:registrationNotAvailablePart2") }}
                   <a href="{{ contactRegulatorUrl }}"
