@@ -267,6 +267,33 @@ describe('#resubmissionExplainerController', () => {
       )
     })
 
+    it('should show the operator copy when the timestamps are equal', async ({
+      server
+    }) => {
+      vi.mocked(fetchReportDetail).mockResolvedValue(
+        buildResubmissionDetail({
+          operatorRequested,
+          closedPeriodRestated: {
+            uploadedAt: operatorRequested.requestedAt,
+            summaryLogId: 'summary-log-3'
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: explainerUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.querySelector('h1').textContent).toContain(
+        'Your February, 2026 report needs to be resubmitted'
+      )
+      expect(body.querySelector('h1').textContent).not.toContain('Why')
+    })
+
     it('should show the data-changed copy when the restatement is more recent', async ({
       server
     }) => {

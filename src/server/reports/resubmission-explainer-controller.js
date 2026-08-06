@@ -20,7 +20,9 @@ function isOperatorInitiated(resubmissionRequired) {
     return false
   }
   const restatedAt = resubmissionRequired?.closedPeriodRestated?.uploadedAt
-  return !restatedAt || requestedAt >= restatedAt
+  // The two timestamps come from separate backend write paths; parse to epoch
+  // so ordering doesn't depend on their ISO-8601 serialisation matching.
+  return !restatedAt || Date.parse(requestedAt) >= Date.parse(restatedAt)
 }
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
@@ -51,6 +53,9 @@ export const resubmissionExplainerController = {
 
     // The resubmission cause is recorded on the submitted report
     // (submissionNumber - 1); this page sits on the new draft's submission.
+    // That prior submission is always a submitted report, and the backend never
+    // flags submitted reports as stale, so fetchReportDetail cannot throw
+    // ReportStaleError here the way it can on an in-progress draft.
     const report = await fetchReportDetail(
       organisationId,
       registrationId,
@@ -60,7 +65,7 @@ export const resubmissionExplainerController = {
       submissionNumber - 1,
       request.auth.credentials.idToken
     )
-    const keyPrefix = isOperatorInitiated(report?.resubmissionRequired)
+    const keyPrefix = isOperatorInitiated(report.resubmissionRequired)
       ? 'reports:resubmissionExplainerOperator'
       : 'reports:resubmissionExplainer'
 
