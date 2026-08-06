@@ -78,14 +78,13 @@ export const resubmissionExplainerController = {
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`
     const periodPath = `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
+    // The page title and heading are the same string on this page.
+    const title = localise(`${keyPrefix}Heading`, { periodLabel })
+
     return h.view('reports/resubmission-explainer', {
-      pageTitle: localise(`${keyPrefix}PageTitle`, {
-        periodLabel
-      }),
+      pageTitle: title,
       caption: localise('reports:createDraftReportCaption'),
-      heading: localise(`${keyPrefix}Heading`, {
-        periodLabel
-      }),
+      heading: title,
       paragraph1: localise(`${keyPrefix}Para1`),
       paragraph2: localise(`${keyPrefix}Para2`),
       paragraph3: localise('reports:resubmissionExplainerPara3', {
