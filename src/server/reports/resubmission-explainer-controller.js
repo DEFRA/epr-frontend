@@ -1,8 +1,27 @@
 import Boom from '@hapi/boom'
 
+import { fetchReportDetail } from './helpers/fetch-report-detail.js'
 import { formatPeriodLabelWithComma } from './helpers/format-period-label.js'
 import { periodParamsSchema } from './helpers/period-params-schema.js'
 import { isResubmission } from './helpers/resubmission.js'
+
+/**
+ * Whether the explainer shows the operator-initiated copy. It does when the
+ * operator self-requested resubmission ("Use this report's summary log"). A
+ * summary-log restatement of the closed period — or no recorded cause — keeps
+ * the original data-changed copy. When both causes are recorded, the most
+ * recent one wins.
+ * @param {ReportDetailResponse['resubmissionRequired']} [resubmissionRequired]
+ * @returns {boolean}
+ */
+function isOperatorInitiated(resubmissionRequired) {
+  const requestedAt = resubmissionRequired?.operatorRequested?.requestedAt
+  if (!requestedAt) {
+    return false
+  }
+  const restatedAt = resubmissionRequired?.closedPeriodRestated?.uploadedAt
+  return !restatedAt || requestedAt >= restatedAt
+}
 
 /** @satisfies {Partial<HapiServerRoute<HapiRequest>>} */
 export const resubmissionExplainerController = {
@@ -15,7 +34,7 @@ export const resubmissionExplainerController = {
    * @param {HapiRequest & { params: PeriodParams }} request
    * @param {ResponseToolkit} h
    */
-  handler(request, h) {
+  async handler(request, h) {
     const {
       organisationId,
       registrationId,
@@ -30,6 +49,21 @@ export const resubmissionExplainerController = {
       throw Boom.notFound()
     }
 
+    // The resubmission cause is recorded on the submitted report
+    // (submissionNumber - 1); this page sits on the new draft's submission.
+    const report = await fetchReportDetail(
+      organisationId,
+      registrationId,
+      year,
+      cadence,
+      period,
+      submissionNumber - 1,
+      request.auth.credentials.idToken
+    )
+    const keyPrefix = isOperatorInitiated(report?.resubmissionRequired)
+      ? 'reports:resubmissionExplainerOperator'
+      : 'reports:resubmissionExplainer'
+
     const periodLabel = formatPeriodLabelWithComma(
       { year, period },
       cadence,
@@ -40,15 +74,15 @@ export const resubmissionExplainerController = {
     const periodPath = `${basePath}/${year}/${cadence}/${period}/submissions/${submissionNumber}`
 
     return h.view('reports/resubmission-explainer', {
-      pageTitle: localise('reports:resubmissionExplainerPageTitle', {
+      pageTitle: localise(`${keyPrefix}PageTitle`, {
         periodLabel
       }),
       caption: localise('reports:createDraftReportCaption'),
-      heading: localise('reports:resubmissionExplainerHeading', {
+      heading: localise(`${keyPrefix}Heading`, {
         periodLabel
       }),
-      paragraph1: localise('reports:resubmissionExplainerPara1'),
-      paragraph2: localise('reports:resubmissionExplainerPara2'),
+      paragraph1: localise(`${keyPrefix}Para1`),
+      paragraph2: localise(`${keyPrefix}Para2`),
       paragraph3: localise('reports:resubmissionExplainerPara3', {
         periodLabel
       }),
@@ -69,4 +103,5 @@ export const resubmissionExplainerController = {
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
  * @import { PeriodParams } from './helpers/period-params-schema.js'
+ * @import { ReportDetailResponse } from './helpers/fetch-report-detail.js'
  */
