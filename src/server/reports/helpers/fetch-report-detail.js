@@ -105,11 +105,8 @@ export async function fetchReportDetail(
  *   },
  *   canRequestResubmission?: boolean,
  *   resubmissionRequired?: {
- *     operatorRequested?: {
- *       requestedAt: string,
- *       requestedBy: { id: string, name: string, email: string, position: string }
- *     },
- *     closedPeriodRestated?: { uploadedAt: string, summaryLogId: string }
+ *     operatorRequested?: { requestedAt: string },
+ *     closedPeriodRestated?: { uploadedAt: string }
  *   },
  *   supportingInformation?: string,
  *   prn?: {

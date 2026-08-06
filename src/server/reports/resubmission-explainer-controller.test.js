@@ -18,18 +18,11 @@ const buildResubmissionDetail = (resubmissionRequired) =>
   /** @type {ReportDetailResponse} */ ({ resubmissionRequired })
 
 const operatorRequested = {
-  requestedAt: '2026-02-10T09:00:00.000Z',
-  requestedBy: {
-    id: 'user-1',
-    name: 'Ada Operator',
-    email: 'ada@example.com',
-    position: 'Manager'
-  }
+  requestedAt: '2026-02-10T09:00:00.000Z'
 }
 
 const closedPeriodRestated = {
-  uploadedAt: '2026-02-08T09:00:00.000Z',
-  summaryLogId: 'summary-log-1'
+  uploadedAt: '2026-02-08T09:00:00.000Z'
 }
 
 const organisationId = 'org-123'
@@ -274,8 +267,7 @@ describe('#resubmissionExplainerController', () => {
         buildResubmissionDetail({
           operatorRequested,
           closedPeriodRestated: {
-            uploadedAt: operatorRequested.requestedAt,
-            summaryLogId: 'summary-log-3'
+            uploadedAt: operatorRequested.requestedAt
           }
         })
       )
@@ -301,8 +293,7 @@ describe('#resubmissionExplainerController', () => {
         buildResubmissionDetail({
           operatorRequested,
           closedPeriodRestated: {
-            uploadedAt: '2026-02-12T09:00:00.000Z',
-            summaryLogId: 'summary-log-2'
+            uploadedAt: '2026-02-12T09:00:00.000Z'
           }
         })
       )
