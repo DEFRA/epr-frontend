@@ -42,7 +42,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest --coverage",
     "test:ui": "vitest --ui --coverage",
-    "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json --legacy-watch ./src",
+    "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json --legacy-watch --polling-interval 1000 ./src",
     "server:debug": "nodemon --inspect-brk=0.0.0.0 --ext js,json --legacy-watch ./src",
     "prestart": "npm run build",
     "start": "NODE_ENV=production node --use-strict .",

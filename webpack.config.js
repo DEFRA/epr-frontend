@@ -36,7 +36,8 @@ export default {
   devtool: NODE_ENV === 'production' ? 'source-map' : 'inline-source-map',
   watchOptions: {
     aggregateTimeout: 200,
-    poll: 1000
+    poll: 1000,
+    ignored: '**/node_modules/**'
   },
   output: {
     filename:
