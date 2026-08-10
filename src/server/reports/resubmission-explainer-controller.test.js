@@ -252,7 +252,13 @@ describe('#resubmissionExplainerController', () => {
     })
   })
 
-  describe('when both resubmission causes are recorded', () => {
+  // The backend does not currently produce a both-causes state where the
+  // operator request is the more recent: resubmissionEligibility returns
+  // ALREADY_REQUESTED once any resubmissionRequired key exists, and the pre-CPA
+  // backfill skips already-flagged reports, so operatorRequested is only ever
+  // written before closedPeriodRestated (stamped at flag time). These tests
+  // therefore pin the tie-break as defensive code, not a live business rule.
+  describe('when both resubmission causes are recorded (defensive tie-break)', () => {
     it('should show the operator copy when the operator request is more recent', async ({
       server
     }) => {
