@@ -53,19 +53,31 @@ export const resubmissionExplainerController = {
 
     // The resubmission cause is recorded on the submitted report
     // (submissionNumber - 1); this page sits on the new draft's submission.
-    // That prior submission is always a submitted report, and the backend never
-    // flags submitted reports as stale, so fetchReportDetail cannot throw
-    // ReportStaleError here the way it can on an in-progress draft.
-    const report = await fetchReportDetail(
-      organisationId,
-      registrationId,
-      year,
-      cadence,
-      period,
-      submissionNumber - 1,
-      request.auth.credentials.idToken
-    )
-    const keyPrefix = isOperatorInitiated(report.resubmissionRequired)
+    // N-1 is always an already-submitted, stored report, so the backend returns
+    // it without re-aggregating and never flags it stale. Even so, this lookup
+    // only chooses between two wordings: a backend failure must not error-page
+    // the operator off the flow, so fall back to the original data-changed copy
+    // when the cause cannot be determined.
+    let resubmissionRequired
+    try {
+      const report = await fetchReportDetail(
+        organisationId,
+        registrationId,
+        year,
+        cadence,
+        period,
+        submissionNumber - 1,
+        request.auth.credentials.idToken
+      )
+      resubmissionRequired = report.resubmissionRequired
+    } catch (error) {
+      request.logger.warn({
+        message:
+          'Failed to fetch prior report for resubmission explainer; showing data-changed copy',
+        err: error
+      })
+    }
+    const keyPrefix = isOperatorInitiated(resubmissionRequired)
       ? 'reports:resubmissionExplainerOperator'
       : 'reports:resubmissionExplainer'
 

@@ -334,6 +334,39 @@ describe('#resubmissionExplainerController', () => {
     })
   })
 
+  describe('when fetching the resubmission cause fails', () => {
+    beforeEach(() => {
+      vi.mocked(fetchReportDetail).mockRejectedValue(new Error('backend down'))
+    })
+
+    it('should still return 200', async ({ server }) => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: explainerUrl,
+        auth: mockAuth
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    it('should fall back to the data-changed copy', async ({ server }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: explainerUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.querySelector('h1').textContent).toContain(
+        'Why your February, 2026 report needs to be resubmitted'
+      )
+      expect(body.textContent).toContain(
+        'Your summary log data for this period has been changed since the report was submitted to your regulator.'
+      )
+    })
+  })
+
   describe('guards', () => {
     it('should return 404 for a first submission (not a resubmission)', async ({
       server
