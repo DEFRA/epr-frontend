@@ -198,6 +198,22 @@ describe('#resubmissionExplainerController', () => {
         'You started to make changes to the report, but did not resubmit the new draft.'
       )
     })
+
+    it('should render the operator-initiated second paragraph', async ({
+      server
+    }) => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: explainerUrl,
+        auth: mockAuth
+      })
+
+      const { body } = new JSDOM(result).window.document
+
+      expect(body.textContent).toContain(
+        'You need to create the new draft report and an approved person will need to submit it in order to remain compliant with the regulations.'
+      )
+    })
   })
 
   describe('when the resubmission was a closed-period restatement', () => {
