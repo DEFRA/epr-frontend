@@ -1,3 +1,4 @@
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -97,6 +98,7 @@ describe('#summaryLogUploadController', () => {
       method: 'GET',
       url,
       auth: buildMockAuth({
+        provider: OIDC_ENTRA_ID,
         idToken: 'test-id-token',
         scope: [SCOPES.regulator]
       })

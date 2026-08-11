@@ -174,7 +174,7 @@
           freeNote: freeNote,
           avg: localise("reports:avgPriceLabel")
         }, {
-          editable: true,
+          editable: not isReadOnly,
           revenueChangeUrl: prnRevenueChangeUrl,
           freeChangeUrl: freePrnsChangeUrl if isReprocessor else freePernChangeUrl,
           changeText: changeText
@@ -186,7 +186,7 @@
       {{ supportingInfoSummary({
         label: supportingInformationLabel,
         value: supportingInformation,
-        changeUrl: changeUrl,
+        changeUrl: changeUrl if not isReadOnly,
         changeText: changeText
       }) }}
 

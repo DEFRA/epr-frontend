@@ -145,7 +145,7 @@ describe('regulator write guard', () => {
       auth: regulatorAuth
     })
 
-    expect(statusCode).not.toBe(statusCodes.forbidden)
+    expect(statusCode).toBeLessThan(statusCodes.badRequest)
     expect(headers.location).not.toBe(paths.regulators.notAuthorised)
   })
 })

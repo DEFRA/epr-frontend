@@ -7,6 +7,7 @@ import {
   asWasteBalance
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
@@ -222,7 +223,10 @@ describe('#listPrnsController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url: reprocessorListUrl,
-          auth: buildMockAuth({ scope: [SCOPES.regulator] })
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            scope: [SCOPES.regulator]
+          })
         })
 
         const dom = new JSDOM(result)

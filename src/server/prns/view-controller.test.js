@@ -10,6 +10,7 @@ import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
@@ -1208,7 +1209,10 @@ describe('#viewController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url: viewUrl,
-          auth: buildMockAuth({ scope: [SCOPES.regulator] }),
+          auth: buildMockAuth({
+            provider: OIDC_ENTRA_ID,
+            scope: [SCOPES.regulator]
+          }),
           headers: { cookie: cookies }
         })
 
