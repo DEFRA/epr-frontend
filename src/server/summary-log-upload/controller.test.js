@@ -111,6 +111,29 @@ describe('#summaryLogUploadController', () => {
     expect($('main form')).toHaveLength(0)
   })
 
+  it('should not create a summary log for a regulator opening the page', async ({
+    server
+  }) => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url,
+      auth: buildMockAuth({
+        provider: OIDC_ENTRA_ID,
+        idToken: 'test-id-token',
+        scope: [SCOPES.regulator]
+      })
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
+
+    const $ = cheerio.load(
+      /** @type {string} */ (/** @type {unknown} */ (result))
+    )
+
+    expect($('main h1').text()).toContain('Summary log')
+  })
+
   it('should display error page without leaking backend error details', async ({
     server
   }) => {

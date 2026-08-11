@@ -1,3 +1,5 @@
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { submitSummaryLog } from '#server/common/helpers/summary-log/submit-summary-log.js'
@@ -1203,6 +1205,31 @@ describe('#summaryLogUploadProgressController', () => {
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
         idToken: 'test-id-token'
       })
+    })
+
+    it('status: rejected - should not initiate an upload for a regulator', async ({
+      server
+    }) => {
+      mockFetchSummaryLogStatus.mockResolvedValueOnce({
+        status: summaryLogStatuses.rejected,
+        validation: {
+          failures: [{ errorCode: 'FILE_VIRUS_DETECTED' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url,
+        auth: buildMockAuth({
+          provider: OIDC_ENTRA_ID,
+          idToken: 'test-id-token',
+          scope: [SCOPES.regulator]
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(initiateSummaryLogUpload).not.toHaveBeenCalled()
+      expect(result).not.toContain('<form')
     })
 
     it('status: rejected without validation - should show validation failures page with technical error', async ({
