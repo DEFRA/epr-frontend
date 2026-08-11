@@ -10,10 +10,16 @@ import {
   extractCookieValues,
   mergeCookies
 } from '#server/common/test-helpers/cookie-helper.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
-import { getByRole, getByText, queryByRole } from '@testing-library/dom'
+import {
+  getByRole,
+  getByText,
+  queryByRole,
+  queryByText
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { describe, expect, vi } from 'vitest'
 import { fetchPackagingRecyclingNote } from './helpers/fetch-packaging-recycling-note.js'
@@ -1177,6 +1183,40 @@ describe('#viewController', () => {
         expect(getByText(main, /Check before creating PRN/i)).toBeDefined()
         // Should show December waste as Yes
         expect(getByText(main, /^Yes$/)).toBeDefined()
+      })
+
+      it('hides the discard link from a regulator', async ({ server }) => {
+        const { cookie: csrfCookie, crumb } = await getCsrfToken(
+          server,
+          createUrl,
+          { auth: mockAuth }
+        )
+
+        const postResponse = await server.inject({
+          method: 'POST',
+          url: createUrl,
+          auth: mockAuth,
+          headers: { cookie: csrfCookie },
+          payload: { ...validPayload, crumb }
+        })
+
+        const postCookieValues = extractCookieValues(
+          postResponse.headers['set-cookie']
+        )
+        const cookies = mergeCookies(csrfCookie, ...postCookieValues)
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: viewUrl,
+          auth: buildMockAuth({ scope: [SCOPES.regulator] }),
+          headers: { cookie: cookies }
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByText(main, /Discard and start again/i)).toBeNull()
       })
 
       it('displays discard link below create button on check page', async ({

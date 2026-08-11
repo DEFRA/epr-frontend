@@ -76,7 +76,7 @@
       </form>
       {% endif %}
 
-      {% if discardLink %}
+      {% if discardLink and not isReadOnly %}
         <p class="govuk-body">
           <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
         </p>

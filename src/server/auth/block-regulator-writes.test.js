@@ -37,6 +37,24 @@ describe(blockRegulatorWrites, () => {
     expect(blockRegulatorWrites(request, h)).toBe(h.continue)
   })
 
+  it('allows a head request from a regulator session', () => {
+    const request = requestWithSession('head', [SCOPES.regulator])
+
+    expect(blockRegulatorWrites(request, h)).toBe(h.continue)
+  })
+
+  it('rejects an unrecognised method from a regulator session', () => {
+    const request = requestWithSession('patch', [SCOPES.regulator])
+
+    expect(() => blockRegulatorWrites(request, h)).toThrow(
+      expect.objectContaining({
+        output: expect.objectContaining({
+          statusCode: statusCodes.forbidden
+        })
+      })
+    )
+  })
+
   it('allows a write from an operator session', () => {
     const request = requestWithSession('post', undefined)
 

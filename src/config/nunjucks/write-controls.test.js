@@ -9,10 +9,15 @@ const templates = readdirSync(templateRoot, { recursive: true })
   .map(String)
   .filter((entry) => entry.endsWith('.njk'))
 
+const CONDITION_OR_FORM =
+  /{%-?\s*(if|elif|elseif|else|endif)\s*([^%]*?)\s*-?%}|<form/g
+
 /**
  * Lines holding a `<form>` that no enclosing `{% if not isReadOnly %}` covers.
- * Tracks `{% if %}` nesting only — a form inside a `{% for %}` still has to
- * sit inside the read-only condition to count as guarded.
+ * Reads each tag in the order it appears, so a condition opened after a form on
+ * the same line does not count, and an `{% else %}` or `{% elif %}` drops the
+ * condition its branch does not carry. Tracks `{% if %}` nesting only — a form
+ * inside a `{% for %}` still has to sit inside the read-only condition.
  * @param {string} source
  * @returns {number[]}
  */
@@ -23,27 +28,67 @@ const unguardedFormLines = (source) => {
   const unguarded = []
 
   source.split('\n').forEach((line, index) => {
-    const opened = /{%-?\s*if\s+([^%]*?)\s*-?%}/.exec(line)
-
-    if (opened) {
-      openConditions.push(opened[1] ?? '')
-    }
-
-    const guarded = openConditions.some((condition) =>
-      readOnlyCondition.test(condition)
-    )
-
-    if (line.includes('<form') && !guarded) {
-      unguarded.push(index + 1)
-    }
-
-    if (/{%-?\s*endif\s*-?%}/.test(line)) {
-      openConditions.pop()
+    for (const [, tag, condition] of line.matchAll(CONDITION_OR_FORM)) {
+      if (tag === 'if') {
+        openConditions.push(condition ?? '')
+      } else if (tag === 'endif') {
+        openConditions.pop()
+      } else if (tag) {
+        openConditions[openConditions.length - 1] = condition ?? ''
+      } else if (!openConditions.some((open) => readOnlyCondition.test(open))) {
+        unguarded.push(index + 1)
+      }
     }
   })
 
   return unguarded
 }
+
+describe('the scan itself', () => {
+  it('accepts a form inside the read-only condition', () => {
+    const source = ['{% if not isReadOnly %}', '<form>', '{% endif %}'].join(
+      '\n'
+    )
+
+    expect(unguardedFormLines(source)).toStrictEqual([])
+  })
+
+  it('rejects a form the condition does not cover', () => {
+    const source = ['{% if not isReadOnly %}', '{% endif %}', '<form>'].join(
+      '\n'
+    )
+
+    expect(unguardedFormLines(source)).toStrictEqual([3])
+  })
+
+  it('rejects a form in the else branch of the read-only condition', () => {
+    const source = [
+      '{% if not isReadOnly %}',
+      '{% else %}',
+      '<form>',
+      '{% endif %}'
+    ].join('\n')
+
+    expect(unguardedFormLines(source)).toStrictEqual([3])
+  })
+
+  it('rejects a form in an elif branch of the read-only condition', () => {
+    const source = [
+      '{% if not isReadOnly %}',
+      '{% elif somethingElse %}',
+      '<form>',
+      '{% endif %}'
+    ].join('\n')
+
+    expect(unguardedFormLines(source)).toStrictEqual([3])
+  })
+
+  it('rejects a form the condition guards only on a later line', () => {
+    const source = ['<form>{% if not isReadOnly %}', '{% endif %}'].join('\n')
+
+    expect(unguardedFormLines(source)).toStrictEqual([1])
+  })
+})
 
 describe('write controls in templates', () => {
   it('finds the templates to check', () => {
