@@ -3,20 +3,32 @@ import { statusCodes } from '#server/common/constants/status-codes.js'
 import { describe, expect, it } from 'vitest'
 import { blockRegulatorWrites } from './block-regulator-writes.js'
 
-const h = /** @type {any} */ ({ continue: Symbol('continue') })
+/**
+ * @import { Request, ResponseToolkit } from '@hapi/hapi'
+ */
+
+const h = /** @type {ResponseToolkit} */ (
+  /** @type {unknown} */ ({ continue: Symbol('continue') })
+)
 
 /**
  * @param {string} method
  * @param {string[] | undefined} scope
+ * @returns {Request}
  */
 const requestWithSession = (method, scope) =>
-  /** @type {any} */ ({ method, auth: { credentials: { scope } } })
+  /** @type {Request} */ (
+    /** @type {unknown} */ ({ method, auth: { credentials: { scope } } })
+  )
 
 /**
  * @param {string} method
+ * @returns {Request}
  */
 const requestWithoutSession = (method) =>
-  /** @type {any} */ ({ method, auth: { credentials: null } })
+  /** @type {Request} */ (
+    /** @type {unknown} */ ({ method, auth: { credentials: null } })
+  )
 
 describe(blockRegulatorWrites, () => {
   it('rejects a write from a regulator session as forbidden', () => {

@@ -29,10 +29,6 @@ describe('regulator write guard', () => {
     config.set('featureFlags.regulatorAccess', true)
   })
 
-  afterAll(() => {
-    config.set('featureFlags.regulatorAccess', false)
-  })
-
   beforeEach(({ msw }) => {
     msw.use(
       http.get(`${backendUrl}/v1/me/organisations`, () =>
@@ -51,6 +47,10 @@ describe('regulator write guard', () => {
         })
       )
     )
+  })
+
+  afterAll(() => {
+    config.set('featureFlags.regulatorAccess', false)
   })
 
   it('sends a regulator posting to an operator route to the not-authorised page', async ({
