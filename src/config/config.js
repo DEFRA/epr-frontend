@@ -249,6 +249,12 @@ export const config = convict({
     default: 'http://localhost:3000',
     env: 'APP_BASE_URL'
   },
+  allowedRedirectOrigins: {
+    doc: 'Comma-separated list of additional origins the service answers on, such as a vanity domain. A request arriving on one of these keeps that origin for its authentication redirects, instead of falling back to appBaseUrl.',
+    format: Array,
+    default: /** @type {string[]} */ ([]),
+    env: 'ALLOWED_REDIRECT_ORIGINS'
+  },
   eprBackendUrl: {
     doc: 'EPR Backend API base URL',
     format: String,
