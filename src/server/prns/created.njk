@@ -25,6 +25,7 @@
       {{ wasteBalanceMessage }}
     </p>
 
+    {% if not isReadOnly %}
     <p class="govuk-body">
       {{ issueText.prefix }} <a href="{{ issueText.link.href }}" class="govuk-link">{{ issueText.link.text }}</a>{{ issueText.suffix }}
     </p>
@@ -32,6 +33,7 @@
     <p class="govuk-body">
       <a href="{{ createAnotherLink.href }}" class="govuk-link">{{ createAnotherLink.text }}</a>
     </p>
+    {% endif %}
 
     <p class="govuk-body">
       <a href="{{ returnHomeLink.href }}" class="govuk-link">{{ returnHomeLink.text }}</a>

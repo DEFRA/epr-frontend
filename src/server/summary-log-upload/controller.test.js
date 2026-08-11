@@ -1,3 +1,4 @@
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
@@ -73,6 +74,39 @@ describe('#summaryLogUploadController', () => {
     expect(result).toContain(
       `href="/organisations/${organisationId}/registrations/${registrationId}"`
     )
+  })
+
+  it('should render the upload form for an operator', async ({ server }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url,
+      auth: mockAuth
+    })
+
+    const $ = cheerio.load(
+      /** @type {string} */ (/** @type {unknown} */ (result))
+    )
+
+    expect($('main form')).toHaveLength(1)
+  })
+
+  it('should not render the upload form for a regulator', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url,
+      auth: buildMockAuth({
+        idToken: 'test-id-token',
+        scope: [SCOPES.regulator]
+      })
+    })
+
+    const $ = cheerio.load(
+      /** @type {string} */ (/** @type {unknown} */ (result))
+    )
+
+    expect($('main form')).toHaveLength(0)
   })
 
   it('should display error page without leaking backend error details', async ({

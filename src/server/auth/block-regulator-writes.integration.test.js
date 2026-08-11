@@ -4,9 +4,11 @@ import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
+import { asHtml } from '#server/common/test-helpers/dom.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { paths } from '#server/paths.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
+import { load } from 'cheerio'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
@@ -101,6 +103,30 @@ describe('regulator write guard', () => {
 
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(`/organisations/${organisationId}`)
+  })
+
+  it('shows an operator the write controls on an operator page', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: linkingUrl,
+      auth: operatorAuth
+    })
+
+    expect(load(asHtml(result))('main form')).toHaveLength(1)
+  })
+
+  it('shows a regulator no write controls on the same page', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: linkingUrl,
+      auth: regulatorAuth
+    })
+
+    expect(load(asHtml(result))('main form')).toHaveLength(0)
   })
 
   it.for([

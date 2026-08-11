@@ -7,6 +7,7 @@ import {
   asWasteBalance
 } from '#server/common/test-helpers/prn-fixtures.js'
 import { fetchPackagingRecyclingNotes } from './helpers/fetch-packaging-recycling-notes.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
@@ -213,6 +214,22 @@ describe('#listPrnsController', () => {
         expect(createLink.getAttribute('href')).toBe(
           '/organisations/org-123/registrations/reg-001/accreditations/acc-001/packaging-recycling-notes/create'
         )
+      })
+
+      it('should not render create PRN link for a regulator', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: reprocessorListUrl,
+          auth: buildMockAuth({ scope: [SCOPES.regulator] })
+        })
+
+        const dom = new JSDOM(result)
+        const { body } = dom.window.document
+        const main = getByRole(body, 'main')
+
+        expect(queryByText(main, /Create a PRN/i)).toBeNull()
       })
 
       it('should render waste balance section', async ({ server }) => {

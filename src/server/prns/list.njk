@@ -18,11 +18,13 @@
 
       <div class="epr-heading-with-action">
         <h1 class="govuk-heading-xl govuk-!-margin-bottom-0">{{ heading }}</h1>
+        {% if not isReadOnly %}
         {{ govukButton({
           text: createLink.text,
           href: createLink.href,
           classes: "govuk-button--secondary"
         }) }}
+        {% endif %}
       </div>
 
       <div class="govuk-summary-card epr-waste-balance-banner govuk-!-margin-bottom-6">

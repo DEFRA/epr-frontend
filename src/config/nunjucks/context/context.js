@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { paths } from '#server/paths.js'
 import { readFileSync } from 'node:fs'
@@ -42,6 +43,18 @@ const getI18nContext = (request) => {
 }
 
 /**
+ * A regulator may see an operator's data but never change it, so templates
+ * leave out every write control for one. `blockRegulatorWrites` refuses the
+ * matching requests.
+ * @param {HapiRequest | null} request
+ */
+const isReadOnly = (request) => {
+  const scope = request?.auth?.credentials?.scope
+
+  return Boolean(scope?.includes(SCOPES.regulator))
+}
+
+/**
  * @param {HapiRequest | null} request
  */
 export function context(request) {
@@ -59,6 +72,7 @@ export function context(request) {
   return {
     assetPath: `${assetPath}/assets`,
     breadcrumbs: [],
+    isReadOnly: isReadOnly(request),
     navigation: buildNavigation(request),
     serviceUrl: paths.start,
     ...getI18nContext(request),
