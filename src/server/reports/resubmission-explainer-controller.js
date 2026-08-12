@@ -67,7 +67,7 @@ export const resubmissionExplainerController = {
         cadence,
         period,
         submissionNumber - 1,
-        request.auth.credentials.idToken
+        request.auth.credentials.backendToken
       )
       resubmissionRequired = report.resubmissionRequired
     } catch (error) {

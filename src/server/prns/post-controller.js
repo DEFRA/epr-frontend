@@ -167,13 +167,13 @@ async function handleInvalidRecipient(request, h, organisations) {
     getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      idToken: session.idToken,
+      backendToken: session.backendToken,
       accreditationId
     }),
     getWasteBalance(
       organisationId,
       accreditationId,
-      session.idToken,
+      session.backendToken,
       request.logger
     )
   ])
@@ -222,14 +222,14 @@ export const postController = {
             getRequiredRegistrationWithAccreditation({
               organisationId,
               registrationId,
-              idToken: session.idToken,
+              backendToken: session.backendToken,
               accreditationId
             }),
             request.wasteOrganisationsService.getOrganisations(),
             getWasteBalance(
               organisationId,
               accreditationId,
-              session.idToken,
+              session.backendToken,
               request.logger
             )
           ])
@@ -292,7 +292,7 @@ export const postController = {
           tonnage: Number.parseInt(tonnage, 10),
           notes: notes || undefined
         },
-        session.idToken
+        session.backendToken
       )
 
       // Store PRN data in session for check/confirm page

@@ -13,7 +13,7 @@ describe(createPrn, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const accreditationId = 'acc-789'
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const payload = {
     issuedToOrganisation: {
@@ -51,7 +51,7 @@ describe(createPrn, () => {
       registrationId,
       accreditationId,
       payload,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -59,7 +59,7 @@ describe(createPrn, () => {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${idToken}`
+          Authorization: `Bearer ${backendToken}`
         },
         body: JSON.stringify(payload)
       }
@@ -69,7 +69,7 @@ describe(createPrn, () => {
   it('encodes URL path parameters with special characters', async () => {
     vi.mocked(fetchJsonFromBackend).mockResolvedValue(mockResponse)
 
-    await createPrn('org/123', 'reg&456', 'acc#789', payload, idToken)
+    await createPrn('org/123', 'reg&456', 'acc#789', payload, backendToken)
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
       '/v1/organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789/packaging-recycling-notes',
@@ -85,7 +85,7 @@ describe(createPrn, () => {
       registrationId,
       accreditationId,
       payload,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -101,7 +101,7 @@ describe(createPrn, () => {
         registrationId,
         accreditationId,
         payload,
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Network error')
   })

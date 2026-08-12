@@ -246,9 +246,13 @@ export const listController = {
         fetchRegistrationAndAccreditation(
           organisationId,
           registrationId,
-          session.idToken
+          session.backendToken
         ),
-        fetchReportingPeriods(organisationId, registrationId, session.idToken)
+        fetchReportingPeriods(
+          organisationId,
+          registrationId,
+          session.backendToken
+        )
       ])
 
     const material = getDisplayMaterial(registration)

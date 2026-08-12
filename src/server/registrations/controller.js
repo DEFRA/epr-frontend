@@ -26,14 +26,14 @@ export const controller = {
       await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       )
 
     const wasteBalance = registration.accreditationId
       ? await getWasteBalance(
           organisationId,
           registration.accreditationId,
-          session.idToken,
+          session.backendToken,
           request.logger
         )
       : null

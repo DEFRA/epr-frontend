@@ -9,7 +9,7 @@ import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
  * Builds a `session`-strategy auth object for `server.inject`, with credentials
  * that satisfy the app's `AuthCredentials` augmentation (see
  * `src/server/types/hapi.d.ts` -> `UserSession`). Pass overrides to vary
- * individual credential fields (e.g. `idToken`).
+ * individual credential fields (e.g. `backendToken`).
  * @param {Partial<UserSession>} [overrides]
  * @returns {{ strategy: string, credentials: UserSession }}
  */

@@ -33,7 +33,7 @@ const mockOrganisationData = /** @type {Organisation} */ (
   })
 )
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 describe('#summaryLogUploadController', () => {
   const organisationId = '123'
@@ -121,7 +121,7 @@ describe('#summaryLogUploadController', () => {
       registrationId: '456',
       redirectUrl:
         '/organisations/123/registrations/456/summary-logs/{summaryLogId}',
-      idToken: 'test-id-token'
+      backendToken: 'test-id-token'
     })
   })
 

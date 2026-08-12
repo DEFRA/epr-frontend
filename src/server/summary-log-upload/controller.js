@@ -17,7 +17,7 @@ export const summaryLogUploadController = {
 
     const organisationData = await fetchOrganisationById(
       organisationId,
-      session.idToken
+      session.backendToken
     )
 
     const registration = organisationData.registrations?.find(
@@ -49,7 +49,7 @@ export const summaryLogUploadController = {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: session.idToken
+        backendToken: session.backendToken
       })
 
       const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`

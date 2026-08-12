@@ -43,7 +43,7 @@ describe(fetchSummaryLogStatus, () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { backendToken: 'test-id-token' }
     )
 
     expect(capturedRequest).toBeDefined()
@@ -98,7 +98,7 @@ describe(fetchSummaryLogStatus, () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { backendToken: 'test-id-token' }
     )
 
     expect(
@@ -123,7 +123,7 @@ describe(fetchSummaryLogStatus, () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { backendToken: 'test-id-token' }
     )
 
     expect(result).not.toHaveProperty('unknownField')
@@ -151,7 +151,7 @@ describe(fetchSummaryLogStatus, () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { backendToken: 'test-id-token' }
     )
 
     expect(warnSpy).toHaveBeenCalledTimes(1)
@@ -172,7 +172,7 @@ describe(fetchSummaryLogStatus, () => {
 
     await expect(
       fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,
@@ -196,7 +196,7 @@ describe(fetchSummaryLogStatus, () => {
 
     await expect(
       fetchSummaryLogStatus(organisationId, registrationId, summaryLogId, {
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,

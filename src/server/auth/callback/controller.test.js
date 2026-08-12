@@ -76,6 +76,7 @@ describe('#authCallbackController', () => {
             profile: mockProfile,
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             urls: {
               token: 'http://test.auth/token',
@@ -120,6 +121,7 @@ describe('#authCallbackController', () => {
         {
           profile: mockProfile,
           idToken: 'mock-id-token',
+          backendToken: 'mock-backend-token',
           expiresAt: expect.any(String),
           refreshToken: 'mock-refresh-token',
           urls: {
@@ -168,6 +170,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -339,6 +342,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -430,6 +434,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -469,7 +474,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
 
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
@@ -511,6 +516,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -721,6 +727,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -766,7 +773,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
         expect.any(Object)
@@ -818,6 +825,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -896,6 +904,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -962,6 +971,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {

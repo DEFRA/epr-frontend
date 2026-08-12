@@ -27,7 +27,7 @@ const mockCredentials = {
     id: 'user-123',
     email: 'test@example.com'
   },
-  idToken: 'mock-id-token'
+  backendToken: 'mock-backend-token'
 }
 
 const mockAuth = /** @type {ServerInjectOptions['auth']} */ (
@@ -182,7 +182,7 @@ describe('#postCreatePrnController', () => {
             tonnage: 100,
             notes: 'Test notes'
           },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
 
@@ -220,7 +220,7 @@ describe('#postCreatePrnController', () => {
           expect.objectContaining({
             notes: undefined
           }),
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
 

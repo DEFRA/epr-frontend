@@ -336,7 +336,7 @@ describe('#organisationController', () => {
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(organisationId, 'test-id-token')
+      ).toHaveBeenCalledWith(organisationId, 'test-backend-token')
     })
 
     it('should pass JWT token to backend call', async ({ server }) => {
@@ -352,7 +352,7 @@ describe('#organisationController', () => {
 
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith(expect.any(String), 'test-id-token')
+      ).toHaveBeenCalledWith(expect.any(String), 'test-backend-token')
     })
 
     describe('registered-only', () => {
@@ -1063,7 +1063,7 @@ describe('#organisationController', () => {
       // Just verify the request succeeded (logging happens internally)
       expect(
         fetchOrganisationModule.fetchOrganisationById
-      ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', 'test-id-token')
+      ).toHaveBeenCalledWith('6507f1f77bcf86cd79943901', 'test-backend-token')
     })
 
     it('should handle different status color mappings correctly', async ({

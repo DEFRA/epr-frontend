@@ -66,13 +66,13 @@ const defraIdCallbackController = {
         }
       })
 
-      const organisations = await fetchUserOrganisations(session.idToken)
+      const organisations = await fetchUserOrganisations(session.backendToken)
 
       if (!organisations.linked) {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
-      await addUserToOrganisation(organisations.linked.id, session.idToken)
+      await addUserToOrganisation(organisations.linked.id, session.backendToken)
 
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id

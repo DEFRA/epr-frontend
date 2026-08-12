@@ -366,6 +366,20 @@ describe('#defraId', () => {
       })
     })
 
+    it('should present the id token to the backend, not the access token', async () => {
+      mockVerifyToken.mockResolvedValue({
+        sub: 'user-123',
+        email: 'john.doe@example.com',
+        exp: 1735689600
+      })
+
+      const mockCredentials = { token: 'mock-access-token' }
+
+      await profileFn(mockCredentials, { id_token: 'mock-id-token' })
+
+      expect(mockCredentials.backendToken).toBe('mock-id-token')
+    })
+
     it('should set all credential fields from OIDC response', async () => {
       const mockPayload = {
         sub: 'user-456',

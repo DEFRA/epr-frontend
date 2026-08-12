@@ -1909,7 +1909,7 @@ describe('#checkController', () => {
             submissionNumber: 1
           },
           { status: 'ready_to_submit', version: 1 },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })

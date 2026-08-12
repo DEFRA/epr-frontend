@@ -52,7 +52,7 @@ export const deletePostController = {
       accreditationId,
       prnId,
       prn,
-      idToken
+      backendToken
     } = await fetchPrnForUpdate(request)
     const redirectBasePath = buildPrnBasePath(request.params)
 
@@ -67,7 +67,7 @@ export const deletePostController = {
         accreditationId,
         prnId,
         { status: 'deleted' },
-        idToken
+        backendToken
       )
 
       return h.redirect(redirectBasePath)

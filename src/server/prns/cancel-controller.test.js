@@ -267,7 +267,7 @@ describe('#cancelController', () => {
           accreditationId,
           prnId,
           { status: 'cancelled' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 

@@ -1386,7 +1386,7 @@ describe('#submitController', () => {
             version: 1,
             submissionDeclaredBy: 'Test User'
           },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
 
@@ -1724,7 +1724,7 @@ describe('#submitController', () => {
             version: 1,
             submissionDeclaredBy: 'Test User'
           },
-          'mock-id-token'
+          'mock-backend-token'
         )
         expect(statusCode).toBe(statusCodes.found)
         expect(headers.location).toBe(resubmittedUrl)

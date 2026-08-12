@@ -6,14 +6,14 @@ import { fetchJsonFromBackend } from '#server/common/helpers/fetch-json-from-bac
  * @param {string} options.organisationId
  * @param {string} options.registrationId
  * @param {string} options.redirectUrl
- * @param {string} options.idToken
+ * @param {string} options.backendToken
  * @returns {Promise<{summaryLogId: string, uploadId: string, uploadUrl: string, statusUrl: string}>}
  */
 async function initiateSummaryLogUpload({
   organisationId,
   registrationId,
   redirectUrl,
-  idToken
+  backendToken
 }) {
   const path = `/v1/organisations/${organisationId}/registrations/${registrationId}/summary-logs`
 
@@ -21,7 +21,7 @@ async function initiateSummaryLogUpload({
     method: 'POST',
     body: JSON.stringify({ redirectUrl }),
     headers: {
-      Authorization: `Bearer ${idToken}`
+      Authorization: `Bearer ${backendToken}`
     }
   })
 }

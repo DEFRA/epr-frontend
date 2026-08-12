@@ -33,15 +33,18 @@ import { fetchOrganisationById } from '#server/common/helpers/organisations/fetc
  * Fetches organisation data and extracts the registration and its linked accreditation
  * @param {string} organisationId - The organisation ID
  * @param {string} registrationId - The registration ID to find
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @returns {Promise<RegistrationWithAccreditation>} Organisation data with registration and accreditation
  */
 async function fetchRegistrationAndAccreditation(
   organisationId,
   registrationId,
-  idToken
+  backendToken
 ) {
-  const organisationData = await fetchOrganisationById(organisationId, idToken)
+  const organisationData = await fetchOrganisationById(
+    organisationId,
+    backendToken
+  )
 
   const registration = organisationData.registrations.find(
     ({ id }) => id === registrationId

@@ -98,7 +98,7 @@ const mockFetchWasteBalances = vi.mocked(fetchWasteBalances, {
   deep: true
 })
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 const enablesClientSidePolling = () =>
   expect.stringContaining('meta http-equiv="refresh"')
@@ -135,7 +135,7 @@ describe('#summaryLogUploadProgressController', () => {
       organisationId,
       registrationId,
       summaryLogId,
-      { idToken: 'test-id-token' }
+      { backendToken: 'test-id-token' }
     )
     expect(result).toStrictEqual(expect.stringContaining('Summary log |'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -1201,7 +1201,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     })
 
@@ -1317,7 +1317,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     })
 
@@ -2148,7 +2148,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     })
 
@@ -2187,7 +2187,7 @@ describe('#summaryLogUploadProgressController', () => {
         organisationId,
         registrationId,
         redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     })
 

@@ -1116,7 +1116,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'awaiting_acceptance' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
     })
@@ -1573,7 +1573,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'awaiting_authorisation' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
@@ -1728,7 +1728,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
 
         expect(server.loggerMocks.warn).toHaveBeenCalledWith({
@@ -1785,7 +1785,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'awaiting_authorisation' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 
@@ -1829,7 +1829,7 @@ describe('#viewController', () => {
           accreditationId,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
     })

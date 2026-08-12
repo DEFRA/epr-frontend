@@ -7,7 +7,7 @@ import { addUserToOrganisation } from './add-user-to-organisation.js'
 
 describe('#addUserToOrganisation', () => {
   const backendUrl = config.get('eprBackendUrl')
-  const mockIdToken = 'mock-id-token-12345'
+  const mockBackendToken = 'mock-backend-token-12345'
   const organisationId = 'org-123'
   const userEndpoint = `${backendUrl}/v1/organisations/${organisationId}/user`
 
@@ -16,7 +16,7 @@ describe('#addUserToOrganisation', () => {
       bearerAuthHandler(
         'put',
         userEndpoint,
-        mockIdToken,
+        mockBackendToken,
         () => new HttpResponse(null, { status: 200 })
       )
     )
@@ -24,7 +24,7 @@ describe('#addUserToOrganisation', () => {
 
   it('should add user to organisation successfully with valid token', async () => {
     await expect(
-      addUserToOrganisation(organisationId, mockIdToken)
+      addUserToOrganisation(organisationId, mockBackendToken)
     ).resolves.not.toThrow()
   })
 
@@ -47,7 +47,7 @@ describe('#addUserToOrganisation', () => {
     )
 
     await expect(
-      addUserToOrganisation(organisationId, mockIdToken)
+      addUserToOrganisation(organisationId, mockBackendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {
@@ -60,7 +60,7 @@ describe('#addUserToOrganisation', () => {
     msw.use(http.put(userEndpoint, () => HttpResponse.error()))
 
     await expect(
-      addUserToOrganisation(organisationId, mockIdToken)
+      addUserToOrganisation(organisationId, mockBackendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: {

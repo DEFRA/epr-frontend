@@ -31,7 +31,7 @@ export const discardGetController = {
     const { registration } = await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      idToken: session.idToken,
+      backendToken: session.backendToken,
       accreditationId
     })
 
@@ -76,7 +76,7 @@ export const discardPostController = {
         accreditationId,
         prnId,
         { status: 'discarded' },
-        session.idToken
+        session.backendToken
       )
 
       request.yar.clear('prnDraft')

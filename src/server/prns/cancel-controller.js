@@ -53,7 +53,7 @@ export const cancelPostController = {
       accreditationId,
       prnId,
       prn,
-      idToken
+      backendToken
     } = await fetchPrnForUpdate(request)
     const {
       organisationId: orgId,
@@ -74,7 +74,7 @@ export const cancelPostController = {
         accreditationId,
         prnId,
         { status: 'cancelled' },
-        idToken
+        backendToken
       )
 
       return h.redirect(

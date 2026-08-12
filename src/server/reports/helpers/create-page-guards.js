@@ -35,7 +35,7 @@ async function fetchGuardedData(isMatchingRegistration, request) {
     fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     ),
     fetchReportDetail(
       organisationId,
@@ -44,7 +44,7 @@ async function fetchGuardedData(isMatchingRegistration, request) {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
   ])
 

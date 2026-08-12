@@ -87,7 +87,7 @@ export const viewPostController = {
       const wasteBalanceMap = await fetchWasteBalances(
         organisationId,
         [accreditationId],
-        session.idToken
+        session.backendToken
       )
       const wasteBalance = wasteBalanceMap[accreditationId]
       const availableAmount = wasteBalance?.availableAmount ?? 0
@@ -109,7 +109,7 @@ export const viewPostController = {
           accreditationId,
           prnId,
           { status: 'discarded' },
-          session.idToken
+          session.backendToken
         )
 
         request.yar.clear('prnDraft')
@@ -126,7 +126,7 @@ export const viewPostController = {
         accreditationId,
         prnId,
         { status: 'awaiting_authorisation' },
-        session.idToken
+        session.backendToken
       )
 
       // Clear draft and store for created page
@@ -188,7 +188,7 @@ async function handleDraftView(
     await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      idToken: session.idToken,
+      backendToken: session.backendToken,
       accreditationId
     })
 
@@ -260,7 +260,7 @@ async function handleExistingView(
       getRequiredRegistrationWithAccreditation({
         organisationId,
         registrationId,
-        idToken: session.idToken,
+        backendToken: session.backendToken,
         accreditationId
       }),
       fetchPackagingRecyclingNote(
@@ -268,7 +268,7 @@ async function handleExistingView(
         registrationId,
         accreditationId,
         prnId,
-        session.idToken
+        session.backendToken
       )
     ])
 

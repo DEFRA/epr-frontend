@@ -16,7 +16,7 @@ describe(updateReportStatus, () => {
   const cadence = 'quarterly'
   const period = 1
   const submissionNumber = 1
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const mockResponse = { ok: true }
 
@@ -37,7 +37,7 @@ describe(updateReportStatus, () => {
         submissionNumber
       },
       { status: 'ready_to_submit', version: 1 },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -65,7 +65,7 @@ describe(updateReportStatus, () => {
         submissionNumber
       },
       { status: 'ready_to_submit', version: 1 },
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -87,7 +87,7 @@ describe(updateReportStatus, () => {
         submissionNumber
       },
       { status: 'ready_to_submit', version: 1 },
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -110,7 +110,7 @@ describe(updateReportStatus, () => {
         /** @type {Parameters<typeof updateReportStatus>[1]} */ (
           /** @type {unknown} */ ('ready_to_submit')
         ),
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Network error')
   })

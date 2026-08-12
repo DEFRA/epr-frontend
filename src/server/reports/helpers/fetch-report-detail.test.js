@@ -18,7 +18,7 @@ describe(fetchReportDetail, () => {
   const cadence = 'quarterly'
   const period = 1
   const submissionNumber = 1
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   const mockResponse = {
     operatorCategory: 'REPROCESSOR_REGISTERED_ONLY',
@@ -78,7 +78,7 @@ describe(fetchReportDetail, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -102,7 +102,7 @@ describe(fetchReportDetail, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -121,7 +121,7 @@ describe(fetchReportDetail, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockResponse)
@@ -139,7 +139,7 @@ describe(fetchReportDetail, () => {
         cadence,
         period,
         submissionNumber,
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Network error')
   })
@@ -163,7 +163,7 @@ describe(fetchReportDetail, () => {
         cadence,
         period,
         submissionNumber,
-        idToken
+        backendToken
       )
     ).rejects.toBeInstanceOf(ReportStaleError)
   })
@@ -186,7 +186,7 @@ describe(fetchReportDetail, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     ).catch((e) => e)
 
     expect(err.reasons).toStrictEqual([STALE_REASON.SUMMARY_LOG_CHANGED])
@@ -210,7 +210,7 @@ describe(fetchReportDetail, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     ).catch((e) => e)
 
     expect(err.reasons).toStrictEqual([STALE_REASON.PRN_CANCELLED])
@@ -238,7 +238,7 @@ describe(fetchReportDetail, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     ).catch((e) => e)
 
     expect(err.reasons).toStrictEqual([
@@ -261,7 +261,7 @@ describe(fetchReportDetail, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(staleResponse)
