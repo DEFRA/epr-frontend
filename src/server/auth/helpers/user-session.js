@@ -1,3 +1,4 @@
+import { selectBackendToken } from './backend-token.js'
 import { buildUserProfile, getTokenExpiresAt } from './build-session.js'
 import { dropUserSession } from './drop-user-session.js'
 
@@ -60,6 +61,7 @@ async function updateUserSession(
     profile,
     expiresAt,
     idToken: refreshedTokens.id_token,
+    backendToken: selectBackendToken(existingSession.provider, refreshedTokens),
     refreshToken: refreshedTokens.refresh_token,
     idTokenRefreshInProgress: false
   }

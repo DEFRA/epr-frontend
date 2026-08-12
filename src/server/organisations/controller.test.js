@@ -48,6 +48,7 @@ const mockAuth = {
     query: {},
     refreshToken: 'mock-refresh-token',
     idToken: 'test-id-token',
+    backendToken: 'test-backend-token',
     expiresAt: '2099-01-01T00:00:00.000Z',
     profile: {
       id: 'user-123',

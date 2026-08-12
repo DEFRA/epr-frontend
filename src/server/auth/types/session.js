@@ -20,11 +20,18 @@
 
 /**
  * Complete user session stored in cache
+ *
+ * `idToken` is the OIDC id token, and the only consumer is the `id_token_hint`
+ * on the provider logout URL. `backendToken` is what every backend call
+ * presents: the id token for a Defra ID session, and the access token for an
+ * Entra ID session, because the `roles` claim the backend resolves a regulator
+ * from arrives on the access token.
  * @typedef {Omit<BellCredentials, 'expiresIn' | 'token'> & {
  *   profile: UserProfile
  *   linkedOrganisationId?: string
  *   expiresAt: string
  *   idToken: string
+ *   backendToken: string
  *   refreshToken: string
  *   urls: { token: string, logout: string }
  *   idTokenRefreshInProgress?: boolean

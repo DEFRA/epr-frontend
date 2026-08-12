@@ -2,6 +2,7 @@ import * as jose from 'jose'
 import { config } from '#config/config.js'
 import { REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { assertUserSession } from '#server/common/test-helpers/auth-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
@@ -29,7 +30,8 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
 }))
 
 const performSignInFlow = async (server, mswServer, tokenInfo) => {
-  const { accessToken, publicKey, referer, callbackReferer } = tokenInfo
+  const { accessToken, idToken, publicKey, referer, callbackReferer } =
+    tokenInfo
   const signInResponse = await server.inject({
     method: 'GET',
     url: '/regulators/login',
@@ -47,7 +49,10 @@ const performSignInFlow = async (server, mswServer, tokenInfo) => {
 
   mswServer.use(
     http.post('http://entra-id.auth/token', () =>
-      HttpResponse.json({ access_token: accessToken, id_token: accessToken })
+      HttpResponse.json({
+        access_token: accessToken,
+        id_token: idToken ?? accessToken
+      })
     )
   )
 
@@ -159,6 +164,34 @@ describe('/auth/callback/entra - GET integration', async () => {
           email: 'jane.doe@example.com'
         }
       })
+    })
+  })
+
+  describe('on successful return from Entra ID - the tokens the session keeps', () => {
+    const storedSession = async (server, msw) => {
+      const cacheSet = vi.spyOn(server.app.cache, 'set')
+
+      await performSignInFlow(server, msw, {
+        ...regulatorToken,
+        idToken: 'entra-id-token'
+      })
+
+      return assertUserSession(cacheSet.mock.calls[0][1])
+    }
+
+    it('presents the access token to the backend, because it carries the roles claim', async ({
+      server,
+      msw
+    }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session.backendToken).toBe(regulatorToken.accessToken)
+    })
+
+    it('keeps the id token for the logout hint', async ({ server, msw }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session.idToken).toBe('entra-id-token')
     })
   })
 

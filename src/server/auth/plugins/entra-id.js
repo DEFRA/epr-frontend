@@ -109,18 +109,24 @@ const createEntraId = () => ({
            * Extract user profile from the verified access token and
            * populate credentials. Bell gives us a plain `BellCredentials`
            * object which we mutate into a `UserSession` by attaching the
-           * profile, token expiry, id token and OIDC URLs.
+           * profile, token expiry, tokens and OIDC URLs.
+           *
+           * The access token becomes the session's backend token: it carries
+           * the `roles` claim the backend resolves a regulator from. The id
+           * token stays for the `id_token_hint` on logout.
            * @param {BellProfileTarget} credentials
            * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
-            const payload = await verifyToken(credentials.token ?? '')
+            const accessToken = credentials.token ?? ''
+            const payload = await verifyToken(accessToken)
             const { oid: id, preferred_username: email, roles = [] } = payload
 
             credentials.profile = { id, email }
             credentials.expiresAt = getTokenExpiresAt(payload)
             credentials.idToken = params.id_token
+            credentials.backendToken = accessToken
             credentials.urls = {
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint
