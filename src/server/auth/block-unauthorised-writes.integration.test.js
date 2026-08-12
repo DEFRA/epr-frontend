@@ -60,7 +60,7 @@ describe('write guard', () => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('sends a regulator posting to an operator route to the not-authorised page', async ({
+  it('sends a regulator posting to an operator route to the no-permission page', async ({
     server
   }) => {
     const { cookie, crumb } = await getCsrfToken(
@@ -80,7 +80,7 @@ describe('write guard', () => {
     })
 
     expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(paths.regulators.notAuthorised)
+    expect(headers.location).toBe(paths.regulators.noPermission)
   })
 
   it('leaves an operator posting to the same route unaffected', async ({
@@ -109,7 +109,7 @@ describe('write guard', () => {
     expect(headers.location).toBe(`/organisations/${organisationId}`)
   })
 
-  it('sends a session the backend granted nothing to the not-authorised page', async ({
+  it('sends a session the backend granted nothing to the no-permission page', async ({
     server
   }) => {
     const { cookie, crumb } = await getCsrfToken(server, '/cookies', {
@@ -125,7 +125,7 @@ describe('write guard', () => {
     })
 
     expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(paths.regulators.notAuthorised)
+    expect(headers.location).toBe(paths.regulators.noPermission)
   })
 
   it('shows a session the backend granted nothing no write controls', async ({
@@ -165,7 +165,7 @@ describe('write guard', () => {
   })
 
   it.for([
-    paths.regulators.notAuthorised,
+    paths.regulators.noPermission,
     paths.regulators.home,
     paths.loggedOut,
     paths.auth.defraId.login,
@@ -181,6 +181,6 @@ describe('write guard', () => {
     })
 
     expect(statusCode).toBeLessThan(statusCodes.badRequest)
-    expect(headers.location).not.toBe(paths.regulators.notAuthorised)
+    expect(headers.location).not.toBe(paths.regulators.noPermission)
   })
 })

@@ -12,5 +12,6 @@
     "pageTitle": "Not authorised",
     "heading": "User not authorised",
     "body": "This Entra user is not configured as a regulator."
-  }
+  },
+  "serviceName": "Check reprocessed or exported packaging waste"
 }
