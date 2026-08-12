@@ -68,8 +68,8 @@ export function buildNavigation(request) {
 
   const session = request.auth?.credentials
 
-  // Credentials from a sign-in callback are not a session: the visitor has
-  // nothing to sign out of and no account these controls reach.
+  // Every control here acts on the session cookie, so a request that another
+  // strategy authenticated gets none of them.
   if (!session || request.auth.strategy !== SESSION_STRATEGY) {
     return []
   }

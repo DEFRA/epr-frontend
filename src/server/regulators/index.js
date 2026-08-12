@@ -55,7 +55,7 @@ export const regulators = {
             })
           },
           method: 'GET',
-          path: paths.regulators.notAuthorised
+          path: paths.regulators.noPermission
         }
       ])
     }

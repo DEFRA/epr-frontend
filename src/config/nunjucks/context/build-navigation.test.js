@@ -71,6 +71,16 @@ describe('#buildNavigation', () => {
     expect(buildNavigation(request)).toStrictEqual([])
   })
 
+  it('offers a regulator the sign out link and nothing else', () => {
+    const request = mockRequest({
+      auth: { credentials: credentials.regulator, strategy: SESSION_STRATEGY }
+    })
+
+    expect(buildNavigation(request)).toStrictEqual([
+      { href: '/logout', text: 'Sign out' }
+    ])
+  })
+
   describe('home', () => {
     it('should provide home link when user has linked organisation', () => {
       const request = mockRequest({
@@ -122,44 +132,12 @@ describe('#buildNavigation', () => {
         text: 'Manage account'
       })
     })
-
-    it('should not include manage account link for a user who signed in with Entra ID', () => {
-      const request = mockRequest({
-        auth: {
-          credentials: credentials.regulator,
-          strategy: SESSION_STRATEGY
-        }
-      })
-      const navigation = buildNavigation(request)
-
-      expect(navigation).not.toStrictEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ text: 'Manage account' })
-        ])
-      )
-    })
   })
 
   describe('sign out', () => {
     it('should include sign out link when user is authenticated', () => {
       const request = mockRequest({
         auth: { credentials: credentials.authedWithLinkedOrg }
-      })
-      const navigation = buildNavigation(request)
-      const signOut = navigation.find((item) => item.text === 'Sign out')
-
-      expect(signOut).toStrictEqual({
-        href: '/logout',
-        text: 'Sign out'
-      })
-    })
-
-    it('should include sign out link for a user who signed in with Entra ID', () => {
-      const request = mockRequest({
-        auth: {
-          credentials: credentials.regulator,
-          strategy: SESSION_STRATEGY
-        }
       })
       const navigation = buildNavigation(request)
       const signOut = navigation.find((item) => item.text === 'Sign out')
