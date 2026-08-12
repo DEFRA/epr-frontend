@@ -1,10 +1,17 @@
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { fetchReportDetail } from '#server/reports/helpers/fetch-report-detail.js'
 import { it } from '#vite/fixtures/server.js'
-import { getByRole, getByText, queryByRole } from '@testing-library/dom'
+import {
+  getByRole,
+  getByText,
+  queryAllByRole,
+  queryByRole
+} from '@testing-library/dom'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
 
@@ -24,6 +31,11 @@ vi.mock(import('./helpers/update-report-status.js'))
 const { updateReportStatus } = await import('./helpers/update-report-status.js')
 
 const mockAuth = buildMockAuth()
+
+const regulatorAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  scope: [SCOPES.regulator]
+})
 
 const exporterRegistration = {
   organisationData: /** @type {Organisation} */ ({ id: 'org-123' }),
@@ -1492,6 +1504,40 @@ describe('#checkController', () => {
         vi.mocked(fetchReportDetail).mockResolvedValue(
           accreditedReprocessorReportDetail
         )
+      })
+
+      it('offers an operator the change links and the create form', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: mockAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(
+          queryAllByRole(body, 'link', { name: /Change/ }).length
+        ).toBeGreaterThan(0)
+        expect(body.querySelectorAll('form')).toHaveLength(1)
+      })
+
+      it('offers a regulator neither the change links nor the create form', async ({
+        server
+      }) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: baseUrl,
+          auth: regulatorAuth
+        })
+
+        const { body } = new JSDOM(result).window.document
+
+        expect(queryAllByRole(body, 'link', { name: /Change/ })).toStrictEqual(
+          []
+        )
+        expect(body.querySelectorAll('form')).toHaveLength(0)
       })
 
       it('should display accreditation number and label in header summary list', async ({

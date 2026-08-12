@@ -1,3 +1,4 @@
+import { isRegulatorSession } from '#server/auth/scopes.js'
 import { sessionNames } from '#server/common/constants/session-names.js'
 import { summaryLogStatuses } from '#server/common/constants/statuses.js'
 import { fetchRegistrationAndAccreditation } from '#server/common/helpers/organisations/fetch-registration-and-accreditation.js'
@@ -430,13 +431,18 @@ export const summaryLogUploadProgressController = {
     const redirectUrl = `${baseUrl}/summary-logs/{summaryLogId}`
     const cancelUrl = baseUrl
 
-    const { uploadUrl } = await getUploadUrl(
-      status,
-      organisationId,
-      registrationId,
-      redirectUrl,
-      session.backendToken
-    )
+    // Asking for an upload URL creates a summary log, so this GET writes. A
+    // regulator reads the page without one; the re-upload form is hidden for
+    // them.
+    const { uploadUrl } = isRegulatorSession(session)
+      ? {}
+      : await getUploadUrl(
+          status,
+          organisationId,
+          registrationId,
+          redirectUrl,
+          session.backendToken
+        )
 
     const { wasteBalance } = await getWasteBalanceData(
       status,

@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
+import { isRegulatorSession } from '#server/auth/scopes.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { paths } from '#server/paths.js'
 import { readFileSync } from 'node:fs'
@@ -59,6 +60,7 @@ export function context(request) {
   return {
     assetPath: `${assetPath}/assets`,
     breadcrumbs: [],
+    isReadOnly: isRegulatorSession(request?.auth?.credentials),
     navigation: buildNavigation(request),
     serviceUrl: paths.start,
     ...getI18nContext(request),

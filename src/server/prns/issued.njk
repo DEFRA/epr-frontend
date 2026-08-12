@@ -23,9 +23,11 @@
       </a>
     </p>
 
+    {% if not isReadOnly %}
     <p class="govuk-body">
       <a href="{{ issueAnotherLink.href }}" class="govuk-link">{{ issueAnotherLink.text }}</a>
     </p>
+    {% endif %}
 
     <p class="govuk-body">
       <a href="{{ managePrnsLink.href }}" class="govuk-link">{{ managePrnsLink.text }}</a>

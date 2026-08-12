@@ -227,7 +227,7 @@
         }) }}
       </div>
 
-      {% if makeChangesUrl %}
+      {% if makeChangesUrl and not isReadOnly %}
         {{ govukButton({
           text: localise("reports:view:makeChangesButton"),
           href: makeChangesUrl
