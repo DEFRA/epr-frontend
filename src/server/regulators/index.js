@@ -5,7 +5,11 @@ import Boom from '@hapi/boom'
 
 /**
  * Regulators plugin
- * Registers the post-login landing page for Entra ID authenticated regulators
+ * Registers the post-login landing page for Entra ID authenticated regulators,
+ * and the page that a refused request lands on. A refusal reaches that page
+ * from `catchAll`, which knows only that the backend answered 403, so the page
+ * states no cause beyond the refusal itself. The sign-in refusal is a separate
+ * page: it knows the identity holds no regulator role, and says so.
  */
 export const regulators = {
   plugin: {
@@ -46,8 +50,8 @@ export const regulators = {
               )
             }
 
-            return h.view('regulators/not-authorised', {
-              pageTitle: request.t('regulators:notAuthorised:pageTitle')
+            return h.view('regulators/no-permission', {
+              pageTitle: request.t('regulators:noPermission:pageTitle')
             })
           },
           method: 'GET',
