@@ -6,6 +6,7 @@ import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID, createHash } from 'node:crypto'
@@ -139,6 +140,38 @@ function referrerIfPresentElseDefault(request, defaultPath) {
 }
 
 /**
+ * A session carries a positive identity or none at all. The backend answers
+ * `role: null` for an identity it does not recognise, and such a session gets
+ * no session cookie rather than one that falls through to whatever a guard
+ * written against a specific scope happens to allow.
+ * @param {UserSession} session
+ */
+const holdsNoRole = (session) => session.role === null
+
+/**
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {UserSession} session
+ */
+const refuseSignIn = async (request, h, session) => {
+  await metrics.signInFailure(OIDC_ENTRA_ID)
+
+  request.logger.info({
+    message: 'User has no role on this service, so no session was created',
+    event: {
+      action: 'signInRefused',
+      reference: hashUserId(session.profile.id)
+    }
+  })
+
+  return h
+    .view('regulators/not-authorised', {
+      pageTitle: request.t('regulators:notAuthorised:pageTitle')
+    })
+    .code(statusCodes.forbidden)
+}
+
+/**
  * Auth callback controller
  * Handles the OAuth2/OIDC callback from Entra ID
  * Creates user session and sets session cookie for authenticated regulators
@@ -161,6 +194,10 @@ const entraIdCallbackController = {
       const session = request.auth.credentials
 
       await applyBackendIdentity(session)
+
+      if (holdsNoRole(session)) {
+        return refuseSignIn(request, h, session)
+      }
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)

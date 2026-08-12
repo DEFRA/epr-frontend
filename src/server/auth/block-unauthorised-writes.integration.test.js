@@ -3,7 +3,6 @@ import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { paths } from '#server/paths.js'
@@ -89,11 +88,8 @@ describe('write guard', () => {
     msw
   }) => {
     msw.use(
-      bearerAuthHandler(
-        'post',
-        `${backendUrl}/v1/organisations/${organisationId}/link`,
-        'mock-backend-token',
-        () => HttpResponse.json({})
+      http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
+        HttpResponse.json({})
       )
     )
 
