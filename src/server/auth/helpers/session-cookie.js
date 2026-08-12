@@ -212,7 +212,7 @@ const createSessionCookie = (verifyToken) => {
           }
         })
 
-        server.auth.default('session')
+        server.auth.default(SESSION_STRATEGY)
       }
     }
   }
