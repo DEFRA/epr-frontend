@@ -1,4 +1,6 @@
 import { config } from '#config/config.js'
+import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
+import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { paths } from '#server/paths.js'
 
 /**
@@ -24,10 +26,17 @@ const home = ({ localiseUrl, t: localise }, session) => {
 }
 
 /**
+ * The link manages a Defra ID account, so it belongs only to a user who has
+ * one. A regulator signs in with Entra ID and manages their account elsewhere.
  * @param {HapiRequest} request
+ * @param {UserSession} session
  * @returns {NavigationItem[]}
  */
-const manageAccount = ({ t: localise }) => {
+const manageAccount = ({ t: localise }, session) => {
+  if (session.provider !== OIDC_DEFRA_ID) {
+    return []
+  }
+
   return [
     {
       href: config.get('defraId.manageAccountUrl'),
@@ -59,13 +68,15 @@ export function buildNavigation(request) {
 
   const session = request.auth?.credentials
 
-  if (!session) {
+  // Credentials from a sign-in callback are not a session: the visitor has
+  // nothing to sign out of and no account these controls reach.
+  if (!session || request.auth.strategy !== SESSION_STRATEGY) {
     return []
   }
 
   return [
     ...home(request, session),
-    ...manageAccount(request),
+    ...manageAccount(request, session),
     ...signOut(request)
   ]
 }
