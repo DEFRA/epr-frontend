@@ -12,7 +12,7 @@ describe(fetchRegistrationAndAccreditation, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const accreditationId = 'acc-789'
-  const idToken = 'test-id-token'
+  const backendToken = 'test-id-token'
 
   test('returns organisation data, registration and accreditation when all exist', async ({
     msw
@@ -38,7 +38,7 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     const accreditation = {
@@ -79,7 +79,7 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual({
@@ -108,7 +108,11 @@ describe(fetchRegistrationAndAccreditation, () => {
     )
 
     await expect(
-      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        backendToken
+      )
     ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
   })
 
@@ -132,7 +136,7 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual({
@@ -165,7 +169,7 @@ describe(fetchRegistrationAndAccreditation, () => {
     const result = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual({
@@ -190,7 +194,11 @@ describe(fetchRegistrationAndAccreditation, () => {
     )
 
     await expect(
-      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        backendToken
+      )
     ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
   })
 
@@ -213,7 +221,7 @@ describe(fetchRegistrationAndAccreditation, () => {
     await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      idToken
+      backendToken
     )
 
     expect(
@@ -230,7 +238,11 @@ describe(fetchRegistrationAndAccreditation, () => {
     )
 
     await expect(
-      fetchRegistrationAndAccreditation(organisationId, registrationId, idToken)
+      fetchRegistrationAndAccreditation(
+        organisationId,
+        registrationId,
+        backendToken
+      )
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }

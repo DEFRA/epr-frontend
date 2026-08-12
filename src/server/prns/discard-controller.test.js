@@ -398,7 +398,7 @@ describe('#discardController', () => {
           accreditationId,
           prnId,
           { status: 'discarded' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 

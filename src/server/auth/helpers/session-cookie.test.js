@@ -4,6 +4,7 @@ import {
   assertUserSession,
   asUserSession
 } from '#server/common/test-helpers/auth-helper.js'
+import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { Metrics } from '@defra/cdp-metrics'
 import Iron from '@hapi/iron'
@@ -61,6 +62,10 @@ const defaultJwtPayload = {
 }
 
 describe('#sessionCookie - integration', () => {
+  beforeEach(({ msw }) => {
+    msw.use(identityHandler())
+  })
+
   afterEach(() => vi.restoreAllMocks())
 
   describe('token refresh on expired session', () => {

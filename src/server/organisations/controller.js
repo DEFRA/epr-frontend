@@ -282,14 +282,14 @@ function getDisplayableRegistrations(organisationData) {
  * Fetches waste balances for displayable registrations
  * @param {string} organisationId - Organisation ID
  * @param {Array<{registration: object}>} displayableRegistrations - Filtered registrations
- * @param {string} idToken - JWT token
+ * @param {string} backendToken - JWT token
  * @param {TypedLogger} logger - Request logger
  * @returns {Promise<WasteBalanceMap>}
  */
 async function getWasteBalanceMap(
   organisationId,
   displayableRegistrations,
-  idToken,
+  backendToken,
   logger
 ) {
   if (displayableRegistrations.length === 0) {
@@ -301,7 +301,11 @@ async function getWasteBalanceMap(
     .filter(Boolean)
 
   try {
-    return await fetchWasteBalances(organisationId, accreditationIds, idToken)
+    return await fetchWasteBalances(
+      organisationId,
+      accreditationIds,
+      backendToken
+    )
   } catch (error) {
     logger.error({ message: 'Failed to fetch waste balances', err: error })
     return {}
@@ -366,7 +370,7 @@ export const controller = {
 
     const organisationData = await fetchOrganisationById(
       organisationId,
-      session.idToken
+      session.backendToken
     )
 
     const displayableRegistrations =
@@ -375,7 +379,7 @@ export const controller = {
     const wasteBalanceMap = await getWasteBalanceMap(
       organisationId,
       displayableRegistrations,
-      session.idToken,
+      session.backendToken,
       request.logger
     )
 

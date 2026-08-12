@@ -41,6 +41,7 @@ describe('#logoutController', () => {
   describe('when user is authenticated', () => {
     const mockSession = {
       idToken: 'id-token-123',
+      backendToken: 'access-token-123',
       profile: {
         id: 'user-id',
         email: 'test@example.com'

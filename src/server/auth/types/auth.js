@@ -90,6 +90,7 @@
  *   profile?: UserProfile
  *   expiresAt?: string
  *   idToken?: string
+ *   backendToken?: string
  *   scope: string[]
  *   urls?: { token: string, logout: string }
  * }} BellProfileTarget

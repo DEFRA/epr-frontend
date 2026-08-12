@@ -304,7 +304,7 @@ async function buildViewData(request, options = {}) {
     fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     ),
     fetchReportDetail(
       organisationId,
@@ -313,7 +313,7 @@ async function buildViewData(request, options = {}) {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
   ])
 
@@ -364,7 +364,7 @@ export const submitGetController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     const status = /** @type {NonNullable<ReportDetailResponse['status']>} */ (
@@ -457,7 +457,7 @@ export const submitPostController = {
         submissionNumber
       },
       transition,
-      session.idToken
+      session.backendToken
     )
 
     return h.redirect(

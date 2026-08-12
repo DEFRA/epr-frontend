@@ -169,7 +169,7 @@ export const checkGetController = {
       await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       )
 
     const reportDetail = await fetchReportDetail(
@@ -179,7 +179,7 @@ export const checkGetController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     if (reportDetail.status?.currentStatus !== SUBMISSION_STATUS.IN_PROGRESS) {
@@ -254,7 +254,7 @@ export const checkPostController = {
         submissionNumber
       },
       transition,
-      session.idToken
+      session.backendToken
     )
 
     return h.redirect(

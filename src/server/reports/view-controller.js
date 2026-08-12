@@ -318,7 +318,7 @@ export const viewGetController = {
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       ),
       fetchReportDetail(
         organisationId,
@@ -327,7 +327,7 @@ export const viewGetController = {
         cadence,
         period,
         submissionNumber,
-        session.idToken
+        session.backendToken
       )
     ])
 

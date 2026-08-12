@@ -1,5 +1,6 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
+import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
@@ -12,6 +13,7 @@ import { randomUUID, createHash } from 'node:crypto'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
  */
 
 /**
@@ -50,6 +52,8 @@ const defraIdCallbackController = {
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
 
+      await applyBackendIdentity(session)
+
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
@@ -66,13 +70,13 @@ const defraIdCallbackController = {
         }
       })
 
-      const organisations = await fetchUserOrganisations(session.idToken)
+      const organisations = await fetchUserOrganisations(session.backendToken)
 
       if (!organisations.linked) {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
-      await addUserToOrganisation(organisations.linked.id, session.idToken)
+      await addUserToOrganisation(organisations.linked.id, session.backendToken)
 
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
@@ -94,6 +98,20 @@ const defraIdCallbackController = {
 
     return h.redirect(referrerIfPresentElseDefault(request, '/'))
   }
+}
+
+/**
+ * Asks the backend who the newly authenticated identity is, and records the
+ * answer on the session. Authentication establishes identity and grants
+ * nothing; this is where a session learns what it may do.
+ * @param {UserSession} session
+ * @returns {Promise<void>}
+ */
+async function applyBackendIdentity(session) {
+  const { role, scopes } = await fetchIdentity(session.backendToken)
+
+  session.role = role
+  session.scope = scopes
 }
 
 /**
@@ -141,6 +159,8 @@ const entraIdCallbackController = {
 
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
+
+      await applyBackendIdentity(session)
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)

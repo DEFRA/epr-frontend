@@ -28,7 +28,7 @@ export const issuedController = {
       getRequiredRegistrationWithAccreditation({
         organisationId,
         registrationId,
-        idToken: session.idToken,
+        backendToken: session.backendToken,
         accreditationId
       }),
       fetchPackagingRecyclingNote(
@@ -36,7 +36,7 @@ export const issuedController = {
         registrationId,
         accreditationId,
         prnId,
-        session.idToken
+        session.backendToken
       )
     ])
 

@@ -104,6 +104,7 @@ describe('#logoutController - integration', () => {
   describe('when user is logged in to Entra ID', () => {
     const mockAuth = buildMockAuth({
       idToken: 'test-id-token',
+      backendToken: 'test-access-token',
       profile: {
         id: 'user-id',
         email: 'user@email.com'
@@ -134,6 +135,26 @@ describe('#logoutController - integration', () => {
       expect(redirectUrl.pathname).toBe('/logout')
       expect(redirectUrl.searchParams.get('post_logout_redirect_uri')).toBe(
         'http://localhost:3000/auth/logout'
+      )
+    })
+
+    // The session presents the access token to the backend, but Entra ends the
+    // session only on the id token. Sending the wrong one fails silently.
+    it('should send the id token as the logout hint, not the backend token', async ({
+      server
+    }) => {
+      const response = await server.inject({
+        method: 'GET',
+        url: paths.logout,
+        auth: mockAuth
+      })
+
+      const redirectUrl = new URL(
+        /** @type {string} */ (response.headers.location)
+      )
+
+      expect(redirectUrl.searchParams.get('id_token_hint')).toBe(
+        'test-id-token'
       )
     })
 

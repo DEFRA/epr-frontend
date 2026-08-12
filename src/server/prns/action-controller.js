@@ -29,7 +29,7 @@ export const actionController = {
         getRequiredRegistrationWithAccreditation({
           organisationId,
           registrationId,
-          idToken: session.idToken,
+          backendToken: session.backendToken,
           accreditationId
         }),
         fetchPackagingRecyclingNote(
@@ -37,7 +37,7 @@ export const actionController = {
           registrationId,
           accreditationId,
           prnId,
-          session.idToken
+          session.backendToken
         )
       ])
 

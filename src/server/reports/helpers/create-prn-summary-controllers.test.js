@@ -369,7 +369,7 @@ describe.each(subtrees)('$name prn summary page', (subtree) => {
             submissionNumber: 1
           },
           { prnRevenue: 1576.12 },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })

@@ -1,7 +1,11 @@
 import * as jose from 'jose'
 import { config } from '#config/config.js'
-import { REGULATOR_ROLE } from '#server/auth/plugins/entra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { assertUserSession } from '#server/common/test-helpers/auth-helper.js'
+import {
+  IDENTITIES,
+  identityHandler
+} from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { afterAll, beforeAll, describe, expect, vi } from 'vitest'
@@ -29,7 +33,8 @@ vi.mock(import('@defra/cdp-auditing'), () => ({
 }))
 
 const performSignInFlow = async (server, mswServer, tokenInfo) => {
-  const { accessToken, publicKey, referer, callbackReferer } = tokenInfo
+  const { accessToken, idToken, publicKey, referer, callbackReferer } =
+    tokenInfo
   const signInResponse = await server.inject({
     method: 'GET',
     url: '/regulators/login',
@@ -47,7 +52,10 @@ const performSignInFlow = async (server, mswServer, tokenInfo) => {
 
   mswServer.use(
     http.post('http://entra-id.auth/token', () =>
-      HttpResponse.json({ access_token: accessToken, id_token: accessToken })
+      HttpResponse.json({
+        access_token: accessToken,
+        id_token: idToken ?? accessToken
+      })
     )
   )
 
@@ -107,14 +115,16 @@ describe('/auth/callback/entra - GET integration', async () => {
     iss: 'https://login.microsoftonline.com/test-tenant-id/v2.0'
   }
 
+  // The application role rides on the token and this app never reads it. The
+  // backend resolves it and answers over the identity endpoint, so every test
+  // below varies that answer rather than the claim.
   const regulatorToken = await generateAccessToken({
     ...claims,
-    roles: [REGULATOR_ROLE]
+    roles: ['Waste.Regulator.Standard']
   })
 
-  const nonRegulatorToken = await generateAccessToken({
-    ...claims
-    // Entra emits the roles claim when user has no application roles assigned
+  beforeEach(({ msw }) => {
+    msw.use(identityHandler(IDENTITIES.regulator))
   })
 
   describe('on successful return from Entra ID - authorised regulator', () => {
@@ -159,6 +169,67 @@ describe('/auth/callback/entra - GET integration', async () => {
           email: 'jane.doe@example.com'
         }
       })
+    })
+  })
+
+  describe('on successful return from Entra ID - the tokens the session keeps', () => {
+    const storedSession = async (server, msw) => {
+      const cacheSet = vi.spyOn(server.app.cache, 'set')
+
+      await performSignInFlow(server, msw, {
+        ...regulatorToken,
+        idToken: 'entra-id-token'
+      })
+
+      return assertUserSession(cacheSet.mock.calls[0][1])
+    }
+
+    it('presents the access token to the backend, because it carries the roles claim', async ({
+      server,
+      msw
+    }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session.backendToken).toBe(regulatorToken.accessToken)
+    })
+
+    it('keeps the id token for the logout hint', async ({ server, msw }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session.idToken).toBe('entra-id-token')
+    })
+  })
+
+  describe('on successful return from Entra ID - the identity the session keeps', () => {
+    const storedSession = async (server, msw) => {
+      const cacheSet = vi.spyOn(server.app.cache, 'set')
+
+      await performSignInFlow(server, msw, regulatorToken)
+
+      return assertUserSession(cacheSet.mock.calls[0][1])
+    }
+
+    it('takes the role and scopes from the backend', async ({
+      server,
+      msw
+    }) => {
+      const session = await storedSession(server, msw)
+
+      expect(session).toMatchObject({
+        role: IDENTITIES.regulator.role,
+        scope: IDENTITIES.regulator.scopes
+      })
+    })
+
+    it('grants nothing when the backend recognises nobody, even though the token carries the application role', async ({
+      server,
+      msw
+    }) => {
+      msw.use(identityHandler(IDENTITIES.unrecognised))
+
+      const session = await storedSession(server, msw)
+
+      expect(session).toMatchObject({ role: null, scope: [] })
     })
   })
 
@@ -258,16 +329,20 @@ describe('/auth/callback/entra - GET integration', async () => {
     )
   })
 
-  describe('on successful return from Entra ID - user without regulator role', () => {
+  describe('on successful return from Entra ID - an identity the backend does not recognise', () => {
+    beforeEach(({ msw }) => {
+      msw.use(identityHandler(IDENTITIES.unrecognised))
+    })
+
     it('redirects to the regulators home page', async ({ server, msw }) => {
-      const response = await performSignInFlow(server, msw, nonRegulatorToken)
+      const response = await performSignInFlow(server, msw, regulatorToken)
 
       expect(response.statusCode).toBe(statusCodes.found)
       expect(response.headers['location']).toBe('/regulators/home')
     })
 
     it('creates a session', async ({ server, msw }) => {
-      const response = await performSignInFlow(server, msw, nonRegulatorToken)
+      const response = await performSignInFlow(server, msw, regulatorToken)
 
       const setCookieHeaders = []
         .concat(response.headers['set-cookie'] ?? [])
@@ -277,14 +352,14 @@ describe('/auth/callback/entra - GET integration', async () => {
     })
 
     it('records sign in success metric', async ({ server, msw }) => {
-      await performSignInFlow(server, msw, nonRegulatorToken)
+      await performSignInFlow(server, msw, regulatorToken)
 
       expect(mock.signInSuccessMetric).toHaveBeenCalledTimes(1)
       expect(mock.signInSuccessMetric).toHaveBeenCalledWith('entra-id')
     })
 
     it('audits a successful sign in attempt', async ({ server, msw }) => {
-      await performSignInFlow(server, msw, nonRegulatorToken)
+      await performSignInFlow(server, msw, regulatorToken)
 
       expect(mock.cdpAuditing).toHaveBeenCalledTimes(1)
       expect(mock.cdpAuditing).toHaveBeenCalledWith({

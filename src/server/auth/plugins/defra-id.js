@@ -70,8 +70,11 @@ const createDefraId = (verifyToken) => ({
           /**
            * Extract user profile from OIDC ID token and populate credentials.
            * Bell gives us a plain `BellCredentials` object which we mutate
-           * into a `UserSession` by attaching the profile, token expiry, id
-           * token and OIDC URLs.
+           * into a `UserSession` by attaching the profile, token expiry,
+           * tokens and OIDC URLs.
+           *
+           * A Defra ID session presents the id token to the backend, so the
+           * id token is also the backend token.
            * @param {BellProfileTarget} credentials
            * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
@@ -82,6 +85,7 @@ const createDefraId = (verifyToken) => ({
             credentials.profile = buildUserProfile(payload)
             credentials.expiresAt = getTokenExpiresAt(payload)
             credentials.idToken = params.id_token
+            credentials.backendToken = params.id_token
             credentials.urls = {
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint

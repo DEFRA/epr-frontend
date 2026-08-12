@@ -25,7 +25,7 @@ describe('#provideUserOrganisations', () => {
       bearerAuthHandler(
         'get',
         `${backendUrl}/v1/me/organisations`,
-        'mock-id-token',
+        'mock-backend-token',
         () => HttpResponse.json({ organisations: mockOrganisations })
       )
     )
@@ -58,7 +58,9 @@ describe('#provideUserOrganisations', () => {
       })
     )
 
-    const mockRequest = { auth: buildMockAuth({ idToken: 'invalid-token' }) }
+    const mockRequest = {
+      auth: buildMockAuth({ backendToken: 'invalid-token' })
+    }
 
     await expect(provideUserOrganisations.method(mockRequest)).rejects.toThrow(
       '401 Unauthorized'

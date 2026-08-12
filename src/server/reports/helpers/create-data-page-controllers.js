@@ -163,7 +163,7 @@ function createSimplePostHandler(fieldName, nextPage) {
           submissionNumber
         },
         { [fieldName]: fieldValue },
-        request.auth.credentials.idToken
+        request.auth.credentials.backendToken
       )
     }
 
@@ -267,7 +267,7 @@ function createTonnagePostHandler(
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     const prn = /** @type {NonNullable<typeof reportDetail.prn>} */ (
@@ -294,7 +294,7 @@ function createTonnagePostHandler(
         submissionNumber
       },
       { [fieldName]: fieldValue },
-      session.idToken
+      session.backendToken
     )
 
     return h.redirect(

@@ -1,6 +1,8 @@
 import { defraIdCallbackController } from '#server/auth/callback/controller.js'
+import * as fetchIdentityModule from '#server/auth/helpers/fetch-identity.js'
 import * as fetchUserOrganisationsModule from '#server/auth/helpers/fetch-user-organisations.js'
 import { asUserOrganisations } from '#server/common/test-helpers/auth-helper.js'
+import { IDENTITIES } from '#server/common/test-helpers/identity-helper.js'
 import {
   mockHapiRequest,
   asResponseToolkit
@@ -25,12 +27,16 @@ vi.mock(import('node:crypto'), () => ({
   )
 }))
 
+vi.mock(import('#server/auth/helpers/fetch-identity.js'))
 vi.mock(import('#server/auth/helpers/fetch-user-organisations.js'))
 vi.mock(import('#server/auth/helpers/add-user-to-organisation.js'))
 vi.mock(import('#server/common/helpers/metrics/index.js'))
 
 describe('#authCallbackController', () => {
   beforeEach(() => {
+    vi.mocked(fetchIdentityModule.fetchIdentity).mockResolvedValue(
+      IDENTITIES.operator
+    )
     vi.mocked(metricsModule.metrics.signInSuccess).mockResolvedValue(undefined)
     vi.mocked(metricsModule.metrics.signInFailure).mockResolvedValue(undefined)
     vi.mocked(
@@ -76,6 +82,7 @@ describe('#authCallbackController', () => {
             profile: mockProfile,
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             urls: {
               token: 'http://test.auth/token',
@@ -120,13 +127,16 @@ describe('#authCallbackController', () => {
         {
           profile: mockProfile,
           idToken: 'mock-id-token',
+          backendToken: 'mock-backend-token',
           expiresAt: expect.any(String),
           refreshToken: 'mock-refresh-token',
           urls: {
             token: 'http://test.auth/token',
             logout: 'http://test.auth/logout'
           },
-          linkedOrganisationId: 'defra-org-uuid'
+          linkedOrganisationId: 'defra-org-uuid',
+          role: IDENTITIES.operator.role,
+          scope: IDENTITIES.operator.scopes
         }
       )
 
@@ -168,6 +178,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -339,6 +350,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -430,6 +442,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -469,7 +482,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
 
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
@@ -511,6 +524,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -721,6 +735,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -766,7 +781,7 @@ describe('#authCallbackController', () => {
 
       expect(
         fetchUserOrganisationsModule.fetchUserOrganisations
-      ).toHaveBeenCalledExactlyOnceWith('mock-id-token')
+      ).toHaveBeenCalledExactlyOnceWith('mock-backend-token')
       expect(mockRequest.server.app.cache.set).toHaveBeenCalledWith(
         'mock-uuid-1234',
         expect.any(Object)
@@ -818,6 +833,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -896,6 +912,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {
@@ -962,6 +979,7 @@ describe('#authCallbackController', () => {
           credentials: {
             profile: mockProfile,
             idToken: 'mock-id-token',
+            backendToken: 'mock-backend-token',
             refreshToken: 'mock-refresh-token',
             expiresAt: new Date(Date.now() + 3600000).toISOString(),
             urls: {

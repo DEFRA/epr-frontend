@@ -1,5 +1,7 @@
+import { selectBackendToken } from './backend-token.js'
 import { buildUserProfile, getTokenExpiresAt } from './build-session.js'
 import { dropUserSession } from './drop-user-session.js'
+import { fetchIdentity } from './fetch-identity.js'
 
 /**
  * @import { RefreshedTokens } from './refreshed-tokens-schema.js'
@@ -37,6 +39,10 @@ async function markSessionAsIdTokenRefreshInProgress(request, userSession) {
 
 /**
  * Update user session with refreshed tokens
+ *
+ * The identity is asked for again on every refresh, so a permission the
+ * backend changes reaches a signed-in user within the refresh cadence rather
+ * than at the end of their session.
  * @param {VerifyToken} verifyToken - Token verification function
  * @param {HapiRequest} request - Hapi request object
  * @param {UserSession} existingSession - Current user session
@@ -53,6 +59,11 @@ async function updateUserSession(
 
   const profile = buildUserProfile(payload)
   const expiresAt = getTokenExpiresAt(payload)
+  const backendToken = selectBackendToken(
+    existingSession.provider,
+    refreshedTokens
+  )
+  const { role, scopes } = await fetchIdentity(backendToken)
 
   /** @type {UserSession} */
   const session = {
@@ -60,6 +71,9 @@ async function updateUserSession(
     profile,
     expiresAt,
     idToken: refreshedTokens.id_token,
+    backendToken,
+    role,
+    scope: scopes,
     refreshToken: refreshedTokens.refresh_token,
     idTokenRefreshInProgress: false
   }

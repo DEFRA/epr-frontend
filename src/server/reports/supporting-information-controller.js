@@ -173,7 +173,7 @@ async function buildViewData(request, options = {}) {
     await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     )
 
   const reportDetail = await fetchReportDetail(
@@ -183,7 +183,7 @@ async function buildViewData(request, options = {}) {
     cadence,
     period,
     submissionNumber,
-    session.idToken
+    session.backendToken
   )
 
   const material = getDisplayMaterial(registration)
@@ -292,7 +292,7 @@ export const supportingInformationPostController = {
         submissionNumber
       },
       { supportingInformation },
-      request.auth.credentials.idToken
+      request.auth.credentials.backendToken
     )
 
     const basePath = `/organisations/${organisationId}/registrations/${registrationId}/reports`

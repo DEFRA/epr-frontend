@@ -62,7 +62,7 @@ export const deleteGetController = {
     const { registration } = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     )
 
     const material = getDisplayMaterial(registration)
@@ -111,7 +111,7 @@ export const deletePostController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     return h.redirect(

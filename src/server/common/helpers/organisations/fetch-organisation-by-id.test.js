@@ -10,7 +10,7 @@ const backendUrl = config.get('eprBackendUrl')
 
 describe(fetchOrganisationById, () => {
   const organisationId = 'org-123'
-  const idToken = 'test-id-token'
+  const backendToken = 'test-id-token'
 
   test('returns organisation data when backend responds successfully', async ({
     msw
@@ -30,7 +30,7 @@ describe(fetchOrganisationById, () => {
       )
     )
 
-    const result = await fetchOrganisationById(organisationId, idToken)
+    const result = await fetchOrganisationById(organisationId, backendToken)
 
     expect(result).toStrictEqual(mockOrganisationData)
   })
@@ -46,7 +46,7 @@ describe(fetchOrganisationById, () => {
       })
     )
 
-    await fetchOrganisationById(organisationId, idToken)
+    await fetchOrganisationById(organisationId, backendToken)
 
     expect(capturedUrl).toMatch(/\/v1\/organisations\/org-123$/)
   })
@@ -61,7 +61,7 @@ describe(fetchOrganisationById, () => {
       })
     )
 
-    await fetchOrganisationById(organisationId, idToken)
+    await fetchOrganisationById(organisationId, backendToken)
 
     const request = /** @type {Request} */ (capturedRequest)
 
@@ -80,7 +80,7 @@ describe(fetchOrganisationById, () => {
     )
 
     await expect(
-      fetchOrganisationById(organisationId, idToken)
+      fetchOrganisationById(organisationId, backendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 404 }
@@ -100,7 +100,7 @@ describe(fetchOrganisationById, () => {
     )
 
     await expect(
-      fetchOrganisationById(organisationId, idToken)
+      fetchOrganisationById(organisationId, backendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }

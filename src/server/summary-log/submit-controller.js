@@ -32,7 +32,7 @@ export const submitSummaryLogController = {
         organisationId,
         registrationId,
         summaryLogId,
-        session.idToken
+        session.backendToken
       )
 
       request.yar.set(sessionNames.summaryLogs, {

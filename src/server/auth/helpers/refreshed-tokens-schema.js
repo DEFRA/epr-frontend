@@ -3,22 +3,27 @@ import Joi from 'joi'
 /**
  * OIDC token endpoint response, narrowed to the fields the codebase consumes.
  *
- * Additional fields the provider returns (eg `access_token`, `expires_in`,
- * `token_type`) are allowed through by the schema below but not declared here
- * so the type contract reflects what we read. Session expiry is derived from
- * the JWT `exp` claim, not from `expires_in`.
+ * Additional fields the provider returns (eg `expires_in`, `token_type`) are
+ * allowed through by the schema below but not declared here so the type
+ * contract reflects what we read. Session expiry is derived from the JWT `exp`
+ * claim, not from `expires_in`.
+ *
+ * `access_token` is optional because Azure B2C does not issue one for a Defra
+ * ID session. An Entra ID session needs it — see `selectBackendToken`.
  *
  * Add a field to the typedef and schema together — they are kept in this file
  * precisely to make that coupling structural.
  * @typedef {{
  *   id_token: string
  *   refresh_token: string
+ *   access_token?: string
  * }} RefreshedTokens
  */
 
 export const refreshedTokensSchema = Joi.object({
   id_token: Joi.string().required(),
-  refresh_token: Joi.string().required()
+  refresh_token: Joi.string().required(),
+  access_token: Joi.string()
 }).unknown(true)
 
 /**

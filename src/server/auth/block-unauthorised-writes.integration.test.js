@@ -19,12 +19,20 @@ const linkingUrl = '/account/linking'
 const regulatorAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-1', email: 'jane.doe@example.com' },
-  scope: [SCOPES.regulator]
+  role: 'regulator_standard',
+  scope: ['organisation.read', SCOPES.regulator]
+})
+
+const grantedNothingAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'john.doe@example.com' },
+  role: null,
+  scope: []
 })
 
 const operatorAuth = buildMockAuth()
 
-describe('regulator write guard', () => {
+describe('write guard', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
   })
@@ -84,7 +92,7 @@ describe('regulator write guard', () => {
       bearerAuthHandler(
         'post',
         `${backendUrl}/v1/organisations/${organisationId}/link`,
-        'mock-id-token',
+        'mock-backend-token',
         () => HttpResponse.json({})
       )
     )
@@ -103,6 +111,37 @@ describe('regulator write guard', () => {
 
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(`/organisations/${organisationId}`)
+  })
+
+  it('sends a session the backend granted nothing to the not-authorised page', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(server, '/cookies', {
+      auth: grantedNothingAuth
+    })
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: linkingUrl,
+      auth: grantedNothingAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.found)
+    expect(headers.location).toBe(paths.regulators.notAuthorised)
+  })
+
+  it('shows a session the backend granted nothing no write controls', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: linkingUrl,
+      auth: grantedNothingAuth
+    })
+
+    expect(load(asHtml(result))('main form')).toHaveLength(0)
   })
 
   it('shows an operator the write controls on an operator page', async ({

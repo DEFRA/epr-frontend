@@ -27,7 +27,7 @@ const provideUserOrganisations = {
       return null
     }
 
-    return fetchUserOrganisations(session.idToken)
+    return fetchUserOrganisations(session.backendToken)
   },
   assign: 'userOrganisations'
 }

@@ -71,7 +71,7 @@ export const reportStaleErrorGetController = {
     const { registration } = await fetchRegistrationAndAccreditation(
       organisationId,
       registrationId,
-      session.idToken
+      session.backendToken
     )
     const { noteType } = getNoteTypeDisplayNames(registration)
 
@@ -114,7 +114,7 @@ export const reportStaleErrorPostController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     return h.redirect(
