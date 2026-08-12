@@ -117,6 +117,7 @@
         }) }}
       {% endif %}
 
+      {% if not isReadOnly %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
         {{ govukButton({
@@ -129,6 +130,7 @@
           classes: "govuk-button--secondary"
         }) }}
       </form>
+      {% endif %}
       <p class="govuk-body">
         <a href="{{ backUrl }}" class="govuk-link">{{ localise("reports:cancelAndReturn") }}</a>
       </p>

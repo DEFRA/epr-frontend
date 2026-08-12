@@ -50,7 +50,7 @@
       rows: accreditationRows
     }) }}
 
-    {% if issueButton %}
+    {% if issueButton and not isReadOnly %}
       <form method="POST" action="{{ issueButton.action }}" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -71,7 +71,7 @@
       </form>
     {% endif %}
 
-    {% if cancelButton %}
+    {% if cancelButton and not isReadOnly %}
       {{ govukButton({
         text: cancelButton.text,
         href: cancelButton.href,

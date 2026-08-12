@@ -11,12 +11,14 @@
       <p class="govuk-body">{{ bodyLine2 }}</p>
 
       <div class="govuk-button-group">
+        {% if not isReadOnly %}
         {{ govukButton({
           text: localise('reports:reportStaleDeleteAndStartAgain'),
           classes: "govuk-button--warning",
           preventDoubleClick: true,
           attributes: { form: "delete-report-form" }
         }) }}
+        {% endif %}
 
         {{ govukButton({
           text: localise('reports:reportStaleReturnToReports'),
@@ -25,9 +27,11 @@
         }) }}
       </div>
 
+      {% if not isReadOnly %}
       <form id="delete-report-form" method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
       </form>
+      {% endif %}
 
     </div>
   </div>
