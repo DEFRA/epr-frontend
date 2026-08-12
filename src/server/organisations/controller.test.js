@@ -1,6 +1,7 @@
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import * as fetchOrganisationModule from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import * as fetchWasteBalancesModule from '#server/common/helpers/waste-balance/fetch-waste-balances.js'
+import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
 import { asOrganisation } from '#server/common/test-helpers/organisation-fixtures.js'
 import { it } from '#vite/fixtures/server.js'
 import Boom from '@hapi/boom'
@@ -8,7 +9,6 @@ import { getAllByRole, getByRole } from '@testing-library/dom'
 import { load } from 'cheerio'
 import { JSDOM } from 'jsdom'
 import { beforeEach, describe, expect, vi } from 'vitest'
-import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 
 /** @import {DOMWindow} from 'jsdom' */
 
@@ -41,25 +41,10 @@ const cellInColumn = (table) => {
   }
 }
 
-const mockAuth = {
-  strategy: 'session',
-  credentials: {
-    provider: OIDC_DEFRA_ID,
-    query: {},
-    refreshToken: 'mock-refresh-token',
-    idToken: 'test-id-token',
-    backendToken: 'test-backend-token',
-    expiresAt: '2099-01-01T00:00:00.000Z',
-    profile: {
-      id: 'user-123',
-      email: 'test@example.com'
-    },
-    urls: {
-      token: 'http://defra-id.auth/token',
-      logout: 'http://defra-id.auth/logout'
-    }
-  }
-}
+const mockAuth = buildMockAuth({
+  idToken: 'test-id-token',
+  backendToken: 'test-backend-token'
+})
 
 describe('#organisationController', () => {
   beforeEach(() => {

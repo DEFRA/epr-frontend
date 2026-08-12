@@ -40,7 +40,7 @@
  *   refreshToken: string
  *   urls: { token: string, logout: string }
  *   idTokenRefreshInProgress?: boolean
- *   role?: string | null
+ *   role: string | null
  *   scope: string[]
  * }} UserSession
  */
