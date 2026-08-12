@@ -65,7 +65,10 @@ export async function catchAll(r, h) {
     request.auth.credentials?.provider === OIDC_ENTRA_ID
   ) {
     return h
-      .redirect(request.localiseUrl(paths.regulators.noPermission))
+      .view('regulators/no-permission', {
+        pageTitle: request.t('regulators:noPermission:pageTitle')
+      })
+      .code(statusCode)
       .takeover()
   }
 

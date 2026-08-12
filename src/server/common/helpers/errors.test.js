@@ -1,6 +1,7 @@
 import { vi, describe, expect, it, beforeEach } from 'vitest'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { removeUserSession } from '#server/auth/helpers/user-session.js'
+import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 
 import { catchAll } from '#server/common/helpers/errors.js'
 import {
@@ -19,6 +20,7 @@ describe(catchAll, () => {
   const mockToolkit = {
     view: vi.fn().mockReturnThis(),
     code: vi.fn().mockReturnThis(),
+    takeover: vi.fn().mockReturnThis(),
     redirect: mockRedirect
   }
 
@@ -63,6 +65,25 @@ describe(catchAll, () => {
     })
     expect(mockToolkit.code).toHaveBeenCalledWith(code)
     expect(mockErrorLogger).not.toHaveBeenCalled()
+  })
+
+  it('renders the no-permission page with the refusal status for a regulator', async () => {
+    const req = {
+      ...makeRequest(statusCodes.forbidden),
+      auth: {
+        isAuthenticated: true,
+        credentials: { provider: OIDC_ENTRA_ID }
+      }
+    }
+
+    await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
+
+    expect(mockToolkit.view).toHaveBeenCalledWith('regulators/no-permission', {
+      pageTitle: 'regulators:noPermission:pageTitle'
+    })
+    expect(mockToolkit.code).toHaveBeenCalledWith(statusCodes.forbidden)
+    expect(mockToolkit.takeover).toHaveBeenCalledWith()
+    expect(mockRedirect).not.toHaveBeenCalled()
   })
 
   it('logs user out when session is missing', async () => {
