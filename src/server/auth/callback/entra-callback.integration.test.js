@@ -349,7 +349,7 @@ describe('/auth/callback/entra - GET integration', async () => {
       server,
       msw
     }) => {
-      const response = await performSignInFlow(server, msw, nonRegulatorToken)
+      const response = await performSignInFlow(server, msw, regulatorToken)
 
       expect(asHtml(response.result)).not.toMatch(/entra/i)
     })

@@ -109,7 +109,7 @@ describe('write guard', () => {
     expect(headers.location).toBe(`/organisations/${organisationId}`)
   })
 
-  it('sends a session the backend granted nothing to the not-authorised page', async ({
+  it('refuses a session the backend granted nothing, in place', async ({
     server
   }) => {
     const { cookie, crumb } = await getCsrfToken(server, '/cookies', {
@@ -124,8 +124,8 @@ describe('write guard', () => {
       payload: { organisationId, crumb }
     })
 
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(paths.regulators.notAuthorised)
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(headers.location).toBeUndefined()
   })
 
   it('shows a session the backend granted nothing no write controls', async ({
