@@ -4,9 +4,6 @@ import { paths } from '#server/paths.js'
 /**
  * Regulators plugin
  * Registers the post-login landing page for Entra ID authenticated regulators.
- * The page a refused request lands on has no route of its own: `catchAll`
- * renders it in place with the refusal's own 403, so the status line tells the
- * truth about the request that was refused.
  */
 export const regulators = {
   plugin: {

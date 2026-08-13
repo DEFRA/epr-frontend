@@ -1,5 +1,5 @@
 /** @import { HapiServer } from '#server/common/hapi-types.js'; */
-import { getByRole, getByText } from '@testing-library/dom'
+import { getByRole, getByText, queryByText } from '@testing-library/dom'
 import Boom from '@hapi/boom'
 import { JSDOM } from 'jsdom'
 import { describe, expect } from 'vitest'
@@ -40,10 +40,15 @@ describe('#catchAll - server errors', () => {
   })
 })
 
-describe('#catchAll - a refusal for a regulator', () => {
+describe('#catchAll - a refused request', () => {
   const regulatorAuth = buildMockAuth({
     provider: OIDC_ENTRA_ID,
     profile: { id: 'entra-user-1', email: 'jane.doe@example.com' }
+  })
+
+  const operatorAuth = buildMockAuth({
+    provider: OIDC_DEFRA_ID,
+    profile: { id: 'defra-user-1', email: 'defra.user@example.com' }
   })
 
   /**
@@ -93,7 +98,9 @@ describe('#catchAll - a refusal for a regulator', () => {
     expect(response.headers['location']).toBeUndefined()
   })
 
-  it('renders the no-permission page for the refusal', async ({ server }) => {
+  it('states that permission is absent for a session signed in with Entra ID', async ({
+    server
+  }) => {
     routeThatRefuses(server, 'GET')
 
     const response = await server.inject({
@@ -108,7 +115,7 @@ describe('#catchAll - a refusal for a regulator', () => {
     expect(getByText(body, 'You do not have permission')).toBeDefined()
   })
 
-  it('renders the generic error page for a refusal of a Defra ID session', async ({
+  it('states that permission is absent for a session signed in with Defra ID', async ({
     server
   }) => {
     routeThatRefuses(server, 'GET')
@@ -116,10 +123,7 @@ describe('#catchAll - a refusal for a regulator', () => {
     const response = await server.inject({
       method: 'GET',
       url: '/refused',
-      auth: buildMockAuth({
-        provider: OIDC_DEFRA_ID,
-        profile: { id: 'defra-user-1', email: 'defra.user@example.com' }
-      })
+      auth: operatorAuth
     })
 
     expect(response.statusCode).toBe(statusCodes.forbidden)
@@ -127,6 +131,35 @@ describe('#catchAll - a refusal for a regulator', () => {
     const dom = new JSDOM(response.result)
     const body = dom.window.document.body
 
-    expect(getByText(body, 'Forbidden')).toBeDefined()
+    expect(getByText(body, 'You do not have permission')).toBeDefined()
+    expect(queryByText(body, 'Forbidden')).toBeNull()
+  })
+
+  /**
+   * `@hapi/crumb` refuses a stale or missing crumb with a bare 403, and it is
+   * registered for the whole server, so a CSRF refusal reads the same page as
+   * an authorisation refusal. The page fits it poorly: it tells the reader to
+   * ask for access when the answer is to go back and submit the form again.
+   */
+  it('reads the permission page to a signed in user whose crumb is missing', async ({
+    server
+  }) => {
+    server.route({
+      method: 'POST',
+      path: '/needs-a-crumb',
+      handler: () => 'never reached'
+    })
+
+    const response = await server.inject({
+      method: 'POST',
+      url: '/needs-a-crumb',
+      auth: operatorAuth,
+      payload: {}
+    })
+
+    expect(response.statusCode).toBe(statusCodes.forbidden)
+
+    const body = new JSDOM(response.result).window.document.body
+    expect(getByText(body, 'You do not have permission')).toBeDefined()
   })
 })
