@@ -1,5 +1,6 @@
 import { config } from '#config/config.js'
 import { buildNavigation } from '#config/nunjucks/context/build-navigation.js'
+import { isRegulator } from '#server/auth/roles.js'
 import { isReadOnlySession } from '#server/auth/scopes.js'
 import { createLogger } from '#server/common/helpers/logging/logger.js'
 import { paths } from '#server/paths.js'
@@ -43,6 +44,25 @@ const getI18nContext = (request) => {
 }
 
 /**
+ * What the header calls the service, and where its link goes. A regulator
+ * reads the records an operator records, so the operator's name for the
+ * service is wrong on a regulator's page, and the operator's start page is not
+ * where a regulator starts.
+ * @param {HapiRequest | null} request
+ * @returns {{ serviceNameKey: string, serviceUrl: string }}
+ */
+const buildService = (request) => {
+  if (isRegulator(request?.auth?.credentials)) {
+    return {
+      serviceNameKey: 'regulators:serviceName',
+      serviceUrl: paths.regulators.home
+    }
+  }
+
+  return { serviceNameKey: 'common:serviceName', serviceUrl: paths.start }
+}
+
+/**
  * @param {HapiRequest | null} request
  */
 export function context(request) {
@@ -57,13 +77,17 @@ export function context(request) {
     }
   }
 
+  const i18n = getI18nContext(request)
+  const { serviceNameKey, serviceUrl } = buildService(request)
+
   return {
     assetPath: `${assetPath}/assets`,
     breadcrumbs: [],
     isReadOnly: isReadOnlySession(request?.auth?.credentials),
     navigation: buildNavigation(request),
-    serviceUrl: paths.start,
-    ...getI18nContext(request),
+    serviceName: i18n.localise(serviceNameKey),
+    serviceUrl,
+    ...i18n,
 
     /**
      * @param {string} asset

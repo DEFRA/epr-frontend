@@ -29,13 +29,13 @@
   }) }}
 
   {{ govukServiceNavigation({
-    serviceName: localise('common:serviceName'),
+    serviceName: serviceName,
     serviceUrl: localiseUrl(serviceUrl),
     navigation: navigation
   }) }}
 {% endblock %}
 
-{% block pageTitle %}{{ pageTitle }} | {{ localise('common:serviceName') }}{% endblock %}
+{% block pageTitle %}{{ pageTitle }} | {{ serviceName }}{% endblock %}
 
 {% block beforeContent %}
   {{ govukPhaseBanner({
