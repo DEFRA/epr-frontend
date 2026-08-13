@@ -1,3 +1,4 @@
+import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 
 /**
@@ -14,7 +15,7 @@ import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
  * @returns {{ strategy: string, credentials: UserSession }}
  */
 export const buildMockAuth = (overrides = {}) => ({
-  strategy: 'session',
+  strategy: SESSION_STRATEGY,
   credentials: {
     provider: OIDC_DEFRA_ID,
     query: {},

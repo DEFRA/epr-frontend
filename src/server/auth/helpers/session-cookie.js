@@ -18,6 +18,13 @@ import { validateRefreshedTokens } from './refreshed-tokens-schema.js'
  */
 
 /**
+ * Name of the strategy that authenticates a request from the session cookie.
+ * A request authenticated by any other strategy carries credentials from a
+ * sign-in callback, not from a session.
+ */
+export const SESSION_STRATEGY = 'session'
+
+/**
  * @param {'blocking' | 'background'} type
  * @param {{ outcome?: 'success' | 'failure' }} [extras]
  * @returns {{ action: string, type: string, kind: string, outcome?: string }}
@@ -166,7 +173,7 @@ const createSessionCookie = (verifyToken) => {
       register: async (server) => {
         await server.register(authCookie)
 
-        server.auth.strategy('session', 'cookie', {
+        server.auth.strategy(SESSION_STRATEGY, 'cookie', {
           cookie: {
             name: 'userSession',
             path: '/',
@@ -205,7 +212,7 @@ const createSessionCookie = (verifyToken) => {
           }
         })
 
-        server.auth.default('session')
+        server.auth.default(SESSION_STRATEGY)
       }
     }
   }
