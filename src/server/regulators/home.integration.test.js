@@ -52,7 +52,7 @@ describe('/regulators/home - GET integration', () => {
     expect(response.statusCode).toBe(statusCodes.found)
   })
 
-  it('redirects authenticated non-regulator users to the no-permission page', async ({
+  it('refuses authenticated non-regulator users with a 403', async ({
     server
   }) => {
     const response = await server.inject({
@@ -67,7 +67,7 @@ describe('/regulators/home - GET integration', () => {
       })
     })
 
-    expect(response.statusCode).toBe(statusCodes.found)
-    expect(response.headers['location']).toBe('/regulators/no-permission')
+    expect(response.statusCode).toBe(statusCodes.forbidden)
+    expect(response.headers['location']).toBeUndefined()
   })
 })
