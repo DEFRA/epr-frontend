@@ -19,6 +19,7 @@ describe(catchAll, () => {
   const mockToolkit = {
     view: vi.fn().mockReturnThis(),
     code: vi.fn().mockReturnThis(),
+    takeover: vi.fn().mockReturnThis(),
     redirect: mockRedirect
   }
 
@@ -63,6 +64,22 @@ describe(catchAll, () => {
     })
     expect(mockToolkit.code).toHaveBeenCalledWith(code)
     expect(mockErrorLogger).not.toHaveBeenCalled()
+  })
+
+  it('renders the no-permission page with the refusal status for any session', async () => {
+    const req = {
+      ...makeRequest(statusCodes.forbidden),
+      auth: { isAuthenticated: true }
+    }
+
+    await catchAll(asRequest(req), asResponseToolkit(mockToolkit))
+
+    expect(mockToolkit.view).toHaveBeenCalledWith('error/no-permission', {
+      pageTitle: 'error:noPermission:pageTitle'
+    })
+    expect(mockToolkit.code).toHaveBeenCalledWith(statusCodes.forbidden)
+    expect(mockToolkit.takeover).toHaveBeenCalledWith()
+    expect(mockRedirect).not.toHaveBeenCalled()
   })
 
   it('logs user out when session is missing', async () => {

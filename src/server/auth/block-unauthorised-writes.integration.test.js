@@ -60,7 +60,7 @@ describe('write guard', () => {
     config.set('featureFlags.regulatorAccess', false)
   })
 
-  it('sends a regulator posting to an operator route to the not-authorised page', async ({
+  it('refuses a regulator posting to an operator route, in place', async ({
     server
   }) => {
     const { cookie, crumb } = await getCsrfToken(
@@ -79,8 +79,8 @@ describe('write guard', () => {
       payload: { organisationId, crumb }
     })
 
-    expect(statusCode).toBe(statusCodes.found)
-    expect(headers.location).toBe(paths.regulators.notAuthorised)
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(headers.location).toBeUndefined()
   })
 
   it('leaves an operator posting to the same route unaffected', async ({
@@ -165,7 +165,6 @@ describe('write guard', () => {
   })
 
   it.for([
-    paths.regulators.notAuthorised,
     paths.regulators.home,
     paths.loggedOut,
     paths.auth.defraId.login,
@@ -174,13 +173,12 @@ describe('write guard', () => {
     '/cookies',
     '/contact'
   ])('leaves %s reachable by a regulator', async (url, { server }) => {
-    const { statusCode, headers } = await server.inject({
+    const { statusCode } = await server.inject({
       method: 'GET',
       url,
       auth: regulatorAuth
     })
 
     expect(statusCode).toBeLessThan(statusCodes.badRequest)
-    expect(headers.location).not.toBe(paths.regulators.notAuthorised)
   })
 })
