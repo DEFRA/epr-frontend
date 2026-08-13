@@ -1,6 +1,6 @@
 import { config } from '#config/config.js'
 import { nunjucksConfig } from '#config/nunjucks/nunjucks.js'
-import { blockRegulatorWrites } from '#server/auth/block-regulator-writes.js'
+import { blockUnauthorisedWrites } from '#server/auth/block-unauthorised-writes.js'
 import { getOidcConfiguration } from '#server/auth/helpers/get-oidc-configuration.js'
 import { createSessionCookie } from '#server/auth/helpers/session-cookie.js'
 import { getVerifyToken } from '#server/auth/helpers/verify-token.js'
@@ -150,7 +150,7 @@ export async function createServer(options = {}) {
 
   await server.register(plugins)
 
-  server.ext('onPostAuth', blockRegulatorWrites)
+  server.ext('onPostAuth', blockUnauthorisedWrites)
   server.ext('onPreResponse', catchAll)
 
   return server

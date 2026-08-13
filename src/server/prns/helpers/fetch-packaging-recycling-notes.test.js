@@ -24,7 +24,7 @@ describe(fetchPackagingRecyclingNotes, () => {
   const organisationId = 'org-123'
   const registrationId = 'reg-456'
   const accreditationId = 'acc-789'
-  const idToken = 'test-id-token'
+  const backendToken = 'test-id-token'
 
   test('returns packaging recycling notes when backend responds successfully', async ({
     msw
@@ -51,7 +51,7 @@ describe(fetchPackagingRecyclingNotes, () => {
       organisationId,
       registrationId,
       accreditationId,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockPrnData)
@@ -75,7 +75,7 @@ describe(fetchPackagingRecyclingNotes, () => {
       organisationId,
       registrationId,
       accreditationId,
-      idToken
+      backendToken
     )
 
     expect(capturedUrl).toMatch(
@@ -100,7 +100,7 @@ describe(fetchPackagingRecyclingNotes, () => {
       organisationId,
       registrationId,
       accreditationId,
-      idToken
+      backendToken
     )
 
     const request = /** @type {Request} */ (capturedRequest)
@@ -121,7 +121,12 @@ describe(fetchPackagingRecyclingNotes, () => {
       })
     )
 
-    await fetchPackagingRecyclingNotes('org/123', 'reg&456', 'acc#789', idToken)
+    await fetchPackagingRecyclingNotes(
+      'org/123',
+      'reg&456',
+      'acc#789',
+      backendToken
+    )
 
     expect(capturedUrl).toContain(
       'organisations/org%2F123/registrations/reg%26456/accreditations/acc%23789'
@@ -145,7 +150,7 @@ describe(fetchPackagingRecyclingNotes, () => {
         organisationId,
         registrationId,
         accreditationId,
-        idToken
+        backendToken
       )
     ).rejects.toMatchObject({
       isBoom: true,
@@ -166,7 +171,7 @@ describe(fetchPackagingRecyclingNotes, () => {
         organisationId,
         registrationId,
         accreditationId,
-        idToken
+        backendToken
       )
     ).rejects.toMatchObject({
       isBoom: true,

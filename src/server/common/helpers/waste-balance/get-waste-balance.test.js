@@ -9,7 +9,7 @@ const mockLogger = createMockLogger()
 
 const organisationId = 'org-123'
 const accreditationId = 'acc-456'
-const idToken = 'mock-token'
+const backendToken = 'mock-token'
 
 const stubWasteBalance = {
   amount: 20.5,
@@ -29,7 +29,7 @@ describe(getWasteBalance, () => {
     const result = await getWasteBalance(
       organisationId,
       accreditationId,
-      idToken,
+      backendToken,
       mockLogger
     )
 
@@ -37,7 +37,7 @@ describe(getWasteBalance, () => {
     expect(fetchWasteBalances).toHaveBeenCalledWith(
       organisationId,
       [accreditationId],
-      idToken
+      backendToken
     )
   })
 
@@ -49,7 +49,7 @@ describe(getWasteBalance, () => {
     const result = await getWasteBalance(
       organisationId,
       accreditationId,
-      idToken,
+      backendToken,
       mockLogger
     )
 
@@ -63,7 +63,7 @@ describe(getWasteBalance, () => {
     const result = await getWasteBalance(
       organisationId,
       accreditationId,
-      idToken,
+      backendToken,
       mockLogger
     )
 

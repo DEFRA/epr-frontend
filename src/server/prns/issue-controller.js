@@ -19,7 +19,7 @@ export const issueController = {
         accreditationId,
         prnId,
         { status: 'awaiting_acceptance' },
-        session.idToken
+        session.backendToken
       )
 
       // Store prnNumber in session to mitigate MongoDB replication lag.

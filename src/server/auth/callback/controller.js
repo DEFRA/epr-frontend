@@ -1,9 +1,9 @@
 import { ACCOUNT_LINKING_PATH } from '#server/account/linking/controller.js'
 import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisation.js'
+import { fetchIdentity } from '#server/auth/helpers/fetch-identity.js'
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
-import { SCOPES } from '#server/auth/scopes.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
@@ -53,6 +53,8 @@ const defraIdCallbackController = {
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
 
+      await applyBackendIdentity(session)
+
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
 
@@ -69,13 +71,13 @@ const defraIdCallbackController = {
         }
       })
 
-      const organisations = await fetchUserOrganisations(session.idToken)
+      const organisations = await fetchUserOrganisations(session.backendToken)
 
       if (!organisations.linked) {
         return h.redirect(ACCOUNT_LINKING_PATH)
       }
 
-      await addUserToOrganisation(organisations.linked.id, session.idToken)
+      await addUserToOrganisation(organisations.linked.id, session.backendToken)
 
       const isInitialUser =
         organisations.linked.linkedBy?.id === session.profile.id
@@ -97,6 +99,20 @@ const defraIdCallbackController = {
 
     return h.redirect(referrerIfPresentElseDefault(request, '/'))
   }
+}
+
+/**
+ * Asks the backend who the newly authenticated identity is, and records the
+ * answer on the session. Authentication establishes identity and grants
+ * nothing; this is where a session learns what it may do.
+ * @param {UserSession} session
+ * @returns {Promise<void>}
+ */
+async function applyBackendIdentity(session) {
+  const { role, scopes } = await fetchIdentity(session.backendToken)
+
+  session.role = role
+  session.scope = scopes
 }
 
 /**
@@ -124,12 +140,13 @@ function referrerIfPresentElseDefault(request, defaultPath) {
 }
 
 /**
- * Every Entra ID identity this app recognises is a regulator — operators sign
- * in with Defra ID — so an identity granted no scope has no role here.
+ * A session carries a positive identity or none at all. The backend answers
+ * `role: null` for an identity it does not recognise, and such a session gets
+ * no session cookie rather than one that falls through to whatever a guard
+ * written against a specific scope happens to allow.
  * @param {UserSession} session
  */
-const holdsRecognisedRole = (session) =>
-  session.scope.includes(SCOPES.regulator)
+const holdsNoRole = (session) => session.role === null
 
 /**
  * @param {HapiRequest} request
@@ -176,7 +193,9 @@ const entraIdCallbackController = {
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
 
-      if (!holdsRecognisedRole(session)) {
+      await applyBackendIdentity(session)
+
+      if (holdsNoRole(session)) {
         return refuseSignIn(request, h, session)
       }
 

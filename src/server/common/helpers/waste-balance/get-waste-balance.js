@@ -6,21 +6,21 @@ import { fetchWasteBalances } from './fetch-waste-balances.js'
  * Fetches waste balance for a single accreditation with error handling
  * @param {string} organisationId - The organisation ID
  * @param {string} accreditationId - The accreditation ID
- * @param {string} idToken - JWT ID token for authorization
+ * @param {string} backendToken - Bearer token for the backend
  * @param {TypedLogger} logger - Logger instance for error reporting
  * @returns {Promise<WasteBalance|null>} Balance data or null if unavailable
  */
 async function getWasteBalance(
   organisationId,
   accreditationId,
-  idToken,
+  backendToken,
   logger
 ) {
   try {
     const wasteBalanceMap = await fetchWasteBalances(
       organisationId,
       [accreditationId],
-      idToken
+      backendToken
     )
 
     return wasteBalanceMap[accreditationId] ?? null

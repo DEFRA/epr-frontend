@@ -19,8 +19,8 @@ async function getStartNowHref(request) {
     return request.localiseUrl(paths.auth.defraId.login)
   }
 
-  const { idToken } = request.auth.credentials
-  const organisations = await fetchUserOrganisations(idToken)
+  const { backendToken } = request.auth.credentials
+  const organisations = await fetchUserOrganisations(backendToken)
 
   if (organisations.linked) {
     return request.localiseUrl(`/organisations/${organisations.linked.id}`)

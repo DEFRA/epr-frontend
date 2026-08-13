@@ -316,7 +316,7 @@ describe('#makeChangesController', () => {
             period: 1,
             submissionNumber: 1
           },
-          'mock-id-token'
+          'mock-backend-token'
         )
       })
     })

@@ -208,7 +208,7 @@ export const detailController = {
       await fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       )
 
     validateCadenceForRegistration(cadence, accreditation)
@@ -220,7 +220,7 @@ export const detailController = {
       cadence,
       period,
       submissionNumber,
-      session.idToken
+      session.backendToken
     )
 
     if (reportDetail.id) {

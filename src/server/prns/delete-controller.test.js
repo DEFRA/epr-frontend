@@ -248,7 +248,7 @@ describe('#deleteController', () => {
           accreditationId,
           prnId,
           { status: 'deleted' },
-          mockCredentials.idToken
+          mockCredentials.backendToken
         )
       })
 

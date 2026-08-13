@@ -3,7 +3,6 @@ import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
 import { SCOPES } from '#server/auth/scopes.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
 import { buildMockAuth } from '#server/common/test-helpers/auth-helper.js'
-import { bearerAuthHandler } from '#server/common/test-helpers/bearer-auth-helper.js'
 import { asHtml } from '#server/common/test-helpers/dom.js'
 import { getCsrfToken } from '#server/common/test-helpers/csrf-helper.js'
 import { paths } from '#server/paths.js'
@@ -19,12 +18,20 @@ const linkingUrl = '/account/linking'
 const regulatorAuth = buildMockAuth({
   provider: OIDC_ENTRA_ID,
   profile: { id: 'entra-user-1', email: 'jane.doe@example.com' },
-  scope: [SCOPES.regulator]
+  role: 'regulator_standard',
+  scope: ['organisation.read', SCOPES.regulator]
+})
+
+const grantedNothingAuth = buildMockAuth({
+  provider: OIDC_ENTRA_ID,
+  profile: { id: 'entra-user-2', email: 'john.doe@example.com' },
+  role: null,
+  scope: []
 })
 
 const operatorAuth = buildMockAuth()
 
-describe('regulator write guard', () => {
+describe('write guard', () => {
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
   })
@@ -81,11 +88,8 @@ describe('regulator write guard', () => {
     msw
   }) => {
     msw.use(
-      bearerAuthHandler(
-        'post',
-        `${backendUrl}/v1/organisations/${organisationId}/link`,
-        'mock-id-token',
-        () => HttpResponse.json({})
+      http.post(`${backendUrl}/v1/organisations/${organisationId}/link`, () =>
+        HttpResponse.json({})
       )
     )
 
@@ -103,6 +107,37 @@ describe('regulator write guard', () => {
 
     expect(statusCode).toBe(statusCodes.found)
     expect(headers.location).toBe(`/organisations/${organisationId}`)
+  })
+
+  it('refuses a session the backend granted nothing, in place', async ({
+    server
+  }) => {
+    const { cookie, crumb } = await getCsrfToken(server, '/cookies', {
+      auth: grantedNothingAuth
+    })
+
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: linkingUrl,
+      auth: grantedNothingAuth,
+      headers: { cookie },
+      payload: { organisationId, crumb }
+    })
+
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(headers.location).toBeUndefined()
+  })
+
+  it('shows a session the backend granted nothing no write controls', async ({
+    server
+  }) => {
+    const { result } = await server.inject({
+      method: 'GET',
+      url: linkingUrl,
+      auth: grantedNothingAuth
+    })
+
+    expect(load(asHtml(result))('main form')).toHaveLength(0)
   })
 
   it('shows an operator the write controls on an operator page', async ({

@@ -32,7 +32,7 @@ export const controller = {
     const { registration } = await getRequiredRegistrationWithAccreditation({
       organisationId,
       registrationId,
-      idToken: session.idToken,
+      backendToken: session.backendToken,
       accreditationId
     })
 
@@ -41,7 +41,7 @@ export const controller = {
       getWasteBalance(
         organisationId,
         accreditationId,
-        session.idToken,
+        session.backendToken,
         request.logger
       )
     ])

@@ -355,7 +355,7 @@ describe('#resubmissionExplainerController', () => {
         'monthly',
         2,
         1,
-        'mock-id-token'
+        'mock-backend-token'
       )
     })
   })

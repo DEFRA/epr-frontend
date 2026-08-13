@@ -109,7 +109,7 @@ describe('#issueController', () => {
         accreditationId,
         prnId,
         { status: 'awaiting_acceptance' },
-        mockCredentials.idToken
+        mockCredentials.backendToken
       )
     })
 

@@ -37,7 +37,7 @@ export const createdController = {
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       ),
       fetchReportDetail(
         organisationId,
@@ -46,7 +46,7 @@ export const createdController = {
         cadence,
         period,
         submissionNumber,
-        session.idToken
+        session.backendToken
       )
     ])
 

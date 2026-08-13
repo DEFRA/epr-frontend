@@ -33,7 +33,7 @@ describe(initiateSummaryLogUpload, () => {
       organisationId: 'org-123',
       registrationId: 'reg-456',
       redirectUrl: '/redirect/path',
-      idToken: 'test-id-token'
+      backendToken: 'test-id-token'
     })
 
     const request = /** @type {Request} */ (capturedRequest)
@@ -66,7 +66,7 @@ describe(initiateSummaryLogUpload, () => {
       organisationId: 'org-123',
       registrationId: 'reg-456',
       redirectUrl: '/redirect/path',
-      idToken: 'test-id-token'
+      backendToken: 'test-id-token'
     })
 
     expect(result).toStrictEqual(mockResponse)
@@ -91,7 +91,7 @@ describe(initiateSummaryLogUpload, () => {
         organisationId: 'org-123',
         registrationId: 'reg-456',
         redirectUrl: '/redirect/path',
-        idToken: 'test-id-token'
+        backendToken: 'test-id-token'
       })
     ).rejects.toMatchObject({
       isBoom: true,

@@ -23,7 +23,7 @@ const backendUrl = config.get('eprBackendUrl')
 describe(fetchWasteBalances, () => {
   const organisationId = 'org-123'
   const accreditationIds = ['acc-001', 'acc-002']
-  const idToken = 'test-id-token'
+  const backendToken = 'test-id-token'
 
   test('returns waste balance data when backend responds successfully', async ({
     msw
@@ -42,7 +42,7 @@ describe(fetchWasteBalances, () => {
     const result = await fetchWasteBalances(
       organisationId,
       accreditationIds,
-      idToken
+      backendToken
     )
 
     expect(result).toStrictEqual(mockWasteBalanceData)
@@ -62,7 +62,7 @@ describe(fetchWasteBalances, () => {
       )
     )
 
-    await fetchWasteBalances(organisationId, accreditationIds, idToken)
+    await fetchWasteBalances(organisationId, accreditationIds, backendToken)
 
     expect(capturedUrl).toContain('accreditationIds=acc-001,acc-002')
   })
@@ -80,7 +80,7 @@ describe(fetchWasteBalances, () => {
       )
     )
 
-    await fetchWasteBalances(organisationId, accreditationIds, idToken)
+    await fetchWasteBalances(organisationId, accreditationIds, backendToken)
 
     const request = /** @type {Request} */ (capturedRequest)
 
@@ -90,7 +90,7 @@ describe(fetchWasteBalances, () => {
   })
 
   test('returns empty object when accreditationIds array is empty', async () => {
-    const result = await fetchWasteBalances(organisationId, [], idToken)
+    const result = await fetchWasteBalances(organisationId, [], backendToken)
 
     expect(result).toStrictEqual({})
   })
@@ -106,7 +106,11 @@ describe(fetchWasteBalances, () => {
       })
     )
 
-    await fetchWasteBalances(organisationId, ['acc/001', 'acc&002'], idToken)
+    await fetchWasteBalances(
+      organisationId,
+      ['acc/001', 'acc&002'],
+      backendToken
+    )
 
     expect(capturedUrl).toContain('accreditationIds=acc%2F001,acc%26002')
   })
@@ -124,7 +128,7 @@ describe(fetchWasteBalances, () => {
     )
 
     await expect(
-      fetchWasteBalances(organisationId, accreditationIds, idToken)
+      fetchWasteBalances(organisationId, accreditationIds, backendToken)
     ).rejects.toMatchObject({
       isBoom: true,
       output: { statusCode: 500 }

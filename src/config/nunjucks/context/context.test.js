@@ -129,7 +129,27 @@ describe('#context', () => {
       expect(contextResult.isReadOnly).toBe(true)
     })
 
-    it('does not mark a session holding other scopes read-only', async () => {
+    it('does not mark an operator holding the write scope read-only', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: {
+              isAuthenticated: true,
+              credentials: {
+                scope: [
+                  'organisation.linked.read',
+                  SCOPES.organisationLinkedWrite
+                ]
+              }
+            }
+          })
+        )
+      )
+
+      expect(contextResult.isReadOnly).toBe(false)
+    })
+
+    it('marks a session holding other scopes read-only', async () => {
       contextResult = await contextImport.context(
         mockRequest(
           /** @type {Partial<Request>} */ ({
@@ -141,10 +161,10 @@ describe('#context', () => {
         )
       )
 
-      expect(contextResult.isReadOnly).toBe(false)
+      expect(contextResult.isReadOnly).toBe(true)
     })
 
-    it('does not mark a session without scopes read-only', async () => {
+    it('marks a session without scopes read-only', async () => {
       contextResult = await contextImport.context(
         mockRequest(
           /** @type {Partial<Request>} */ ({
@@ -153,13 +173,13 @@ describe('#context', () => {
         )
       )
 
-      expect(contextResult.isReadOnly).toBe(false)
+      expect(contextResult.isReadOnly).toBe(true)
     })
 
-    it('does not mark a signed out request read-only', async () => {
+    it('marks a signed out request read-only', async () => {
       contextResult = await contextImport.context(mockRequest())
 
-      expect(contextResult.isReadOnly).toBe(false)
+      expect(contextResult.isReadOnly).toBe(true)
     })
   })
 
@@ -190,7 +210,7 @@ describe('#context', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
-        isReadOnly: false,
+        isReadOnly: true,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
@@ -274,7 +294,7 @@ describe('#context cache', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
-        isReadOnly: false,
+        isReadOnly: true,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],

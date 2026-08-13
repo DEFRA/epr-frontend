@@ -42,7 +42,7 @@ const exporterPlasticApproved = findRegistrationAndAccreditation(
   'reg-export-001-plastic-approved'
 )
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 describe('#accreditationDashboardController', () => {
   beforeEach(() => {

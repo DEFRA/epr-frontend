@@ -36,7 +36,7 @@ export const submittedController = {
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       ),
       fetchReportDetail(
         organisationId,
@@ -45,7 +45,7 @@ export const submittedController = {
         cadence,
         period,
         submissionNumber,
-        session.idToken
+        session.backendToken
       )
     ])
 

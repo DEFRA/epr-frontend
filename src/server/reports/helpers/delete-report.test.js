@@ -16,7 +16,7 @@ describe(deleteReport, () => {
   const cadence = 'monthly'
   const period = 1
   const submissionNumber = 1
-  const idToken = 'test-token'
+  const backendToken = 'test-token'
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,7 +32,7 @@ describe(deleteReport, () => {
       cadence,
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -40,7 +40,7 @@ describe(deleteReport, () => {
       {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${idToken}`
+          Authorization: `Bearer ${backendToken}`
         }
       }
     )
@@ -56,7 +56,7 @@ describe(deleteReport, () => {
       'quarterly',
       period,
       submissionNumber,
-      idToken
+      backendToken
     )
 
     expect(fetchJsonFromBackend).toHaveBeenCalledWith(
@@ -77,7 +77,7 @@ describe(deleteReport, () => {
         cadence,
         period,
         submissionNumber,
-        idToken
+        backendToken
       )
     ).rejects.toThrow('Network error')
   })

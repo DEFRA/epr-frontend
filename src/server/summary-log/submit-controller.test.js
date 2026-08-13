@@ -22,7 +22,7 @@ vi.mock(
   })
 )
 
-const mockAuth = buildMockAuth({ idToken: 'test-id-token' })
+const mockAuth = buildMockAuth({ backendToken: 'test-id-token' })
 
 describe('#submitSummaryLogController', () => {
   const organisationId = '123'

@@ -2,6 +2,7 @@ import * as jose from 'jose'
 import { config } from '#config/config.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { statusCodes } from '#server/common/constants/status-codes.js'
+import { identityHandler } from '#server/common/test-helpers/identity-helper.js'
 import { beforeEach, it } from '#vite/fixtures/server.js'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, vi } from 'vitest'
@@ -91,6 +92,10 @@ describe('/auth/callback - GET integration', async () => {
   const idTokenAndPublicKey = await generateIdToken({
     sub: 'user-id',
     email: 'user@email.com'
+  })
+
+  beforeEach(({ msw }) => {
+    msw.use(identityHandler())
   })
 
   describe('on successful return from Defra ID - unlinked organisation', () => {

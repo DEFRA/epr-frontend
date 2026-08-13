@@ -7,7 +7,6 @@ import { getTokenExpiresAt } from '../helpers/build-session.js'
 import { getOidcConfiguration } from '../helpers/get-oidc-configuration.js'
 import { getRedirectUrl } from '../helpers/get-redirect-url.js'
 import { recordSignInReferrer } from '../helpers/record-sign-in-referrer.js'
-import { SCOPES } from '../scopes.js'
 
 /**
  * @import { AzureB2CTokenParams, BellProfileTarget, OAuthTokenParams } from '../types/auth.js'
@@ -17,15 +16,11 @@ import { SCOPES } from '../scopes.js'
 export const OIDC_ENTRA_ID = 'entra-id'
 
 /**
- * App role required for an Entra ID user to be treated as a regulator.
- * Configured against the app registration in Entra and returned in the
- * access token's `roles` claim for users assigned to it.
- */
-export const REGULATOR_ROLE = 'Waste.Regulator.Standard'
-
-/**
  * Subset of the Entra ID access token payload claims the app reads. Mirrors
  * the `DefraIdJwtPayload` typedef pattern in `../types/auth.js`.
+ *
+ * The token's `roles` claim is absent here on purpose. It is what the backend
+ * resolves a regulator from, and the backend holds that mapping alone.
  *
  * Authoritative claim list: Microsoft's access token reference for v2.0
  * tokens https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens
@@ -33,7 +28,6 @@ export const REGULATOR_ROLE = 'Waste.Regulator.Standard'
  *   oid: string
  *   preferred_username: string
  *   exp: number
- *   roles?: string[]
  * }} EntraIdJwtPayload
  */
 
@@ -109,25 +103,29 @@ const createEntraId = () => ({
            * Extract user profile from the verified access token and
            * populate credentials. Bell gives us a plain `BellCredentials`
            * object which we mutate into a `UserSession` by attaching the
-           * profile, token expiry, id token and OIDC URLs.
+           * profile, token expiry, tokens and OIDC URLs.
+           *
+           * The access token becomes the session's backend token: it carries
+           * the `roles` claim the backend resolves a regulator from. The id
+           * token stays for the `id_token_hint` on logout.
            * @param {BellProfileTarget} credentials
            * @param {OAuthTokenParams | AzureB2CTokenParams} params
            * @returns {Promise<void>}
            */
           profile: async function (credentials, params) {
-            const payload = await verifyToken(credentials.token ?? '')
-            const { oid: id, preferred_username: email, roles = [] } = payload
+            const accessToken = credentials.token ?? ''
+            const payload = await verifyToken(accessToken)
+            const { oid: id, preferred_username: email } = payload
 
             credentials.profile = { id, email }
             credentials.expiresAt = getTokenExpiresAt(payload)
             credentials.idToken = params.id_token
+            credentials.backendToken = accessToken
             credentials.urls = {
               token: oidcConf.token_endpoint,
               logout: oidcConf.end_session_endpoint
             }
-            credentials.scope = roles.includes(REGULATOR_ROLE)
-              ? [SCOPES.regulator]
-              : []
+            credentials.scope = []
           }
         },
         providerParams: () => ({

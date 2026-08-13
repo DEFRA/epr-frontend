@@ -24,7 +24,7 @@ export const controller = {
       failAction: async (request, h) => {
         const session = request.auth.credentials
 
-        const organisations = await fetchUserOrganisations(session.idToken)
+        const organisations = await fetchUserOrganisations(session.backendToken)
 
         const viewData = buildLinkingViewData(request, organisations, {
           errors: {
@@ -47,7 +47,7 @@ export const controller = {
 
     const session = request.auth.credentials
 
-    await linkOrganisation(session.idToken, organisationId)
+    await linkOrganisation(session.backendToken, organisationId)
 
     // Store linked organisation ID in session for navigation
     const sessionId = request.state?.userSession?.sessionId

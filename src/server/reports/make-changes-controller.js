@@ -122,7 +122,7 @@ export const makeChangesGetController = {
       fetchRegistrationAndAccreditation(
         organisationId,
         registrationId,
-        session.idToken
+        session.backendToken
       ),
       fetchReportDetail(
         organisationId,
@@ -131,7 +131,7 @@ export const makeChangesGetController = {
         cadence,
         period,
         submissionNumber,
-        session.idToken
+        session.backendToken
       )
     ])
 
@@ -204,7 +204,7 @@ export const makeChangesPostController = {
           period,
           submissionNumber
         },
-        session.idToken
+        session.backendToken
       )
     } catch (error) {
       const boomError = /** @type {BoomError} */ (error)

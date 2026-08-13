@@ -269,7 +269,7 @@ describe('#createPrnController', () => {
         expect(getRequiredRegistrationWithAccreditation).toHaveBeenCalledWith({
           organisationId: 'org-123',
           registrationId: 'reg-001',
-          idToken: 'mock-id-token',
+          backendToken: 'mock-backend-token',
           accreditationId: 'acc-001'
         })
       })

@@ -487,7 +487,7 @@ describe('#reportStaleErrorController', () => {
         'quarterly',
         1,
         1,
-        'mock-id-token'
+        'mock-backend-token'
       )
     })
 

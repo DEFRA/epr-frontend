@@ -21,7 +21,7 @@ async function isReprocessor(request) {
   const { registration } = await fetchRegistrationAndAccreditation(
     organisationId,
     registrationId,
-    session.idToken
+    session.backendToken
   )
 
   return isReprocessorRegistration(registration)

@@ -1,5 +1,6 @@
 import { SESSION_STRATEGY } from '#server/auth/helpers/session-cookie.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 
 /**
  * @import { UserSession } from '#server/auth/types/session.js'
@@ -10,7 +11,11 @@ import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
  * Builds a `session`-strategy auth object for `server.inject`, with credentials
  * that satisfy the app's `AuthCredentials` augmentation (see
  * `src/server/types/hapi.d.ts` -> `UserSession`). Pass overrides to vary
- * individual credential fields (e.g. `idToken`).
+ * individual credential fields (e.g. `backendToken`).
+ *
+ * The default is an operator, carrying the role and scopes the backend grants
+ * a Defra ID identity. Pass `scope` to build a session that holds something
+ * else.
  * @param {Partial<UserSession>} [overrides]
  * @returns {{ strategy: string, credentials: UserSession }}
  */
@@ -23,7 +28,9 @@ export const buildMockAuth = (overrides = {}) => ({
     profile: { id: 'user-123', email: 'test@example.com' },
     expiresAt: '2099-01-01T00:00:00.000Z',
     idToken: 'mock-id-token',
-    scope: [],
+    backendToken: 'mock-backend-token',
+    role: 'operator',
+    scope: ['organisation.linked.read', SCOPES.organisationLinkedWrite],
     urls: {
       token: 'http://defra-id.auth/token',
       logout: 'http://defra-id.auth/logout'
