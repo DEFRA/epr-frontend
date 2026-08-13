@@ -1,3 +1,4 @@
+import { isRegulatorSession } from '#server/auth/scopes.js'
 import { fetchOrganisationById } from '#server/common/helpers/organisations/fetch-organisation-by-id.js'
 import { initiateSummaryLogUpload } from '#server/common/helpers/upload/initiate-summary-log-upload.js'
 import { errorCodes } from '#server/common/enums/error-codes.js'
@@ -45,12 +46,16 @@ export const summaryLogUploadController = {
     }
 
     try {
-      const { uploadUrl } = await initiateSummaryLogUpload({
-        organisationId,
-        registrationId,
-        redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
-        idToken: session.idToken
-      })
+      // Starting an upload creates a summary log, so this GET writes. A
+      // regulator reads the page without one; the form is hidden for them.
+      const { uploadUrl } = isRegulatorSession(session)
+        ? {}
+        : await initiateSummaryLogUpload({
+            organisationId,
+            registrationId,
+            redirectUrl: `/organisations/${organisationId}/registrations/${registrationId}/summary-logs/{summaryLogId}`,
+            idToken: session.idToken
+          })
 
       const backUrl = `/organisations/${organisationId}/registrations/${registrationId}`
 

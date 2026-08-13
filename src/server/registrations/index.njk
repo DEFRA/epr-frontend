@@ -90,11 +90,13 @@
                 </div>
               </div>
               <div class="govuk-summary-card__content">
+                {% if not isReadOnly %}
                 <p class="govuk-body">
                   <a href="{{ uploadSummaryLogUrl }}" class="govuk-link">
                     {{ localise("registrations:uploadSummaryLog") }}
                   </a>
                 </p>
+                {% endif %}
               </div>
             </div>
           </div>

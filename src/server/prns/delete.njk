@@ -20,6 +20,7 @@
       iconFallbackText: "Warning"
     }) }}
 
+    {% if not isReadOnly %}
     <form method="POST" novalidate>
       <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -29,6 +30,7 @@
         preventDoubleClick: true
       }) }}
     </form>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
