@@ -20,6 +20,7 @@
         <p class="govuk-body">{{ localise('account:linking:bodyOne') }}</p>
         <p class="govuk-body">{{ localise('account:linking:bodyTwo') }}</p>
 
+        {% if not isReadOnly %}
         <form method="POST" action="{{ localiseUrl('/account/linking') }}">
           <input type="hidden" name="crumb" value="{{ crumb }}" />
           {% set radioItems = [] %}
@@ -76,6 +77,7 @@
             ' ~ unlinkedOrgsList
           }) }}
         </form>
+        {% endif %}
       </div>
     </div>
   </div>

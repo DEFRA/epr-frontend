@@ -31,6 +31,7 @@
         <p class="govuk-hint">{{ hintText }}</p>
       {% endif %}
 
+      {% if not isReadOnly %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -73,6 +74,7 @@
           <a href="{{ deleteUrl }}" class="govuk-link">{{ localise("reports:deleteReportLink") }}</a>
         </p>
       </form>
+      {% endif %}
 
     </div>
   </div>

@@ -65,6 +65,7 @@
     }) }}
 
     {% if createButton %}
+      {% if not isReadOnly %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -73,8 +74,9 @@
           preventDoubleClick: true
         }) }}
       </form>
+      {% endif %}
 
-      {% if discardLink %}
+      {% if discardLink and not isReadOnly %}
         <p class="govuk-body">
           <a href="{{ discardLink.href }}" class="govuk-link">{{ discardLink.text }}</a>
         </p>
