@@ -84,6 +84,7 @@ describe('#sessionCookie - integration', () => {
         },
         expiresAt,
         idToken: `old-id-token-${userId}`,
+        backendToken: `old-backend-token-${userId}`,
         refreshToken: `old-refresh-token-${userId}`,
         urls: {
           token: 'http://defra-id.auth/token',
@@ -280,6 +281,7 @@ describe('#sessionCookie - integration', () => {
         },
         expiresAt: futureExpiry,
         idToken: 'valid-id-token',
+        backendToken: 'valid-backend-token',
         refreshToken: 'valid-refresh-token',
         urls: {
           token: 'http://defra-id.auth/token',
@@ -427,6 +429,7 @@ describe('#sessionCookie - integration', () => {
         },
         expiresAt: expiredAt,
         idToken: 'old-id-token',
+        backendToken: 'old-backend-token',
         refreshToken: 'old-refresh-token',
         urls: {
           token: 'http://defra-id.auth/token',
@@ -624,6 +627,7 @@ describe('#sessionCookie - integration', () => {
         profile: { id: 'user-in-progress', email: 'inprogress@example.com' },
         expiresAt,
         idToken: 'old-id-token-in-progress',
+        backendToken: 'old-backend-token-in-progress',
         refreshToken: 'old-refresh-token-in-progress',
         idTokenRefreshInProgress: true,
         urls: {
@@ -711,6 +715,56 @@ describe('#sessionCookie - integration', () => {
 
       const removedSession = await server.app.cache.get(sessionId)
       expect(removedSession).toBeNull()
+    })
+  })
+
+  describe('a session stored before the identity fields existed', () => {
+    beforeEach(({ server }) => {
+      server.route({
+        method: 'GET',
+        path: '/test-auth',
+        options: {
+          auth: 'session'
+        },
+        handler: () => ({ reached: true })
+      })
+    })
+
+    it('is refused, so the user signs in again instead of calling the backend with no token', async ({
+      server
+    }) => {
+      const sessionId = 'test-session-pre-migration'
+      await server.app.cache.set(
+        sessionId,
+        asUserSession({
+          profile: { id: 'user-123', email: 'user-123@example.com' },
+          expiresAt: addSeconds(new Date(), 3600).toISOString(),
+          idToken: 'old-id-token',
+          refreshToken: 'old-refresh-token',
+          scope: [],
+          urls: {
+            token: 'http://defra-id.auth/token',
+            logout: 'http://defra-id.auth/logout'
+          }
+        })
+      )
+
+      const sealedCookie = await Iron.seal(
+        { sessionId },
+        config.get('session.cookie.password'),
+        Iron.defaults
+      )
+
+      const response = await server.inject({
+        method: 'GET',
+        url: '/test-auth',
+        headers: {
+          cookie: `userSession=${sealedCookie}`
+        }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.found)
+      expect(response.headers.location).toBe(loggedOutUrl)
     })
   })
 })
