@@ -273,10 +273,21 @@ describe('/auth/callback/entra - GET integration', async () => {
       expect(response.statusCode).toBe(statusCodes.forbidden)
 
       const $ = load(asHtml(response.result))
-      expect($('h1').text().trim()).toBe('User not authorised')
-      expect($('[data-testid="app-page-body"]').text()).toContain(
-        'This Entra user is not configured as a regulator.'
+      expect($('h1').text().trim()).toBe(
+        'You do not have access to this service'
       )
+      expect($('[data-testid="app-page-body"]').text()).toContain(
+        'your account has no role in this service'
+      )
+    })
+
+    it('names no identity provider to a reader who has just been refused', async ({
+      server,
+      msw
+    }) => {
+      const response = await performSignInFlow(server, msw, nonRegulatorToken)
+
+      expect(asHtml(response.result)).not.toMatch(/entra/i)
     })
 
     it('creates no session', async ({ server, msw }) => {
