@@ -8,7 +8,28 @@ import { it } from '#vite/fixtures/server.js'
 import { load } from 'cheerio'
 import { afterAll, beforeAll, describe, expect } from 'vitest'
 
-describe('/regulators/no-permission - GET integration', () => {
+/**
+ * The page has no route of its own. It is rendered in place by `catchAll` on
+ * the request that was refused, so every case here drives a real refusal by
+ * asking for a regulators page the session may not have.
+ */
+describe('the no-permission page', () => {
+  const roleless = buildMockAuth({
+    provider: OIDC_ENTRA_ID,
+    profile: {
+      id: 'entra-user-2',
+      email: 'regulator@example.com'
+    }
+  })
+
+  const operator = buildMockAuth({
+    provider: OIDC_DEFRA_ID,
+    profile: {
+      id: 'defra-user-2',
+      email: 'operator@example.com'
+    }
+  })
+
   beforeAll(() => {
     config.set('featureFlags.regulatorAccess', true)
   })
@@ -22,17 +43,11 @@ describe('/regulators/no-permission - GET integration', () => {
   }) => {
     const response = await server.inject({
       method: 'GET',
-      url: '/regulators/no-permission',
-      auth: buildMockAuth({
-        provider: OIDC_ENTRA_ID,
-        profile: {
-          id: 'entra-user-2',
-          email: 'regulator@example.com'
-        }
-      })
+      url: '/regulators/home',
+      auth: roleless
     })
 
-    expect(response.statusCode).toBe(statusCodes.ok)
+    expect(response.statusCode).toBe(statusCodes.forbidden)
 
     const $ = load(asHtml(response.result))
     expect($('h1').text().trim()).toBe('You do not have permission')
@@ -46,14 +61,8 @@ describe('/regulators/no-permission - GET integration', () => {
   }) => {
     const response = await server.inject({
       method: 'GET',
-      url: '/regulators/no-permission',
-      auth: buildMockAuth({
-        provider: OIDC_ENTRA_ID,
-        profile: {
-          id: 'entra-user-2',
-          email: 'regulator@example.com'
-        }
-      })
+      url: '/regulators/home',
+      auth: roleless
     })
 
     const $ = load(asHtml(response.result))
@@ -63,21 +72,19 @@ describe('/regulators/no-permission - GET integration', () => {
     expect(navigation).not.toContain('Manage account')
   })
 
-  it('returns a 403 rather than the page for a user authenticated with Defra ID', async ({
+  it('reads the same to an operator refused a regulators page', async ({
     server
   }) => {
     const response = await server.inject({
       method: 'GET',
-      url: '/regulators/no-permission',
-      auth: buildMockAuth({
-        provider: OIDC_DEFRA_ID,
-        profile: {
-          id: 'defra-user-2',
-          email: 'defra.user@example.com'
-        }
-      })
+      url: '/regulators/home',
+      auth: operator
     })
 
     expect(response.statusCode).toBe(statusCodes.forbidden)
+
+    const $ = load(asHtml(response.result))
+    expect($('h1').text().trim()).toBe('You do not have permission')
+    expect($('.govuk-service-navigation').text()).toContain('Manage account')
   })
 })

@@ -196,6 +196,13 @@ const createSessionCookie = (verifyToken) => {
               return { isValid: false }
             }
 
+            // Every session carries the token its backend calls present. One
+            // without it can only reach the backend unauthenticated, so it is
+            // refused here and the user signs in again.
+            if (!userSession.backendToken) {
+              return { isValid: false }
+            }
+
             // Note this first check also catches an expired session
             if (userSessionExpires(userSession, inNext10Seconds)) {
               return blockingRefresh(request, userSession)

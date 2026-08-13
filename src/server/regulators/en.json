@@ -3,15 +3,10 @@
     "pageTitle": "Regulators home",
     "heading": "Regulators home"
   },
-  "noPermission": {
-    "pageTitle": "You do not have permission",
-    "heading": "You do not have permission",
-    "body": "You cannot use the page you asked for. If you think you should have access, contact us using the details at the bottom of this page."
-  },
   "notAuthorised": {
-    "pageTitle": "Not authorised",
-    "heading": "User not authorised",
-    "body": "This Entra user is not configured as a regulator."
+    "pageTitle": "You do not have access to this service",
+    "heading": "You do not have access to this service",
+    "body": "You signed in successfully, but your account has no role in this service. To ask for access, contact us using the details at the bottom of this page."
   },
   "serviceName": "Check reprocessed or exported packaging waste"
 }
