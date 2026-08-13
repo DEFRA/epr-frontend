@@ -1,4 +1,5 @@
 import { config } from '#config/config.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import {
   afterEach,
   beforeAll,
@@ -106,6 +107,62 @@ describe('#context', () => {
     })
   })
 
+  describe('read-only sessions', () => {
+    let contextImport
+
+    beforeAll(async () => {
+      contextImport = await import('#config/nunjucks/context/context.js')
+    })
+
+    it('marks a regulator session read-only', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: {
+              isAuthenticated: true,
+              credentials: { scope: [SCOPES.regulator] }
+            }
+          })
+        )
+      )
+
+      expect(contextResult.isReadOnly).toBe(true)
+    })
+
+    it('does not mark a session holding other scopes read-only', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: {
+              isAuthenticated: true,
+              credentials: { scope: ['something-else'] }
+            }
+          })
+        )
+      )
+
+      expect(contextResult.isReadOnly).toBe(false)
+    })
+
+    it('does not mark a session without scopes read-only', async () => {
+      contextResult = await contextImport.context(
+        mockRequest(
+          /** @type {Partial<Request>} */ ({
+            auth: { isAuthenticated: true, credentials: {} }
+          })
+        )
+      )
+
+      expect(contextResult.isReadOnly).toBe(false)
+    })
+
+    it('does not mark a signed out request read-only', async () => {
+      contextResult = await contextImport.context(mockRequest())
+
+      expect(contextResult.isReadOnly).toBe(false)
+    })
+  })
+
   describe('when webpack manifest file read succeeds', () => {
     let contextImport
 
@@ -133,6 +190,7 @@ describe('#context', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        isReadOnly: false,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],
@@ -216,6 +274,7 @@ describe('#context cache', () => {
         assetPath: '/public/assets',
         breadcrumbs: [],
         getAssetPath: expect.any(Function),
+        isReadOnly: false,
         localise: expect.any(Function),
         localiseUrl: expect.any(Function),
         navigation: [],

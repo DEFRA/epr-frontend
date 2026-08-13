@@ -18,6 +18,7 @@
       <p class="govuk-body">{{ bodyWarning }}</p>
       <p class="govuk-body">{{ bodyGuidance }}</p>
 
+      {% if not isReadOnly %}
       <form method="POST" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}" />
 
@@ -27,6 +28,7 @@
           preventDoubleClick: true
         }) }}
       </form>
+      {% endif %}
 
     </div>
   </div>

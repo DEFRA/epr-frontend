@@ -3,8 +3,10 @@ import { addUserToOrganisation } from '#server/auth/helpers/add-user-to-organisa
 import { fetchUserOrganisations } from '#server/auth/helpers/fetch-user-organisations.js'
 import { OIDC_DEFRA_ID } from '#server/auth/plugins/defra-id.js'
 import { OIDC_ENTRA_ID } from '#server/auth/plugins/entra-id.js'
+import { SCOPES } from '#server/auth/scopes.js'
 import { paths } from '#server/paths.js'
 import { auditSignIn } from '#server/common/helpers/auditing/index.js'
+import { statusCodes } from '#server/common/constants/status-codes.js'
 import { metrics } from '#server/common/helpers/metrics/index.js'
 import { getSafeRedirect } from '#utils/get-safe-redirect.js'
 import { randomUUID, createHash } from 'node:crypto'
@@ -12,6 +14,7 @@ import { randomUUID, createHash } from 'node:crypto'
 /**
  * @import { ResponseToolkit } from '@hapi/hapi'
  * @import { HapiRequest, HapiServerRoute } from '#server/common/hapi-types.js'
+ * @import { UserSession } from '#server/auth/types/session.js'
  */
 
 /**
@@ -121,6 +124,37 @@ function referrerIfPresentElseDefault(request, defaultPath) {
 }
 
 /**
+ * Every Entra ID identity this app recognises is a regulator — operators sign
+ * in with Defra ID — so an identity granted no scope has no role here.
+ * @param {UserSession} session
+ */
+const holdsRecognisedRole = (session) =>
+  session.scope.includes(SCOPES.regulator)
+
+/**
+ * @param {HapiRequest} request
+ * @param {ResponseToolkit} h
+ * @param {UserSession} session
+ */
+const refuseSignIn = async (request, h, session) => {
+  await metrics.signInFailure(OIDC_ENTRA_ID)
+
+  request.logger.info({
+    message: 'User has no role on this service, so no session was created',
+    event: {
+      action: 'signInRefused',
+      reference: hashUserId(session.profile.id)
+    }
+  })
+
+  return h
+    .view('regulators/not-authorised', {
+      pageTitle: request.t('regulators:notAuthorised:pageTitle')
+    })
+    .code(statusCodes.forbidden)
+}
+
+/**
  * Auth callback controller
  * Handles the OAuth2/OIDC callback from Entra ID
  * Creates user session and sets session cookie for authenticated regulators
@@ -141,6 +175,10 @@ const entraIdCallbackController = {
 
     if (request.auth.isAuthenticated) {
       const session = request.auth.credentials
+
+      if (!holdsRecognisedRole(session)) {
+        return refuseSignIn(request, h, session)
+      }
 
       const sessionId = randomUUID()
       await request.server.app.cache.set(sessionId, session)
