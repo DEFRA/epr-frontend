@@ -14,8 +14,7 @@ export const paths = Object.freeze({
   loggedOut: '/logged-out',
   logout: '/logout',
   regulators: Object.freeze({
-    home: '/regulators/home',
-    notAuthorised: '/regulators/not-authorised'
+    home: '/regulators/home'
   }),
   start: '/start'
 })
