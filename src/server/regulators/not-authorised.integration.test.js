@@ -35,7 +35,7 @@ describe('/regulators/not-authorised - GET integration', () => {
     expect(response.statusCode).toBe(statusCodes.ok)
 
     const $ = load(asHtml(response.result))
-    expect($('h1').text().trim()).toBe('User not authorised')
+    expect($('h1').text().trim()).toBe('You do not have access to this service')
   })
 
   it('returns a 403 rather than the not-authorised page for a user authenticated with Defra ID', async ({
